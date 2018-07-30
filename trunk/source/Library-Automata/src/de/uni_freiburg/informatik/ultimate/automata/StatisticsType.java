@@ -243,6 +243,48 @@ public enum StatisticsType {
 	 */
 	OPERATION_NAME,
 	/**
+	 * Size of the alphabet of a Petri net.
+	 */
+	PETRI_ALPHABET,
+	/**
+	 * Size of the flow relation / number of edges inside a Petri net
+	 * that is used as the minuend of a difference operation.
+	 */
+	PETRI_DIFFERENCE_MINUEND_FLOW,
+	/**
+	 * Number of places inside a Petri net that is used as the minuend of a difference operation.
+	 */
+	PETRI_DIFFERENCE_MINUEND_PLACES,
+	/**
+	 * Number of transitions inside a Petri net that is used as the minuend of a difference operation.
+	 */
+	PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
+	/**
+	 * Number of letters in subtrahend's alphabet that are
+	 * used more often to label non-self-loops than self-loops in subtrahend.
+	 */
+	PETRI_DIFFERENCE_SUBTRAHEND_LETTERS_WITH_MORE_CHANGERS_THAN_LOOPERS,
+	/**
+	 * Number of letters in subtrahend's alphabet that are only used to label only self-loops in subtrahend.
+	 */
+	PETRI_DIFFERENCE_SUBTRAHEND_LOOPER_ONLY_LETTERS,
+	/**
+	 * Number of states in an NWA that is used as the subtrahend of a difference operation.
+	 */
+	PETRI_DIFFERENCE_SUBTRAHEND_STATES,
+	/**
+	 * Size of the flow relation / number of edges inside a Petri net.
+	 */
+	PETRI_FLOW,
+	/**
+	 * Number of places inside a Petri net.
+	 */
+	PETRI_PLACES,
+	/**
+	 * Number of transitions inside a Petri net.
+	 */
+	PETRI_TRANSITIONS,
+	/**
 	 * Amount of transitions a simulation has removed (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
 	 */
@@ -461,4 +503,12 @@ public enum StatisticsType {
 	 * Number of return transitions.
 	 */
 	TRANSITIONS_RETURN_OUTPUT,
+
 }
+
+
+
+
+
+
+

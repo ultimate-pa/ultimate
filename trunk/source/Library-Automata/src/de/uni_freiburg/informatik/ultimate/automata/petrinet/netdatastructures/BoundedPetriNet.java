@@ -144,23 +144,22 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		assert constantTokenAmountGuaranteed();
 	}
 
-
 	@Override
 	public Set<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
-		if (transition instanceof Transition) {
-			return ((Transition) transition).getSuccessors();
-		} else {
-			throw new IllegalArgumentException(this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
-		}
+		return cast(transition).getSuccessors();
 	}
 
 	@Override
 	public Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
+		return cast(transition).getPredecessors();
+	}
+
+	private Transition<LETTER, PLACE> cast(final ITransition<LETTER, PLACE> transition) {
 		if (transition instanceof Transition) {
-			return ((Transition) transition).getPredecessors();
-		} else {
-			throw new IllegalArgumentException(this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
+			return ((Transition<LETTER, PLACE>) transition);
 		}
+		throw new IllegalArgumentException(
+				this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
 	}
 
 	/**
@@ -354,6 +353,22 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return "has " + mPlaces.size() + "places, " + mTransitions.size() + " transitions";
 	}
 
+	/** @return Letters actually being used as a label of some transition in this net. */
+	public Set<LETTER> usedLetters() {
+		final Set<LETTER> usedLetters = new HashSet<>();
+		for (ITransition<LETTER, PLACE> trans : mTransitions) {
+			usedLetters.add(trans.getSymbol());
+		}
+		return usedLetters;
+	}
 
+	/** @return Number of edges in this net. */
+	public int flowSize() {
+		int flowSize = 0;
+		for (ITransition<LETTER, PLACE> trans : mTransitions) {
+			flowSize += getPredecessors(trans).size() + getSuccessors(trans).size();
+		}
+		return flowSize;
+	}
 
 }
