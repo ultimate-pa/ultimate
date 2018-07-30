@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -1855,6 +1856,13 @@ public final class SmtUtils {
 		final Term fAnnot = script.annotate(term, annot);
 		script.assertTerm(fAnnot);
 		return script.term(name);
+	}
+
+	/**
+	 * Write a line in the SMT script.
+	 */
+	public static QuotedObject echo(final Script script, final String message) {
+		return script.echo(new QuotedObject(message));
 	}
 
 	private static class InnerDualJunctTracker {
