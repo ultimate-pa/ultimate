@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -155,13 +153,7 @@ public class RtInconcistencyConditionGenerator {
 		final Script solver =
 				SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_ModelsAndUnsatCoreMode,
 						settings, false, false, Logics.ALL.toString(), "RtInconsistencySolver");
-
-		try {
-			return new LoggingScript(solver, "C:\\Users\\firefox\\Desktop\\result.smt2", true);
-		} catch (final FileNotFoundException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
+		return solver;
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
