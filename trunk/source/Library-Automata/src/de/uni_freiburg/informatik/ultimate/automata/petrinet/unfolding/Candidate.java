@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 
@@ -89,6 +91,17 @@ public class Candidate<LETTER, PLACE> {
 	public ISuccessorTransitionProvider<LETTER, PLACE> getTransition() {
 		return mSuccTransProvider;
 	}
+	
+	public void instantiate(Collection<Condition<LETTER, PLACE>> newPlaces) {
+		LinkedList<PLACE> places = new LinkedList<PLACE>(mSuccTransProvider.getPredecessorPlaces());
+		for (Condition<LETTER, PLACE> condition : newPlaces) {
+			boolean wasContained = places.remove(condition.getPlace());
+			if (wasContained) {
+				mChosen.add(condition);
+			}
+		}
+		mPlaces.addAll(places);
+	}
 
 
 
@@ -147,5 +160,10 @@ public class Candidate<LETTER, PLACE> {
 			return false;
 		}
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return mSuccTransProvider.toString();
 	}
 }
