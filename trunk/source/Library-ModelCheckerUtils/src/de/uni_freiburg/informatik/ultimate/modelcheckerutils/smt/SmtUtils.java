@@ -805,8 +805,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns true iff the given term is an atomic formula, which means it does not contain any logical symbols (and,
-	 * or, not, quantifiers)
+	 * @return true iff the given term is an atomic formula, which means it does not contain any logical symbols (e.g.,
+	 * and, or, not, implication, biimplication, quantifiers)
+	 * FIXME 2017-07-31 Matthias: provides incorrect result for user defined or theory defined (does such a theory
+	 * exists?) function symbols with Boolean parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
 		if (isTrue(term) || isFalse(term) || isConstant(term)) {
