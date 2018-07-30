@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLoc
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 
 /**
  * @author Jochen Hoenicke

@@ -271,4 +271,18 @@ public class DataStructureUtils {
 		return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 	}
 
+	/**
+	 *
+	 * @return true iff both sets consist of the same elements or are empty, false otherwise.
+	 */
+	public static <E> boolean isDifferent(final Set<E> a, final Set<E> b) {
+		if (a.isEmpty() && b.isEmpty()) {
+			return false;
+		}
+		if (a.size() != b.size()) {
+			return true;
+		}
+		return a.stream().anyMatch(e -> !b.contains(e));
+	}
+
 }

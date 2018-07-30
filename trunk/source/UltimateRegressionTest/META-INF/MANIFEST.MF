@@ -6,6 +6,7 @@ Bundle-Version: 0.1.23
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.test,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.lassoranker,
@@ -23,7 +24,9 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
  de.uni_freiburg.informatik.ultimate.buchiprogramproduct,
- de.uni_freiburg.informatik.ultimate.source.smtparser
+ de.uni_freiburg.informatik.ultimate.source.smtparser,
+ de.uni_freiburg.informatik.ultimate.reqparser,
+ de.uni_freiburg.informatik.ultimate.pea2boogie
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

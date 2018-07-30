@@ -30,10 +30,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -41,10 +39,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementInconsistentErrorResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementTransformationErrorResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementTypeErrorResult;
 
 /**
  * Utility class that helps with reporting results.
@@ -147,86 +149,6 @@ public class PeaResultUtil {
 
 	private void report(final IResult result) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-	}
-
-	/**
-	 * Report type errors detected during creation of the symbol table. We abort if they occur.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private static final class RequirementTypeErrorResult extends GenericResult {
-		public RequirementTypeErrorResult(final String id, final String reason) {
-			super(Activator.PLUGIN_ID, "Type error in requirement: " + id,
-					"Type error in requirement: " + id + " Reason: " + reason, Severity.ERROR);
-		}
-	}
-
-	/**
-	 * Report errors that occurred during the transformation of the requirement to a {@link PhaseEventAutomata}. We just
-	 * continue after they occur.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private static final class RequirementTransformationErrorResult extends GenericResult {
-
-		public RequirementTransformationErrorResult(final String id, final String reason) {
-			super(Activator.PLUGIN_ID, "Ignored requirement due to translation errors: " + id,
-					"Ignored requirement due to translation errors: " + id + " Reason: " + reason, Severity.WARNING);
-		}
-	}
-
-	private static final class RequirementInconsistentErrorResult extends GenericResult {
-
-		public RequirementInconsistentErrorResult(final InvariantInfeasibleException ex) {
-			super(Activator.PLUGIN_ID, "Requirements set is inconsistent.",
-					"Requirements set is inconsistent. " + ex.getMessage(), Severity.ERROR);
-		}
-	}
-
-	private static final class ReqCheckSuccessResult<E extends IElement> extends AbstractResultAtElement<E> {
-
-		private final ReqCheck mReqCheck;
-
-		public ReqCheckSuccessResult(final E element, final String plugin,
-				final IBacktranslationService translatorSequence) {
-			super(element, plugin, translatorSequence);
-			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
-		}
-
-		@Override
-		public String getShortDescription() {
-			return mReqCheck.getPositiveMessage();
-		}
-
-		@Override
-		public String getLongDescription() {
-			return mReqCheck.getPositiveMessage();
-		}
-
-	}
-
-	private static final class ReqCheckFailResult<E extends IElement> extends AbstractResultAtElement<E> {
-
-		private final ReqCheck mReqCheck;
-
-		public ReqCheckFailResult(final E element, final String plugin,
-				final IBacktranslationService translatorSequence) {
-			super(element, plugin, translatorSequence);
-			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
-		}
-
-		@Override
-		public String getShortDescription() {
-			return mReqCheck.getNegativeMessage();
-		}
-
-		@Override
-		public String getLongDescription() {
-			return mReqCheck.getNegativeMessage();
-		}
-
 	}
 
 }

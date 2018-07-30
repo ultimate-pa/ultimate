@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -82,6 +83,19 @@ public final class ResultUtil {
 		return filteredList;
 	}
 
+	/**
+	 * Returns new Collections that contains all IResults from ultimateIResults that are subclasses of the class
+	 * resClass.
+	 */
+	public static Collection<IResult> filterResults(final Map<String, List<IResult>> results,
+			final Predicate<IResult> pred) {
+		final List<IResult> filteredList = new ArrayList<>();
+		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
+			filteredList.addAll(filterResults(entry.getValue(), pred));
+		}
+		return filteredList;
+	}
+
 	public static <E extends IResult> Collection<E> filterResults(final List<IResult> results,
 			final Class<E> resClass) {
 		final List<E> filteredList = new ArrayList<>();
@@ -93,6 +107,10 @@ public final class ResultUtil {
 			}
 		}
 		return filteredList;
+	}
+
+	public static Collection<IResult> filterResults(final List<IResult> results, final Predicate<IResult> pred) {
+		return results.stream().filter(pred).collect(Collectors.toList());
 	}
 
 	public static boolean anyMatch(final Map<String, List<IResult>> results, final Predicate<IResult> pred) {
