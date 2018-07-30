@@ -805,16 +805,22 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff the given term is an atomic formula, which means it does not contain any logical symbols (e.g.,
-	 * and, or, not, implication, biimplication, quantifiers)
-	 * FIXME 2017-07-31 Matthias: provides incorrect result for user defined or theory defined (does such a theory
-	 * exists?) function symbols with Boolean parameters.
+	 * @param term
+	 *            A {@link Term} whose {@link Sort} is "Bool". For other
+	 *            {@link Sort}s the notion of atomicity is not defined
+	 * @return true iff the given term is an atomic formula, which means it does not
+	 *         contain any logical symbols (e.g., and, or, not, implication,
+	 *         biimplication, quantifiers) FIXME 2017-07-31 Matthias: provides
+	 *         incorrect result for user defined or theory defined (does such a
+	 *         theory exists?) function symbols with Boolean parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
 		if (isTrue(term) || isFalse(term) || isConstant(term)) {
 			return true;
 		}
 		if (term instanceof ApplicationTerm) {
+			// Note that this is only correct because we checked for constant terms (i.e.,
+			// unary function symbols) above.
 			return !allParamsAreBool((ApplicationTerm) term);
 		}
 		return term instanceof TermVariable;
