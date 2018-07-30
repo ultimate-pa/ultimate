@@ -71,6 +71,10 @@ public class QuantifierPusher extends TermTransformer {
 		 * on which the quantifier elimination was called on.
 		 */
 		ALL_LOCAL,
+		/**
+		 * Same as {@link #ALL_LOCAL}, except that we do not use UPD.
+		 */
+		NO_UPD,
 	}
 	
 	private enum SubformulaClassification { 
@@ -275,17 +279,21 @@ public class QuantifierPusher extends TermTransformer {
 		final int numberOfEliminateesBefore = eliminatees.size();
 		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (mPqeTechniques) {
-		case ALL_LOCAL: {
+		case ALL_LOCAL:
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
 			elimtechniques.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 			elimtechniques.add(new XnfUpd(mMgdScript, mServices));
 			break;
-		}
-		case ONLY_DER: {
+		case NO_UPD:
+			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
+			elimtechniques
+					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+			break;
+		case ONLY_DER:
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
 			break;
-		}
 		default:
 			throw new AssertionError("unknown value " + mPqeTechniques);
 		}

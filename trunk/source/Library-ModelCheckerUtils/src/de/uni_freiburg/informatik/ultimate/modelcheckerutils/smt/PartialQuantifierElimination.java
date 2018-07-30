@@ -158,17 +158,17 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
-	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using
-	 * {@link PqeTechniques#ONLY_DER}.
+	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using the
+	 * specified {@link PqeTechniques}.
 	 */
-	public static Term quantifierOnlyDER(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final int quantifier, final Collection<TermVariable> vars, final Term body,
-			final Term[]... patterns) {
+	public static Term quantifierCustom(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final PqeTechniques techniques, final int quantifier,
+			final Collection<TermVariable> vars, final Term body, final Term[]... patterns) {
 		final Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
 		if (varSet.isEmpty()) {
 			return body;
 		}
-		final Term elim = elimPushPull(mgdScript, quantifier, varSet, body, services, logger, PqeTechniques.ONLY_DER);
+		final Term elim = elimPushPull(mgdScript, quantifier, varSet, body, services, logger, techniques);
 		if (elim instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) elim;
 			return mgdScript.getScript().quantifier(quantifier, qf.getVariables(), qf.getSubformula(), patterns);
