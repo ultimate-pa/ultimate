@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -71,7 +72,8 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 			final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
 			final IRun<LETTER, IPredicate, ?> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
@@ -79,7 +81,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique,
 				xnfConversionTechnique);
 
-		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier);
+		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier, emptyStackFactory);
 	}
 
 	@Override
@@ -89,13 +91,13 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-			final IPredicateUnifier predicateUnifier) {
-		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
+			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier, emptyStackFactory);
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomatonNew(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-			final IPredicateUnifier predicateUnifier) {
+			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
@@ -106,7 +108,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 		}
 
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
 
 		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
 		final Map<LETTER, IPredicate> callHierPreds = new HashMap<>();

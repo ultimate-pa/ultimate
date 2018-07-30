@@ -34,7 +34,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * Prints a {@link BoundedPetriNet}.
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.P
  */
 public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final Map<LETTER, String> mAlphabet;
-	private final Map<Place<STATE>, String> mPlacesMapping;
+	private final Map<STATE, String> mPlacesMapping;
 
 	/**
 	 * @param writer
@@ -69,8 +68,8 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printAutomatonPrefix();
 		printAlphabet();
 		printPlaces();
-		printTransitions(net.getTransitions());
-		printInitialMarking(net.getInitialMarking());
+		printTransitions(net);
+		printInitialMarking(net.getInitialPlaces());
 		printAcceptingPlaces(net.getAcceptingPlaces());
 		printAutomatonSuffix();
 		finish();
@@ -78,8 +77,8 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);
 
-	protected abstract Map<Place<STATE>, String>
-			getPlacesMapping(final Collection<Place<STATE>> places);
+	protected abstract Map<STATE, String>
+			getPlacesMapping(final Collection<STATE> places);
 
 	protected final void printElementPrefix(final String string) {
 		print(String.format("\t%s = ", string));
@@ -97,39 +96,39 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printCollectionSuffix();
 	}
 
-	private void printTransitions(final Collection<ITransition<LETTER, STATE>> transitions) {
+	private void printTransitions(final BoundedPetriNet<LETTER, STATE> net) {
 		printlnCollectionPrefix("transitions");
-		for (final ITransition<LETTER, STATE> transition : transitions) {
-			printTransition(transition);
+		for (final ITransition<LETTER, STATE> transition : net.getTransitions()) {
+			printTransition(transition, net);
 		}
 		printTransitionsSuffix();
 	}
 
-	private void printTransition(final ITransition<LETTER, STATE> transition) {
+	private void printTransition(final ITransition<LETTER, STATE> transition, BoundedPetriNet<LETTER, STATE> net) {
 		printOneTransitionPrefix();
-		printMarking(transition.getPredecessors());
+		printMarking(net.getPredecessors(transition));
 		print(' ');
 		print(mAlphabet.get(transition.getSymbol()));
 		print(' ');
-		printMarking(transition.getSuccessors());
+		printMarking(net.getSuccessors(transition));
 		printOneTransitionSuffix();
 	}
 
-	private void printMarking(final Iterable<Place<STATE>> marking) {
+	private void printMarking(final Iterable<STATE> marking) {
 		print('{');
-		for (final Place<STATE> place : marking) {
+		for (final STATE place : marking) {
 			printElement(mPlacesMapping.get(place));
 		}
 		print('}');
 	}
 
-	private void printInitialMarking(final Iterable<Place<STATE>> initialMarking) {
+	private void printInitialMarking(final Iterable<STATE> initialMarking) {
 		printElementPrefix("initialMarking");
 		printMarking(initialMarking);
 		println(',');
 	}
 
-	private void printAcceptingPlaces(final Iterable<Place<STATE>> acceptingPlaces) {
+	private void printAcceptingPlaces(final Iterable<STATE> acceptingPlaces) {
 		printElementPrefix("acceptingPlaces");
 		printMarking(acceptingPlaces);
 		print(NEW_LINE);

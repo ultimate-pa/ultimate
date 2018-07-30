@@ -33,6 +33,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -99,8 +100,9 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
-		super(logger);
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+		super(logger, emptyStackFactory);
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;

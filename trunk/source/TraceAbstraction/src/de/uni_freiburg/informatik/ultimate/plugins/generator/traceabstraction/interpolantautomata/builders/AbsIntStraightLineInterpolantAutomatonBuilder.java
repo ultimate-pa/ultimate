@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -89,13 +90,14 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predUnifier,
 			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
-		mResult = constructAutomaton(oldAbstraction, aiResult, predUnifier);
+		mResult = constructAutomaton(oldAbstraction, aiResult, predUnifier, emptyStackFactory);
 	}
 
 	@Override
@@ -105,7 +107,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 
 	private <STATE extends IAbstractState<STATE>> NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<STATE, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier) {
+			final IAbstractInterpretationResult<STATE, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 
 		final RcfgDebugHelper<STATE, LETTER, IProgramVarOrConst, ?> debugHelper =
 				new RcfgDebugHelper<>(mCsToolkit, mServices, mSymbolTable);
@@ -113,7 +116,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(),
-						oldAbstraction.getStateFactory());
+						emptyStackFactory);
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = cex.getWord();

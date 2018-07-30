@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * Prints a {@link BoundedPetriNet}. In this version letters and places are represented by a default symbol and a unique
@@ -71,10 +70,10 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 	}
 
 	@Override
-	protected Map<Place<STATE>, String> getPlacesMapping(final Collection<Place<STATE>> places) {
+	protected Map<STATE, String> getPlacesMapping(final Collection<STATE> places) {
 		int counter = 0;
-		final HashMap<Place<STATE>, String> placesMapping = new HashMap<>();
-		for (final Place<STATE> place : places) {
+		final HashMap<STATE, String> placesMapping = new HashMap<>();
+		for (final STATE place : places) {
 			placesMapping.put(place, 'p' + Integer.toString(counter));
 			counter++;
 		}

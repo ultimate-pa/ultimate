@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,44 +28,45 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Implementation of a possible extension.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
+public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LETTER, PLACE> {
 
-	private final PriorityQueue<Event<S, C>> mPe;
-	private final BranchingProcess<S, C> mBranchingProcess;
+	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
+	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
-	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess, final Comparator<Event<S, C>> order) {
+	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
 		mPe = new PriorityQueue<>(order);
 	}
 
 	@Override
-	public Event<S, C> remove() {
+	public Event<LETTER, PLACE> remove() {
 		return mPe.remove();
 	}
 
 	@Override
-	public void update(final Event<S, C> event) {
-		final Collection<Candidate<S, C>> candidates = computeCandidates(event);
-		for (final Candidate<S, C> candidate : candidates) {
+	public void update(final Event<LETTER, PLACE> event) {
+		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
+		for (final Candidate<LETTER, PLACE> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
 	}
@@ -75,43 +76,51 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
 	@SuppressWarnings("squid:S1698")
-	private void evolveCandidate(final Candidate<S, C> cand) {
-		if (cand.mPlaces.isEmpty()) {
-			mPe.add(new Event<>(cand.mChosen, cand.mT));
+	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
+		if (cand.getPlaces().isEmpty()) {
+			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
+				mPe.add(new Event<>(cand.getChosen(), trans, mBranchingProcess.getNet()));
+			}
 			return;
 		}
-		final Place<C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
-		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
-			assert cand.mT.getPredecessors().contains(c.getPlace());
+		// mod!
+		final PLACE p = cand.getPlaces().remove(cand.getPlaces().size() - 1);
+		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
+			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
 			// equality intended here
-			assert c.getPlace() == p;
-			assert !cand.mChosen.contains(c);
-			if (mBranchingProcess.isCoset(cand.mChosen, c)) {
-				cand.mChosen.add(c);
+			assert c.getPlace().equals(p);
+			assert !cand.getChosen().contains(c);
+			if (mBranchingProcess.isCoset(cand.getChosen(), c)) {
+				// mod!
+				cand.getChosen().add(c);
 				evolveCandidate(cand);
-				cand.mChosen.remove(cand.mChosen.size() - 1);
+				// mod!
+				cand.getChosen().remove(cand.getChosen().size() - 1);
 			}
 		}
-		cand.mPlaces.add(p);
+		// mod!
+		cand.getPlaces().add(p);
 	}
 
 	/**
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
-	private Collection<Candidate<S, C>> computeCandidates(final Event<S, C> event) {
-		final Map<ITransition<S, C>, Candidate<S, C>> candidates = new HashMap<>();
-		for (final Condition<S, C> cond0 : event.getSuccessorConditions()) {
-			for (final ITransition<S, C> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
-				Candidate<S, C> current;
+	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
+		final Map<ITransition<LETTER, PLACE>, Candidate<LETTER, PLACE>> candidates = new HashMap<>();
+		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
+			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
+				Candidate<LETTER, PLACE> current;
 				if (!candidates.containsKey(t)) {
-					current = new Candidate<>((Transition<S, C>) t);
+					final Transition<LETTER, PLACE> trans = (Transition<LETTER, PLACE>) t;
+					current = new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(trans),
+							mBranchingProcess.getNet()));
 					candidates.put(t, current);
 				} else {
 					current = candidates.get(t);
 				}
-				current.mChosen.add(cond0);
-				current.mPlaces.remove(cond0.getPlace());
-				assert current.mPlaces.size() + current.mChosen.size() == t.getPredecessors().size();
+				current.getChosen().add(cond0);
+				current.getPlaces().remove(cond0.getPlace());
+				assert current.getPlaces().size() + current.getChosen().size() == mBranchingProcess.getNet().getPredecessors(t).size();
 			}
 		}
 		return candidates.values();

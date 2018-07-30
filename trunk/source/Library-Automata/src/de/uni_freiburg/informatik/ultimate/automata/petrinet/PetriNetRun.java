@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,25 +35,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 /**
  * A Petri net run is a sequence of markings <tt>m0 ... m_{n+1}</tt> and a word <tt>w_0 ... w_n</tt>.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbols type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
+public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, PLACE, Marking<LETTER, PLACE>> {
 
-	private final Word<S> mWord;
-	private final ArrayList<Marking<S, C>> mMarkingSequence;
+	private final Word<LETTER> mWord;
+	private final ArrayList<Marking<LETTER, PLACE>> mMarkingSequence;
 
 	/**
 	 * Construct Petri net run of length 0.
-	 * 
+	 *
 	 * @param m0
 	 *            initial marking
 	 */
-	public PetriNetRun(final Marking<S, C> m0) {
+	public PetriNetRun(final Marking<LETTER, PLACE> m0) {
 		mWord = new NestedWord<>();
 		mMarkingSequence = new ArrayList<>();
 		mMarkingSequence.add(m0);
@@ -61,7 +61,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 
 	/**
 	 * Constructs Petri net run of length 1.
-	 * 
+	 *
 	 * @param m0
 	 *            initial marking
 	 * @param symbol
@@ -69,7 +69,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	 * @param m1
 	 *            next marking
 	 */
-	public PetriNetRun(final Marking<S, C> m0, final S symbol, final Marking<S, C> m1) {
+	public PetriNetRun(final Marking<LETTER, PLACE> m0, final LETTER symbol, final Marking<LETTER, PLACE> m1) {
 		mWord = new NestedWord<>(symbol, NestedWord.INTERNAL_POSITION);
 		mMarkingSequence = new ArrayList<>();
 		mMarkingSequence.add(m0);
@@ -78,13 +78,13 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 
 	/**
 	 * Constructs Petri net run of arbitrary length.
-	 * 
+	 *
 	 * @param sequenceOfMarkings
 	 *            sequence of markings
 	 * @param word
 	 *            corresponding word
 	 */
-	public PetriNetRun(final ArrayList<Marking<S, C>> sequenceOfMarkings, final Word<S> word) {
+	public PetriNetRun(final ArrayList<Marking<LETTER, PLACE>> sequenceOfMarkings, final Word<LETTER> word) {
 		if (sequenceOfMarkings.size() - 1 != word.length()) {
 			throw new IllegalArgumentException("run consists of word length +1 markings");
 		}
@@ -93,12 +93,12 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	}
 
 	@Override
-	public S getSymbol(final int pos) {
+	public LETTER getSymbol(final int pos) {
 		return mWord.getSymbol(pos);
 	}
 
 	@Override
-	public Word<S> getWord() {
+	public Word<LETTER> getWord() {
 		return mWord;
 	}
 
@@ -107,7 +107,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	 *            Position.
 	 * @return marking at the given position
 	 */
-	public Marking<S, C> getMarking(final int pos) {
+	public Marking<LETTER, PLACE> getMarking(final int pos) {
 		return mMarkingSequence.get(pos);
 	}
 
@@ -123,8 +123,8 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	 *            Another run.
 	 * @return A new run which is the concatenation of this and run2. This is not changed.
 	 */
-	public PetriNetRun<S, C> concatenate(final PetriNetRun<S, C> run2) {
-		final ArrayList<Marking<S, C>> concatMarkingSequence = new ArrayList<>();
+	public PetriNetRun<LETTER, PLACE> concatenate(final PetriNetRun<LETTER, PLACE> run2) {
+		final ArrayList<Marking<LETTER, PLACE>> concatMarkingSequence = new ArrayList<>();
 		for (int i = 0; i < mMarkingSequence.size(); i++) {
 			concatMarkingSequence.add(this.getMarking(i));
 		}
@@ -135,7 +135,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 		for (int i = 1; i < run2.mMarkingSequence.size(); i++) {
 			concatMarkingSequence.add(run2.getMarking(i));
 		}
-		final Word<S> concatWord = mWord.concatenate(run2.getWord());
+		final Word<LETTER> concatWord = mWord.concatenate(run2.getWord());
 		return new PetriNetRun<>(concatMarkingSequence, concatWord);
 	}
 
@@ -156,7 +156,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	}
 
 	@Override
-	public List<Marking<S, C>> getStateSequence() {
+	public List<Marking<LETTER, PLACE>> getStateSequence() {
 		return mMarkingSequence;
 	}
 }

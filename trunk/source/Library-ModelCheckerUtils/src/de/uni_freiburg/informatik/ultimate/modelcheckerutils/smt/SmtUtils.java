@@ -361,9 +361,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Return term that represents the sum of all summands. Return the neutral
-	 * element for sort sort if summands is empty. (This method should be kept
-	 * simple and does not remove "0" from the list of summands. If you want to get
+	 * Return term that represents the sum of all summands. Return the neutral element for sort sort if summands is
+	 * empty. (This method should be kept simple and does not remove "0" from the list of summands. If you want to get
 	 * rid of "0" then use {@link AffineTerm}).
 	 */
 	public static Term sum(final Script script, final Sort sort, final Term... summands) {
@@ -1819,8 +1818,8 @@ public final class SmtUtils {
 	public static Pair<LBool, Term> interpolateBinary(final Script script, final Term first, final Term second) {
 		script.push(1);
 		try {
-			final Term fPart = assertAndAnnotate(script, first, "first");
-			final Term sPart = assertAndAnnotate(script, second, "second");
+			final Term fPart = annotateAndAssert(script, first, "first");
+			final Term sPart = annotateAndAssert(script, second, "second");
 			final LBool checkSatResult = script.checkSat();
 			switch (checkSatResult) {
 			case UNSAT:
@@ -1837,9 +1836,15 @@ public final class SmtUtils {
 		}
 	}
 
-	private static Term assertAndAnnotate(final Script script, final Term t, final String name) {
+	/**
+	 * Creates an annotated term from term and name, asserts that term and returns a term representing the name.
+	 *
+	 * Note: This method changes the state of the solver!
+	 */
+	public static Term annotateAndAssert(final Script script, final Term term, final String name) {
+		assert term.getFreeVars().length == 0 : "Term has free vars";
 		final Annotation annot = new Annotation(":named", name);
-		final Term fAnnot = script.annotate(t, annot);
+		final Term fAnnot = script.annotate(term, annot);
 		script.assertTerm(fAnnot);
 		return script.term(name);
 	}

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 /**
  * Special case of NestedWordAutomaton in which we can partition the set of states into modules. Each module has an
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * </ul>
  * ( I think 2012-09-17 the following should also apply: Each entry state must be an initial state or has at least one
  * incoming call transition.)
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -66,7 +66,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param internalAlphabet
@@ -78,12 +78,12 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public Senwa(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet, final IStateFactory<STATE> stateFactory) {
+	public Senwa(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet, final IEmptyStackStateFactory<STATE> stateFactory) {
 		super(services, vpAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
-	
-	
+
+
 	/**
 	 * @param state
 	 *            A state.
@@ -118,7 +118,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	/**
 	 * * Return all states <i>down</i> such that a configuration is reachable, where <i>up</i> is the current state and
 	 * <i>down</i> is the topmost stack element.
-	 * 
+	 *
 	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
 	@Override

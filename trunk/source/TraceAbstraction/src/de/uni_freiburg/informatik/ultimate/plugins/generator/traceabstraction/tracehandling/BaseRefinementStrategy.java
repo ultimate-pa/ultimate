@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -95,11 +96,14 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	private IProgramExecution<IcfgEdge, Term> mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
+	protected final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
-	public BaseRefinementStrategy(final ILogger logger) {
+	public BaseRefinementStrategy(final ILogger logger,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mLogger = logger;
+		mEmptyStackFactory = emptyStackFactory;
 	}
 
 	/**

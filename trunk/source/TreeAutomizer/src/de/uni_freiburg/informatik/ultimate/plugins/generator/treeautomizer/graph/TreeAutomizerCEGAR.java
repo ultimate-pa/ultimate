@@ -218,7 +218,7 @@ public class TreeAutomizerCEGAR {
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
-		mAbstraction = new TreeAutomatonBU<>(mStateFactory);
+		mAbstraction = new TreeAutomatonBU<>();
 		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
 			for (final HcPredicateSymbol sym : clause.getBodyPredicates()) {
@@ -274,7 +274,7 @@ public class TreeAutomizerCEGAR {
 				.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
 
 		if (TreeAutomizerSettings.USE_RAW_INTERPOLANT_AUTOMATON) {
-			mInterpolAutomaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
+			mInterpolAutomaton = treeRunWithInterpolants.getAutomaton();
 		} else {
 			mInterpolAutomaton = treeRunWithInterpolants.getInterpolantAutomaton(mStateFactory);
 		}

@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -41,15 +42,16 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 
 	@Override
 	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
-			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier) {
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
 		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack =
-				s -> super.createStrategy(counterexample, abstraction, taskIdentifier);
+				s -> super.createStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory);
 
 		return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 				mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-				mPrefsConsolidation, taskIdentifier) {
+				mPrefsConsolidation, taskIdentifier, emptyStackFactory) {
 			@Override
 			protected InteractiveCegar getInteractive() {
 				// instead of passing the interactive interface via

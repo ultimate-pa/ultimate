@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Carl Kuesters
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,12 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AAToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	private final Set<LETTER> mAlphabet;
-	private final IStateFactory<STATE> mStateFactory;
 	private final ArrayList<STATE> mStates = new ArrayList<>();
 	private final HashMap<STATE, Integer> mStatesIndices = new HashMap<>();
 	private final HashMap<LETTER, BooleanExpression[]> mTransitionFunction = new HashMap<>();
@@ -57,9 +55,8 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public AlternatingAutomaton(final Set<LETTER> alphabet, final IStateFactory<STATE> stateFactory) {
+	public AlternatingAutomaton(final Set<LETTER> alphabet) {
 		mAlphabet = alphabet;
-		mStateFactory = stateFactory;
 	}
 
 	public void addState(final STATE state) {
@@ -176,11 +173,6 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
-	}
-
-	@Override
-	public IStateFactory<STATE> getStateFactory() {
-		return mStateFactory;
 	}
 
 	@Override

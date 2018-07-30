@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * nwa_difference such that nwa_difference accepts all words that are accepted by nwa_minuend but not by
  * Psi(nwa_subtrahend), i.e. L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ), where Psi is a
  * transformation of the automaton nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol. Type of the elements of the alphabet over which the automata are defined.
@@ -105,7 +105,7 @@ public final class DifferenceSadd<LETTER, STATE>
 
 	/**
 	 * Constructor where powerset determinizer is used.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -126,7 +126,7 @@ public final class DifferenceSadd<LETTER, STATE>
 
 	/**
 	 * Constructor with a given state determinizer.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param contentFactory
@@ -160,7 +160,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			mLogger.info(startMessage());
 		}
 
-		mDifference = new NestedWordAutomaton<>(mServices, minuend.getVpAlphabet(), minuend.getStateFactory());
+		mDifference = new NestedWordAutomaton<>(mServices, minuend.getVpAlphabet(), contentFactory);
 		mAuxiliaryEmptyStackState = mDifference.getEmptyStackState();
 		computeDifference();
 
@@ -405,7 +405,7 @@ public final class DifferenceSadd<LETTER, STATE>
 	 * State of an NWA that accepts the language difference of two NWAs. A DifferenceState is a pair whose first entry
 	 * is a state of the minuend, the second entry is a DeterminizedState of the subtrahend. A DifferenceState is final
 	 * iff the minuend state is final and the subtrahend state is not final.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class DifferenceState {
@@ -466,7 +466,7 @@ public final class DifferenceSadd<LETTER, STATE>
 
 	/**
 	 * A summary state.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class SummaryState {

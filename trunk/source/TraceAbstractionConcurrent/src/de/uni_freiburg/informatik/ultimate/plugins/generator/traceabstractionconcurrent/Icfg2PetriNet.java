@@ -33,8 +33,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -50,21 +48,20 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 public abstract class Icfg2PetriNet {
-	
+
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	
+
 	private final BoogieIcfgContainer mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final IStateFactory<IPredicate> mContentFactory;
 
-	
 
-	
-	public Icfg2PetriNet(final BoogieIcfgContainer icfg, final IStateFactory<IPredicate> contentFactory,
+
+
+	public Icfg2PetriNet(final BoogieIcfgContainer icfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -73,45 +70,44 @@ public abstract class Icfg2PetriNet {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mIcfg = icfg;
-		mContentFactory = contentFactory;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
-		
+
 		final Set<IcfgEdge> alphabet = new HashSet<>();
-		
+
 		final BoundedPetriNet<IcfgEdge, IPredicate> net = new BoundedPetriNet<>(
-				new AutomataLibraryServices(services), alphabet, contentFactory, false);
-		
+				new AutomataLibraryServices(services), alphabet, false);
+
 		final Set<BoogieIcfgLocation> init = icfg.getInitialNodes();
 		final Map<String, Set<BoogieIcfgLocation>> procErrorNodes = icfg.getProcedureErrorNodes();
-		
-		final IValueConstruction<BoogieIcfgLocation, Place<IPredicate>> valueConstruction = 
-				new IValueConstruction<BoogieIcfgLocation, Place<IPredicate>>() {
+
+		final IValueConstruction<BoogieIcfgLocation, IPredicate> valueConstruction =
+				new IValueConstruction<BoogieIcfgLocation, IPredicate>() {
 
 			@Override
-			public Place<IPredicate> constructValue(final BoogieIcfgLocation key) {
+			public IPredicate constructValue(final BoogieIcfgLocation key) {
 				final IPredicate pred = predicateFactory.newDontCarePredicate(key);
 				final boolean isInitial = init.contains(key);
 				final String proc = key.getProcedure();
 				final boolean isFinal = procErrorNodes.get(proc).contains(key);
-				final Place<IPredicate> place = net.addPlace(pred, isInitial, isFinal);
+				final IPredicate place = net.addPlace(pred, isInitial, isFinal);
 				return place;
 			}
-			
+
 		};
-		final ConstructionCache<BoogieIcfgLocation, Place<IPredicate>> cc = new ConstructionCache<>(valueConstruction);
+		final ConstructionCache<BoogieIcfgLocation, IPredicate> cc = new ConstructionCache<>(valueConstruction);
 
 		for (final BoogieIcfgLocation loc : init) {
 			cc.getOrConstruct(loc);
 		}
-		
+
 		final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
 		while(it.hasNext()) {
 			final IcfgEdge edge = it.next();
-			final Place<IPredicate> pred = cc.getOrConstruct((BoogieIcfgLocation) edge.getSource());
-			final Place<IPredicate> succ = cc.getOrConstruct((BoogieIcfgLocation) edge.getTarget());
+			final IPredicate pred = cc.getOrConstruct((BoogieIcfgLocation) edge.getSource());
+			final IPredicate succ = cc.getOrConstruct((BoogieIcfgLocation) edge.getTarget());
 			net.addTransition(edge, Collections.singleton(pred), Collections.singleton(succ));
 		}
 	}
-	
+
 }

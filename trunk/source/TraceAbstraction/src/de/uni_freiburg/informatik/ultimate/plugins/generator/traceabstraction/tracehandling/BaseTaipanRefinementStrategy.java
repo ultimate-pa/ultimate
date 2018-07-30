@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -106,6 +107,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -133,8 +135,9 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) {
-		super(logger);
+			final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+		super(logger, emptyStackFactory);
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -234,13 +237,14 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
-					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode);
+					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode, mEmptyStackFactory);
 		}
 		return mInterpolantAutomatonBuilder;
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps, final Mode mode) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps, final Mode mode,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		switch (mode) {
 		case ABSTRACT_INTERPRETATION:
 		case SMTINTERPOL:
@@ -251,14 +255,14 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 				mLogger.info("Using the first two imperfect interpolant sequences");
 				return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
 						NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
-						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction.getStateFactory(),
+						imperfectIpps.stream().limit(2).collect(Collectors.toList()), emptyStackFactory,
 						InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 			}
 			// if we have some perfect, we take one of those
 			mLogger.info("Using the first perfect interpolant sequence");
 			return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
 					NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
-					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction.getStateFactory(),
+					perfectIpps.stream().limit(1).collect(Collectors.toList()), emptyStackFactory,
 					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:

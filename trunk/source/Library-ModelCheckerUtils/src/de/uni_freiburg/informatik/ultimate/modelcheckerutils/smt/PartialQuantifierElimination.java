@@ -70,13 +70,13 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * equivalent to term φ[c]. Resp. we use that the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
  */
 public class PartialQuantifierElimination {
-	static final boolean USE_UPD = true;
-	static final boolean USE_IRD = true;
-	static final boolean USE_TIR = true;
-	static final boolean USE_SSD = true;
-	static final boolean USE_SOS = false;
-	static final boolean USE_USR = false;
-	private static boolean mPushPull = true;
+	private static final boolean USE_UPD = true;
+	private static final boolean USE_IRD = true;
+	private static final boolean USE_TIR = true;
+	private static final boolean USE_SSD = true;
+	private static final boolean USE_SOS = false;
+	private static final boolean USE_USR = false;
+	private static final boolean USE_PUSH_PULL = true;
 	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
 	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
 
@@ -128,8 +128,8 @@ public class PartialQuantifierElimination {
 			return body;
 		}
 		Term elim = body;
-		if (mPushPull) {
-			final int quantBefore = varSet.size();
+		if (USE_PUSH_PULL) {
+			// final int quantBefore = varSet.size();
 			// Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
 			elim = elimPushPull(mgdScript, quantifier, varSet, elim, services, logger);
 			// return elim;
@@ -137,7 +137,7 @@ public class PartialQuantifierElimination {
 				final QuantifiedFormula qf = (QuantifiedFormula) elim;
 				varSet = new HashSet<>(Arrays.asList(qf.getVariables()));
 				elim = qf.getSubformula();
-				final int quantAfterwards = varSet.size();
+				// final int quantAfterwards = varSet.size();
 				// logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
 			} else {
 				// logger.warn("push-pull eliminated " + quantBefore);
@@ -159,6 +159,26 @@ public class PartialQuantifierElimination {
 				patterns);
 	}
 
+	/**
+	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
+	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using
+	 * {@link PqeTechniques#ONLY_DER}.
+	 */
+	public static Term quantifierOnlyDER(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final int quantifier, final Collection<TermVariable> vars, final Term body,
+			final Term[]... patterns) {
+		final Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
+		if (varSet.isEmpty()) {
+			return body;
+		}
+		final Term elim = elimPushPull(mgdScript, quantifier, varSet, body, services, logger, PqeTechniques.ONLY_DER);
+		if (elim instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) elim;
+			return mgdScript.getScript().quantifier(quantifier, qf.getVariables(), qf.getSubformula(), patterns);
+		}
+		return elim;
+	}
+
 	private static Set<TermVariable> constructIntersectionWithFreeVars(final Collection<TermVariable> vars,
 			final Term term) {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
@@ -174,13 +194,18 @@ public class PartialQuantifierElimination {
 	public static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
+		return elimPushPull(mgdScript, quantifier, eliminatees, term, services, logger, PqeTechniques.ALL_LOCAL);
+	}
+
+	private static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
+			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
+			final ILogger logger, final PqeTechniques techniques) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed =
-				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(quantified);
-		final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
+		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
+		// final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 		// final Term pnf = new Nnf(script, services, freshTermVariableConstructor,
 		// QuantifierHandling.PULL).transform(pushed);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
@@ -207,7 +232,8 @@ public class PartialQuantifierElimination {
 
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(mgdScript)).transform(term);
-		result = QuantifierUtils.transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
+		result = QuantifierUtils.transformToXnf(services, script, quantifier, mgdScript, result,
+				xnfConversionTechnique);
 		// if (result instanceof QuantifiedFormula) {
 		// QuantifiedFormula qf = (QuantifiedFormula) result;
 		// if (qf.getQuantifier() != quantifier) {
@@ -285,13 +311,14 @@ public class PartialQuantifierElimination {
 			if (DEBUG_EXTENDED_RESULT_CHECK) {
 				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
 						logger, simplificationTechnique, script, result);
-				assert validateEquivalence(script, sosResult, esp, logger, "SDD") : "Array QEs differ. Esp: "
-						+ esp + " Sos:" + sosResult;
+				assert validateEquivalence(script, sosResult, esp, logger, "SDD") : "Array QEs differ. Esp: " + esp
+						+ " Sos:" + sosResult;
 				final boolean doSizeCheck = false;
 				if (doSizeCheck) {
 					final long espTreeSize = new DAGSize().treesize(esp.getTerm());
 					final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
-					assert espTreeSize <= sosTreeSize * 2 : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+					assert espTreeSize <= sosTreeSize * 2 : "unexpected size! esp:" + espTreeSize + " sos"
+							+ sosTreeSize;
 					if (sosTreeSize > 1 && sosTreeSize * 2 < espTreeSize) {
 						throw new AssertionError("unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize);
 					}
@@ -323,8 +350,7 @@ public class PartialQuantifierElimination {
 		}
 
 		// simplification
-//		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
-
+		// result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
@@ -361,7 +387,6 @@ public class PartialQuantifierElimination {
 		}
 		return sat != LBool.SAT;
 	}
-
 
 	private static Term applyInfinityRestrictorDrop(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final Script script,
@@ -483,7 +508,8 @@ public class PartialQuantifierElimination {
 		final Set<TermVariable> eliminateesCopy = new HashSet<>(eliminatees);
 		final Term[] oldXjunctsInner = QuantifierUtils.getXjunctsInner(quantifier, term);
 		final Term[] newXjunctsInner = elimination.tryToEliminate(quantifier, oldXjunctsInner, eliminateesCopy);
-		final Term result = QuantifierUtils.applyDualFiniteConnective(script, quantifier, Arrays.asList(newXjunctsInner));
+		final Term result =
+				QuantifierUtils.applyDualFiniteConnective(script, quantifier, Arrays.asList(newXjunctsInner));
 		return result;
 	}
 

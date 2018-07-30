@@ -8,13 +8,13 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * 
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class McMillanOrder<LETTER, C> implements IOrder<LETTER, C> {
+public class McMillanOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
 
 	@Override
-	public int compare(final Configuration<LETTER, C> o1, final Configuration<LETTER, C> o2) {
+	public int compare(final Configuration<LETTER, PLACE> o1, final Configuration<LETTER, PLACE> o2) {
 		return o1.size() - o2.size();
 	}
 	

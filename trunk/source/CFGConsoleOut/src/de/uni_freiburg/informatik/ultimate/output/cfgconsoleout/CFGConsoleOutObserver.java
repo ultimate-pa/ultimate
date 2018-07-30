@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -93,7 +93,7 @@ public class CFGConsoleOutObserver extends BaseObserver {
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, toolkit.getManagedScript(),
 				toolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final IStateFactory<IPredicate> stateFac = new PredicateFactoryRefinement(mServices, toolkit.getManagedScript(),
+		final IEmptyStackStateFactory<IPredicate> stateFac = new PredicateFactoryRefinement(mServices, toolkit.getManagedScript(),
 				predicateFactory, false, Collections.emptySet());
 
 		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(

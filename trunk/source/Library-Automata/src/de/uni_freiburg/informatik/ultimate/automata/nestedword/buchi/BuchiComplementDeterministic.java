@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * BNWA complementation that works only for deterministic Buchi automata.
  * <p>
  * FIXME: return in final part may take nonfinal state from stack
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -71,18 +71,6 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	private final HashMap<STATE, STATE> mOld2Final = new HashMap<>();
 	private final HashMap<STATE, STATE> mOld2NonFinal = new HashMap<>();
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
 	public BuchiComplementDeterministic(final AutomataLibraryServices services,
 			final IBuchiComplementDeterministicStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
@@ -99,7 +87,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		} else {
 			mTotalizedOperand = new ReachableStatesCopy<>(mServices, operand, true, false, false, false).getResult();
 		}
-		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), operand.getStateFactory());
+		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), stateFactory);
 		traverseDoubleDeckerGraph();
 
 		if (mLogger.isInfoEnabled()) {
@@ -226,14 +214,14 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 			final STATE succ = trans.getSucc();
 			if (!isFinal) {
 				final STATE newSuccNonFinal = getOrConstructNewState(succ, false, false);
-				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, trans.getLetter(),
-						newSuccNonFinal);
+				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier,
+						trans.getLetter(), newSuccNonFinal);
 				newSuccs.add(newSuccNonFinal);
 			}
 			if (!mTotalizedOperand.isFinal(succ)) {
 				final STATE newSuccFinal = getOrConstructNewState(succ, false, true);
-				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, trans.getLetter(),
-						newSuccFinal);
+				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier,
+						trans.getLetter(), newSuccFinal);
 				newSuccs.add(newSuccFinal);
 			}
 		}

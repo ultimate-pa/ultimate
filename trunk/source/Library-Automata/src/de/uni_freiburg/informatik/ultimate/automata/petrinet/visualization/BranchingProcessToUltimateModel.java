@@ -41,32 +41,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * Converter from {@link BranchingProcess} to Ultimate model.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class BranchingProcessToUltimateModel<S, C> {
+public class BranchingProcessToUltimateModel<LETTER, PLACE> {
 	/**
 	 * @param branchingProcess
 	 *            Branching process.
 	 * @return the initial node of the Branching process Ultimate model
 	 */
 	@SuppressWarnings("unchecked")
-	public IElement transformToUltimateModel(final BranchingProcess<S, C> branchingProcess) {
-		final BranchingProcessInitialNode<S, C> graphroot = new BranchingProcessInitialNode<>(branchingProcess);
+	public IElement transformToUltimateModel(final BranchingProcess<LETTER, PLACE> branchingProcess) {
+		final BranchingProcessInitialNode<LETTER, PLACE> graphroot = new BranchingProcessInitialNode<>(branchingProcess);
 
-		final Collection<Condition<S, C>> initialStates = branchingProcess.initialConditions();
+		final Collection<Condition<LETTER, PLACE>> initialStates = branchingProcess.initialConditions();
 		// Collection<Event<S,C>> cutOffEvents = net.getCutOffEvents();
 
-		final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode = new HashMap<>();
-		final Map<Event<S, C>, EventNode<S, C>> transition2EventNode = new HashMap<>();
+		final Map<Condition<LETTER, PLACE>, ConditionNode<LETTER, PLACE>> place2ConditionNode = new HashMap<>();
+		final Map<Event<LETTER, PLACE>, EventNode<LETTER, PLACE>> transition2EventNode = new HashMap<>();
 
 		final Queue<Object> queue = new LinkedList<>(initialStates);
 
 		// add all initial states to model - all are successors of the graphroot
-		for (final Condition<S, C> place : initialStates) {
-			final ConditionNode<S, C> conditionNode = new ConditionNode<>(place, branchingProcess);
+		for (final Condition<LETTER, PLACE> place : initialStates) {
+			final ConditionNode<LETTER, PLACE> conditionNode = new ConditionNode<>(place, branchingProcess);
 			place2ConditionNode.put(place, conditionNode);
 			graphroot.connectOutgoing(conditionNode);
 		}
@@ -75,20 +75,20 @@ public class BranchingProcessToUltimateModel<S, C> {
 			final Object node = queue.remove();
 
 			if (node instanceof Condition) {
-				conditionHandling(place2ConditionNode, transition2EventNode, queue, (Condition<S, C>) node);
+				conditionHandling(place2ConditionNode, transition2EventNode, queue, (Condition<LETTER, PLACE>) node);
 			} else if (node instanceof Event) {
-				eventHandling(branchingProcess, place2ConditionNode, transition2EventNode, queue, (Event<S, C>) node);
+				eventHandling(branchingProcess, place2ConditionNode, transition2EventNode, queue, (Event<LETTER, PLACE>) node);
 			}
 		}
 		return graphroot;
 	}
 
-	private void conditionHandling(final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
-			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,
-			final Condition<S, C> place) {
-		final ConditionNode<S, C> conditionNode = place2ConditionNode.get(place);
-		for (final Event<S, C> transition : place.getSuccessorEvents()) {
-			EventNode<S, C> transNode = transition2EventNode.get(transition);
+	private void conditionHandling(final Map<Condition<LETTER, PLACE>, ConditionNode<LETTER, PLACE>> place2ConditionNode,
+			final Map<Event<LETTER, PLACE>, EventNode<LETTER, PLACE>> transition2EventNode, final Queue<Object> queue,
+			final Condition<LETTER, PLACE> place) {
+		final ConditionNode<LETTER, PLACE> conditionNode = place2ConditionNode.get(place);
+		for (final Event<LETTER, PLACE> transition : place.getSuccessorEvents()) {
+			EventNode<LETTER, PLACE> transNode = transition2EventNode.get(transition);
 			if (transNode == null) {
 				transNode = new EventNode<>(transition);
 				transition2EventNode.put(transition, transNode);
@@ -98,13 +98,13 @@ public class BranchingProcessToUltimateModel<S, C> {
 		}
 	}
 
-	private void eventHandling(final BranchingProcess<S, C> branchingProcess,
-			final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
-			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,
-			final Event<S, C> transition) {
-		final EventNode<S, C> eventNode = transition2EventNode.get(transition);
-		for (final Condition<S, C> place : transition.getSuccessorConditions()) {
-			ConditionNode<S, C> conditionNode = place2ConditionNode.get(place);
+	private void eventHandling(final BranchingProcess<LETTER, PLACE> branchingProcess,
+			final Map<Condition<LETTER, PLACE>, ConditionNode<LETTER, PLACE>> place2ConditionNode,
+			final Map<Event<LETTER, PLACE>, EventNode<LETTER, PLACE>> transition2EventNode, final Queue<Object> queue,
+			final Event<LETTER, PLACE> transition) {
+		final EventNode<LETTER, PLACE> eventNode = transition2EventNode.get(transition);
+		for (final Condition<LETTER, PLACE> place : transition.getSuccessorConditions()) {
+			ConditionNode<LETTER, PLACE> conditionNode = place2ConditionNode.get(place);
 			if (conditionNode == null) {
 				conditionNode = new ConditionNode<>(place, branchingProcess);
 				place2ConditionNode.put(place, conditionNode);

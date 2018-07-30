@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import petruchio.cov.Backward;
@@ -50,29 +51,29 @@ import petruchio.interfaces.petrinet.Transition;
  * Check if a BoundedPetriNet has an accepting run. The emptiness check uses Tim Strazny's Petruchio. A marking of a
  * BoundedPetriNet is accepting if the marking contains an accepting place. EmptinessPetruchio checks if any (singleton)
  * marking {p} such that p is an accepting place can be covered.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            Type of alphabet symbols
- * @param <C>
+ * @param <PLACE>
  *            Type of place labeling
  */
-public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
-	private final PetruchioWrapper<S, C> mPetruchio;
+public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+	private final PetruchioWrapper<LETTER, PLACE> mPetruchio;
 
-	private final BoundedPetriNet<S, C> mBoundedNet;
+	private final BoundedPetriNet<LETTER, PLACE> mBoundedNet;
 
-	private final NestedRun<S, C> mAcceptedRun;
+	private final NestedRun<LETTER, PLACE> mAcceptedRun;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param net
 	 *            Petri net
 	 */
-	public EmptinessPetruchio(final AutomataLibraryServices services, final BoundedPetriNet<S, C> net) {
+	public EmptinessPetruchio(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> net) {
 		super(services);
 		mBoundedNet = net;
 
@@ -92,7 +93,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	 * @return Some accepting run if the Petri net has an accepting run, null otherwise. Note: A run should be an
 	 *         interleaved sequence of markings and symbols. Here each marking will be null instead.
 	 */
-	private NestedRun<S, C> constructAcceptingRun() {
+	private NestedRun<LETTER, PLACE> constructAcceptingRun() {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Net has " + mBoundedNet.getPlaces().size() + " Places");
 			mLogger.debug("Net has " + mBoundedNet.getTransitions().size() + " Transitions");
@@ -116,7 +117,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
-		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> pAcceptingBounded : mBoundedNet
+		for (final PLACE pAcceptingBounded : mBoundedNet
 				.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
 			final Place pAcceptingPetruchio = mPetruchio.getpBounded2pPetruchio().get(pAcceptingBounded);
@@ -146,33 +147,33 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	/**
 	 * Translate sequence of Petruchio transitions to run of PetriNet.
 	 */
-	private NestedRun<S, C> tracePetruchio2run(final SimpleList<Transition> tracePetruchio) {
+	private NestedRun<LETTER, PLACE> tracePetruchio2run(final SimpleList<Transition> tracePetruchio) {
 
-		NestedRun<S, C> result = new NestedRun<>(null);
+		NestedRun<LETTER, PLACE> result = new NestedRun<>(null);
 		// Workaround: If initial marking can be covered, Petruchio delivers a list with one element that is null.
 		if (tracePetruchio.getLength() == 1 && tracePetruchio.iterator().next() == null) {
 			return result;
 		}
 		for (final Transition tPetruchio : tracePetruchio) {
-			final S symbol = mPetruchio.gettPetruchio2tBounded().get(tPetruchio).getSymbol();
-			final NestedRun<S, C> oneStepSubrun = new NestedRun<>(null, symbol, NestedWord.INTERNAL_POSITION, null);
+			final LETTER symbol = mPetruchio.gettPetruchio2tBounded().get(tPetruchio).getSymbol();
+			final NestedRun<LETTER, PLACE> oneStepSubrun = new NestedRun<>(null, symbol, NestedWord.INTERNAL_POSITION, null);
 			result = result.concatenate(oneStepSubrun);
 		}
 		return result;
 	}
 
 	@Override
-	protected IPetriNet<S, C> getOperand() {
+	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mBoundedNet;
 	}
 
 	@Override
-	public NestedRun<S, C> getResult() {
+	public NestedRun<LETTER, PLACE> getResult() {
 		return mAcceptedRun;
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + getOperationName());
@@ -180,11 +181,11 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 
 		final boolean correct;
 		if (mAcceptedRun == null) {
-			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
+			final NestedRun<LETTER, PLACE> automataRun = (new IsEmpty<>(mServices,
 					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mBoundedNet)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
-			correct = mBoundedNet.accepts(mAcceptedRun.getWord());
+			correct = new Accepts(mServices, mBoundedNet, mAcceptedRun.getWord()).getResult();
 		}
 
 		if (mLogger.isInfoEnabled()) {

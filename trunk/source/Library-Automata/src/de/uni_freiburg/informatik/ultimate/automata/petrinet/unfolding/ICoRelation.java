@@ -46,19 +46,19 @@ import java.util.Set;
  * Since the relation is only needed on Conditions, only related Methods exist.
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public interface ICoRelation<S, C> {
+public interface ICoRelation<LETTER, PLACE> {
 	/**
 	 * Updates the Co-relation regarding an event that just has been added to the branching process.
 	 * 
 	 * @param event
 	 *            the Event that has been added.
 	 */
-	void update(Event<S, C> event);
+	void update(Event<LETTER, PLACE> event);
 
 	/**
 	 * @param cond1
@@ -67,7 +67,7 @@ public interface ICoRelation<S, C> {
 	 *            Another condition.
 	 * @return {@code true} iff 2 Conditions are in co-relation.
 	 */
-	boolean isInCoRelation(Condition<S, C> cond1, Condition<S, C> cond2);
+	boolean isInCoRelation(Condition<LETTER, PLACE> cond1, Condition<LETTER, PLACE> cond2);
 
 	/**
 	 * @return The number of co-relation queries that have been issued.
@@ -81,7 +81,7 @@ public interface ICoRelation<S, C> {
 	 * @param initialConditions
 	 *            set of initial conditions
 	 */
-	void initialize(Set<Condition<S, C>> initialConditions);
+	void initialize(Set<Condition<LETTER, PLACE>> initialConditions);
 
 	/**
 	 * @param coSet
@@ -91,5 +91,5 @@ public interface ICoRelation<S, C> {
 	 * @return {@code true} iff, given the co-set <code>coSet</code>, the unification with condition <code>c</code> is
 	 *         still a co-set.
 	 */
-	boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> cond);
+	boolean isCoset(Collection<Condition<LETTER, PLACE>> coSet, Condition<LETTER, PLACE> cond);
 }

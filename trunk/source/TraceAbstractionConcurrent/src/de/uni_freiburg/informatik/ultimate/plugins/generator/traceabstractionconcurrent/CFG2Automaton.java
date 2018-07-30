@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -75,12 +75,12 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 	private final IIcfg<?> mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final IStateFactory<IPredicate> mContentFactory;
+	private final IEmptyStackStateFactory<IPredicate> mContentFactory;
 	protected List<INestedWordAutomaton<LETTER, IPredicate>> mAutomata;
 
 	private LETTER mSharedVarsInit;
 
-	public CFG2Automaton(final IIcfg<?> icfg, final IStateFactory<IPredicate> contentFactory,
+	public CFG2Automaton(final IIcfg<?> icfg, final IEmptyStackStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {

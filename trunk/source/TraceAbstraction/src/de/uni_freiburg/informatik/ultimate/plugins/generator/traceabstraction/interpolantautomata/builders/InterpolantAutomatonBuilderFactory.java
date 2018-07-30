@@ -169,7 +169,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 			final IAutomaton<LETTER, IPredicate> abstraction, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample) {
 		return mAbsIntRunner.createInterpolantAutomatonBuilder(predicateUnifier,
-				(INestedWordAutomaton<LETTER, IPredicate>) abstraction, counterexample);
+				(INestedWordAutomaton<LETTER, IPredicate>) abstraction, counterexample, mPredicateFactory);
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderCanonical(

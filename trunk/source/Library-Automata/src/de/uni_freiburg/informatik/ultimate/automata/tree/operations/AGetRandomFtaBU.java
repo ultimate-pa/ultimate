@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2017 Daniel Tischner <zabuza.dev@gmail.com>
  * Copyright (C) 2009-2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -54,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * </ul>
  * Roughly said the algorithm randomly selects source and destination nodes in
  * each round, connecting them with a random transition.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, String, IStateFactory<String>> {
@@ -72,7 +71,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * for example the total number would be <tt>50</tt> and the density
 	 * <tt>0.1</tt> then the result would be <tt>5</tt>. The method ensures that
 	 * <tt>0</tt> is only returned if the density was precisely <tt>0.0</tt>.
-	 * 
+	 *
 	 * @param density
 	 *            The density to apply
 	 * @param numberOfTotal
@@ -134,7 +133,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	/**
 	 * Constructor of a deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
@@ -187,7 +186,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
@@ -202,7 +201,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * state of this object.<br>
 	 * <br>
 	 * Therefore the first <tt>k</tt> states are selected as accepting.
-	 * 
+	 *
 	 * @param result
 	 *            The automaton to add the states to
 	 * @param numberToStateRepresentation
@@ -242,7 +241,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * <br>
 	 * Therefore transitions are added arbitrary, source states and destination get
 	 * selected randomly.
-	 * 
+	 *
 	 * @param result
 	 *            The automaton to add the states to
 	 * @param numberToStateRepresentation
@@ -361,7 +360,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * Checks whether the input of the operation is valid. Throws an exception if
 	 * invalid. The method should be called right after initialization and before
 	 * executing the generation.
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             If an input is invalid
 	 */
@@ -410,7 +409,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 	/**
 	 * Generates the automaton with the given seed using the current internal state.
-	 * 
+	 *
 	 * @param seed
 	 *            The seed to use for generation
 	 * @return The generated automaton representing the current internal state
@@ -425,7 +424,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		}
 
 		// Create the initial empty tree automaton
-		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>(new StringFactory());
+		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>();
 
 		if (this.mNumberOfStates == 0) {
 			// Empty automaton
@@ -455,7 +454,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	/**
 	 * Starts the generation of the random tree automaton. After the method has
 	 * terminated the result can be accessed by using {@link #getResult()}.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.

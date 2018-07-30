@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -51,10 +50,10 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 			final boolean interprocedural) {
 		super(theory.getManagedScript(), predicateFactory, taPrefs);
 	}
-	
+
 	@Override
 	public IPredicate concurrentProduct(final IPredicate c1, final IPredicate c2) {
-		
+
 		final List<IPredicate> programPoints = new ArrayList<>();
 		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
@@ -70,19 +69,19 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 		programPoints.add(c2);
 		return result;
 	}
-	
+
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
 		final LinkedList<IPredicate> programPoints = new LinkedList<>();
-		for (final Place<IPredicate> place : marking) {
-			programPoints.add(place.getContent());
+		for (final IPredicate place : marking) {
+			programPoints.add(place);
 		}
 		return mPredicateFactory.getNewProdState(programPoints);
 	}
-	
+
 	@Override
 	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
-		final IcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
+		final IcfgLocation pp = ((ISLPredicate) c.getPlace()).getProgramPoint();
 		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
 }

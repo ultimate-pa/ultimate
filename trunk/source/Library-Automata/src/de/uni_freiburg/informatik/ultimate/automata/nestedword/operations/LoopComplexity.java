@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Thomas Lang
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * loop complexity of the underlying graph representation. This number is also called cycle rank.
  * <p>
  * <a href="https://en.wikipedia.org/wiki/Cycle_rank">See Wikipedia</a>.
- * 
+ *
  * @author Thomas Lang
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -72,7 +73,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -80,7 +81,9 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public LoopComplexity(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
+	public LoopComplexity(final AutomataLibraryServices services,
+			final IEmptyStackStateFactory<STATE> emptyStackFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 
@@ -90,7 +93,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mOperand = (new RemoveUnreachable<>(mServices, operand)).getResult();
 		}
 
-		mGraph = constructGraph();
+		mGraph = constructGraph(emptyStackFactory);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -105,17 +108,18 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	/**
 	 * Construct an automaton that represents the graph structure of the operand.
-	 * 
+	 * @param emptyStackFactory
+	 *
 	 * @return The Result is a copy of the operand where each edge has the same label. As label we us some letter form
 	 *         the alphabet.
 	 */
-	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph()
+	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(final IEmptyStackStateFactory<STATE> emptyStackFactory)
 			throws AutomataOperationCanceledException {
 		final LETTER letter = mOperand.getVpAlphabet().getInternalAlphabet().iterator().next();
 		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
 		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<>(mServices,
 				new VpAlphabet<>(singletonAlphabet, singletonAlphabet, singletonAlphabet),
-				mOperand.getStateFactory());
+				emptyStackFactory);
 
 		for (final STATE state : mOperand.getStates()) {
 			graph.addState(true, true, state);

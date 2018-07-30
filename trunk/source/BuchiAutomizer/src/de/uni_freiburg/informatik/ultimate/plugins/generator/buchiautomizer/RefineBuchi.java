@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BenchmarkRecord;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -685,7 +686,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), abstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), (IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;
 		if (emptyStem) {
 			result.addState(true, true, honda);

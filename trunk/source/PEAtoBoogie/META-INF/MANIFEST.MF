@@ -14,5 +14,6 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
- de.uni_freiburg.informatik.ultimate.lib.smtlib
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.smtinterpol
 Export-Package: de.uni_freiburg.informatik.ultimate.pea2boogie

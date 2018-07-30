@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -55,7 +54,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
-		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>, 
+		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
         IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>, IConcurrentProductStateFactory<String> {
 
 	public static final String INFINITY = "∞";
@@ -76,7 +75,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	private static final int RANK_THREE = 3;
 	private static final int MINIMUM_LIST_SIZE = 2;
 	private static final int MINIMUM_PAIR_LIST_SIZE = 7;
-	
+
 	private String product(final String state1, final String state2) {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
@@ -99,9 +98,9 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	public String intersection(final String state1, final String state2) {
 		return product(state1, state2);
 	}
-	
+
 	@Override
-	public String concurrentProduct(String state1, String state2) {
+	public String concurrentProduct(final String state1, final String state2) {
 		return product(state1, state2);
 	}
 
@@ -167,13 +166,13 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		final StringBuilder builder = new StringBuilder(marking.size() * MINIMUM_LIST_SIZE);
 		builder.append(OPEN_BRACE);
 		boolean firstElement = true;
-		for (final Place<String> place : marking) {
+		for (final String place : marking) {
 			if (firstElement) {
 				firstElement = false;
 			} else {
 				builder.append(COMMA);
 			}
-			builder.append(place.getContent());
+			builder.append(place);
 		}
 		builder.append(CLOSE_BRACE);
 		return builder.toString();

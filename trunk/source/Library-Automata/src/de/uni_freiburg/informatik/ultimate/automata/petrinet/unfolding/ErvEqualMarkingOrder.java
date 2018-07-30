@@ -6,16 +6,16 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * 
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class ErvEqualMarkingOrder<LETTER, C> implements IOrder<LETTER, C> {
+public class ErvEqualMarkingOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
 	
-	private final IOrder<LETTER, C> mMcMillanOrder = new McMillanOrder<>();
-	private final IOrder<LETTER, C> mErvOrder = new EsparzaRoemerVoglerOrder<>();
+	private final IOrder<LETTER, PLACE> mMcMillanOrder = new McMillanOrder<>();
+	private final IOrder<LETTER, PLACE> mErvOrder = new EsparzaRoemerVoglerOrder<>();
 	
 	@Override
-	public int compare(final Event<LETTER, C> o1, final Event<LETTER, C> o2) {
+	public int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
 		int result = mMcMillanOrder.compare(o1, o2);
 		if (result != 0) {
 			return result;
@@ -24,14 +24,14 @@ public class ErvEqualMarkingOrder<LETTER, C> implements IOrder<LETTER, C> {
 		if (!o1.getMark().equals(o2.getMark())) {
 			return 0;
 		}
-		final Configuration<LETTER, C> c1 = o1.getLocalConfiguration();
-		final Configuration<LETTER, C> c2 = o2.getLocalConfiguration();
+		final Configuration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
+		final Configuration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
 		result = compare(c1, c2);
 		return result;
 	}
 
 	@Override
-	public int compare(final Configuration<LETTER, C> c1, final Configuration<LETTER, C> c2) {
+	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
 		return mErvOrder.compare(c1, c2);
 	}
 }

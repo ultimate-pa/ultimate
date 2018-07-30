@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Intersect 2 tree automatons.
- * 
+ *
  * @author mostafa (mostafa.amin93@gmail.com)
  *
  * @param <LETTER>
@@ -70,11 +70,11 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 	private final Map<Pair<STATE, STATE>, STATE> mReducedStates;
 
 	/**
-	 * 
+	 *
 	 * NOTE: because of a convention in TestFileInterpreter, if an argument for
 	 * the operation is a StateFactory, it must be the first argument same for
 	 * Services, both: first services then StateFactory
-	 * 
+	 *
 	 * @param services
 	 * @param factory
 	 * @param t1
@@ -131,7 +131,7 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 		final Set<TreeAutomatonRule<LETTER, Pair<STATE, STATE>>> newRules = new HashSet<>();
 		alphabet.addAll(mTreeA.getAlphabet());
 		alphabet.addAll(mTreeB.getAlphabet());
-		
+
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 
@@ -189,7 +189,7 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 			}
 		}
 
-		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>(mStateFactory);
+		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>();
 
 		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : newRules) {
 			final List<STATE> src = new ArrayList<>();

@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import java.util.List;
-import java.util.Set;
 
 public class DummySemanticReducerFactory<STATE, LETTER> implements ISemanticReducerFactory<STATE, LETTER> {
 

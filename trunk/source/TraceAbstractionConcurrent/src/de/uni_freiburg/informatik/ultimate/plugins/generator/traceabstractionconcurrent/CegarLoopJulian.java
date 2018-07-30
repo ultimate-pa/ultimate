@@ -199,7 +199,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
 					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
 			final DeterminizeDD<LETTER, IPredicate> dabps =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
+					new DeterminizeDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
 		case PREDICATE_ABSTRACTION:
