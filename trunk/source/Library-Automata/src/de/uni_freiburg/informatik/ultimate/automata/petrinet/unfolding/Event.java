@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 
 /**
  * Event of a {@link BranchingProcess}.
@@ -76,11 +75,11 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 *            homomorphism transition
 	 */
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final ITransition<LETTER, PLACE> transition,
-			final BoundedPetriNet<LETTER, PLACE> net) {
+			BranchingProcess<LETTER, PLACE> bp) {
 		assert conditionToPlaceEqual(predecessors,
-				net.getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
+				bp.getNet().getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
-						+ "\n  " + "transitions predecessors:" + net.getPredecessors(transition);
+						+ "\n  " + "transitions predecessors:" + bp.getNet().getPredecessors(transition);
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
@@ -102,8 +101,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mLocalConfiguration.add(this);
 
 		mSuccessors = new HashSet<>();
-		for (final PLACE p : net.getSuccessors(transition)) {
-			mSuccessors.add(new Condition<>(this, p));
+		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
+			mSuccessors.add(bp.constructCondition(this, p));
 		}
 		for (final Event<LETTER, PLACE> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
@@ -120,16 +119,16 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * @param net
 	 *            Petri net
 	 */
-	public Event(final BoundedPetriNet<LETTER, PLACE> net) {
+	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
-		mMark = new Marking(net.getInitialPlaces());
+		mMark = new Marking(bp.getNet().getInitialPlaces());
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
 		mSuccessors = new HashSet<>();
 		for (final PLACE p : mMark) {
-			final Condition<LETTER, PLACE> c = new Condition<>(this, p);
+			final Condition<LETTER, PLACE> c = bp.constructCondition(this, p);
 			mSuccessors.add(c);
 			conditionMarkSet.add(c);
 		}

@@ -44,7 +44,6 @@ import java.util.HashSet;
 public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
-	private static int sSerialNumberCounter;
 
 	private final Event<LETTER, PLACE> mPredecessor;
 	private final Collection<Event<LETTER, PLACE>> mSuccessors;
@@ -53,16 +52,10 @@ public class Condition<LETTER, PLACE> implements Serializable {
 	private final int mSerialNumber;
 
 	/**
-	 * Constructor.
-	 * 
-	 * @param predecessor
-	 *            predecessor event
-	 * @param place
-	 *            place
+	 * Construct conditions only via {@link BranchingProcess}
 	 */
-	public Condition(final Event<LETTER, PLACE> predecessor, final PLACE place) {
-		mSerialNumber = sSerialNumberCounter;
-		sSerialNumberCounter++;
+	Condition(final Event<LETTER, PLACE> predecessor, final PLACE place, int serialNumber) {
+		mSerialNumber = serialNumber;
 
 		mPredecessor = predecessor;
 		mSuccessors = new HashSet<>();

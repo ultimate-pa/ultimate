@@ -76,6 +76,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
 
 	private final IOrder<LETTER, PLACE> mOrder;
+	
+	private int mConditionSerialnumberCounter = 0;
 
 	public BranchingProcess(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> net,
 			final IOrder<LETTER, PLACE> order) {
@@ -92,7 +94,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mCoRelation = new ConditionEventsCoRelation<>(this);
 
 		// add a dummy event as root. its successors are the initial conditions.
-		mDummyRoot = new Event<>(net);
+		mDummyRoot = new Event<>(this);
 		addEvent(mDummyRoot);
 	}
 
@@ -102,6 +104,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	public Event<LETTER, PLACE> getDummyRoot() {
 		return mDummyRoot;
+	}
+	
+	public Condition<LETTER, PLACE> constructCondition(Event<LETTER, PLACE> predecessor, PLACE place) {
+		return new Condition<LETTER, PLACE>(predecessor, place, mConditionSerialnumberCounter++);
 	}
 
 	/**

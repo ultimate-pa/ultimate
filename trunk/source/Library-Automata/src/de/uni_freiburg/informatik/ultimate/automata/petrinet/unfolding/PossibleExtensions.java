@@ -83,7 +83,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
 		if (cand.getPlaces().isEmpty()) {
 			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-				mPe.add(new Event<>(cand.getChosen(), trans, mBranchingProcess.getNet()));
+				mPe.add(new Event<>(cand.getChosen(), trans, mBranchingProcess));
 			}
 			return;
 		}
