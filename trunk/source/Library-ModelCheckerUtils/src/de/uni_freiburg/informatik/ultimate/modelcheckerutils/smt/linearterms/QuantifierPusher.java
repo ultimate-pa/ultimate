@@ -276,6 +276,7 @@ public class QuantifierPusher extends TermTransformer {
 		switch (mPqeTechniques) {
 		case ALL_LOCAL:
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			// elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
 			elimtechniques
 					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
@@ -283,6 +284,7 @@ public class QuantifierPusher extends TermTransformer {
 			break;
 		case NO_UPD:
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			// elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
 			elimtechniques
 					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
