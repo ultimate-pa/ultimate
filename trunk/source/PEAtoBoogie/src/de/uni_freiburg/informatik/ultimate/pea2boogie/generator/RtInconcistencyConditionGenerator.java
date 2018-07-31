@@ -92,7 +92,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  */
 public class RtInconcistencyConditionGenerator {
 
-	private static final boolean SIMPLIFY = false;
+	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
+	private static final boolean TRY_SOLVER_BEFORE_QELIM = true;
 	private static final boolean PRINT_STATS = false;
 	private static final String SOLVER_LOGFILE = null;
 
@@ -116,6 +117,8 @@ public class RtInconcistencyConditionGenerator {
 	private int mBeforeSize;
 	private int mTrivialConsistent;
 	private int mGeneratedChecks;
+	private int mNoQelim;
+	private int mQelim;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
@@ -139,6 +142,8 @@ public class RtInconcistencyConditionGenerator {
 		mAfterSize = 0;
 		mTrivialConsistent = 0;
 		mGeneratedChecks = 0;
+		mNoQelim = 0;
+		mQelim = 0;
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -195,15 +200,12 @@ public class RtInconcistencyConditionGenerator {
 			} else {
 				mPlain++;
 			}
-			final Term checkRhsAndInvariantSimplified = simplifyAndLog(checkRhsAndInvariant);
-			if (checkRhsAndInvariantSimplified == mTrue) {
+			if (checkRhsAndInvariant == mTrue) {
 				continue;
 			}
 
 			final Term rtInconsistencyCheckLhs = SmtUtils.and(mScript, impliesLHS);
-			final Term rtInconsistencyCheck =
-					SmtUtils.implies(mScript, rtInconsistencyCheckLhs, checkRhsAndInvariantSimplified);
-
+			final Term rtInconsistencyCheck = SmtUtils.implies(mScript, rtInconsistencyCheckLhs, checkRhsAndInvariant);
 			rtInconsistencyChecks.add(rtInconsistencyCheck);
 		}
 		if (rtInconsistencyChecks.isEmpty()) {
@@ -223,9 +225,10 @@ public class RtInconcistencyConditionGenerator {
 		if (!PRINT_STATS) {
 			return;
 		}
-		mLogger.info(String.format("Of %s formulas, %s were quantified, %s were plain", mQuantified + mPlain,
-				mQuantified, mPlain));
-		if (SIMPLIFY) {
+		mLogger.info(String.format(
+				"Of %s formulas, %s were quantified, %s were plain. Needed %s quantifier elimination runs, %s solver decisions.",
+				mQuantified + mPlain, mQuantified, mPlain, mQelim, mNoQelim));
+		if (SIMPLIFY_BEFORE_QELIM) {
 			mLogger.info(String.format("Terms of DAG size %s were simplified to DAG size %s (%s percent reduction)",
 					mBeforeSize, mAfterSize, 100.0 - ((mAfterSize * 1.0) / (mBeforeSize * 1.0)) * 100.0));
 		}
@@ -245,7 +248,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term simplifyAndLog(final Term term) {
-		if (!SIMPLIFY) {
+		if (!SIMPLIFY_BEFORE_QELIM) {
 			return term;
 		}
 		mBeforeSize = mBeforeSize + new DAGSize().size(term);
@@ -450,17 +453,28 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term existentiallyProjectEventsAndPrimedVars(final Term term) {
-		final Set<TermVariable> varsToRemove = getPrimedAndEventVars(term.getFreeVars());
+		final Term simplifiedTerm = simplifyAndLog(term);
+
+		final Set<TermVariable> varsToRemove = getPrimedAndEventVars(simplifiedTerm.getFreeVars());
 		if (varsToRemove.isEmpty()) {
 			return term;
 		}
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Removing " + varsToRemove.size() + " variables");
 		}
-		// final Term quantifiedFormula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
-
-		final Term quantifierFreeFormula = PartialQuantifierElimination.quantifierCustom(mServices, mLogger,
-				mManagedScript, PqeTechniques.NO_UPD, QuantifiedFormula.EXISTS, varsToRemove, term, new Term[0]);
+		if (TRY_SOLVER_BEFORE_QELIM) {
+			final Term quantifiedFormula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
+			final Term isTrueTerm = mScript.term("distinct", mTrue, quantifiedFormula);
+			final LBool result = SmtUtils.checkSatTerm(mScript, isTrueTerm);
+			if (result == LBool.UNSAT) {
+				mNoQelim++;
+				return mTrue;
+			}
+		}
+		mQelim++;
+		final Term quantifierFreeFormula =
+				PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mManagedScript,
+						PqeTechniques.ALL_LOCAL, QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm, new Term[0]);
 
 		// final Term quantifierFreeFormula =
 		// PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
