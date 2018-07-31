@@ -70,12 +70,14 @@ public class PredicateTrie<T extends IPredicate> {
     }
 
     public T unifyPredicate(T predicate) {
+    	// empty tree
         if (this.mRoot == null) {
             this.mRoot = new Leaf<T>(predicate);
             return predicate;
         }
         INode current = this.mRoot;
         InnerNode parent = null;
+        // find the predicate with the same fulfilling models 
         while (current instanceof InnerNode) {
             parent = (InnerNode)current;
             boolean edge = this.fulfillsPredicate(predicate, parent.mWitness);
@@ -83,9 +85,11 @@ public class PredicateTrie<T extends IPredicate> {
         }
         T currentPredicate = (T) ((Leaf)current).mPredicate;
         Map<Term, Term> newWitness = compare(predicate, currentPredicate);
+        // an equal predicate is already in the tree
         if (newWitness.isEmpty()) {
             return currentPredicate;
         }
+        // the given predicate is new and inserted to the tree
         InnerNode newNode = this.fulfillsPredicate(predicate, newWitness) ? new InnerNode(new Leaf<T>(predicate), current, newWitness) : new InnerNode(current, new Leaf<T>(predicate), newWitness);
         if (parent != null) {
             parent.swapChild(current, newNode);
@@ -107,12 +111,14 @@ public class PredicateTrie<T extends IPredicate> {
         INode current = this.mRoot;
         InnerNode grandParent = null;
         InnerNode parent = null;
+        // find the predicate
         while (current instanceof InnerNode) {
             grandParent = parent;
             parent = (InnerNode)current;
             edge = this.fulfillsPredicate(predicate, parent.mWitness);
             current = parent.getChild(edge);
         }
+        // remove the predicate
         if (current == predicate) {
             edge = this.fulfillsPredicate(predicate, parent.mWitness);
             if (grandParent == null) {

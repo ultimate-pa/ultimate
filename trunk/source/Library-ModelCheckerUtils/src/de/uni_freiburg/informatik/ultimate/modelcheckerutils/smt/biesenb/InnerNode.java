@@ -52,6 +52,11 @@ implements INode {
         return this.mFalseChild;
     }
 
+    /**
+     * swap the predicate "oldChild" with the new predicate
+     * @param oldChild
+     * @param newChild
+     */
     public void swapChild(INode oldChild, INode newChild) {
         if (oldChild.equals(this.mTrueChild)) {
             this.mTrueChild = newChild;

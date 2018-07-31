@@ -73,6 +73,7 @@ public class ImplicationGraph<T extends IPredicate> {
         Pair<ImplicationGraph<T>, Map<Vertex<T>, Vertex<T>>> copy = this.createFullCopy();
         Set<Vertex<T>> marked = new HashSet<>();
         Vertex<T> maxVertex = null;
+        // find the predicates that imply the given predicate
         while (!marked.containsAll(copy.getFirst().mVertices)) {
             max = 0;
             maxVertex = null;
@@ -82,6 +83,7 @@ public class ImplicationGraph<T extends IPredicate> {
                 max = count;
                 maxVertex = vertex;
             }
+            // TODO can't be null
             if (implication(maxVertex.mPredicate, predicate)) {
                 marked.add(maxVertex);
                 copy.getFirst().removeAllVerticesImplying(maxVertex);
@@ -98,6 +100,7 @@ public class ImplicationGraph<T extends IPredicate> {
         implying = false;
         Pair<ImplicationGraph<T>, Map<Vertex<T>, Vertex<T>>> subCopy = this.createSubCopy(parents);
         marked.clear();
+        // find the predicates that are implied by the given predicate
         while (!marked.containsAll(subCopy.getFirst().mVertices)) {
             max = 0;
             maxVertex = null;
@@ -107,6 +110,7 @@ public class ImplicationGraph<T extends IPredicate> {
                 max = count;
                 maxVertex = vertex;
             }
+            // TODO can't be null
             if (implication(predicate, maxVertex.mPredicate)) {
                 marked.add(maxVertex);
                 subCopy.getFirst().removeAllImpliedVertices(maxVertex);
