@@ -66,75 +66,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 
-	private static final String TOOLCHAIN = "examples/toolchains/AutomataScriptInterpreter.xml";
-	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
-	private static final int TIMEOUT_MS = 60 * 60 * 1_000;
+	private static final int TIMEOUT_MS = 60 * 1_000;
+	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(
+			"examples/toolchains/AutomataScriptInterpreter.xml"));
 	private static final String[] DIRECTORIES = {
-		"examples/Automata/benchmarks/pn/difference-realworld"
-	};
-	private static final String[] FILE_ENDINGS = {".ats"};
-	private static final String[] SETTINGS = {"AutomataScript/default.epf"};
-
-	private static final StatisticsType[] interestingColumnsEnum = {
-		StatisticsType.RUNTIME_TOTAL_MS,
-		StatisticsType.PETRI_ALPHABET,
-		StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW,
-		StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES,
-		StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
-		StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_LETTERS_WITH_MORE_CHANGERS_THAN_LOOPERS,
-		StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_LOOPER_ONLY_LETTERS,
-		StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES,
-		StatisticsType.PETRI_FLOW,
-		StatisticsType.PETRI_PLACES,
-		StatisticsType.PETRI_TRANSITIONS,
-	};
-
-	private static final String[] interestingColumnsOther = {
-		"File",
-		// "Settings",
-	};
-	
-	private static final Set<String> INTERESTING_COLUMNS_AS_SET = Stream.concat(
-		Arrays.stream(interestingColumnsOther),
-		Arrays.stream(interestingColumnsEnum).map(StatisticsType::toString)
-	).collect(Collectors.toSet());
-
-	private static final Object[] INTERESTING_OPERATIONS = {"difference"};
-
-	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET = new HashSet<>(
-			Arrays.asList(INTERESTING_OPERATIONS));
+			"examples/Automata/benchmarks/pn/difference-realworld"
+		};
+	private static final String[] FILE_ENDINGS = { ".ats" };
+	private static final String[] SETTINGS = { "AutomataScript/default.epf" };
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] { new ColumnDefinition(
-				CegarLoopStatisticsDefinitions.OverallTime.toString(),
-				"Avg. runtime",
-				ConversionContext.Divide(1_000_000_000, 2, " s"),
-				Aggregate.Sum,
-				Aggregate.Average), };
-
-		final Predicate<String> columnPredicate = INTERESTING_COLUMNS_AS_SET::contains;
-		final Map<String, Set<Object>> column2allowedValues = Collections.singletonMap(
-				StatisticsType.OPERATION_NAME.toString(), INTERESTING_OPERATIONS_AS_SET);
-		final Predicate<Pair<List<Object>, List<String>>> predicate = new CsvProviderRowFilter
-				.AllowedValuesRowFilter<>(column2allowedValues);
-
-		final List<ICsvProviderTransformer<Object>> transformers = new ArrayList<>();
-		transformers.add(new CsvProviderColumnFilter<>(columnPredicate));
-		transformers.add(new CsvProviderRowFilter<>(predicate));
-
 		return new ITestSummary[] {
 				new AutomataScriptTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class, transformers),
-				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
+				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class),
 		};
 	}
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[0];
+		return new IIncrementalLog[] {};
 	}
 
 	@Override
@@ -155,7 +106,7 @@ public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
-		testCases.sort(null);
+		Collections.sort(testCases);
 		return testCases;
 	}
 
