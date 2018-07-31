@@ -119,16 +119,14 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 * @throws AutomataLibraryException
 	 *             if inclusion check in assertion fails
 	 */
-	public BoundedPetriNet(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, PLACE> nwa)
-			throws AutomataLibraryException {
+	public BoundedPetriNet(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, PLACE> nwa) {
 		this(services, nwa.getVpAlphabet().getInternalAlphabet(), true);
 		final Map<PLACE, PLACE> state2place = new HashMap<>();
-		for (final PLACE content : nwa.getStates()) {
-			// PLACE content = state;
-			final boolean isInitial = nwa.isInitial(content);
-			final boolean isAccepting = nwa.isFinal(content);
-			final PLACE place = addPlace(content, isInitial, isAccepting);
-			state2place.put(content, place);
+		for (final PLACE nwaState : nwa.getStates()) {
+			final boolean isInitial = nwa.isInitial(nwaState);
+			final boolean isAccepting = nwa.isFinal(nwaState);
+			final PLACE place = addPlace(nwaState, isInitial, isAccepting);
+			state2place.put(nwaState, place);
 		}
 		Set<PLACE> succPlace;
 		Set<PLACE> predPlace;
@@ -193,8 +191,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	/**
 	 * Adds a place.
 	 *
-	 * @param content
-	 *            content
+	 * @param place
+	 *            place to be added
 	 * @param isInitial
 	 *            {@code true} iff the place is initial
 	 * @param isAccepting
@@ -364,11 +362,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	/** @return Number of edges in this net. */
 	public int flowSize() {
-		int flowSize = 0;
-		for (ITransition<LETTER, PLACE> trans : mTransitions) {
-			flowSize += getPredecessors(trans).size() + getSuccessors(trans).size();
-		}
-		return flowSize;
+		return mPredecessors.size() + mSuccessors.size();
 	}
 
 }
