@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -336,7 +337,6 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				}
 			}
 			events.add(event);
-
 			if (event.isCutoffEvent()) {
 				mCutOffEvents++;
 			} else {
@@ -363,6 +363,18 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public int getNonCutOffEvents() {
 			return mNonCutOffEvents;
 		}
-
+		
+		/**
+		 * @return Number of transitions that can never be fired in operand Petri net.
+		 */
+		public long deadTransitionsInOperand() {
+			// This statistic could be computed more efficiently when using a Set<ITransition> in
+			// this class' add(Event) method. But doing so would slow down computation
+			// even in cases in which this statistic is not needed.
+			final int transitionsInNet = mOperand.getTransitions().size();
+			final long eventLabelsInFinPre = mUnfolding.getEvents().parallelStream()
+					.map(Event::getTransition).filter(Objects::nonNull).distinct().count();
+			return transitionsInNet - eventLabelsInFinPre;
+		}
 	}
 }

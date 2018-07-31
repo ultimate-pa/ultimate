@@ -1,0 +1,62 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:00)
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:01)
+
+
+PetriNet net = (
+	alphabet = {"#0#g := -2;" "#1#assume true;" "#4#g := 0;" "#8#assume true;" "#9#g := g + 1;" "#11#assume !(g != -1);" "#12#assume g != -1;" "#13#assume true;" "g := 0;assume true;" },
+	places = {"5#Thread2FINALtrue" "6#Thread2ENTRYtrue" "7#Thread2EXITtrue" "8#~initENTRYtrue" "10#L25-1true" "11#Thread1ENTRYtrue" "12#L26true" "13#Thread1FINALtrue" "14#Thread1EXITtrue" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "16#~initENTRYtrue" "17#true" "19#(<= 0 g)" "Black: 17#true" "Black: 19#(<= 0 g)" },
+	transitions = {
+		({"10#L25-1true" } "#12#assume g != -1;" {"13#Thread1FINALtrue" })
+		({"13#Thread1FINALtrue" } "#13#assume true;" {"14#Thread1EXITtrue" })
+		({"17#true" "Black: 19#(<= 0 g)" "11#Thread1ENTRYtrue" } "#4#g := 0;" {"19#(<= 0 g)" "Black: 17#true" "10#L25-1true" })
+		({"Black: 19#(<= 0 g)" "10#L25-1true" } "#11#assume !(g != -1);" {"Black: 19#(<= 0 g)" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"Black: 17#true" "11#Thread1ENTRYtrue" } "#4#g := 0;" {"Black: 17#true" "10#L25-1true" })
+		({"5#Thread2FINALtrue" } "#1#assume true;" {"7#Thread2EXITtrue" })
+		({"6#Thread2ENTRYtrue" "Black: 19#(<= 0 g)" } "#0#g := -2;" {"5#Thread2FINALtrue" "Black: 19#(<= 0 g)" })
+		({"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" } "#0#g := -2;" {"17#true" "5#Thread2FINALtrue" "Black: 19#(<= 0 g)" })
+		({"16#~initENTRYtrue" "17#true" "Black: 19#(<= 0 g)" "8#~initENTRYtrue" } "g := 0;assume true;" {"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" "11#Thread1ENTRYtrue" })
+		({"16#~initENTRYtrue" "Black: 17#true" "8#~initENTRYtrue" } "g := 0;assume true;" {"Black: 17#true" "6#Thread2ENTRYtrue" "11#Thread1ENTRYtrue" })
+		({"12#L26true" } "#9#g := g + 1;" {"10#L25-1true" })
+		({"10#L25-1true" } "#8#assume true;" {"12#L26true" })
+	},
+	initialMarking = {"16#~initENTRYtrue" "17#true" "Black: 19#(<= 0 g)" "8#~initENTRYtrue" },
+	acceptingPlaces = {"15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"#0#g := -2;" "#1#assume true;" "#4#g := 0;" "#8#assume true;" "#9#g := g + 1;" "#11#assume !(g != -1);" "#12#assume g != -1;" "#13#assume true;" "g := 0;assume true;" },
+	states = {"23#true" "24#false" "25#(<= (+ g 2) 0)" },
+	initialStates = {"23#true" },
+	finalStates = {"24#false" },
+	transitions = {
+		("23#true" "#0#g := -2;" "25#(<= (+ g 2) 0)")
+		("23#true" "#1#assume true;" "23#true")
+		("23#true" "#4#g := 0;" "23#true")
+		("23#true" "#8#assume true;" "23#true")
+		("23#true" "#9#g := g + 1;" "23#true")
+		("23#true" "#11#assume !(g != -1);" "23#true")
+		("23#true" "#12#assume g != -1;" "23#true")
+		("23#true" "#13#assume true;" "23#true")
+		("23#true" "g := 0;assume true;" "23#true")
+		("24#false" "#0#g := -2;" "24#false")
+		("24#false" "#1#assume true;" "24#false")
+		("24#false" "#4#g := 0;" "24#false")
+		("24#false" "#8#assume true;" "24#false")
+		("24#false" "#9#g := g + 1;" "24#false")
+		("24#false" "#11#assume !(g != -1);" "24#false")
+		("24#false" "#12#assume g != -1;" "24#false")
+		("24#false" "#13#assume true;" "24#false")
+		("24#false" "g := 0;assume true;" "24#false")
+		("25#(<= (+ g 2) 0)" "#0#g := -2;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#1#assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#4#g := 0;" "23#true")
+		("25#(<= (+ g 2) 0)" "#8#assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#9#g := g + 1;" "23#true")
+		("25#(<= (+ g 2) 0)" "#11#assume !(g != -1);" "24#false")
+		("25#(<= (+ g 2) 0)" "#12#assume g != -1;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#13#assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "g := 0;assume true;" "23#true")
+	}
+);

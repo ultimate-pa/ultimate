@@ -100,10 +100,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES, mUnfoldingStatistics.getCoRelationQueries());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_DEAD_TRANSITIONS, mUnfoldingStatistics.deadTransitionsInOperand());
 
 		return statistics;
 	}
-
-
 
 }

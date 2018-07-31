@@ -36,8 +36,6 @@ for minuend in *_Iteration*_AbstractionAfterDifference.ats; do
 		// Generated from
 		// $minuend ($(dumpDate "$minuend"))
 		// $subtrahend ($(dumpDate "$subtrahend"))
-		
-		difference(net, nwa);
 	EOF
 done
 

@@ -109,7 +109,15 @@ public final class Difference
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
 		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC);
 	}
-	
+
+	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
+			final AutomataLibraryServices services, final SF factory,
+			final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
+			final String loopSyncMethod) {
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod));
+	}
+
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,

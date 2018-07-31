@@ -28,52 +28,41 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.automatascript;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 
-	private static final int TIMEOUT_MS = 60 * 1_000;
+	private static final int TIMEOUT_MS = 5 * 60 * 1_000;
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(
 			"examples/toolchains/AutomataScriptInterpreter.xml"));
 	private static final String[] DIRECTORIES = {
-			"examples/Automata/benchmarks/pn/difference-realworld"
+			"examples/Automata/benchmarks/pn/difference-small"
 		};
 	private static final String[] FILE_ENDINGS = { ".ats" };
-	private static final String[] SETTINGS = { "AutomataScript/default.epf" };
+	private static final String[] SETTINGS = {
+			"AutomataScript/differencePetriNwa/differenceHeuristic.epf",
+			"AutomataScript/differencePetriNwa/differenceInverted.epf",
+			"AutomataScript/differencePetriNwa/differencePairwise.epf",
+			"AutomataScript/differencePetriNwa/finPreDifferenceHeuristic.epf",
+			"AutomataScript/differencePetriNwa/finPreDifferenceInverted.epf",
+			"AutomataScript/differencePetriNwa/finPreDifferencePairwise.epf",
+		};
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
