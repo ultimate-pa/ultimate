@@ -113,25 +113,32 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				if (left instanceof IdentifierExpression && right instanceof IdentifierExpression) {
 					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
-					segmentationMap.move(rightVar, leftVar);
-					final ArrayDomainState<STATE> state2 = state.updateState(segmentationMap).removeUnusedAuxVars();
-					return state.intersect(state2);
+					final Segmentation leftSegmentation = segmentationMap.getSegmentation(leftVar);
+					final Segmentation rightSegmentation = segmentationMap.getSegmentation(rightVar);
+					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
+							state.intersectSegmentations(leftSegmentation, rightSegmentation);
+					segmentationMap.union(leftVar, rightVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(segmentationMap);
 				}
 				if (left instanceof IdentifierExpression) {
 					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
+					final Segmentation leftSegmentation = segmentationMap.getSegmentation(leftVar);
 					final Pair<ArrayDomainState<STATE>, Segmentation> rightPair = state.getSegmentation(right);
-					segmentationMap.put(leftVar, rightPair.getSecond());
-					final ArrayDomainState<STATE> state2 =
-							rightPair.getFirst().updateState(segmentationMap).removeUnusedAuxVars();
-					return state.intersect(state2);
+					final Segmentation rightSegmentation = rightPair.getSecond();
+					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
+							rightPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation);
+					segmentationMap.put(leftVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(segmentationMap);
 				}
 				if (right instanceof IdentifierExpression) {
+					final Pair<ArrayDomainState<STATE>, Segmentation> leftPair = state.getSegmentation(left);
+					final Segmentation leftSegmentation = leftPair.getSecond();
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
-					final Pair<ArrayDomainState<STATE>, Segmentation> leftPair = state.getSegmentation(right);
-					segmentationMap.put(rightVar, leftPair.getSecond());
-					final ArrayDomainState<STATE> state2 =
-							leftPair.getFirst().updateState(segmentationMap).removeUnusedAuxVars();
-					return state.intersect(state2);
+					final Segmentation rightSegmentation = segmentationMap.getSegmentation(rightVar);
+					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
+							leftPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation);
+					segmentationMap.put(rightVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(segmentationMap);
 				}
 				// TODO: Refine this?
 				return state;
@@ -148,7 +155,6 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			return state.updateState(newSubState);
 		}
 		final List<Term> constraints = new ArrayList<>();
-		final SegmentationMap newSegmentationMap = state.getSegmentationMap();
 		final Map<Term, Term> substitution = new HashMap<>();
 		ArrayDomainState<STATE> newState = state;
 		for (final MultiDimensionalSelect select : selects) {
@@ -169,12 +175,14 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair = tmpState.getSegmentation(store);
 			newState = segmentationPair.getFirst();
 			final IProgramVarOrConst arrayVar = mToolkit.getBoogieVar((IdentifierExpression) arrayExpr);
+			final SegmentationMap newSegmentationMap = newState.getSegmentationMap();
 			newSegmentationMap.put(arrayVar, segmentationPair.getSecond());
+			newState = newState.updateState(newSegmentationMap);
 		}
 		constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));
-		return newState.updateState(newSubState, newSegmentationMap).simplify();
+		return newState.updateState(newSubState).simplify();
 	}
 
 	private boolean isInvalidArrayInequality(final ArrayDomainState<STATE> state, final Term assumption) {
