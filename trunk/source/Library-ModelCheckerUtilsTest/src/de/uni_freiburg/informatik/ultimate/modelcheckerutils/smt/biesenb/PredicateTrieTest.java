@@ -27,10 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.io.IOException;
-import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,18 +54,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOld
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTree;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
@@ -93,66 +93,28 @@ public class PredicateTrieTest {
 	public void test() {
 
 		final PredicateTrie<TestPredicate> ptrie = new PredicateTrie<>(mMgdScript);
-		mMgdScript.lock(this);
 		final Set<IProgramVar> vars = new HashSet<>();
 		final BoogieNonOldVar a = constructProgramVar("a");
 		final BoogieNonOldVar b = constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
-		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred2 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mScript);
-		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mScript);
-		mMgdScript.unlock(this);
-		
-		ptrie.unifyPredicate(pred1);
-		ptrie.unifyPredicate(pred2);
-		ptrie.unifyPredicate(pred3);
-		ptrie.unifyPredicate(pred4);
-		ptrie.unifyPredicate(pred5);
-		ptrie.unifyPredicate(pred6);
-		ptrie.unifyPredicate(pred7);
-		
+		final TestPredicate pred1 = pred("=", a, 1);
+		final TestPredicate pred2 = pred("=", a, 1);
+		final TestPredicate pred3 = pred("=", a, 2);
+		final TestPredicate pred4 = pred(">", a, 0);
+		final TestPredicate pred5 = pred(">", a, 1);
+		final TestPredicate pred6 = pred("=", b, 0);
+		final TestPredicate pred7 = and(pred1, pred6);
+
+		Assert.assertThat("1", ptrie.unifyPredicate(pred1), Is.is(pred1));
+		Assert.assertThat("2", ptrie.unifyPredicate(pred2), Is.is(pred1));
+		Assert.assertThat("3", ptrie.unifyPredicate(pred3), Is.is(pred3));
+		Assert.assertThat("4", ptrie.unifyPredicate(pred4), Is.is(pred4));
+		Assert.assertThat("5", ptrie.unifyPredicate(pred5), Is.is(pred5));
+		Assert.assertThat("6", ptrie.unifyPredicate(pred6), Is.is(pred6));
+		Assert.assertThat("7", ptrie.unifyPredicate(pred7), Is.is(pred7));
+
 		mLogger.info("\n" + ptrie.toString());
-	}
-
-	/**
-	 * Old quantifier elimination needs seconds, new quantifier elimination needs minutes and produces more than 500
-	 * conjuncts
-	 */
-	public void rajdeepIteration5wp() {
-
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
-		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv8);
-
-		mScript.declareFun("ULTIMATE.start_design_~nack.base", new Sort[0], bv32);
-		mScript.declareFun("ULTIMATE.start_design_~nack.offset", new Sort[0], bv32);
-		mScript.declareFun("ULTIMATE.start_design_~alloc_addr.base", new Sort[0], bv32);
-		mScript.declareFun("ULTIMATE.start_main_~#nack~7.base", new Sort[0], bv32);
-		mScript.declareFun("ULTIMATE.start_main_~#nack~7.offset", new Sort[0], bv32);
-
-		mScript.declareFun("~smain.count", new Sort[0], bv8);
-		mScript.declareFun("~smain.busy", new Sort[0], array);
-
-		final String formulaAsString =
-				"(forall ((|#memory_INTTYPE1| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 8)))) (v_bitvector_28 (_ BitVec 32)) (v_bitvector_27 (_ BitVec 32)) (~smain.free_addr (_ BitVec 8)) (v_bitvector_20 (_ BitVec 8)) (~smain.alloc (_ BitVec 8)) (v_bitvector_32 (_ BitVec 32)) (v_bitvector_31 (_ BitVec 32)) (v_bitvector_30 (_ BitVec 32)) (v_bitvector_29 (_ BitVec 32)) (v_bitvector_36 (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 8)))) (ULTIMATE.start_design_~alloc_addr.offset (_ BitVec 32)) (|ULTIMATE.start_design_#t~ite18| (_ BitVec 32)) (v_bitvector_24 (_ BitVec 8)) (v_bitvector_19 (_ BitVec 8)) (v_bitvector_35 (_ BitVec 8)) (v_bitvector_25 (_ BitVec 32)) (v_bitvector_26 (_ BitVec 32)) (v_bitvector_33 (_ BitVec 32)) (v_bitvector_34 (_ BitVec 32))) (and (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_28 ((_ extract 7 0) v_bitvector_27))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8)) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_28 ((_ extract 7 0) v_bitvector_27))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_32 ((_ extract 7 0) v_bitvector_31))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8)) (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_30 ((_ extract 7 0) v_bitvector_29))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) ULTIMATE.start_design_~alloc_addr.offset ((_ extract 7 0) |ULTIMATE.start_design_#t~ite18|))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (or (not (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (_ bv0 8) ~smain.alloc) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_25 ((_ extract 7 0) v_bitvector_26))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (not (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_33 ((_ extract 7 0) v_bitvector_34))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32)) (_ bv0 32)) (= (_ bv0 8) v_bitvector_35)) (or (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) ULTIMATE.start_design_~alloc_addr.offset ((_ extract 7 0) |ULTIMATE.start_design_#t~ite18|))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))))))";
-
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
 	}
 
 	@After
@@ -160,30 +122,47 @@ public class PredicateTrieTest {
 		mScript.exit();
 	}
 
+	private TestPredicate pred(final String op, final IProgramVar var, final int value) {
+		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
+				Collections.singleton(var), mScript);
+	}
+
+	private TestPredicate and(final TestPredicate... preds) {
+		if (preds == null || preds.length < 2) {
+			throw new IllegalArgumentException();
+		}
+		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
+		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
+				(a, b) -> DataStructureUtils.union(a, b));
+		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mScript);
+	}
+
 	private BoogieNonOldVar constructProgramVar(final String identifier) {
 		BoogieOldVar oldVar;
-		final Sort sort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort sort = SmtSortUtils.getIntSort(mScript);
 		{
 			final boolean isOldVar = true;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
-			final TermVariable termVariable = mMgdScript.variable(name, sort);
+			final TermVariable termVariable = mScript.variable(name, sort);
+			mMgdScript.lock(this);
 			final ApplicationTerm defaultConstant =
 					ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
-
+			mMgdScript.unlock(this);
 			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
 		}
 		BoogieNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
-			final TermVariable termVariable = mMgdScript.variable(name, sort);
+			final TermVariable termVariable = mScript.variable(name, sort);
+			mMgdScript.lock(this);
 			final ApplicationTerm defaultConstant =
 					ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
-
+			mMgdScript.unlock(this);
 			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
