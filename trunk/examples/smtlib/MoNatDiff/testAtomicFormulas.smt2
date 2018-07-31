@@ -4,15 +4,15 @@
 (set-logic UFLIA)
 
 ; MoNatDiff specific declarations
-(declare-sort SetOfInts 0)
-(declare-fun element (Int SetOfInts) Bool)
-(declare-fun subsetInts (SetOfInts SetOfInts) Bool)
-(declare-fun strictSubsetInts (SetOfInts SetOfInts) Bool)
+(declare-sort SetOfInt 0)
+(declare-fun element (Int SetOfInt) Bool)
+(declare-fun subsetInt (SetOfInt SetOfInt) Bool)
+(declare-fun strictSubsetInt (SetOfInt SetOfInt) Bool)
 
 (declare-fun x () Int)
 (declare-fun y () Int)
-(declare-fun S () SetOfInts)
-(declare-fun T () SetOfInts)
+(declare-fun S () SetOfInt)
+(declare-fun T () SetOfInt)
 
 ; assert statements for all atomic formulas of type inequality
 ; x-y <= c
@@ -37,10 +37,11 @@
 (assert (element 8 T))
 
 ; assert statements for all atomic formulas of type subset
-; X subsetInts Y
-(assert (subsetInts S T ))
-; X strictSubsetInts Y
-(assert (strictSubsetInts T S))
+; X subsetInt Y
+(assert (subsetInt S T))
+
+; X strictSubsetInt Y
+(assert (strictSubsetInt T S))
 
 (check-sat)
 (get-model)
