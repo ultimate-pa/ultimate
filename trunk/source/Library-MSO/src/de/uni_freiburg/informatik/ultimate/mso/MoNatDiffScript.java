@@ -99,7 +99,6 @@ public class MoNatDiffScript extends NoopScript {
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		// TODO Auto-generated method stub
 		
-		mLogger.info("term: " + term);
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term);
 
 		return null;
@@ -136,66 +135,22 @@ public class MoNatDiffScript extends NoopScript {
 	 * Note: Currently we are working here. AffineRelation doesn't help that much. :-(
 	 */
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
-		mLogger.info("traverse term: " + term);
+		mLogger.info("term: " + term);
 		
-		try {
-			AffineRelation affineRelation = new AffineRelation(this, term);
-			mLogger.info("Term is AffineRelation.");
-			return null;
-			
-		} catch (final NotAffineException e) {
-			mLogger.info("Term is NOT an AffineRelation.");
-		}
-		
-		List<Term> terms = new ArrayList<Term>();
-		
-		if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula quantifiedFormula = (QuantifiedFormula)term;
-			terms.add(quantifiedFormula.getSubformula());
-		}
-		
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm applicationTerm = (ApplicationTerm)term;
-			terms.addAll(Arrays.asList(applicationTerm.getParameters()));
-		}
-		
-		for (Term t : terms) {
-			return traversePostOrder(t);
-		}
-		
-		return null;
-		
-		/*
 		if (term == null)
 			return null;
 
-		String operator = new String();
-		Term term1 = null, term2 = null;
-
-		if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
-			operator = quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS ? "exists" : "forall";
-			term1 = quantifiedFormula.getSubformula();
-		}
-
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm applicationTerm = (ApplicationTerm) term;
-			String operator_tmp = applicationTerm.getFunction().getName();
-
-			if (operator_tmp.equals("not") || operator_tmp.equals("and") || operator_tmp.equals("or")) {
-				operator = operator_tmp;
-				Term[] terms = applicationTerm.getParameters();
-				term1 = terms.length > 0 ? terms[0] : null;
-				term2 = terms.length > 1 ? terms[1] : null;
-			}
-		}
-
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton1 = postOrder(term1);
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton2 = postOrder(term2);
-
-		mLogger.info("process: " + term);
-		return process(term, operator, automaton1, automaton2);
-		*/
+		SplittedTerm splittedTerm = MoNatDiffUtils.splitTerm(term);
+		
+		String info = "operator: " + splittedTerm.operator + ", terms:";
+		for (int i = 0; i < splittedTerm.terms.size(); i++)
+			info += " " + splittedTerm.terms.get(i);
+		mLogger.info(info);
+		
+		for (int i = 0; i < splittedTerm.terms.size(); i++)
+			traversePostOrder(splittedTerm.terms.get(i));
+		
+		return null;
 	}
 
 	/*
