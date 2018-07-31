@@ -100,6 +100,7 @@ public class Candidate<LETTER, PLACE> {
 				mChosen.add(condition);
 			}
 		}
+		mPlaces.clear();
 		mPlaces.addAll(places);
 	}
 

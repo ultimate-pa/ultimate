@@ -69,7 +69,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	@Override
 	public void update(final Event<LETTER, PLACE> event) {
-		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
+		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidatesCollectTransitionsFirst(event);
 		for (final Candidate<LETTER, PLACE> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
@@ -140,7 +140,10 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 		List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 		for (ITransition<LETTER, PLACE> transition : transitions) {
-			candidates.add(new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), mBranchingProcess.getNet())));
+			Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
+					Collections.singleton(transition), mBranchingProcess.getNet()));
+			candidate.instantiate(event.getSuccessorConditions());
+			candidates.add(candidate);
 		}
 		return candidates;
 	}
