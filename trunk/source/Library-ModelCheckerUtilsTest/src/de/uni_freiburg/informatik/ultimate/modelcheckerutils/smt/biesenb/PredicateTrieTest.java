@@ -106,6 +106,8 @@ public class PredicateTrieTest {
 		final TestPredicate pred6 = pred("=", b, 0);
 		final TestPredicate pred7 = and(pred1, pred6);
 
+		final TestPredicate pred8 = and(neg(pred(">", a, 2)), neg(pred("<", a, 2)));
+
 		Assert.assertThat("1", ptrie.unifyPredicate(pred1), Is.is(pred1));
 		Assert.assertThat("2", ptrie.unifyPredicate(pred2), Is.is(pred1));
 		Assert.assertThat("3", ptrie.unifyPredicate(pred3), Is.is(pred3));
@@ -113,6 +115,7 @@ public class PredicateTrieTest {
 		Assert.assertThat("5", ptrie.unifyPredicate(pred5), Is.is(pred5));
 		Assert.assertThat("6", ptrie.unifyPredicate(pred6), Is.is(pred6));
 		Assert.assertThat("7", ptrie.unifyPredicate(pred7), Is.is(pred7));
+		Assert.assertThat("8", ptrie.unifyPredicate(pred8), Is.is(pred3));
 
 		mLogger.info("\n" + ptrie.toString());
 	}
@@ -125,6 +128,10 @@ public class PredicateTrieTest {
 	private TestPredicate pred(final String op, final IProgramVar var, final int value) {
 		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
 				Collections.singleton(var), mScript);
+	}
+
+	private TestPredicate neg(final TestPredicate pred) {
+		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mScript);
 	}
 
 	private TestPredicate and(final TestPredicate... preds) {
