@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,92 +35,98 @@ import java.util.Set;
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class Vertex<T> {
-    public final T mPredicate;
-    private Set<Vertex<T>> mChildren;
-    private Set<Vertex<T>> mParents;
+	private final T mPredicate;
+	private final Set<Vertex<T>> mChildren;
+	private final Set<Vertex<T>> mParents;
 
-    public Vertex(T predicate, Set<Vertex<T>> children, Set<Vertex<T>> parents) {
-        this.mPredicate = predicate;
-        this.mChildren = children;
-        this.mParents = parents;
-    }
+	public Vertex(final T predicate, final Set<Vertex<T>> children, final Set<Vertex<T>> parents) {
+		mPredicate = predicate;
+		mChildren = children;
+		mParents = parents;
+	}
 
-    public void updateEdges() {
-        for (Vertex<T> parent : this.mParents) {
-            for (Vertex<T> child : this.mChildren) {
-                if (parent.mChildren.contains(child)) {
-                    parent.removeChild(child);
-                    child.removeParent(parent);
-                }
-                child.addParent(this);
-            }
-            parent.addChild(this);
-        }
-    }
+	public void updateEdges() {
+		for (final Vertex<T> parent : mParents) {
+			for (final Vertex<T> child : mChildren) {
+				if (parent.mChildren.contains(child)) {
+					parent.removeChild(child);
+					child.removeParent(parent);
+				}
+				child.addParent(this);
+			}
+			parent.addChild(this);
+		}
+	}
 
-    public int getImplicationCount(boolean implying) {
-        int a = implying ? 0 : 1;
-        HashSet<Vertex<T>> marked = new HashSet<Vertex<T>>();
-        ArrayDeque<Vertex<T>> parents = new ArrayDeque<Vertex<T>>(this.mParents);
-        while (!parents.isEmpty()) {
-            Vertex<T> current = parents.pop();
-            if (!marked.add(current)) continue;
-            ++a;
-            parents.addAll(current.getParents());
-        }
-        int b = implying ? 1 : 0;
-        marked.clear();
-        ArrayDeque<Vertex<T>> children = new ArrayDeque<Vertex<T>>(this.mChildren);
-        while (!children.isEmpty()) {
-            Vertex<T> current = children.pop();
-            if (!marked.add(current)) continue;
-            ++b;
-            children.addAll(current.getChildren());
-        }
-        return a * b / (a + b) + 1;
-    }
+	public int getImplicationCount(final boolean implying) {
+		int a = implying ? 0 : 1;
+		final Set<Vertex<T>> marked = new HashSet<>();
+		final Deque<Vertex<T>> parents = new ArrayDeque<>(mParents);
+		while (!parents.isEmpty()) {
+			final Vertex<T> current = parents.pop();
+			if (!marked.add(current)) {
+				continue;
+			}
+			++a;
+			parents.addAll(current.getParents());
+		}
+		int b = implying ? 1 : 0;
+		marked.clear();
+		final Deque<Vertex<T>> children = new ArrayDeque<>(mChildren);
+		while (!children.isEmpty()) {
+			final Vertex<T> current = children.pop();
+			if (!marked.add(current)) {
+				continue;
+			}
+			++b;
+			children.addAll(current.getChildren());
+		}
+		return a * b / (a + b) + 1;
+	}
 
-    public String toString() {
-        ArrayDeque c = new ArrayDeque();
-        this.mChildren.forEach(child -> {
-            boolean bl = c.add(child.mPredicate);
-        }
-        );
-        return String.valueOf(this.mPredicate.toString()) + "-> " + c.toString();
-    }
+	@Override
+	public String toString() {
+		final Deque<T> c = new ArrayDeque<>();
+		mChildren.forEach(child -> c.add(child.mPredicate));
+		return String.valueOf(mPredicate.toString()) + "-> " + c.toString();
+	}
 
-    public Set<Vertex<T>> getChildren() {
-        return this.mChildren;
-    }
+	public Set<Vertex<T>> getChildren() {
+		return mChildren;
+	}
 
-    public Set<Vertex<T>> getParents() {
-        return this.mParents;
-    }
+	public Set<Vertex<T>> getParents() {
+		return mParents;
+	}
 
-    public boolean addChild(Vertex<T> child) {
-        return this.mChildren.add(child);
-    }
+	public boolean addChild(final Vertex<T> child) {
+		return mChildren.add(child);
+	}
 
-    public boolean addParent(Vertex<T> parent) {
-        return this.mParents.add(parent);
-    }
+	public boolean addParent(final Vertex<T> parent) {
+		return mParents.add(parent);
+	}
 
-    public boolean removeChild(Vertex<T> child) {
-        return this.mChildren.remove(child);
-    }
+	public boolean removeChild(final Vertex<T> child) {
+		return mChildren.remove(child);
+	}
 
-    public boolean removeParent(Vertex<T> parent) {
-        return this.mParents.remove(parent);
-    }
+	public boolean removeParent(final Vertex<T> parent) {
+		return mParents.remove(parent);
+	}
 
-    public Set<Vertex<T>> getDescendants() {
-        HashSet<Vertex<T>> decendants = new HashSet<Vertex<T>>(this.mChildren);
-        ArrayDeque<Vertex<T>> vertex = new ArrayDeque<Vertex<T>>(this.mChildren);
-        while (!vertex.isEmpty()) {
-            Vertex<T> current = vertex.removeFirst();
-            decendants.addAll(current.mChildren);
-            vertex.addAll(current.mChildren);
-        }
-        return decendants;
-    }
+	public T getPredicate() {
+		return mPredicate;
+	}
+
+	public Set<Vertex<T>> getDescendants() {
+		final Set<Vertex<T>> decendants = new HashSet<>(mChildren);
+		final Deque<Vertex<T>> vertex = new ArrayDeque<>(mChildren);
+		while (!vertex.isEmpty()) {
+			final Vertex<T> current = vertex.removeFirst();
+			decendants.addAll(current.mChildren);
+			vertex.addAll(current.mChildren);
+		}
+		return decendants;
+	}
 }

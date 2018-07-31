@@ -26,57 +26,63 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb.INode;
 import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
-public class InnerNode
-implements INode {
-    public final Map<Term, Term> mWitness;
-    private INode mTrueChild;
-    private INode mFalseChild;
+public class InnerNode implements INode {
+	private final Map<Term, Term> mWitness;
+	private INode mTrueChild;
+	private INode mFalseChild;
 
-    public InnerNode(INode trueChild, INode flaseChild, Map<Term, Term> witness) {
-        this.mWitness = witness;
-        this.mTrueChild = trueChild;
-        this.mFalseChild = flaseChild;
-    }
+	public InnerNode(final INode trueChild, final INode flaseChild, final Map<Term, Term> witness) {
+		mWitness = witness;
+		mTrueChild = trueChild;
+		mFalseChild = flaseChild;
+	}
 
-    public INode getChild(boolean edge) {
-        if (edge) {
-            return this.mTrueChild;
-        }
-        return this.mFalseChild;
-    }
+	public INode getChild(final boolean edge) {
+		if (edge) {
+			return mTrueChild;
+		}
+		return mFalseChild;
+	}
 
-    /**
-     * swap the predicate "oldChild" with the new predicate
-     * @param oldChild
-     * @param newChild
-     */
-    public void swapChild(INode oldChild, INode newChild) {
-        if (oldChild.equals(this.mTrueChild)) {
-            this.mTrueChild = newChild;
-        } else if (oldChild.equals(this.mFalseChild)) {
-            this.mFalseChild = newChild;
-        } else {
-            throw new IllegalArgumentException("the node to swap is not a child of this node");
-        }
-    }
+	/**
+	 * swap the predicate "oldChild" with the new predicate
+	 *
+	 * @param oldChild
+	 * @param newChild
+	 */
+	public void swapChild(final INode oldChild, final INode newChild) {
+		if (oldChild.equals(mTrueChild)) {
+			mTrueChild = newChild;
+		} else if (oldChild.equals(mFalseChild)) {
+			mFalseChild = newChild;
+		} else {
+			throw new IllegalArgumentException("the node to swap is not a child of this node");
+		}
+	}
 
-    @Override
-    public void toString(StringBuilder sb) {
-        sb.append("inner: " + this.hashCode() + this.mWitness.toString() + " -> " + this.mTrueChild.hashCode() + this.mTrueChild.toString() + " and " + this.mFalseChild.hashCode() + this.mFalseChild.toString());
-        sb.append("\n");
-        this.mTrueChild.toString(sb);
-        this.mFalseChild.toString(sb);
-    }
+	public Map<Term, Term> getWitness() {
+		return mWitness;
+	}
 
-    @Override
-    public String toString() {
-        return this.mWitness.toString();
-    }
+	@Override
+	public void toString(final StringBuilder sb) {
+		sb.append("inner: " + hashCode() + mWitness.toString() + " -> " + mTrueChild.hashCode() + mTrueChild.toString()
+				+ " and " + mFalseChild.hashCode() + mFalseChild.toString());
+		sb.append("\n");
+		mTrueChild.toString(sb);
+		mFalseChild.toString(sb);
+	}
+
+	@Override
+	public String toString() {
+		return mWitness.toString();
+	}
+
 }

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public interface INode {
-    public void toString(StringBuilder var1);
 
-    public String toString();
+	void toString(StringBuilder sb);
+
 }

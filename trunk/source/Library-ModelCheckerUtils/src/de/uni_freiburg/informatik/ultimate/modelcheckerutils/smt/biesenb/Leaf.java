@@ -26,29 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb.INode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class Leaf<T extends IPredicate> implements INode {
-	
+
 	public final T mPredicate;
 
-    public Leaf(T predicate) {
-        mPredicate = predicate;
-    }
+	public Leaf(final T predicate) {
+		mPredicate = predicate;
+	}
 
-    @Override
-    public void toString(StringBuilder sb) {
-        sb.append("leaf: ");
-        sb.append(this.mPredicate.toString());
-        sb.append("\n");
-    }
+	@Override
+	public void toString(final StringBuilder sb) {
+		sb.append("leaf: ");
+		sb.append(mPredicate.toString());
+		sb.append("\n");
+	}
 
-    @Override
-    public String toString() {
-        return this.mPredicate.toString();
-    }
+	@Override
+	public String toString() {
+		return mPredicate.toString();
+	}
 }
