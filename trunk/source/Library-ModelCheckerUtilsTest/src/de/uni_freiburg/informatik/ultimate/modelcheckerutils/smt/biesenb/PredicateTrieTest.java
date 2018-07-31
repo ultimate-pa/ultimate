@@ -27,12 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hamcrest.core.Is;
 import org.junit.After;
@@ -44,24 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
@@ -94,8 +79,8 @@ public class PredicateTrieTest {
 
 		final PredicateTrie<TestPredicate> ptrie = new PredicateTrie<>(mMgdScript);
 		final Set<IProgramVar> vars = new HashSet<>();
-		final BoogieNonOldVar a = constructProgramVar("a");
-		final BoogieNonOldVar b = constructProgramVar("b");
+		final IProgramNonOldVar a = TestPredicate.constructProgramVar(mMgdScript, "a");
+		final IProgramNonOldVar b = TestPredicate.constructProgramVar(mMgdScript, "b");
 		vars.add(a);
 		vars.add(b);
 		final TestPredicate pred1 = pred("=", a, 1);
@@ -120,98 +105,21 @@ public class PredicateTrieTest {
 		mLogger.info("\n" + ptrie.toString());
 	}
 
+	private TestPredicate neg(final TestPredicate pred) {
+		return TestPredicate.neg(mScript, pred);
+	}
+
+	private TestPredicate and(final TestPredicate... preds) {
+		return TestPredicate.and(mScript, preds);
+	}
+
+	private TestPredicate pred(final String op, final IProgramNonOldVar var, final int value) {
+		return TestPredicate.pred(mScript, op, var, value);
+	}
+
 	@After
 	public void tearDown() {
 		mScript.exit();
 	}
 
-	private TestPredicate pred(final String op, final IProgramVar var, final int value) {
-		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
-				Collections.singleton(var), mScript);
-	}
-
-	private TestPredicate neg(final TestPredicate pred) {
-		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mScript);
-	}
-
-	private TestPredicate and(final TestPredicate... preds) {
-		if (preds == null || preds.length < 2) {
-			throw new IllegalArgumentException();
-		}
-		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
-		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
-				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mScript);
-	}
-
-	private BoogieNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
-		final Sort sort = SmtSortUtils.getIntSort(mScript);
-		{
-			final boolean isOldVar = true;
-			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			mMgdScript.lock(this);
-			final ApplicationTerm defaultConstant =
-					ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
-			final ApplicationTerm primedConstant =
-					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
-			mMgdScript.unlock(this);
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
-		}
-		BoogieNonOldVar nonOldVar;
-		{
-			final boolean isOldVar = false;
-			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			mMgdScript.lock(this);
-			final ApplicationTerm defaultConstant =
-					ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
-			final ApplicationTerm primedConstant =
-					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
-			mMgdScript.unlock(this);
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
-		}
-		oldVar.setNonOldVar(nonOldVar);
-		return nonOldVar;
-	}
-
-	private static final class TestPredicate implements IPredicate {
-
-		private final Set<IProgramVar> mVars;
-		private final Term mClosedFormula;
-		private final Term mFormula;
-
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Script script) {
-			mVars = vars;
-			mFormula = formula;
-			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, script);
-		}
-
-		@Override
-		public String[] getProcedures() {
-			return new String[0];
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			return mVars;
-		}
-
-		@Override
-		public Term getFormula() {
-			return mFormula;
-		}
-
-		@Override
-		public Term getClosedFormula() {
-			return mClosedFormula;
-		}
-
-		@Override
-		public String toString() {
-			return getFormula().toStringDirect();
-		}
-
-	}
 }
