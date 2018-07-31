@@ -1147,7 +1147,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return updateState(mSubState, newSegmentationMap).removeUnusedAuxVars();
 	}
 
-	private Term getSubTerm() {
+	public Term getSubTerm() {
 		if (mCachedTerm == null) {
 			mCachedTerm = mSubState.getTerm(mToolkit.getScript());
 		}
