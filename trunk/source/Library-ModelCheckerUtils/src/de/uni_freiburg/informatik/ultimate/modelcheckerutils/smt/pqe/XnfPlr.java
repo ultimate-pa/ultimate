@@ -34,10 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -84,41 +84,44 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		}
 
 		final Iterator<TermVariable> iter = booleanQuantVars.iterator();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		final Term trueTerm = mScript.term("true");
+		final Term falseTerm = mScript.term("false");
 		while (iter.hasNext()) {
 			final TermVariable var = iter.next();
-			final Term negatedVar = mScript.term("not", var);
-			boolean remove = true;
 			for (int i = 0; i < inputAtoms.length; ++i) {
 				final Term atom = inputAtoms[i];
-				final ContainsSubterm contains = new ContainsSubterm(negatedVar);
-				if (contains.containsSubterm(atom)) {
-					remove = false;
+				if (atom instanceof ApplicationTerm) {
+					final ApplicationTerm aatom = ((ApplicationTerm) atom);
+					if (aatom.getFunction().getName().equals("not")) {
+						if (aatom.getParameters()[0].equals(var)) {
+							substitutionMapping.put(var, falseTerm);
+							break;
+						}
+					}
+				} else if (atom.equals(var)) {
+					substitutionMapping.put(var, trueTerm);
 					break;
 				}
 			}
-			if (remove) {
-				iter.remove();
-			}
 		}
 
-		if (booleanQuantVars.isEmpty()) {
+		if (substitutionMapping.isEmpty()) {
 			// cannot remove any variable
 			return inputAtoms;
 		}
 
-		// remaining booleanQuantVars can be removed
-		final Term trueTerm = mScript.term("true");
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		booleanQuantVars.stream().forEach(a -> {
-			substitutionMapping.put(a, trueTerm);
-			eliminatees.remove(a);
-		});
+		// vars in substitutionMapping can be removed
+		eliminatees.removeAll(substitutionMapping.keySet());
+
 		final SubstitutionWithLocalSimplification subst =
 				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 		for (int i = 0; i < inputAtoms.length; ++i) {
 			inputAtoms[i] = subst.transform(inputAtoms[i]);
 		}
 		return inputAtoms;
+		// slurp up multiple true or false terms
+		// return SmtUtils.getConjuncts(SmtUtils.and(mScript, inputAtoms));
 	}
 
 }
