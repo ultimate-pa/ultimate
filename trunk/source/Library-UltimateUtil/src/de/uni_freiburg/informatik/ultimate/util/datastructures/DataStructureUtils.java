@@ -94,6 +94,14 @@ public class DataStructureUtils {
 		return a.stream().filter(elem -> !b.contains(elem)).collect(Collectors.toSet());
 	}
 
+	@SafeVarargs
+	public static <T> Set<T> toSet(final T... elems) {
+		if (elems == null || elems.length == 0) {
+			return Collections.emptySet();
+		}
+		return new HashSet<>(Arrays.asList(elems));
+	}
+
 	/**
 	 * Construct a {@link Set} that contains all elements of set1 and set2.
 	 */
@@ -255,10 +263,9 @@ public class DataStructureUtils {
 		return result;
 	}
 
-
 	/**
-	 * Construct Map<V, K> that contains a pair (v,k) in the input contained the
-	 * pair (k,v). If the input is not injective the behavior is not specified.
+	 * Construct Map<V, K> that contains a pair (v,k) in the input contained the pair (k,v). If the input is not
+	 * injective the behavior is not specified.
 	 */
 	public static <K, V> Map<V, K> constructReverseMapping(final Map<K, V> map) {
 		return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
