@@ -31,10 +31,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -81,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Translates SMT Terms to Boogie Expressions.
@@ -94,9 +93,7 @@ public final class Term2Expression implements Serializable {
 
 	private final Script mScript;
 
-	private final ScopedHashMap<TermVariable, VarList> mQuantifiedVariables;
-
-	private int mFreshIdentiferCounter;
+	private TranslateState mTranslateState;
 
 	private final TypeSortTranslator mTypeSortTranslator;
 
@@ -104,7 +101,7 @@ public final class Term2Expression implements Serializable {
 
 	private final Set<IdentifierExpression> mFreeVariables;
 
-	private final Map<Term, Expression> mCache;
+	private final NestedMap2<Term, TranslateState, Expression> mCache;
 
 	public Term2Expression(final TypeSortTranslator tsTranslation,
 			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable,
@@ -113,18 +110,18 @@ public final class Term2Expression implements Serializable {
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mScript = maScript.getScript();
 		mFreeVariables = new HashSet<>();
-		mFreshIdentiferCounter = 0;
-		mQuantifiedVariables = new ScopedHashMap<>();
-		mCache = new HashMap<>();
+		mTranslateState = new TranslateState();
+		mCache = new NestedMap2<>();
 	}
 
 	private String getFreshIdenfier() {
-		mFreshIdentiferCounter++;
-		return "freshIdentifier" + mFreshIdentiferCounter;
+		mTranslateState = mTranslateState.incrementIdentifierCounter();
+		return "freshIdentifier" + mTranslateState.getFreshIdentiferCounter();
 	}
 
 	public Expression translate(final Term term) {
-		Expression result = mCache.get(term);
+		final TranslateState stateAtStart = mTranslateState;
+		Expression result = mCache.get(term, mTranslateState);
 		if (result == null) {
 			if (term instanceof AnnotatedTerm) {
 				result = translate((AnnotatedTerm) term);
@@ -142,7 +139,7 @@ public final class Term2Expression implements Serializable {
 				throw new UnsupportedOperationException("unknown kind of Term");
 			}
 			assert result != null;
-			mCache.put(term, result);
+			mCache.put(term, stateAtStart, result);
 		}
 		return result;
 	}
@@ -393,7 +390,7 @@ public final class Term2Expression implements Serializable {
 	}
 
 	private Expression translate(final QuantifiedFormula term) {
-		mQuantifiedVariables.beginScope();
+		mTranslateState = mTranslateState.beginQuantifiedVariablesScope();
 		final VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
 		for (final TermVariable tv : term.getVariables()) {
@@ -402,7 +399,7 @@ public final class Term2Expression implements Serializable {
 			final ASTType astType = new PrimitiveType(null, boogieType, boogieType.toString());
 			final VarList varList = new VarList(null, identifiers, astType);
 			parameters[offset] = varList;
-			mQuantifiedVariables.put(tv, varList);
+			mTranslateState = mTranslateState.putInQuantifiedVariables(tv, varList);
 			offset++;
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
@@ -438,15 +435,15 @@ public final class Term2Expression implements Serializable {
 		final Expression subformula = translate(subTerm);
 		final QuantifierExpression result =
 				new QuantifierExpression(null, type, isUniversal, typeParams, parameters, attributes, subformula);
-		mQuantifiedVariables.endScope();
+		mTranslateState = mTranslateState.endQuantifiedVariablesScope();
 		return result;
 	}
 
 	private Expression translate(final TermVariable term) {
 		final Expression result;
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
-		if (mQuantifiedVariables.containsKey(term)) {
-			final VarList varList = mQuantifiedVariables.get(term);
+		if (mTranslateState.getQuantifiedVariables().containsKey(term)) {
+			final VarList varList =	mTranslateState.getQuantifiedVariables().get(term);
 			assert varList.getIdentifiers().length == 1;
 			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, translateIdentifier(id),
@@ -600,4 +597,68 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
+	/**
+	 * Represents the state that the result of a call to a translate*(Term) method in this class may depend on.
+	 * Immutable. Necessary for caching.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static class TranslateState {
+
+		private final int mFreshIdentiferCounter;
+
+		private final ScopedHashMap<TermVariable, VarList> mQuantifiedVariables;
+
+		/**
+		 * Create the initial translate state.
+		 */
+		TranslateState() {
+			mFreshIdentiferCounter = 0;
+			mQuantifiedVariables = new ScopedHashMap<>();
+		}
+
+		/**
+		 * copy constructor
+		 *
+		 * @param freshIdentiferCounter
+		 * @param quantifiedVariables Caller has to make sure this object is not used in other instances of
+		 *	 TranslateState!
+		 */
+		private TranslateState(final int freshIdentiferCounter,
+				final ScopedHashMap<TermVariable, VarList> quantifiedVariables) {
+			mFreshIdentiferCounter = freshIdentiferCounter;
+			mQuantifiedVariables = quantifiedVariables;
+		}
+
+		TranslateState incrementIdentifierCounter() {
+			return new TranslateState(mFreshIdentiferCounter + 1, mQuantifiedVariables);
+		}
+
+		TranslateState beginQuantifiedVariablesScope() {
+			final ScopedHashMap<TermVariable, VarList> copy = new ScopedHashMap<>(mQuantifiedVariables);
+			copy.beginScope();
+			return new TranslateState(mFreshIdentiferCounter, copy);
+		}
+
+		TranslateState endQuantifiedVariablesScope() {
+			final ScopedHashMap<TermVariable, VarList> copy = new ScopedHashMap<>(mQuantifiedVariables);
+			copy.endScope();
+			return new TranslateState(mFreshIdentiferCounter, copy);
+		}
+
+		TranslateState putInQuantifiedVariables(final TermVariable tv, final VarList vl) {
+			final ScopedHashMap<TermVariable, VarList> copy = new ScopedHashMap<>(mQuantifiedVariables);
+			copy.put(tv, vl);
+			return new TranslateState(mFreshIdentiferCounter, copy);
+		}
+
+		int getFreshIdentiferCounter() {
+			return mFreshIdentiferCounter;
+		}
+
+		ScopedHashMap<TermVariable, VarList> getQuantifiedVariables() {
+			return mQuantifiedVariables;
+		}
+	}
 }
