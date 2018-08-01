@@ -18,15 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCAppTerm extends CCTerm {
@@ -155,67 +152,41 @@ public class CCAppTerm extends CCTerm {
 		mLeftParInfo.mMark = mRightParInfo.mMark = false;
 	}
 
-	public void toStringHelper(StringBuilder sb, HashMap<CCAppTerm, Integer> visited) {
-		if (mFunc instanceof CCAppTerm) {
-			((CCAppTerm) mFunc).toStringHelper(sb, visited);
-			sb.append(' ');
-		} else {
-			sb.append('(').append(mFunc).append(' ');
-		}
-		if (mArg instanceof CCAppTerm) {
-			final CCAppTerm arg2 = (CCAppTerm) mArg;
-			if (!visited.containsKey(arg2)) {
-				arg2.toStringHelper(sb, visited);
-				sb.append(')');
-				visited.put(arg2, visited.size());
-			} else {
-				sb.append("@" + visited.get(arg2));
-			}
-		} else {
-			sb.append(mArg);
-		}
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		toStringHelper(sb, new HashMap<CCAppTerm, Integer>());
-		sb.append(')');
+		final HashMap<CCAppTerm, Integer> visited = new HashMap<CCAppTerm, Integer>();
+		final ArrayDeque<Object> todo = new ArrayDeque<>();
+		todo.add(")");
+		todo.add(this);
+		todo.add("(");
+		while (!todo.isEmpty()) {
+			Object item = todo.removeLast();
+			if (item instanceof String) {
+				sb.append(item);
+			} else if (item instanceof CCAppTerm) {
+				CCAppTerm app = (CCAppTerm) item;
+				Integer id = visited.get(item);
+				if (id != null) {
+					sb.append("@" + id);
+				} else {
+					visited.put(app, visited.size());
+					if (app.mArg instanceof CCAppTerm) {
+						todo.add(")");
+						todo.add(app.mArg);
+						todo.add("(");
+					} else {
+						todo.add(app.mArg);
+					}
+					todo.add(" ");
+					todo.add(app.mFunc);
+				}
+			} else if (item instanceof CCBaseTerm) {
+				sb.append(item);
+			} else {
+				throw new AssertionError("Unknown CCTerm " + item);
+			}
+		}
 		return sb.toString();
-	}
-
-	@Override
-	public Term toSMTTerm(Theory theory, boolean useAuxVars) {
-		if (mSmtTerm != null) {
-			return mSmtTerm;
-		}
-
-		assert !mIsFunc;
-		CCTerm t = this;
-		int dest = 0;
-		while (t instanceof CCAppTerm) {
-			t = ((CCAppTerm) t).mFunc;
-			++dest;
-		}
-		final CCBaseTerm basefunc = (CCBaseTerm) t;
-		final Term[] args = new Term[dest];
-		t = this;
-		while (t instanceof CCAppTerm) {
-			args[--dest] = ((CCAppTerm) t).mArg.toSMTTerm(theory, useAuxVars);
-			t = ((CCAppTerm) t).mFunc;
-		}
-		FunctionSymbol sym;
-		if (basefunc.mSymbol instanceof FunctionSymbol) {
-			sym = (FunctionSymbol) basefunc.mSymbol;
-		} else if (basefunc.mSymbol instanceof String) {
-			// tmp is just to get the correct function symbol. This is needed
-			// if the function symbol is polymorphic
-			final ApplicationTerm tmp = theory.term((String) basefunc.mSymbol, args);
-			sym = tmp.getFunction();
-		} else {
-			throw new InternalError("Unknown symbol in CCBaseTerm: " + basefunc.mSymbol);
-		}
-		mSmtTerm = Coercion.buildApp(sym, args);
-		return mSmtTerm;
 	}
 }

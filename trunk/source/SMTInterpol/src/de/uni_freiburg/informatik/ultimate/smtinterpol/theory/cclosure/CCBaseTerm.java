@@ -19,8 +19,6 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
 public class CCBaseTerm extends CCTerm {
@@ -29,24 +27,6 @@ public class CCBaseTerm extends CCTerm {
 	public CCBaseTerm(boolean isFunc, int parentPos, Object symb, SharedTerm term) {
 		super(isFunc, parentPos, term, symb.hashCode());
 		mSymbol = symb;
-	}
-
-	@Override
-	public Term toSMTTerm(Theory t, boolean useAuxVars) {
-		assert !mIsFunc;
-		if (mSymbol instanceof SharedTerm)
-		 {
-			return ((SharedTerm) mSymbol).getRealTerm();// TODO auxvar stuff
-		}
-		if (mSymbol instanceof FunctionSymbol) {
-			final FunctionSymbol func = (FunctionSymbol) mSymbol;
-			assert func.getParameterSorts().length == 0;
-			return t.term(func);
-		} else if (mSymbol instanceof String) {
-			return t.term((String) mSymbol);
-		} else {
-			throw new InternalError("Unknown symbol in CCBaseTerm: " + mSymbol);
-		}
 	}
 
 	@Override

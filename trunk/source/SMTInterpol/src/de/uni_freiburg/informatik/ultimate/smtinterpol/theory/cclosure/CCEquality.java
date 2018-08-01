@@ -88,8 +88,8 @@ public class CCEquality extends DPLLAtom {
 
 	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		final Term lhs = mLhs.toSMTTerm(smtTheory, quoted);
-		final Term rhs = mRhs.toSMTTerm(smtTheory, quoted);
+		final Term lhs = mLhs.toSMTTerm(smtTheory);
+		final Term rhs = mRhs.toSMTTerm(smtTheory);
 		final Term res = Coercion.buildEq(lhs, rhs);
 		return quoted ? smtTheory.annotatedTerm(QUOTED_CC, res) : res;
 	}

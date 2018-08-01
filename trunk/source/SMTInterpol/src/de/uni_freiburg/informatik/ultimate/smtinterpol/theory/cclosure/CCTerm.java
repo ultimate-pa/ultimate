@@ -615,8 +615,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		return mFlatTerm;
 	}
 	
-	public abstract Term toSMTTerm(Theory t, boolean useAuxVars);
 	public Term toSMTTerm(Theory t) {
-		return toSMTTerm(t, false);
+		return new CCTermConverter(t).convert(this);
 	}
 }
