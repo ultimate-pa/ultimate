@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,14 +40,21 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -106,6 +114,21 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			transitionMapping = constructMapBasedTransitionProvider(newTransition2OldTransition);
 		}
 		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
+				predicateProvider, transitionMapping);
+	}
+
+	public static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNetWithSPredicates(
+			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
+			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
+			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
+			final PredicateFactory predicateFactory) {
+		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
+
+		Function<IcfgLocation, IPredicate> predicateProvider;
+		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
+		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
+		return constructPetriNet(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
 				predicateProvider, transitionMapping);
 	}
 
@@ -213,6 +236,72 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return nwa;
 	}
 
+
+
+	private static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNet(
+			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
+			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
+			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
+			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
+			final Function<IIcfgTransition<?>, LETTER> letterProvider) {
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
+		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
+
+		// construct the net
+		final BoundedPetriNet<LETTER, IPredicate> net = new BoundedPetriNet<LETTER, IPredicate>(new AutomataLibraryServices(services),
+				vpAlphabet.getInternalAlphabet(), false);
+		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
+		{
+			// add places
+			for (final IcfgLocation locNode : allNodes) {
+				final boolean isInitial = initialNodes.contains(locNode);
+				final boolean isAccepting = acceptingLocations.contains(locNode);
+				final IPredicate place = predicateProvider.apply(locNode);
+				net.addPlace(place, isInitial, isAccepting);
+				nodes2States.put(locNode, place);
+			}
+		}
+
+		// add transitions
+		for (final IcfgLocation locNode : allNodes) {
+			final IPredicate state = nodes2States.get(locNode);
+			if (locNode.getOutgoingNodes() != null) {
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
+					final IcfgLocation succLoc = edge.getTarget();
+					final IPredicate succState = nodes2States.get(succLoc);
+					if (edge instanceof IIcfgInternalTransition<?>) {
+						net.addTransition((LETTER) edge, Collections.singleton(state), Collections.singleton(succState));
+					} else if (edge instanceof IIcfgForkTransitionCurrentThread) {
+						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
+					} else if (edge instanceof IIcfgForkTransitionOtherThread) {
+						final IIcfgForkTransitionCurrentThread current = ((IIcfgForkTransitionOtherThread) edge).getCorrespondingIIcfgForkTransitionCurrentThread();
+						final IcfgLocation currentThreadLoc = current.getTarget();
+						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
+						net.addTransition((LETTER) edge, Collections.singleton(state), new HashSet(Arrays.asList(new IPredicate[] { succCurrentThread, succState})));
+					} else if (edge instanceof IIcfgJoinTransitionCurrentThread) {
+						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
+					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
+						final IIcfgJoinTransitionCurrentThread current = ((IIcfgJoinTransitionOtherThread) edge).getCorrespondingIIcfgJoinTransitionCurrentThread();
+						final IcfgLocation currentThreadLoc = current.getSource();
+						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
+						net.addTransition((LETTER) edge, new HashSet(Arrays.asList(new IPredicate[] { predCurrentThread, state})), Collections.singleton(succState));
+					} else if (edge instanceof IIcfgCallTransition<?>) {
+						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
+						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+					} else if (edge instanceof Summary) {
+						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+					} else {
+						throw new UnsupportedOperationException("unknown kind of edge " + edge.getClass().getSimpleName());
+					}
+				}
+			}
+		}
+		return net;
+	}
+
+
 	/**
 	 * Extract from an ICFG the alphabet that is needed for an trace
 	 * abstraction-based analysis.
@@ -238,7 +327,9 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final IcfgLocation locNode = iter.next();
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
-					if (edge instanceof IIcfgCallTransition) {
+					if (edge instanceof IcfgInternalTransition) {
+						internalAlphabet.add((LETTER) edge);
+					} else if (edge instanceof IIcfgCallTransition) {
 						if (!intraproceduralAnalysis) {
 							callAlphabet.add((LETTER) edge);
 						}
@@ -257,8 +348,16 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						} else {
 							internalAlphabet.add((LETTER) summary);
 						}
-					} else {
+					} else if (edge instanceof IIcfgForkTransitionCurrentThread) {
+						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
+					} else if (edge instanceof IIcfgForkTransitionOtherThread) {
 						internalAlphabet.add((LETTER) edge);
+					} else if (edge instanceof IIcfgJoinTransitionCurrentThread) {
+						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
+					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
+						internalAlphabet.add((LETTER) edge);
+					} else {
+						throw new UnsupportedOperationException("unknown kind of edge " + edge.getClass().getSimpleName());
 					}
 				}
 			}
