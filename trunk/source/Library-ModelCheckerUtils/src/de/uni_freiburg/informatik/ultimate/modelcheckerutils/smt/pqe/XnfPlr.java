@@ -95,12 +95,18 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 					final ApplicationTerm aatom = ((ApplicationTerm) atom);
 					if (aatom.getFunction().getName().equals("not")) {
 						if (aatom.getParameters()[0].equals(var)) {
+							if (mLogger.isDebugEnabled()) {
+								mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
+							}
 							substitutionMapping.put(var, falseTerm);
 							break;
 						}
 					}
 				} else if (atom.equals(var)) {
 					substitutionMapping.put(var, trueTerm);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
+					}
 					break;
 				}
 			}
@@ -111,8 +117,8 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 			return inputAtoms;
 		}
 
-		// vars in substitutionMapping can be removed
-		eliminatees.removeAll(substitutionMapping.keySet());
+		// TODO: why does removing variables in DER work, but not here?
+		// eliminatees.removeAll(substitutionMapping.keySet());
 
 		final SubstitutionWithLocalSimplification subst =
 				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
@@ -120,8 +126,6 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 			inputAtoms[i] = subst.transform(inputAtoms[i]);
 		}
 		return inputAtoms;
-		// slurp up multiple true or false terms
-		// return SmtUtils.getConjuncts(SmtUtils.and(mScript, inputAtoms));
 	}
 
 }

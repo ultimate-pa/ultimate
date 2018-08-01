@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfIrd;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfPlr;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfTir;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfUpd;
 
@@ -275,16 +276,16 @@ public class QuantifierPusher extends TermTransformer {
 		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (mPqeTechniques) {
 		case ALL_LOCAL:
+			elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			// elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
 			elimtechniques
 					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 			elimtechniques.add(new XnfUpd(mMgdScript, mServices));
 			break;
 		case NO_UPD:
+			elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			// elimtechniques.add(new XnfPlr(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
 			elimtechniques
 					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
