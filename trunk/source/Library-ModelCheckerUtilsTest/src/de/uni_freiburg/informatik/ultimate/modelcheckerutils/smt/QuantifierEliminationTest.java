@@ -33,8 +33,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -67,8 +66,9 @@ public class QuantifierEliminationTest {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices,
-					new ToolchainStorage(), "z3");
+			mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
+			// mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices,
+			// new ToolchainStorage(), "z3");
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
@@ -117,24 +117,25 @@ public class QuantifierEliminationTest {
 		// Functions
 
 		// term
-		final Term term =
-				mScript.quantifier(1, new TermVariable[] { var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88 },
-						mScript.term("or", mScript.term("not", mScript.term(
-								"and", mScript.quantifier(1,
-										new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
-										mScript.term("or",
-												mScript.term("=", var_v_oldvalid_88, mScript.term("store",
+		final Term term = mScript.quantifier(1,
+				new TermVariable[] { var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88 },
+				mScript.term("or", mScript.term("not", mScript.term(
+						"and",
+						mScript.quantifier(1, new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
+								mScript.term("or",
+										mScript.term("=", var_v_oldvalid_88,
+												mScript.term("store",
 														mScript.term("store", var_v_valid_207, var_v_probe3_6_p9base_40,
 																con_1),
 														var_v_probe3_6_p9base_40, con_0)),
-												mScript.term("=", var_v_probe3_6_p9base_40, con_0),
-												mScript.term("not",
-														mScript.term("=",
-																mScript.term("select", var_v_valid_207,
-																		var_v_probe3_6_p9base_40),
-																con_0)))),
-								mScript.term("=", var_oldvalid, var_v_valid_207))),
-								mScript.term("=", var_valid, var_v_oldvalid_88)));
+										mScript.term("=", var_v_probe3_6_p9base_40, con_0),
+										mScript.term("not",
+												mScript.term("=",
+														mScript.term("select", var_v_valid_207,
+																var_v_probe3_6_p9base_40),
+														con_0)))),
+						mScript.term("=", var_oldvalid, var_v_valid_207))),
+						mScript.term("=", var_valid, var_v_oldvalid_88)));
 
 		PartialQuantifierElimination.tryToEliminate(mServices, mServices.getLoggingService().getLogger("lol"),
 				mMgdScript, term, SimplificationTechnique.SIMPLIFY_DDA,
@@ -169,21 +170,40 @@ public class QuantifierEliminationTest {
 		// mgdScript, term, SimplificationTechnique.SIMPLIFY_DDA,
 		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
-	
+
 	@Test
 	public void otherArrayBug() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
 		mScript.declareFun("b", new Sort[0], intintArraySort);
 		mScript.declareFun("i", new Sort[0], intSort);
-		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
-		
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
+
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		
+
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-			SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info(result);
 		Assert.assertTrue(!SmtUtils.isTrue(result));
+	}
+
+	@Test
+	public void plrTest1() {
+		final String formulaAsString = "(exists ( (A Int) (B Bool) (C Bool) (D Bool) (E Bool) (F Bool) (G Bool) ) (and "
+				+ "(<= 0 A) " + "(or (and (not B) (not C)) (and C B)) " + "(or (and (not D) (not E)) (and E D)) "
+				+ "(or (and F G) (and (not G) (not F))) " + "))";
+
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info(result);
+
+		final Term trueTerm = mScript.term("true");
+		final LBool checkSatResult = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", trueTerm, formulaAsTerm));
+		Assert.assertTrue(checkSatResult == LBool.UNSAT);
+		Assert.assertTrue(SmtUtils.isTrue(result));
 	}
 
 }
