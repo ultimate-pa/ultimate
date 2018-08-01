@@ -114,7 +114,6 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
-
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -4688,6 +4687,23 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
+	 * Checks if an LRValue is an Integer of value 0
+	 * 
+	 * @param value
+	 * @param type
+	 * @return
+	 */
+	Boolean isNullPointerEquivalent(LRValue value, CType type) {
+		if (type.isIntegerType() && value.getValue() instanceof IntegerLiteral) {
+			IntegerLiteral intLit = (IntegerLiteral) value.getValue();
+			if (intLit.getValue() == "0") {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Handle relational operators according to Section 6.5.8 of C11. Assumes that left (resp. right) are the results
 	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
@@ -4698,11 +4714,25 @@ public class CHandler implements ICHandler {
 		assert right.mLrVal instanceof RValue : "no RValue";
 		left.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 		right.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-		final CType lType = left.mLrVal.getCType().getUnderlyingType();
-		final CType rType = right.mLrVal.getCType().getUnderlyingType();
+		CType lType = left.mLrVal.getCType().getUnderlyingType();
+		CType rType = right.mLrVal.getCType().getUnderlyingType();
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 		final Expression expr;
+		
+		//Convert integer with a value of 0 to a Null pointer if necessary
+		if(lType instanceof CPrimitive && rType instanceof CPointer && 
+				isNullPointerEquivalent(left.getLrValue(), lType)) {
+			// FIXME: the following is a workaround for the null pointer
+			convert(loc, left, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			lType = left.mLrVal.getCType().getUnderlyingType();
+		} else if (lType instanceof CPointer && rType instanceof CPrimitive && 
+				isNullPointerEquivalent(right.getLrValue(), rType)) {
+			// FIXME: the following is a workaround for the null pointer
+			convert(loc, right, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			rType = right.mLrVal.getCType().getUnderlyingType();
+		}
+		
 		if (lType instanceof CPrimitive && rType instanceof CPrimitive) {
 			assert lType.isRealType() && rType.isRealType() : "no real type";
 			mExpressionTranslation.usualArithmeticConversions(loc, left, right);
@@ -4737,7 +4767,7 @@ public class CHandler implements ICHandler {
 			}
 
 		} else {
-			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
+			throw new UnsupportedOperationException("unsupported " + lType + ", " + rType);
 		}
 		// The result has type int (C11 6.5.8.6)
 		final CPrimitive typeOfResult = new CPrimitive(CPrimitives.INT);
