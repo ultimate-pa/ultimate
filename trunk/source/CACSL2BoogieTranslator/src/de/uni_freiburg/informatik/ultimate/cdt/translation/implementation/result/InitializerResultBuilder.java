@@ -62,7 +62,7 @@ public class InitializerResultBuilder {
 		mRootExpressionResult = initializerResult.hasRootExpressionResult() ?
 				new ExpressionResultBuilder()
 				.addAllExceptLrValue(initializerResult.getRootExpressionResult())
-				.setLrVal(initializerResult.getRootExpressionResult().getLrValue())
+				.setLrValue(initializerResult.getRootExpressionResult().getLrValue())
 				.build() :
 					null;
 		mChildren = initializerResult.isInitializerList() ? new ArrayList<>(initializerResult.getList()) : null;

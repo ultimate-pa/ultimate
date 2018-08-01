@@ -58,7 +58,7 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 
 	@Override
 	public void convertPointerToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
-		final RValue pointer = (RValue) rexp.mLrVal;
+		final RValue pointer = (RValue) rexp.getLrValue();
 		final Expression baseAddress = MemoryHandler.getPointerBaseAddress(pointer.getValue(), loc);
 		final Expression offset = MemoryHandler.getPointerOffset(pointer.getValue(), loc);
 		final Expression sumExpr = mExpressionTranslation.constructArithmeticExpression(
@@ -66,7 +66,7 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 				baseAddress, mExpressionTranslation.getCTypeOfPointerComponents(), 
 				offset, mExpressionTranslation.getCTypeOfPointerComponents());
 		final RValue sum = new RValue(sumExpr, mExpressionTranslation.getCTypeOfPointerComponents());
-		rexp.mLrVal = sum;
+		rexp.setLrValue(sum);
 		mExpressionTranslation.convertIntToInt(loc, rexp, newType);
 	}
 
@@ -75,8 +75,8 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 		mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 				loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.mLrVal.getValue(), loc), newType, false, false);
-		rexp.mLrVal = rValue;
+		final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc), newType, false, false);
+		rexp.setLrValue(rValue);
 	}
 
 }

@@ -88,12 +88,12 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			mExpressionTranslation.convertToBool(loc, rexp);
 		} else {
 			final String prefixedFunctionName = declareConvertPointerToIntFunction(loc, newType);
-			final Expression pointerExpression = rexp.mLrVal.getValue();
+			final Expression pointerExpression = rexp.getLrValue().getValue();
 			final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { pointerExpression },
 					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(intExpression, newType, false, false);
-			rexp.mLrVal = rValue;
+			rexp.setLrValue(rValue);
 		}
 	}
 
@@ -113,21 +113,21 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		final boolean overapproximate = false;
 		if (overapproximate) {
 			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc,
-					(CPrimitive) rexp.mLrVal.getCType());
-			final Expression intExpression = rexp.mLrVal.getValue();
+					(CPrimitive) rexp.getLrValue().getCType());
+			final Expression intExpression = rexp.getLrValue().getValue();
 			final Expression pointerExpression = ExpressionFactory.constructFunctionApplication(loc,
 					prefixedFunctionName, new Expression[] { intExpression },
 					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.mLrVal = rValue;
+			rexp.setLrValue(rValue);
 		} else {
 			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 			final RValue rValue = new RValue(
-					MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.mLrVal.getValue(), loc), newType, false,
+					MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc), newType, false,
 					false);
-			rexp.mLrVal = rValue;
+			rexp.setLrValue(rValue);
 		}
 	}
 

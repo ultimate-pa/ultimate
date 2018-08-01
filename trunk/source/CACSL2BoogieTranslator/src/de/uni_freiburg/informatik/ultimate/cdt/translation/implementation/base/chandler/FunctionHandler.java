@@ -342,7 +342,7 @@ public class FunctionHandler {
 
 			assert bodyResultBuilder.getAuxVars().isEmpty();
 			assert bodyResultBuilder.getOverappr().isEmpty();
-			assert bodyResultBuilder.getLrVal() == null;
+			assert bodyResultBuilder.getLrValue() == null;
 
 			body = mProcedureManager.constructBody(loc,
 					bodyResultBuilder.getDeclarations()
@@ -397,7 +397,7 @@ public class FunctionHandler {
 		assert main instanceof PRDispatcher || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
 
-		CType calledFuncType = funcNameRex.mLrVal.getCType().getUnderlyingType();
+		CType calledFuncType = funcNameRex.getLrValue().getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction) && calledFuncType instanceof CPointer) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
@@ -412,7 +412,7 @@ public class FunctionHandler {
 			final CDeclaration[] paramDecsFromCall = new CDeclaration[arguments.length];
 			for (int i = 0; i < arguments.length; i++) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(arguments[i]);
-				paramDecsFromCall[i] = new CDeclaration(rex.mLrVal.getCType(), "#param" + i); // TODO:
+				paramDecsFromCall[i] = new CDeclaration(rex.getLrValue().getCType(), "#param" + i); // TODO:
 				// SFO?
 			}
 			calledFuncCFunction = new CFunction(calledFuncCFunction.getResultType(), paramDecsFromCall,
@@ -513,13 +513,14 @@ public class FunctionHandler {
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
-			if (!returnValueSwitched.mLrVal.getCType().equals(functionResultType)
+			if (!returnValueSwitched.getLrValue().getCType().equals(functionResultType)
 					&& functionResultType instanceof CPointer
-					&& returnValueSwitched.mLrVal.getCType() instanceof CPrimitive
-					&& returnValueSwitched.mLrVal.getValue() instanceof IntegerLiteral
-					&& "0".equals(((IntegerLiteral) returnValueSwitched.mLrVal.getValue()).getValue())) {
-				returnValueSwitched.mLrVal =
-						new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
+					&& returnValueSwitched.getLrValue().getCType() instanceof CPrimitive
+					&& returnValueSwitched.getLrValue().getValue() instanceof IntegerLiteral
+					&& "0".equals(((IntegerLiteral) returnValueSwitched.getLrValue().getValue()).getValue())) {
+				returnValueSwitched
+						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType));
+
 			}
 
 			if (outParams.length == 0) {
@@ -544,7 +545,7 @@ public class FunctionHandler {
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
 
-				resultBuilder.setLrVal(returnValueSwitched.getLrValue());
+				resultBuilder.setLrValue(returnValueSwitched.getLrValue());
 
 				resultBuilder.addAllExceptLrValue(returnValueSwitched);
 
@@ -631,15 +632,15 @@ public class FunctionHandler {
 			final IASTInitializerClause inParam = inParams[i];
 			final ExpressionResult in = StandardFunctionHandler.dispatchAndConvertFunctionArgument(main, loc, inParam);
 
-			if (in.mLrVal.getValue() == null) {
+			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 
 			if (isCalleeSignatureNotYetDetermined) {
 				// add the current parameter to the procedure's signature
-				calleeProcInfo.updateCFunction(null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
-						false);
+				calleeProcInfo.updateCFunction(null, null,
+						new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i), false);
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				CType expectedParamType =
@@ -661,7 +662,7 @@ public class FunctionHandler {
 				// implicit casts
 				main.mCHandler.convert(loc, in, expectedParamType);
 			}
-			translatedParams.add(in.mLrVal.getValue());
+			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 		}
 
@@ -880,9 +881,9 @@ public class FunctionHandler {
 					final HeapLValue hlv = LRValueFactory.constructHeapLValue(main, llv.getValue(), cvar, null);
 
 					// convention (or rather an insight?): if a variable is put on heap or not, its ctype stays the same
-					final ExpressionResult assign =
-							((CHandler) main.mCHandler).makeAssignment(main, igLoc, hlv, Collections.emptyList(),
-									new ExpressionResultBuilder().setLrVal(new RValue(rhsId, cvar)).build(), paramDec);
+					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, hlv,
+							Collections.emptyList(),
+							new ExpressionResultBuilder().setLrValue(new RValue(rhsId, cvar)).build(), paramDec);
 
 					resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc, paramDec));
 					resultBuilder.addAllExceptLrValue(assign);
@@ -1053,7 +1054,7 @@ public class FunctionHandler {
 				functionCallExpressionResultBuilder.getAuxVars());
 
 		if (returnedValue != null) {
-			functionCallExpressionResultBuilder.setLrVal(new RValue(returnedValue, returnCType));
+			functionCallExpressionResultBuilder.setLrValue(new RValue(returnedValue, returnCType));
 		}
 
 		return functionCallExpressionResultBuilder.build();

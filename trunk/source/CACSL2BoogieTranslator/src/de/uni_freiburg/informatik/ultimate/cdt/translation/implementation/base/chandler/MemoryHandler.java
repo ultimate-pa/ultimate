@@ -885,7 +885,7 @@ public class MemoryHandler {
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.mLrVal.getValue(), ignoreLoc);
+				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
 			} else {
 				// convert to smallest
 				final List<ReadWriteDefinition> rwds =
@@ -893,7 +893,7 @@ public class MemoryHandler {
 				// PRIMITIVE primitive = getCprimitiveThatFitsBest(rwds);
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
 				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
-				convertedValue = exprRes.mLrVal.getValue();
+				convertedValue = exprRes.getLrValue().getValue();
 			}
 			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc, hda.getVariableLHS(),
 					new Expression[] { currentPtr });
@@ -999,7 +999,7 @@ public class MemoryHandler {
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
 		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
-		final Expression convertedValue = exprRes.mLrVal.getValue();
+		final Expression convertedValue = exprRes.getLrValue().getValue();
 
 		final List<Statement> loopBody =
 				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, convertedValue, procName, hook);
@@ -2160,13 +2160,13 @@ public class MemoryHandler {
 		if (bitvectorConversionNeeded) {
 			final IdentifierExpression returnedValueIdExpr = auxvar.getExp();
 
-			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
+			resultBuilder.setLrValue(new RValue(returnedValueIdExpr, resultType));
 
 			final ExpressionResult intermediateResult = resultBuilder.build();
 			mExpressionTranslation.convertIntToInt(loc, intermediateResult,
 					(CPrimitive) resultType.getUnderlyingType());
 			resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult)
-					.setLrVal(intermediateResult.getLrValue());
+					.setLrValue(intermediateResult.getLrValue());
 
 			final AuxVarInfo bvReturnedValueAux =
 					AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MEMREAD);
@@ -2176,20 +2176,20 @@ public class MemoryHandler {
 			final VariableLHS[] bvlhss = new VariableLHS[] { bvReturnedValueAux.getLhs() };
 			final AssignmentStatement as =
 					// mProcedureManager.constructAssignmentStatement(loc, bvlhss, new Expression[] {
-					// result.mLrVal.getValue() });
+					// result.getLrValue().getValue() });
 					StatementFactory.constructAssignmentStatement(loc, bvlhss,
-							new Expression[] { resultBuilder.getLrVal().getValue() });
+							new Expression[] { resultBuilder.getLrValue().getValue() });
 			// stmt.add(as);
 			resultBuilder.addStatement(as);
 			// TODO is it correct to use returnedValueAstType here?
-			// result.mLrVal = new RValue(bvReturnedValueAux.getExp(), resultType);
-			resultBuilder.resetLrVal(new RValue(bvReturnedValueAux.getExp(), resultType));
+			// result.setLrValue(new RValue(bvReturnedValueAux.getExp(), resultType));
+			resultBuilder.resetLrValue(new RValue(bvReturnedValueAux.getExp(), resultType));
 		} else {
 			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
 					auxvar.getExp().getIdentifier(),
 					new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
-			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
+			resultBuilder.setLrValue(new RValue(returnedValueIdExpr, resultType));
 		}
 		// return result;
 		return resultBuilder.build();

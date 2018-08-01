@@ -615,7 +615,7 @@ public class PostProcessor {
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
 						StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
-								new Expression[] { firstElseRex.mLrVal.getValue() });
+								new Expression[] { firstElseRex.getLrValue().getValue() });
 				firstElseStmt.add(assignment);
 			}
 			IfStatement currentIfStmt = null;
@@ -633,7 +633,7 @@ public class PostProcessor {
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
 							StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
-									new Expression[] { currentRex.mLrVal.getValue() });
+									new Expression[] { currentRex.getLrValue().getValue() });
 					newStmts.add(assignment);
 				}
 

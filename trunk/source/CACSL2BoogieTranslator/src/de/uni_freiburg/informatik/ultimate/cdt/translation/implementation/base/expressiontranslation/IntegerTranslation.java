@@ -493,7 +493,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void convertToIntegerType(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
-		final CPrimitive oldType = (CPrimitive) operand.mLrVal.getCType().getUnderlyingType();
+		final CPrimitive oldType = (CPrimitive) operand.getLrValue().getCType().getUnderlyingType();
 		if (oldType.isIntegerType()) {
 			final Expression newExpression;
 			if (mTypeSizes.isUnsigned(resultType)) {
@@ -502,9 +502,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 						&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 					// required for sound Nutz transformation
 					// (see examples/programs/regression/c/NutzTransformation03.c)
-					oldWrappedIfNeeded = applyWraparound(loc, mTypeSizes, oldType, operand.mLrVal.getValue());
+					oldWrappedIfNeeded = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
 				} else {
-					oldWrappedIfNeeded = operand.mLrVal.getValue();
+					oldWrappedIfNeeded = operand.getLrValue().getValue();
 				}
 				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
 					final BigInteger maxValuePlusOne =
@@ -533,9 +533,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 				if (mTypeSizes.isUnsigned(oldType)) {
 					// required for sound Nutz transformation
 					// (see examples/programs/regression/c/NutzTransformation01.c)
-					oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.mLrVal.getValue());
+					oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
 				} else {
-					oldWrappedIfUnsigned = operand.mLrVal.getValue();
+					oldWrappedIfUnsigned = operand.getLrValue().getValue();
 				}
 				if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
 						|| (mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
@@ -565,7 +565,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 			}
 			final RValue newRValue = new RValue(newExpression, resultType, false, false);
-			operand.mLrVal = newRValue;
+			operand.setLrValue(newRValue);
 		} else {
 			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
@@ -573,11 +573,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	public void oldConvertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
 		assert newType.isIntegerType();
-		assert rexp.mLrVal.getCType() instanceof CPointer;
+		assert rexp.getLrValue().getCType() instanceof CPointer;
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
 			super.convertPointerToInt(loc, rexp, newType);
 		} else {
-			final Expression pointerExpression = rexp.mLrVal.getValue();
+			final Expression pointerExpression = rexp.getLrValue().getValue();
 			final Expression intExpression;
 			if (mTypeSizes.useFixedTypeSizes()) {
 				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
@@ -592,7 +592,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				intExpression = MemoryHandler.getPointerOffset(pointerExpression, loc);
 			}
 			final RValue rValue = new RValue(intExpression, newType, false, true);
-			rexp.mLrVal = rValue;
+			rexp.setLrValue(rValue);
 		}
 	}
 
@@ -600,7 +600,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
 			super.convertIntToPointer(loc, rexp, newType);
 		} else {
-			final Expression intExpression = rexp.mLrVal.getValue();
+			final Expression intExpression = rexp.getLrValue().getValue();
 			final Expression baseAdress;
 			final Expression offsetAdress;
 			if (mTypeSizes.useFixedTypeSizes()) {
@@ -618,7 +618,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression pointerExpression =
 					MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.mLrVal = rValue;
+			rexp.setLrValue(rValue);
 		}
 	}
 
@@ -903,8 +903,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		final RValue oldRValue = (RValue) rexp.mLrVal;
-		rexp.mLrVal = new RValue(oldRValue.getValue(), newType);
+		final RValue oldRValue = (RValue) rexp.getLrValue();
+		rexp.setLrValue(new RValue(oldRValue.getValue(), newType));
 	}
 
 	@Override
@@ -920,13 +920,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
-		final Expression oldExpression = rexp.mLrVal.getValue();
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType(), newType);
+		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression },
 				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.mLrVal = rValue;
+		rexp.setLrValue(rValue);
 	}
 
 	@Override

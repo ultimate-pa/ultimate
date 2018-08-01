@@ -44,19 +44,8 @@ public class ExpressionResultBuilder {
 	private LRValue mLrVal;
 	private final List<Declaration> mDeclarations = new ArrayList<>();
 	private final List<Overapprox> mOverappr = new ArrayList<>();
-//	private final Map<VariableDeclaration, ILocation> mAuxVars = new LinkedHashMap<>();
 	private final Set<AuxVarInfo> mAuxVars = new HashSet<>();
 	private final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
-
-
-//	public ExpressionResultBuilder(final ExpressionResult assignmentExprRes) {
-//		mStatements.addAll(assignmentExprRes.mStmt);
-//		mDeclarations.addAll(assignmentExprRes.mDecl);
-//		mOverappr.addAll(assignmentExprRes.mOverappr);
-//		mAuxVars.putAll(assignmentExprRes.mAuxVars);
-//		mNeighbourUnionFields.addAll(assignmentExprRes.mOtherUnionFields);
-//		mLrVal = assignmentExprRes.mLrVal;
-//	}
 
 	/**
 	 * Creates an ExpressionResultBuidler with empty fields.
@@ -74,13 +63,21 @@ public class ExpressionResultBuilder {
 		mStatements.addAll(original.mStatements);
 		mDeclarations.addAll(original.mDeclarations);
 		mOverappr.addAll(original.mOverappr);
-//		mAuxVars.putAll(original.mAuxVars);
 		mAuxVars.addAll(original.mAuxVars);
 		mNeighbourUnionFields.addAll(original.mNeighbourUnionFields);
-		mLrVal = original.mLrVal;
+		mLrVal = original.getLrValue();
 	}
 
-	public ExpressionResultBuilder setLrVal(final LRValue val) {
+	public ExpressionResultBuilder(final ExpressionResult er) {
+		mStatements.addAll(er.getStatements());
+		mDeclarations.addAll(er.getDeclarations());
+		mOverappr.addAll(er.getOverapprs());
+		mAuxVars.addAll(er.getAuxVars());
+		mNeighbourUnionFields.addAll(er.getNeighbourUnionFields());
+		mLrVal = er.getLrValue();
+	}
+
+	public ExpressionResultBuilder setLrValue(final LRValue val) {
 		if (mLrVal != null) {
 			throw new IllegalStateException("LRValue has already been set");
 		}
@@ -92,6 +89,7 @@ public class ExpressionResultBuilder {
 		mStatements.add(stm);
 		return this;
 	}
+
 	public <T extends Statement> ExpressionResultBuilder addStatements(final Collection<T> stms) {
 		mStatements.addAll(stms);
 		return this;
@@ -101,6 +99,7 @@ public class ExpressionResultBuilder {
 		mDeclarations.add(stm);
 		return this;
 	}
+
 	public <T extends Declaration> ExpressionResultBuilder addDeclarations(final Collection<T> stms) {
 		mDeclarations.addAll(stms);
 		return this;
@@ -110,10 +109,12 @@ public class ExpressionResultBuilder {
 		mOverappr.add(oa);
 		return this;
 	}
+
 	public ExpressionResultBuilder addOverapprox(final Collection<Overapprox> oas) {
 		mOverappr.addAll(oas);
 		return this;
 	}
+
 	public ExpressionResultBuilder addAuxVar(final AuxVarInfo auxvar) {
 		mAuxVars.add(auxvar);
 		return this;
@@ -124,19 +125,11 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-//	public ExpressionResultBuilder putAuxVar(final VariableDeclaration avDecl, final ILocation avLoc) {
-//		mAuxVars.put(avDecl, avLoc);
-//		return this;
-//	}
-//	public ExpressionResultBuilder putAuxVars(final Map<VariableDeclaration, ILocation> auxVars) {
-//		mAuxVars.putAll(auxVars);
-//		return this;
-//	}
-
 	public ExpressionResultBuilder addNeighbourUnionField(final ExpressionResult unionField) {
 		mNeighbourUnionFields.add(unionField);
 		return this;
 	}
+
 	public ExpressionResultBuilder addNeighbourUnionFields(final Collection<ExpressionResult> unionFields) {
 		mNeighbourUnionFields.addAll(unionFields);
 		return this;
@@ -153,11 +146,24 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	/**
+	 * Add all statements, declarations, auxVars and overapproximations of the supplied {@link ExpressionResult}s to
+	 * this builder.
+	 */
+	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult... resExprs) {
+		for (final ExpressionResult resExpr : resExprs) {
+			addAllExceptLrValue(resExpr);
+		}
+		return this;
+	}
+
 	public ExpressionResultBuilder addAllExceptLrValueAndStatements(final ExpressionResult exprResult) {
 		addDeclarations(exprResult.getDeclarations());
 		addOverapprox(exprResult.getOverapprs());
 		addAuxVars(exprResult.getAuxVars());
-		addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
+		if (exprResult.mOtherUnionFields != null && !exprResult.mOtherUnionFields.isEmpty()) {
+			addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
+		}
 		return this;
 	}
 
@@ -165,7 +171,7 @@ public class ExpressionResultBuilder {
 		return new ExpressionResult(mStatements, mLrVal, mDeclarations, mAuxVars, mOverappr, mNeighbourUnionFields);
 	}
 
-	public LRValue getLrVal() {
+	public LRValue getLrValue() {
 		return mLrVal;
 	}
 
@@ -181,7 +187,7 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mOverappr);
 	}
 
-//	public Map<VariableDeclaration, ILocation> getAuxVars() {
+	// public Map<VariableDeclaration, ILocation> getAuxVars() {
 	public Set<AuxVarInfo> getAuxVars() {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
@@ -190,18 +196,18 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mNeighbourUnionFields);
 	}
 
-	public void resetLrVal(final LRValue rVal) {
+	public void resetLrValue(final LRValue rVal) {
 		if (mLrVal == null) {
 			throw new IllegalStateException("use setLrVal instead");
 		}
 		mLrVal = rVal;
 	}
 
-	public void setOrResetLrVal(final LRValue lrVal) {
+	public void setOrResetLrValue(final LRValue lrVal) {
 		if (mLrVal == null) {
-			setLrVal(lrVal);
+			setLrValue(lrVal);
 		} else {
-			resetLrVal(lrVal);
+			resetLrValue(lrVal);
 		}
 
 	}
@@ -215,4 +221,5 @@ public class ExpressionResultBuilder {
 		mStatements.clear();
 		mStatements.addAll(newStatements);
 	}
+
 }

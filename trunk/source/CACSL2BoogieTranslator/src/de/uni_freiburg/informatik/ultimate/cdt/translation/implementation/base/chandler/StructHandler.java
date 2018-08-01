@@ -104,7 +104,7 @@ public class StructHandler {
 		final List<ExpressionResult> unionFieldToCType = fieldOwner.mOtherUnionFields == null ? new ArrayList<>()
 				: new ArrayList<>(fieldOwner.mOtherUnionFields);
 
-		CType foType = fieldOwner.mLrVal.getCType().getUnderlyingType();
+		CType foType = fieldOwner.getLrValue().getCType().getUnderlyingType();
 
 		foType = (node.isPointerDereference() ? ((CPointer) foType).mPointsToType : foType);
 
@@ -114,14 +114,14 @@ public class StructHandler {
 
 		if (node.isPointerDereference()) {
 			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, loc, node);
-			final Expression address = rFieldOwnerRex.mLrVal.getValue();
+			final Expression address = rFieldOwnerRex.getLrValue().getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt,
-					LRValueFactory.constructHeapLValue(main, address, rFieldOwnerRex.mLrVal.getCType(), null),
+					LRValueFactory.constructHeapLValue(main, address, rFieldOwnerRex.getLrValue().getCType(), null),
 					rFieldOwnerRex.mDecl, rFieldOwnerRex.mAuxVars, rFieldOwnerRex.mOverappr);
 		}
 
-		if (fieldOwner.mLrVal instanceof HeapLValue) {
-			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.mLrVal;
+		if (fieldOwner.getLrValue() instanceof HeapLValue) {
+			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.getLrValue();
 
 			// TODO: different calculations for unions
 			final Expression startAddress = fieldOwnerHlv.getAddress();
@@ -147,13 +147,13 @@ public class StructHandler {
 				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
 						(CUnion) cStructType, fieldOwnerHlv, node));
 			}
-		} else if (fieldOwner.mLrVal instanceof RValue) {
-			final RValue rVal = (RValue) fieldOwner.mLrVal;
+		} else if (fieldOwner.getLrValue() instanceof RValue) {
+			final RValue rVal = (RValue) fieldOwner.getLrValue();
 			final StructAccessExpression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(),
 					field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
-			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
+			final LocalLValue lVal = (LocalLValue) fieldOwner.getLrValue();
 			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = new LocalLValue(slhs, cFieldType, bi);
@@ -196,7 +196,7 @@ public class StructHandler {
 			if (fieldOwner instanceof LocalLValue) {
 				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
 						((LocalLValue) fieldOwner).getLhs(), neighbourField);
-				builder.setLrVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
+				builder.setLrValue(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
 				final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType,
@@ -209,7 +209,7 @@ public class StructHandler {
 				final StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
 						MemoryHandler.getPointerBaseAddress(unionAddress, loc), summedOffset, loc);
 
-				builder.setLrVal(LRValueFactory.constructHeapLValue(main, neighbourFieldAddress,
+				builder.setLrValue(LRValueFactory.constructHeapLValue(main, neighbourFieldAddress,
 						foType.getFieldType(neighbourField), null));
 
 			}
@@ -250,9 +250,9 @@ public class StructHandler {
 		// overappr.addAll(call.mOverappr);
 		resultBuilder.addAllExceptLrValue(call);
 		// final ExpressionResult result =
-		// new ExpressionResult(stmt, new RValue(call.mLrVal.getValue(), resultType),
+		// new ExpressionResult(stmt, new RValue(call.getLrValue().getValue(), resultType),
 		// decl, auxVars, overappr);
-		resultBuilder.setLrVal(new RValue(call.mLrVal.getValue(), resultType));
+		resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));
 		// return result;
 		return resultBuilder.build();
 	}

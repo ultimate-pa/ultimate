@@ -87,7 +87,7 @@ public class ExpressionResult extends Result {
 	/**
 	 * the LRValue may contain the contents of a memory cell or its address or both
 	 */
-	public LRValue mLrVal;
+	private LRValue mLrVal;
 	/**
 	 * Declaration list. Some translations need to declare some temporary variables, which we do here.
 	 */
@@ -105,10 +105,9 @@ public class ExpressionResult extends Result {
 	public final Set<AuxVarInfo> mAuxVars;
 
 	/**
-	 * We store off-heap unions as Boogie structs.
-	 * When we write a field of an off-heap union, we must havoc all the other "neighbour" fields of the union.
-	 * If this ExpressionResult represents a field in an off-heap union then this member contains information about the
-	 * union fields that must be havocced if this union field is written.
+	 * We store off-heap unions as Boogie structs. When we write a field of an off-heap union, we must havoc all the
+	 * other "neighbour" fields of the union. If this ExpressionResult represents a field in an off-heap union then this
+	 * member contains information about the union fields that must be havocced if this union field is written.
 	 */
 	public final List<ExpressionResult> mOtherUnionFields;
 
@@ -137,8 +136,7 @@ public class ExpressionResult extends Result {
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
-			final Set<AuxVarInfo> auxVars,
-			final List<Overapprox> overapproxList) {
+			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
 		this(stmt, lrVal, decl, auxVars, overapproxList, Collections.emptyList());
 	}
 
@@ -153,13 +151,11 @@ public class ExpressionResult extends Result {
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal) {
-		this(stmt, lrVal, new ArrayList<Declaration>(),
-				new LinkedHashSet<AuxVarInfo>(),
-				new ArrayList<Overapprox>(), Collections.emptyList());
+		this(stmt, lrVal, new ArrayList<Declaration>(), new LinkedHashSet<AuxVarInfo>(), new ArrayList<Overapprox>(),
+				Collections.emptyList());
 	}
 
-	public ExpressionResult(final LRValue lrVal,
-			final Set<AuxVarInfo> auxVars) {
+	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars) {
 		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars);
 	}
 
@@ -183,7 +179,7 @@ public class ExpressionResult extends Result {
 				builder.addNeighbourUnionFields(resExpr.mOtherUnionFields);
 			}
 		}
-		builder.setLrVal(null); // just for being explicit
+		builder.setLrValue(null); // just for being explicit
 		return builder.build();
 	}
 
@@ -235,11 +231,11 @@ public class ExpressionResult extends Result {
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
-				newValue = (RValue) rex.mLrVal;
+				newValue = (RValue) rex.getLrValue();
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
-				newValue = (RValue) rex.mLrVal;
+				newValue = (RValue) rex.getLrValue();
 			} else if (underlyingType instanceof CArray) {
 				final CArray cArray = (CArray) underlyingType;
 				result = copyStmtDeclAuxvarOverapprox(this);
@@ -250,7 +246,7 @@ public class ExpressionResult extends Result {
 				final ExpressionResult rex = readStructFromHeap(main, structHandler, memoryHandler, loc,
 						hlv.getAddress(), (CStruct) underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
-				newValue = (RValue) rex.mLrVal;
+				newValue = (RValue) rex.getLrValue();
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else if (underlyingType instanceof CFunction) {
@@ -314,14 +310,14 @@ public class ExpressionResult extends Result {
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
 						loc, i, structOnHeapAddress, structType, hook);
-				fieldLRVal = fieldRead.mLrVal;
+				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
 						loc, i, structOnHeapAddress, structType, hook);
-				fieldLRVal = fieldRead.mLrVal;
+				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
 				newAuxVars.addAll(fieldRead.getAuxVars());
@@ -331,7 +327,7 @@ public class ExpressionResult extends Result {
 						structOnHeapAddress, (CArray) underlyingType, hook);
 				final ExpressionResult xres = xres1;
 
-				fieldLRVal = xres.mLrVal;
+				fieldLRVal = xres.getLrValue();
 				newStmt.addAll(xres.mStmt);
 				newDecl.addAll(xres.mDecl);
 				newAuxVars.addAll(xres.getAuxVars());
@@ -340,7 +336,7 @@ public class ExpressionResult extends Result {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
 						loc, i, structOnHeapAddress, structType, hook);
-				fieldLRVal = fieldRead.mLrVal;
+				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
 				newAuxVars.addAll(fieldRead.getAuxVars());
@@ -359,7 +355,7 @@ public class ExpressionResult extends Result {
 				final ExpressionResult fieldRead = readStructFromHeap(main, structHandler, memoryHandler, loc,
 						innerStructAddress, (CStruct) underlyingType, hook);
 
-				fieldLRVal = fieldRead.mLrVal;
+				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
 				newAuxVars.addAll(fieldRead.getAuxVars());
@@ -378,10 +374,9 @@ public class ExpressionResult extends Result {
 			}
 
 		}
-		final StructConstructor sc =
-				ExpressionFactory.constructStructConstructor(loc,
-						fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
-						fieldValues.toArray(new Expression[fieldValues.size()]));
+		final StructConstructor sc = ExpressionFactory.constructStructConstructor(loc,
+				fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
+				fieldValues.toArray(new Expression[fieldValues.size()]));
 
 		final ExpressionResult result = new ExpressionResult(newStmt, new RValue(sc, structType), newDecl, newAuxVars,
 				mOverappr, mOtherUnionFields);
@@ -389,8 +384,8 @@ public class ExpressionResult extends Result {
 	}
 
 	/**
-	 * Copy the contents of a given on-heap array (given via address parameter) in to a fresh Boogie array.
-	 * Introduces a fresh auxvar for the Boogie Array, which is the LRValue of the returned expression result.
+	 * Copy the contents of a given on-heap array (given via address parameter) in to a fresh Boogie array. Introduces a
+	 * fresh auxvar for the Boogie Array, which is the LRValue of the returned expression result.
 	 *
 	 * @param main
 	 * @param structHandler
@@ -450,10 +445,10 @@ public class ExpressionResult extends Result {
 					readRex = memoryHandler.getReadCall(main, readAddress, arrayType.getValueType(), hook);
 				}
 				builder.addAllExceptLrValue(readRex);
-				if (builder.getLrVal() == null) {
-					builder.setLrVal(readRex.getLrValue());
+				if (builder.getLrValue() == null) {
+					builder.setLrValue(readRex.getLrValue());
 				} else {
-					builder.resetLrVal(readRex.getLrValue());
+					builder.resetLrValue(readRex.getLrValue());
 				}
 
 				final ArrayLHS arrayAccLhs = ExpressionFactory.constructNestedArrayLHS(loc, newArrayAuxvar.getLhs(),
@@ -461,10 +456,8 @@ public class ExpressionResult extends Result {
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc,
 						new LocalLValue(arrayAccLhs, arrayType.getValueType(), null), Collections.emptyList(),
-							builder.build(), hook);
-				builder = new ExpressionResultBuilder()
-						.addAllExceptLrValue(assRex)
-						.setLrVal(assRex.getLrValue());
+						builder.build(), hook);
+				builder = new ExpressionResultBuilder().addAllExceptLrValue(assRex).setLrValue(assRex.getLrValue());
 
 				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), valueTypeSize,
@@ -474,13 +467,16 @@ public class ExpressionResult extends Result {
 			throw new UnsupportedSyntaxException(loc,
 					"we need to generalize this to nested and/or variable length arrays");
 		}
-		builder.setOrResetLrVal(resultValue);
+		builder.setOrResetLrValue(resultValue);
 		return builder.build();
 	}
 
 	/**
 	 * Add all declaration, statements, auxvars, etc. from another ResultExpression.
+	 *
+	 * @deprecated Use {@link ExpressionResultBuilder} instead.
 	 */
+	@Deprecated
 	public void addAll(final ExpressionResult re) {
 		mDecl.addAll(re.mDecl);
 		mStmt.addAll(re.mStmt);
@@ -580,11 +576,10 @@ public class ExpressionResult extends Result {
 	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
 	public void rexBoolToIntIfNecessary(final ILocation loc, final ExpressionTranslation expressionTranslation) {
 		if (mLrVal == null) {
-			/* This ExpressionResult does not have a value (for example it may be the translation of a call to a void
-			 * function).
-			 * Void values like this are allowed for example in something like <code>0 ? foo() : 0</code> where foo is
-			 * void.
-			 * Do nothing here.
+			/*
+			 * This ExpressionResult does not have a value (for example it may be the translation of a call to a void
+			 * function). Void values like this are allowed for example in something like <code>0 ? foo() : 0</code>
+			 * where foo is void. Do nothing here.
 			 */
 			return;
 		}
@@ -608,8 +603,6 @@ public class ExpressionResult extends Result {
 
 		return sb.toString();
 	}
-
-
 
 	public LRValue getLrValue() {
 		return mLrVal;
@@ -640,12 +633,11 @@ public class ExpressionResult extends Result {
 	}
 
 	/**
-	 * Converts an array to a pointer, if applicable.
-	 * Triggers that the array is moved on heap, if necessary.
-	 * Returns an ExpressionResult with the same side effects and the same value except the value has pointer type.
+	 * Converts an array to a pointer, if applicable. Triggers that the array is moved on heap, if necessary. Returns an
+	 * ExpressionResult with the same side effects and the same value except the value has pointer type.
 	 *
 	 * (this can be used for example for function parameters, when an array is passed by reference (which is the
-	 *  standard case).)
+	 * standard case).)
 	 *
 	 * @param main
 	 * @param loc
@@ -656,11 +648,19 @@ public class ExpressionResult extends Result {
 		if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(this);
-			resultBuilder.setLrVal(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal, hook));
+			resultBuilder.setLrValue(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal, hook));
 			return resultBuilder.build();
-		} else {
-			return this;
 		}
+		return this;
+	}
+
+	/**
+	 * Use {@link ExpressionResultBuilder} instead.
+	 */
+	@Deprecated
+	public void setLrValue(final LRValue val) {
+		mLrVal = val;
+
 	}
 
 }
