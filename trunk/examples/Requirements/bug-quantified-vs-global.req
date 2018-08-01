@@ -1,0 +1,14 @@
+// triggers translation bug
+// java.lang.AssertionError: Incorrect DeclarationInformation of D'. Expected: QUANTIFIED   Found: GLOBAL
+
+Input A IS bool
+Input B IS bool
+Input C IS bool
+Input D IS bool
+CONST T IS 50.0
+
+ID1: Globally, it is always the case that if "B && A" holds, then "D" holds after at most "T" time units
+ID2: Globally, it is always the case that if "B && !A" holds, then "!D" holds after at most "T " time units
+ID3: Globally, it is always the case that if "C && A" holds, then "D" holds after at most "T" time units
+ID4: Globally, it is always the case that if "C && !A" holds, then "!D" holds after at most "T" time units
+
