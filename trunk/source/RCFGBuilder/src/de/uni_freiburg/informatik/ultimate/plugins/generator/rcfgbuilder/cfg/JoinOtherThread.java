@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -38,17 +39,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOtherThread<IcfgLocation, ForkOtherThread> {
 
 	private static final long serialVersionUID = 6045590312545516354L;
-	
+
 	protected JoinStatement mJoinStatement;
 	protected String mPrettyPrintedStatements;
 
-	JoinOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, 
+	JoinOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final JoinStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mJoinStatement = st;
-		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);		
+		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
-	
+
 	@Visualizable
 	public JoinStatement getJoinStatement() {
 		return mJoinStatement;
@@ -68,5 +69,11 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	@Override
 	public UnmodifiableTransFormula getAssignmentOfJoin() {
 		return getTransformula();
+	}
+
+	@Override
+	public IIcfgJoinTransitionCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

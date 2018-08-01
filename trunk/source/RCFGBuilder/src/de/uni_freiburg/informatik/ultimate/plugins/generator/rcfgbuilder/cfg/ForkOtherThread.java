@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -37,24 +38,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 /**
  * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only
  * the execution from the position directly before the fork statement to the initial position of the forked procedure. A
- * ForkOtherThread object provides three auxiliary TransitionFormulas. Two of them assign the global variables th_id_X 
+ * ForkOtherThread object provides three auxiliary TransitionFormulas. Two of them assign the global variables th_id_X
  * and th_X_inUse. The other one shows the actual fork statement of the code.
- * 
+ *
  * @author lars.nitzke@outlook.com
  */
 public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOtherThread<IcfgLocation> {
-	
+
 	private static final long serialVersionUID = 5866537291870187570L;
 	protected ForkStatement mForkStatement;
 	protected String mPrettyPrintedStatements;
 
-	ForkOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, 
+	ForkOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ForkStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mForkStatement = st;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
-	
+
 	@Visualizable
 	public ForkStatement getForkStatement() {
 		return mForkStatement;
@@ -73,5 +74,11 @@ public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOth
 	@Override
 	public UnmodifiableTransFormula getLocalVarsAssignment() {
 		return getTransformula();
+	}
+
+	@Override
+	public IIcfgForkTransitionCurrentThread<IcfgLocation> getCorrespondingIIcfgForkTransitionCurrentThread() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
