@@ -1,7 +1,13 @@
+; ==============================================================================
 ; Test identification of basic term types
+; ==============================================================================
+
 (set-logic UFLIA)
 
+; ==============================================================================
 ; MoNatDiff specific declarations
+; ==============================================================================
+
 (declare-sort SetOfInt 0)
 (declare-fun element (Int SetOfInt) Bool)
 (declare-fun subsetInt (SetOfInt SetOfInt) Bool)

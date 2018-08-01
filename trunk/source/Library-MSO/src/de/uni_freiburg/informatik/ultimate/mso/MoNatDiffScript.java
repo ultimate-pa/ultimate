@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -72,7 +73,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/*
+ * Questions:
+ * 1) How to deal with constant values larger than max integer in constantTermToInt()?
+ * 2) How to deal with empty symbol in MoNatDiffAlphabetSymbol?
+ */
 public class MoNatDiffScript extends NoopScript {
+
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataLibraryServices;
 	private final ILogger mLogger;
@@ -85,21 +92,19 @@ public class MoNatDiffScript extends NoopScript {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		mLogger.info("hello world, logic set to " + logic);
 		super.setLogic(logic);
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		mLogger.info("hello world, logic set to " + logic);
 		super.setLogic(logic);
 	}
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		// TODO Auto-generated method stub
-		
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term);
+
+		//NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term);
 
 		return null;
 	}
@@ -109,12 +114,129 @@ public class MoNatDiffScript extends NoopScript {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
+	/*
+	 * Traverses formula in post order.
+	 * TODO: Try with AffineRelation
+	 */
+	/*
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
+		mLogger.info("term: " + term);
+		SplittedTerm splittedTerm = MoNatDiffUtils.splitTerm(term);
+
+		if (splittedTerm.operator instanceof FunctionSymbol
+				&& ((FunctionSymbol) splittedTerm.operator).getName().matches("<|<=|element|subsetInt|strictSubsetInt"))
+			return atomicFormulaToAutomaton(splittedTerm);
+
+		for (int i = 0; i < splittedTerm.terms.length; i++)
+			traversePostOrder(splittedTerm.terms[i]);
+
+		return null;
+	}
+	*/
+
+	/*
+	 * TODO: Comment.
+	 */
+	/*
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> atomicFormulaToAutomaton(SplittedTerm splittedTerm) {
+		FunctionSymbol functionSymbol = (FunctionSymbol) splittedTerm.operator;
+		
+		// TODO: Check if length of terms == 2.
+		
+		Term lhs = splittedTerm.terms[0];
+		Term rhs = splittedTerm.terms[1];
+		
+		
+
+		if (functionSymbol.getName().equals("<") && MoNatDiffUtils.isIntConstant(rhs)) {
+			int c = MoNatDiffUtils.constantTermToInt(rhs);
+
+			if (MoNatDiffUtils.isIntVariable(lhs)) {
+				mLogger.info("Construct strictIneqAutomaton x < c");
+				return MoNatDiffAutomatonFactory.strictIneqAutomaton(lhs, c, mAutomataLibraryServices);
+			}
+
+			if (MoNatDiffUtils.isIntVariableMinusIntVariable(lhs)) {
+				mLogger.info("Construct strictIneqAutomaton x-y < c");
+				Term[] lhsTerms = MoNatDiffUtils.splitTerm(lhs).terms;
+				return MoNatDiffAutomatonFactory.strictIneqAutomaton(lhsTerms[0], lhsTerms[1], c,
+						mAutomataLibraryServices);
+			}
+
+			if (MoNatDiffUtils.isNegatedIntVariable(lhs)) {
+				mLogger.info("Construct strictNegIneqAutomaton -x < c");
+				Term[] lhsTerms = MoNatDiffUtils.splitTerm(lhs).terms;
+				return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(lhsTerms[0], c, mAutomataLibraryServices);
+			}
+		}
+
+		if (functionSymbol.getName().equals("<=") && MoNatDiffUtils.isIntConstant(rhs)) {
+			int c = MoNatDiffUtils.constantTermToInt(rhs);
+
+			if (MoNatDiffUtils.isIntVariable(lhs)) {
+				mLogger.info("Construct nonStrictIneqAutomaton x <= c");
+				return MoNatDiffAutomatonFactory.nonStrictIneqAutomaton(lhs, c, mAutomataLibraryServices);
+			}
+
+			if (MoNatDiffUtils.isIntVariableMinusIntVariable(lhs)) {
+				mLogger.info("Construct nonStrictIneqAutomaton x-y <= c");
+				Term[] lhsTerms = MoNatDiffUtils.splitTerm(lhs).terms;
+				return MoNatDiffAutomatonFactory.nonStrictIneqAutomaton(lhsTerms[0], lhsTerms[1], c,
+						mAutomataLibraryServices);
+			}
+
+			if (MoNatDiffUtils.isNegatedIntVariable(lhs)) {
+				mLogger.info("Construct nonStrictNegIneqAutomaton -x <= c");
+				Term[] lhsTerms = MoNatDiffUtils.splitTerm(lhs).terms;
+				return MoNatDiffAutomatonFactory.nonStrictNegIneqAutomaton(lhsTerms[0], c, mAutomataLibraryServices);
+			}
+		}
+
+		// TODO: Check sort of parameters for subset and strictSubset.
+		
+		if (functionSymbol.getName().equals("strictSubsetInt")) {
+			mLogger.info("Construct strictSubsetAutomaton X strictSubset Y");
+			return MoNatDiffAutomatonFactory.strictSubsetAutomaton(lhs, rhs, mAutomataLibraryServices);
+		}
+
+		if (functionSymbol.getName().equals("subsetInt")) {
+			mLogger.info("Construct nonStrictSubsetAutomaton X subset Y");
+			return MoNatDiffAutomatonFactory.nonStrictSubsetAutomaton(lhs, rhs, mAutomataLibraryServices);
+		}
+
+		if (functionSymbol.getName().equals("element") && MoNatDiffUtils.isSetOfIntVariable(rhs)) {
+
+			if (MoNatDiffUtils.isIntConstant(lhs)) {
+				mLogger.info("Construct constElementAutomaton c element X");
+				return MoNatDiffAutomatonFactory.constElementAutomaton(MoNatDiffUtils.constantTermToInt(lhs), rhs,
+						mAutomataLibraryServices);
+			}
+			
+			if (MoNatDiffUtils.isIntVariable(lhs))
+			{
+				mLogger.info("Construct elementAutomaton x element Y");
+				return MoNatDiffAutomatonFactory.elementAutomaton(lhs, rhs, mAutomataLibraryServices);
+			}
+
+			if (MoNatDiffUtils.isIntVariablePlusIntConstant(lhs))
+			{
+				mLogger.info("Construct elementAutomaton x+c element Y");
+				Term[] lhsTerms = MoNatDiffUtils.splitTerm(lhs).terms;
+				return MoNatDiffAutomatonFactory.elementAutomaton(lhsTerms[0],
+						MoNatDiffUtils.constantTermToInt(lhsTerms[1]), rhs, mAutomataLibraryServices);
+			}
+		}
+
+		throw new IllegalArgumentException("Given input is not valid in MoNatDiff logic.");
+	}
+	*/
+
 	private void checkEmptiness(NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
 		try {
-			IsEmpty<MoNatDiffAlphabetSymbol, String> emptinessCheck =
-					new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibraryServices, automaton);
-			
+			IsEmpty<MoNatDiffAlphabetSymbol, String> emptinessCheck = new IsEmpty<MoNatDiffAlphabetSymbol, String>(
+					mAutomataLibraryServices, automaton);
+
 			if (emptinessCheck.getResult() == false) {
 				mLogger.info("automaton is not empty");
 
@@ -128,120 +250,6 @@ public class MoNatDiffScript extends NoopScript {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	/*
-	 * Traverses formula in post order.
-	 * Note: Currently we are working here. AffineRelation doesn't help that much. :-(
-	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
-		mLogger.info("term: " + term);
-		
-		if (term == null)
-			return null;
-
-		SplittedTerm splittedTerm = MoNatDiffUtils.splitTerm(term);
-		
-		String info = "operator: " + splittedTerm.operator + ", terms:";
-		for (int i = 0; i < splittedTerm.terms.size(); i++)
-			info += " " + splittedTerm.terms.get(i);
-		mLogger.info(info);
-		
-		for (int i = 0; i < splittedTerm.terms.size(); i++)
-			traversePostOrder(splittedTerm.terms.get(i));
-		
-		return null;
-	}
-
-	/*
-	 * Processes formula.
-	 * TODO: Add formula x element Y.
-	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> process(Term term, String operator,
-			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton1,
-			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton2) {
-		
-		if (operator.isEmpty()) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			operator = appTerm.getFunction().getName();
-
-			if (operator.equals("subsetInt")) {
-				mLogger.info("construct nonStrictSubsetAutomaton X subset Y");
-				Term[] terms = appTerm.getParameters();
-				return MoNatDiffAutomatonFactory.nonStrictSubsetAutomaton(terms[0], terms[1], mAutomataLibraryServices);
-			}
-
-			if (operator.equals("strictSubsetInt")) {
-				mLogger.info("construct strictSubsetAutomaton X strictSubset Y");
-				Term[] terms = appTerm.getParameters();
-				return MoNatDiffAutomatonFactory.strictSubsetAutomaton(terms[0], terms[1], mAutomataLibraryServices);
-			}
-
-			if (operator.equals("element")) {
-				Term[] terms = appTerm.getParameters();
-				if (terms[0] instanceof ConstantTerm) {
-					mLogger.info("construct constElementAutomaton c element X");
-					return MoNatDiffAutomatonFactory.constElementAutomaton(terms[1],
-							MoNatDiffUtils.constantTermToInt(terms[0]), mAutomataLibraryServices);
-				}
-
-				ApplicationTerm term0 = (ApplicationTerm) terms[0];
-				Term[] terms0 = term0.getParameters();
-				mLogger.info("construct elementAutomaton x+c element Y");
-				return MoNatDiffAutomatonFactory.elementAutomaton(terms0[0], terms[1],
-						MoNatDiffUtils.constantTermToInt(terms0[1]), mAutomataLibraryServices);
-			}
-
-			if (operator.equals("<=")) {
-				Term[] terms = appTerm.getParameters();
-				ApplicationTerm term0 = terms[0] instanceof ApplicationTerm ? (ApplicationTerm) terms[0] : null;
-
-				if (term0 == null || term0.getFunction().getParameterCount() == 0) {
-					mLogger.info("construct nonStrictIneqAutomaton x <= c");
-					return MoNatDiffAutomatonFactory.nonStrictIneqAutomaton(terms[0],
-							MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-				}
-
-				Term[] terms0 = term0.getParameters();
-				if (terms0.length == 1) {
-					mLogger.info("construct nonStrictNegIneqAutomaton -x <= c");
-					return MoNatDiffAutomatonFactory.nonStrictNegIneqAutomaton(terms0[0],
-							MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-				}
-
-				mLogger.info("construct nonStrictIneqAutomaton x-y <= c");
-				return MoNatDiffAutomatonFactory.nonStrictIneqAutomaton(terms0[0], terms0[1],
-						MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-			}
-
-			if (operator.equals("<")) {
-				Term[] terms = appTerm.getParameters();
-				ApplicationTerm term0 = terms[0] instanceof ApplicationTerm ? (ApplicationTerm) terms[0] : null;
-
-				if (term0 == null || term0.getFunction().getParameterCount() == 0) {
-					mLogger.info("construct strictIneqAutomaton x < c");
-					return MoNatDiffAutomatonFactory.strictIneqAutomaton(terms[0],
-							MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-				}
-
-				Term[] terms0 = term0.getParameters();
-				if (terms0.length == 1) {
-					mLogger.info("construct strictNegIneqAutomaton -x < c");
-					return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(terms0[0],
-							MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-				}
-
-				mLogger.info("construct strictIneqAutomaton x-y < c");
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(terms0[0], terms0[1],
-						MoNatDiffUtils.constantTermToInt(terms[1]), mAutomataLibraryServices);
-			}
-		}
-
-		/*
-		 * TODO: Construct automata for ... not and exist
-		 */
-
-		return null;
 	}
 
 	/*

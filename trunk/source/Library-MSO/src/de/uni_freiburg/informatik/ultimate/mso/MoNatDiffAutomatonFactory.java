@@ -4,19 +4,13 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * TODO: Comment.
@@ -35,6 +29,27 @@ public final class MoNatDiffAutomatonFactory {
 
 		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
 				stringFactory);
+	}
+	
+	/*
+	 * Constructs automaton for atomic formula "x < c".
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(Term x, int c,
+			AutomataLibraryServices automataLibraryServices) {
+		
+		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+
+		if (c > 0) {
+			automaton.addState(true, false, "init");
+			automaton.addState(false, true, "final");
+			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
+			automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 0), "final");
+
+			addUpToConstPart(automaton, c - 1, new MoNatDiffAlphabetSymbol(x, 0), new MoNatDiffAlphabetSymbol(x, 0),
+					new MoNatDiffAlphabetSymbol(x, 1));
+		}
+
+		return automaton;
 	}
 
 	/*
@@ -63,46 +78,7 @@ public final class MoNatDiffAutomatonFactory {
 
 		return automaton;
 	}
-
-	/*
-	 * Constructs automaton for atomic formula "x-y <= c".
-	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nonStrictIneqAutomaton(Term x, Term y, int c,
-			AutomataLibraryServices automataLibraryServices) {
-
-		return strictIneqAutomaton(x, y, c + 1, automataLibraryServices);
-	}
-
-	/*
-	 * Constructs automaton for atomic formula "x < c".
-	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(Term x, int c,
-			AutomataLibraryServices automataLibraryServices) {
-
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-
-		if (c > 0) {
-			automaton.addState(true, false, "init");
-			automaton.addState(false, true, "final");
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
-			automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 0), "final");
-
-			addUpToConstPart(automaton, c - 1, new MoNatDiffAlphabetSymbol(x, 0), new MoNatDiffAlphabetSymbol(x, 0),
-					new MoNatDiffAlphabetSymbol(x, 1));
-		}
-
-		return automaton;
-	}
-
-	/*
-	 * Constructs automaton for atomic formula "x <= c".
-	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nonStrictIneqAutomaton(Term x, int c,
-			AutomataLibraryServices automataLibraryServices) {
-
-		return strictIneqAutomaton(x, c + 1, automataLibraryServices);
-	}
-
+	
 	/*
 	 * Constructs automaton for atomic formula "-x < c".
 	 */
@@ -126,6 +102,24 @@ public final class MoNatDiffAutomatonFactory {
 			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
 
 		return automaton;
+	}
+	
+	/*
+	 * Constructs automaton for atomic formula "x <= c".
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nonStrictIneqAutomaton(Term x, int c,
+			AutomataLibraryServices automataLibraryServices) {
+
+		return strictIneqAutomaton(x, c + 1, automataLibraryServices);
+	}
+
+	/*
+	 * Constructs automaton for atomic formula "x-y <= c".
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nonStrictIneqAutomaton(Term x, Term y, int c,
+			AutomataLibraryServices automataLibraryServices) {
+
+		return strictIneqAutomaton(x, y, c + 1, automataLibraryServices);
 	}
 
 	/*
@@ -183,13 +177,13 @@ public final class MoNatDiffAutomatonFactory {
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> elementAutomaton(Term x, Term y,
 			AutomataLibraryServices automataLibraryServices) {
 
-		return elementAutomaton(x, y, 0, automataLibraryServices);
+		return elementAutomaton(x, 0, y, automataLibraryServices);
 	}
 
 	/*
 	 * Constructs automaton for atomic formula "x+c element Y".
 	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> elementAutomaton(Term x, Term y, int c,
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> elementAutomaton(Term x, int c, Term y,
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
@@ -214,7 +208,7 @@ public final class MoNatDiffAutomatonFactory {
 	/*
 	 * Constructs automaton for atomic formula "c element X".
 	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> constElementAutomaton(Term x, int c,
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> constElementAutomaton(int c, Term x,
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
