@@ -147,13 +147,20 @@ sep_line_ultversion="This is Ultimate"
 function scanLogs(){
     local dir="$1"
     local iname="$2"
-    local log_files=($(find "$dir" -type f -iname "$iname"))
+    local log_files=()
+    while IFS=  read -r -d $'\0'; do
+        log_files+=("$REPLY")
+    done < <(find "$dir" -type f -iname "$iname" -print0)
+    
+    
     count=0
     local content=()
-    
+
     echo "Processing ${#log_files[@]} files..."
-    
-    for log_file in ${log_files[@]}; do
+
+    for (( idx=0; idx < ${#log_files[@]}; idx++ ))
+    do
+        log_file="${log_files[$idx]}"
         printf .
         grep -q "$sep_line_ultversion" "$log_file"
         if [ ! $? -eq 0 ]; then 
@@ -175,11 +182,11 @@ function scanLogs(){
                 content=`sed -e "1,/$sep_line_ultoutput/d" "$log_file"`
             else
                 # is not Ultimate.py logfile, assume normal Ultimate log
-                content=`cat $log_file`
+                content=`cat "$log_file"`
             fi
         fi 
         
-        scanLog content $log_file
+        scanLog content "$log_file"
     done 
     printf "\n"
     
@@ -229,8 +236,7 @@ function getUnhandledResults(){
     me=`dirname "$(readlink -f "$0")"`/`basename "$0"`
     
     for i in "${result_types}"; do 
-        grep -q "$i" "$me"
-        if [ ! $? -eq 0 ]; then 
+        if ! grep -q "$i" "$me" ; then 
             echo "Unhandled result type $i in logfiles"
         fi
     done 
