@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -327,7 +326,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final IcfgLocation locNode = iter.next();
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
-					if (edge instanceof IcfgInternalTransition) {
+					if (edge instanceof IIcfgInternalTransition) {
 						internalAlphabet.add((LETTER) edge);
 					} else if (edge instanceof IIcfgCallTransition) {
 						if (!intraproceduralAnalysis) {
