@@ -31,16 +31,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Implementation of a possible extension.
@@ -106,31 +103,11 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		cand.getPlaces().add(p);
 	}
 
+
+	
 	/**
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
-	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
-		final Map<ITransition<LETTER, PLACE>, Candidate<LETTER, PLACE>> candidates = new HashMap<>();
-		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
-			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
-				Candidate<LETTER, PLACE> current;
-				if (!candidates.containsKey(t)) {
-					final Transition<LETTER, PLACE> trans = (Transition<LETTER, PLACE>) t;
-					current = new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(trans),
-							mBranchingProcess.getNet()));
-					candidates.put(t, current);
-				} else {
-					current = candidates.get(t);
-				}
-				current.getChosen().add(cond0);
-				current.getPlaces().remove(cond0.getPlace());
-				assert current.getPlaces().size() + current.getChosen().size() == mBranchingProcess.getNet().getPredecessors(t).size();
-			}
-		}
-//		Collection<Candidate<LETTER, PLACE>> alternativeResult = computeCandidatesCollectTransitionsFirst(event);
-		return candidates.values();
-	}
-	
 	private Collection<Candidate<LETTER, PLACE>> computeCandidatesCollectTransitionsFirst(final Event<LETTER, PLACE> event) {
 		Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
@@ -141,8 +118,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 		for (ITransition<LETTER, PLACE> transition : transitions) {
 			Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
-					Collections.singleton(transition), mBranchingProcess.getNet()));
-			candidate.instantiate(event.getSuccessorConditions());
+					Collections.singleton(transition), mBranchingProcess.getNet()), event.getSuccessorConditions());
 			candidates.add(candidate);
 		}
 		return candidates;

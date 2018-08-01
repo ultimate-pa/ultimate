@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an incomplete Event. A <i>Candidate</i> consists of
@@ -79,10 +80,11 @@ public class Candidate<LETTER, PLACE> {
 	 * @param transition
 	 *            transition
 	 */
-	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider) {
+	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider, Collection<Condition<LETTER, PLACE>> newPlaces) {
 		mSuccTransProvider = succTransProvider;
 		mChosen = new ArrayList<>(succTransProvider.getPredecessorPlaces().size());
 		mPlaces = new ArrayList<>(succTransProvider.getPredecessorPlaces());
+		instantiate(newPlaces);
 	}
 
 
@@ -92,7 +94,7 @@ public class Candidate<LETTER, PLACE> {
 		return mSuccTransProvider;
 	}
 	
-	public void instantiate(Collection<Condition<LETTER, PLACE>> newPlaces) {
+	private Pair<ArrayList<Condition<LETTER, PLACE>>, ArrayList<PLACE>> instantiate(Collection<Condition<LETTER, PLACE>> newPlaces) {
 		LinkedList<PLACE> places = new LinkedList<PLACE>(mSuccTransProvider.getPredecessorPlaces());
 		for (Condition<LETTER, PLACE> condition : newPlaces) {
 			boolean wasContained = places.remove(condition.getPlace());
@@ -102,6 +104,7 @@ public class Candidate<LETTER, PLACE> {
 		}
 		mPlaces.clear();
 		mPlaces.addAll(places);
+		return null;
 	}
 
 
