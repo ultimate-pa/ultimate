@@ -661,9 +661,9 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				 * 1 (store a i1
 				 * 2   (store (select a i1) i2
 				 * 3      (store (select (select a i1) i2) i3 v)))
-				 * Now say the current storeTerm is the one in line 3 and we want to know at wich dimension a is
+				 * Now say the current storeTerm is the one in line 3 and we want to know at which dimension a is
 				 *  accessed by i3.
-				 * We compute (dimensonality of a) - (dimensionality of store3) = 3 - 1 = 2 .
+				 * We compute (dimensionality of a) - (dimensionality of store3) = 3 - 1 = 2 .
 				 *  (so, by convention we count the access dimensions starting from 0)
 				 * @formatter:on
 				 */

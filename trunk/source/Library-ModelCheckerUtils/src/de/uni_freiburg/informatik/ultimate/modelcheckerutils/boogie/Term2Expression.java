@@ -114,7 +114,7 @@ public final class Term2Expression implements Serializable {
 		mCache = new NestedMap2<>();
 	}
 
-	private String getFreshIdenfier() {
+	private String getFreshIdentifier() {
 		mTranslateState = mTranslateState.incrementIdentifierCounter();
 		return "freshIdentifier" + mTranslateState.getFreshIdentiferCounter();
 	}
@@ -453,7 +453,7 @@ public final class Term2Expression implements Serializable {
 			// introduced during model checking.
 			// TODO: Matthias: I think we want closed expressions, we should
 			// quantify auxilliary variables
-			result = new IdentifierExpression(null, type, getFreshIdenfier(),
+			result = new IdentifierExpression(null, type, getFreshIdentifier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			mFreeVariables.add((IdentifierExpression) result);
 		} else {
