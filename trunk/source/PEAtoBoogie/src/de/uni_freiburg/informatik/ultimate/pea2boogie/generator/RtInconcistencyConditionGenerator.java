@@ -93,9 +93,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 public class RtInconcistencyConditionGenerator {
 
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
-	private static final boolean TRY_SOLVER_BEFORE_QELIM = true;
-	private static final boolean PRINT_STATS = false;
+	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
+	private static final boolean PRINT_STATS = true;
 	private static final String SOLVER_LOGFILE = null;
+	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
 	private final ReqSymboltable mBoogieSymboltable;
 	private final Term mPrimedInvariant;
