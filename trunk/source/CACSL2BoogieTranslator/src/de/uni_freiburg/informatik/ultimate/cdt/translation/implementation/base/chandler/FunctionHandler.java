@@ -401,7 +401,7 @@ public class FunctionHandler {
 		if (!(calledFuncType instanceof CFunction) && calledFuncType instanceof CPointer) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
-			calledFuncType = ((CPointer) calledFuncType).pointsToType.getUnderlyingType();
+			calledFuncType = ((CPointer) calledFuncType).mPointsToType.getUnderlyingType();
 		}
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
 		CFunction calledFuncCFunction = (CFunction) calledFuncType;

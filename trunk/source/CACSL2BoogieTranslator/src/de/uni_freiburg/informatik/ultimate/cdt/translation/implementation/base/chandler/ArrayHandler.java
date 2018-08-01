@@ -126,7 +126,7 @@ public class ArrayHandler {
 			assert cTypeLeft.equals(leftExpRes.mLrVal.getCType());
 			final Expression oldAddress = leftExpRes.mLrVal.getValue();
 			final RValue integer = (RValue) subscript.mLrVal;
-			final CType valueType = ((CPointer) cTypeLeft).pointsToType;
+			final CType valueType = ((CPointer) cTypeLeft).mPointsToType;
 			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main,
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.mLrVal.getValue();

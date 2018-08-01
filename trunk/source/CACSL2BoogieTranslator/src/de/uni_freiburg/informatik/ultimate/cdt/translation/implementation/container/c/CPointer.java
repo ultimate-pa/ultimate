@@ -40,71 +40,66 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @date 18.09.2012
  */
 public class CPointer extends CType {
-    /**
-     * The type, this pointer points to.
-     */
-    public final CType pointsToType;
+	/**
+	 * The type, this pointer points to.
+	 */
+	public final CType mPointsToType;
 
-    /**
-     * Constructor.
-     *
-     * @param pointsToType
-     *            the type, this pointer points to.
-     */
-    public CPointer(final CType pointsToType) {
-//        super();
-        super(false, false, false, false); //FIXME: integrate those flags
-        this.pointsToType = pointsToType;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param pointsToType
+	 *            the type, this pointer points to.
+	 */
+	public CPointer(final CType pointsToType) {
+		// super();
+		super(false, false, false, false); // FIXME: integrate those flags
+		this.mPointsToType = pointsToType;
+	}
 
-    @Override
-    public String toString() {
-        return SFO.POINTER;
-    }
+	@Override
+	public String toString() {
+		return SFO.POINTER;
+	}
 
-    @Override
-    public boolean equals(final Object o) {
-    	if (super.equals(o)) {
+	@Override
+	public boolean equals(final Object o) {
+		if (super.equals(o)) {
 			return true;
 		}
-        if (!(o instanceof CType)) {
-            return false;
-        }
-        final CType oType = ((CType)o).getUnderlyingType();
-        if (oType instanceof CPointer) {
-            return pointsToType.equals(((CPointer) oType).pointsToType);
-        }
-        else {
-            return false;
-        }
-    }
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (oType instanceof CPointer) {
+			return mPointsToType.equals(((CPointer) oType).mPointsToType);
+		}
+		return false;
+	}
 
 	@Override
 	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPointer &&
-				((CPointer) o).pointsToType instanceof CPrimitive
-				&& ((CPrimitive) ((CPointer) o).pointsToType).getType() == CPrimitives.VOID) {
+		if (o instanceof CPointer && ((CPointer) o).mPointsToType instanceof CPrimitive
+				&& ((CPrimitive) ((CPointer) o).mPointsToType).getType() == CPrimitives.VOID) {
 			return true;
 		}
 
 		if (super.equals(o)) {
 			return true;
 		}
-        final CType oType = o.getUnderlyingType();
-        if (oType instanceof CPointer) {
-            return pointsToType.isCompatibleWith(((CPointer)oType).pointsToType);
-        }
-        else {
-            return false;
-        }
+		final CType oType = o.getUnderlyingType();
+		if (oType instanceof CPointer) {
+			return mPointsToType.isCompatibleWith(((CPointer) oType).mPointsToType);
+		}
+		return false;
 	}
 
 	public CType getTargetType() {
-		return pointsToType;
+		return mPointsToType;
 	}
 
 	@Override
 	public int hashCode() {
-		return HashUtils.hashJenkins(31, pointsToType);
+		return HashUtils.hashJenkins(31, mPointsToType);
 	}
 }

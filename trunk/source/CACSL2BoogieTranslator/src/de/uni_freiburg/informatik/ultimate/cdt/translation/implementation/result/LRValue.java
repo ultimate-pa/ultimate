@@ -105,9 +105,8 @@ public abstract class LRValue {
 		if (this instanceof HeapLValue) {
 			value = ((HeapLValue) this).getAddress();
 			throw new AssertionError("unexpected: double check this case");
-		} else {
-			value = getValue();
 		}
+		value = getValue();
 
 		if (value instanceof IntegerLiteral) {
 			return "0".equals(((IntegerLiteral) value).getValue());

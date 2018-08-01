@@ -673,12 +673,10 @@ public class CHandler implements ICHandler {
 
 		// TODO Need to get a CLocation from somewhere
 		// the overall translation result:
-		final Unit boogieUnit =
-				new Unit(
-						main.getLocationFactory()
-								.createRootCLocation(units.stream().map(a -> a.getSourceTranslationUnit())
-										.collect(Collectors.toSet())),
-						mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+		final Unit boogieUnit = new Unit(
+				main.getLocationFactory().createRootCLocation(
+						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
+				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
@@ -1142,8 +1140,8 @@ public class CHandler implements ICHandler {
 
 		if (POINTER_CAST_IS_UNSUPPORTED_SYNTAX && newCType instanceof CPointer
 				&& expr.mLrVal.getCType() instanceof CPointer) {
-			final CType newPointsToType = ((CPointer) newCType).pointsToType;
-			final CType exprPointsToType = ((CPointer) expr.mLrVal.getCType()).pointsToType;
+			final CType newPointsToType = ((CPointer) newCType).mPointsToType;
+			final CType exprPointsToType = ((CPointer) expr.mLrVal.getCType()).mPointsToType;
 			if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
 				if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
 						&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
@@ -3416,7 +3414,7 @@ public class CHandler implements ICHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.pointsToType, hook);
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.mPointsToType, hook);
 			addOffsetInBoundsCheck(main, loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -3572,7 +3570,7 @@ public class CHandler implements ICHandler {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
-		final CType pointedType = pointer.pointsToType;
+		final CType pointedType = pointer.mPointsToType;
 		if (pointedType.isIncomplete()) {
 			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
 		}
@@ -3976,7 +3974,7 @@ public class CHandler implements ICHandler {
 				if (cd.getType().isIncomplete()) {
 					/*
 					 * type of this (variable) declaration is incomplete at the end of the file -- omit the declaration
-					 *  from Boogie program
+					 * from Boogie program
 					 */
 					continue;
 				}
@@ -4136,7 +4134,7 @@ public class CHandler implements ICHandler {
 					(CPrimitive) typeOfResult, right.mLrVal.getValue(), (CPrimitive) typeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.mLrVal.getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).pointsToType;
+			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
 			intermediateResult = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			final ExpressionResult re = doPointerArithmeticWithConversion(main, op, loc, left.mLrVal.getValue(),
 					(RValue) right.mLrVal, pointsToType, hook);
@@ -4148,7 +4146,7 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
 			}
 			typeOfResult = right.mLrVal.getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).pointsToType;
+			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
 			intermediateResult = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			final ExpressionResult re = doPointerArithmeticWithConversion(main, op, loc, right.mLrVal.getValue(),
 					(RValue) left.mLrVal, pointsToType, hook);
@@ -4169,8 +4167,8 @@ public class CHandler implements ICHandler {
 			intermediateResult = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			CType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).pointsToType;
-				final CType rightPointsToType = ((CPointer) rType).pointsToType;
+				final CType leftPointsToType = ((CPointer) lType).mPointsToType;
+				final CType rightPointsToType = ((CPointer) rType).mPointsToType;
 				if (!leftPointsToType.equals(rightPointsToType)) {
 					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
 					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)
