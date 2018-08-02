@@ -1,2 +1,1 @@
-struct stu s;
-
+extern struct stu s;
