@@ -27,145 +27,77 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an incomplete Event. A <i>Candidate</i> consists of
  * <ul>
  * <li>the transition which belongs to the event</li>
  * <li>a subset of conditions of the set of predecessors of the event.</li>
- * <li>the set of predecessor-places of the transition minus the places that correspond with the conditions in the given
- * condition-set.</li>
+ * <li>the set of predecessor-places of the transition minus the places that
+ * correspond with the conditions in the given condition-set.</li>
  * </ul>
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            symbol type
- * @param <PLACE>
- *            place content type
  **/
 public class Candidate<LETTER, PLACE> {
 
 	private final ISuccessorTransitionProvider<LETTER, PLACE> mSuccTransProvider;
-	/**
-	 * Chosen conditions.
-	 */
-	private final ArrayList<Condition<LETTER, PLACE>> mChosen;
-	/**
-	 * Places.
-	 */
-	private final ArrayList<PLACE> mPlaces;
 
-//	/**
-//	 * Constructor from another candidate.
-//	 *
-//	 * @param candidate
-//	 *            candidate
-//	 */
-//	public Candidate(final Map.Entry<Transition<LETTER, PLACE>, Map<PLACE, Condition<LETTER, PLACE>>> candidate) {
-//		mT = candidate.getKey();
-//		mChosen = new ArrayList<>(candidate.getValue().values());
-//		mPlaces = new ArrayList<>(candidate.getValue().keySet());
-//	}
+	private final LinkedList<Condition<LETTER, PLACE>> mInstantiated;
+	private final LinkedList<PLACE> mNotInstantiated;
 
-	/**
-	 * Constructor with transition.
-	 *
-	 * @param transition
-	 *            transition
-	 */
-	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider, Collection<Condition<LETTER, PLACE>> newPlaces) {
+
+	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
+			final Collection<Condition<LETTER, PLACE>> supersetOfPredecessorConditions) {
 		mSuccTransProvider = succTransProvider;
-		mChosen = new ArrayList<>(succTransProvider.getPredecessorPlaces().size());
-		mPlaces = new ArrayList<>(succTransProvider.getPredecessorPlaces());
-		instantiate(newPlaces);
+		mInstantiated = new LinkedList<>();
+		mNotInstantiated = new LinkedList<>(mSuccTransProvider.getPredecessorPlaces());
+		// instantiate the places with the given conditions
+		for (final Condition<LETTER, PLACE> condition : supersetOfPredecessorConditions) {
+			final boolean wasContained = mNotInstantiated.remove(condition.getPlace());
+			if (wasContained) {
+				mInstantiated.add(condition);
+			}
+		}
 	}
-
-
-
 
 	public ISuccessorTransitionProvider<LETTER, PLACE> getTransition() {
 		return mSuccTransProvider;
 	}
-	
-	private Pair<ArrayList<Condition<LETTER, PLACE>>, ArrayList<PLACE>> instantiate(Collection<Condition<LETTER, PLACE>> newPlaces) {
-		LinkedList<PLACE> places = new LinkedList<PLACE>(mSuccTransProvider.getPredecessorPlaces());
-		for (Condition<LETTER, PLACE> condition : newPlaces) {
-			boolean wasContained = places.remove(condition.getPlace());
-			if (wasContained) {
-				mChosen.add(condition);
-			}
-		}
-		mPlaces.clear();
-		mPlaces.addAll(places);
-		return null;
+
+	public boolean isFullyInstantiated() {
+		return mNotInstantiated.isEmpty();
 	}
 
-
-
-
-	public ArrayList<Condition<LETTER, PLACE>> getChosen() {
-		return mChosen;
+	public PLACE getNextUninstantiatedPlace() {
+		return mNotInstantiated.get(mNotInstantiated.size() - 1);
 	}
 
-
-
-
-	public ArrayList<PLACE> getPlaces() {
-		return mPlaces;
+	public void instantiateNext(final Condition<LETTER, PLACE> condition) {
+		if (!getNextUninstantiatedPlace().equals(condition.getPlace())) {
+			throw new IllegalStateException();
+		} else {
+			mInstantiated.add(condition);
+			mNotInstantiated.remove(mNotInstantiated.size() - 1);
+		}
 	}
 
-
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = prime + ((mChosen == null) ? 0 : mChosen.hashCode());
-		result = prime * result + ((mPlaces == null) ? 0 : mPlaces.hashCode());
-		result = prime * result + ((mSuccTransProvider == null) ? 0 : mSuccTransProvider.hashCode());
-		return result;
+	public void undoOneInstantiation() {
+		final Condition<LETTER, PLACE> last = mInstantiated.remove(mInstantiated.size() - 1);
+		mNotInstantiated.add(last.getPlace());
 	}
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Candidate<?, ?> other = (Candidate<?, ?>) obj;
-		if (mChosen == null) {
-			if (other.mChosen != null) {
-				return false;
-			}
-		} else if (!mChosen.equals(other.mChosen)) {
-			return false;
-		}
-		if (mPlaces == null) {
-			if (other.mPlaces != null) {
-				return false;
-			}
-		} else if (!mPlaces.equals(other.mPlaces)) {
-			return false;
-		}
-		if (mSuccTransProvider == null) {
-			if (other.mSuccTransProvider != null) {
-				return false;
-			}
-		} else if (!mSuccTransProvider.equals(other.mSuccTransProvider)) {
-			return false;
-		}
-		return true;
+	public List<Condition<LETTER, PLACE>> getInstantiated() {
+		return Collections.unmodifiableList(mInstantiated);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSuccTransProvider.toString();

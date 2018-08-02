@@ -78,52 +78,51 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
-		if (cand.getPlaces().isEmpty()) {
+		if (cand.isFullyInstantiated()) {
 			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-				mPe.add(new Event<>(cand.getChosen(), trans, mBranchingProcess));
+				mPe.add(new Event<>(cand.getInstantiated(), trans, mBranchingProcess));
 			}
 			return;
 		}
 		// mod!
-		final PLACE p = cand.getPlaces().remove(cand.getPlaces().size() - 1);
+		final PLACE p = cand.getNextUninstantiatedPlace();
 		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
 			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
 			// equality intended here
 			assert c.getPlace().equals(p);
-			assert !cand.getChosen().contains(c);
-			if (mBranchingProcess.isCoset(cand.getChosen(), c)) {
+			assert !cand.getInstantiated().contains(c);
+			if (mBranchingProcess.isCoset(cand.getInstantiated(), c)) {
 				// mod!
-				cand.getChosen().add(c);
+				cand.instantiateNext(c);
 				evolveCandidate(cand);
 				// mod!
-				cand.getChosen().remove(cand.getChosen().size() - 1);
+				cand.undoOneInstantiation();
 			}
 		}
 		// mod!
-		cand.getPlaces().add(p);
 	}
 
 
-	
+
 	/**
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidatesCollectTransitionsFirst(final Event<LETTER, PLACE> event) {
-		Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
 			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
 				transitions.add(t);
 			}
 		}
-		List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
-		for (ITransition<LETTER, PLACE> transition : transitions) {
-			Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
+		final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
+		for (final ITransition<LETTER, PLACE> transition : transitions) {
+			final Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
 					Collections.singleton(transition), mBranchingProcess.getNet()), event.getSuccessorConditions());
 			candidates.add(candidate);
 		}
 		return candidates;
 	}
-	
+
 
 	@Override
 	public boolean isEmpy() {
