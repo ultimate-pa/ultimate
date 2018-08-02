@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -4702,6 +4703,11 @@ public class CHandler implements ICHandler {
 		if (type.isIntegerType() && value.getValue() instanceof IntegerLiteral) {
 			final IntegerLiteral intLit = (IntegerLiteral) value.getValue();
 			if (intLit.getValue() == "0") {
+				return true;
+			}
+		} else if (type.isIntegerType() && value.getValue() instanceof BitvecLiteral) {
+			final BitvecLiteral bitvecLit = (BitvecLiteral) value.getValue();
+			if (bitvecLit.getValue() == "0") {
 				return true;
 			}
 		}
