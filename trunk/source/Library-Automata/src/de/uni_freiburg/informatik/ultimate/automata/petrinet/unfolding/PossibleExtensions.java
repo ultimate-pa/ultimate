@@ -66,7 +66,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	@Override
 	public void update(final Event<LETTER, PLACE> event) {
-		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidatesCollectTransitionsFirst(event);
+		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
 		for (final Candidate<LETTER, PLACE> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
@@ -84,7 +84,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			}
 			return;
 		}
-		// mod!
 		final PLACE p = cand.getNextUninstantiatedPlace();
 		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
 			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
@@ -92,14 +91,11 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			assert c.getPlace().equals(p);
 			assert !cand.getInstantiated().contains(c);
 			if (mBranchingProcess.isCoset(cand.getInstantiated(), c)) {
-				// mod!
 				cand.instantiateNext(c);
 				evolveCandidate(cand);
-				// mod!
 				cand.undoOneInstantiation();
 			}
 		}
-		// mod!
 	}
 
 
@@ -107,10 +103,10 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	/**
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
-	private Collection<Candidate<LETTER, PLACE>> computeCandidatesCollectTransitionsFirst(final Event<LETTER, PLACE> event) {
+	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
-		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
-			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
+		for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
+			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond.getPlace())) {
 				transitions.add(t);
 			}
 		}
