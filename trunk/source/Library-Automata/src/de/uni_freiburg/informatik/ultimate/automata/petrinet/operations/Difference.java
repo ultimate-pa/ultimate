@@ -71,20 +71,40 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @author schaetzc@informatik.uni-freiburg.de
  *
  * @param <LETTER>
- *            Type of letters from the alphabet
+ *            Type of letters in the alphabet of minuend Petri net, subtrahend DFA, and difference Petri net
  * @param <PLACE>
- *            content type
+ *            Type of places in minuend and difference Petri net
  * @param <CRSF>
- *            check result state factory type
+ *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
 public final class Difference
 		<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
+	/**
+	 * Synchronization with self-loops in subtrahend DFA can be done
+	 * using different methods. In theory, the synchronization method can be chosen per self-loop.
+	 * The synchronization methods listed here are used for all self-loops.
+	 * However, some of the synchronization methods may decide per self-loop how to synchronize.
+	 */
 	public enum LoopSyncMethod {
+		/**
+		 * Synchronize with each LETTER-self-loop in subtrahend DFA
+		 * by inserting a transition for each LETTER-transition in the minuend Petri net.
+		 */
 		PAIRWISE,
-		HEURISTIC,
+		/**
+		 * Synchronize with all LETTER-self-loops in subtrahend DFA
+		 * by inserting a single transition for all LETTER-transition in the minuend Petri net together.
+		 * The new transition checks that the subtrahend DFA is not in a LETTER-changer state
+		 * (a state that can be left by reading LETTER) by checking black places of said changer states.
+		 */
 		INVERTED,
+		/**
+		 * For each LETTER decide whether to use {@link #PAIRWISE} or {@link #INVERTED}
+		 * trying to minimize the resulting difference Petri net using a heuristic.
+		 */
+		HEURISTIC,
 	}
 	
 	private final LoopSyncMethod mLoopSyncMethod;
