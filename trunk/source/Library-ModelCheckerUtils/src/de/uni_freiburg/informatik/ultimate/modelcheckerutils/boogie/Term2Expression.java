@@ -104,8 +104,7 @@ public final class Term2Expression implements Serializable {
 	private final NestedMap2<Term, TranslateState, Expression> mCache;
 
 	public Term2Expression(final TypeSortTranslator tsTranslation,
-			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable,
-			final ManagedScript maScript) {
+			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable, final ManagedScript maScript) {
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mScript = maScript.getScript();
@@ -186,8 +185,9 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length > 0 &&
-					(SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0]) || SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
+			if (symb.getParameterSorts().length > 0
+					&& (SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0])
+							|| SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
@@ -210,17 +210,15 @@ public final class Term2Expression implements Serializable {
 						return ExpressionFactory.createRealLiteral(null, param.toString());
 					} else if (param instanceof ApplicationTerm) {
 						final ApplicationTerm at = (ApplicationTerm) param;
-						if (SmtUtils.isFunctionApplication(param, "-") ) {
+						if (SmtUtils.isFunctionApplication(param, "-")) {
 							if (at.getParameters().length == 1) {
 								// unary minus
 								return ExpressionFactory.createRealLiteral(null,
 										"-" + at.getParameters()[0].toString());
-							} else {
-								throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 							}
-						} else {
 							throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 						}
+						throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 					} else {
 						throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 					}
@@ -432,6 +430,7 @@ public final class Term2Expression implements Serializable {
 		} else {
 			attributes = new Attribute[0];
 		}
+		// TODO: This is wrong. The scope of the subterms has to be QUANTIFIED
 		final Expression subformula = translate(subTerm);
 		final QuantifierExpression result =
 				new QuantifierExpression(null, type, isUniversal, typeParams, parameters, attributes, subformula);
@@ -443,7 +442,7 @@ public final class Term2Expression implements Serializable {
 		final Expression result;
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		if (mTranslateState.getQuantifiedVariables().containsKey(term)) {
-			final VarList varList =	mTranslateState.getQuantifiedVariables().get(term);
+			final VarList varList = mTranslateState.getQuantifiedVariables().get(term);
 			assert varList.getIdentifiers().length == 1;
 			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, translateIdentifier(id),
@@ -458,9 +457,9 @@ public final class Term2Expression implements Serializable {
 			mFreeVariables.add((IdentifierExpression) result);
 		} else {
 			final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
-//			final BoogieASTNode astNode =
-//			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
-//			final ILocation loc = astNode.getLocation();
+			// final BoogieASTNode astNode =
+			// assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
+			// final ILocation loc = astNode.getLocation();
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
@@ -478,15 +477,14 @@ public final class Term2Expression implements Serializable {
 				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()),
 						declInfo);
 			} else {
-//			} else if (pv instanceof HcHeadVar) {
+				// } else if (pv instanceof HcHeadVar) {
 				// TODO hack
-				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
-						declInfo);
-//			} else if (pv instanceof HcBodyVar) {
-//				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
-//						declInfo);
-//			} else {
-//				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
+				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(), declInfo);
+				// } else if (pv instanceof HcBodyVar) {
+				// result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
+				// declInfo);
+				// } else {
+				// throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
@@ -495,7 +493,7 @@ public final class Term2Expression implements Serializable {
 	/*
 	 * TODO escape all sequences that are not allowed in Boogie
 	 */
-	private String translateIdentifier(final String id) {
+	private static String translateIdentifier(final String id) {
 		return id.replace(" ", "_").replace("(", "_").replace(")", "_").replace("+", "PLUS").replace("-", "MINUS")
 				.replace("*", "MUL");
 	}
@@ -622,8 +620,8 @@ public final class Term2Expression implements Serializable {
 		 * copy constructor
 		 *
 		 * @param freshIdentiferCounter
-		 * @param quantifiedVariables Caller has to make sure this object is not used in other instances of
-		 *	 TranslateState!
+		 * @param quantifiedVariables
+		 *            Caller has to make sure this object is not used in other instances of TranslateState!
 		 */
 		private TranslateState(final int freshIdentiferCounter,
 				final ScopedHashMap<TermVariable, VarList> quantifiedVariables) {
