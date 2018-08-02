@@ -4,6 +4,8 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -16,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /*
  * TODO: Comment.
+ * TODO: CHECK INPUTS !
  */
 public final class MoNatDiffAutomatonFactory {
 
@@ -25,36 +28,38 @@ public final class MoNatDiffAutomatonFactory {
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> emptyAutomaton(
 			AutomataLibraryServices automataLibraryServices) {
 
-		Set<MoNatDiffAlphabetSymbol> alphabet = null;
+		Set<MoNatDiffAlphabetSymbol> alphabet = new HashSet<MoNatDiffAlphabetSymbol>();
 		VpAlphabet<MoNatDiffAlphabetSymbol> vpAlphabet = new VpAlphabet<MoNatDiffAlphabetSymbol>(alphabet);
 		StringFactory stringFactory = new StringFactory();
 
 		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
 				stringFactory);
 	}
-	
+
 	/*
 	 * Constructs automaton for atomic formula "x < c".
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(Term x, Rational c,
 			AutomataLibraryServices automataLibraryServices) {
-		
+
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
+		MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+
 		int cInt = SmtUtils.toInt(c).intValueExact();
-		
+
 		if (cInt < 0)
-        	throw new IllegalArgumentException("Constant must not be negative.");
+			throw new IllegalArgumentException("Constant must not be negative.");
 
 		if (cInt > 0) {
 			automaton.addState(true, false, "init");
 			automaton.addState(false, true, "final");
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
-			automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 0), "final");
-
-			addUpToConstPart(automaton, cInt - 1, new MoNatDiffAlphabetSymbol(x, 0), new MoNatDiffAlphabetSymbol(x, 0),
-					new MoNatDiffAlphabetSymbol(x, 1));
+			automaton.addInternalTransition("init", x1, "final");
+			automaton.addInternalTransition("final", x0, "final");
+			addUpToConstPart(automaton, cInt - 1, x0, x0, x1);
 		}
-		
+
 		return automaton;
 	}
 
@@ -65,30 +70,34 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
+		MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
+		MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
+		MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
 		int cInt = SmtUtils.toInt(c).intValueExact();
-		
+
 		if (cInt < 0)
-        	throw new IllegalArgumentException("Constant must not be negative.");
+			throw new IllegalArgumentException("Constant must not be negative.");
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
 		automaton.addState(false, false, "s1");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "init");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 1, 0), "s1");
-		automaton.addInternalTransition("s1", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "s1");
-		automaton.addInternalTransition("s1", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "final");
+		automaton.addInternalTransition("init", xy00, "init");
+		automaton.addInternalTransition("init", xy10, "s1");
+		automaton.addInternalTransition("s1", xy00, "s1");
+		automaton.addInternalTransition("s1", xy01, "final");
+		automaton.addInternalTransition("final", xy00, "final");
 
 		if (cInt > 0) {
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "final");
-
-			addUpToConstPart(automaton, cInt - 1, new MoNatDiffAlphabetSymbol(x, y, 0, 1),
-					new MoNatDiffAlphabetSymbol(x, y, 0, 1), new MoNatDiffAlphabetSymbol(x, y, 1, 0));
+			automaton.addInternalTransition("init", xy11, "final");
+			addUpToConstPart(automaton, cInt - 1, xy01, xy01, xy10);
 		}
 
 		return automaton;
 	}
-	
+
 	/*
 	 * Constructs automaton for atomic formula "-x < c".
 	 */
@@ -96,24 +105,28 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
+		MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+
 		int cInt = SmtUtils.toInt(c).intValueExact();
-		
+
 		if (cInt < 0)
-        	throw new IllegalArgumentException("Constant must not be negative.");
-		
+			throw new IllegalArgumentException("Constant must not be negative.");
+
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 0), "init");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 0), "final");
+		automaton.addInternalTransition("init", x0, "init");
+		automaton.addInternalTransition("final", x0, "final");
 
 		if (cInt == 0) {
 			automaton.addState(true, false, "s1");
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 0), "s1");
-			automaton.addInternalTransition("s1", new MoNatDiffAlphabetSymbol(x, 1), "final");
+			automaton.addInternalTransition("init", x0, "s1");
+			automaton.addInternalTransition("s1", x1, "final");
 		}
 
 		if (cInt > 0)
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
+			automaton.addInternalTransition("init", x1, "final");
 
 		return automaton;
 	}
@@ -125,15 +138,20 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
+		MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
+		MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
+		MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "init");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "init");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "final");
+		automaton.addInternalTransition("init", xy00, "init");
+		automaton.addInternalTransition("init", xy11, "init");
+		automaton.addInternalTransition("init", xy01, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+		automaton.addInternalTransition("final", xy01, "final");
+		automaton.addInternalTransition("final", xy11, "final");
 
 		return automaton;
 	}
@@ -145,26 +163,22 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
+		MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
+		MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
+		MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "final");
+		automaton.addInternalTransition("init", xy00, "final");
+		automaton.addInternalTransition("init", xy01, "final");
+		automaton.addInternalTransition("init", xy11, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+		automaton.addInternalTransition("final", xy01, "final");
+		automaton.addInternalTransition("final", xy11, "final");
 
 		return automaton;
-	}
-
-	/*
-	 * Constructs automaton for atomic formula "x element Y".
-	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> elementAutomaton(Term x, Term y,
-			AutomataLibraryServices automataLibraryServices) {
-
-		return elementAutomaton(x, Rational.ZERO, y, automataLibraryServices);
 	}
 
 	/*
@@ -174,24 +188,28 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
+		MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
+		MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
+		MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
 		int cInt = SmtUtils.toInt(c).intValueExact();
-		
+
 		if (cInt < 0)
-        	throw new IllegalArgumentException("Constant must not be negative.");
+			throw new IllegalArgumentException("Constant must not be negative.");
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "init");
-		automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "init");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 0), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, y, 0, 1), "final");
+		automaton.addInternalTransition("init", xy00, "init");
+		automaton.addInternalTransition("init", xy01, "init");
+		automaton.addInternalTransition("final", xy00, "final");
+		automaton.addInternalTransition("final", xy01, "final");
 
 		if (cInt == 0)
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, y, 1, 1), "final");
+			automaton.addInternalTransition("init", xy11, "final");
 
-		addConstPart(automaton, cInt, new MoNatDiffAlphabetSymbol(x, y, 1, 0), new MoNatDiffAlphabetSymbol(x, y, 1, 1),
-				new MoNatDiffAlphabetSymbol(x, y, 0, 0), new MoNatDiffAlphabetSymbol(x, y, 0, 1),
-				new MoNatDiffAlphabetSymbol(x, y, 0, 1));
+		addConstPart(automaton, cInt, xy10, xy11, xy00, xy01, xy01);
 
 		return automaton;
 	}
@@ -203,22 +221,24 @@ public final class MoNatDiffAutomatonFactory {
 			AutomataLibraryServices automataLibraryServices) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
+		MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+
 		int cInt = SmtUtils.toInt(c).intValueExact();
-		
+
 		if (cInt < 0)
-        	throw new IllegalArgumentException("Constant must not be negative.");
+			throw new IllegalArgumentException("Constant must not be negative.");
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 0), "final");
-		automaton.addInternalTransition("final", new MoNatDiffAlphabetSymbol(x, 1), "final");
+		automaton.addInternalTransition("final", x0, "final");
+		automaton.addInternalTransition("final", x1, "final");
 
 		if (cInt == 0)
-			automaton.addInternalTransition("init", new MoNatDiffAlphabetSymbol(x, 1), "final");
+			automaton.addInternalTransition("init", x1, "final");
 
-		addConstPart(automaton, cInt, new MoNatDiffAlphabetSymbol(x, 0), new MoNatDiffAlphabetSymbol(x, 1),
-				new MoNatDiffAlphabetSymbol(x, 0), new MoNatDiffAlphabetSymbol(x, 1),
-				new MoNatDiffAlphabetSymbol(x, 1));
+		addConstPart(automaton, cInt, x0, x1, x0, x1, x1);
 
 		return automaton;
 	}

@@ -28,21 +28,19 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.eclipse.osgi.service.runnable.ApplicationLauncher;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -62,8 +60,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -76,9 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * Questions:
@@ -168,20 +162,12 @@ public class MoNatDiffScript extends NoopScript {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term.getParameters()[0]);
 		StringFactory stateFactory = new StringFactory();
-		
-		mLogger.info("TRY COMPLEMENT ==============================");
-		mLogger.info(automaton.sizeInformation());
 
 		try {
-			mLogger.info("1 ==============================");
-			Complement<MoNatDiffAlphabetSymbol, String> complement = new Complement<MoNatDiffAlphabetSymbol, String>(
-					mAutomataLibraryServices, stateFactory, automaton);
-			
-			mLogger.info("2 ==============================");
-			
-			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = complement.getResult();
-			
-			mLogger.info("3 ==============================");
+			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> complement = new Complement<MoNatDiffAlphabetSymbol, String>(
+					mAutomataLibraryServices, stateFactory, automaton).getResult();
+
+			checkEmptiness(complement);
 
 		} catch (AutomataOperationCanceledException e) {
 			// TODO Auto-generated catch block
@@ -321,7 +307,7 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * TODO: Comment.
 	 */
-	private void checkEmptiness(NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
+	private void checkEmptiness(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
 		try {
 			IsEmpty<MoNatDiffAlphabetSymbol, String> emptinessCheck = new IsEmpty<MoNatDiffAlphabetSymbol, String>(
 					mAutomataLibraryServices, automaton);
@@ -338,6 +324,16 @@ public class MoNatDiffScript extends NoopScript {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	/*
+	 * Only for debugging.
+	 */
+	private void printAutomata(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
+		AutomatonDefinitionPrinter printer = new AutomatonDefinitionPrinter(mAutomataLibraryServices, "debug",
+				Format.GFF, automaton);
+
+		mLogger.info(printer.getDefinitionAsString());
 	}
 
 	/*

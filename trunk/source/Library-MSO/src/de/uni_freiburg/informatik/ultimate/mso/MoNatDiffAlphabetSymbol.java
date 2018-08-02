@@ -60,6 +60,14 @@ public class MoNatDiffAlphabetSymbol {
 
 		mMap.put(term, value != 0);
 	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object == this)
+			return true;
+		
+		return (object instanceof MoNatDiffAlphabetSymbol && ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
+	}
 
 	/*
 	 * TODO: Comment.

@@ -22,7 +22,7 @@
 ; assert statements for all atomic formulas of type inequality
 ; ==============================================================================
 
-(assert (not (< x 5)))
+(assert (not (< x 3)))
 
 (assert (<= (- x y) 2))
 (assert (< (- x y) 5))
