@@ -82,7 +82,6 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 
 		final Iterator<TermVariable> iter = booleanQuantVars.iterator();
 		final Term trueTerm = mScript.term("true");
-		final Term falseTerm = mScript.term("false");
 		while (iter.hasNext()) {
 			final TermVariable var = iter.next();
 			for (int i = 0; i < inputAtoms.length; ++i) {
@@ -94,7 +93,7 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 							if (mLogger.isDebugEnabled()) {
 								mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
 							}
-							inputAtoms[i] = falseTerm;
+							inputAtoms[i] = trueTerm;
 							break;
 						}
 					}
