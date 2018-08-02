@@ -5,7 +5,7 @@
 //   |       |
 //   `->(1)--´     (dead)
 
-PetriNet result = removeDeadNodes(n);
+PetriNet result = removeUnreachable(n);
 assert(numberOfPlaces(result) == 1);
 assert(numberOfTransitions(result) == 1);
 assert(accepts(result, []));

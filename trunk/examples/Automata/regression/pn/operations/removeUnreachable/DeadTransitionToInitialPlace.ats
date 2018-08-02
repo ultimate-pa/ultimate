@@ -1,7 +1,7 @@
 // Date:  2018-08-02
 // Author: schaetzc@tf.uni-freiburg.de
 
-PetriNet result = removeDeadNodes(n);
+PetriNet result = removeUnreachable(n);
 assert(numberOfPlaces(result) == 0);
 assert(numberOfTransitions(result) == 0);
 assert(isEmpty(result));
@@ -12,6 +12,6 @@ PetriNet n = (
   transitions = {
   	({p0} a {p1})
   },
-  initialMarking = {},
-  acceptingPlaces = {p1}
+  initialMarking = {p1},
+  acceptingPlaces = {}
 );

@@ -1,11 +1,11 @@
 // Date:  2018-08-02
 // Author: schaetzc@tf.uni-freiburg.de
 //
-//   ,--[a]--,  ,----[a]---,
+//   ,--[a]--,  ,----[b]---,
 //   |       |  |          |
 //   `->(1)--'  `->(dead)--´
 
-PetriNet result = removeDeadNodes(n);
+PetriNet result = removeUnreachable(n);
 assert(numberOfPlaces(result) == 1);
 assert(numberOfTransitions(result) == 1);
 assert(accepts(result, []));
@@ -13,11 +13,11 @@ assert(accepts(result, [a]));
 assert(accepts(result, [a a]));
 
 PetriNet n = (
-  alphabet = {a},
+  alphabet = {a b},
   places = {p0 pDead},
   transitions = {
     ({p0} a {p0})
-    ({pDead} a {pDead})
+    ({pDead} b {pDead})
   },
   initialMarking = {p0},
   acceptingPlaces = {p0}

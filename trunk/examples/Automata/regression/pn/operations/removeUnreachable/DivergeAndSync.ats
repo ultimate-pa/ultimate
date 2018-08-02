@@ -1,7 +1,7 @@
 // Date:  2018-08-02
 // Author: schaetzc@tf.uni-freiburg.de
 
-PetriNet result = removeDeadNodes(n);
+PetriNet result = removeUnreachable(n);
 
 assert(numberOfPlaces(result) == 7);
 assert(numberOfTransitions(result) == 10);
