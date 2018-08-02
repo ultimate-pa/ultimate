@@ -11,7 +11,7 @@ function exitOnFail {
 }
 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-exitOnFail mvn clean install -Pmaterialize
+exitOnFail mvn -T 1C clean install -Pmaterialize
 popd > /dev/null
 
 for platform in {linux,win32}; do
