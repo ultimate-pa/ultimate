@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <CRSF>
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
-public class RemoveDeadNodes<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
+public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
@@ -49,12 +49,12 @@ public class RemoveDeadNodes<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	
 	private final Set<ITransition<LETTER, PLACE>> mAliveTransitions;
 	
-	public RemoveDeadNodes(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand)
+	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, null);
 	}
 	
-	public RemoveDeadNodes(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
+	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
 			Set<ITransition<LETTER, PLACE>> aliveTransitions) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
