@@ -27,10 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -39,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -84,7 +81,6 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		}
 
 		final Iterator<TermVariable> iter = booleanQuantVars.iterator();
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Term trueTerm = mScript.term("true");
 		final Term falseTerm = mScript.term("false");
 		while (iter.hasNext()) {
@@ -98,32 +94,18 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 							if (mLogger.isDebugEnabled()) {
 								mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
 							}
-							substitutionMapping.put(var, falseTerm);
+							inputAtoms[i] = falseTerm;
 							break;
 						}
 					}
 				} else if (atom.equals(var)) {
-					substitutionMapping.put(var, trueTerm);
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
 					}
+					inputAtoms[i] = trueTerm;
 					break;
 				}
 			}
-		}
-
-		if (substitutionMapping.isEmpty()) {
-			// cannot remove any variable
-			return inputAtoms;
-		}
-
-		// TODO: why does removing variables in DER work, but not here?
-		// eliminatees.removeAll(substitutionMapping.keySet());
-
-		final SubstitutionWithLocalSimplification subst =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
-		for (int i = 0; i < inputAtoms.length; ++i) {
-			inputAtoms[i] = subst.transform(inputAtoms[i]);
 		}
 		return inputAtoms;
 	}
