@@ -1,0 +1,42 @@
+// Date:  2018-08-02
+// Author: schaetzc@tf.uni-freiburg.de
+
+PetriNet result = removeDeadNodes(n);
+
+assert(numberOfPlaces(result) == 7);
+assert(numberOfTransitions(result) == 10);
+
+assert(accepts(result, [a c intermediateReset]));
+assert(accepts(result, [c b intermediateReset]));
+assert(accepts(result, [a c sync reset]));
+assert(accepts(result, [c a sync reset]));
+
+assert(!accepts(result, [a b]));
+assert(!accepts(result, [b c sync reset]));
+
+PetriNet n = (
+  alphabet = {a b c sync deadSync intermediateReset reset deadReset},
+  places = {p01 p02 pa1 pa2 pb pc p3},
+  transitions = {
+    ({p01} a {pa1 pa2})
+    ({p01} b {pb})
+    ({p02} c {pc})
+    
+    ({pa1 pa2 pc} intermediateReset {p01 p02})
+    ({pb pc} intermediateReset {p01 p02})
+    
+    ({pa1 pc} sync {p3})
+    ({pa2 pc} sync {p3})
+    ({pb pc} sync {p3})
+    ({pa1 pb} deadSync {p3})
+    ({pa2 pb} deadSync {p3})
+    
+    ({pa1 p3} reset {p01 p02})
+    ({pa2 p3} reset {p01 p02})
+    ({pa1 pa2 p3} deadReset {p01 p02})
+    ({pb p3} deadReset {p01 p02})
+    ({pc p3} deadReset {p01 p02})
+  },
+  initialMarking = {p01 p02},
+  acceptingPlaces = {p01}
+);

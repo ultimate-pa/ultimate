@@ -1,0 +1,51 @@
+// 2-slotted ring protocol
+// auto-generated on 2018-08-02 by schaetzc using generateSlottedRingProtocol.sh
+//
+// The slotted ring protocol was presented in [1].
+// In [2] the slotted ring protocol was used to show that complete finite
+// prefixes can be drastically reduced in size. Exact numbers of conditions and
+// events in the prefixes of some n-slotted ring protocols are given in
+// table 2 on page 18 and can be used as a test for Ultimate's finite prefix
+// operation.
+//
+// [1] E. Pastor, O. Roig, J. Cortadella and R.M. Badia:
+//     Petri Net Analysis Using Boolean Manipulation.
+//     https://doi.org/10.1007/3-540-58152-9_23
+//
+// [2] Javier Esparza, Stefan Römer, and Walter Vogler:
+//     An improvement of McMillan's unfolding algorithm
+//     http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.9584
+
+PetriNet result = slottedRingProtocol2;
+// Everything is reachable/alive. Nothing should be deleted
+assert(numberOfPlaces(result) == 20);
+assert(numberOfTransitions(result) == 20);
+
+PetriNet slottedRingProtocol2 = (
+  alphabet = {a},
+  places = {n1_1 n1_2 n1_3 n1_4 n1_5 n1_6 n1_7 n1_8 n1_9 n1_10 n2_1 n2_2 n2_3 n2_4 n2_5 n2_6 n2_7 n2_8 n2_9 n2_10},
+  transitions = {
+    ({n1_1 n1_4} a {n1_2 n1_3})
+    ({n1_2 n1_6} a {n1_5 n2_8})
+    ({n1_3} a {n2_6})
+    ({n1_5} a {n1_4})
+    ({n1_7} a {n1_9})
+    ({n1_7} a {n1_8})
+    ({n1_8} a {n1_1})
+    ({n1_8} a {n1_9})
+    ({n1_4 n1_9} a {n1_3 n1_10})
+    ({n1_6 n1_10} a {n1_5 n2_7})
+    ({n2_1 n2_4} a {n2_2 n2_3})
+    ({n2_2 n2_6} a {n2_5 n1_8})
+    ({n2_3} a {n1_6})
+    ({n2_5} a {n2_4})
+    ({n2_7} a {n2_9})
+    ({n2_7} a {n2_8})
+    ({n2_8} a {n2_1})
+    ({n2_8} a {n2_9})
+    ({n2_4 n2_9} a {n2_3 n2_10})
+    ({n2_6 n2_10} a {n2_5 n1_7})
+  },
+  initialMarking = {n1_2 n1_6 n2_2 n2_6},
+  acceptingPlaces = {}
+);
