@@ -137,9 +137,8 @@ public class QuantifierEliminationTest {
 						mScript.term("=", var_oldvalid, var_v_valid_207))),
 						mScript.term("=", var_valid, var_v_oldvalid_88)));
 
-		PartialQuantifierElimination.tryToEliminate(mServices, mServices.getLoggingService().getLogger("lol"),
-				mMgdScript, term, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, term,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		// //Sorts
 		// final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
@@ -184,7 +183,7 @@ public class QuantifierEliminationTest {
 
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		mLogger.info("Result: " + result);
 		Assert.assertTrue(!SmtUtils.isTrue(result));
 	}
 
@@ -198,12 +197,29 @@ public class QuantifierEliminationTest {
 
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		mLogger.info("Result: " + result);
 
 		final Term trueTerm = mScript.term("true");
 		final LBool checkSatResult = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", trueTerm, formulaAsTerm));
 		Assert.assertTrue(checkSatResult == LBool.UNSAT);
 		Assert.assertTrue(SmtUtils.isTrue(result));
+	}
+
+	@Test
+	public void plrTest2() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("T1", new Sort[0], realSort);
+		mScript.declareFun("T2", new Sort[0], realSort);
+		final String formulaAsString = "(exists ((A Int) (B Int) (C Bool) (D Int) (E Int) (F Bool) (G Bool) (H Int)) "
+				+ "(or " + "(<= 50.0 T2) " + "(and " + "(not F) " + "(or " + "(and " + "(< T1 50.0) "
+				+ "(or (and (not (< B 5)) (not (= H E))) (and (not (= H E)) (or (not F) (not G) (not (= A E)) (not C))))) "
+				+ "(and (= H E) (or (not F) (= H E) (not (< B 5)) (not G) (not (= A E)) (not C))) "
+				+ "(and (< T1 50.0) (= A E) (< B 5) C (not (= H E)) F G)) " + "(not (= E D))) " + "(< T2 50.0)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
 	}
 
 }
