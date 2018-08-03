@@ -144,8 +144,7 @@ class Executor {
 			final Symbol sym = lexer.next_token();
 			if (sym.sym == LexerSymbols.LPAR) {
 				parenLevel++;
-			}
-			if (sym.sym == LexerSymbols.RPAR) {
+			} else if (sym.sym == LexerSymbols.RPAR) {
 				parenLevel--;
 			}
 			result.add(sym);
