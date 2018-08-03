@@ -82,12 +82,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
 public class MoNatDiffScript extends NoopScript {
 
 	private final IUltimateServiceProvider mServices;
-	private final AutomataLibraryServices mAutomataLibraryServices;
+	private final AutomataLibraryServices mALS;
 	private final ILogger mLogger;
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mServices = services;
-		mAutomataLibraryServices = new AutomataLibraryServices(services);
+		mALS = new AutomataLibraryServices(services);
 		mLogger = logger;
 	}
 
@@ -104,6 +104,19 @@ public class MoNatDiffScript extends NoopScript {
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		// TODO Auto-generated method stub
+
+		String[] terms = { "a", "b", "c", "d" };
+		int rows = (int) Math.pow(2, terms.length);
+
+		for (int i = 0; i < rows; i++) {
+			String str = new String();
+
+			for (int j = terms.length - 1; j >= 0; j--) {
+				// terms[j]
+				str += terms[j] + "=" + ((i / (int) Math.pow(2, j)) % 2 + " ");
+			}
+			mLogger.info(str);
+		}
 
 		mLogger.info("formula: " + term);
 		checkEmptiness(traversePostOrder(term));
@@ -165,7 +178,7 @@ public class MoNatDiffScript extends NoopScript {
 
 		try {
 			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> complement = new Complement<MoNatDiffAlphabetSymbol, String>(
-					mAutomataLibraryServices, stateFactory, automaton).getResult();
+					mALS, stateFactory, automaton).getResult();
 
 			checkEmptiness(complement);
 
@@ -212,14 +225,13 @@ public class MoNatDiffScript extends NoopScript {
 			if (var.getValue().equals(Rational.ONE)) {
 				mLogger.info("Construct x < c.");
 
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(var.getKey(), constant, mAutomataLibraryServices);
+				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mALS, var.getKey(), constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
 				mLogger.info("Construct -x < c.");
 
-				return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(var.getKey(), constant,
-						mAutomataLibraryServices);
+				return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(mALS, var.getKey(), constant);
 			}
 		}
 
@@ -234,12 +246,10 @@ public class MoNatDiffScript extends NoopScript {
 				throw new IllegalArgumentException("Input is not difference logic.");
 
 			if (var1.getValue().equals(Rational.ONE))
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(var1.getKey(), var2.getKey(), constant,
-						mAutomataLibraryServices);
+				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mALS, var1.getKey(), var2.getKey(), constant);
 
 			if (var2.getValue().equals(Rational.ONE))
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(var2.getKey(), var1.getKey(), constant,
-						mAutomataLibraryServices);
+				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mALS, var2.getKey(), var1.getKey(), constant);
 		}
 
 		throw new IllegalArgumentException("Invalid inequality");
@@ -254,8 +264,7 @@ public class MoNatDiffScript extends NoopScript {
 		if (term.getParameters().length != 2)
 			throw new IllegalArgumentException("StrictSubset must have exactly two parameters.");
 
-		return MoNatDiffAutomatonFactory.strictSubsetAutomaton(term.getParameters()[0], term.getParameters()[1],
-				mAutomataLibraryServices);
+		return MoNatDiffAutomatonFactory.strictSubsetAutomaton(mALS, term.getParameters()[0], term.getParameters()[1]);
 	}
 
 	/*
@@ -267,8 +276,7 @@ public class MoNatDiffScript extends NoopScript {
 		if (term.getParameters().length != 2)
 			throw new IllegalArgumentException("Subset must have exactly two parameters.");
 
-		return MoNatDiffAutomatonFactory.subsetAutomaton(term.getParameters()[0], term.getParameters()[1],
-				mAutomataLibraryServices);
+		return MoNatDiffAutomatonFactory.subsetAutomaton(mALS, term.getParameters()[0], term.getParameters()[1]);
 	}
 
 	/*
@@ -285,8 +293,7 @@ public class MoNatDiffScript extends NoopScript {
 		if (variables.size() == 0) {
 			mLogger.info("Construct c element X.");
 
-			return MoNatDiffAutomatonFactory.constElementAutomaton(constant, term.getParameters()[1],
-					mAutomataLibraryServices);
+			return MoNatDiffAutomatonFactory.constElementAutomaton(mALS, constant, term.getParameters()[1]);
 		}
 
 		if (variables.size() == 1) {
@@ -297,8 +304,7 @@ public class MoNatDiffScript extends NoopScript {
 			if (!var.getValue().equals(Rational.ONE))
 				throw new IllegalArgumentException("Invalid input.");
 
-			return MoNatDiffAutomatonFactory.elementAutomaton(var.getKey(), constant, term.getParameters()[1],
-					mAutomataLibraryServices);
+			return MoNatDiffAutomatonFactory.elementAutomaton(mALS, var.getKey(), constant, term.getParameters()[1]);
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
@@ -309,8 +315,8 @@ public class MoNatDiffScript extends NoopScript {
 	 */
 	private void checkEmptiness(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
 		try {
-			IsEmpty<MoNatDiffAlphabetSymbol, String> emptinessCheck = new IsEmpty<MoNatDiffAlphabetSymbol, String>(
-					mAutomataLibraryServices, automaton);
+			IsEmpty<MoNatDiffAlphabetSymbol, String> emptinessCheck = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mALS,
+					automaton);
 
 			if (emptinessCheck.getResult() == false) {
 
@@ -330,8 +336,7 @@ public class MoNatDiffScript extends NoopScript {
 	 * Only for debugging.
 	 */
 	private void printAutomata(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
-		AutomatonDefinitionPrinter printer = new AutomatonDefinitionPrinter(mAutomataLibraryServices, "debug",
-				Format.GFF, automaton);
+		AutomatonDefinitionPrinter printer = new AutomatonDefinitionPrinter(mALS, "debug", Format.GFF, automaton);
 
 		mLogger.info(printer.getDefinitionAsString());
 	}
@@ -343,8 +348,8 @@ public class MoNatDiffScript extends NoopScript {
 		final Set<Integer> alphabet = null;
 		final VpAlphabet<Integer> vpAlphabet = new VpAlphabet<Integer>(alphabet);
 		final StringFactory stateFactory = new StringFactory();
-		final NestedWordAutomaton<Integer, String> automaton = new NestedWordAutomaton<Integer, String>(
-				mAutomataLibraryServices, vpAlphabet, stateFactory);
+		final NestedWordAutomaton<Integer, String> automaton = new NestedWordAutomaton<Integer, String>(mALS,
+				vpAlphabet, stateFactory);
 
 		// add some initial state
 		automaton.addState(true, false, "q_0");
@@ -353,27 +358,27 @@ public class MoNatDiffScript extends NoopScript {
 		// connect both states via transition that is labeled by letter 23
 		automaton.addInternalTransition("q_0", 23, "q_1");
 
-		final INestedWordAutomaton<Integer, String> intersection = new Intersect<Integer, String>(
-				mAutomataLibraryServices, stateFactory, automaton, automaton).getResult();
-		final INestedWordAutomaton<Integer, String> buchiIntersection = new BuchiIntersect<Integer, String>(
-				mAutomataLibraryServices, stateFactory, automaton, automaton).getResult();
-		final INestedWordAutomaton<Integer, String> union = new Union<Integer, String>(mAutomataLibraryServices,
+		final INestedWordAutomaton<Integer, String> intersection = new Intersect<Integer, String>(mALS, stateFactory,
+				automaton, automaton).getResult();
+		final INestedWordAutomaton<Integer, String> buchiIntersection = new BuchiIntersect<Integer, String>(mALS,
 				stateFactory, automaton, automaton).getResult();
-		final INestedWordAutomaton<Integer, String> determinize = new Determinize<Integer, String>(
-				mAutomataLibraryServices, stateFactory, automaton).getResult();
-		final INestedWordAutomaton<Integer, String> complement = new Complement<Integer, String>(
-				mAutomataLibraryServices, stateFactory, automaton).getResult();
-		final INestedWordAutomaton<Integer, String> buchiComplement = new BuchiComplementFKV<Integer, String>(
-				mAutomataLibraryServices, stateFactory, automaton).getResult();
+		final INestedWordAutomaton<Integer, String> union = new Union<Integer, String>(mALS, stateFactory, automaton,
+				automaton).getResult();
+		final INestedWordAutomaton<Integer, String> determinize = new Determinize<Integer, String>(mALS, stateFactory,
+				automaton).getResult();
+		final INestedWordAutomaton<Integer, String> complement = new Complement<Integer, String>(mALS, stateFactory,
+				automaton).getResult();
+		final INestedWordAutomaton<Integer, String> buchiComplement = new BuchiComplementFKV<Integer, String>(mALS,
+				stateFactory, automaton).getResult();
 
-		final IsEmpty<Integer, String> emptinessCheck = new IsEmpty<Integer, String>(mAutomataLibraryServices, union);
+		final IsEmpty<Integer, String> emptinessCheck = new IsEmpty<Integer, String>(mALS, union);
 		if (emptinessCheck.getResult() == false) {
 			final NestedRun<Integer, String> run = emptinessCheck.getNestedRun();
 			final NestedWord<Integer> word = run.getWord();
 		}
 
-		final BuchiIsEmpty<Integer, String> buchiEmptinessCheck = new BuchiIsEmpty<Integer, String>(
-				mAutomataLibraryServices, buchiComplement);
+		final BuchiIsEmpty<Integer, String> buchiEmptinessCheck = new BuchiIsEmpty<Integer, String>(mALS,
+				buchiComplement);
 		if (emptinessCheck.getResult() == false) {
 			final NestedLassoRun<Integer, String> lassorun = buchiEmptinessCheck.getAcceptingNestedLassoRun();
 			final NestedLassoWord<Integer> lassoword = lassorun.getNestedLassoWord();

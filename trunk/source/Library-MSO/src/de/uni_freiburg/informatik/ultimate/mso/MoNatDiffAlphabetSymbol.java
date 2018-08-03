@@ -61,12 +61,19 @@ public class MoNatDiffAlphabetSymbol {
 		mMap.put(term, value != 0);
 	}
 	
-	@Override
-	public boolean equals(Object object) {
-		if (object == this)
-			return true;
-		
-		return (object instanceof MoNatDiffAlphabetSymbol && ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
+//	@Override
+//	public boolean equals(Object object) {
+//		if (object == this)
+//			return true;
+//		
+//		return (object instanceof MoNatDiffAlphabetSymbol && ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
+//	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	public boolean contains(MoNatDiffAlphabetSymbol alphabetSymbol) {
+		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
 
 	/*
@@ -84,4 +91,5 @@ public class MoNatDiffAlphabetSymbol {
 
 		return str;
 	}
+
 }
