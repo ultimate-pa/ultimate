@@ -28,13 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.naming.spi.StateFactory;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -56,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -103,22 +108,6 @@ public class MoNatDiffScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		// TODO Auto-generated method stub
-
-		String[] terms = { "a", "b", "c", "d" };
-		int rows = (int) Math.pow(2, terms.length);
-
-		for (int i = 0; i < rows; i++) {
-			String str = new String();
-
-			for (int j = terms.length - 1; j >= 0; j--) {
-				// terms[j]
-				str += terms[j] + "=" + ((i / (int) Math.pow(2, j)) % 2 + " ");
-			}
-			mLogger.info(str);
-		}
-
-		mLogger.info("formula: " + term);
 		checkEmptiness(traversePostOrder(term));
 
 		return null;
@@ -134,7 +123,7 @@ public class MoNatDiffScript extends NoopScript {
 	 * Traverses formula in post order.
 	 */
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
-		mLogger.info("term: " + term);
+		mLogger.info("Traverse term: " + term);
 
 		if (term instanceof QuantifiedFormula) {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
@@ -146,10 +135,10 @@ public class MoNatDiffScript extends NoopScript {
 			String functionSymbol = applicationTerm.getFunction().getName();
 
 			if (functionSymbol.equals("not"))
-				return processNot(applicationTerm);
+				return processNegation(applicationTerm);
 
 			if (functionSymbol.equals("and"))
-				return processAnd(applicationTerm);
+				return processConjunction(applicationTerm);
 
 			if (functionSymbol.equals("strictSubsetInt"))
 				return processStrictSubset(applicationTerm);
@@ -164,14 +153,14 @@ public class MoNatDiffScript extends NoopScript {
 				return processInequality(applicationTerm);
 		}
 
-		throw new IllegalArgumentException("Input must be QuantifiedFormula or ApplicationTerm.");
+		throw new IllegalArgumentException("Input must be a QuantifiedFormula or an ApplicationTerm.");
 	}
 
 	/*
 	 * TODO: Comment.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processNot(ApplicationTerm term) {
-		mLogger.info("Construct not.");
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processNegation(ApplicationTerm term) {
+		mLogger.info("Construct not Phi : " + term);
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term.getParameters()[0]);
 		StringFactory stateFactory = new StringFactory();
@@ -193,12 +182,33 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * TODO: Comment.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processAnd(ApplicationTerm term) {
-		mLogger.info("Construct and.");
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processConjunction(ApplicationTerm term) {
+		mLogger.info("Construct Phi and Psi : " + term);
 
 		Term[] terms = term.getParameters();
-		for (int i = 0; i < terms.length; i++) {
-			traversePostOrder(terms[i]);
+		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(terms[0]);
+
+		for (int i = 1; i < terms.length; i++) {
+			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(terms[i]);
+			printAutomata("INPUT: ", automaton);
+
+			Set<MoNatDiffAlphabetSymbol> alphabet = mergeAlphabets(result.getAlphabet(), automaton.getAlphabet());
+			result = reconstruct(result, alphabet);
+			automaton = reconstruct(automaton, alphabet);
+			
+			printAutomata("MERGED: ", result);
+
+			try {
+				INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> intersection = new Intersect<MoNatDiffAlphabetSymbol, String>(
+						mALS, new StringFactory(), result, automaton).getResult();
+				
+				printAutomata("INTERSECTION: ", intersection);
+				
+				checkEmptiness(intersection);
+				
+			} catch (AutomataLibraryException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return null;
@@ -223,20 +233,20 @@ public class MoNatDiffScript extends NoopScript {
 			Entry<Term, Rational> var = variables.entrySet().iterator().next();
 
 			if (var.getValue().equals(Rational.ONE)) {
-				mLogger.info("Construct x < c.");
+				mLogger.info("Construct x < c : " + term);
 
 				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mALS, var.getKey(), constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
-				mLogger.info("Construct -x < c.");
+				mLogger.info("Construct -x < c : " + term);
 
 				return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(mALS, var.getKey(), constant);
 			}
 		}
 
 		if (variables.size() == 2) {
-			mLogger.info("Construct x-y < c.");
+			mLogger.info("Construct x-y < c : " + term);
 
 			Iterator<Entry<Term, Rational>> it = variables.entrySet().iterator();
 			Entry<Term, Rational> var1 = it.next();
@@ -259,7 +269,7 @@ public class MoNatDiffScript extends NoopScript {
 	 * TODO: Comment.
 	 */
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processStrictSubset(ApplicationTerm term) {
-		mLogger.info("Construct X strictSubset Y.");
+		mLogger.info("Construct X strictSubset Y : " + term);
 
 		if (term.getParameters().length != 2)
 			throw new IllegalArgumentException("StrictSubset must have exactly two parameters.");
@@ -271,7 +281,7 @@ public class MoNatDiffScript extends NoopScript {
 	 * TODO: Comment.
 	 */
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processSubset(ApplicationTerm term) {
-		mLogger.info("Construct X subset Y.");
+		mLogger.info("Construct X subset Y : " + term);
 
 		if (term.getParameters().length != 2)
 			throw new IllegalArgumentException("Subset must have exactly two parameters.");
@@ -291,13 +301,13 @@ public class MoNatDiffScript extends NoopScript {
 		Rational constant = affineTerm.getConstant();
 
 		if (variables.size() == 0) {
-			mLogger.info("Construct c element X.");
+			mLogger.info("Construct c element X : " + term);
 
 			return MoNatDiffAutomatonFactory.constElementAutomaton(mALS, constant, term.getParameters()[1]);
 		}
 
 		if (variables.size() == 1) {
-			mLogger.info("Construct x+c element Y.");
+			mLogger.info("Construct x+c element Y : " + term);
 
 			Entry<Term, Rational> var = variables.entrySet().iterator().next();
 
@@ -308,6 +318,69 @@ public class MoNatDiffScript extends NoopScript {
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
+	}
+
+	/*
+	 * TODO: Comment. How to handle empty alphabets?
+	 */
+	private Set<MoNatDiffAlphabetSymbol> mergeAlphabets(Set<MoNatDiffAlphabetSymbol> alphabet1,
+			Set<MoNatDiffAlphabetSymbol> alphabet2) {
+
+		Set<MoNatDiffAlphabetSymbol> result = new HashSet<MoNatDiffAlphabetSymbol>();
+
+		Set<Term> terms = new HashSet<Term>();
+		terms.addAll(alphabet1.iterator().next().getMap().keySet());
+		terms.addAll(alphabet2.iterator().next().getMap().keySet());
+
+		assert (terms.size() == 0);
+
+		int numLetters = (int) Math.pow(2, terms.size());
+		for (int i = 0; i < numLetters; i++) {
+			MoNatDiffAlphabetSymbol symbol = new MoNatDiffAlphabetSymbol();
+			Iterator<Term> itTerms = terms.iterator();
+
+			for (int j = 0; j < terms.size(); j++) {
+				int value = (i / (int) Math.pow(2, j)) % 2;
+				symbol.add(itTerms.next(), value);
+			}
+			result.add(symbol);
+		}
+
+		return result;
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
+			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, Set<MoNatDiffAlphabetSymbol> alphabet) {
+
+		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = MoNatDiffAutomatonFactory.emptyAutomaton(mALS);
+
+		result.getAlphabet().addAll(alphabet);
+		Iterator<String> itStates = automaton.getStates().iterator();
+
+		while (itStates.hasNext()) {
+			String state = itStates.next();
+
+			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
+
+			Iterator<OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String>> itTransitions = automaton
+					.internalSuccessors(state).iterator();
+
+			while (itTransitions.hasNext()) {
+				OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition = itTransitions.next();
+
+				Iterator<MoNatDiffAlphabetSymbol> itMatches = alphabet.stream()
+						.filter(e -> e.contains(transition.getLetter())).iterator();
+
+				while (itMatches.hasNext()) {
+					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
+				}
+			}
+		}
+
+		return result;
 	}
 
 	/*
@@ -333,12 +406,10 @@ public class MoNatDiffScript extends NoopScript {
 	}
 
 	/*
-	 * Only for debugging.
+	 * Prints the given automaton to logger. Only used for debugging.
 	 */
-	private void printAutomata(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
-		AutomatonDefinitionPrinter printer = new AutomatonDefinitionPrinter(mALS, "debug", Format.GFF, automaton);
-
-		mLogger.info(printer.getDefinitionAsString());
+	private void printAutomata(String name, INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
+		mLogger.info(new AutomatonDefinitionPrinter(mALS, name, Format.ATS, automaton).getDefinitionAsString());
 	}
 
 	/*

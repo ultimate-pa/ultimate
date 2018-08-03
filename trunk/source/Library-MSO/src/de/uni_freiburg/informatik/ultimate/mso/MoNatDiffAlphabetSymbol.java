@@ -21,6 +21,13 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
+	public MoNatDiffAlphabetSymbol() {
+		mMap = new HashMap<Term, Boolean>();
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
 	public MoNatDiffAlphabetSymbol(Term term, int value) {
 		mMap = new HashMap<Term, Boolean>();
 		add(term, value);
@@ -40,12 +47,19 @@ public class MoNatDiffAlphabetSymbol {
 	 */
 	public MoNatDiffAlphabetSymbol(Term[] terms, int[] values) {
 		if (terms.length != values.length)
-			throw new InvalidParameterException("Different lengths of terms and values.");
+			throw new InvalidParameterException("Input terms, values of different length.");
 
 		mMap = new HashMap<Term, Boolean>();
 
 		for (int i = 0; i < terms.length; i++)
 			add(terms[i], values[i]);
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	public Map<Term, Boolean> getMap() {
+		return mMap;
 	}
 
 	/*
@@ -53,10 +67,10 @@ public class MoNatDiffAlphabetSymbol {
 	 */
 	public void add(Term term, int value) {
 		if (!MoNatDiffUtils.isVariable(term))
-			throw new InvalidParameterException("Term must be a variable of sort Int or SetOfInt.");
+			throw new InvalidParameterException("Input term must be a Int or SetOfInt variable.");
 
 		if (value < 0 || value > 1)
-			throw new InvalidParameterException("Value must be either 0 or 1.");
+			throw new InvalidParameterException("Input value must be 0 or 1.");
 
 		mMap.put(term, value != 0);
 	}
@@ -86,7 +100,7 @@ public class MoNatDiffAlphabetSymbol {
 		while (it.hasNext()) {
 			Map.Entry<Term, Boolean> entry = it.next();
 			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1" : "0");
-			str += it.hasNext() ? ", " : "";
+			str += it.hasNext() ? " " : "";
 		}
 
 		return str;

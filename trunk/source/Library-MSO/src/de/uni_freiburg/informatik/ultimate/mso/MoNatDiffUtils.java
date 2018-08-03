@@ -4,13 +4,7 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.math.BigInteger;
-
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -99,6 +93,7 @@ public class MoNatDiffUtils {
 
 	/*
 	 * TODO: Comment.
+	 * TODO: Remove sort check here. Add isQuantifiedVariable, isFreeVariable of each sort.
 	 */
 	public static boolean isIntVariable(Term term) {
 		return isVariable(term) && SmtSortUtils.isIntSort(term.getSort());
@@ -106,6 +101,7 @@ public class MoNatDiffUtils {
 
 	/*
 	 * TODO: Comment.
+	 * TODO: Remove sort check here. Add isQuantifiedVariable, isFreeVariable of each sort.
 	 */
 	public static boolean isSetOfIntVariable(Term term) {
 		return isVariable(term) && isSetOfIntSort(term.getSort());

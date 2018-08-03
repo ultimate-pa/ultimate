@@ -8,8 +8,9 @@
 
 (declare-fun x () Int)
 (declare-fun y () Int)
+(declare-fun z () Int)
 
-(assert (exists ((x Int)) (and (<= (- x y) 2) (<= y 2))))
+(assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
 
 (check-sat)
 (get-model)
