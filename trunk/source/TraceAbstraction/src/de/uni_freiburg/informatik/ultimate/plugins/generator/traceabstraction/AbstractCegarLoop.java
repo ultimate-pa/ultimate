@@ -41,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -67,6 +69,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -220,6 +224,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected final IToolchainStorage mToolchainStorage;
 
 	private IRunningTaskStackProvider mRunningTaskStackProvider;
+	protected final TaskIdentifier mTaskIdentifier;
 
 	protected Dumper mDumper;
 	/**
@@ -246,6 +251,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
+		// TODO: TaskIdentifier should probably be provided by caller
+		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mInteractive = new InteractiveCegar(services, logger);
 	}
 
@@ -398,7 +405,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mArtifactAutomaton = mAbstraction;
 			}
 			if (mPref.dumpAutomata()) {
-				final String filename = mName + "Abstraction" + mIteration;
+				// TODO Matthias: Iteration should probably added to TaskIdentifier
+				final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_Abstraction");
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -454,10 +462,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 								&& mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 							mArtifactAutomaton = mInterpolAutomaton;
 						}
-						if (mPref.dumpAutomata()) {
-							writeAutomatonToFile(mInterpolAutomaton,
-									automatonType + "Automaton_Iteration" + mIteration);
-						}
+//						if (mPref.dumpAutomata()) {
+//							writeAutomatonToFile(mInterpolAutomaton,
+//									automatonType + "Automaton_Iteration" + mIteration);
+//						}
 					}
 
 					mInteractive.waitIfPaused();
@@ -486,10 +494,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 						mArtifactAutomaton = mAbstraction;
 					}
 
-					if (mPref.dumpAutomata()) {
-						final String filename = "Abstraction" + mIteration;
-						writeAutomatonToFile(mAbstraction, filename);
-					}
+//					if (mPref.dumpAutomata()) {
+//						final String filename = "Abstraction" + mIteration;
+//						writeAutomatonToFile(mAbstraction, filename);
+//					}
 
 					final boolean newMaximumReached =
 							mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -556,9 +564,23 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
-		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
-				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", automaton);
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
+				determineAutomatonName(automaton), mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling,
+				"", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+	}
+
+	private String determineAutomatonName(final IAutomaton<LETTER, IPredicate> automaton) {
+		String result;
+		if (automaton instanceof INwaBasis) {
+			result = "nwa";
+		} else if (automaton instanceof IPetriNet) {
+			result = "net";
+		} else {
+			throw new UnsupportedOperationException(
+					"unknown kind of automaton " + automaton.getClass().getSimpleName());
+		}
+		return result;
 	}
 
 	public static String addIndentation(final int indentation, final String s) {

@@ -91,9 +91,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
@@ -147,6 +145,33 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractCegarLoop<LETTER> {
 
+	public enum AutomatonType {
+		FLOYD_HOARE, ERROR;
+
+		private String longString;
+
+		static {
+			FLOYD_HOARE.longString = "FloydHoare";
+			ERROR.longString = "Error";
+		}
+
+		private String shortString;
+
+		static {
+			FLOYD_HOARE.longString = "Fh";
+			ERROR.longString = "Err";
+		}
+
+		public String getLongString() {
+			return longString;
+		}
+
+		public String getShortString() {
+			return shortString;
+		}
+
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
@@ -190,7 +215,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final boolean mStoreFloydHoareAutomata;
 	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata =
 			new LinkedHashSet<>();
-	protected final TaskIdentifier mTaskIdentifier;
 	private boolean mFirstReuseDump = true;
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
@@ -201,8 +225,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final IToolchainStorage storage) {
 		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		// TODO: TaskIdentifier should probably be provided by caller
-		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfg);
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
@@ -468,6 +490,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
+
+		if (mPref.dumpAutomata()) {
+			// TODO Matthias: Iteration should probably added to TaskIdentifier
+			final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_RawFloydHoareAutomaton");
+			super.writeAutomatonToFile(mInterpolAutomaton, filename);
+		}
+
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
 			final boolean inductive = new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
@@ -534,7 +563,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mPref.getHoareTripleChecks(), mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		}
 
-		final String automatonType;
+		final AutomatonType automatonType;
 		final boolean useErrorAutomaton;
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement;
 		final InterpolantAutomatonEnhancement enhanceMode;
@@ -542,14 +571,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final boolean exploitSigmaStarConcatOfIa;
 		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 			mErrorGeneralizationEngine.startDifference();
-			automatonType = "error";
+			automatonType = AutomatonType.ERROR;
 			useErrorAutomaton = true;
 			exploitSigmaStarConcatOfIa = false;
 			enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
 			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 		} else {
-			automatonType = "interpolant";
+			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
@@ -627,7 +656,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
-			final boolean useErrorAutomaton, final String automatonType)
+			final boolean useErrorAutomaton, final AutomatonType automatonType)
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
@@ -671,7 +700,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						(NestedRun<LETTER, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
 			}
 
-			dumpAutomatonIfEnabled(subtrahend, "Enhanced", automatonType);
+			if (mPref.dumpAutomata()) {
+				// TODO Matthias: Iteration should probably added to TaskIdentifier
+				final String filename = mTaskIdentifier + ("Iteration" + mIteration) + ("Enhanced" + automatonType.getShortString() + "Automaton");
+				super.writeAutomatonToFile(subtrahend, filename);
+			}
+			if (mPref.dumpAutomata()) {
+				// TODO Matthias: Iteration should probably added to TaskIdentifier
+				final String filename = mTaskIdentifier + ("Iteration" + mIteration) + ("AbstractionAfterDifference");
+				super.writeAutomatonToFile(subtrahend, filename);
+			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
 			if (!useErrorAutomaton) {
@@ -690,8 +728,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 			mAbstraction = diff.getResult();
 
-			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Original", automatonType);
-
 		} finally
 
 		{
@@ -704,7 +740,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<LETTER, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
-			final String automatonType) throws AutomataLibraryException {
+			final AutomatonType automatonType) throws AutomataLibraryException {
 		final RunningTaskInfo runningTaskInfo =
 				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
 		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
@@ -717,20 +753,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private RunningTaskInfo getDifferenceTimeoutRunningTaskInfo(final INestedWordAutomaton<LETTER, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
-			final String automatonType) {
+			final AutomatonType automatonType) {
 		final String taskDescription = "constructing difference of abstraction (" + minuend.size() + "states) and "
 				+ automatonType + " automaton (currently " + subtrahend.size() + " states, "
 				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
 		return new RunningTaskInfo(getClass(), taskDescription);
-	}
-
-	private void dumpAutomatonIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
-			final String prefix, final String automatonType) {
-		if (mPref.dumpAutomata()) {
-			final String type = Character.toUpperCase(automatonType.charAt(0)) + automatonType.substring(1);
-			final String filename = prefix + type + "Automaton_Iteration" + mIteration;
-			super.writeAutomatonToFile(subtrahend, filename);
-		}
 	}
 
 	protected void dumpOrAppendAutomatonForReuseIfEnabled(
@@ -905,10 +932,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
-		if (mPref.dumpAutomata()) {
-			final String filename = mIcfg.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
-			super.writeAutomatonToFile(mAbstraction, filename);
-		}
 		final Function<ISLPredicate, IcfgLocation> lcsProvider = x -> x.getProgramPoint();
 		AutomataMinimization<IcfgLocation, ISLPredicate, LETTER> am;
 		try {

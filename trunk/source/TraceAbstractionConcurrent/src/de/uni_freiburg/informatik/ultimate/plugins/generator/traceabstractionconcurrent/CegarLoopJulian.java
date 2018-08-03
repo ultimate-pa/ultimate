@@ -169,6 +169,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 				abstraction, dia).getResult();
 
+		if (mPref.dumpAutomata()) {
+			// TODO Matthias: Iteration should probably added to TaskIdentifier
+			final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_AbstractionAfterDifference");
+			super.writeAutomatonToFile(mAbstraction, filename);
+		}
+
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
 		// mBiggestAbstractionSize = mAbstraction.size();
@@ -215,6 +221,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
 							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
+			if (mPref.dumpAutomata()) {
+				// TODO Matthias: Iteration should probably added to TaskIdentifier
+				final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_EagerFloydHoareAutomaton");
+				super.writeAutomatonToFile(dia, filename);
+			}
 			break;
 		default:
 			throw new UnsupportedOperationException();

@@ -107,10 +107,6 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 	protected void minimizeAbstraction(final PredicateFactoryForInterpolantAutomata predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
-		if (mPref.dumpAutomata()) {
-			final String filename = mIcfg.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
-			super.writeAutomatonToFile(mAbstraction, filename);
-		}
 		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
 		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, LETTER> am;
 		try {
