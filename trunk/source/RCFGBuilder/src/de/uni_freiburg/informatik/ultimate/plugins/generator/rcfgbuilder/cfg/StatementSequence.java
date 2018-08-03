@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class StatementSequence extends CodeBlock implements IIcfgInternalTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = -1780068525981157749L;
+	private static final boolean ADD_SERIAL_NUMBER_IN_TO_STRING_REPRESENTATION = false;
 
 	public enum Origin {
 		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
@@ -127,6 +128,11 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	@Override
 	public String toString() {
-		return getPrettyPrintedStatements();
+		if (ADD_SERIAL_NUMBER_IN_TO_STRING_REPRESENTATION) {
+			return "#" + getSerialNumber() + "#" + getPrettyPrintedStatements();
+		} else {
+			return getPrettyPrintedStatements();
+		}
 	}
+
 }
