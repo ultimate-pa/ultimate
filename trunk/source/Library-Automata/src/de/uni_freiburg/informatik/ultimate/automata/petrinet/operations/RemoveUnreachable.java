@@ -20,15 +20,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Removes parts of a Petri Net that do not change its behavior.
- * A node is either a transition or a place.
  * <p>
- * A transition is dead iff it can never fire
+ * A transition is unreachable iff it can never fire
  * (because there is no reachable marking covering all of its preceding places).
- * Non-dead transitions are alive.
  * <p>
- * Places which are not covered by any reachable marking are dead.
- * Non-accepting places without an alive successor transition are dead.
- * Out of all accepting places without alive successor transitions only one place is alive, the others are dead.
+ * A place is unreachable iff it is not covered by any reachable marking.
+ * <p>
+ * This operation may also remove some of the reachable places if they are not needed, for insance
+ * <ul>
+ *   <li> all non-accepting places without a reachable successor transition
+ *   <li> all but one accepting place without a reachable successor transition
+ * </ul>
  * 
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -44,10 +46,10 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
 	
-	/** {@link #mOperand} without dead transitions and without dead places. */
+	/** {@link #mOperand} with only reachable transitions and required places. */
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	
-	private final Set<ITransition<LETTER, PLACE>> mAliveTransitions;
+	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
 	
 	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException {
@@ -55,15 +57,15 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	}
 	
 	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
-			Set<ITransition<LETTER, PLACE>> aliveTransitions) throws AutomataOperationCanceledException {
+			Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mResult = new BoundedPetriNet<>(services, operand.getAlphabet(), operand.constantTokenAmount());
-		mAliveTransitions = aliveTransitions == null ? computeAliveTransitions() : aliveTransitions;
+		mReachableTransitions = reachableTransitions == null ? computeReachableTransitions() : reachableTransitions;
 		rebuildNetWithoutDeadNodes();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> computeAliveTransitions() throws AutomataOperationCanceledException {
+	private Set<ITransition<LETTER, PLACE>> computeReachableTransitions() throws AutomataOperationCanceledException {
 		BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
 		return finPre.getEvents().stream().map(Event::getTransition)
 				// finPre contains dummy root-event which does not correspond to any transition
@@ -71,27 +73,27 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 				.collect(Collectors.toSet());
 	}
 	
-	private Set<PLACE> alivePlaces() {
-		Set<PLACE> alivePlaces = new HashSet<>();
-		for (ITransition<LETTER, PLACE> trans : mAliveTransitions) {
-			alivePlaces.addAll(mOperand.getPredecessors(trans));
-			alivePlaces.addAll(mOperand.getSuccessors(trans));
+	private Set<PLACE> requiredPlaces() {
+		Set<PLACE> reachablePlaces = new HashSet<>();
+		for (ITransition<LETTER, PLACE> trans : mReachableTransitions) {
+			reachablePlaces.addAll(mOperand.getPredecessors(trans));
+			reachablePlaces.addAll(mOperand.getSuccessors(trans));
 		}
 
 		Stream<PLACE> acceptingInitialPlaces = mOperand.getInitialPlaces().stream()
 				.filter(mOperand.getAcceptingPlaces()::contains);
 		// This is an optimization to remove more places.
-		// The naive way would be to consider all accepting initial places to be alive.
+		// The naive way would be to require all accepting initial places.
 		Optional<PLACE> alwaysAcceptingPlace = acceptingInitialPlaces
-				.filter(place -> !alivePlaces.contains(place)).findAny();
-		alwaysAcceptingPlace.ifPresent(alivePlaces::add);
+				.filter(place -> !reachablePlaces.contains(place)).findAny();
+		alwaysAcceptingPlace.ifPresent(reachablePlaces::add);
 
-		return alivePlaces;
+		return reachablePlaces;
 	}
 
 	private void rebuildNetWithoutDeadNodes() {
-		alivePlaces().forEach(this::rebuildPlace);
-		mAliveTransitions.forEach(this::rebuildTransition);
+		requiredPlaces().forEach(this::rebuildPlace);
+		mReachableTransitions.forEach(this::rebuildTransition);
 	}
 
 	private void rebuildPlace(PLACE place) {
