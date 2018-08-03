@@ -35,8 +35,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 
 /**
@@ -53,6 +55,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
+	private boolean mLazySuccessorComputation = false;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
@@ -104,19 +107,29 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
-		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
-		for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond.getPlace())) {
-				transitions.add(t);
+		if (mLazySuccessorComputation) {
+			Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
+			Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
+			Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
+					.getNet().getSuccessorTransitionProviders(correspondingPlaces);
+			List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
+					.map(x -> new Candidate<LETTER, PLACE>(x, conditions)).collect(Collectors.toList());
+			return candidates;
+		} else {
+			final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
+				for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond.getPlace())) {
+					transitions.add(t);
+				}
 			}
+			final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
+			for (final ITransition<LETTER, PLACE> transition : transitions) {
+				final Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
+						Collections.singleton(transition), mBranchingProcess.getNet()), event.getSuccessorConditions());
+				candidates.add(candidate);
+			}
+			return candidates;
 		}
-		final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
-		for (final ITransition<LETTER, PLACE> transition : transitions) {
-			final Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
-					Collections.singleton(transition), mBranchingProcess.getNet()), event.getSuccessorConditions());
-			candidates.add(candidate);
-		}
-		return candidates;
 	}
 
 
