@@ -115,6 +115,8 @@ public class RtInconcistencyConditionGenerator {
 	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final boolean mSeparateInvariantHandling;
 
+	private final Map<Term, Term> mProjectionCache;
+
 	private final Map<Phase, Term> mPhaseTermCache;
 	private int mQuantified;
 	private int mPlain;
@@ -141,6 +143,7 @@ public class RtInconcistencyConditionGenerator {
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mSeparateInvariantHandling = separateInvariantHandling;
 		mPhaseTermCache = new HashMap<>();
+		mProjectionCache = new HashMap<>();
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
@@ -482,6 +485,17 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term existentiallyProjectEventsAndPrimedVars(final Term term) {
+		final Term cachedResult = mProjectionCache.get(term);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		final Term rtr = computeExistentialProjection(term);
+		mProjectionCache.put(term, rtr);
+		return rtr;
+	}
+
+	private Term computeExistentialProjection(final Term term) {
+
 		final Term simplifiedTerm = simplifyAndLog(term);
 
 		final Set<TermVariable> varsToRemove = getPrimedAndEventVars(simplifiedTerm.getFreeVars());
