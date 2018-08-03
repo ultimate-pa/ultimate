@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
  * Removes parts of a Petri Net that do not change its behavior.
@@ -66,7 +67,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	}
 
 	private Set<ITransition<LETTER, PLACE>> computeReachableTransitions() throws AutomataOperationCanceledException {
-		BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
+		final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
 		return finPre.getEvents().stream().map(Event::getTransition)
 				// finPre contains dummy root-event which does not correspond to any transition
 				.filter(Objects::nonNull)
@@ -74,21 +75,29 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	}
 	
 	private Set<PLACE> requiredPlaces() {
-		Set<PLACE> reachablePlaces = new HashSet<>();
-		for (ITransition<LETTER, PLACE> trans : mReachableTransitions) {
-			reachablePlaces.addAll(mOperand.getPredecessors(trans));
-			reachablePlaces.addAll(mOperand.getSuccessors(trans));
+		final Set<PLACE> requiredPlaces = new HashSet<>();
+		for (final ITransition<LETTER, PLACE> trans : mReachableTransitions) {
+			requiredPlaces.addAll(mOperand.getPredecessors(trans));
+			// successor places are only required
+			// if they are predecessors of another transition
+			// or if they are accepting
 		}
+		acceptingSuccPlaces().forEach(requiredPlaces::add);
 
-		Stream<PLACE> acceptingInitialPlaces = mOperand.getInitialPlaces().stream()
-				.filter(mOperand.getAcceptingPlaces()::contains);
-		// This is an optimization to remove more places.
-		// The naive way would be to require all accepting initial places.
-		Optional<PLACE> alwaysAcceptingPlace = acceptingInitialPlaces
-				.filter(place -> !reachablePlaces.contains(place)).findAny();
-		alwaysAcceptingPlace.ifPresent(reachablePlaces::add);
+		final Optional<PLACE> alwaysAcceptingPlace = acceptingInitialPlaces()
+				.filter(place -> !requiredPlaces.contains(place)).findAny();
+		alwaysAcceptingPlace.ifPresent(requiredPlaces::add);
 
-		return reachablePlaces;
+		return requiredPlaces;
+	}
+	
+	private Stream<PLACE> acceptingSuccPlaces() {
+		return mOperand.getAcceptingPlaces().stream().filter(
+				accPlace -> SetOperations.intersecting(mOperand.getPredecessors(accPlace), mReachableTransitions));
+	}
+	
+	private Stream<PLACE> acceptingInitialPlaces() {
+		return mOperand.getAcceptingPlaces().stream().filter(mOperand.getInitialPlaces()::contains);
 	}
 
 	private void rebuildNetWithoutDeadNodes() {
@@ -103,7 +112,8 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	}
 
 	private void rebuildTransition(ITransition<LETTER, PLACE> trans) {
-		mResult.addTransition(trans.getSymbol(), mOperand.getPredecessors(trans), mOperand.getSuccessors(trans));
+		final Set<PLACE> succ = SetOperations.intersection(mOperand.getSuccessors(trans), mResult.getPlaces());
+		mResult.addTransition(trans.getSymbol(), mOperand.getPredecessors(trans), succ);
 	}
 
 	@Override

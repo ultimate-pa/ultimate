@@ -1,0 +1,18 @@
+// Date:  2018-08-03
+// Author: schaetzc@tf.uni-freiburg.de
+
+PetriNet result = removeUnreachable(n);
+
+assert(numberOfPlaces(result) == 1);
+assert(numberOfTransitions(result) == 1);
+assert(isEmpty(result));
+
+PetriNet n = (
+  alphabet = {a},
+  places = {p0 p1 p2},
+  transitions = {
+    ({p0} a {p1 p2})
+  },
+  initialMarking = {p0},
+  acceptingPlaces = {}
+);
