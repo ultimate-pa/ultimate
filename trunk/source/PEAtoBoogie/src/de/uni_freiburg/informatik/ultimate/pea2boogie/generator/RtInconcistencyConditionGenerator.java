@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -78,11 +79,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
@@ -96,6 +99,7 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
 	private static final String SOLVER_LOGFILE = null;
+	private static final boolean PRINT_QUANTIFIED_FORMULAS = true;
 	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
 	private final ReqSymboltable mBoogieSymboltable;
@@ -118,8 +122,8 @@ public class RtInconcistencyConditionGenerator {
 	private int mBeforeSize;
 	private int mTrivialConsistent;
 	private int mGeneratedChecks;
-	private int mNoQelim;
-	private int mQelim;
+	private int mQuantifiedQuery;
+	private int mQelimQuery;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
@@ -143,8 +147,8 @@ public class RtInconcistencyConditionGenerator {
 		mAfterSize = 0;
 		mTrivialConsistent = 0;
 		mGeneratedChecks = 0;
-		mNoQelim = 0;
-		mQelim = 0;
+		mQuantifiedQuery = 0;
+		mQelimQuery = 0;
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -198,6 +202,7 @@ public class RtInconcistencyConditionGenerator {
 			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkPrimedRhsAndPrimedInvariant);
 			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
 				mQuantified++;
+				printQuantifiedFormula("After solver", () -> (QuantifiedFormula) checkRhsAndInvariant);
 			} else {
 				mPlain++;
 			}
@@ -218,6 +223,29 @@ public class RtInconcistencyConditionGenerator {
 		return mBoogie2Smt.getTerm2Expression().translate(finalCheck);
 	}
 
+	private void printQuantifiedFormula(final String prefix, final Supplier<QuantifiedFormula> formulaSuppl) {
+		if (!PRINT_QUANTIFIED_FORMULAS) {
+			return;
+		}
+		final QuantifiedFormula formula = formulaSuppl.get();
+		final TermVariable[] quantVars = formula.getVariables();
+		final TermVariable[] newQuantVars = new TermVariable[quantVars.length];
+		final Map<Term, Term> subst = new HashMap<>();
+		final Set<Term> oldVars = new HashSet<>();
+		for (int i = 0; i < quantVars.length; ++i) {
+			final TermVariable var = quantVars[i];
+			final TermVariable newVar = mScript.variable(CoreUtil.alphabeticalSequence(i), var.getSort());
+			newQuantVars[i] = newVar;
+			oldVars.add(var);
+			subst.put(var, newVar);
+		}
+		assert subst.values().stream().anyMatch(oldVars::contains) : "Var with same name already exists";
+		final Term subForm = new Substitution(mScript, subst).transform(formula.getSubformula());
+		final Term renamedQuantifiedFormula =
+				mScript.quantifier(formula.getQuantifier(), newQuantVars, subForm, new Term[0]);
+		mLogger.info(prefix + ": Renamed quantified formula: " + renamedQuantifiedFormula.toStringDirect());
+	}
+
 	public void logStats() {
 		if (mTrivialConsistent > 0) {
 			mLogger.info(String.format("%s checks, %s trivial consistent, %s non-trivial",
@@ -227,8 +255,8 @@ public class RtInconcistencyConditionGenerator {
 			return;
 		}
 		mLogger.info(String.format(
-				"Of %s formulas, %s were quantified, %s were plain. Needed %s quantifier elimination runs, %s solver decisions.",
-				mQuantified + mPlain, mQuantified, mPlain, mQelim, mNoQelim));
+				"Of %s formulas, %s were quantified, %s were plain. Needed %s quantifier elimination runs, %s quantified solver queries.",
+				mQuantified + mPlain, mQuantified, mPlain, mQelimQuery, mQuantifiedQuery));
 		if (SIMPLIFY_BEFORE_QELIM) {
 			mLogger.info(String.format("Terms of DAG size %s were simplified to DAG size %s (%s percent reduction)",
 					mBeforeSize, mAfterSize, 100.0 - ((mAfterSize * 1.0) / (mBeforeSize * 1.0)) * 100.0));
@@ -465,22 +493,33 @@ public class RtInconcistencyConditionGenerator {
 		}
 		if (TRY_SOLVER_BEFORE_QELIM) {
 			final Term quantifiedFormula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
-			final Term isTrueTerm = mScript.term("distinct", mTrue, quantifiedFormula);
-			final LBool result = SmtUtils.checkSatTerm(mScript, isTrueTerm);
-			if (result == LBool.UNSAT) {
-				mNoQelim++;
+			if (querySolverIsTrue(quantifiedFormula)) {
 				return mTrue;
 			}
 		}
-		mQelim++;
-		final Term quantifierFreeFormula =
-				PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mManagedScript,
-						PqeTechniques.ALL_LOCAL, QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm, new Term[0]);
+		mQelimQuery++;
+		final Term afterQelimFormula = PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mManagedScript,
+				PqeTechniques.ALL_LOCAL, QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm, new Term[0]);
 
-		// final Term quantifierFreeFormula =
-		// PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
-		// SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		return quantifierFreeFormula;
+		if (afterQelimFormula instanceof QuantifiedFormula) {
+			// qelim failed to eliminate all quantifiers, perhaps the solver is better?
+			printQuantifiedFormula("Before qelim", () -> (QuantifiedFormula) SmtUtils.quantifier(mScript,
+					QuantifiedFormula.EXISTS, varsToRemove, term));
+			printQuantifiedFormula("After qelim", () -> (QuantifiedFormula) afterQelimFormula);
+			if (querySolverIsTrue(afterQelimFormula)) {
+				return mTrue;
+			}
+		}
+		return afterQelimFormula;
+	}
+
+	private boolean querySolverIsTrue(final Term term) {
+		final Term isTrueTerm = mScript.term("distinct", mTrue, term);
+		if (term instanceof QuantifiedFormula) {
+			mQuantifiedQuery++;
+		}
+		final LBool result = SmtUtils.checkSatTerm(mScript, isTrueTerm);
+		return result == LBool.UNSAT;
 	}
 
 	private Set<TermVariable> getPrimedAndEventVars(final TermVariable[] freeVars) {

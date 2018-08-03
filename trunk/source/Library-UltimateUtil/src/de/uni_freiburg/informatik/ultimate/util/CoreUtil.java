@@ -725,6 +725,28 @@ public class CoreUtil {
 		}
 	}
 
+	/**
+	 * Generate a String containing an alphabetical sequence based on a fixed index.
+	 *
+	 * Note: Performs poorly for very long sequences.
+	 *
+	 * @param i
+	 *            the index of the sequence. Must be larger 0 or you get the empty string.
+	 * @return 0 -> A, 1 -> B, 2 -> C, ... 25 -> Z, 26 -> AA, 27 -> AB, ... , 700 -> ZY, 701 -> ZZ, 702 -> AAA, ...
+	 *
+	 */
+	public static String alphabeticalSequence(final int i) {
+		return i < 0 ? "" : alphabeticalSequence((i / 26) - 1) + (char) (65 + i % 26);
+	}
+
+	public static String getStackTrace(final Throwable t) {
+		final StringBuilder sb = new StringBuilder();
+		for (final StackTraceElement elem : t.getStackTrace()) {
+			sb.append(String.format("%s%n", elem.toString()));
+		}
+		return sb.toString();
+	}
+
 	@FunctionalInterface
 	public interface IReduce<T, K> {
 		T reduce(K entry);
@@ -738,13 +760,5 @@ public class CoreUtil {
 	@FunctionalInterface
 	private interface IWriterConsumer {
 		void consume(Writer fw) throws IOException;
-	}
-
-	public static String getStackTrace(final Throwable t) {
-		final StringBuilder sb = new StringBuilder();
-		for (final StackTraceElement elem : t.getStackTrace()) {
-			sb.append(String.format("%s%n", elem.toString()));
-		}
-		return sb.toString();
 	}
 }
