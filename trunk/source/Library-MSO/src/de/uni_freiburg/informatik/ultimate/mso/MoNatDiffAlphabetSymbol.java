@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class MoNatDiffAlphabetSymbol {
 
-	private Map<Term, Boolean> mMap;
+	private final Map<Term, Boolean> mMap;
 
 	/*
 	 * TODO: Comment.
@@ -28,11 +28,11 @@ public class MoNatDiffAlphabetSymbol {
 	public MoNatDiffAlphabetSymbol() {
 		mMap = new HashMap<Term, Boolean>();
 	}
-	
+
 	/*
 	 * TODO: Comment.
 	 */
-	public MoNatDiffAlphabetSymbol(Term term, int value) {
+	public MoNatDiffAlphabetSymbol(final Term term, final int value) {
 		mMap = new HashMap<Term, Boolean>();
 		add(term, value);
 	}
@@ -40,7 +40,7 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
-	public MoNatDiffAlphabetSymbol(Term term1, Term term2, int value1, int value2) {
+	public MoNatDiffAlphabetSymbol(final Term term1, final Term term2, final int value1, final int value2) {
 		mMap = new HashMap<Term, Boolean>();
 		add(term1, value1);
 		add(term2, value2);
@@ -49,7 +49,7 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
-	public MoNatDiffAlphabetSymbol(Term[] terms, int[] values) {
+	public MoNatDiffAlphabetSymbol(final Term[] terms, final int[] values) {
 		if (terms.length != values.length)
 			throw new InvalidParameterException("Input terms, values of different length.");
 
@@ -57,7 +57,7 @@ public class MoNatDiffAlphabetSymbol {
 		for (int i = 0; i < terms.length; i++)
 			add(terms[i], values[i]);
 	}
-	
+
 	/*
 	 * TODO: Comment.
 	 */
@@ -68,7 +68,7 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
-	public void add(Term term, int value) {
+	public void add(final Term term, final int value) {
 		if (!MoNatDiffUtils.isVariable(term))
 			throw new InvalidParameterException("Input term must be a Int or SetOfInt variable.");
 
@@ -77,32 +77,33 @@ public class MoNatDiffAlphabetSymbol {
 
 		mMap.put(term, value != 0);
 	}
-	
-//	@Override
-//	public boolean equals(Object object) {
-//		if (object == this)
-//			return true;
-//		
-//		return (object instanceof MoNatDiffAlphabetSymbol && ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
-//	}
-	
+
+	// @Override
+	// public boolean equals(Object object) {
+	// if (object == this)
+	// return true;
+	//
+	// return (object instanceof MoNatDiffAlphabetSymbol &&
+	// ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
+	// }
+
 	/*
 	 * TODO: Comment.
 	 */
-	public boolean contains(MoNatDiffAlphabetSymbol alphabetSymbol) {
+	public boolean contains(final MoNatDiffAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
-	
+
 	/*
 	 * TODO: Comment.
 	 */
-	public boolean allMatches(Boolean value, Term... excludedTerms) {
-		Set<Term> excluded = new HashSet<Term>(Arrays.asList(excludedTerms));
-		Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
-		
+	public boolean allMatches(final Boolean value, final Term... excludedTerms) {
+		final Set<Term> excluded = new HashSet<Term>(Arrays.asList(excludedTerms));
+		final Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
+
 		while (it.hasNext()) {
-			Entry<Term, Boolean> entry = it.next();
-			
+			final Entry<Term, Boolean> entry = it.next();
+
 			if (!excluded.contains(entry.getKey()) && !entry.getValue().equals(value))
 				return false;
 		}
@@ -113,15 +114,16 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
+	@Override
 	public String toString() {
 		String str = new String();
-		
+
 		if (mMap.isEmpty())
 			str += "empty";
 
-		Iterator<Map.Entry<Term, Boolean>> it = mMap.entrySet().iterator();
+		final Iterator<Map.Entry<Term, Boolean>> it = mMap.entrySet().iterator();
 		while (it.hasNext()) {
-			Map.Entry<Term, Boolean> entry = it.next();
+			final Map.Entry<Term, Boolean> entry = it.next();
 			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1" : "0");
 			str += it.hasNext() ? " " : "";
 		}
