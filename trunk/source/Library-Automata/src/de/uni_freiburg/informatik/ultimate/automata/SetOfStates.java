@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Represents a set of states of an automaton. States can be initial and/or accepting. This class stores initial and
  * accepting states explicitly which allows iteration and modification over these sets.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
  *            type of states
@@ -50,7 +50,7 @@ public class SetOfStates<STATE> {
 	 * as emtpy stack symbol.
 	 */
 	private final STATE mEmptyStackState;
-	
+
 	public SetOfStates(final STATE emptyStackState) {
 		super();
 		mEmptyStackState = emptyStackState;
@@ -58,7 +58,7 @@ public class SetOfStates<STATE> {
 
 	/**
 	 * Adds a state.
-	 * 
+	 *
 	 * @param isInitial
 	 *            {@code true} iff the state is initial
 	 * @param isAccepting
@@ -85,7 +85,7 @@ public class SetOfStates<STATE> {
 
 	/**
 	 * Removes a state.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 */
@@ -100,10 +100,11 @@ public class SetOfStates<STATE> {
 
 	/**
 	 * Makes an initial state non-initial.
-	 * 
-	 * @param state
-	 *            state
+	 *
+	 * @deprecated
+	 * 			Do not modify existing automata, construct new automata instead.
 	 */
+	@Deprecated
 	public void makeStateNonInitial(final STATE state) {
 		if (!mStates.contains(state)) {
 			throw new IllegalArgumentException(NOT_A_STATE + state);
@@ -125,7 +126,7 @@ public class SetOfStates<STATE> {
 	public Set<STATE> getAcceptingStates() {
 		return Collections.unmodifiableSet(mAcceptingStates);
 	}
-	
+
 	public STATE getEmptyStackState() {
 		return mEmptyStackState;
 	}

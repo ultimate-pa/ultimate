@@ -410,7 +410,10 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	/**
 	 * @param state
 	 *            A state which is made non-initial.
+	 * @deprecated
+	 * 			Do not modify existing automata, construct new automata instead.
 	 */
+	@Deprecated
 	public void makeStateNonIntial(final STATE state) {
 		mSetOfStates.makeStateNonInitial(state);
 	}
