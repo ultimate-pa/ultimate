@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -51,9 +50,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 
 /**
- * undocumented!
- * <p>
- * NOTE: The interface INestedWordAutomatonOldApi can be removed when also removing the respective overridden methods.
+ * This {@link INestedWordAutomaton} represents the modification of another
+ * {@link INestedWordAutomaton}. The input {@link INestedWordAutomaton} is
+ * however not modified at all. An {@link NestedWordAutomatonFilteredStates} is
+ * just a layer that acts as a modification and uses the input automaton as
+ * back-end.
+ *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -73,18 +75,10 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 
 	/**
-	 * Constructor without ancestor computation.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param automaton
-	 *            automaton
-	 * @param remainingStates
-	 *            remaining states
-	 * @param newInitials
-	 *            new initial states
-	 * @param newFinals
-	 *            new final states
+	 * Default constructor. Resulting automaton will not provide
+	 * {@link DoubleDecker} informations. For automata without call and return
+	 * transitions (i.e., finite automata and Büchi automata) this information is
+	 * irrelevant and hence this constructor is as good as the other constructor.
 	 */
 	public NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton, final Set<STATE> remainingStates,
@@ -93,14 +87,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	/**
-	 * Constructor with ancestor computation.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param automaton
-	 *            automaton
-	 * @param ancestorComputation
-	 *            ancestor computation object
+	 * Constructor that takes also {@link DoubleDecker} informations. Use this only
+	 * if you know exactly what you are doing.
 	 */
 	public NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
@@ -110,22 +98,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	/**
-	 * Private full constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param automaton
-	 *            automaton
-	 * @param remainingStates
-	 *            remaining states
-	 * @param newInitials
-	 *            new initial states
-	 * @param newFinals
-	 *            new final states
-	 * @param ancestorComputation
-	 *            ancestor computation object
-	 * @throws AutomataOperationCanceledException
-	 *             if operation is canceled
+	 * Deliberately made private.
 	 */
 	private NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton, final Set<STATE> remainingStates,
