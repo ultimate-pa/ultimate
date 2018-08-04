@@ -23,6 +23,43 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public final class MoNatDiffAutomatonFactory {
 
 	/*
+	 * Constructs empty automaton.
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> emptyAutomaton(
+			AutomataLibraryServices automataLibraryServices) {
+
+		Set<MoNatDiffAlphabetSymbol> alphabet = new HashSet<MoNatDiffAlphabetSymbol>();
+		VpAlphabet<MoNatDiffAlphabetSymbol> vpAlphabet = new VpAlphabet<MoNatDiffAlphabetSymbol>(alphabet);
+		StringFactory stringFactory = new StringFactory();
+
+		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
+				stringFactory);
+	}
+	
+	/*
+	 * Constructs automaton that represents an Int variable.
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> intVariableAutomaton(
+			AutomataLibraryServices automataLibraryServices, Term x) {
+		
+		if (!MoNatDiffUtils.isIntVariable(x))
+			throw new IllegalArgumentException("Input x must be an Int variable.");
+
+		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
+		MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("init", x0, "init");
+		automaton.addInternalTransition("init", x1, "final");
+		automaton.addInternalTransition("final", x0, "final");
+		
+		return automaton;
+	}
+	
+	/*
 	 * Constructs automaton for atomic formula "x < c".
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(
@@ -224,7 +261,7 @@ public final class MoNatDiffAutomatonFactory {
 
 		return automaton;
 	}
-
+	
 	/*
 	 * Adds a part to automaton that represents the value of constant c.
 	 */
@@ -278,19 +315,5 @@ public final class MoNatDiffAutomatonFactory {
 
 			automaton.addInternalTransition(state, stateToFinal, "final");
 		}
-	}
-
-	/*
-	 * Constructs empty automaton.
-	 */
-	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> emptyAutomaton(
-			AutomataLibraryServices automataLibraryServices) {
-
-		Set<MoNatDiffAlphabetSymbol> alphabet = new HashSet<MoNatDiffAlphabetSymbol>();
-		VpAlphabet<MoNatDiffAlphabetSymbol> vpAlphabet = new VpAlphabet<MoNatDiffAlphabetSymbol>(alphabet);
-		StringFactory stringFactory = new StringFactory();
-
-		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
-				stringFactory);
 	}
 }

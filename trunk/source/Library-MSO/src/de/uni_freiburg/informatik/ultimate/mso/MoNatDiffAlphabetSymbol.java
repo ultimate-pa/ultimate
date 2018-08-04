@@ -5,9 +5,13 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -50,7 +54,6 @@ public class MoNatDiffAlphabetSymbol {
 			throw new InvalidParameterException("Input terms, values of different length.");
 
 		mMap = new HashMap<Term, Boolean>();
-
 		for (int i = 0; i < terms.length; i++)
 			add(terms[i], values[i]);
 	}
@@ -89,12 +92,32 @@ public class MoNatDiffAlphabetSymbol {
 	public boolean contains(MoNatDiffAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	public boolean allMatches(Boolean value, Term... excludedTerms) {
+		Set<Term> excluded = new HashSet<Term>(Arrays.asList(excludedTerms));
+		Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
+		
+		while (it.hasNext()) {
+			Entry<Term, Boolean> entry = it.next();
+			
+			if (!excluded.contains(entry.getKey()) && !entry.getValue().equals(value))
+				return false;
+		}
+
+		return true;
+	}
 
 	/*
 	 * TODO: Comment.
 	 */
 	public String toString() {
 		String str = new String();
+		
+		if (mMap.isEmpty())
+			str += "empty";
 
 		Iterator<Map.Entry<Term, Boolean>> it = mMap.entrySet().iterator();
 		while (it.hasNext()) {
@@ -105,5 +128,4 @@ public class MoNatDiffAlphabetSymbol {
 
 		return str;
 	}
-
 }

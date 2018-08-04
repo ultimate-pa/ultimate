@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.mso;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,8 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import javax.naming.spi.StateFactory;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -83,6 +84,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  * Questions:
  * 1) How to deal with constant values larger than max integer in constantTermToInt()?
  * 2) How to deal with empty symbol in MoNatDiffAlphabetSymbol?
+ * 3) What to do iff all variables are quantified ones?
+ * 4) How to handle empty alphabets in createAlphabet?
+ * 5) How to deal with accepting states before projection if no free variables exist?
+ * 6) Does this exist somewhere hierarchicalSuccessorsOutgoing? Is our implementation inefficient?
  */
 public class MoNatDiffScript extends NoopScript {
 
@@ -122,12 +127,13 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * Traverses formula in post order.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(Term term) {
 		mLogger.info("Traverse term: " + term);
 
 		if (term instanceof QuantifiedFormula) {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
-			traversePostOrder(quantifiedFormula.getSubformula());
+
+			return processExists(quantifiedFormula);
 		}
 
 		if (term instanceof ApplicationTerm) {
@@ -153,65 +159,120 @@ public class MoNatDiffScript extends NoopScript {
 				return processInequality(applicationTerm);
 		}
 
-		throw new IllegalArgumentException("Input must be a QuantifiedFormula or an ApplicationTerm.");
+		throw new IllegalArgumentException("Input must be a QuantifiedFormula or an ApplicationTerm. " + term);
 	}
 
 	/*
 	 * TODO: Comment.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processNegation(ApplicationTerm term) {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processExists(QuantifiedFormula term) {
+		mLogger.info("Construct exists Phi : " + term);
+
+		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
+
+		Set<MoNatDiffAlphabetSymbol> alphabet = result.getAlphabet();
+		Term[] quantifiedVariables = term.getVariables();
+
+		mLogger.info("Quantified variables: " + collectionToString(Arrays.asList(quantifiedVariables)));
+
+		Set<MoNatDiffAlphabetSymbol> zeros = MoNatDiffUtils.allMatchesAlphabet(alphabet, false, quantifiedVariables);
+		Set<MoNatDiffAlphabetSymbol> ones = MoNatDiffUtils.allMatchesAlphabet(alphabet, true, quantifiedVariables);
+
+		mLogger.info("0-symbols: " + collectionToString(zeros));
+		mLogger.info("1-symbols: " + collectionToString(ones));
+
+		Set<String> addFinalStates = new HashSet<String>();
+		Iterator<String> it = result.getInitialStates().iterator();
+		while (it.hasNext())
+			addFinalStates.addAll(MoNatDiffUtils.hierarchicalSuccessorsOutgoing(result, it.next(),
+					ones.toArray(new MoNatDiffAlphabetSymbol[ones.size()])));
+
+		it = result.getFinalStates().iterator();
+		while (it.hasNext())
+			addFinalStates.retainAll(MoNatDiffUtils.hierarchicalPredecessorsIncoming(result, it.next(),
+					zeros.toArray(new MoNatDiffAlphabetSymbol[zeros.size()])));
+
+		mLogger.info("Additional final states: " + collectionToString(addFinalStates));
+
+		Set<Term> terms = alphabet.iterator().next().getMap().keySet();
+		terms.removeAll(Arrays.asList(quantifiedVariables));
+		Set<MoNatDiffAlphabetSymbol> reducedAlphabet = createAlphabet(terms.toArray(new Term[terms.size()]));
+
+		mLogger.info("Reduced alphabet: " + collectionToString(reducedAlphabet));
+
+		result = reconstruct(result, reducedAlphabet, false);
+		// TODO: Add additional final states.
+
+		mLogger.info("EXISTS: " + automatonToString(result, Format.ATS));
+
+		return result;
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processNegation(ApplicationTerm term) {
 		mLogger.info("Construct not Phi : " + term);
 
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(term.getParameters()[0]);
-		StringFactory stateFactory = new StringFactory();
+		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 
 		try {
-			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> complement = new Complement<MoNatDiffAlphabetSymbol, String>(
-					mALS, stateFactory, automaton).getResult();
-
-			checkEmptiness(complement);
+			result = new Complement<MoNatDiffAlphabetSymbol, String>(mALS, new StringFactory(), result).getResult();
 
 		} catch (AutomataOperationCanceledException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return automaton;
+		Set<Term> terms = result.getAlphabet().iterator().next().getMap().keySet();
+
+		mLogger.info("Variables: " + terms.stream().map(o -> o.toString()).collect(Collectors.joining(" | ")));
+		terms.removeIf(o -> !MoNatDiffUtils.isIntVariable(o));
+		mLogger.info("Int Variables: " + terms.stream().map(o -> o.toString()).collect(Collectors.joining(" | ")));
+
+		Iterator<Term> itTerms = terms.iterator();
+		while (itTerms.hasNext()) {
+			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> variableAutomaton = MoNatDiffAutomatonFactory
+					.intVariableAutomaton(mALS, itTerms.next());
+
+			variableAutomaton = reconstruct(variableAutomaton, result.getAlphabet(), true);
+
+			try {
+				result = new Intersect<MoNatDiffAlphabetSymbol, String>(mALS, new StringFactory(), result,
+						variableAutomaton).getResult();
+			} catch (AutomataLibraryException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		return result;
 	}
 
 	/*
 	 * TODO: Comment.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processConjunction(ApplicationTerm term) {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processConjunction(ApplicationTerm term) {
 		mLogger.info("Construct Phi and Psi : " + term);
 
 		Term[] terms = term.getParameters();
-		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(terms[0]);
+		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(terms[0]);
 
 		for (int i = 1; i < terms.length; i++) {
-			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(terms[i]);
-			printAutomata("INPUT: ", automaton);
+			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(terms[i]);
 
 			Set<MoNatDiffAlphabetSymbol> alphabet = mergeAlphabets(result.getAlphabet(), automaton.getAlphabet());
-			result = reconstruct(result, alphabet);
-			automaton = reconstruct(automaton, alphabet);
-			
-			printAutomata("MERGED: ", result);
+			result = reconstruct(result, alphabet, true);
+			automaton = reconstruct(automaton, alphabet, true);
 
 			try {
-				INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> intersection = new Intersect<MoNatDiffAlphabetSymbol, String>(
-						mALS, new StringFactory(), result, automaton).getResult();
-				
-				printAutomata("INTERSECTION: ", intersection);
-				
-				checkEmptiness(intersection);
-				
+				result = new Intersect<MoNatDiffAlphabetSymbol, String>(mALS, new StringFactory(), result, automaton)
+						.getResult();
 			} catch (AutomataLibraryException e) {
 				e.printStackTrace();
 			}
 		}
 
-		return null;
+		return result;
 	}
 
 	/*
@@ -321,27 +382,26 @@ public class MoNatDiffScript extends NoopScript {
 	}
 
 	/*
-	 * TODO: Comment. How to handle empty alphabets?
+	 * TODO: Comment.
 	 */
-	private Set<MoNatDiffAlphabetSymbol> mergeAlphabets(Set<MoNatDiffAlphabetSymbol> alphabet1,
-			Set<MoNatDiffAlphabetSymbol> alphabet2) {
-
+	private Set<MoNatDiffAlphabetSymbol> createAlphabet(Term[] terms) {
 		Set<MoNatDiffAlphabetSymbol> result = new HashSet<MoNatDiffAlphabetSymbol>();
 
-		Set<Term> terms = new HashSet<Term>();
-		terms.addAll(alphabet1.iterator().next().getMap().keySet());
-		terms.addAll(alphabet2.iterator().next().getMap().keySet());
+		if (terms.length == 0) {
+			result.add(new MoNatDiffAlphabetSymbol());
+			mLogger.info("CREATED EMPTY ALPHABET SYMBOL");
+			return result;
+			// throw new IllegalArgumentException("Input terms has length 0.");
+		}
 
-		assert (terms.size() == 0);
+		int numSymbols = (int) Math.pow(2, terms.length);
 
-		int numLetters = (int) Math.pow(2, terms.size());
-		for (int i = 0; i < numLetters; i++) {
+		for (int i = 0; i < numSymbols; i++) {
 			MoNatDiffAlphabetSymbol symbol = new MoNatDiffAlphabetSymbol();
-			Iterator<Term> itTerms = terms.iterator();
 
-			for (int j = 0; j < terms.size(); j++) {
+			for (int j = 0; j < terms.length; j++) {
 				int value = (i / (int) Math.pow(2, j)) % 2;
-				symbol.add(itTerms.next(), value);
+				symbol.add(terms[j], value);
 			}
 			result.add(symbol);
 		}
@@ -352,8 +412,22 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * TODO: Comment.
 	 */
+	private Set<MoNatDiffAlphabetSymbol> mergeAlphabets(Set<MoNatDiffAlphabetSymbol> alphabet1,
+			Set<MoNatDiffAlphabetSymbol> alphabet2) {
+
+		Set<Term> terms = new HashSet<Term>();
+		terms.addAll(alphabet1.iterator().next().getMap().keySet());
+		terms.addAll(alphabet2.iterator().next().getMap().keySet());
+
+		return createAlphabet(terms.toArray(new Term[terms.size()]));
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
-			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, Set<MoNatDiffAlphabetSymbol> alphabet) {
+			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, Set<MoNatDiffAlphabetSymbol> alphabet,
+			boolean isExtended) {
 
 		NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = MoNatDiffAutomatonFactory.emptyAutomaton(mALS);
 
@@ -371,8 +445,12 @@ public class MoNatDiffScript extends NoopScript {
 			while (itTransitions.hasNext()) {
 				OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition = itTransitions.next();
 
-				Iterator<MoNatDiffAlphabetSymbol> itMatches = alphabet.stream()
-						.filter(e -> e.contains(transition.getLetter())).iterator();
+				Iterator<MoNatDiffAlphabetSymbol> itMatches;
+
+				if (isExtended)
+					itMatches = alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator();
+				else
+					itMatches = alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
 
 				while (itMatches.hasNext()) {
 					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
@@ -406,10 +484,23 @@ public class MoNatDiffScript extends NoopScript {
 	}
 
 	/*
-	 * Prints the given automaton to logger. Only used for debugging.
+	 * Returns collection as String. Only used for debugging.
 	 */
-	private void printAutomata(String name, INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
-		mLogger.info(new AutomatonDefinitionPrinter(mALS, name, Format.ATS, automaton).getDefinitionAsString());
+	private String collectionToString(Iterable<?> objects) {
+		String result = new String();
+
+		for (Object object : objects) {
+			result += object.toString() + " ";
+		}
+
+		return result;
+	}
+
+	/*
+	 * Returns automaton as String. Only used for debugging.
+	 */
+	private String automatonToString(INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, Format format) {
+		return new AutomatonDefinitionPrinter(mALS, "", Format.ATS, automaton).getDefinitionAsString();
 	}
 
 	/*
