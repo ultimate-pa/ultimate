@@ -96,9 +96,36 @@ public class MonniauxMapEliminator {
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
 
+			// __________________________________________________________
+			final TransFormula tf = IcfgUtils.getTransformula(transition);
+			final int step = 0;
+
+			final Term tfTerm = tf.getFormula();
+
+			final int index = 0;
+
+			/*
+			 * for (final Term term : TermWalker(tfTerm) ) {
+			 * 
+			 * if (term instanceof ApplicationTerm) { final ApplicationTerm aterm = (ApplicationTerm) term; final Term[]
+			 * xy = aterm.getParameters();
+			 * 
+			 * if (aterm.getFunction().getName().equals("select")) { final Term x = xy[0]; final Term y = xy[1];
+			 * 
+			 * step++; } else if (aterm.getFunction().getName().equals("store")) { // To be implemented step++; } else {
+			 * continue; } }
+			 * 
+			 * final IcfgLocation source = transition.getSource(); final IcfgLocation target = transition.getTarget();
+			 * // lst.createNewTransition(source, target, tf); // lst.createNewInternalTransition(source, target, tf);
+			 * 
+			 * }
+			 */
+
+			// _______________________________________________________________________
+
 			if (transition instanceof IIcfgInternalTransition) {
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
-				final UnmodifiableTransFormula tf = internalTransition.getTransformula();
+				final UnmodifiableTransFormula tf2 = internalTransition.getTransformula();
 
 				// keep or modify tf
 
@@ -106,78 +133,6 @@ public class MonniauxMapEliminator {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
-			final TransFormula tf = IcfgUtils.getTransformula(transition);
-			int step = 0;
-
-			/*
-			 * String expr = "ABCD"; String test = "(sfksanohoa (select x y))"; for (String expr1 : test.split(" ")) {
-			 * expr = expr1; expr = expr.substring(1); break; }
-			 */
-
-			final Term tfTerm = tf.getFormula();
-
-			String transformula = tf.toString();
-			String expr = null;
-			String x = null;
-			String y = null;
-			int index = 0;
-
-			for (final String expr1 : transformula.split(" (select * *)")) {
-
-				for (int i = expr1.length() - 1; i >= 0; i--) {
-					index = expr1.length();
-					final char c = expr1.charAt(i);
-					if (c == '(') {
-						expr = expr1.substring(i + 1);
-						i = 0;
-					}
-				}
-
-				for (int i = index + 1; i < transformula.length(); i++) {
-					final char c = transformula.charAt(i);
-					int index_left = 0;
-					boolean left_found = false;
-					boolean x_found = false;
-					int index_right = 0;
-					if (c == ' ') {
-						index_left = i + 1;
-						left_found = true;
-					}
-					if (c == ' ' && left_found) {
-						index_right = i - 1;
-						x = transformula.substring(index_left, index_right);
-						x_found = true;
-					}
-					if (c == ')' && x_found) {
-						y = transformula.substring(index_right + 1, i - 1);
-						i = transformula.length() + 1;
-					}
-
-				}
-
-				final String sub_transformula = "(and (=> (= y i_step) (= a_step_i x_i)) (expr a_step_i)";
-				sub_transformula.replaceAll("y", y);
-				sub_transformula.replaceAll("x", x);
-				sub_transformula.replaceAll("expr", expr);
-				sub_transformula.replaceAll("step", Integer.toString(step));
-
-				// TermVariable t = new TermVariable("f_step", sort, null);
-
-				final Map<IProgramVar, TermVariable> inV = tf.getInVars();
-				inV.remove(x);
-				transformula = transformula.replaceAll("(* (select x y))", sub_transformula);
-				final Map<IProgramVar, TermVariable> outV = tf.getOutVars();
-				outV.remove(x);
-				// outV.merge(null, , null);
-				step++;
-
-			}
-
-			/*
-			 * for (true) { //todo }
-			 *
-			 * TransFormula(inVars, outVars, auxVars, nonTheoryConst) newTF;
-			 */
 		}
 	}
 
