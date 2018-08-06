@@ -26,13 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
@@ -365,4 +370,26 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			}
 		}
 	}
+
+
+	private static <LETTER, PLACE> boolean areIndependent(final IPetriNet<LETTER, PLACE> net, final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
+		final Set<ITransition<LETTER, PLACE>> c1SuccTrans = c1.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
+		final Set<ITransition<LETTER, PLACE>> c2SuccTrans = c2.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
+		return Collections.disjoint(c1SuccTrans, c2SuccTrans);
+	}
+
+
+	public LinkedHashSet<Condition<LETTER, PLACE>> collectRelevantEvents() {
+		final LinkedHashSet<Condition<LETTER, PLACE>> conditions = new LinkedHashSet<>();
+		for (final Event<LETTER, PLACE> e : mInput.getEvents()) {
+			if (!e.isCutoffEvent()) {
+				for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
+					conditions.add(c);
+				}
+			}
+		}
+		return conditions;
+	}
+
+
 }
