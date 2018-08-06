@@ -110,13 +110,26 @@ public class MonniauxMapEliminator {
 			 * if (term instanceof ApplicationTerm) { final ApplicationTerm aterm = (ApplicationTerm) term; final Term[]
 			 * xy = aterm.getParameters();
 			 * 
-			 * if (aterm.getFunction().getName().equals("select")) { final Term x = xy[0]; final Term y = xy[1];
+			 * if (aterm.getFunction().getName().equals("select")) { final Term x = xy[0]; final Term y = xy[1]; //
+			 * TODO: Find expr with walker
 			 * 
-			 * step++; } else if (aterm.getFunction().getName().equals("store")) { // To be implemented step++; } else {
-			 * continue; } }
+			 * final Term sTerm = (and (=> (= y i_step) (= a_step_i x_i)) (expr a_step_i)); final Map<Term, Term>
+			 * Substitution = Map(term, sTerm);
+			 * 
+			 * final Collection<IProgramVar> inVarsToRemove = x; final Collection<IProgramVar> outVarsToRemove = x;
+			 * final Map<IProgramVar, TermVariable> additionalOutVars = Map(f_step, a_step_i);
+			 * 
+			 * SubstitutionWithLocalSimplification.tfTerm(mMgdScript, Substitution);
+			 * 
+			 * tf = constuctCopy(mMgdScript, tf, inVarsToRemove, outVarsToRemove, additionalOutVars);
+			 * 
+			 * step++; } else if (aterm.getFunction().getName().equals("store")) { // To be implemented step++; } else
+			 * {continue; }
+			 * 
+			 * }
 			 * 
 			 * final IcfgLocation source = transition.getSource(); final IcfgLocation target = transition.getTarget();
-			 * // lst.createNewTransition(source, target, tf); // lst.createNewInternalTransition(source, target, tf);
+			 * // lst.createNewTransition(source, target, tf); lst.createNewInternalTransition(source, target, tf);
 			 * 
 			 * }
 			 */
