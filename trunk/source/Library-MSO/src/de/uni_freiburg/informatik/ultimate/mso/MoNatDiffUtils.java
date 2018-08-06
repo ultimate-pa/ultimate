@@ -12,16 +12,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 
 /*
  * TODO: Comment.
  */
-public class MoNatDiffUtils {
+public final class MoNatDiffUtils {
+
+	private MoNatDiffUtils() {
+
+	}
 
 	/*
 	 * TODO: Comment.
@@ -98,6 +108,35 @@ public class MoNatDiffUtils {
 	 */
 	public static boolean isSetOfIntVariable(final Term term) {
 		return isFreeSetOfIntVariable(term) || isQuantifiedSetOfIntVariable(term);
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	public static AffineTerm makeAffineTerm(final Script script, final Term term) {
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
+
+		if (affineTerm.isErrorTerm())
+			throw new IllegalArgumentException("Could not transform input to AffineTerm.");
+
+		return (AffineTerm) affineTerm.toTerm(script);
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	public static AffineRelation makeAffineRelation(final Script script, final Term term,
+			final TransformInequality transformInequality) {
+
+		AffineRelation affineRelation = null;
+
+		try {
+			affineRelation = new AffineRelation(script, term, transformInequality);
+		} catch (final NotAffineException e) {
+			throw new IllegalArgumentException("Could not transform input to AffineRelation.");
+		}
+
+		return affineRelation;
 	}
 
 	/*

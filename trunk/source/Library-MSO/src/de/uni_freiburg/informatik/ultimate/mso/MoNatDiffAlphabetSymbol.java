@@ -61,7 +61,7 @@ public class MoNatDiffAlphabetSymbol {
 	/*
 	 * TODO: Comment.
 	 */
-	public Map<Term, Boolean> getMap() {
+	public final Map<Term, Boolean> getMap() {
 		return mMap;
 	}
 
