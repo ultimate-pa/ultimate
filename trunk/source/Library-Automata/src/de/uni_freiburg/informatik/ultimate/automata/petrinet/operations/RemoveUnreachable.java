@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,10 +28,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * <p>
  * A place is unreachable iff it is not covered by any reachable marking.
  * <p>
- * This operation may also remove some of the reachable places if they are not needed, for insance
+ * This operation may also remove some of the reachable places if they are not needed.
+ * Required are only
  * <ul>
- *   <li> all non-accepting places without a reachable successor transition
- *   <li> all but one accepting place without a reachable successor transition
+ *   <li> places with a reachable successor transition,
+ *   <li> or accepting-places with a reachable predecessor transition,
+ *   <li> or at most one accepting initial place without a reachable successor transition.
  * </ul>
  * 
  * @author schaetzc@tf.uni-freiburg.de
@@ -79,21 +82,22 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 		for (final ITransition<LETTER, PLACE> trans : mReachableTransitions) {
 			requiredPlaces.addAll(mOperand.getPredecessors(trans));
 			// successor places are only required
-			// if they are predecessors of another transition
+			// if they are predecessors of another reachable transition
 			// or if they are accepting
 		}
 		acceptingSuccPlaces().forEach(requiredPlaces::add);
-
-		final Optional<PLACE> alwaysAcceptingPlace = acceptingInitialPlaces()
-				.filter(place -> !requiredPlaces.contains(place)).findAny();
-		alwaysAcceptingPlace.ifPresent(requiredPlaces::add);
-
+		alwaysAcceptingPlaces().findAny().ifPresent(requiredPlaces::add);
 		return requiredPlaces;
 	}
 	
 	private Stream<PLACE> acceptingSuccPlaces() {
 		return mOperand.getAcceptingPlaces().stream().filter(
 				accPlace -> SetOperations.intersecting(mOperand.getPredecessors(accPlace), mReachableTransitions));
+	}
+	
+	private Stream<PLACE> alwaysAcceptingPlaces() {
+		return acceptingInitialPlaces().filter(
+				accIniPlace -> SetOperations.disjoint(mOperand.getSuccessors(accIniPlace), mReachableTransitions));
 	}
 	
 	private Stream<PLACE> acceptingInitialPlaces() {
