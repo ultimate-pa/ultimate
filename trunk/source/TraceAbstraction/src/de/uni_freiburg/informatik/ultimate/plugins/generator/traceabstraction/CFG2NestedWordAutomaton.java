@@ -70,17 +70,13 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * Construct the control automata (see Trace Abstraction) for the program of
-	 * rootNode. If mInterprocedural==false we construct an automaton for each
-	 * procedure otherwise we construct one nested word automaton for the whole
-	 * program.
+	 * Construct the control automata (see Trace Abstraction) for the program of rootNode. If mInterprocedural==false we
+	 * construct an automaton for each procedure otherwise we construct one nested word automaton for the whole program.
 	 *
 	 * @param acceptingLocations
-	 *            locations for which the corresponding automaton state should be
-	 *            accepting
+	 *            locations for which the corresponding automaton state should be accepting
 	 *
 	 */
-	@SuppressWarnings("unchecked")
 	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithSPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
@@ -97,14 +93,15 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * @param newTransition2OldTransition If null then this method uses the identity to map input transitions to
-	 * result transitions.
+	 * @param newTransition2OldTransition
+	 *            If null then this method uses the identity to map input transitions to result transitions.
 	 */
 	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithDebugPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final VpAlphabet<LETTER> vpAlphabet, final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition) {
+			final VpAlphabet<LETTER> vpAlphabet,
+			final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition) {
 		final Function<IcfgLocation, IPredicate> predicateProvider = constructDebugPredicateProvider();
 		final Function<IIcfgTransition<?>, LETTER> transitionMapping;
 		if (newTransition2OldTransition == null) {
@@ -140,8 +137,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return nwa.toString();
 	}
 
-	private static Function<IcfgLocation, IPredicate> constructSPredicateProvider(
-			final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
+	private static Function<IcfgLocation, IPredicate>
+			constructSPredicateProvider(final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
 		Function<IcfgLocation, IPredicate> predicateProvider;
 		final Term trueTerm = mgdScript.getScript().term("true");
 		if (DEBUG_STORE_HISTORY) {
@@ -159,12 +156,14 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return x -> pf.newDebugPredicate(x.toString());
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <LETTER> Function<IIcfgTransition<?>, LETTER> constructIdentityTransitionProvider() {
 		return x -> (LETTER) x;
 	}
 
-	private static <LETTER> Function<IIcfgTransition<?>, LETTER> constructMapBasedTransitionProvider(
-			final Map<IIcfgTransition<?>, IIcfgTransition<?>> mapping) {
+	@SuppressWarnings("unchecked")
+	private static <LETTER> Function<IIcfgTransition<?>, LETTER>
+			constructMapBasedTransitionProvider(final Map<IIcfgTransition<?>, IIcfgTransition<?>> mapping) {
 		return x -> (LETTER) mapping.get(x);
 	}
 
@@ -179,8 +178,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 
 		// construct the automaton
-		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(services), vpAlphabet, automataStateFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> nwa =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), vpAlphabet, automataStateFactory);
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 
 		{
@@ -235,8 +234,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return nwa;
 	}
 
-
-
+	@SuppressWarnings("unchecked")
 	private static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNet(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
@@ -248,8 +246,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 
 		// construct the net
-		final BoundedPetriNet<LETTER, IPredicate> net = new BoundedPetriNet<LETTER, IPredicate>(new AutomataLibraryServices(services),
-				vpAlphabet.getInternalAlphabet(), false);
+		final BoundedPetriNet<LETTER, IPredicate> net =
+				new BoundedPetriNet<>(new AutomataLibraryServices(services), vpAlphabet.getInternalAlphabet(), false);
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 		{
 			// add places
@@ -270,29 +268,40 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					final IcfgLocation succLoc = edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof IIcfgInternalTransition<?>) {
-						net.addTransition((LETTER) edge, Collections.singleton(state), Collections.singleton(succState));
+						net.addTransition((LETTER) edge, Collections.singleton(state),
+								Collections.singleton(succState));
 					} else if (edge instanceof IIcfgForkTransitionCurrentThread) {
 						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
 					} else if (edge instanceof IIcfgForkTransitionOtherThread) {
-						final IIcfgForkTransitionCurrentThread current = ((IIcfgForkTransitionOtherThread) edge).getCorrespondingIIcfgForkTransitionCurrentThread();
+						final IIcfgForkTransitionCurrentThread<?> current = ((IIcfgForkTransitionOtherThread<?>) edge)
+								.getCorrespondingIIcfgForkTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getTarget();
 						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
-						net.addTransition((LETTER) edge, Collections.singleton(state), new HashSet(Arrays.asList(new IPredicate[] { succCurrentThread, succState})));
+						net.addTransition((LETTER) edge, Collections.singleton(state),
+								new HashSet<>(Arrays.asList(new IPredicate[] { succCurrentThread, succState })));
 					} else if (edge instanceof IIcfgJoinTransitionCurrentThread) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
 					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
-						final IIcfgJoinTransitionCurrentThread current = ((IIcfgJoinTransitionOtherThread) edge).getCorrespondingIIcfgJoinTransitionCurrentThread();
+						final IIcfgJoinTransitionCurrentThread<?> current =
+								((IIcfgJoinTransitionOtherThread<?, ?>) edge)
+										.getCorrespondingIIcfgJoinTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getSource();
 						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
-						net.addTransition((LETTER) edge, new HashSet(Arrays.asList(new IPredicate[] { predCurrentThread, state})), Collections.singleton(succState));
+						net.addTransition((LETTER) edge,
+								new HashSet<>(Arrays.asList(new IPredicate[] { predCurrentThread, state })),
+								Collections.singleton(succState));
 					} else if (edge instanceof IIcfgCallTransition<?>) {
-						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+						throw new UnsupportedOperationException(
+								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
 					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
-						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+						throw new UnsupportedOperationException(
+								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
 					} else if (edge instanceof Summary) {
-						throw new UnsupportedOperationException("unsupported for concurrent analysis " + edge.getClass().getSimpleName());
+						throw new UnsupportedOperationException(
+								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
 					} else {
-						throw new UnsupportedOperationException("unknown kind of edge " + edge.getClass().getSimpleName());
+						throw new UnsupportedOperationException(
+								"unknown kind of edge " + edge.getClass().getSimpleName());
 					}
 				}
 			}
@@ -300,20 +309,18 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return net;
 	}
 
-
 	/**
-	 * Extract from an ICFG the alphabet that is needed for an trace
-	 * abstraction-based analysis.
+	 * Extract from an ICFG the alphabet that is needed for an trace abstraction-based analysis.
 	 *
 	 * @param icfg
 	 * @param intraproceduralAnalysis
-	 *            In an intraprocedural analysis we ignore call and return
-	 *            statements. Instead we add summary edges between the call
-	 *            predecessor and the return successor. If a specification of the
-	 *            procedure is given, this specification is used here. If no
-	 *            specification is given we use the trivial ("true") specification.
+	 *            In an intraprocedural analysis we ignore call and return statements. Instead we add summary edges
+	 *            between the call predecessor and the return successor. If a specification of the procedure is given,
+	 *            this specification is used here. If no specification is given we use the trivial ("true")
+	 *            specification.
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <LETTER> VpAlphabet<LETTER> extractVpAlphabet(final IIcfg<? extends IcfgLocation> icfg,
 			final boolean intraproceduralAnalysis) {
 		final Set<LETTER> internalAlphabet = new HashSet<>();
@@ -356,7 +363,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
 						internalAlphabet.add((LETTER) edge);
 					} else {
-						throw new UnsupportedOperationException("unknown kind of edge " + edge.getClass().getSimpleName());
+						throw new UnsupportedOperationException(
+								"unknown kind of edge " + edge.getClass().getSimpleName());
 					}
 				}
 			}
