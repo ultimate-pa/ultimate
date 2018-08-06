@@ -354,7 +354,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	/** @return Letters actually being used as a label of some transition in this net. */
 	public Set<LETTER> usedLetters() {
 		final Set<LETTER> usedLetters = new HashSet<>();
-		for (ITransition<LETTER, PLACE> trans : mTransitions) {
+		for (final ITransition<LETTER, PLACE> trans : mTransitions) {
 			usedLetters.add(trans.getSymbol());
 		}
 		return usedLetters;
@@ -363,6 +363,15 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	/** @return Number of edges in this net. */
 	public int flowSize() {
 		return mPredecessors.size() + mSuccessors.size();
+	}
+
+	@Override
+	public boolean isAccepting(final PLACE place) {
+		if (!mPlaces.contains(place)) {
+			throw new IllegalArgumentException("unknown place " + place);
+		} else {
+			return mAcceptingPlaces.contains(place);
+		}
 	}
 
 }

@@ -48,21 +48,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  */
-public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
+public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPetriNetSuccessorProvider<LETTER, PLACE> {
 	Collection<PLACE> getPlaces();
 
 	Collection<ITransition<LETTER, PLACE>> getTransitions();
 
-	Set<PLACE> getInitialPlaces();
-
 	Collection<PLACE> getAcceptingPlaces();
 
-	/**
-	 * @param marking
-	 *            A marking.
-	 * @return {@code true} iff the marking is accepting.
-	 */
-	boolean isAccepting(Marking<LETTER, PLACE> marking);
+
 
 
 
@@ -73,11 +66,6 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 	Set<ITransition<LETTER, PLACE>> getPredecessors(final PLACE place);
 
 
-	/** @return Outgoing places of given transition. */
-	Set<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition);
-
-	/** @return Incoming places of given transition. */
-	Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition);
 
 
 	@Override
@@ -86,6 +74,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 		return new PetriNetToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
 	}
 
+	@Override
 	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(final Collection<PLACE> places) {
 		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
 		for (final PLACE p : places) {
