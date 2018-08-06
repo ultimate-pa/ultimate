@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
@@ -156,6 +157,9 @@ public class MoNatDiffScript extends NoopScript {
 
 			if (functionSymbol.equals("or"))
 				return processDisjunction(applicationTerm);
+			
+			if (functionSymbol.equals("=>"))
+				return processImplication(applicationTerm);
 
 			if (functionSymbol.equals("strictSubsetInt"))
 				return processStrictSubset(applicationTerm);
@@ -331,6 +335,18 @@ public class MoNatDiffScript extends NoopScript {
 		return traversePostOrder(conjunction);
 	}
 
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processImplication(final ApplicationTerm term) {
+		final Term[] terms = term.getParameters();
+		
+		for (int i = 0; i < terms.length - 1; i++)
+			terms[i] = SmtUtils.not(this, terms[i]); 
+		
+		return traversePostOrder(SmtUtils.or(this, terms));
+	}
+	
 	/*
 	 * TODO: Comment.
 	 */

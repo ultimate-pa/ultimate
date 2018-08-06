@@ -11,7 +11,9 @@
 (declare-fun z () Int)
 (declare-fun S () SetOfInt)
 
-(assert (not (or (< x 2) (< y 2))) )
+;(assert (= z 3))
+(assert (=> (< x 5) (< y 4) (< z 3)))
+;(assert (not (or (< x 2) (< y 2))) )
 ;(assert (exists ((x Int)) (not (and (< x 2) (< y 2)))) )
 ;(assert (not (exists ((x Int)) (not (and (< x 2) (< y 2))))) )
 ;(assert (forall ((x Int)) (and (< x 2) (< y 2))) )
