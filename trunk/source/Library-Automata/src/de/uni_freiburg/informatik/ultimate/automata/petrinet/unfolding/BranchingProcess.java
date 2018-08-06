@@ -29,9 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -42,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
@@ -60,7 +59,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 
-	private final Map<PLACE, Set<Condition<LETTER, PLACE>>> mPlace2cond;
+	private final HashRelation<PLACE, Condition<LETTER, PLACE>> mPlace2Conds;
 
 	/**
 	 * Dummy root event with all initial conditions as successors.
@@ -85,10 +84,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
 		mOrder = order;
-		mPlace2cond = new HashMap<>();
-		for (final PLACE p : net.getPlaces()) {
-			mPlace2cond.put(p, new HashSet<Condition<LETTER, PLACE>>());
-		}
+		mPlace2Conds = new HashRelation<>();
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
 		mCoRelation = new ConditionEventsCoRelation<>(this);
@@ -128,8 +124,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		boolean someSuccessorIsAccepting = false;
 		for (final Condition<LETTER, PLACE> c : event.getSuccessorConditions()) {
 			mConditions.add(c);
-			mPlace2cond.get(c.getPlace()).add(c);
-			if (isAccepting(c)) {
+			mPlace2Conds.addPair(c.getPlace(), c);
+			if (mNet.isAccepting(c.getPlace())) {
 				someSuccessorIsAccepting = true;
 			}
 		}
@@ -140,7 +136,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	private boolean checkOneSafety(final Event<LETTER, PLACE> event) {
 		for (final Condition<LETTER, PLACE> condition : event.getSuccessorConditions()) {
-			final Set<Condition<LETTER, PLACE>> existing = mPlace2cond.get(condition.getPlace());
+			final Set<Condition<LETTER, PLACE>> existing = mPlace2Conds.getImage(condition.getPlace());
 			for (final Condition<LETTER, PLACE> c : existing) {
 				if (c != condition && isInCoRelation(c, condition)) {
 					mLogger.debug(c + " in coRelation with " + condition + " but they belong to the same place.");
@@ -149,10 +145,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		return true;
-	}
-
-	boolean isAccepting(final Condition<LETTER, PLACE> condition) {
-		return mNet.getAcceptingPlaces().contains(condition.getPlace());
 	}
 
 	/**
@@ -185,7 +177,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @return all conditions c s.t. p is the corresponding place of c.
 	 */
 	public Set<Condition<LETTER, PLACE>> place2cond(final PLACE place) {
-		return mPlace2cond.get(place);
+		return mPlace2Conds.getImage(place);
 	}
 
 	/**
