@@ -37,6 +37,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
@@ -116,16 +117,20 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 					.map(x -> new Candidate<LETTER, PLACE>(x, conditions)).collect(Collectors.toList());
 			return candidates;
 		} else {
+			if (!(mBranchingProcess.getNet() instanceof IPetriNet)) {
+				throw new IllegalArgumentException("non-lazy computation only available for fully constructed nets");
+			}
+			IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
 			final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
 			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-				for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond.getPlace())) {
+				for (final ITransition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
 					transitions.add(t);
 				}
 			}
 			final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 			for (final ITransition<LETTER, PLACE> transition : transitions) {
 				final Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
-						Collections.singleton(transition), mBranchingProcess.getNet()), event.getSuccessorConditions());
+						Collections.singleton(transition), fullPetriNet), event.getSuccessorConditions());
 				candidates.add(candidate);
 			}
 			return candidates;
