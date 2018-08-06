@@ -186,7 +186,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			// equality intended here
 			if (c == mRepresentatives.find(c)) {
 				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c),
-						bp.initialConditions().contains(c), bp.mNet.isAccepting(c.getPlace()));
+						bp.initialConditions().contains(c), bp.getNet().isAccepting(c.getPlace()));
 				placeMap.put(c, place);
 			}
 		}
