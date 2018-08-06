@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -63,7 +63,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
 	private final IOrder<LETTER, PLACE>  mOrder;
@@ -87,7 +87,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public PetriNetUnfolder(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
+	public PetriNetUnfolder(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> operand,
 			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
 		mServices = services;
@@ -126,7 +126,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private void computeUnfolding() throws AutomataOperationCanceledException {
 		boolean someInitialPlaceIsAccepting = false;
 		for (final Condition<LETTER, PLACE> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
-			if (((BoundedPetriNet<LETTER, PLACE>)mOperand).getAcceptingPlaces().contains(c.getPlace())) {
+			if (mOperand.isAccepting(c.getPlace())) {
 				someInitialPlaceIsAccepting = true;
 			}
 		}
@@ -270,12 +270,17 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataOperationCanceledException {
+		if (!(mOperand instanceof IPetriNet)) {
+			mLogger.warn("Will not check Unfolding because operand is constructed on-demand" );
+			return true;
+		}
+
 		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct;
 		if (mRun == null) {
 			final NestedRun<LETTER, PLACE> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, (IPetriNet<LETTER, PLACE>) mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;
@@ -284,7 +289,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			correct = automataRun == null;
 		} else {
 			final Word<LETTER> word = mRun.getWord();
-			if (new Accepts<LETTER, PLACE>(mServices, mOperand, word).getResult()) {
+			if (new Accepts<LETTER, PLACE>(mServices, (IPetriNet<LETTER, PLACE>) mOperand, word).getResult()) {
 				correct = true;
 			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
@@ -371,7 +376,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			// This statistic could be computed more efficiently when using a Set<ITransition> in
 			// this class' add(Event) method. But doing so would slow down computation
 			// even in cases in which this statistic is not needed.
-			final int transitionsInNet = mOperand.getTransitions().size();
+			final int transitionsInNet = ((IPetriNet<LETTER, PLACE>) mOperand).getTransitions().size();
 			final long eventLabelsInFinPre = mUnfolding.getEvents().parallelStream()
 					.map(Event::getTransition).filter(Objects::nonNull).distinct().count();
 			return transitionsInNet - eventLabelsInFinPre;

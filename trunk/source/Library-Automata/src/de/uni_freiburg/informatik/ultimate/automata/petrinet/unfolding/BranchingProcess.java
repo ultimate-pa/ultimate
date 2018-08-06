@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -72,13 +72,13 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * Places of this branching process correspond to places of the net.
 	 * Events of this branching process correspond to transitions of the net.
 	 */
-	private final BoundedPetriNet<LETTER, PLACE> mNet;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
 	private final IOrder<LETTER, PLACE> mOrder;
 	
 	private int mConditionSerialnumberCounter = 0;
 
-	public BranchingProcess(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> net,
+	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final IOrder<LETTER, PLACE> order) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -261,7 +261,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * Returns the net associated with this branching process.
 	 * @return Net associated with this branching process
 	 */
-	public BoundedPetriNet<LETTER, PLACE> getNet() {
+	public IPetriNetSuccessorProvider<LETTER, PLACE> getNet() {
 		return mNet;
 	}
 

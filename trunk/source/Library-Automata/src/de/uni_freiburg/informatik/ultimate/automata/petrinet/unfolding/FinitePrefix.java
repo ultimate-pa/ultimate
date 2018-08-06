@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -46,19 +46,19 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            place content type
  */
 public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final IPetriNet<LETTER, STATE> mOperand;
+	private final IPetriNetSuccessorProvider<LETTER, STATE> mOperand;
 
 	private final BranchingProcess<LETTER, STATE> mResult;
 
 	private final PetriNetUnfolder<LETTER, STATE>.Statistics mUnfoldingStatistics;
 
 
-	public FinitePrefix(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand)
+	public FinitePrefix(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, false);
 	}
 	
-	public FinitePrefix(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand,
+	public FinitePrefix(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, STATE> operand,
 			boolean sameTransitionCutOff) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -66,7 +66,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV,
+		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<LETTER, STATE>(mServices, operand, UnfoldingOrder.ERV,
 				sameTransitionCutOff, false);
 		mUnfoldingStatistics = unf.getUnfoldingStatistics();
 		mResult = unf.getFinitePrefix();
@@ -82,7 +82,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 	}
 
 	@Override
-	protected IPetriNet<LETTER, STATE> getOperand() {
+	protected IPetriNetSuccessorProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
@@ -100,7 +100,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES, mUnfoldingStatistics.getCoRelationQueries());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
-		statistics.addKeyValuePair(StatisticsType.NUMBER_DEAD_TRANSITIONS, mUnfoldingStatistics.deadTransitionsInOperand());
+		if (mOperand instanceof IPetriNet) {
+			statistics.addKeyValuePair(StatisticsType.NUMBER_DEAD_TRANSITIONS, mUnfoldingStatistics.deadTransitionsInOperand());
+		}
 
 		return statistics;
 	}

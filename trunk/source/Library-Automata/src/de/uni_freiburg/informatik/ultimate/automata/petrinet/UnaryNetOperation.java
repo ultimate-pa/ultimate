@@ -56,7 +56,7 @@ public abstract class UnaryNetOperation<LETTER, PLACE, CRSF extends IStateFactor
 	/**
 	 * @return The operand Petri net.
 	 */
-	protected abstract IPetriNet<LETTER, PLACE> getOperand();
+	protected abstract IPetriNetSuccessorProvider<LETTER, PLACE> getOperand();
 
 	@Override
 	public String startMessage() {

@@ -94,7 +94,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			mLogger.info(startMessage());
 		}
 
-		final BoundedPetriNet<LETTER, PLACE> oldNet = mInput.getNet();
+		final BoundedPetriNet<LETTER, PLACE> oldNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
 		mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
 		mRepresentatives = new UnionFind<>();
 		constructNet(bp, oldNet);

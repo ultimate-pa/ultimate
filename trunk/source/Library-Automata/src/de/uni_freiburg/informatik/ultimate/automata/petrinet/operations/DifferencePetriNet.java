@@ -14,7 +14,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -31,7 +32,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private static final String EMPTY_INITIAL_ERROR_MESSAGE = "Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). However we presume that in most cases, such a subtrahend was passed accidentally";
 	private final AutomataLibraryServices mServices;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinued;
-	private final INwaSuccessorStateProvider<LETTER, PLACE> mSubtrahend;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old = new HashMap<ITransition<LETTER,PLACE>, ITransition<LETTER,PLACE>>();
 	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOld2New = new HashRelation<>();
 	private final Map<ITransition<LETTER, PLACE>, PLACE> mNewTransition2AutomatonPredecessorState = new HashMap<>();
@@ -45,7 +46,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 
 	public DifferencePetriNet(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
-			final INwaSuccessorStateProvider<LETTER, PLACE> subtrahend) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahend) {
 		super();
 		mServices = services;
 		mMinued = minued;
@@ -55,12 +56,17 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	@Override
 	public Set<PLACE> getInitialPlaces() {
 		final Set<PLACE> result = new HashSet<>(mMinued.getInitialPlaces());
+		for (PLACE initialPlace : result) {
+			mMinuendPlaces.add(initialPlace);
+		}
 		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
 		if (!it.hasNext()) {
 			throw new UnsupportedOperationException(
 					EMPTY_INITIAL_ERROR_MESSAGE);
 		}
-		result.add(it.next());
+		PLACE automatonInitialState = it.next(); 
+		result.add(automatonInitialState);
+		mSubtrahendStates.add(automatonInitialState);
 		if (it.hasNext()) {
 			throw new IllegalArgumentException("subtrahend not deterministic");
 		}
@@ -172,10 +178,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					mMinuendPlaces.add(petriNetSuccessor);
 					successors.add(petriNetSuccessor);
 				}
-				PLACE subtrahendSucc;
+				OutgoingInternalTransition<LETTER, PLACE> subtrahendSucc;
 				{
-					final Collection<PLACE> subtrahendSuccs = mSubtrahend.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
-					final Iterator<PLACE> it = subtrahendSuccs.iterator();
+					final Iterable<OutgoingInternalTransition<LETTER, PLACE>> subtrahendSuccs = mSubtrahend.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
+					final Iterator<OutgoingInternalTransition<LETTER, PLACE>> it = subtrahendSuccs.iterator();
 					if (!it.hasNext()) {
 						throw new IllegalArgumentException("Subtrahend not total.");
 					}
@@ -184,12 +190,13 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						throw new IllegalArgumentException("Subtrahend not deterministic.");
 					}
 				}
-				mSubtrahendStates.add(subtrahendSucc);
+				mSubtrahendStates.add(subtrahendSucc.getSucc());
 
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
 				result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
+				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 			}
 			return result;
 		}
