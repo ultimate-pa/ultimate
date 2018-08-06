@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+	<option name="--generate-csv" />
+	<option name="--csv-dir">csv</option>
+
+	<rundefinition name="RubberTaipan">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-RubberTaipan_Default-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbstractInterpretation_Default">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_Default-OldIcfg.epf</option>
+	</rundefinition>
+	
+	<rundefinition name="AbstractInterpretation_INT">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_INT-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbstractInterpretation_CON">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_CON-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbstractInterpretation_OCT">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_OCT-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbstractInterpretation_INTCON">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_INTCON-OldIcfg.epf</option>
+	</rundefinition>
+	
+	<rundefinition name="ToothlessTaipan_Default">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_Default-OldIcfg.epf</option>
+	</rundefinition>
+	
+	<rundefinition name="ToothlessTaipan_INT">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_INT-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="ToothlessTaipan_CON">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_CON-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="ToothlessTaipan_OCT">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_OCT-OldIcfg.epf</option>
+	</rundefinition>
+
+	<rundefinition name="ToothlessTaipan_INTCON">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-ToothlessTaipan_INTCON-OldIcfg.epf</option>
+	</rundefinition>
+    
+	<tasks name="Loops">
+		<includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+		 <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+	</tasks>
+
+	<tasks name="ECA">
+		<includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+	</tasks>
+</benchmark>
