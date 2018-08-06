@@ -82,13 +82,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
 
 /*
  * Questions:
- * 1) How to deal with constant values larger than max integer in constantTermToInt()?
+ * 1) (solved) How to deal with constant values larger than max integer in constantTermToInt()?
  * 2) How to deal with empty symbol in MoNatDiffAlphabetSymbol?
- * 3) What to do iff all variables are quantified ones?
+ * 3) What to do iff all variables are quantified ones? 
+ * 		-> if at least one accepting state is reachable -> true-automaton
  * 4) How to handle empty alphabets in createAlphabet?
  * 5) How to deal with accepting states before projection if no free variables exist?
+ * 		-> see 3)
  * 6) Does this exist somewhere hierarchicalSuccessorsOutgoing? Is our implementation inefficient?
- * 7) How to insert final keyword with script?
+ * 7) (solved) How to insert final keyword with script?
+ * 8) How to use SmtUtils.toCNF()? (Might be helpful for dealing with disjunction, implication, equality)
  */
 public class MoNatDiffScript extends NoopScript {
 
@@ -320,18 +323,18 @@ public class MoNatDiffScript extends NoopScript {
 
 		return result;
 	}
-	
+
 	/*
 	 * TODO: Comment.
 	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processDisjunction(final ApplicationTerm term) {
 		final Term[] terms = new Term[term.getParameters().length];
-		
+
 		for (int i = 0; i < term.getParameters().length; i++)
 			terms[i] = SmtUtils.not(this, term.getParameters()[i]);
-		
+
 		final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
-		
+
 		return traversePostOrder(conjunction);
 	}
 
