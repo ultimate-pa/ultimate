@@ -155,7 +155,7 @@ public class MoNatDiffScript extends NoopScript {
 				return processConjunction(applicationTerm);
 
 			if (functionSymbol.equals("or"))
-				throw new UnsupportedOperationException("Not implemented.");
+				return processDisjunction(applicationTerm);
 
 			if (functionSymbol.equals("strictSubsetInt"))
 				return processStrictSubset(applicationTerm);
@@ -177,8 +177,6 @@ public class MoNatDiffScript extends NoopScript {
 	 * TODO: Comment.
 	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processForall(final QuantifiedFormula term) {
-		// mLogger.info("Construct forall Phi: " + term);
-
 		final Term subformula = SmtUtils.not(this, term.getSubformula());
 		final Term exists = SmtUtils.not(this, quantifier(QuantifiedFormula.EXISTS, term.getVariables(), subformula));
 
@@ -189,7 +187,6 @@ public class MoNatDiffScript extends NoopScript {
 	 * TODO: Comment.
 	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processExists(final QuantifiedFormula term) {
-
 		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct exists Phi: " + term);
 
@@ -318,6 +315,20 @@ public class MoNatDiffScript extends NoopScript {
 		}
 
 		return result;
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processDisjunction(final ApplicationTerm term) {
+		final Term[] terms = new Term[term.getParameters().length];
+		
+		for (int i = 0; i < term.getParameters().length; i++)
+			terms[i] = SmtUtils.not(this, term.getParameters()[i]);
+		
+		final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
+		
+		return traversePostOrder(conjunction);
 	}
 
 	/*
