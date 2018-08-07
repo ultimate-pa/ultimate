@@ -191,6 +191,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					}
 				}
 				mSubtrahendStates.add(subtrahendSucc.getSucc());
+				successors.add(subtrahendSucc.getSucc());
 
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
@@ -208,7 +209,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			result.addPlace(place, mMinued.getInitialPlaces().contains(place), mMinued.isAccepting(place));
 		}
 		for (final PLACE place : mSubtrahendStates) {
-			result.addPlace(place, mSubtrahend.isInitial(place), mMinued.isAccepting(place));
+			result.addPlace(place, mSubtrahend.isInitial(place), false);
 		}
 		for (final Entry<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> entry : mTransitions.entrySet()) {
 			result.addTransition(entry.getValue().getSymbol(), entry.getValue().getPredecessors(), entry.getValue().getSuccessors());
