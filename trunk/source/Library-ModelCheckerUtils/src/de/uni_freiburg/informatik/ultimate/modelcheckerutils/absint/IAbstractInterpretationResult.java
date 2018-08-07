@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * The result of an abstract interpretation analysis run.
@@ -96,4 +97,9 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates);
 
 	IVariableProvider<STATE, ACTION> getUsedVariableProvider();
+
+	/**
+	 * @return the benchmark object of this fixpoint engine run.
+	 */
+	ICsvProviderProvider<Object> getBenchmark();
 }
