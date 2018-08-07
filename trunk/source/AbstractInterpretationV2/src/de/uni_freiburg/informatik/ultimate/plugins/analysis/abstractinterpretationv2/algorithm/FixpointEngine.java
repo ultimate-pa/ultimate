@@ -248,6 +248,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			preStateWithFreshVariables = preState;
 			postState = preState.apply(postOp, currentAction);
 		}
+		mResult.getBenchmark().countPostApplication();
 
 		assert postState != null;
 		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState,

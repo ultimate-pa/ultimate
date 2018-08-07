@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider.CsvColumn;
 
 /**
  *
@@ -19,7 +21,12 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 	private final Map<Integer, Integer> mAction2Widen;
 	private final Map<Integer, Integer> mAction2Fixpoints;
 	private int mLastAction;
+
+	@CsvColumn("MaxVariables")
 	private int mMaxVariables;
+
+	@CsvColumn("PostApplication")
+	private int mPostApplication;
 
 	public AbsIntBenchmark() {
 		mAction2Visits = new HashMap<>();
@@ -27,34 +34,39 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 		mAction2Widen = new HashMap<>();
 		mAction2Fixpoints = new HashMap<>();
 		mMaxVariables = 0;
+		mPostApplication = 0;
 	}
 
 	@Override
 	public ICsvProvider<Object> createCsvProvider() {
-		return null;
+		return SimpleCsvProvider.constructCsvProviderReflectively(this);
 	}
 
-	public void addIteration(final ACTION action) {
+	void addIteration(final ACTION action) {
 		mLastAction = action.hashCode();
 		addOrIncrement(mAction2Visits);
 	}
 
-	public void addMerge() {
+	void addMerge() {
 		addOrIncrement(mAction2Merges);
 	}
 
-	public void addWiden() {
+	void addWiden() {
 		addOrIncrement(mAction2Widen);
 	}
 
-	public void addFixpoint() {
+	void addFixpoint() {
 		addOrIncrement(mAction2Fixpoints);
 	}
 
-	public void addMaxVariables(final int varCount) {
+	void addMaxVariables(final int varCount) {
 		if (varCount > mMaxVariables) {
 			mMaxVariables = varCount;
 		}
+	}
+
+	void countPostApplication() {
+		mPostApplication++;
 	}
 
 	private void addOrIncrement(final Map<Integer, Integer> map) {
