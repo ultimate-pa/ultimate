@@ -105,7 +105,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mSettings = new VPDomainSettings(ups);
+		mSettings = new VPDomainSettings();
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
 				trackedArrays, mixArrayFunctions);
@@ -124,6 +124,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		final WeqSettings settings = new WeqSettings();
 		settings.setUseFullWeqccDuringProjectaway(ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT));
 		settings.setDeactivateWeakEquivalences(ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES));
+		settings.setPreciseWeqLabelComparison(ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR));
+		settings.setFlattenWeqEdgesBeforeMeetWWeqGpa(ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN));
 		return settings;
 	}
 
@@ -140,6 +142,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState> {
 		@Override
 		public EqState apply(final EqState first, final EqState second) {
+//			return mEqStateFactory.getTopState();
 			return first.union(second);
 		}
 	}
@@ -199,6 +202,15 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
+
+		/*
+		 * report EqPostOperator's Benchmark
+		 */
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "EqPostOperator statistics",
+						mPost.getBenchmark()));
+
+
 
 		/*
 		 * report EqConstraintFactory's Benchmark

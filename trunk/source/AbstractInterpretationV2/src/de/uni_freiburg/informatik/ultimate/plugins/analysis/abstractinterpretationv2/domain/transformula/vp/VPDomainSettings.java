@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-
 /**
  * Keeps settings that are not full-blown Ultimate preferences (those are in VPDomainPreferences).
  *
@@ -10,13 +8,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
  */
 public class VPDomainSettings {
 
-	/**
-	 * settings that are ultimate preferences
-	 */
-	public final boolean mUseWeqInProject;
-	public final boolean mFlattenBeforeFatten;
-	public final boolean mDeactivateWeakEquivalences;
-	public final boolean mPreciseComparisonOperator;
+//	/**
+//	 * settings that are ultimate preferences
+//	 */
+//	public final boolean mUseWeqInProject;
+//	public final boolean mFlattenBeforeFatten;
+//	public final boolean mDeactivateWeakEquivalences;
+//	public final boolean mPreciseComparisonOperator;
 
 
 	/*
@@ -32,11 +30,11 @@ public class VPDomainSettings {
 	 *
 	 * @param ups
 	 */
-	public VPDomainSettings(final IPreferenceProvider ups) {
-		mUseWeqInProject = ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT);
-		mFlattenBeforeFatten = ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN);
-		mDeactivateWeakEquivalences = ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES);
-		mPreciseComparisonOperator = ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR);
+	public VPDomainSettings() {
+//		mUseWeqInProject = ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT);
+//		mFlattenBeforeFatten = ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN);
+//		mDeactivateWeakEquivalences = ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES);
+//		mPreciseComparisonOperator = ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR);
 	}
 
 	public boolean isCheckPostCorrectness() {

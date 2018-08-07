@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
 /**
  *
@@ -88,6 +89,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final VPDomainSettings mSettings;
 
+	private final BenchmarkWithCounters mBenchmark;
+
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
@@ -111,11 +114,21 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mDoubleCheckPredicateTransformer =
 				new PredicateTransformer<>(mMgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
 		mDoubleCheckImplicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
+
+		if (mDebug) {
+			mBenchmark = new BenchmarkWithCounters();
+			mBenchmark.registerCountersAndWatches(BmNames.getNames());
+		} else {
+			mBenchmark = null;
+		}
 	}
 
 	@Override
 	public List<EqState> apply(final EqState oldState, final ACTION transition) {
+		debugStart(BmNames.APPLY_NORMAL);
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			// timeout
+			debugEnd(BmNames.APPLY_NORMAL);
 			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), oldState.getVariables());
 		}
 
@@ -132,6 +145,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					mEqStateFactory.statesToPredicate(result)) : "soundness check failed!";
 		}
 //		TransFormulaUtils.prettyPrint(transition.getTransformula())
+		debugEnd(BmNames.APPLY_NORMAL);
 		return result;
 	}
 
@@ -176,8 +190,11 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		// .containsAll(mCfgSmtToolkit.getSymbolTable().getGlobals());
 		// assert hierarchicalPrestate.getVariables()
 		// .containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+		debugStart(BmNames.APPLY_RETURN);
 
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			// timeout
+			debugEnd(BmNames.APPLY_RETURN);
 			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), hierarchicalPrestate.getVariables());
 		}
 
@@ -201,6 +218,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					modifiableGlobalsOfCalledProcedure);
 			// TODO implement SMT solver soundness check (like in other apply method)
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
+			debugEnd(BmNames.APPLY_RETURN);
 			return result;
 		} else if (transition instanceof IReturnAction) {
 
@@ -232,13 +250,45 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 			// TODO implement SMT solver soundness check (like in other apply method)
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
+			debugEnd(BmNames.APPLY_RETURN);
 			return result;
 		} else {
+			debugEnd(BmNames.APPLY_RETURN);
 			throw new UnsupportedOperationException();
 		}
 	}
 
 	public TransFormulaConverterCache getTransformulaConverterCache() {
 		return mTransFormulaConverter;
+	}
+
+	public BenchmarkWithCounters getBenchmark() {
+		return mBenchmark;
+	}
+
+	private void debugStart(final BmNames name) {
+		if (mDebug) {
+			mBenchmark.incrementCounter(name.name());
+			mBenchmark.unpauseWatch(name.name());
+		}
+	}
+
+	private void debugEnd(final BmNames name) {
+		if (mDebug) {
+			mBenchmark.pauseWatch(name.name());
+		}
+	}
+
+	private static enum BmNames {
+
+		APPLY_NORMAL, APPLY_RETURN;
+
+		static String[] getNames() {
+			final String[] result = new String[values().length];
+			for (int i = 0; i < values().length; i++) {
+				result[i] = values()[i].name();
+			}
+			return result;
+		}
 	}
 }
