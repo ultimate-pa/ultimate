@@ -2,6 +2,7 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
 	<option name="--generate-csv" />
 	<option name="--csv-dir">csv</option>
+	<option name="--force-no-wrapper" />
 
 	<rundefinition name="RubberTaipan">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
@@ -59,12 +60,12 @@
 	</rundefinition>
     
 	<tasks name="Loops">
-		<includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+		<includesfile>../../../trunk/examples/svcomp-ReachSafety-Loops-true.set</includesfile>
 		 <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
 	</tasks>
 
 	<tasks name="ECA">
-		<includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+		<includesfile>../../../trunk/examples/svcomp-ReachSafety-ECA-true.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
 	</tasks>
 </benchmark>

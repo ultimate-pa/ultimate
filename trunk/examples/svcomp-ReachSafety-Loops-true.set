@@ -1,0 +1,10 @@
+svcomp/loops/*_true-unreach-call*.i
+svcomp/loop-acceleration/*_true-unreach-call*.i
+svcomp/loop-crafted/*_true-unreach-call*.i
+
+svcomp/loop-invgen/*_true-unreach-call*.i
+svcomp/loop-lit/*_true-unreach-call*.i
+svcomp/loop-new/*_true-unreach-call*.i
+svcomp/loop-industry-pattern/*_true-unreach-call*.c
+
+svcomp/loops/heavy_true-unreach-call.c
