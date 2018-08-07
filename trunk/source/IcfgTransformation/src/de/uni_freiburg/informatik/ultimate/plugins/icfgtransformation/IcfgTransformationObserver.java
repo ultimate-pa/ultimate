@@ -159,6 +159,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 				ups.getEnum(IcfgTransformationPreferences.LABEL_TRANSFORMATION_TYPE, TransformationTestType.class);
 
 		switch (transformation) {
+		case HEAP_SEPARATOR:
+			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
+					new AbsIntEqualityProvider(mServices));
 		case LOOP_ACCELERATION_EXAMPLE:
 			return applyLoopAccelerationEx(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_BIESENBACH:
