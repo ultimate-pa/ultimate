@@ -30,38 +30,35 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Check if the languages of a given {@link IPetriNet} and a given
  * {@link INestedWordAutomaton} are identical.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IsEquivalent<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	private final IPetriNet2FiniteAutomatonStateFactory<STATE> mPetriNet2FiniteAutomatonStateFactory;
-	private final INwaInclusionStateFactory mNwaInclusionStateFactory;
+	private final IPetriNetAndAutomataInclusionStateFactory<STATE> mStateFactory;
 	private final boolean mResult;
 
 	public IsEquivalent(final AutomataLibraryServices services,
-			IPetriNet2FiniteAutomatonStateFactory<STATE> petriNet2FiniteAutomatonStateFactory,
-			INwaInclusionStateFactory nwaInclusionStateFactory, final IPetriNet<LETTER, STATE> petriNet,
-			INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataLibraryException {
+			final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory,
+			final IPetriNet<LETTER, STATE> petriNet, final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mAutomaton = automaton;
-		mPetriNet2FiniteAutomatonStateFactory = petriNet2FiniteAutomatonStateFactory;
-		mNwaInclusionStateFactory = nwaInclusionStateFactory;
+		mStateFactory = stateFactory;
 		printStartMessage();
 		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton = (new PetriNet2FiniteAutomaton<LETTER, STATE>(
-				mServices, mPetriNet2FiniteAutomatonStateFactory, mPetriNet)).getResult();
+				mServices, stateFactory, mPetriNet)).getResult();
 		mResult = new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent<LETTER, STATE>(
-				mServices, mNwaInclusionStateFactory, petriNetAsAutomaton, mAutomaton).getResult();
+				mServices, stateFactory, petriNetAsAutomaton, mAutomaton).getResult();
 		printExitMessage();
 	}
 

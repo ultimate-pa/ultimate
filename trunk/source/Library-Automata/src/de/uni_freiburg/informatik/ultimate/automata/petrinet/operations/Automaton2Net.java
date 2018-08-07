@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Transforms an {@link INestedWordAutomaton} to a {@link BoundedPetriNet}.
@@ -46,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state/place type
  */
-public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class Automaton2Net<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IPetriNetAndAutomataInclusionStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final BoundedPetriNet<LETTER, STATE> mNet;
 
@@ -90,13 +89,11 @@ public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + mNet.getClass().getSimpleName());
 		}
-		final boolean correct = new IsEquivalent<LETTER, STATE>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<STATE>) stateFactory,
-				(INwaInclusionStateFactory<STATE>) stateFactory, mNet, mOperand).getResult();
+		final boolean correct = new IsEquivalent<LETTER, STATE>(mServices, stateFactory, mNet, mOperand).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + mNet.getClass().getSimpleName());
 		}

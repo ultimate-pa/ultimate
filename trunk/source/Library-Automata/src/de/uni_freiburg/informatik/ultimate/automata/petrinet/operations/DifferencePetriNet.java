@@ -56,7 +56,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	@Override
 	public Set<PLACE> getInitialPlaces() {
 		final Set<PLACE> result = new HashSet<>(mMinued.getInitialPlaces());
-		for (PLACE initialPlace : result) {
+		for (final PLACE initialPlace : result) {
 			mMinuendPlaces.add(initialPlace);
 		}
 		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
@@ -64,7 +64,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			throw new UnsupportedOperationException(
 					EMPTY_INITIAL_ERROR_MESSAGE);
 		}
-		PLACE automatonInitialState = it.next(); 
+		final PLACE automatonInitialState = it.next();
 		result.add(automatonInitialState);
 		mSubtrahendStates.add(automatonInitialState);
 		if (it.hasNext()) {

@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Automaton2Net;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PrefixProduct;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -45,7 +45,7 @@ public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
 		extends CFG2Automaton<LETTER, BoundedPetriNet<LETTER, IPredicate>> {
 	private final BoundedPetriNet<LETTER, IPredicate> mResult;
 
-	public Cfg2NetJulian(final IIcfg<?> rootNode, final IEmptyStackStateFactory<IPredicate> contentFactory,
+	public Cfg2NetJulian(final IIcfg<?> rootNode, final IPetriNetAndAutomataInclusionStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws AutomataLibraryException {

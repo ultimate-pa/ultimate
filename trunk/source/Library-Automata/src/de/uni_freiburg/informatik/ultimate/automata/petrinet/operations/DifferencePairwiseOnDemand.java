@@ -26,18 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  *
@@ -52,15 +55,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
 public final class DifferencePairwiseOnDemand
-		<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
-		extends GeneralOperation<LETTER, PLACE, CRSF> {
+		<LETTER, PLACE>
+		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
 
-	
+
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
 	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
-	private BoundedPetriNet<LETTER, PLACE> mResult;
+	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 
 
@@ -76,8 +79,8 @@ public final class DifferencePairwiseOnDemand
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
-		DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend);
+
+		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend);
 		new FinitePrefix<LETTER, PLACE>(mServices, difference);
 		mResult = difference.getYetConstructedPetriNet();
 
@@ -97,7 +100,7 @@ public final class DifferencePairwiseOnDemand
 	}
 
 
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
