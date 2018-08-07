@@ -109,18 +109,18 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		if (mLazySuccessorComputation) {
-			Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
-			Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
-			Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
+			final Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
+			final Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
+			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
 					.getNet().getSuccessorTransitionProviders(correspondingPlaces);
-			List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
+			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
 					.map(x -> new Candidate<LETTER, PLACE>(x, conditions)).collect(Collectors.toList());
 			return candidates;
 		} else {
 			if (!(mBranchingProcess.getNet() instanceof IPetriNet)) {
 				throw new IllegalArgumentException("non-lazy computation only available for fully constructed nets");
 			}
-			IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
+			final IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
 			final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
 			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
 				for (final ITransition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
