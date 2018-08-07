@@ -219,8 +219,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 					new IdentityTransformer(icfg.getCfgSmtToolkit())).getResult();
 		}
 
-		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer = new HeapSepIcfgTransformer<>(mLogger, icfg,
-				locFac, fac, backtranslationTracker, outlocClass, "heap_separated_icfg", equalityProvider, validArray);
+		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+				new HeapSepIcfgTransformer<>(mLogger, mServices, icfg, locFac, fac, backtranslationTracker, outlocClass,
+						"heap_separated_icfg", equalityProvider, validArray);
 
 		// mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 		// "HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));

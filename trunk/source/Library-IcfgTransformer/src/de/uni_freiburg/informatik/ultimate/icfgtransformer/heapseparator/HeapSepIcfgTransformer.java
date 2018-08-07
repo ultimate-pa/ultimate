@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.AxiomsAdderIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
@@ -96,6 +97,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final HeapSepSettings mSettings;
 
+	private final IUltimateServiceProvider mServices;
+
 
 	/**
 	 * prefix of heap arrays (copied from class "SFO" in C to Boogie translation)
@@ -122,8 +125,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 */
-	public HeapSepIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public HeapSepIcfgTransformer(final ILogger logger, final IUltimateServiceProvider services,
+			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
@@ -132,6 +135,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mStatistics = new HeapSeparatorBenchmark();
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
+		mServices = services;
 
 		mSettings = new HeapSepSettings();
 
@@ -176,6 +180,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final IProgramNonOldVar validArray) {
 
+		if (mSettings.isDumpPrograms()) {
+//			CFG2NestedWordAutomaton.printIcfg(mServices, originalIcfg);
+		}
 
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
@@ -417,6 +424,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 }
 
 class HeapSepSettings {
+
+
+	private final boolean mDumpPrograms = true;
+
+	private final String mDumpProgramsPath = "C:\\Temp\\automata";
+
+	private final boolean mCrashOnArrayAssume = true;
+
 	/**
 	 *
 	 * not clear:
@@ -439,6 +454,35 @@ class HeapSepSettings {
 
 	public boolean isAssertFreezeVarLitDisequalitiesIntoScript() {
 		return mAssertFreezeVarLitDisequalitiesIntoScript;
+	}
+
+	/**
+	 * Dump the programs (input program, program as fed to equality domain, transformed program) to disk as automata
+	 * (via {@link CFG2Automaton}.
+	 *
+	 * @return
+	 */
+	public boolean isDumpPrograms() {
+		return mDumpPrograms;
+	}
+
+	/**
+	 * Path used if {@link #isDumpPrograms()} is set.
+	 *
+	 * @return
+	 */
+	public String getDumpProgramsPath() {
+		return mDumpProgramsPath;
+	}
+
+	/**
+	 * Our technique does not handle assumes between arrays, if those arrays are supposed to be separated.
+	 * (Not yet used, not clear what else to do but crash..)
+	 *
+	 * @return
+	 */
+	public boolean isCrashOnArrayAssume() {
+		return mCrashOnArrayAssume;
 	}
 }
 
