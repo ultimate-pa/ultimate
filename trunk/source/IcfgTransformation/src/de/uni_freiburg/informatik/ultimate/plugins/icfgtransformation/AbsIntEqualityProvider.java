@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -69,6 +70,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	private final Set<IProgramConst> mAdditionalLiterals;
 	private List<String> mTrackedArrays;
 	private final Set<String> mMixArrayFunctions;
+	private ICsvProviderProvider<Object> mAbsIntBenchmark;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -105,6 +107,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
 		mBotState = absIntResult.getUsedDomain().createBottomState();
+		mAbsIntBenchmark = absIntResult.getBenchmark();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
 		assert mLoc2States != null : "There was no AbsInt result";
 		assert !mPreprocessed;
@@ -166,4 +169,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		return (EqState) getEqualityProvidingStateForLocationSet(Collections.singleton(edge.getSource()));
 	}
 
+	public ICsvProviderProvider<Object> getAbsIntBenchmark() {
+		return mAbsIntBenchmark;
+	}
 }
