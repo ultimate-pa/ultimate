@@ -226,8 +226,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 				new HeapSepIcfgTransformer<>(mLogger, mServices, icfg, locFac, fac, backtranslationTracker, outlocClass,
 						"heap_separated_icfg", equalityProvider, validArray);
 
-		// mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
-		// "HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "Abstract Interpretation statistics",
+						((AbsIntEqualityProvider) equalityProvider).getAbsIntBenchmark()));
+
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_ID,
 				"HeapSeparatorStatistics", icfgTransformer.getStatistics()));
 
@@ -338,10 +340,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
-
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "Abstract Interpretation statistics",
-						((AbsIntEqualityProvider) equalityProvider).getAbsIntBenchmark()));
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
