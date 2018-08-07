@@ -27,7 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -253,5 +259,50 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	@Override
 	public int getRowCount() {
 		return mTable.size();
+	}
+
+	public static SimpleCsvProvider<Object> constructCsvProviderReflectively(final Object instance) {
+		if (instance == null) {
+			throw new IllegalArgumentException("instance is null");
+		}
+
+		// collect all values
+		final List<String> columnTitles = new ArrayList<>();
+		final List<Object> values = new ArrayList<>();
+		for (final Field field : instance.getClass().getDeclaredFields()) {
+			if (field.isAnnotationPresent(CsvColumn.class)) {
+				try {
+					final Object value = field.get(instance);
+					final CsvColumn annot = field.getAnnotation(CsvColumn.class);
+					final String name = annot.value();
+					columnTitles.add(name);
+					values.add(value);
+				} catch (final IllegalArgumentException e) {
+					throw new RuntimeException(e);
+				} catch (final IllegalAccessException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		if (values.isEmpty()) {
+			return new SimpleCsvProvider<>(Collections.emptyList());
+		}
+
+		final SimpleCsvProvider<Object> csvProvider = new SimpleCsvProvider<>(columnTitles);
+		csvProvider.addRow(values);
+		return csvProvider;
+	}
+
+	/**
+	 * Annotation with which you mark a field as column provider in some object
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	@Target(value = { ElementType.METHOD, ElementType.FIELD })
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface CsvColumn {
+		String value();
 	}
 }
