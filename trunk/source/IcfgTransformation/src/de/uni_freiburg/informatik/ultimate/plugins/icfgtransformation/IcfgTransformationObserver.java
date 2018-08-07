@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.MonniauxMapEliminator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
@@ -182,10 +183,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
-		case HEAP_SEPARATOR:
-			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
-					new AbsIntEqualityProvider(mServices));
-
+		case MAP_ELIMINATION_MONNIAUX:
+			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
@@ -197,7 +196,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
-
 		/**
 		 * name of the valid array, copied from class "SFO" in C to Boogie translation
 		 */
@@ -205,8 +203,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 		final String MEMORY = "#memory";
 
-//		equalityProvider.setTrackedArrays(Arrays.asList(new String[]{ VALID, MEMORY } ));
-
+		// equalityProvider.setTrackedArrays(Arrays.asList(new String[]{ VALID, MEMORY } ));
 
 		IProgramNonOldVar validArray = null;
 		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
@@ -222,15 +219,13 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 					new IdentityTransformer(icfg.getCfgSmtToolkit())).getResult();
 		}
 
-		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-				new HeapSepIcfgTransformer<>(mLogger, icfg, locFac, fac, backtranslationTracker, outlocClass,
-						"heap_separated_icfg", equalityProvider, validArray);
+		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer = new HeapSepIcfgTransformer<>(mLogger, icfg,
+				locFac, fac, backtranslationTracker, outlocClass, "heap_separated_icfg", equalityProvider, validArray);
 
-//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
-//				"HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics",
-						icfgTransformer.getStatistics()));
+		// mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
+		// "HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_ID,
+				"HeapSeparatorStatistics", icfgTransformer.getStatistics()));
 
 		return icfgTransformer.getResult();
 	}
@@ -316,10 +311,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	}
 
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyModuloNeighbor(
-			final ILogger logger,
-			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
-			final IUltimateServiceProvider services) {
+			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
+			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
 		IIcfg<OUTLOC> result;
 		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
 		transitionPreprocessors.add(new RewriteIte());
@@ -350,6 +344,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		return new IcfgTransformerSequence<>(mLogger, icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "IcfgWithMapElim", transformers)
 						.getResult();
+	}
+
+	private IIcfg<IcfgLocation> applyMapEliminationMonniaux(final IIcfg<IcfgLocation> icfg,
+			final IBacktranslationTracker backtranslationTracker) {
+		return new MonniauxMapEliminator(mLogger, icfg, backtranslationTracker).getResult();
 	}
 
 	private MapEliminationSettings getMapElimSettings() {

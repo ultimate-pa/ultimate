@@ -96,6 +96,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 		MAP_ELIMINATION_EQUALITY,
 
+		MAP_ELIMINATION_MONNIAUX,
+
 		REMOVE_DIV_MOD,
 
 		MODULO_NEIGHBOR,

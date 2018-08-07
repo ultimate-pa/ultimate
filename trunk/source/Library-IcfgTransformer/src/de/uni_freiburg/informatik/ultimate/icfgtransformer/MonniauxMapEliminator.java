@@ -25,6 +25,8 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -38,25 +40,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * @author Luca Bruder (luca.bruder@gmx.de)
  * @author Lisa Kleinlein (lisa.kleinlein@web.de)
  */
-public class MonniauxMapEliminator {
+public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
 	private final ManagedScript mMgdScript;
 	private final IIcfg<IcfgLocation> mIcfg;
@@ -69,8 +72,13 @@ public class MonniauxMapEliminator {
 		mIcfg = Objects.requireNonNull(icfg);
 		mMgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
-		mResultIcfg = eliminateMaps();
 		mBacktranslationTracker = backtranslationTracker;
+		mResultIcfg = eliminateMaps();
+	}
+
+	@Override
+	public IIcfg<IcfgLocation> getResult() {
+		return mResultIcfg;
 	}
 
 	private IIcfg<IcfgLocation> eliminateMaps() {
@@ -92,45 +100,41 @@ public class MonniauxMapEliminator {
 
 	private void iterate(final TransformedIcfgBuilder<?, IcfgLocation> lst) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(mIcfg);
-		final Script s = mMgdScript.getScript();
+		final Script script = mMgdScript.getScript();
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
 
-			// __________________________________________________________
-			final TransFormula tf = IcfgUtils.getTransformula(transition);
 			final int step = 0;
-
-			final Term tfTerm = tf.getFormula();
 
 			final int index = 0;
 
 			/*
 			 * for (final Term term : TermWalker(tfTerm) ) {
-			 * 
+			 *
 			 * if (term instanceof ApplicationTerm) { final ApplicationTerm aterm = (ApplicationTerm) term; final Term[]
 			 * xy = aterm.getParameters();
-			 * 
+			 *
 			 * if (aterm.getFunction().getName().equals("select")) { final Term x = xy[0]; final Term y = xy[1]; //
 			 * TODO: Find expr with walker
-			 * 
+			 *
 			 * final Term sTerm = (and (=> (= y i_step) (= a_step_i x_i)) (expr a_step_i)); final Map<Term, Term>
 			 * Substitution = Map(term, sTerm);
-			 * 
+			 *
 			 * final Collection<IProgramVar> inVarsToRemove = x; final Collection<IProgramVar> outVarsToRemove = x;
 			 * final Map<IProgramVar, TermVariable> additionalOutVars = Map(f_step, a_step_i);
-			 * 
+			 *
 			 * SubstitutionWithLocalSimplification.tfTerm(mMgdScript, Substitution);
-			 * 
+			 *
 			 * tf = constuctCopy(mMgdScript, tf, inVarsToRemove, outVarsToRemove, additionalOutVars);
-			 * 
+			 *
 			 * step++; } else if (aterm.getFunction().getName().equals("store")) { // To be implemented step++; } else
 			 * {continue; }
-			 * 
+			 *
 			 * }
-			 * 
+			 *
 			 * final IcfgLocation source = transition.getSource(); final IcfgLocation target = transition.getTarget();
 			 * // lst.createNewTransition(source, target, tf); lst.createNewInternalTransition(source, target, tf);
-			 * 
+			 *
 			 * }
 			 */
 
@@ -139,9 +143,20 @@ public class MonniauxMapEliminator {
 			if (transition instanceof IIcfgInternalTransition) {
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
 				final UnmodifiableTransFormula tf2 = internalTransition.getTransformula();
-
+				final Term tfTerm = tf2.getFormula();
 				// keep or modify tf
-
+				final StoreSelectCollector ssc = new StoreSelectCollector();
+				ssc.transform(tfTerm);
+				final Map<Term, Term> subst = new HashMap<>();
+				for (final Term selectTerm : ssc.mSelectTerms) {
+					mLogger.info(selectTerm);
+					final TermVariable varA =
+							mMgdScript.constructFreshTermVariable("a", SmtSortUtils.getIntSort(script));
+					final Term replacement = null;
+					subst.put(selectTerm, replacement);
+					final Term exprTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst).transform(tfTerm);
+					final Term newTerm = SmtUtils.and(script, exprTerm, script.term("true"));
+				}
 			} else {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
@@ -166,18 +181,23 @@ public class MonniauxMapEliminator {
 		return tfb.finishConstruction(mMgdScript);
 	}
 
-	private final class MyTransformer extends TermTransformer {
+	private final class StoreSelectCollector extends TermTransformer {
+
+		private final Set<Term> mStoreTerms = new HashSet<>();
+		private final Set<Term> mSelectTerms = new HashSet<>();
+
 		@Override
 		protected void convert(final Term term) {
-			// setResult(term);
-
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm aterm = (ApplicationTerm) term;
-				if (aterm.getFunction().getName().equals("store")) {
+				final String funName = aterm.getFunction().getName();
+				if (funName.equals("store")) {
 					// its a store
+					mStoreTerms.add(aterm);
+				} else if (funName.equals("select")) {
+					mSelectTerms.add(aterm);
 				}
 			}
-
 			super.convert(term);
 		}
 	}
