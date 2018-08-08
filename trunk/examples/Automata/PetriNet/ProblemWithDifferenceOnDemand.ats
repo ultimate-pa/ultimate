@@ -1,0 +1,64 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:00)
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:01)
+
+assert(!isEmpty(differencePairwiseOnDemand(net, nwa)));
+
+
+PetriNet net = (
+	alphabet = {"a2" "#1#assume true;" "a1" "a3" "a4" "a5" "#12#assume g != -1;" "#13#assume true;" "a0" },
+	places = {"5#Thread2FINALtrue" "6#Thread2ENTRYtrue" "7#Thread2EXITtrue" "p01" "10#L25-1true" "11#Thread1ENTRYtrue" "12#L26true" "13#Thread1FINALtrue" "14#Thread1EXITtrue" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "p0" "17#true" "19#(<= 0 g)" "Black: 17#true" "Black: 19#(<= 0 g)" },
+	transitions = {
+// 		({"10#L25-1true" } "#12#assume g != -1;" {"13#Thread1FINALtrue" })
+// 		({"13#Thread1FINALtrue" } "#13#assume true;" {"14#Thread1EXITtrue" })
+// 		({"17#true" "Black: 19#(<= 0 g)" "11#Thread1ENTRYtrue" } "a1" {"19#(<= 0 g)" "Black: 17#true" "10#L25-1true" })
+		({"Black: 19#(<= 0 g)" "10#L25-1true" } "a5" {"Black: 19#(<= 0 g)" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"Black: 17#true" "11#Thread1ENTRYtrue" } "a1" {"Black: 17#true" "10#L25-1true" })
+// 		({"5#Thread2FINALtrue" } "#1#assume true;" {"7#Thread2EXITtrue" })
+// 		({"6#Thread2ENTRYtrue" "Black: 19#(<= 0 g)" } "a2" {"5#Thread2FINALtrue" "Black: 19#(<= 0 g)" })
+		({"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" } "a2" {"17#true" "5#Thread2FINALtrue" "Black: 19#(<= 0 g)" })
+		({"p0" "17#true" "Black: 19#(<= 0 g)" "p01" } "a0" {"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" "11#Thread1ENTRYtrue" })
+// 		({"p0" "Black: 17#true" "p01" } "a0" {"Black: 17#true" "6#Thread2ENTRYtrue" "11#Thread1ENTRYtrue" })
+		({"12#L26true" } "a4" {"10#L25-1true" })
+		({"10#L25-1true" } "a3" {"12#L26true" })
+	},
+	initialMarking = {"p0" "17#true" "Black: 19#(<= 0 g)" "p01" },
+	acceptingPlaces = {"15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"a2" "#1#assume true;" "a1" "a3" "a4" "a5" "#12#assume g != -1;" "#13#assume true;" "a0" },
+	states = {"23#true" "24#false" "25#(<= (+ g 2) 0)" },
+	initialStates = {"23#true" },
+	finalStates = {"24#false" },
+	transitions = {
+		("23#true" "a2" "25#(<= (+ g 2) 0)")
+		("23#true" "#1#assume true;" "23#true")
+		("23#true" "a1" "23#true")
+		("23#true" "a3" "23#true")
+		("23#true" "a4" "23#true")
+		("23#true" "a5" "23#true")
+		("23#true" "#12#assume g != -1;" "23#true")
+		("23#true" "#13#assume true;" "23#true")
+		("23#true" "a0" "23#true")
+		("24#false" "a2" "24#false")
+		("24#false" "#1#assume true;" "24#false")
+		("24#false" "a1" "24#false")
+		("24#false" "a3" "24#false")
+		("24#false" "a4" "24#false")
+		("24#false" "a5" "24#false")
+		("24#false" "#12#assume g != -1;" "24#false")
+		("24#false" "#13#assume true;" "24#false")
+		("24#false" "a0" "24#false")
+		("25#(<= (+ g 2) 0)" "a2" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#1#assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "a1" "23#true")
+		("25#(<= (+ g 2) 0)" "a3" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "a4" "23#true")
+		("25#(<= (+ g 2) 0)" "a5" "24#false")
+		("25#(<= (+ g 2) 0)" "#12#assume g != -1;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "#13#assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "a0" "23#true")
+	}
+);
