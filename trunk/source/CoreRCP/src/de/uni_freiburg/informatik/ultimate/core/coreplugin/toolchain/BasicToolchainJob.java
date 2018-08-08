@@ -104,9 +104,8 @@ public abstract class BasicToolchainJob extends Job {
 	protected IStatus convert(final ReturnCode result) {
 		switch (result) {
 		case Ok:
-			return Status.OK_STATUS;
 		case Cancel:
-			return Status.CANCEL_STATUS;
+			return Status.OK_STATUS;
 		case Error:
 		default:
 			// TODO: we use IStatus.Cancel to prevent RCP error messages; but better return status would be nice
