@@ -171,13 +171,13 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	public boolean checkResult(final INestedWordAutomaton<LETTER, PLACE> nwa,
-			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactoryNet2automaton,
-			final INwaInclusionStateFactory<PLACE> stateFactoryInclusion) throws AutomataLibraryException {
+			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
 
-		final boolean correct = new IsEquivalent<>(mServices, stateFactoryNet2automaton, this, nwa).getResult();
+		final boolean correct = new IsEquivalent<LETTER, PLACE>(mServices, stateFactory, this,
+				nwa).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + getClass().getSimpleName());
 		}
