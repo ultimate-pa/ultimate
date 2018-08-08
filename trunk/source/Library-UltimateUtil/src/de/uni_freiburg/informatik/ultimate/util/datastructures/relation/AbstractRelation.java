@@ -278,6 +278,16 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		return mMap.toString();
 	}
 
+	public String toStringAsTable() {
+		final StringBuilder sb = new StringBuilder();
+		for (final D domainElem : getDomain()) {
+			for (final R rangeElem : getImage(domainElem)) {
+				sb.append(domainElem + ", " + rangeElem + System.lineSeparator());
+			}
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * @return true iff there is no element in this relation.
 	 */
