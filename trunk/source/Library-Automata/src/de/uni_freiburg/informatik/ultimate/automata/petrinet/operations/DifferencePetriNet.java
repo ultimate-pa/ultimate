@@ -56,9 +56,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	@Override
 	public Set<PLACE> getInitialPlaces() {
 		final Set<PLACE> result = new HashSet<>(mMinued.getInitialPlaces());
-		for (final PLACE initialPlace : result) {
-			mMinuendPlaces.add(initialPlace);
-		}
 		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
 		if (!it.hasNext()) {
 			throw new UnsupportedOperationException(
@@ -66,9 +63,15 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 		final PLACE automatonInitialState = it.next();
 		result.add(automatonInitialState);
-		mSubtrahendStates.add(automatonInitialState);
 		if (it.hasNext()) {
 			throw new IllegalArgumentException("subtrahend not deterministic");
+		}
+		if (mSubtrahend.isFinal(automatonInitialState)) {
+			return Collections.emptySet();
+		}
+		mSubtrahendStates.add(automatonInitialState);
+		for (final PLACE initialPlace : mMinued.getInitialPlaces()) {
+			mMinuendPlaces.add(initialPlace);
 		}
 		return result;
 	}
@@ -101,6 +104,9 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	@Override
 	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
 			final Collection<PLACE> places) {
+		if (places.isEmpty()) {
+			return Collections.emptySet();
+		}
 		PLACE automatonPredecessor = null;
 		final List<PLACE> petriNetPredecessors = new ArrayList<>();
 		for (final PLACE place : places) {
@@ -162,22 +168,22 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			final List<ITransition<LETTER, PLACE>> result = new ArrayList<>();
 			for (final ITransition<LETTER, PLACE> inputTransition : mPetriNetPredecessors.getTransitions()) {
 				final ITransition<LETTER, PLACE> outputTransition = getOrConstructTransition(inputTransition, mAutomatonPredecessor);
-				result.add(outputTransition);
+				if (outputTransition != null) {
+					result.add(outputTransition);
+				}
 			}
 			return result;
 		}
 
+		/**
+		 *
+		 * @return null iff subtrahend successor is accepting which means that we do not
+		 *         want such a transition in our resulting Petri net.
+		 */
 		private ITransition<LETTER, PLACE> getOrConstructTransition(final ITransition<LETTER, PLACE> inputTransition,
 				final PLACE automatonPredecessor) {
 			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, automatonPredecessor);
 			if (result == null) {
-
-				final LinkedHashSet<PLACE> successors = new LinkedHashSet<>();
-				for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
-					// possibly first time that we saw this place, add
-					mMinuendPlaces.add(petriNetSuccessor);
-					successors.add(petriNetSuccessor);
-				}
 				OutgoingInternalTransition<LETTER, PLACE> subtrahendSucc;
 				{
 					final Iterable<OutgoingInternalTransition<LETTER, PLACE>> subtrahendSuccs = mSubtrahend.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
@@ -190,14 +196,24 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						throw new IllegalArgumentException("Subtrahend not deterministic.");
 					}
 				}
-				mSubtrahendStates.add(subtrahendSucc.getSucc());
-				successors.add(subtrahendSucc.getSucc());
+				if (mSubtrahend.isFinal(subtrahendSucc.getSucc())) {
+					return null;
+				} else {
+					final Set<PLACE> successors = new LinkedHashSet<>();
+					for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
+						// possibly first time that we saw this place, add
+						mMinuendPlaces.add(petriNetSuccessor);
+						successors.add(petriNetSuccessor);
+					}
+					mSubtrahendStates.add(subtrahendSucc.getSucc());
+					successors.add(subtrahendSucc.getSucc());
 
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
 				result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+				}
 			}
 			return result;
 		}
