@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 
 /**
@@ -42,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public enum BooleanValue implements ITermProvider {
 
-    /**
-     * Exactly true.
-     */
+	/**
+	 * Exactly true.
+	 */
 	TRUE,
 	/**
 	 * Exactly false.
@@ -252,15 +253,16 @@ public enum BooleanValue implements ITermProvider {
 
 	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
+		assert sort.equals(var.getSort());
 		switch (this) {
 		case BOTTOM:
 			return script.term("false");
 		case TOP:
 			return script.term("true");
 		case FALSE:
-			return script.term("=", var, script.term("false"));
+			return SmtUtils.not(script, var);
 		case TRUE:
-			return script.term("=", var, script.term("true"));
+			return var;
 		default:
 			throw new UnsupportedOperationException("The boolean value type " + this + " is not implemented.");
 		}
