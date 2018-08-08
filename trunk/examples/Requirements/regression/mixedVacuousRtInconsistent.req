@@ -1,9 +1,10 @@
+// #TestSpec: rt-inconsistent:; vacuous:req02; inconsistent:; results: 7
+
 Input A is bool
 Input B is bool
 Input C is bool
 Input D is bool
 Input E is bool
-
 
 req01: Globally, it is never the case that "A" holds.
 req02: After "A", it is always the case that "B" holds.

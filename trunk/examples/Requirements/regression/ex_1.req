@@ -1,0 +1,6 @@
+// #TestSpec: rt-inconsistent:req1; vacuous:; inconsistent:; results: 1
+// Seemingly inconsistent requirement 
+// DD 2018-03-13 
+req1: After "true", it is always the case that if "true" holds, then "false" holds after at most "50" time units
+
+

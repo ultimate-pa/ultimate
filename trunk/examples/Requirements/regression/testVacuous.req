@@ -1,0 +1,7 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results: 2
+
+Input x is bool
+Input y is bool 
+
+req1: Globally, it is always the case that if "x" holds, then "y" holds after at most 10 time units.
+req2: Globally, it is never the case that "x" holds.

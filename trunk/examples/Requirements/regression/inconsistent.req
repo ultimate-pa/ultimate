@@ -1,4 +1,4 @@
-
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:req1, req2; results: 1
 Input D is bool
 
 req1: Globally, it is never the case that "D" holds.

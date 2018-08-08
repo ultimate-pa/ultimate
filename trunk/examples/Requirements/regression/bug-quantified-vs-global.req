@@ -1,3 +1,4 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 11
 // triggers translation bug
 // java.lang.AssertionError: Incorrect DeclarationInformation of D'. Expected: QUANTIFIED   Found: GLOBAL
 
