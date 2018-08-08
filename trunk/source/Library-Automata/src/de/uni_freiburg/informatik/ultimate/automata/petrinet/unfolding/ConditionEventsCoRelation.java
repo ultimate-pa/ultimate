@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,13 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * A co-relation between a {@link Condition} and an {@link Event}.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -45,12 +45,12 @@ import java.util.Set;
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
 	private int mCoRelationQueries;
 
-	private final HashMap<Condition<LETTER, PLACE>, Set<Event<LETTER, PLACE>>> mCoRelation = new HashMap<>();
+	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param branchingProcess
 	 *            branching process
 	 */
@@ -65,15 +65,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 
 	@Override
 	public void update(final Event<LETTER, PLACE> e) {
-		for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
-			mCoRelation.put(c, new HashSet<Event<LETTER, PLACE>>());
-		}
 		for (final Event<LETTER, PLACE> e1 : mBranchingProcess.getEvents()) {
 			if (isInIrreflexiveCoRelation(e, e1)) {
 				for (final Condition<LETTER, PLACE> c : e1.getSuccessorConditions()) {
 					assert !e.getPredecessorConditions().contains(c);
 					assert !e.getSuccessorConditions().contains(c);
-					mCoRelation.get(c).add(e);
+					mCoRelation.addPair(c,e);
 				}
 			}
 		}
@@ -111,7 +108,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 				assert !e.getSuccessorConditions().contains(c);
 				assert !mBranchingProcess.inCausalRelation(c, e) : c + " , " + e
 						+ " in causal relation, not in co-relation!";
-				mCoRelation.get(c).add(e);
+				mCoRelation.addPair(c,e);
 			}
 		}
 	}
@@ -130,8 +127,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		mCoRelationQueries++;
-		final boolean result = mCoRelation.get(c1).contains(c2.getPredecessorEvent())
-				|| mCoRelation.get(c2).contains(c1.getPredecessorEvent())
+		final boolean result = mCoRelation.containsPair(c1, c2.getPredecessorEvent())
+				|| mCoRelation.containsPair(c2, c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
 		if (result) {
 			assert !mBranchingProcess.inCausalRelation(c1, c2) : c1 + " , " + c2
