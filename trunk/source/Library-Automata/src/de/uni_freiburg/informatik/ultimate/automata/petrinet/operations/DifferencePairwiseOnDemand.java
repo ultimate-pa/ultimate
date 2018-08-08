@@ -130,4 +130,39 @@ public final class DifferencePairwiseOnDemand
 		return mResult;
 	}
 
+	@Override
+	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory)
+			throws AutomataLibraryException {
+		return doResultCheck(mServices, mLogger, stateFactory, mMinuend, mSubtrahend, mResult);
+
+	}
+
+	static <LETTER, PLACE> boolean doResultCheck(
+			final AutomataLibraryServices services, final ILogger logger,
+			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory,
+			final BoundedPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
+			final BoundedPetriNet<LETTER, PLACE> result) throws AutomataLibraryException {
+		final INestedWordAutomaton<LETTER, PLACE> minuendAsAutoaton = new PetriNet2FiniteAutomaton<>(services,
+				stateFactory, minuend).getResult();
+		final INestedWordAutomaton<LETTER, PLACE> differenceAutomata = new DifferenceDD<>(services, stateFactory,
+				minuendAsAutoaton, subtrahend).getResult();
+		final boolean isCorrect;
+
+		final IsIncluded<LETTER, PLACE> subsetCheck = new IsIncluded<LETTER, PLACE>(services, stateFactory, result,
+				differenceAutomata);
+		if (!subsetCheck.getResult()) {
+			final Word<LETTER> ctx = subsetCheck.getCounterexample();
+			logger.error("Should not be accepted: " + ctx);
+		}
+
+		final IsIncluded<LETTER, PLACE> supersetCheck = new IsIncluded<LETTER, PLACE>(services, stateFactory,
+				differenceAutomata, result);
+		if (!supersetCheck.getResult()) {
+			final Word<LETTER> ctx = supersetCheck.getCounterexample();
+			logger.error("Should be accepted: " + ctx);
+		}
+
+		return subsetCheck.getResult() && supersetCheck.getResult();
+	}
+
 }
