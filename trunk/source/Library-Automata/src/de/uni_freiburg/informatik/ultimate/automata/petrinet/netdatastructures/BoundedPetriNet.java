@@ -40,19 +40,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Models 1-bounded petri nets with accepting places.
- * Boundedness is only assumed, not checked!
+ * Models 1-bounded petri nets with accepting places. Boundedness is only assumed, not checked!
  * <p>
- * A petri net is n-bounded iff at all times each place has at most n tokens.
- * A petri net with accepting places accepts a marking m iff m contains at least one accepting place.
+ * A petri net is n-bounded iff at all times each place has at most n tokens. A petri net with accepting places accepts
+ * a marking m iff m contains at least one accepting place.
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -69,19 +68,16 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	private final Set<LETTER> mAlphabet;
 
-
 	private final Collection<PLACE> mPlaces = new HashSet<>();
 	private final Set<PLACE> mInitialPlaces = new HashSet<>();
 	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions = new HashSet<>();
 	/**
-	 * Map each place to its incoming transitions.
-	 * Redundant to {@link #mTransitions} for better performance.
+	 * Map each place to its incoming transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
 	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mPredecessors = new HashRelation<>();
 	/**
-	 * Map each place to its outgoing transitions.
-	 * Redundant to {@link #mTransitions} for better performance.
+	 * Map each place to its outgoing transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
 	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mSuccessors = new HashRelation<>();
 
@@ -161,11 +157,11 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	/**
-	 * If {@link #mConstantTokenAmount} is set, check that amount of tokens is preserved for all initial markings*
-	 * and all firing sequences.
+	 * If {@link #mConstantTokenAmount} is set, check that amount of tokens is preserved for all initial markings* and
+	 * all firing sequences.
 	 * <p>
-	 * * Depending on the initial marking and reachability of some transitions, this method may return false
-	 * even though {@link #mConstantTokenAmount} was set correctly to true.
+	 * * Depending on the initial marking and reachability of some transitions, this method may return false even though
+	 * {@link #mConstantTokenAmount} was set correctly to true.
 	 *
 	 * @return {@link #mConstantTokenAmount} implies all (not only the reachable) transitions preserve the token amount.
 	 */
@@ -174,14 +170,13 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	public boolean checkResult(final INestedWordAutomaton<LETTER, PLACE> nwa,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactoryNet2automaton,
+			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactoryNet2automaton,
 			final INwaInclusionStateFactory<PLACE> stateFactoryInclusion) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
 
-		final boolean correct = new IsEquivalent<LETTER, PLACE>(mServices, stateFactoryNet2automaton, stateFactoryInclusion,
-				this, nwa).getResult();
+		final boolean correct = new IsEquivalent<>(mServices, stateFactoryNet2automaton, this, nwa).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + getClass().getSimpleName());
 		}
@@ -230,8 +225,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 *            successor places
 	 * @return the newly added transition
 	 */
-	public Transition<LETTER, PLACE> addTransition(final LETTER letter,
-			final Set<PLACE> preds, final Set<PLACE> succs) {
+	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
+			final Set<PLACE> succs) {
 		assert mAlphabet.contains(letter) : "Letter not from alphabet: " + letter;
 		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, mTransitions.size());
 		for (final PLACE predPlace : preds) {
@@ -246,7 +241,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return transition;
 	}
 
-
 	/**
 	 * @param transition
 	 *            A transition from this net.
@@ -256,8 +250,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 * @deprecated currently not used
 	 */
 	@Deprecated
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
-			final Collection<PLACE> marking) {
+	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
 		return marking.containsAll(getSuccessors(transition));
 	}
 
@@ -305,7 +298,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return mTransitions;
 	}
 
-
 	/** @return Outgoing transitions of given place. */
 	@Override
 	public Set<ITransition<LETTER, PLACE>> getSuccessors(final PLACE place) {
@@ -319,8 +311,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	/**
-	 * @return {@code true} if the number of tokens in the net is constant (= size of initial marking)
-	 *         during every run of the net.
+	 * @return {@code true} if the number of tokens in the net is constant (= size of initial marking) during every run
+	 *         of the net.
 	 */
 	public boolean constantTokenAmount() {
 		return mConstantTokenAmount;
@@ -337,8 +329,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	boolean transitionsPreserveTokenAmount() {
-		return mTransitions.parallelStream().allMatch(
-				transition -> getPredecessors(transition).size() == getSuccessors(transition).size());
+		return mTransitions.parallelStream()
+				.allMatch(transition -> getPredecessors(transition).size() == getSuccessors(transition).size());
 	}
 
 	@Override
@@ -369,9 +361,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	public boolean isAccepting(final PLACE place) {
 		if (!mPlaces.contains(place)) {
 			throw new IllegalArgumentException("unknown place " + place);
-		} else {
-			return mAcceptingPlaces.contains(place);
 		}
+		return mAcceptingPlaces.contains(place);
 	}
 
 }

@@ -35,30 +35,23 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Check if the languages of a given {@link IPetriNet} and a given
- * {@link INestedWordAutomaton} are identical.
+ * Check if the languages of a given {@link IPetriNet} and a given {@link INestedWordAutomaton} are identical.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IsEquivalent<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final IPetriNet<LETTER, STATE> mPetriNet;
-	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	private final IPetriNetAndAutomataInclusionStateFactory<STATE> mStateFactory;
+public class IsEquivalent<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final boolean mResult;
 
 	public IsEquivalent(final AutomataLibraryServices services,
 			final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory,
-			final IPetriNet<LETTER, STATE> petriNet, final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataLibraryException {
+			final IPetriNet<LETTER, STATE> petriNet, final INestedWordAutomaton<LETTER, STATE> automaton)
+			throws AutomataLibraryException {
 		super(services);
-		mPetriNet = petriNet;
-		mAutomaton = automaton;
-		mStateFactory = stateFactory;
 		printStartMessage();
-		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton = (new PetriNet2FiniteAutomaton<LETTER, STATE>(
-				mServices, stateFactory, mPetriNet)).getResult();
-		mResult = new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent<LETTER, STATE>(
-				mServices, stateFactory, petriNetAsAutomaton, mAutomaton).getResult();
+		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, petriNet)).getResult();
+		mResult = new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent<>(mServices,
+				stateFactory, petriNetAsAutomaton, automaton).getResult();
 		printExitMessage();
 	}
 
@@ -73,8 +66,7 @@ public class IsEquivalent<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.warn("Not yet implemented: result check for " + this.getClass().getSimpleName());
 		return true;
 	}
