@@ -954,7 +954,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
-		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = mManager.alignElements(this, other);
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = mManager.alignElements(this, other,
+				CcSettings.ALIGN_INPLACE);
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 

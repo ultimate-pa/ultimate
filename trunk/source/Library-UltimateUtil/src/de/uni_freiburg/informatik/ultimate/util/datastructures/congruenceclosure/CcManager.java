@@ -691,7 +691,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return false;
 		}
-		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2);
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
+				CcSettings.ALIGN_INPLACE);
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
@@ -755,36 +756,59 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2);
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
+				CcSettings.ALIGN_INPLACE);
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
 	public Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> alignElements(final CongruenceClosure<ELEM> cc1,
-			final CongruenceClosure<ELEM> cc2) {
-		bmStart(CcBmNames.ALIGN_ELEMENTS);
-		final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
-		final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
+			final CongruenceClosure<ELEM> cc2, final boolean inplace) {
+		if (inplace) {
+			bmStart(CcBmNames.ALIGN_ELEMENTS);
 
-		addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
-		addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+			addAllElements(cc1, cc2.getAllElements(), null, true);
+			addAllElements(cc2, cc1.getAllElements(), null, true);
 
-		/* this single call is not enough for aligning because constant arrays may introduce elements when other
-		 * elements are added based on equalities in that constraint
-		 */
-		while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
-				|| !cc2Aligned.getAllElements().containsAll(cc1Aligned.getAllElements())) {
+			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			 * elements are added based on equalities in that constraint
+			 */
+			while (!cc1.getAllElements().containsAll(cc2.getAllElements())
+					|| !cc2.getAllElements().containsAll(cc1.getAllElements())) {
+				addAllElements(cc1, cc2.getAllElements(), null, true);
+				addAllElements(cc2, cc1.getAllElements(), null, true);
+			}
+
+			bmEnd(CcBmNames.ALIGN_ELEMENTS);
+			return new Pair<>(cc1, cc2);
+		} else {
+			// not inplace
+
+			bmStart(CcBmNames.ALIGN_ELEMENTS);
+
+			final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
+			final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
+
 			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
 			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
 
+			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			 * elements are added based on equalities in that constraint
+			 */
+			while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
+					|| !cc2Aligned.getAllElements().containsAll(cc1Aligned.getAllElements())) {
+				addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+				addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+
+			}
+
+			cc1Aligned.freeze();
+			cc2Aligned.freeze();
+
+			bmEnd(CcBmNames.ALIGN_ELEMENTS);
+			return new Pair<>(cc1Aligned, cc2Aligned);
 		}
-
-		cc1Aligned.freeze();
-		cc2Aligned.freeze();
-
-		bmEnd(CcBmNames.ALIGN_ELEMENTS);
-		return new Pair<>(cc1Aligned, cc2Aligned);
 	}
 
 	private static <E extends ICongruenceClosureElement<E>>

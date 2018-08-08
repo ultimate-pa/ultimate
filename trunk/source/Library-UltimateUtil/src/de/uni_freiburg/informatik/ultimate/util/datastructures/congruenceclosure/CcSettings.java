@@ -51,4 +51,9 @@ public class CcSettings {
 	 */
 	public static final boolean SUPPORT_MIX_FUNCTION = true;
 
+	/**
+	 * Should trigger e.g. that when two elements are compared, the expset increase is permanent (not just to a copy)
+	 */
+	public static final boolean ALIGN_INPLACE = false;
+
 }
