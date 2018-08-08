@@ -6,8 +6,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -15,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
@@ -43,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * @param <CRSF>
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
-public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
+public class RemoveUnreachable<LETTER, PLACE, CRSF extends
+		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
@@ -126,6 +136,47 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
 	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of " + getOperationName());
+		}
+		final boolean correct = new IsEquivalent<>(mServices, stateFactory,
+				netToNwa(stateFactory, mOperand), netToNwa(stateFactory, mResult)).getResult();
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + getOperationName());
+		}
+		return correct;
+	}
+
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(
+			final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net) {
+		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
+
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_REMOVED_PLACES , mOperand.getPlaces().size() - mResult.getPlaces().size());
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_REMOVED_TRANSITIONS, mOperand.getTransitions().size() - mResult.getTransitions().size());
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_REMOVED_FLOW, mOperand.flowSize() - mResult.flowSize());
+
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_PLACES , mResult.getPlaces().size());
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
+		statistics.addKeyValuePair(
+				StatisticsType.PETRI_FLOW, mResult.flowSize());
+
+		return statistics;
 	}
 
 }

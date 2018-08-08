@@ -285,6 +285,18 @@ public enum StatisticsType {
 	 */
 	PETRI_PLACES,
 	/**
+	 * Number of Petri net flow edges removed by an operation.
+	 */
+	PETRI_REMOVED_FLOW,
+	/**
+	 * Number of Petri net places removed by an operation.
+	 */
+	PETRI_REMOVED_PLACES,
+	/**
+	 * Number of Petri net transitions removed by an operation.
+	 */
+	PETRI_REMOVED_TRANSITIONS,
+	/**
 	 * Number of transitions inside a Petri net.
 	 */
 	PETRI_TRANSITIONS,
