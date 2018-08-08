@@ -56,6 +56,15 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	boolean isEqualTo(final V other);
 
+	/**
+	 * Compares <code>this</code> with another {@link INonrelationalValue} and checks whether <code>this</code> is
+	 * included in other. If all values that are represented by this instance are represented by the other instance,
+	 * return true. Return false otherwise.
+	 *
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
+	 */
 	boolean isContainedIn(final V other);
 
 	V add(final V other);
