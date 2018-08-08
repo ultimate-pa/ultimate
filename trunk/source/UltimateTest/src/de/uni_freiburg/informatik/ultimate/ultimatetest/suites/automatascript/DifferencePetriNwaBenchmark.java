@@ -55,9 +55,10 @@ public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 	private static final String[] DIRECTORIES = { "examples/Automata/benchmarks/pn/difference-small" };
 	private static final String[] FILE_ENDINGS = { ".ats" };
 	private static final String[] SETTINGS = {
-		//"AutomataScript/differencePetriNwa/differenceHeuristic.epf",
-		//"AutomataScript/differencePetriNwa/differenceInverted.epf",
-		//"AutomataScript/differencePetriNwa/differencePairwise.epf",
+//		"AutomataScript/differencePetriNwa/differenceHeuristic.epf",
+//		"AutomataScript/differencePetriNwa/differenceInverted.epf",
+//		"AutomataScript/differencePetriNwa/differencePairwise.epf",
+//		"AutomataScript/differencePetriNwa/differencePairwiseOnDemand.epf",
 		"AutomataScript/differencePetriNwa/finPreDifferenceHeuristic.epf",
 		"AutomataScript/differencePetriNwa/finPreDifferenceInverted.epf",
 		"AutomataScript/differencePetriNwa/finPreDifferencePairwise.epf",
