@@ -417,8 +417,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	/**
-	 * Return the constraint of the form elem in L that mCongrunenceClosure puts on elem.
-	 * If elem is equal to something, return a singleton.
+	 * Return the constraint of the form "e in L U N" that mCongrunenceClosure puts on elem.
+	 *
+	 * If elem is equal to some element e' according to mCongruenceClosure, then we add e' to L U N.
+	 * Note that is a weakening of the real constraint. We really know "elem ~ e' /\ (elem = l1 \/ elem = l2 \/ ...)",
+	 * whereas we return "(elem ~ e' \/ elem = l1 \/ elem = l2 \/ ...)" at this point. However this helps precision e.g.
+	 * of join operations on set constraints..
+	 *
+	 * Note that if elem is its own representative, we may not add it to the set, because we would get the disjunct
+	 *  elem = elem, which would make the whole disjunction "true".
+	 *
 	 * If there is a set constraint, return the set.
 	 * Otherwise return null (for "unconstrained")
 	 *
@@ -435,17 +443,26 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
-		/* an equality x ~ y implies a set constraint x in {y}, which we simply conjoin with the rest
-		 * we don't add a constraint like x in {x} though, as
+		/* an equality x ~ y implies a set constraint x in {y}, which we add to the set (which is a strict
+		 *  overapproximation as discussed in the method comment.)
+		 * We don't add a constraint like x in {x} though, as this would mean adding a "true" disjunct (again,
+		 * as discussed in the method comment).
 		 */
-//		if (!rep.equals(elem)) {
+		if (!rep.equals(elem)) {
 			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(rep)));
-//		}
+		}
 
 		final SetConstraintConjunction<ELEM> scc = mContainsConstraints.get(rep);
+
 		if (scc != null) {
 			result.addAll(scc.getSetConstraints());
 		}
+
+		if (result.isEmpty()) {
+			// could not find any elements for the set constraint
+			return null;
+		}
+
 		return result;
 	}
 
@@ -692,7 +709,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final Set<ELEM> result = new HashSet<>();
 		{
 			final Set<SetConstraint<ELEM>> c = getConstraint(rep);
-			c.forEach(sc -> sc.getElementSet().forEach(result::add));
+			if (c != null) {
+				c.forEach(sc -> sc.getElementSet().forEach(result::add));
+			}
 		}
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : getConstraints().entrySet()) {
 			if (en.getKey().equals(rep)) {
