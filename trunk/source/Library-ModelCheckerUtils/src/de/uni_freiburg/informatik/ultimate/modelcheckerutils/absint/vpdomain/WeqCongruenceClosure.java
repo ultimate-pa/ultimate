@@ -505,8 +505,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					final NODE aQ = sampleAi.replaceArgument(
 							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
 
-//					edgeLabel.getDisjuncts().forEach(d -> d.addElement(aQ, false));
-
 					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
 //					assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
 //					+ "literals --> unexpected..";
@@ -521,19 +519,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final NODE constantArrayConstant = constantArray.getConstantFunctionValue();
 				assert constantArrayConstant.isLiteral();
 
-//				// construct L cup {l}
-//				final SetConstraintConjunction<NODE> newLiteralSet =
-//						SetConstraintConjunction.join(
-//								mCongruenceClosure.getLiteralSetConstraints(),
-//
-//								containsConstraint,
-//								new SetConstraintConjunction<>(
-//										null,
-//										containsConstraint.getConstrainedElement(),
-//										constantArrayConstant));
-//				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
-//				newLiteralSet.add(constantArrayConstant);
-
 				// do propagations
 				for (final NODE aI : aIs) {
 					// construct L cup {l}
@@ -544,13 +529,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 									Collections.singleton(
 											mManager.getCcManager().getSetConstraintManager()
 												.buildSetConstraint(Collections.singleton(constantArrayConstant))));
-//									aI,
-//									containsConstraint,
-//									new SetConstraintConjunction<>(
-//											null,
-//											containsConstraint.getConstrainedElement(),
-//											constantArrayConstant));
-
 
 					mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
 				}
