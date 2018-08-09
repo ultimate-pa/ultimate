@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
@@ -66,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static final int TIMEOUT = 60_000;
+	private static final int TIMEOUT = 10_000;
 
 	public ReqCheckerRegressionTestSuite() {
 		super();
@@ -86,7 +87,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 		private final Set<String> mVacuous;
 		private final Set<String> mInconsistent;
 		private final int mNoResults;
-		private final boolean mIsException;
+		private final boolean mIsIrregular;
 
 		private String mOverallResultMessage;
 
@@ -99,7 +100,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 				throw new IllegalArgumentException("negative number of results");
 			}
 			mNoResults = results;
-			mIsException = false;
+			mIsIrregular = false;
 			mOverallResultMessage = createString();
 		}
 
@@ -139,8 +140,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 						throw new UnsupportedOperationException("Unsupported spec: " + spec);
 					}
 					results++;
-				} else if (result instanceof ExceptionOrErrorResult) {
-					mIsException = true;
+				} else if (result instanceof ExceptionOrErrorResult || result instanceof TimeoutResult) {
+					mIsIrregular = true;
 					mNoResults = 0;
 					mVacuous = Collections.emptySet();
 					mRtInconsistent = Collections.emptySet();
@@ -150,7 +151,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 				}
 			}
 
-			mIsException = false;
+			mIsIrregular = false;
 			mNoResults = results;
 			mVacuous = vacuous;
 			mRtInconsistent = rtInconsistent;
@@ -198,7 +199,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 		}
 
 		public boolean isSuccess(final ReqCheckerResult actual) {
-			if (actual.mIsException) {
+			if (actual.mIsIrregular) {
 				return false;
 			}
 			if (actual.mNoResults != mNoResults) {
@@ -217,7 +218,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 		}
 
 		public String generateDeltaMessage(final ReqCheckerResult actual) {
-			if (actual.mIsException) {
+			if (actual.mIsIrregular) {
 				return actual.mOverallResultMessage;
 			}
 			final String msg = "%s different. Expected: %s. Actual %s.";
