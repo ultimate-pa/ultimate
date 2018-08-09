@@ -797,7 +797,6 @@ public class Req2BoogieTranslator {
 		}
 
 		for (final Entry<PatternType, PhaseEventAutomata>[] subset : subsets) {
-			subsetsSize--;
 			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
@@ -810,7 +809,9 @@ public class Req2BoogieTranslator {
 			if (assertStmt != null) {
 				stmtList.add(assertStmt);
 			}
+			subsetsSize--;
 		}
+		mRtInconcistencyConditionGenerator.logStats();
 		return stmtList;
 	}
 
