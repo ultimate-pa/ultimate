@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import net.sourceforge.czt.z.util.ZString;
 
@@ -82,6 +84,11 @@ public class CounterTrace {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.stream(getPhases()).map(a -> a.toString(false)).collect(Collectors.joining(";"));
 	}
 
 	public static class DCPhase {
