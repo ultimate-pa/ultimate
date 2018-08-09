@@ -970,8 +970,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = new ThreeValuedEquivalenceRelation<>(newPartition,
 				newDisequalities);
 
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
+			|| CcManager.isPartitionStronger(thisAligned.mElementTVER, newElemTver);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
+		  	|| CcManager.isPartitionStronger(otherAligned.mElementTVER, newElemTver);
+
+
 
 		final CongruenceClosure<ELEM> newCc = mManager.getCongruenceClosureFromTver(newElemTver, true);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
+			|| CcManager.isPartitionStronger(thisAligned.mElementTVER, newCc.mElementTVER);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
+		  	|| CcManager.isPartitionStronger(otherAligned.mElementTVER, newCc.mElementTVER);
 
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
 				this.mLiteralSetConstraints.join(newCc, thisSplitInfo, otherSplitInfo, other.mLiteralSetConstraints);
@@ -2056,6 +2066,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	@Override
 //	public SetConstraintConjunction<ELEM> getContainsConstraintForElement(final ELEM elem) {
 	public Set<SetConstraint<ELEM>> getContainsConstraintForElement(final ELEM elem) {
-		return mLiteralSetConstraints.getConstraint(elem);
+		final Set<SetConstraint<ELEM>> constraint = mLiteralSetConstraints.getConstraint(elem);
+		if (SetConstraintManager.isTautologicalWrtElement(elem, constraint)) {
+			// normalization: if the constraint is tautological for the given element, return null instead
+			return null;
+		}
+		return constraint;
 	}
 }

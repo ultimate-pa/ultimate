@@ -496,7 +496,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @param constraints
 	 * @return
 	 */
-	public  boolean isTautological(
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
 			final Set<SetConstraint<ELEM>> constraints) {
 		if (constraints == null) {
 			return true;
@@ -539,7 +539,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
-	public  boolean isTautological(
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
 			final SetConstraintConjunction<ELEM> newConstraint) {
 		if (newConstraint == null) {
 			return true;
@@ -614,6 +614,30 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Use this when we first bring together an element and the conjunction of SetConstraints that it is supposed to be
+	 * contained in.
+	 * The combination is tautological if the element is contained in all SetConstraints (or if the set is empty)
+	 *
+	 * @param elem
+	 * @param constraint
+	 * @return
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautologicalWrtElement(
+			final ELEM elem, final Set<SetConstraint<ELEM>> constraint) {
+		if (isTautological(constraint)) {
+			// constraint is tautological by itself (i.e. null or an empty conjunction)
+			return true;
+		}
+		for (final SetConstraint<ELEM> sc : constraint) {
+			if (!sc.containsElement(elem)) {
+				// sc only has element other than elem --> it is not tautological to state "elem in sc"
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
