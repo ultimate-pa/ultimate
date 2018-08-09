@@ -343,6 +343,15 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
+	/**
+	 *
+	 * @param surroundingConstraint
+	 * @param rep1
+	 * @param rep2
+	 * @param constraintConjunction1
+	 * @param constraintConjunction2
+	 * @return
+	 */
 	public  Set<SetConstraint<ELEM>> meet(
 			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
 			final Set<SetConstraint<ELEM>> constraintConjunction1,
@@ -378,10 +387,12 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @return
 	 */
 	public  boolean meetIsInconsistent(
-			final CCLiteralSetConstraints<ELEM> surroundingConstraint, final Set<SetConstraint<ELEM>> litConstraint1,
+			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
+			final Set<SetConstraint<ELEM>> litConstraint1,
 			final Set<SetConstraint<ELEM>> litConstraint2) {
 
-		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1, litConstraint2);
+		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
+				litConstraint2);
 		return isInconsistent(meet);
 	}
 
@@ -577,6 +588,32 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	public SetConstraintComparator<ELEM> getSetConstraintComparator() {
 		return mSetConstraintComparator;
+	}
+
+	public boolean hasOnlyLiterals(final Set<SetConstraint<ELEM>> litConstraint2) {
+		if (litConstraint2 == null || litConstraint2.isEmpty()) {
+			return false;
+		}
+		return litConstraint2.stream().allMatch(sc -> sc.hasOnlyLiterals());
+	}
+
+
+	/**
+	 * Detect if a conjunction of SetConstraints constraints to be only in a set of literals.
+	 * If that is the case return that set, otherwise return null.
+	 *
+	 * @param scs
+	 * @return
+	 */
+	public Set<ELEM> getLiteralSet(final Set<SetConstraint<ELEM>> scs) {
+		assert scs.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList()).size() <= 1 :
+			"not normalized?";
+		for (final SetConstraint<ELEM> sc : scs) {
+			if (sc.hasOnlyLiterals()) {
+				return sc.getLiterals();
+			}
+		}
+		return null;
 	}
 
 }

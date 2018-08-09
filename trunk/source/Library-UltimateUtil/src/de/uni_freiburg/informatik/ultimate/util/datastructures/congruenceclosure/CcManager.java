@@ -692,7 +692,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
-				CcSettings.ALIGN_INPLACE);
+				CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
@@ -757,7 +757,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
-				CcSettings.ALIGN_INPLACE);
+				CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
@@ -765,6 +765,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> alignElements(final CongruenceClosure<ELEM> cc1,
 			final CongruenceClosure<ELEM> cc2, final boolean inplace) {
+		assert !inplace || !cc1.isFrozen();
+		assert !inplace || !cc2.isFrozen();
 		if (inplace) {
 			bmStart(CcBmNames.ALIGN_ELEMENTS);
 
@@ -814,7 +816,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private static <E extends ICongruenceClosureElement<E>>
 			boolean areDisequalitiesStrongerThan(final CongruenceClosure<E> left,
 					final CongruenceClosure<E> right) {
-		for (final E rep : right.getAllElementRepresentatives()) {
+		for (final E rep : right.getAllRepresentatives()) {
 			for (final E disequalRep : right.getRepresentativesUnequalTo(rep)) {
 				if (left.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
 					return false;
@@ -858,7 +860,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param second
 	 * @return true if first is stronger/more constraining than second
 	 */
-	private static <E> boolean isPartitionStronger(final ThreeValuedEquivalenceRelation<E> first,
+	static <E> boolean isPartitionStronger(final ThreeValuedEquivalenceRelation<E> first,
 			final ThreeValuedEquivalenceRelation<E> second) {
 		final Collection<E> representativesFromBoth = new ArrayList<>(first.getAllRepresentatives().size()
 				+ second.getAllRepresentatives().size());
@@ -893,7 +895,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final Set<SetConstraint<ELEM>> setConstraintsUpdRepr =
 				mSetConstraintManager.updateOnChangedRepresentative(setConstraintsIn,
 						surroundingSetConstraints.getCongruenceClosure());
-		assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep operation";
+//		assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep operation";
 
 		final Set<SetConstraint<ELEM>> filtered1 = normalizeSetConstraintConjunction(surroundingSetConstraints,
 				setConstraintsUpdRepr);
@@ -923,6 +925,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	/**
+	 * Apply normalizations, e.g.,
+	 *  <li> expansion of literals if possible according to surroundingSetConstraints
+	 *
 	 * note that this normalization is not wrt any constrained element! (e.g. the filtering for x in {x} must happen
 	 * outside of this method)
 	 *
@@ -933,6 +938,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public Set<SetConstraint<ELEM>> normalizeSetConstraintConjunction(
 			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final Collection<SetConstraint<ELEM>> setConstraintsIn) {
+		bmStart(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 
 		// expand non-literals if possible (in-place on SetConstraints)
 		final Set<SetConstraint<ELEM>> expanded = new HashSet<>(setConstraintsIn);
@@ -958,6 +964,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		// check for inconsistency
 		for (final SetConstraint<ELEM> sc : filtered1) {
 			if (sc.isInconsistent()) {
+				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 				return Collections.singleton(sc);
 			}
 			// bs -- example: x in {1} /\ x in {0}
@@ -968,6 +975,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// check for tautology
 		if (filtered1.isEmpty()) {
+			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 			return Collections.emptySet();
 		}
 
@@ -984,6 +992,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			if (meet.isInconsistent()) {
 				// created inconsistent constraint
+				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 				return Collections.singleton(meet);
 			}
 
@@ -997,10 +1006,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// check for tautology
 		if (filtered.isEmpty()) {
+			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 			return null;
 		}
 
 		assert SetConstraintConjunction.sanityCheck(filtered);
+		bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 		return filtered;
 	}
 
@@ -1045,7 +1056,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
 		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
-		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION;
+		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION, NORMALIZE_SET_CONSTRAINT_CONJUNCTION;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];
@@ -1069,5 +1080,27 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public SetConstraintManager<ELEM> getSetConstraintManager() {
 		return mSetConstraintManager;
+	}
+
+	/**
+	 *
+	 * @param ccWithBroaderPartition (broader == stronger == more constraining)
+	 * @param ccWithFinerPartition
+	 * @return
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> HashRelation<ELEM, ELEM> computeSplitInfo(
+			final CongruenceClosure<ELEM> ccWithBroaderPartition,
+			final CongruenceClosure<ELEM> ccWithFinerPartition) {
+		assert CcManager.isPartitionStronger(ccWithBroaderPartition.mElementTVER,
+				ccWithFinerPartition.mElementTVER) : "assuming this has been checked already";
+
+		final HashRelation<ELEM, ELEM> result = new HashRelation<>();
+
+		for (final ELEM finerRep : ccWithFinerPartition.getAllRepresentatives()) {
+			final ELEM broaderRep = ccWithBroaderPartition.getRepresentativeElement(finerRep);
+			result.addPair(broaderRep, finerRep);
+		}
+
+		return result;
 	}
 }

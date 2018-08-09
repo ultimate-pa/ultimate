@@ -283,29 +283,20 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints = new HashMap<>();
 
-		for (final ELEM constrainedElem : newCc.getAllElementRepresentatives()) {
-			final Set<SetConstraint<ELEM>> thisConstraint = this.getConstraint(constrainedElem, newCc, thisSplitInfo);
-			final Set<SetConstraint<ELEM>> otherConstraint = other.getConstraint(constrainedElem, newCc, otherSplitInfo);
+		for (final ELEM constrainedElem : newCc.getAllRepresentatives()) {
+			final Set<SetConstraint<ELEM>> thisConstraint =
+					this.getConstraintWrtSplit(constrainedElem, newCc, thisSplitInfo);
+			final Set<SetConstraint<ELEM>> otherConstraint =
+					other.getConstraintWrtSplit(constrainedElem, newCc, otherSplitInfo);
 
-			final Set<SetConstraint<ELEM>> thisUpdRep =
-					thisConstraint;
-//					SetConstraintConjunction.updateOnChangedRepresentative(thisConstraint, newCc);
-			final Set<SetConstraint<ELEM>> otherUpdRep =
-					otherConstraint;
-//					SetConstraintConjunction.updateOnChangedRepresentative(otherConstraint, newCc);
-
-			Set<SetConstraint<ELEM>> newConstraints;
-			if (thisUpdRep != null && otherUpdRep != null) {
-				newConstraints = mSetConstraintManager.join(newSetConstraints, thisUpdRep, otherUpdRep);
-			} else {
-				// at least one side has no constraint on rep
-				continue;
-			}
+			final Set<SetConstraint<ELEM>> newConstraints =
+					mSetConstraintManager.join(newSetConstraints, thisConstraint, otherConstraint);
 
 			assert mSetConstraintManager.getSingletonValues(newConstraints).stream()
-			.filter(sv -> !sv.equals(constrainedElem)).collect(Collectors.toSet()).isEmpty() : "created "
-					+ "non-tautological singleton set constraints --> report them, befor buildSetConstraintConj.."
-					+ "throws them away!";
+				.filter(sv -> !newCc.getRepresentativeElement(sv).equals(constrainedElem))
+				.collect(Collectors.toSet()).isEmpty()
+					: "created non-tautological singleton set constraints "
+						+ "--> report them, befor buildSetConstraintConj.. throws them away!";
 			final SetConstraintConjunction<ELEM> newConstraint =
 					mCcManager.buildSetConstraintConjunction(newSetConstraints, constrainedElem, newConstraints);
 
@@ -327,19 +318,30 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	public boolean isStrongerThan(
-//			final CCLiteralSetConstraints<ELEM> first,
 			final CCLiteralSetConstraints<ELEM> other) {
+		assert CcManager.isPartitionStronger(this.getCongruenceClosure().mElementTVER,
+				other.getCongruenceClosure().mElementTVER) : "assuming this has been checked already";
 
 		final Set<ELEM> constrainedElements = new HashSet<>();
 		constrainedElements.addAll(this.mContainsConstraints.keySet());
 		constrainedElements.addAll(other.mContainsConstraints.keySet());
 
+
+		final HashRelation<ELEM, ELEM> splitInfo = CcManager.computeSplitInfo(this.getCongruenceClosure(),
+				other.getCongruenceClosure());
+
 		for (final ELEM elem : constrainedElements) {
 
-			// the two constraints must be in terms of the same representatives --> adapt the first to the second..
+			// [old: the two constraints must be in terms of the same representatives --> adapt the first to the second..]
+			/*
+			 *  update the literal constraints wrt the split that the congruenceclosure has between first and second
+			 *  (at this point we already know that the Cc of other is weaker or equal than the Cc of this, so the
+			 *  partition can only be finer.
+			 */
 			final Set<SetConstraint<ELEM>> firstConstraint = //this.getConstraint(elem);
-				mSetConstraintManager.updateOnChangedRepresentative(this.getConstraint(elem),
-						other.getCongruenceClosure());
+//				mSetConstraintManager.updateOnChangedRepresentative(this.getConstraint(elem),
+//						other.getCongruenceClosure());
+					getConstraintWrtSplit(elem, other.getCongruenceClosure(), splitInfo);
 			final Set<SetConstraint<ELEM>> secondConstraint = other.getConstraint(elem);
 
 			if (!mSetConstraintManager.isStrongerThan(firstConstraint, secondConstraint)) {
@@ -417,15 +419,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	/**
-	 * Return the constraint of the form "e in L U N" that mCongrunenceClosure puts on elem.
-	 *
-	 * If elem is equal to some element e' according to mCongruenceClosure, then we add e' to L U N.
-	 * Note that is a weakening of the real constraint. We really know "elem ~ e' /\ (elem = l1 \/ elem = l2 \/ ...)",
-	 * whereas we return "(elem ~ e' \/ elem = l1 \/ elem = l2 \/ ...)" at this point. However this helps precision e.g.
-	 * of join operations on set constraints..
-	 *
-	 * Note that if elem is its own representative, we may not add it to the set, because we would get the disjunct
-	 *  elem = elem, which would make the whole disjunction "true".
+	 * Return the constraint of the form "e in L U N" that the set constraints of mCongruenceClosure puts on elem.
 	 *
 	 * If there is a set constraint, return the set.
 	 * Otherwise return null (for "unconstrained")
@@ -443,14 +437,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
-		/* an equality x ~ y implies a set constraint x in {y}, which we add to the set (which is a strict
-		 *  overapproximation as discussed in the method comment.)
-		 * We don't add a constraint like x in {x} though, as this would mean adding a "true" disjunct (again,
-		 * as discussed in the method comment).
-		 */
-		if (!rep.equals(elem)) {
+		/* an equality x ~ y implies a set constraint x in {y}, which we add to the conjunction. */
+//		if (!rep.equals(elem)) {
 			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(rep)));
-		}
+//		}
+		// dont do this: (only talk about representatives..)
+//		for (final ELEM eqMember : mCongruenceClosure.getEquivalenceClass(elem)) {
+//			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(eqMember)));
+//		}
 
 		final SetConstraintConjunction<ELEM> scc = mContainsConstraints.get(rep);
 
@@ -469,29 +463,43 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	/**
 	 * Get the constraints that this CCLiteralSetConstraints instance puts on constrainedElem, relative to the
 	 * equivalence relation in newCc.
+	 *
+	 * E.g. if this contains a set constraint x in {a , b}, and splitInfo contains a -> {c, d}, then we replace that set
+	 * constraint by x in {c, b} /\ x in {d, b}.
+	 *
+	 *
+	 * [old (wrt. that getConstraint takes into account equalities):
 	 * (e.g. mCongruenceClosure = {!x, y, z,a}, newCc = {x, !y, z}, {!a}, constrainedElem = x, (representatives are
 	 *  marked with "!"), then the result should be "x in {y} /\ x in {a}")
+	 *  ]
 	 *
 	 * @param constrainedElem
-	 * @param newCc TODO remove this param?
+	 * @param ccWithFinerPartition TODO remove this param?
 	 * @return
 	 */
-	private Set<SetConstraint<ELEM>> getConstraint(final ELEM constrainedElem, final CongruenceClosure<ELEM> newCc,
-			final HashRelation<ELEM, ELEM> splitInfo) {
+	private Set<SetConstraint<ELEM>> getConstraintWrtSplit(final ELEM constrainedElem,
+			final CongruenceClosure<ELEM> ccWithFinerPartition, final HashRelation<ELEM, ELEM> splitInfo) {
 		if (!mCongruenceClosure.hasElement(constrainedElem)) {
 			return null;
 		}
 
+		final Set<SetConstraint<ELEM>> oldConstraint = getConstraint(constrainedElem);
+		if (oldConstraint == null) {
+			return null;
+		}
+
 		// initialize to constraint relative to old Cc
-		Set<SetConstraint<ELEM>> result = new HashSet<>(getConstraint(constrainedElem));
+		Set<SetConstraint<ELEM>> result = new HashSet<>(oldConstraint);
 
 		for (final ELEM oldRep : splitInfo.getDomain()) {
 			assert !mCongruenceClosure.hasElement(oldRep)|| mCongruenceClosure.isRepresentative(oldRep);
 			final Set<SetConstraint<ELEM>> newResult = new HashSet<>();
 
 			for (final SetConstraint<ELEM> sc : result) {
+				/* add a constraint for each newRep corresponding to oldRep, where oldRep has been replaced with that
+				 * newRep */
 				for (final ELEM newRep : splitInfo.getImage(oldRep)) {
-					assert newCc.isRepresentative(newRep);
+					assert ccWithFinerPartition.isRepresentative(newRep);
 					newResult.add(mSetConstraintManager.transformElements(sc, e -> e.equals(oldRep) ? newRep : e));
 				}
 			}

@@ -955,7 +955,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = mManager.alignElements(this, other,
-				CcSettings.ALIGN_INPLACE);
+				CcSettings.ALIGN_INPLACE && !this.isFrozen() && !other.isFrozen());
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
@@ -975,11 +975,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
 				this.mLiteralSetConstraints.join(newCc, thisSplitInfo, otherSplitInfo, other.mLiteralSetConstraints);
-//				this.mLiteralSetConstraints.join(other.mLiteralSetConstraints, newElemTver);
 		newCc.resetCcLiteralSetConstraints(newLiteralSetConstraints);
 
 		return newCc;
-//		return mManager.getCongruenceClosureFromTver(newElemTver, newLiteralSetConstraints, true);
 	}
 
 
@@ -1111,12 +1109,32 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return EqualityStatus.EQUAL;
 		}
 
+		if (rep1.isLiteral() && rep2.isLiteral()) {
+			return EqualityStatus.NOT_EQUAL;
+		}
+
 		final Set<SetConstraint<ELEM>> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
 		final Set<SetConstraint<ELEM>> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
 
 
-		if (litConstraint1 != null && litConstraint2 != null
-				&& mManager.getSetConstraintManager().meetIsInconsistent(getLiteralSetConstraints(),
+//		/* if elem1 equals a literal l and litConstraint2 constrains to a literal set disjoint from l: not equal
+//		 * (and vice versa) */
+//		{
+//			if (litConstraint2 != null) {
+//				final Set<ELEM> litSet2 = mManager.getSetConstraintManager().getLiteralSet(litConstraint2);
+//				if (rep1.isLiteral() && litSet2 != null && !litSet2.contains(rep1)) {
+//					return EqualityStatus.NOT_EQUAL;
+//				}
+//			}
+//			if (litConstraint1 != null) {
+//				final Set<ELEM> litSet1 = mManager.getSetConstraintManager().getLiteralSet(litConstraint1);
+//				if (rep2.isLiteral() && litSet1 != null && !litSet1.contains(rep2)) {
+//					return EqualityStatus.NOT_EQUAL;
+//				}
+//			}
+//		}
+
+		if (mManager.getSetConstraintManager().meetIsInconsistent(getLiteralSetConstraints(),
 						litConstraint1,
 						litConstraint2)) {
 			return EqualityStatus.NOT_EQUAL;
@@ -1303,7 +1321,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		/*
 		 * check that each element in ccpars is a function application
 		 */
-		for (final ELEM elem : getAllElementRepresentatives()) {
+		for (final ELEM elem : getAllRepresentatives()) {
 			for (final ELEM ccp : this.getAuxData().getAfCcPars(elem)) {
 				if (!ccp.isFunctionApplication()) {
 					assert false : "ccpar is not a funcapp";
@@ -1492,7 +1510,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final Map<String, Integer> result = new HashMap<>();
 
 		result.put("#Elements", getAllElements().size());
-		result.put("#EquivalenceClasses", getAllElementRepresentatives().size());
+		result.put("#EquivalenceClasses", getAllRepresentatives().size());
 		result.put("#SupportingEqualties", getSupportingElementEqualities().size());
 		result.put("#SupportingDisequalties", getElementDisequalities().size());
 
@@ -1828,7 +1846,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
-	public Collection<ELEM> getAllElementRepresentatives() {
+	public Collection<ELEM> getAllRepresentatives() {
 		return mElementTVER.getAllRepresentatives();
 	}
 

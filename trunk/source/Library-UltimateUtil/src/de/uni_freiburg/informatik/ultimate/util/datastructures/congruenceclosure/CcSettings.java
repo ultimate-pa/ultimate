@@ -54,6 +54,6 @@ public class CcSettings {
 	/**
 	 * Should trigger e.g. that when two elements are compared, the expset increase is permanent (not just to a copy)
 	 */
-	public static final boolean ALIGN_INPLACE = false;
+	public static final boolean ALIGN_INPLACE = true;
 
 }
