@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -46,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -368,18 +368,17 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public int getNonCutOffEvents() {
 			return mNonCutOffEvents;
 		}
-		
+
 		/**
 		 * @return Number of transitions that can never be fired in operand Petri net.
 		 */
-		public long deadTransitionsInOperand() {
+		public long unreachableTransitionsInOperand() {
 			// This statistic could be computed more efficiently when using a Set<ITransition> in
 			// this class' add(Event) method. But doing so would slow down computation
 			// even in cases in which this statistic is not needed.
 			final int transitionsInNet = ((IPetriNet<LETTER, PLACE>) mOperand).getTransitions().size();
-			final long eventLabelsInFinPre = mUnfolding.getEvents().parallelStream()
-					.map(Event::getTransition).filter(Objects::nonNull).distinct().count();
-			return transitionsInNet - eventLabelsInFinPre;
+			final long reachableTransitions = RemoveUnreachable.reachableTransitions(mUnfolding).size();
+			return transitionsInNet - reachableTransitions;
 		}
 	}
 }

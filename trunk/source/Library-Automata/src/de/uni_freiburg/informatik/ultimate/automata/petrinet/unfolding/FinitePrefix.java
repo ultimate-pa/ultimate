@@ -66,8 +66,8 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<LETTER, STATE>(mServices, operand, UnfoldingOrder.ERV,
-				sameTransitionCutOff, false);
+		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices,
+				operand, UnfoldingOrder.ERV, sameTransitionCutOff, false);
 		mUnfoldingStatistics = unf.getUnfoldingStatistics();
 		mResult = unf.getFinitePrefix();
 
@@ -101,7 +101,8 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
 		if (mOperand instanceof IPetriNet) {
-			statistics.addKeyValuePair(StatisticsType.NUMBER_DEAD_TRANSITIONS, mUnfoldingStatistics.deadTransitionsInOperand());
+			statistics.addKeyValuePair(
+					StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS, mUnfoldingStatistics.unreachableTransitionsInOperand());
 		}
 
 		return statistics;

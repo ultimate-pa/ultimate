@@ -219,10 +219,6 @@ public enum StatisticsType {
 	 */
 	NUMBER_CUT_OFF_EVENTS,
 	/**
-	 * Number of transitions that can never fire in a Petri net.
-	 */
-	NUMBER_DEAD_TRANSITIONS,
-	/**
 	 * Number of pairs in a preprocessing.
 	 */
 	NUMBER_INITIAL_PAIRS,
@@ -238,6 +234,10 @@ public enum StatisticsType {
 	 * Number of pairs in a result.
 	 */
 	NUMBER_RESULT_PAIRS,
+	/**
+	 * Number of transitions that can never fire in a Petri net.
+	 */
+	NUMBER_UNREACHABLE_TRANSITIONS,
 	/**
 	 * Number of variables.
 	 */

@@ -66,23 +66,41 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		this(services, operand, null);
 	}
 	
+	/**
+	 * @param operand
+	 *     Petri net to be copied such that only reachable transitions remain.
+	 * @param reachableTransitions
+	 *     The reachable transitions (or a superset) of {@code operand}.
+	 *     Can be computed from an existing finite prefix using {@link #reachableTransitions(BranchingProcess)}.
+	 */
 	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
 			Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mResult = new BoundedPetriNet<>(services, operand.getAlphabet(), operand.constantTokenAmount());
-		mReachableTransitions = reachableTransitions == null ? computeReachableTransitions() : reachableTransitions;
+		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
 		rebuildNetWithoutDeadNodes();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> computeReachableTransitions() throws AutomataOperationCanceledException {
+	private Set<ITransition<LETTER, PLACE>> reachableTransitions() throws AutomataOperationCanceledException {
 		final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
+		return reachableTransitions(finPre);
+	}
+	
+	/**
+	 * From a complete finite prefix compute the reachable transitions of the original Petri net.
+	 * A transition t is reachable iff there is a reachable marking enabling t.
+	 * @param finPre complete finite Prefix of a Petri net N
+	 * @return reachable transitions in N
+	 */
+	public static <LETTER, PLACE> Set<ITransition<LETTER, PLACE>> reachableTransitions(
+			BranchingProcess<LETTER, PLACE> finPre) {
 		return finPre.getEvents().stream().map(Event::getTransition)
 				// finPre contains dummy root-event which does not correspond to any transition
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 	}
-	
+
 	private Set<PLACE> requiredPlaces() {
 		final Set<PLACE> requiredPlaces = new HashSet<>();
 		for (final ITransition<LETTER, PLACE> trans : mReachableTransitions) {
