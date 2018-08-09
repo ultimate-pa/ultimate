@@ -118,6 +118,17 @@ public abstract class PatternType {
 		return new CounterTrace(phases);
 	}
 
+	protected static CounterTrace counterTrace(final CDD... cdds) {
+		if (cdds == null || cdds.length == 0) {
+			throw new IllegalArgumentException("Need at least one phase");
+		}
+		final DCPhase[] phases = new DCPhase[cdds.length];
+		for (int i = 0; i < cdds.length; ++i) {
+			phases[i] = phase(cdds[i]);
+		}
+		return new CounterTrace(phases);
+	}
+
 	protected static DCPhase phase(final CDD x) {
 		return new CounterTrace.DCPhase(x);
 	}
@@ -138,6 +149,10 @@ public abstract class PatternType {
 	 */
 	protected static DCPhase phaseT() {
 		return new CounterTrace.DCPhase();
+	}
+
+	protected static CDD cddT() {
+		return CDD.TRUE;
 	}
 
 	@Override
