@@ -212,4 +212,9 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		}
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return mCoRelation.toStringAsTable();
+	}
 }
