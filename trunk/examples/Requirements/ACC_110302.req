@@ -1,8 +1,0 @@
-Globally, it is always the case that if "x0000" holds, then "x0001" previously held.
-Globally, it is always the case that  "x0002" holds.
-Globally, it is always the case that if "!x0003" holds, then "x0004"  holds after at most 10 time units.
-Globally, it is always the case that if "x0005" holds, then "x0006"  holds as well.
-Globally, it is always the case that if "!x0007 || !x0008" holds, then "!x0005"  holds after at most 100 time units.
-After "x0004" until "x0004", it is always the case that "x0004"  holds.
-Globally, it is always the case that if "x0009" holds, then "!x0010" holds as well.
-Globally, it is always the case that if "!x0011" holds, then "x0010" holds as well.

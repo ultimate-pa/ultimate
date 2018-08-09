@@ -1,2 +1,6 @@
-Between "x0000" and "x0001", it is always the case that "x0000" holds
-Globally, it is always the case that if "x0002" holds, then "x0000" holds as well
+Input x0000 is bool
+Input x0002 is bool
+Input x0001 is bool
+
+ID000: Between "x0000" and "x0001", it is always the case that "x0000" holds
+ID001: Globally, it is always the case that if "x0002" holds, then "x0000" holds as well
