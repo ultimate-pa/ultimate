@@ -414,6 +414,9 @@ public class Req2BoogieTranslator {
 	}
 
 	private static Statement joinIfSmts(final Statement[] statements, final BoogieLocation bl) {
+		if (statements == null || statements.length == 0) {
+			throw new IllegalArgumentException();
+		}
 		IfStatement acc = null;
 		for (int i = 0; i < statements.length; i++) {
 			final IfStatement currentIfSmt = (IfStatement) statements[i];
@@ -482,6 +485,9 @@ public class Req2BoogieTranslator {
 				continue;
 			}
 			statements.add(new IfStatement(bl, ifCon, ifBody, emptyElseBody));
+		}
+		if (statements.isEmpty() || statements.size() == 1) {
+			return statements;
 		}
 		return Collections.singletonList(joinIfSmts(statements.toArray(new Statement[statements.size()]), bl));
 	}
