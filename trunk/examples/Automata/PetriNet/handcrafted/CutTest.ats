@@ -1,0 +1,38 @@
+// Date:  2018-05-02
+// Author: schaetzc@tf.uni-freiburg.de
+//
+// Petri Net n. 
+//
+//    ,-------,
+//    v       |
+//   (1)--[a]-'
+//    `---[b]--->(2)--[c]-,
+//    ^                   |
+//    `-------------------´
+//
+// Used to check whether Ultimate includes cutoff events
+// in the finite prefix of n's unfolding or not.  
+
+assert(accepts(n, []));
+assert(accepts(n, [a]));
+assert(accepts(n, [a a]));
+assert(accepts(n, [b c]));
+assert(accepts(n, [b c b c]));
+assert(accepts(n, [a b c]));
+assert(accepts(n, [b c a]));
+assert(!accepts(n, [b]));
+assert(!isEmpty(n));
+
+print(finitePrefix(n));
+
+PetriNet n = (
+  alphabet = {a b c},
+  places = {p0 p1},
+  transitions = {
+    ({p0} a {p0}) 
+    ({p0} b {p1}) 
+    ({p1} c {p0})
+  },
+  initialMarking = {p0},
+  acceptingPlaces = {p0}
+);
