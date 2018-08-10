@@ -34,7 +34,10 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
@@ -59,8 +62,8 @@ public final class DifferencePairwiseOnDemand
 		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
 
 
-	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
-	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
+	private final IPetriNet<LETTER, PLACE> mMinuend;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
@@ -69,8 +72,8 @@ public final class DifferencePairwiseOnDemand
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) throws AutomataOperationCanceledException {
+			final IPetriNet<LETTER, PLACE> minuendNet,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa) throws AutomataOperationCanceledException {
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
@@ -116,10 +119,14 @@ public final class DifferencePairwiseOnDemand
 				StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES, mMinuend.getPlaces().size());
 		statistics.addKeyValuePair(
 				StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS, mMinuend.getTransitions().size());
+		if (mMinuend instanceof BoundedPetriNet) {
 		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW, mMinuend.flowSize());
+				StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW, ((BoundedPetriNet<LETTER, PLACE>) mMinuend).flowSize());
+		}
+		if (mSubtrahend instanceof INestedWordAutomaton) {
 		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES, mSubtrahend.getStates().size());
+				StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES, ((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend).getStates().size());
+		}
 		return statistics;
 	}
 
@@ -133,14 +140,20 @@ public final class DifferencePairwiseOnDemand
 	@Override
 	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		return doResultCheck(mServices, mLogger, stateFactory, mMinuend, mSubtrahend, mResult);
+		INestedWordAutomaton<LETTER, PLACE> subtrahend;
+		if (mSubtrahend instanceof INestedWordAutomaton) {
+			subtrahend = (INestedWordAutomaton<LETTER, PLACE>) mSubtrahend;
+		} else {
+			subtrahend = new RemoveDeadEnds(mServices, mSubtrahend).getResult();
+		}
+		return doResultCheck(mServices, mLogger, stateFactory, mMinuend, subtrahend, mResult);
 
 	}
 
 	static <LETTER, PLACE> boolean doResultCheck(
 			final AutomataLibraryServices services, final ILogger logger,
 			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory,
-			final BoundedPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
+			final IPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
 			final BoundedPetriNet<LETTER, PLACE> result) throws AutomataLibraryException {
 		final INestedWordAutomaton<LETTER, PLACE> minuendAsAutoaton = new PetriNet2FiniteAutomaton<>(services,
 				stateFactory, minuend).getResult();
