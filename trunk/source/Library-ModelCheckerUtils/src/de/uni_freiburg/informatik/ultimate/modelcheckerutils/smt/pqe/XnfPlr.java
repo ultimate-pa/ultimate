@@ -76,6 +76,7 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		}
 
 		// inputAtoms are conjuncts
+		// Note: Do not modify input atoms !
 		final List<TermVariable> booleanQuantVars = new ArrayList<>(eliminatees.size());
 		for (final TermVariable eliminatee : eliminatees) {
 			if (SmtSortUtils.isBoolSort(eliminatee.getSort())) {
@@ -122,10 +123,11 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 
 		final SubstitutionWithLocalSimplification subst =
 				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+		final Term[] rtr = inputAtoms.clone();
 		for (int i = 0; i < inputAtoms.length; ++i) {
-			inputAtoms[i] = subst.transform(inputAtoms[i]);
+			rtr[i] = subst.transform(inputAtoms[i]);
 		}
-		return inputAtoms;
+		return rtr;
 	}
 
 }
