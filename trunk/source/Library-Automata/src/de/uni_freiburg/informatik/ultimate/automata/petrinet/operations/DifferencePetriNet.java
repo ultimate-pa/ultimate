@@ -124,7 +124,9 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			throw new IllegalArgumentException(EXACTLY_ONE_STATE_OF_SUBTRAHEND);
 		}
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
-		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(petriNetPredecessors);
+		// do use transitions of *all* yet known places because the subtrahend
+		// predecessor could potentially have a transition with all of them.
+		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
 		for (final ISuccessorTransitionProvider<LETTER, PLACE> pred : preds) {
 			result.add(new DifferenceSuccessorTransitionProvider(pred, automatonPredecessor));
 		}
