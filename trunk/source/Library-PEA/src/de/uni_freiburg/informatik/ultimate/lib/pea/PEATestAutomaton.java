@@ -109,8 +109,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
     }
 
     public PEATestAutomaton(final PhaseEventAutomata automata) {
-        this(automata.name, automata.phases, automata.init, automata.clocks,
-                automata.variables, automata.declarations, new Phase[0]);
+        this(automata.mName, automata.mPhases, automata.mInit, automata.mClocks,
+                automata.mVariables, automata.mDeclarations, new Phase[0]);
     }
 
     
@@ -236,7 +236,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
         
         final List<String> newDeclarations = mergeDeclarationLists(b);
         
-        return new PEATestAutomaton(name + TIMES + b.name,
+        return new PEATestAutomaton(mName + TIMES + b.mName,
                           allPhases, initPhases,
                           newClocks, newVariables, newDeclarations,
                           finalPhases);
@@ -260,10 +260,10 @@ public class PEATestAutomaton extends PhaseEventAutomata {
     public PEATestAutomaton removeUnreachableLocations(){
         // building up map for more efficient access to incoming transitions
         final Map<Phase, List<Transition>> incomingTrans = new HashMap<>();
-        for (final Phase phase : phases) {
+        for (final Phase phase : mPhases) {
             incomingTrans.put(phase, new ArrayList<Transition>());
         }
-        for (final Phase phase : phases) {
+        for (final Phase phase : mPhases) {
             for (final Transition transition : phase.getTransitions()) {
                 incomingTrans.get(transition.dest).add(transition);
             }
@@ -288,7 +288,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
         }
         
         // check if there are unreachable phases
-        if(reachablePhases.size() == phases.length) {
+        if(reachablePhases.size() == mPhases.length) {
 			return this;
 		}
         
@@ -301,7 +301,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
         // check if one of the unreachable phases is an inital phase
         boolean initUnreachable = false;
-        for (final Phase initPhase : init){
+        for (final Phase initPhase : mInit){
             if(reachablePhases.contains(initPhase)) {
 				newInit.add(initPhase);
 			} else {
@@ -314,7 +314,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
                         
 
         // rebuild PEATestAutomaton
-        for (final Phase phase : phases) {
+        for (final Phase phase : mPhases) {
             if(reachablePhases.contains(phase)){
                 newPhases.add(phase);
                 final List<Transition> removeList = new ArrayList<>();
@@ -333,16 +333,16 @@ public class PEATestAutomaton extends PhaseEventAutomata {
             }
         }
         
-        return new PEATestAutomaton(name, newPhases.toArray(new Phase[newPhases.size()]),
-                newInit.toArray(new Phase[newInit.size()]),clocks,
-                variables, declarations, finalPhases);
+        return new PEATestAutomaton(mName, newPhases.toArray(new Phase[newPhases.size()]),
+                newInit.toArray(new Phase[newInit.size()]),mClocks,
+                mVariables, mDeclarations, finalPhases);
     }
     
     @Override
 	public void dump() {
-        System.err.println("automata "+name+ " { ");
+        System.err.println("automata "+mName+ " { ");
         System.err.print("clocks: ");
-        final Iterator<String> clockIter = clocks.iterator();
+        final Iterator<String> clockIter = mClocks.iterator();
         while (clockIter.hasNext()) {
             final String actClock = clockIter.next();
             System.err.print(actClock);
@@ -353,13 +353,13 @@ public class PEATestAutomaton extends PhaseEventAutomata {
         System.err.println("");
         System.err.print("  init { ");
         String delim = "";
-        for (int i = 0; i < init.length; i++) {
-            System.err.print(delim + init[i]);
+        for (int i = 0; i < mInit.length; i++) {
+            System.err.print(delim + mInit[i]);
             delim = ", ";
         }
         System.err.println(" }");
-        for (int i = 0; i < phases.length; i++) {
-            phases[i].dump();
+        for (int i = 0; i < mPhases.length; i++) {
+            mPhases[i].dump();
         }
         System.err.println("}");
         

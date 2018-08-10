@@ -43,26 +43,26 @@ public class TimedAutomata {
 	private final State[] mStates;
 
 	public TimedAutomata(final PhaseEventAutomata pea, final CDD[] preds, final String[] predNames) {
-		mStates = new State[pea.phases.length];
+		mStates = new State[pea.mPhases.length];
 		mClocks = new TreeSet<>();
-		for (int i = 0; i < pea.phases.length; i++) {
-			pea.phases[i].nr = i;
+		for (int i = 0; i < pea.mPhases.length; i++) {
+			pea.mPhases[i].nr = i;
 			mStates[i] = new State();
 			mStates[i].nr = i;
 			mStates[i].props = "dummy";
-			mStates[i].clockInv = filterCDD(pea.phases[i].clockInv)[0];
+			mStates[i].clockInv = filterCDD(pea.mPhases[i].clockInv)[0];
 			addClocks(mStates[i].clockInv);
 			for (int j = 0; j < preds.length; j++) {
-				if (pea.phases[i].getStateInvariant().and(preds[j]) != CDD.FALSE) {
+				if (pea.mPhases[i].getStateInvariant().and(preds[j]) != CDD.FALSE) {
 					mStates[i].props += " " + predNames[j];
 				}
 			}
 		}
-		for (int i = 0; i < pea.init.length; i++) {
-			mStates[pea.init[i].nr].props += " init";
+		for (int i = 0; i < pea.mInit.length; i++) {
+			mStates[pea.mInit[i].nr].props += " init";
 		}
-		for (int i = 0; i < pea.phases.length; i++) {
-			final Iterator<Transition> it = pea.phases[i].transitions.iterator();
+		for (int i = 0; i < pea.mPhases.length; i++) {
+			final Iterator<Transition> it = pea.mPhases[i].transitions.iterator();
 			final Collection<Edge> edges = new ArrayList<>();
 			while (it.hasNext()) {
 				final Transition t = it.next();
