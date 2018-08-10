@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -269,14 +270,35 @@ public class RtInconcistencyConditionGenerator {
 	private Term getPhaseTerm(final Phase phase) {
 		Term phaseTerm = mPhaseTermCache.get(phase);
 		if (phaseTerm == null) {
-			final List<Term> inner = new ArrayList<>();
-			for (final Transition trans : phase.getTransitions()) {
-				inner.add(SmtUtils.and(mScript, genGuardANDPrimedStInv(trans), genStrictInv(trans)));
-			}
-			phaseTerm = SmtUtils.or(mScript, inner);
-			mPhaseTermCache.put(phase, phaseTerm);
+			phaseTerm = generatePhaseLeaveTerm(phase);
+			final Term old = mPhaseTermCache.put(phase, phaseTerm);
+			assert old == null;
+		} else {
+			assert isCacheWorking(phase, phaseTerm) : "Cache fails";
 		}
 		return phaseTerm;
+	}
+
+	private boolean isCacheWorking(final Phase phase, final Term cachedPhaseTerm) {
+		final Term gPhaseTerm = generatePhaseLeaveTerm(phase);
+		if (gPhaseTerm != cachedPhaseTerm) {
+			mLogger.fatal("Cache failed");
+			mLogger.fatal("Cached term:    " + cachedPhaseTerm.toStringDirect());
+			mLogger.fatal("Generated term: " + gPhaseTerm.toStringDirect());
+		}
+		return gPhaseTerm == cachedPhaseTerm;
+	}
+
+	private Term generatePhaseLeaveTerm(final Phase phase) {
+		final List<Term> inner = new ArrayList<>();
+		for (final Transition trans : phase.getTransitions()) {
+			final Term guardTerm = toSmt(trans.getGuard());
+			final Term primedStInv = toSmt(trans.getDest().getStateInvariant().prime());
+			final Term strictInv =
+					toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
+			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
+		}
+		return SmtUtils.or(mScript, inner);
 	}
 
 	private Term simplifyAndLog(final Term term) {
@@ -495,9 +517,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term computeExistentialProjection(final Term term) {
-
 		final Term simplifiedTerm = simplifyAndLog(term);
-
 		final Set<TermVariable> varsToRemove = getPrimedAndEventVars(simplifiedTerm.getFreeVars());
 		if (varsToRemove.isEmpty()) {
 			return term;
@@ -568,22 +588,24 @@ public class RtInconcistencyConditionGenerator {
 		return phases;
 	}
 
-	private Term genStrictInv(final Transition transition) {
-		final Phase phase = transition.getDest();
-		final String[] resetVars = transition.getResets();
-		final List<String> resetList = Arrays.asList(resetVars);
-		return toSmt(new StrictInvariant().genStrictInv(phase.getClockInvariant(), resetList));
-	}
-
-	private Term genGuardANDPrimedStInv(final Transition transition) {
-		final Term guard = toSmt(transition.getGuard());
-		final Phase phase = transition.getDest();
-		final Term primedStInv = toSmt(phase.getStateInvariant().prime());
-		return SmtUtils.and(mScript, guard, primedStInv);
-	}
-
 	private Term genPCCompEQ(final String pcName, final int phaseIndex) {
 		return SmtUtils.binaryEquality(mScript, getTermVarTerm(pcName), mScript.numeral(Integer.toString(phaseIndex)));
+	}
+
+	private static String str(final Term[] terms) {
+		return str(Arrays.stream(terms));
+	}
+
+	private static String str(final Collection<Term> terms) {
+		return str(terms.stream());
+	}
+
+	private static String str(final Term term) {
+		return term.toStringDirect();
+	}
+
+	private static String str(final Stream<Term> terms) {
+		return terms.map(RtInconcistencyConditionGenerator::str).collect(Collectors.joining(","));
 	}
 
 	private final class AddDeclarationInformationToIdentifiers extends GeneratedBoogieAstTransformer {

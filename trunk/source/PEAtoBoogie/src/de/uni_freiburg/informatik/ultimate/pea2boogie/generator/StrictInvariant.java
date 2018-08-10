@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
@@ -34,8 +36,18 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 
 public class StrictInvariant {
 
-	public CDD genStrictInv(final CDD cdd, final List<String> resetList) {
+	public CDD genStrictInv(final CDD cdd, final String[] resets) {
+		if (cdd == CDD.TRUE) {
+			return CDD.TRUE;
+		}
+		if (cdd == CDD.FALSE) {
+			return CDD.FALSE;
+		}
+		final Set<String> resetSet = Arrays.stream(resets).collect(Collectors.toSet());
+		return genStrictInv(cdd, resetSet);
+	}
 
+	public CDD genStrictInv(final CDD cdd, final Set<String> resetSet) {
 		if (cdd == CDD.TRUE) {
 			return CDD.TRUE;
 		}
@@ -47,21 +59,20 @@ public class StrictInvariant {
 		final Decision<?> decision = cdd.getDecision();
 
 		CDD decisionCDD;
-		if (!resetList.contains(decision.getVar())) {
+		if (!resetSet.contains(decision.getVar())) {
 			decisionCDD = toStrictRange(decision.getVar(), ((RangeDecision) decision).getLimits());
 			final CDD[] newChilds = new CDD[childs.length];
 			for (int i = 0; i < childs.length; i++) {
-				newChilds[i] = genStrictInv(childs[i], resetList);
+				newChilds[i] = genStrictInv(childs[i], resetSet);
 			}
 			return decisionCDD.getDecision().simplify(newChilds);
 		}
 		assert childs.length == 2;
-		decisionCDD = genStrictInv(childs[0], resetList).or(genStrictInv(childs[1], resetList));
+		decisionCDD = genStrictInv(childs[0], resetSet).or(genStrictInv(childs[1], resetSet));
 		return decisionCDD;
 	}
 
 	public CDD toStrictRange(final String var, final int[] limits) {
 		return RangeDecision.create(var, -2, (limits[0] / 2));
 	}
-
 }
