@@ -472,14 +472,14 @@ public final class Difference
 		assert !iter.hasNext() : "Expected one element, found more.";
 		return result;
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		int looperOnlyLetters = 0;
 		int moreChangersThanLoopers = 0;
-		for (LETTER letter : mSubtrahend.getAlphabet()) {
-			Set<PLACE> loopers = mSelfloop.get(letter);
-			Set<PLACE> changers = mStateChanger.get(letter);
+		for (final LETTER letter : mSubtrahend.getAlphabet()) {
+			final Set<PLACE> loopers = mSelfloop.get(letter);
+			final Set<PLACE> changers = mStateChanger.get(letter);
 			if (changers == null || changers.isEmpty()) {
 				++looperOnlyLetters;
 			}
