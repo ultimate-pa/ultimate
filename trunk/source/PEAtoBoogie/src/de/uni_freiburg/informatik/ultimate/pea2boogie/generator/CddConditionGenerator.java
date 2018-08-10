@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -140,8 +139,7 @@ public class CddConditionGenerator {
 	private static CDD genStrictInv(final Transition transition) {
 		final Phase phase = transition.getDest();
 		final String[] resetVars = transition.getResets();
-		final List<String> resetList = Arrays.asList(resetVars);
-		final CDD cdd = new StrictInvariant().genStrictInv(phase.getClockInvariant(), resetList);
+		final CDD cdd = new StrictInvariant().genStrictInv(phase.getClockInvariant(), resetVars);
 		return cdd;
 	}
 
