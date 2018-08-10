@@ -56,6 +56,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -193,6 +194,11 @@ public class CoreUtil {
 		return null;
 	}
 
+	public static File writeFile(final File file, final String content) throws IOException {
+		writeFile(fw -> fw.append(content), false, file);
+		return file;
+	}
+
 	public static File writeFile(final String filename, final String content) throws IOException {
 		return writeFile(filename, content, false);
 	}
@@ -266,6 +272,26 @@ public class CoreUtil {
 				line = br.readLine();
 			}
 			return rtr;
+		} finally {
+			br.close();
+		}
+	}
+
+	/**
+	 * Convert the given String to a path and read from the file there line by line, calling the supplied consumer for
+	 * each line.
+	 *
+	 * @throws IOException
+	 */
+	public static void readFileLineByLine(final String filename, final Consumer<String> consumer) throws IOException {
+		final BufferedReader br =
+				new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		try {
+			String line = br.readLine();
+			while (line != null) {
+				consumer.accept(line);
+				line = br.readLine();
+			}
 		} finally {
 			br.close();
 		}

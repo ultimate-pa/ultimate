@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Mostafa Mahmoud Amin
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CodeCheck plug-in.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CodeCheck plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -58,17 +58,19 @@ public class GraphWriter {
 	private final StripAnnotationsTermTransformer mStripAnnotTermTransformer;
 	private final String mImagePath;
 	private int mGraphCounter = 0;
+	private final ILogger mLogger;
 
 	/**
 	 * Initialize the Graphwriter with some options
-	 * 
+	 *
 	 * @param annotateEdges
 	 *            annotate the edges?
 	 * @param annotateNodes
 	 * @param showUnreachableEdges
 	 */
-	public GraphWriter(final String imagePath, final boolean annotateEdges, final boolean annotateNodes,
-			final boolean showUnreachableEdges) {
+	public GraphWriter(final ILogger logger, final String imagePath, final boolean annotateEdges,
+			final boolean annotateNodes, final boolean showUnreachableEdges) {
+		mLogger = logger;
 		mImagePath = imagePath;
 		if (imagePath == "") {
 			mDontWrite = true;
@@ -83,20 +85,19 @@ public class GraphWriter {
 		if (mDontWrite) {
 			return;
 		}
-		final GraphViz gv = new GraphViz();
-		new HashMap<>();
+		final GraphViz gv = new GraphViz(mLogger);
 
-		gv.addln(GraphViz.start_graph());
+		gv.addLine(GraphViz.START_GRAPH);
 
 		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
 		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
-		gv.addln(writeNodesToString(allNodes).toString());
-		gv.addln(writeEdgesToString(allEdges).toString());
+		gv.addLine(writeNodesToString(allNodes).toString());
+		gv.addLine(writeEdgesToString(allEdges).toString());
 
-		gv.addln(GraphViz.end_graph());
+		gv.addLine(GraphViz.END_GRAPH);
 
-		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
+		GraphViz.writeGraphToFile(gv.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
 		mGraphCounter++;
 	}
@@ -107,25 +108,24 @@ public class GraphWriter {
 		if (mDontWrite) {
 			return;
 		}
-		final GraphViz gv = new GraphViz();
-		new HashMap<>();
+		final GraphViz gv = new GraphViz(mLogger);
 
-		gv.addln(GraphViz.start_graph());
+		gv.addLine(GraphViz.START_GRAPH);
 
 		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
 		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
-		gv.addln(writeNodesToString(allNodes).toString());
+		gv.addLine(writeNodesToString(allNodes).toString());
 
 		final Set<AnnotatedProgramPoint> errorTraceAl = new HashSet<>();
 		for (int i = 0; i < errorTrace.length; i++) {
 			errorTraceAl.add(errorTrace[i]);
 		}
-		gv.addln(writeEdgesToString(allEdges, errorTraceAl).toString());
+		gv.addLine(writeEdgesToString(allEdges, errorTraceAl).toString());
 
-		gv.addln(GraphViz.end_graph());
+		gv.addLine(GraphViz.END_GRAPH);
 
-		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
+		GraphViz.writeGraphToFile(gv.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
 		mGraphCounter++;
 	}
@@ -136,19 +136,18 @@ public class GraphWriter {
 		if (mDontWrite) {
 			return;
 		}
-		final GraphViz gv = new GraphViz();
-		new HashMap<>();
+		final GraphViz gv = new GraphViz(mLogger);
 
-		gv.addln(GraphViz.start_graph());
+		gv.addLine(GraphViz.START_GRAPH);
 
 		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
 		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
-		gv.addln(writeString(allNodes, allEdges, nodeToCopyCurrent, nodeToCopy));
+		gv.addLine(writeString(allNodes, allEdges, nodeToCopyCurrent, nodeToCopy));
 
-		gv.addln(GraphViz.end_graph());
+		gv.addLine(GraphViz.END_GRAPH);
 
-		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
+		GraphViz.writeGraphToFile(gv.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
 		mGraphCounter++;
 	}

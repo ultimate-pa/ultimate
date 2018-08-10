@@ -85,8 +85,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -185,7 +185,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		mGraphWriter = new GraphWriter(mGlobalSettings.getDotGraphPath(), true, true, true);
+		mGraphWriter = new GraphWriter(mLogger, mGlobalSettings.getDotGraphPath(), true, true, true);
 
 		// AI Module
 		final boolean usePredicatesFromAbstractInterpretation = mGlobalSettings.getUseAbstractInterpretation();
@@ -348,6 +348,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		if (!(root instanceof IIcfg<?>)) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		final IIcfg<IcfgLocation> icfg = (IIcfg<IcfgLocation>) root;
 		initialize(icfg);
 
@@ -378,7 +379,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		int iterationsCount = 0;
 
-		InterpolatingTraceCheck traceCheck = null;
+		InterpolatingTraceCheck<IIcfgTransition<?>> traceCheck = null;
 		final CodeChecker codechecker = createCodeChecker();
 		for (final AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -457,12 +458,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					if (mGlobalSettings.isUseInterpolantconsolidation()) {
 						try {
-							final InterpolantConsolidation<?> interpConsoli = new InterpolantConsolidation<>(
-									mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-									new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(errorRun.getWord()),
-									mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger,
-									mPredicateFactory, mPredicateUnifier, traceCheck, null// mtaPrefs
-							);
+							final InterpolantConsolidation<IIcfgTransition<?>> interpConsoli =
+									new InterpolantConsolidation<>(mPredicateUnifier.getTruePredicate(),
+											mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+											NestedWord.nestedWord(errorRun.getWord()), mCsToolkit,
+											mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger,
+											mPredicateFactory, mPredicateUnifier, traceCheck, null);
 							// Add benchmark data of interpolant consolidation
 							// mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 							// mInterpolantGenerator = interpConsoli;
@@ -580,14 +581,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private InterpolatingTraceCheck createTraceCheck(
+	private InterpolatingTraceCheck<IIcfgTransition<?>> createTraceCheck(
 			final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			try {
-				final InterpolatingTraceCheck tc = new InterpolatingTraceCheckCraig(
+				final InterpolatingTraceCheck<IIcfgTransition<?>> tc = new InterpolatingTraceCheckCraig<>(
 						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())),
@@ -609,7 +610,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			 *
 			 * The fallback interpolation mode is hardcoded for now
 			 */
-			return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+			return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 					new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
@@ -621,7 +622,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		case FPandBPonlyIfFpWasNotPerfect:
 			// return LBool.UNSAT if trace is infeasible
 			try {
-				return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
@@ -633,7 +634,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					throw e;
 				}
 
-				return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
