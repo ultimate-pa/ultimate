@@ -164,8 +164,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
 				new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia)
 						.getResult();
-		assert !accepts(mServices, nia, mCounterexample.getWord(), false) : "Complementation broken!";
-		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
+		// TODO 2018-08-11 Matthias: Complement not needed since we compute difference.
+		// Furthermore there is a problem because we would have to concatenate operand
+		// with some ∑^* automaton first and we do not yet have an implementation for
+		// that.
+//		assert !accepts(mServices, nia, mCounterexample.getWord(), false) : "Complementation broken!";
+//		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
