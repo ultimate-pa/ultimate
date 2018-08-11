@@ -106,9 +106,9 @@ public final class Difference
 		 */
 		HEURISTIC,
 	}
-	
+
 	private final LoopSyncMethod mLoopSyncMethod;
-	
+
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
 	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
@@ -186,7 +186,7 @@ public final class Difference
 			// get outgoing transitions from the accepting state because they will not
 			// contribute to the result of the difference.
 			// The cleanest solution might be that we specify the resulting language
-			// of this operation not as L(N)-L(A) but as L(N)-(L(A)◦∑).
+			// of this operation not as L(N)-L(A) but as L(N)-(L(A)◦∑^*).
 //		} else if (!finalStatesAreTraps()) {
 //			throw new IllegalArgumentException("subtrahend's final states must be trap states");
 		}
