@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
@@ -44,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
@@ -77,6 +80,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
+	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
 
 	public CegarLoopJulian(final DebugIdentifier name, final BoogieIcfgContainer rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -154,7 +158,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomaton<LETTER, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INestedWordAutomaton<LETTER, IPredicate> dia = enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
@@ -203,7 +207,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	protected INestedWordAutomaton<LETTER, IPredicate>
-			determinizeInterpolantAutomaton(final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton)
+			enhanceAnddeterminizeInterpolantAutomaton(final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException {
 		mLogger.debug("Start determinization");
 		INestedWordAutomaton<LETTER, IPredicate> dia;
@@ -220,7 +224,13 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final DeterministicInterpolantAutomaton<LETTER> raw =
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
 							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
+			if (mEnhanceInterpolantAutomatonOnDemand) {
+				new DifferencePairwiseOnDemand(new AutomataLibraryServices(mServices) , mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
+				raw.switchToReadonlyMode();
+			}
 			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
+			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false).getTransitionDensity(SymbolType.INTERNAL);
+			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
 				// TODO Matthias: Iteration should probably added to TaskIdentifier
 				final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_EagerFloydHoareAutomaton");
