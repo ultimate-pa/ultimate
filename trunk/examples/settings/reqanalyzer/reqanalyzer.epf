@@ -43,5 +43,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Fake\ non-incremental\ script=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=FIXED_PREFERENCES
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=UNKNOWN
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.18
 

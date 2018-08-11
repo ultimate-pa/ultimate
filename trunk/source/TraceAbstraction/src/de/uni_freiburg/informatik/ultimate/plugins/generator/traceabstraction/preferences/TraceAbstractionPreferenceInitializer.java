@@ -224,6 +224,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
+	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
+			"Sets the category of solver result for which the verification is aborted (even if another solver is "
+					+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
+					+ ", every unusable solver result aborts the verification, if set to "
+					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
 
 	/**
 	 * Constructor.
@@ -343,8 +348,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
 						RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
-						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, PreferenceType.Combo,
-						RefinementStrategyExceptionBlacklist.values()), };
+						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
+						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()), };
 	}
 
 	/**
@@ -373,8 +378,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * Minimization mode.
 	 */
 	public enum Minimization {
-		NONE, MINIMIZE_SEVPA, SHRINK_NWA, DFA_HOPCROFT_ARRAYS, DFA_HOPCROFT_LISTS, NWA_SIZE_BASED_PICKER, NWA_MAX_SAT, NWA_MAX_SAT2,
-		NWA_COMBINATOR_PATTERN, NWA_COMBINATOR_EVERY_KTH, RAQ_DIRECT_SIMULATION, RAQ_DIRECT_SIMULATION_B,
+		NONE, MINIMIZE_SEVPA, SHRINK_NWA, DFA_HOPCROFT_ARRAYS, DFA_HOPCROFT_LISTS, NWA_SIZE_BASED_PICKER, NWA_MAX_SAT,
+		NWA_MAX_SAT2, NWA_COMBINATOR_PATTERN, NWA_COMBINATOR_EVERY_KTH, RAQ_DIRECT_SIMULATION, RAQ_DIRECT_SIMULATION_B,
 		NWA_OVERAPPROXIMATION, NWA_COMBINATOR_MULTI_DEFAULT, NWA_COMBINATOR_MULTI_SIMULATION, DELAYED_SIMULATION,
 		FAIR_SIMULATION_WITH_SCC, FAIR_SIMULATION_WITHOUT_SCC, FAIR_DIRECT_SIMULATION, RAQ_DELAYED_SIMULATION,
 		RAQ_DELAYED_SIMULATION_B, FULLMULTIPEBBLE_DELAYED_SIMULATION, FULLMULTIPEBBLE_DIRECT_SIMULATION,

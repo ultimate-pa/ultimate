@@ -44,5 +44,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/cut-off\ requires\ same\ transition=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/use\ unfolding\ as\ abstraction=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL_NO_AM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=UNKNOWN
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
 

@@ -64,6 +64,11 @@ public class TraceCheckReasonUnknown {
 		UNSUPPORTED_NON_LINEAR_ARITHMETIC,
 
 		/**
+		 * Formulas in trace contain quantifiers, but solver does not support quantifiers.
+		 */
+		UNSUPPORTED_QUANTIFIERS,
+
+		/**
 		 * Solver crash because an Ultimate developer used wrong parameters
 		 */
 		SOLVER_CRASH_WRONG_USAGE,
@@ -112,10 +117,10 @@ public class TraceCheckReasonUnknown {
 			switch (throwSpecification) {
 			case ALL:
 				return true;
-			case UNKNOWN:
-				return this == UNKNOWN || this == KNOWN_THROW;
 			case DEPENDING:
 				return this == UNKNOWN || this == KNOWN_THROW || this == KNOWN_DEPENDING;
+			case UNKNOWN:
+				return this == UNKNOWN || this == KNOWN_THROW;
 			case NONE:
 				return false;
 			default:
@@ -184,6 +189,10 @@ public class TraceCheckReasonUnknown {
 			// SMTInterpol does not support non-linear arithmetic
 			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith("Cannot handle literal")) {
+			// SMTInterpol cannot handle quantifiers
+			reason = Reason.UNSUPPORTED_QUANTIFIERS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
 		} else if (message.startsWith(CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX)) {
 			// CVC4 does not support nonlinear arithmetic if some LIA or LRA logic is used.
 			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
