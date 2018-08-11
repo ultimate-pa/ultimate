@@ -77,11 +77,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
@@ -206,7 +206,6 @@ public class RtInconcistencyConditionGenerator {
 			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkPrimedRhsAndPrimedInvariant);
 			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
 				mQuantified++;
-				printQuantifiedFormula("After solver", () -> (QuantifiedFormula) checkRhsAndInvariant);
 			} else {
 				mPlain++;
 			}
@@ -263,7 +262,7 @@ public class RtInconcistencyConditionGenerator {
 				mQuantified + mPlain, mQuantified, mPlain, mQelimQuery, mQuantifiedQuery));
 		if (SIMPLIFY_BEFORE_QELIM) {
 			mLogger.info(String.format("Terms of DAG size %s were simplified to DAG size %s (%s percent reduction)",
-					mBeforeSize, mAfterSize, 100.0 - ((mAfterSize * 1.0) / (mBeforeSize * 1.0)) * 100.0));
+					mBeforeSize, mAfterSize, 100.0 - mAfterSize * 1.0 / (mBeforeSize * 1.0) * 100.0));
 		}
 	}
 
@@ -472,7 +471,7 @@ public class RtInconcistencyConditionGenerator {
 			return SmtUtils.geq(mScript, var, rhs);
 		}
 
-		if ((limits[childIdx - 1] / 2) == (limits[childIdx] / 2)) {
+		if (limits[childIdx - 1] / 2 == limits[childIdx] / 2) {
 			// we have upper and lower, but they are identical, so its EQ
 			// and they differ in the first bit because first bit encoding and sortedness
 			final Term rhs = mScript.decimal(Double.toString(limits[childIdx] / 2));
@@ -525,25 +524,26 @@ public class RtInconcistencyConditionGenerator {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Removing " + varsToRemove.size() + " variables");
 		}
-		if (TRY_SOLVER_BEFORE_QELIM) {
-			final Term quantifiedFormula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
-			if (querySolverIsTrue(quantifiedFormula)) {
-				return mTrue;
-			}
+		final QuantifiedFormula quantifiedFormula =
+				(QuantifiedFormula) SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
+		if (TRY_SOLVER_BEFORE_QELIM && querySolverIsTrue(quantifiedFormula)) {
+			return mTrue;
 		}
 		mQelimQuery++;
-		final Term afterQelimFormula = PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mManagedScript,
-				PqeTechniques.ALL_LOCAL, QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm, new Term[0]);
+		final Term afterQelimFormula =
+				PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
+						SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		if (afterQelimFormula instanceof QuantifiedFormula) {
 			// qelim failed to eliminate all quantifiers, perhaps the solver is better?
-			printQuantifiedFormula("Before qelim", () -> (QuantifiedFormula) SmtUtils.quantifier(mScript,
-					QuantifiedFormula.EXISTS, varsToRemove, term));
+			printQuantifiedFormula("Before qelim", () -> quantifiedFormula);
 			printQuantifiedFormula("After qelim", () -> (QuantifiedFormula) afterQelimFormula);
 			if (querySolverIsTrue(afterQelimFormula)) {
 				return mTrue;
 			}
+			printQuantifiedFormula("After solver", () -> (QuantifiedFormula) afterQelimFormula);
 		}
+
 		return afterQelimFormula;
 	}
 
