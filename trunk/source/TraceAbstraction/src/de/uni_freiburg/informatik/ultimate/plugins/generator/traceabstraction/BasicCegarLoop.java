@@ -507,7 +507,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 		}
 
-		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
+		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord(), false) : "Interpolant automaton broken!";
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
@@ -538,7 +538,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final NestedWordAutomaton<LETTER, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
-		assert accepts(mServices, resultBeforeEnhancement, mCounterexample.getWord()) : "Error automaton broken!";
+		assert accepts(mServices, resultBeforeEnhancement, mCounterexample.getWord(), false) : "Error automaton broken!";
 	}
 
 	@Override
@@ -1009,11 +1009,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	protected boolean accepts(final IUltimateServiceProvider services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia, final Word<LETTER> word)
-			throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia, final Word<LETTER> word,
+			final boolean checkAlsoForAcceptanceOfSomePrefix) throws AutomataOperationCanceledException {
 		try {
-			return new Accepts<>(new AutomataLibraryServices(services), nia, NestedWord.nestedWord(word), false, false)
-					.getResult();
+			return new Accepts<>(new AutomataLibraryServices(services), nia, NestedWord.nestedWord(word),
+					checkAlsoForAcceptanceOfSomePrefix, false).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			throw e;
 		} catch (final AutomataLibraryException e) {

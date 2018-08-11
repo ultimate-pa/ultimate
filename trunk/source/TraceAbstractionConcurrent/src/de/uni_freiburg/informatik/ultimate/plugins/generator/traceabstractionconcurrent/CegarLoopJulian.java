@@ -160,7 +160,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
 				new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia)
 						.getResult();
-		assert !accepts(mServices, nia, mCounterexample.getWord()) : "Complementation broken!";
+		assert !accepts(mServices, nia, mCounterexample.getWord(), false) : "Complementation broken!";
 		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -239,7 +239,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
 			writeAutomatonToFile(dia, filename);
 		}
-		assert accepts(mServices, dia, mCounterexample.getWord());
+		assert accepts(mServices, dia,
+				mCounterexample.getWord(), true) : "Counterexample not accepted by determinized interpolant automaton: "
+						+ mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
 		return dia;
 	}
@@ -256,7 +258,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services), mPredicateFactoryResultChecking,
 						(IPetriNet<LETTER, IPredicate>) automaton).getResult();
-		return super.accepts(services, petriNetAsFA, nw);
+		return super.accepts(services, petriNetAsFA, nw, false);
 
 	}
 
