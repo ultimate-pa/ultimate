@@ -26,11 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2P
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Converts to Petri net.
@@ -372,7 +377,11 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	}
 
 
-	private static <LETTER, PLACE> boolean areIndependent(final IPetriNet<LETTER, PLACE> net, final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
+	/**
+	 * @return false iff there exists transition t such that c1 and c2 both have an
+	 *         outgoing event that is labeled with t.
+	 */
+	private static <LETTER, PLACE> boolean areIndependent(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		final Set<ITransition<LETTER, PLACE>> c1SuccTrans = c1.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
 		final Set<ITransition<LETTER, PLACE>> c2SuccTrans = c2.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
 		return Collections.disjoint(c1SuccTrans, c2SuccTrans);
@@ -389,6 +398,81 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			}
 		}
 		return conditions;
+	}
+
+	private Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> computeEquivalenceClasses(final Collection<Condition<LETTER, PLACE>> conditions) {
+		final Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> result = new HashMap<>();
+		for (final Condition<LETTER, PLACE> c : conditions) {
+			final PLACE p = c.getPlace();
+			if (!result.containsKey(p)) {
+				result.put(p, new UnionFind<>());
+			}
+			final UnionFind<Condition<LETTER, PLACE>> uf = result.get(p);
+			final List<Condition<LETTER, PLACE>> mergeRequired = new ArrayList<>();
+			for (final Set<Condition<LETTER, PLACE>> eqClass : uf.getAllEquivalenceClasses()) {
+				for (final Condition<LETTER, PLACE> otherCond : eqClass) {
+					final boolean areIndependent = areIndependent(c, otherCond);
+					if (!areIndependent) {
+						mergeRequired.add(otherCond);
+						// no need to check others of this equivalence class, will be merged anyway
+						continue;
+					}
+				}
+			}
+			uf.makeEquivalenceClass(c);
+			for (final Condition<LETTER, PLACE> otherCond : mergeRequired) {
+				uf.union(c, otherCond);
+			}
+		}
+		return result;
+	}
+
+
+	private IPetriNet<LETTER, PLACE> buildPetrification(final BranchingProcess<LETTER, PLACE> bp) {
+		final LinkedHashSet<Condition<LETTER, PLACE>> relevantConditions = collectRelevantEvents();
+		final Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> equivalenceClasses = computeEquivalenceClasses(relevantConditions);
+		final Map<Condition<LETTER, PLACE>, PLACE> condition2Place = computeCondition2Place(equivalenceClasses, mStateFactory);
+		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors = computeTransitions(bp.getEvents(), condition2Place);
+
+		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, bp.getAlphabet(), false);
+
+		for (final Entry<Condition<LETTER, PLACE>, PLACE> entry : condition2Place.entrySet()) {
+			if (!result.getPlaces().contains(entry.getValue())) {
+				final boolean isInitial = bp.getNet().getInitialPlaces().contains(entry.getKey().getPlace());
+				final boolean isAccepting = bp.getNet().isAccepting(entry.getKey().getPlace());
+				result.addPlace(entry.getValue(), isInitial, isAccepting);
+			}
+		}
+		for (final Triple<LETTER, Set<PLACE>, Set<PLACE>> triple : letterPredecessorsSuccessors) {
+			result.addTransition(triple.getFirst(), triple.getSecond(), triple.getThird());
+		}
+		return result;
+	}
+
+	private HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> computeTransitions(final Collection<Event<LETTER, PLACE>> events,
+			final Map<Condition<LETTER, PLACE>, PLACE> condition2Place) {
+		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors = new HashRelation3<>();
+		for (final Event<LETTER, PLACE> event : events) {
+			final LETTER letter = event.getTransition().getSymbol();
+			final Set<PLACE> predecessors = event.getPredecessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+			final Set<PLACE> successors = event.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+			letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);
+		}
+		return letterPredecessorsSuccessors;
+	}
+
+	private Map<Condition<LETTER, PLACE>, PLACE> computeCondition2Place(
+			final Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> equivalenceClasses, final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory) {
+		final Map<Condition<LETTER, PLACE>, PLACE> result = new HashMap<>();
+		for (final Entry<PLACE, UnionFind<Condition<LETTER, PLACE>>> entry : equivalenceClasses.entrySet()) {
+			for (final Condition<LETTER, PLACE> rep : entry.getValue().getAllRepresentatives())  {
+				final PLACE resultPlace = stateFactory.finitePrefix2net(rep);
+				for (final Condition<LETTER, PLACE> eqMember : entry.getValue().getEquivalenceClassMembers(rep)) {
+					result.put(eqMember, resultPlace);
+				}
+			}
+		}
+		return result;
 	}
 
 
