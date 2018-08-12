@@ -180,7 +180,7 @@ public final class Difference
 		} else if (mSubtrahend.getInitialStates().size() != 1) {
 			throw new IllegalArgumentException("subtrahend must have exactly one inital state");
 		}
-		// TODO 2018-08-10 Matthias: I commented the following two lines because we
+		// TODO 2018-08-10 Matthias: I commented the following three lines because we
 		// somehow want to tolerate subtrahends whose language is not necessarily closed
 		// under concatenation with sigma^*. E.g., if we construct the subtrahend
 		// on-demand with the assumption that the final state is a trap, we will not
@@ -190,7 +190,7 @@ public final class Difference
 		// of this operation not as L(N)-L(A) but as L(N)-(L(A)◦∑^*).
 //		if (!finalStatesAreTraps()) {
 //			throw new IllegalArgumentException("subtrahend's final states must be trap states");
-		}
+//		}
 		return true;
 	}
 
