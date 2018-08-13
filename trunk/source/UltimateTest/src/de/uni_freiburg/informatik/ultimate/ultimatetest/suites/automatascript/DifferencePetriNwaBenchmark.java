@@ -52,7 +52,10 @@ public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 	private static final int TIMEOUT_MS = 30 * 60 * 1_000;
 	private static final File TOOLCHAIN_FILE =
 			new File(TestUtil.getPathFromTrunk("examples/toolchains/AutomataScriptInterpreter.xml"));
-	private static final String[] DIRECTORIES = { "examples/Automata/benchmarks/pn/difference-small" };
+	private static final String[] DIRECTORIES = {
+		"examples/Automata/benchmarks/pn/difference-small",
+		"examples/Automata/benchmarks/pn/difference-small-reach-only"
+	};
 	private static final String[] FILE_ENDINGS = { ".ats" };
 	private static final String[] SETTINGS = {
 //		"AutomataScript/differencePetriNwa/differenceHeuristic.epf",
