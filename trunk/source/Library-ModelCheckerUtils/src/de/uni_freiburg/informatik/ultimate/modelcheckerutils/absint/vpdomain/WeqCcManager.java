@@ -456,7 +456,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> projectAway(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node) {
 		bmStart(WeqCcBmNames.PROJECTAWAY);
 		// TODO: unsure about this freezing -- is there a more efficient solution?
-		freezeIfNecessary(origWeqCc, true);
+		origWeqCc.freezeIfNecessary(true);
 
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
@@ -576,10 +576,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			bmEnd(WeqCcBmNames.MEET);
 			return weqcc1;
 		} else {
-			freezeIfNecessary(weqcc1, mSettings.closeAllEqConstraints());
+			weqcc1.freezeIfNecessary(mSettings.closeAllEqConstraints());
 			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, false);
 
-			freezeIfNecessary(result, mSettings.closeAllEqConstraints());
+			result.freezeIfNecessary(mSettings.closeAllEqConstraints());
 
 			assert checkMeetResult(weqcc1, weqcc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.MEET);
@@ -634,8 +634,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1,
 			final WeqCongruenceClosure<NODE> weqcc2, final boolean modifiable) {
 		bmStart(WeqCcBmNames.JOIN);
-		freezeIfNecessary(weqcc1, true);
-		freezeIfNecessary(weqcc2, true);
+		weqcc1.freezeIfNecessary(true);
+		weqcc2.freezeIfNecessary(true);
 
 		if (weqcc1.isInconsistent()) {
 			bmEnd(WeqCcBmNames.JOIN);
@@ -660,15 +660,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	private void freezeIfNecessary(final WeqCongruenceClosure<NODE> weqcc, final boolean close) {
-		if (!weqcc.isFrozen()) {
-			if (close) {
-				weqcc.freezeAndClose();
-			} else {
-				weqcc.freezeOmitPropagations();
-			}
-		}
-	}
+//	private void freezeIfNecessary(final WeqCongruenceClosure<NODE> weqcc, final boolean close) {
+//		if (!weqcc.isFrozen()) {
+//			if (close) {
+//				weqcc.freezeAndClose();
+//			} else {
+//				weqcc.freezeOmitPropagations();
+//			}
+//		}
+//	}
 
 	public CongruenceClosure<NODE> renameVariablesCc(final CongruenceClosure<NODE> weqCc,
 			final Map<Term, Term> substitutionMapping, final boolean inplace) {
@@ -728,8 +728,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> weqcc1Copy = copyWeqCc(weqcc1, true);
 			final WeqCongruenceClosure<NODE> weqcc2Copy = copyWeqCc(weqcc2, true);;
 
-			freezeIfNecessary(weqcc1Copy, true);
-			freezeIfNecessary(weqcc2Copy, true);
+			weqcc1Copy.freezeIfNecessary(true);
+			weqcc2Copy.freezeIfNecessary(true);
 
 			final boolean result = weqcc1Copy.isStrongerThan(weqcc2Copy);
 			bmEnd(WeqCcBmNames.ISSTRONGERTHAN);
