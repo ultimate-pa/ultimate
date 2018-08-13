@@ -126,6 +126,9 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			mWeqCc.extAndTriangleClosure(false);
+			// unnecessary, as we call closure later
+//		} else {
+//			mWeqCc.mIsClosed = false;
 		}
 
 		assert !mWeqCc.isInconsistent();
