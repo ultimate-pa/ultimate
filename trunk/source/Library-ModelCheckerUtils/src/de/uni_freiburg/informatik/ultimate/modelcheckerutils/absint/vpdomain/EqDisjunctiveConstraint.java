@@ -161,7 +161,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportEqualityInPlace(node1, node2);
-			unfrozen.freezeAndClose();
+			unfrozen.freezeIfNecessary(mFactory.getWeqSettings().closeAllEqConstraints());
 			constraintList.add(unfrozen);
 		}
 		return mFactory.getDisjunctiveConstraint(constraintList);
@@ -178,7 +178,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportDisequalityInPlace(node1, node2);
-			unfrozen.freezeAndClose();
+			unfrozen.freezeIfNecessary(mFactory.getWeqSettings().closeAllEqConstraints());
 			constraintList.add(unfrozen);
 		}
 		return mFactory.getDisjunctiveConstraint(constraintList);
@@ -273,9 +273,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 	}
 
-	public void freezeDisjunctsIfNecessary() {
+	public void freezeDisjunctsIfNecessary(final boolean close) {
 		for (final EqConstraint<NODE> disjunct : mConstraints) {
-			disjunct.freezeIfNecessary();
+			disjunct.freezeIfNecessary(close);
 		}
 	}
 

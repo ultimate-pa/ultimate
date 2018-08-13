@@ -696,9 +696,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		}
 
 		// check that labels are free of weqPrimed vars
-//		if (!groundPartialArrangement.mMeetWithGpaCase) {
 		if (baseWeqCc != null
-				&& !baseWeqCc.mIsWeqFatEdgeLabel
+				&& !baseWeqCc.isWeqFatEdgeLabel()
 		        && baseWeqCc.mDiet != Diet.WEQCCFAT
 				&& baseWeqCc.mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
 				&& baseWeqCc.mDiet != Diet.TRANSITORY_WEQCCREFATTEN) {
@@ -1032,7 +1031,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 */
 	public boolean assertDisjunctsHaveWeqFatFlagSet() {
 		for (final DISJUNCT d : getDisjuncts()) {
-			if (!((WeqCongruenceClosure<NODE>) d).mIsWeqFatEdgeLabel) {
+			if (!((WeqCongruenceClosure<NODE>) d).isWeqFatEdgeLabel()) {
 				assert false;
 				return false;
 			}
@@ -1058,7 +1057,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				// unconstrained in one disjunct --> unconstrained overall
 				return null;
 			}
-//			resultConstraint.addAll(cc);
+
 			if (resultConstraint == null) {
 				resultConstraint = cc;
 			} else {

@@ -174,4 +174,15 @@ public class WeqSettings {
 	public boolean isAddNodesBeforeAnsweringQuery() {
 		return mAddNodesBeforeAnsweringQuery;
 	}
+
+	/**
+	 * WeqCcs in EqConstraints need to be frozen, but they do not always need to be closed. If this returns true, then
+	 * all WeqCcs that are kept in EqConstraint are always also closed.
+	 * (Historically, a freeze meant a close, by this setting, these concerns are separated.)
+	 *
+	 * @return
+	 */
+	public boolean closeAllEqConstraints() {
+		return false;
+	}
 }

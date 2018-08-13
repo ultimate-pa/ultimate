@@ -20,7 +20,7 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	Collection<ELEM> getAllElements();
 
-	void freezeAndClose();
+//	void freezeAndClose();
 
 //	void freezeIfNecessary();
 

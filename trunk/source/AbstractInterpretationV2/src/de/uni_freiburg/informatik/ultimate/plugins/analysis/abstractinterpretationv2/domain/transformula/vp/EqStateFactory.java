@@ -97,7 +97,7 @@ public class EqStateFactory {
 
 	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
 				final Set<IProgramVarOrConst> variables) {
-		constraint.freezeIfNecessary();
+		constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
 		// TODO manage EqStates smarter?
 		return new EqState((EqConstraint<EqNode>) constraint, mEqNodeAndFunctionFactory, this, variables);
 	}

@@ -98,10 +98,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				nonTheoryLiteralNodes);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
-		mBottomConstraint.freezeAndClose();
+		mBottomConstraint.freezeIfNecessary(true);
 
 		mEmptyConstraint = new EqConstraint<>(1, mWeqCcManager.getEmptyWeqCc(true), this);
-		mEmptyConstraint.freezeAndClose();
+		mEmptyConstraint.freezeIfNecessary(true);
 		mEmptyDisjunctiveConstraint = new EqDisjunctiveConstraint<>(Collections.singleton(mEmptyConstraint), this);
 
 		mConstraintIdCounter = 2;
@@ -227,8 +227,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 		if (!inplace) {
-			freezeIfNecessary(constraint1);
+			constraint1.freezeIfNecessary(mWeqCcManager.getSettings().closeAllEqConstraints());
 		}
+
+		assert !mWeqCcManager.getSettings().closeAllEqConstraints() || constraint2.getWeqCc().isClosed() : "right?..";
 
 		assert inplace != constraint1.isFrozen();
 
@@ -247,11 +249,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	private void freezeIfNecessary(final EqConstraint<NODE> constraint1) {
-		if (!constraint1.isFrozen()) {
-			constraint1.freezeAndClose();
-		}
-	}
+//	private void freezeIfNecessary(final EqConstraint<NODE> constraint1) {
+//		if (!constraint1.isFrozen()) {
+//			constraint1.freezeAndClose();
+//		}
+//	}
 
 	/**
 	 * conjunction/intersection/join

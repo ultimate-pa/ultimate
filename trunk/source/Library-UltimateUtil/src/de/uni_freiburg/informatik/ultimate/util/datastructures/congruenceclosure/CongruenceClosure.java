@@ -238,7 +238,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * Sets the flag for isFrozen() to true. (Propagations in CongruenceClosure are done immediately so no closure
 	 * needs to be executed here.)
 	 */
-	@Override
+//	@Override
 	public void freezeAndClose() {
 		assert !mIsFrozen;
 		mIsFrozen = true;

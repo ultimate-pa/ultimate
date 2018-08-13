@@ -64,10 +64,10 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 		return script.term("false");
 	}
 
-	@Override
-	public void freezeAndClose() {
-		// do nothing;
-	}
+//	@Override
+//	public void freezeAndClose() {
+//		// do nothing;
+//	}
 
 	@Override
 	public boolean isFrozen() {

@@ -65,10 +65,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * True iff this WeqCc is a disjunct in a weq label (in contrast to being a "base WeqCc" that is not used inside
 	 *  another WeqCc)
 	 */
-	public boolean mIsWeqFatEdgeLabel;
+	private boolean mIsWeqFatEdgeLabel;
 
 	private boolean mIsFrozen = false;
 
+	/** see {@link #extAndTriangleClosure(boolean)} */
 	private boolean mIsClosed = true;
 
 	private final ILogger mLogger;
@@ -202,7 +203,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	}
 
-	@Override
+//	@Override
 	public void freezeAndClose() {
 		mManager.bmStart(WeqCcBmNames.FREEZE_AND_CLOSE);
 		assert !mIsFrozen;
@@ -909,6 +910,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> other) {
+		assert this.isClosed() && other.isClosed() : "caller ensures this, right?";
+
 		if (!mManager.isStrongerThan(this.mCongruenceClosure, other.mCongruenceClosure)) {
 			return false;
 		}
@@ -950,7 +953,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			throw new IllegalStateException();
 		}
 
-
 		if (useWeqGpa) {
 			mWeakEquivalenceGraphWeqCcFat =
 					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(this,
@@ -967,6 +969,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
+	/**
+	 * All but two propagation rules from the reduction operator are executed immediately when a constraint is updated.
+	 * The two exceptions are the rules ext and triangle.
+	 * This method saturates under those two rules, and thus ensures full closure of the constraint.
+	 * <p>
+	 * (Calling this method is rather expensive.)
+	 *
+	 * @param omitSanityChecks
+	 */
 	public void extAndTriangleClosure(final boolean omitSanityChecks) {
 		if (mIsClosed) {
 			// nothing to do
@@ -1465,7 +1476,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (!inplace) {
 				assert mManager.checkMeetResult(this, other, result,
 						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
-				result.freezeAndClose();
+//				result.freezeAndClose();
+				result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
 			}
 			assert inplace != result.isFrozen();
 			return result;
@@ -1493,12 +1505,32 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (!inplace) {
 			assert mManager.checkMeetResult(this, other, result,
 					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
-			result.freezeAndClose();
+//			result.freezeAndClose();
+			result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
 		}
 
 		assert inplace != result.isFrozen();
 		return result;
 	}
+
+	public void freezeIfNecessary(final boolean close) {
+		if (!this.isFrozen()) {
+			if (close) {
+				this.freezeAndClose();
+			} else {
+				this.freezeOmitPropagations();
+			}
+		} else {
+			if (close && !isClosed()) {
+				/* need to unfreeze and close (or should we do it without unfreezing? -- concretization does not
+				 * change..) */
+				throw new AssertionError();
+			} else {
+				// nothing to do
+			}
+		}
+	}
+
 
 	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other, final boolean inplace) {
 		assert !this.isInconsistent() && !other.isInconsistent();
@@ -1849,6 +1881,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	@Override
 	public Set<SetConstraint<NODE>> getContainsConstraintForElement(final NODE elem) {
 		return mCongruenceClosure.getContainsConstraintForElement(elem);
+	}
+
+	public boolean isWeqFatEdgeLabel() {
+		return mIsWeqFatEdgeLabel;
+	}
+
+	public boolean isClosed() {
+		return mIsClosed;
 	}
 }
 
