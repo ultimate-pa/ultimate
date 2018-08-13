@@ -1,10 +1,34 @@
+/*
+ * Copyright (C) 2018 schaetzc@tf.uni-freiburg.de
+ * Copyright (C) 2009-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -23,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
  * Removes parts of a Petri Net that do not change its behavior.
@@ -77,9 +100,8 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 			Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mResult = new BoundedPetriNet<>(services, operand.getAlphabet(), operand.constantTokenAmount());
 		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
-		rebuildNetWithoutDeadNodes();
+		mResult = new CopySubnet<>(services, mOperand, mReachableTransitions).getResult();
 	}
 
 	private Set<ITransition<LETTER, PLACE>> reachableTransitions() throws AutomataOperationCanceledException {
@@ -99,49 +121,6 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 				// finPre contains dummy root-event which does not correspond to any transition
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
-	}
-
-	private Set<PLACE> requiredPlaces() {
-		final Set<PLACE> requiredPlaces = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> trans : mReachableTransitions) {
-			requiredPlaces.addAll(mOperand.getPredecessors(trans));
-			// successor places are only required
-			// if they are predecessors of another reachable transition
-			// or if they are accepting
-		}
-		acceptingSuccPlaces().forEach(requiredPlaces::add);
-		alwaysAcceptingPlaces().findAny().ifPresent(requiredPlaces::add);
-		return requiredPlaces;
-	}
-	
-	private Stream<PLACE> acceptingSuccPlaces() {
-		return mOperand.getAcceptingPlaces().stream().filter(
-				accPlace -> SetOperations.intersecting(mOperand.getPredecessors(accPlace), mReachableTransitions));
-	}
-	
-	private Stream<PLACE> alwaysAcceptingPlaces() {
-		return acceptingInitialPlaces().filter(
-				accIniPlace -> SetOperations.disjoint(mOperand.getSuccessors(accIniPlace), mReachableTransitions));
-	}
-	
-	private Stream<PLACE> acceptingInitialPlaces() {
-		return mOperand.getAcceptingPlaces().stream().filter(mOperand.getInitialPlaces()::contains);
-	}
-
-	private void rebuildNetWithoutDeadNodes() {
-		requiredPlaces().forEach(this::rebuildPlace);
-		mReachableTransitions.forEach(this::rebuildTransition);
-	}
-
-	private void rebuildPlace(PLACE place) {
-		final boolean isInitial = mOperand.getInitialPlaces().contains(place);
-		final boolean isAccepting = mOperand.getAcceptingPlaces().contains(place);
-		mResult.addPlace(place, isInitial, isAccepting);
-	}
-
-	private void rebuildTransition(ITransition<LETTER, PLACE> trans) {
-		final Set<PLACE> succ = SetOperations.intersection(mOperand.getSuccessors(trans), mResult.getPlaces());
-		mResult.addTransition(trans.getSymbol(), mOperand.getPredecessors(trans), succ);
 	}
 
 	@Override
