@@ -53,19 +53,27 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * Computes the difference between a {@link BoundedPetriNet} and an {@link INestedWordAutomaton}.
- * This operation is specialized for subtrahend automata with the following properties.
+ * Computes the difference L(N)-(L(A)◦Σ^*) between a {@link BoundedPetriNet} N and an {@link INestedWordAutomaton} A.
+ * This operation supports only subtrahend automata with the following properties.
  * Results for other subtrahend automata may or may not be correct.
  * <p>
- * Properties of the subtrahend automata:
+ * Properties of the subtrahend automata A:
  * <ul>
- *   <li>Subtrahend is a deterministic finite automaton (DFA).
- *   <li>Transitions to a sink state are optional,
- *       but for every reachable a-transition in the minuend petri net,
- *       there is an explicit a-transition on every state in the subtrahend automaton.
- *   <li>Once a final state is reached it cannot be left,
- *       that is final states have a selfloop for each letter from the alphabet.
- * <ul>
+ *   <li>Subtrahend is a deterministic finite automaton (DFA)
+ *   <ul>
+ *       <li>There is exactly one initial state
+ *       <li>For every state and letter there is at most one outgoing edge.
+ *   </ul>
+ *   <li>For every minuend word w ∈ L(N) there is an explicit run in A
+ *   <ul>
+ *       <li>either consuming the whole word w
+ *       <li>or reaching one of A's final states by consuming a prefix of w.
+ *   </ul>
+ * </ul>
+ * <p>
+ * If the subtrahend automaton A is closed under concatenation with Σ^*
+ * then L(A)◦Σ^* = L(A) and therefore L(N)-(L(A)◦Σ^*) = L(N)-L(A);
+ * in other words: The result of this operation is the normal difference.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author schaetzc@informatik.uni-freiburg.de
@@ -152,11 +160,11 @@ public final class Difference
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		assert checkMostSubtrahendProperties();
+		assert checkSubtrahendProperties();
 		if (subtrahendDfa.isFinal(onlyElement(subtrahendDfa.getInitialStates()))) {
-			// subtrahend accepts everything (because of its special properties)
-			// --> difference is empty
+			// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
+			// TODO consider removing the following two lines. A net can be empty. The empty net's language is empty.
 			final PLACE sinkContent = factory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
@@ -170,8 +178,7 @@ public final class Difference
 		}
 	}
 
-	private boolean checkMostSubtrahendProperties() {
-		// omitted check: Reachable transitions from minuend have sync partners in subtrahend
+	private boolean checkSubtrahendProperties() {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(mSubtrahend)) {
 			throw new IllegalArgumentException("subtrahend must be a finite automaton");
 		} else if (!IAutomaton.sameAlphabet(mMinuend, mSubtrahend)) {
@@ -180,42 +187,8 @@ public final class Difference
 		} else if (mSubtrahend.getInitialStates().size() != 1) {
 			throw new IllegalArgumentException("subtrahend must have exactly one inital state");
 		}
-		// TODO 2018-08-10 Matthias: I commented the following three lines because we
-		// somehow want to tolerate subtrahends whose language is not necessarily closed
-		// under concatenation with sigma^*. E.g., if we construct the subtrahend
-		// on-demand with the assumption that the final state is a trap, we will not
-		// get outgoing transitions from the accepting state because they will not
-		// contribute to the result of the difference.
-		// The cleanest solution might be that we specify the resulting language
-		// of this operation not as L(N)-L(A) but as L(N)-(L(A)◦∑^*).
-//		if (!finalStatesAreTraps()) {
-//			throw new IllegalArgumentException("subtrahend's final states must be trap states");
-//		}
-		return true;
-	}
-
-	private boolean finalStatesAreTraps() {
-		for (final PLACE finalState : mSubtrahend.getFinalStates()) {
-			if (!stateIsTrap(finalState)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean stateIsTrap(final PLACE state) {
-		for (final LETTER letter : mSubtrahend.getVpAlphabet().getInternalAlphabet()) {
-			boolean noSuccessors = true;
-			for (final OutgoingInternalTransition<LETTER, PLACE> out : mSubtrahend.internalSuccessors(state, letter)) {
-				if (!out.getSucc().equals(state)) {
-					return false;
-				}
-				noSuccessors = false;
-			}
-			if (noSuccessors) {
-				return false;
-			}
-		}
+		// omitted check: Reachable transitions from minuend have sync partners in subtrahend
+		// omitted check: subtrahend has to be deterministic
 		return true;
 	}
 
@@ -236,7 +209,9 @@ public final class Difference
 			final Set<PLACE> changerStates = new HashSet<>();
 			for (final PLACE state : mSubtrahend.getStates()) {
 				if (mSubtrahend.isFinal(state)) {
-					// final states are not copied to the result because of subtrahend's special properties
+					// final states and their in-going transitions are not copied to the result
+					// because we compute L(N)-(L(A)◦∑^*). Once a final state in the subtrahend A is reached,
+					// the difference cannot accept anymore.
 					continue;
 				}
 				final OutgoingInternalTransition<LETTER, PLACE> successors =
@@ -260,8 +235,8 @@ public final class Difference
 
 	private void copyNetPlaces() {
 		// the correct "constantTokenAmmount" could be computed after "addBlackAndWhitePlaces()" using ...
-		//   mOperand.constantTokenAmount() && mBlackPlace.size() == mWhitePlace.size()
-		// ... but field has to be set in constructor and cannot be changed afterwards.
+		// mOperand.constantTokenAmount() && mBlackPlace.size() == mWhitePlace.size()
+		// ... but field "constantTokenAmmount" has to be set in constructor and cannot be changed afterwards.
 		final boolean constantTokenAmount = false;
 		mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), constantTokenAmount);
 
@@ -325,7 +300,7 @@ public final class Difference
 	private void syncWithChanger(final ITransition<LETTER, PLACE> oldTrans,  final PLACE predState) {
 		final PLACE succState = onlyElement(mSubtrahend.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
 		if (mSubtrahend.isFinal(succState)) {
-			// optimization for special structure of subtrahend automata:
+			// optimization for special structure of subtrahend automata L(A)◦Σ^*:
 			// omit this transition because subtrahend will accept everything afterwards
 			return;
 		}
@@ -375,8 +350,7 @@ public final class Difference
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithEachSelfloop(final ITransition<LETTER, PLACE> oldTrans) {
-		// Relies on the special properties of the subtrahend, usually we would have to sync at least
-		// with the selfloop of the implicit (!) sink state which is not in mSelfloop.get(symbol)
+		// Relies on the special properties of the subtrahend L(A)◦Σ^*.
 		final LETTER symbol = oldTrans.getSymbol();
 		for (final PLACE state : mSelfloop.get(symbol)) {
 			final Set<PLACE> predecessors = new HashSet<>();
@@ -413,8 +387,7 @@ public final class Difference
 	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		final LETTER symbol = oldTrans.getSymbol();
 		if (mSelfloop.get(symbol).isEmpty()) {
-			// This optimization relies on the special properties of the subtrahend.
-			// Usually we would have to sync at least with the selfloop of the implicit (!) sink state.
+			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
 		final Set<PLACE> predecessors = new HashSet<>();
