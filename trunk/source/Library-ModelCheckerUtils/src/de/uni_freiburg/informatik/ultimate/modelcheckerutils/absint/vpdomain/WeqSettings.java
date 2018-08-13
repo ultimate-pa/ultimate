@@ -5,20 +5,20 @@ public class WeqSettings {
 
 //	final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
 	// TOOD: is this a good name? was it "before join", not before meetWGpa/fattenWeq/project??
-	private boolean FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN = false;
+	private boolean mFlattenWeqEdgesBeforeWeqFatten = false;
 
-	private final boolean REPORT_EQ_DEQ_INPLACE = true;
-
-
-	private final boolean REMOVE_ELEMENT_INPLACE = false;
-	private final boolean ADD_NODE_INPLACE = false;
-	private final boolean PROJECTTOELEMENTS_INPLACE = false;
+	private final boolean mReportEqDeqInplace = true;
 
 
+	private final boolean mRemoveElementInplace = false;
+	private final boolean mAddNodeInplace = false;
+	private final boolean mProjectToElementsInplace = false;
 
-	private boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
 
-	private boolean DEACTIVATE_WEAK_EQUIVALENCES = false;
+
+	private boolean mUseFullWeqccDuringProjectAway = true;
+
+	private boolean mDeactivateWeakEquivalences = false;
 
 	// setting would not work -- weq-prime architecture would need rework
 // 	private final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
@@ -26,19 +26,19 @@ public class WeqSettings {
 	/**
 	 * if reportChangeToGpa should be called during every report(Dis)Equality
 	 */
-	private final boolean ALWAYS_REPORT_CHANGE_TO_GPA = false;
+	private final boolean mAlwaysReportChangeToGpa = false;
 
 	/**
 	 * the rules pi^#-roweq and pi^
 	 */
-	private final boolean INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE = false;
+	private final boolean mIntroduceAtMostOneNodeForEachRemovedNode = false;
 
 	/*
 	 * toString settings
 	 */
-	private final int MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING = 20;
-	private final int MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING = 3;
-	private final int MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING = 4;
+	private final int mMaxNoElementsForVerboseToString = 20;
+	private final int mMaxNoEdgeLabelDisjunctsForVerboseToString = 3;
+	private final int mMaxNoWeqEdgesForVerboseToString = 4;
 
 
 	/* flags to switch sanity checks on/off */
@@ -48,30 +48,30 @@ public class WeqSettings {
 	// general flag to capture e.g. sanity checks that are done for intermediate steps of a methods and similar ones
 
 	// very fine grained checks
-	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_1 = true;
+	private final boolean mOmitSanityCheckFineGrained1 = true;
 
 	// still fine grained checks but less
-	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
+	private final boolean mOmitSanityCheckFineGrained2 = true;
 
 	/**
 	 * if reportChangeInGpa should perform a meet and project of the label
 	 */
-	private final boolean MEET_WITH_GPA_ON_REPORTCHANGE = false;
+	private final boolean mMeetWithGpaOnReportChange = false;
 
-	private final boolean MEET_WITH_GPA_ON_REPORT_WEQ = false;
+	private final boolean mMeetWithGpaOnReportWeq = false;
 
 	/**
 	 * TODO Should we always do meetWGpa during the label operations done in the roweq-rules?? Does it commute???
 	 * (observation, 02.01.2018: does seem to impact precision on regression tests, negatively if false)
 	 */
-	private final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
+	private final boolean mMeetWithGpaProjectOrShiftLabel = true;
 
 	/**
 	 * if weq labels are compared via an SMT query (right now: the standard solver, probably doing it via SMTInterpol
 	 * would be better) or via our imprecise disjunct-by-disjunct check
 	 * (performance on regressions: slightly worse for "true", ~5-10%)
 	 */
-	private boolean PRECISE_WEQ_LABEL_COMPARISON = false;
+	private boolean mPreciseWeqLabelComparison = false;
 
 	/**
 	 * Whether before answering an equality query (in EqConstraint and the like, not the low-level ones like
@@ -84,91 +84,91 @@ public class WeqSettings {
 	}
 
 	public boolean isFlattenWeqEdgesBeforeMeetWWeqGpa() {
-		return FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN;
+		return mFlattenWeqEdgesBeforeWeqFatten;
 	}
 
 	public boolean isReportEqDeqInplace() {
-		return REPORT_EQ_DEQ_INPLACE;
+		return mReportEqDeqInplace;
 	}
 
 	public boolean isRemoveElementInplace() {
-		return REMOVE_ELEMENT_INPLACE;
+		return mRemoveElementInplace;
 	}
 
 	public boolean isAddNodeInplace() {
-		return ADD_NODE_INPLACE;
+		return mAddNodeInplace;
 	}
 
 	public boolean isProjecttoelementsInplace() {
-		return PROJECTTOELEMENTS_INPLACE;
+		return mProjectToElementsInplace;
 	}
 
 	public boolean isUseFullWeqccDuringProjectaway() {
-		return USE_FULL_WEQCC_DURING_PROJECTAWAY;
+		return mUseFullWeqccDuringProjectAway;
 	}
 
 	public boolean isAlwaysReportChangeToGpa() {
-		return ALWAYS_REPORT_CHANGE_TO_GPA;
+		return mAlwaysReportChangeToGpa;
 	}
 
 	public boolean isIntroduceAtMostOneNodeForEachRemovedNode() {
-		return INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE;
+		return mIntroduceAtMostOneNodeForEachRemovedNode;
 	}
 
 	public int getMaxNoElementsForVerboseToString() {
-		return MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING;
+		return mMaxNoElementsForVerboseToString;
 	}
 
 	public int getMaxNoEdgelabeldisjunctsForVerboseToString() {
-		return MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING;
+		return mMaxNoEdgeLabelDisjunctsForVerboseToString;
 	}
 
 	public int getMaxNoWeqEdgesForVerboseToString() {
-		return MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING;
+		return mMaxNoWeqEdgesForVerboseToString;
 	}
 
 	public boolean omitSanitycheckFineGrained1() {
-		return OMIT_SANITYCHECK_FINE_GRAINED_1;
+		return mOmitSanityCheckFineGrained1;
 	}
 
 	public boolean omitSanitycheckFineGrained2() {
-		return OMIT_SANITYCHECK_FINE_GRAINED_2;
+		return mOmitSanityCheckFineGrained2;
 	}
 
 	public boolean isMeetWithGpaOnReportchange() {
-		return MEET_WITH_GPA_ON_REPORTCHANGE;
+		return mMeetWithGpaOnReportChange;
 	}
 
 	public boolean isMeetWithGpaOnReportWeq() {
-		return MEET_WITH_GPA_ON_REPORT_WEQ;
+		return mMeetWithGpaOnReportWeq;
 	}
 
 	public boolean isMeetWithGpaProjectOrShiftLabel() {
-		return MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL;
+		return mMeetWithGpaProjectOrShiftLabel;
 	}
 
 	public boolean isPreciseWeqLabelComparison() {
-		return PRECISE_WEQ_LABEL_COMPARISON;
+		return mPreciseWeqLabelComparison;
 	}
 
 	public boolean isDeactivateWeakEquivalences() {
-		return DEACTIVATE_WEAK_EQUIVALENCES;
+		return mDeactivateWeakEquivalences;
 	}
 
 	public void setUseFullWeqccDuringProjectaway(final boolean b) {
-		USE_FULL_WEQCC_DURING_PROJECTAWAY = b;
+		mUseFullWeqccDuringProjectAway = b;
 	}
 
 	public void setDeactivateWeakEquivalences(final boolean b) {
-		DEACTIVATE_WEAK_EQUIVALENCES = b;
+		mDeactivateWeakEquivalences = b;
 	}
 
 	public void setFlattenWeqEdgesBeforeMeetWWeqGpa(final boolean b) {
-		FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN = b;
+		mFlattenWeqEdgesBeforeWeqFatten = b;
 	}
 
 	public void setPreciseWeqLabelComparison(final boolean b) {
-		PRECISE_WEQ_LABEL_COMPARISON = b;
+		mPreciseWeqLabelComparison = b;
 	}
 
 	public boolean isAddNodesBeforeAnsweringQuery() {
