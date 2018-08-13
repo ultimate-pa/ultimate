@@ -183,6 +183,6 @@ public class WeqSettings {
 	 * @return
 	 */
 	public boolean closeAllEqConstraints() {
-		return false;
+		return !true;
 	}
 }

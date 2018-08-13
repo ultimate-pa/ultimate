@@ -456,15 +456,32 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> projectAway(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node) {
 		bmStart(WeqCcBmNames.PROJECTAWAY);
 		// TODO: unsure about this freezing -- is there a more efficient solution?
-		origWeqCc.freezeIfNecessary(true);
+//		origWeqCc.freezeIfNecessary(true);
+//		origWeqCc.extAndTriangleClosure(false);
+		final WeqCongruenceClosure<NODE> closed = closeIfNecessary(origWeqCc);
 
-		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+		final WeqCongruenceClosure<NODE> unfrozen = unfreezeIfNecessary(closed);
+
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
 		unfrozen.freezeAndClose();
 		assert checkProjectAwayResult(origWeqCc, node, unfrozen,
 					getNonTheoryLiteralDisequalitiesIfNecessary());
 		bmEnd(WeqCcBmNames.PROJECTAWAY);
 		return unfrozen;
+	}
+
+	public WeqCongruenceClosure<NODE> closeIfNecessary(final WeqCongruenceClosure<NODE> origWeqCc) {
+		if (origWeqCc.isClosed()) {
+			return origWeqCc;
+		}
+		if (origWeqCc.isFrozen()) {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.extAndTriangleClosure(false);
+			return unfrozen;
+		} else {
+			origWeqCc.extAndTriangleClosure(false);
+			return origWeqCc;
+		}
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> flattenWeqLabels(
@@ -554,6 +571,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * Note that this is asymmetrical, in particular in the inplace case, the first argument is updated with the
 	 * constraints in the second.
 	 *
+	 * Also note this triggers no closure operation.
+	 *
 	 * @param weqcc1
 	 * @param weqcc2
 	 * @param inplace
@@ -576,10 +595,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			bmEnd(WeqCcBmNames.MEET);
 			return weqcc1;
 		} else {
-			weqcc1.freezeIfNecessary(mSettings.closeAllEqConstraints());
+//			weqcc1.freezeIfNecessary(mSettings.closeAllEqConstraints());
+			weqcc1.freezeIfNecessary();
 			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, false);
 
-			result.freezeIfNecessary(mSettings.closeAllEqConstraints());
+//			result.freezeIfNecessary(mSettings.closeAllEqConstraints());
+			result.freezeIfNecessary();
 
 			assert checkMeetResult(weqcc1, weqcc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.MEET);
@@ -631,11 +652,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1,
-			final WeqCongruenceClosure<NODE> weqcc2, final boolean modifiable) {
+	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1Raw,
+			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable) {
 		bmStart(WeqCcBmNames.JOIN);
-		weqcc1.freezeIfNecessary(true);
-		weqcc2.freezeIfNecessary(true);
+
+		final WeqCongruenceClosure<NODE> weqcc1 = closeIfNecessary(weqcc1Raw);
+		weqcc1.freezeIfNecessary();
+
+		final WeqCongruenceClosure<NODE> weqcc2 = closeIfNecessary(weqcc2Raw);
+		weqcc2.freezeIfNecessary();
 
 		if (weqcc1.isInconsistent()) {
 			bmEnd(WeqCcBmNames.JOIN);
@@ -716,7 +741,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2) {
 		bmStart(WeqCcBmNames.ISSTRONGERTHAN);
-		if (CcSettings.ALIGN_INPLACE) {
+		if (CcSettings.ALIGN_INPLACE && !weqcc1.isFrozen() && !weqcc2.isFrozen()) {
 
 			weqcc1.extAndTriangleClosure(false);
 			weqcc2.extAndTriangleClosure(false);
@@ -726,10 +751,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return result;
 		} else {
 			final WeqCongruenceClosure<NODE> weqcc1Copy = copyWeqCc(weqcc1, true);
-			final WeqCongruenceClosure<NODE> weqcc2Copy = copyWeqCc(weqcc2, true);;
+			final WeqCongruenceClosure<NODE> weqcc2Copy = copyWeqCc(weqcc2, true);
 
-			weqcc1Copy.freezeIfNecessary(true);
-			weqcc2Copy.freezeIfNecessary(true);
+			final WeqCongruenceClosure<NODE> weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
+			final WeqCongruenceClosure<NODE> weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
+
+			weqcc1CopyClosed.freezeIfNecessary();
+			weqcc2CopyClosed.freezeIfNecessary();
 
 			final boolean result = weqcc1Copy.isStrongerThan(weqcc2Copy);
 			bmEnd(WeqCcBmNames.ISSTRONGERTHAN);
@@ -1588,9 +1616,18 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (disjunct instanceof CongruenceClosure<?>) {
 			return (DISJUNCT) mCcManager.unfreezeIfNecessary((CongruenceClosure<NODE>) disjunct);
 		} else {
-			throw new AssertionError("implement");
+			return (DISJUNCT) this.unfreezeIfNecessary((WeqCongruenceClosure<NODE>) disjunct);
 		}
 	}
+
+	public WeqCongruenceClosure<NODE> unfreezeIfNecessary(final WeqCongruenceClosure<NODE> weqcc) {
+		if (weqcc.isFrozen()) {
+			return unfreeze(weqcc);
+		} else {
+			return weqcc;
+		}
+	}
+
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> copy(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value,

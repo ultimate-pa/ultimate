@@ -98,10 +98,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				nonTheoryLiteralNodes);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
-		mBottomConstraint.freezeIfNecessary(true);
+		mBottomConstraint.freezeIfNecessary();
 
 		mEmptyConstraint = new EqConstraint<>(1, mWeqCcManager.getEmptyWeqCc(true), this);
-		mEmptyConstraint.freezeIfNecessary(true);
+		mEmptyConstraint.freezeIfNecessary();
 		mEmptyDisjunctiveConstraint = new EqDisjunctiveConstraint<>(Collections.singleton(mEmptyConstraint), this);
 
 		mConstraintIdCounter = 2;
@@ -206,31 +206,35 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return new EqDisjunctiveConstraint<NODE>(bottomsFiltered, this);
 	}
 
-	public EqConstraint<NODE> conjoin(final EqConstraint<NODE> constraint1, final EqConstraint<NODE> constraint2,
+	public EqConstraint<NODE> conjoin(final EqConstraint<NODE> constraint1Raw, final EqConstraint<NODE> constraint2,
 			final boolean inplace) {
 		debugStart(BmNames.CONJOIN);
-		if (constraint1.isBottom()) {
+		if (constraint1Raw.isBottom()) {
 			debugEnd(BmNames.CONJOIN);
-			return constraint1;
+			return constraint1Raw;
 		}
 		if (constraint2.isBottom() && !inplace) {
 			debugEnd(BmNames.CONJOIN);
 			return constraint2;
 		}
-		if (constraint1.isTop() && !inplace) {
+		if (constraint1Raw.isTop() && !inplace) {
 			debugEnd(BmNames.CONJOIN);
 			return constraint2;
 		}
 		if (constraint2.isTop()) {
 			debugEnd(BmNames.CONJOIN);
-			return constraint1;
+			return constraint1Raw;
 		}
 
+		EqConstraint<NODE> constraint1 = constraint1Raw;
 		if (!inplace) {
-			constraint1.freezeIfNecessary(mWeqCcManager.getSettings().closeAllEqConstraints());
+			if (mWeqCcManager.getSettings().closeAllEqConstraints()) {
+				constraint1 = closeIfNecessary(constraint1Raw);
+			}
+			constraint1.freezeIfNecessary();
 		}
 
-		assert !mWeqCcManager.getSettings().closeAllEqConstraints() || constraint2.getWeqCc().isClosed() : "right?..";
+//		assert !mWeqCcManager.getSettings().closeAllEqConstraints() || constraint2.getWeqCc().isClosed() : "right?..";
 
 		assert inplace != constraint1.isFrozen();
 
@@ -254,6 +258,18 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 //			constraint1.freezeAndClose();
 //		}
 //	}
+
+	public EqConstraint<NODE> closeIfNecessary(final EqConstraint<NODE> constraint) {
+		if (constraint.isBottom()) {
+			return constraint;
+		}
+		final WeqCongruenceClosure<NODE> weqcc = constraint.getWeqCc();
+		if (weqcc.isClosed()) {
+			return constraint;
+		}
+		final WeqCongruenceClosure<NODE> weqccclosed = mWeqCcManager.closeIfNecessary(constraint.getWeqCc());
+		return getEqConstraint(weqccclosed, true);
+	}
 
 	/**
 	 * conjunction/intersection/join

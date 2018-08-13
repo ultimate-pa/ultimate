@@ -109,4 +109,8 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 		return false;
 	}
 
+	@Override
+	public WeqCongruenceClosure<NODE> getWeqCc() {
+		throw new AssertionError("Bottom constraint has no WeqCc");
+	}
 }

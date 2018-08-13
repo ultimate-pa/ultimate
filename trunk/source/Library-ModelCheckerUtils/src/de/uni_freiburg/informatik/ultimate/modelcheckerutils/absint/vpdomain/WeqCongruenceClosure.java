@@ -1477,7 +1477,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert mManager.checkMeetResult(this, other, result,
 						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
 //				result.freezeAndClose();
-				result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+//				result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+				WeqCongruenceClosure<NODE> closed = result;
+				if (mManager.getSettings().closeAllEqConstraints()) {
+					closed = mManager.closeIfNecessary(result);
+				}
+				closed.freezeIfNecessary();
 			}
 			assert inplace != result.isFrozen();
 			return result;
@@ -1506,28 +1511,36 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert mManager.checkMeetResult(this, other, result,
 					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
 //			result.freezeAndClose();
-			result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+//			result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+			WeqCongruenceClosure<NODE> closed = result;
+			if (mManager.getSettings().closeAllEqConstraints()) {
+				closed = mManager.closeIfNecessary(result);
+			}
+			closed.freezeIfNecessary();
 		}
 
 		assert inplace != result.isFrozen();
 		return result;
 	}
 
-	public void freezeIfNecessary(final boolean close) {
+	public void freezeIfNecessary() {
 		if (!this.isFrozen()) {
-			if (close) {
-				this.freezeAndClose();
-			} else {
-				this.freezeOmitPropagations();
-			}
+			this.freezeOmitPropagations();
+//			if (close) {
+//				this.freezeAndClose();
+//			} else {
+//				this.freezeOmitPropagations();
+//			}
 		} else {
-			if (close && !isClosed()) {
-				/* need to unfreeze and close (or should we do it without unfreezing? -- concretization does not
-				 * change..) */
-				throw new AssertionError();
-			} else {
-				// nothing to do
-			}
+			// nothing to do
+
+//			if (close && !isClosed()) {
+//				/* need to unfreeze and close (or should we do it without unfreezing? -- concretization does not
+//				 * change..) */
+//				throw new AssertionError();
+//			} else {
+//				// nothing to do
+//			}
 		}
 	}
 

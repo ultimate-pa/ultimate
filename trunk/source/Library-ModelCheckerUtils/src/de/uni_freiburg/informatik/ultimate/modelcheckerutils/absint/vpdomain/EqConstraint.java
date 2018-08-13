@@ -83,16 +83,16 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeqCc = cClosure;
 	}
 
-	private void freezeAndClose() {
-		assert !isInconsistent() : "use EqBottomConstraint instead!!";
-//		assert mWeqCc.isFrozen();
-		assert sanityCheck();
-		assert !mIsFrozen;
-//		mWeqCc.freezeAndClose();
-		mWeqCc.freezeIfNecessary(true);
-		mIsFrozen = true;
-	}
-
+//	private void freezeAndClose() {
+//		assert !isInconsistent() : "use EqBottomConstraint instead!!";
+////		assert mWeqCc.isFrozen();
+//		assert sanityCheck();
+//		assert !mIsFrozen;
+////		mWeqCc.freezeAndClose();
+//		mWeqCc.freezeIfNecessary(true);
+//		mIsFrozen = true;
+//	}
+//
 	private void freezeAndDontClose() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
 //		assert mWeqCc.isFrozen();
@@ -425,17 +425,22 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mIsFrozen = true;
 	}
 
-	public void freezeIfNecessary(final boolean close) {
+//	public void freezeIfNecessary(final boolean close) {
+	public void freezeIfNecessary() {
 		if (!isFrozen()) {
-			if (close) {
-				freezeAndClose();
-			} else {
+//			if (close) {
+//				freezeAndClose();
+//			} else {
 				freezeAndDontClose();
-			}
+//			}
 		}
 	}
 
 	public Set<NODE> getAllLiteralNodes() {
 		return mWeqCc.getAllLiterals();
+	}
+
+	public boolean isClosed() {
+		return mWeqCc.isClosed();
 	}
 }

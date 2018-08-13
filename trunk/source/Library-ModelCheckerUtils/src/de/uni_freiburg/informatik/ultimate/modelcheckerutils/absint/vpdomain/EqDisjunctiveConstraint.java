@@ -159,9 +159,14 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	private EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
-			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
+			EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportEqualityInPlace(node1, node2);
-			unfrozen.freezeIfNecessary(mFactory.getWeqSettings().closeAllEqConstraints());
+
+			if (mFactory.getWeqCcManager().getSettings().closeAllEqConstraints()) {
+				unfrozen = mFactory.closeIfNecessary(unfrozen);
+			}
+			unfrozen.freezeIfNecessary();
+
 			constraintList.add(unfrozen);
 		}
 		return mFactory.getDisjunctiveConstraint(constraintList);
@@ -176,9 +181,14 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	private EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
-			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
+			EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportDisequalityInPlace(node1, node2);
-			unfrozen.freezeIfNecessary(mFactory.getWeqSettings().closeAllEqConstraints());
+
+			if (mFactory.getWeqCcManager().getSettings().closeAllEqConstraints()) {
+				unfrozen = mFactory.closeIfNecessary(unfrozen);
+			}
+			unfrozen.freezeIfNecessary();
+
 			constraintList.add(unfrozen);
 		}
 		return mFactory.getDisjunctiveConstraint(constraintList);
@@ -273,9 +283,21 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 	}
 
-	public void freezeDisjunctsIfNecessary(final boolean close) {
+	public EqDisjunctiveConstraint<NODE> closeDisjunctsIfNecessary() {
+		if (mConstraints.stream().allMatch(c -> c.isClosed())) {
+			return this;
+		}
+		final Collection<EqConstraint<NODE>> constraintList = new HashSet<>();
 		for (final EqConstraint<NODE> disjunct : mConstraints) {
-			disjunct.freezeIfNecessary(close);
+			constraintList.add(mFactory.closeIfNecessary(disjunct));
+		}
+		return mFactory.getDisjunctiveConstraint(constraintList);
+	}
+
+
+	public void freezeDisjunctsIfNecessary() {
+		for (final EqConstraint<NODE> disjunct : mConstraints) {
+			disjunct.freezeIfNecessary();
 		}
 	}
 

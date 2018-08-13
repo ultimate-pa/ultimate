@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqC
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -95,11 +94,17 @@ public class EqStateFactory {
 		return mEqNodeAndFunctionFactory;
 	}
 
-	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
+//	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
+	public EqState getEqState(final EqConstraint<EqNode> constraint,
 				final Set<IProgramVarOrConst> variables) {
-		constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
+//		constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
+		if (mEqConstraintFactory.getWeqSettings().closeAllEqConstraints()) {
+			final EqConstraint<EqNode> closed = mEqConstraintFactory.closeIfNecessary(constraint);
+		}
+		constraint.freezeIfNecessary();
+
 		// TODO manage EqStates smarter?
-		return new EqState((EqConstraint<EqNode>) constraint, mEqNodeAndFunctionFactory, this, variables);
+		return new EqState(constraint, mEqNodeAndFunctionFactory, this, variables);
 	}
 
 	public EqConstraintFactory<EqNode> getEqConstraintFactory() {
