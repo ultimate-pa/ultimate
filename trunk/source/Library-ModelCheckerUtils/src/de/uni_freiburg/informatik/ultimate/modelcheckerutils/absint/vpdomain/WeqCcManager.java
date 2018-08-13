@@ -132,7 +132,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
 		nonTheoryLiteralNodes.forEach(mTautologicalWeqCc::addElementRec);
-		mTautologicalWeqCc.freeze();
+		mTautologicalWeqCc.freezeAndClose();
 
 		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
 
@@ -202,7 +202,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.addElement(node, omitSanityChecks);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 			result = unfrozen;
 		}
 
@@ -349,7 +349,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportEquality(node1, node2, false);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 			assert checkReportEqualityResult(origWeqCc, node1, node2, unfrozen,
 					getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTEQUALITY);
@@ -375,7 +375,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportDisequality(node1, node2);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
 					getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTDISEQUALITY);
@@ -397,7 +397,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportWeakEquivalence(array1, array2, storeIndex, false);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 			assert checkReportWeakEquivalenceResult(origWeqCc, array1, array2, storeIndex, unfrozen);
 			bmEnd(WeqCcBmNames.REPORTWEQ);
 			return unfrozen;
@@ -415,7 +415,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportContainsConstraint(elem, literalSet);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 //			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
 //					getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTCONTAINS);
@@ -445,7 +445,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportContainsConstraint(elem, containsConstraint);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 //			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
 //					getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTCONTAINS);
@@ -460,7 +460,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
-		unfrozen.freeze();
+		unfrozen.freezeAndClose();
 		assert checkProjectAwayResult(origWeqCc, node, unfrozen,
 					getNonTheoryLiteralDisequalitiesIfNecessary());
 		bmEnd(WeqCcBmNames.PROJECTAWAY);
@@ -507,7 +507,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		result.setIsEdgeLabelDisjunct();
 
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		assert getSettings().omitSanitycheckFineGrained2() || result.sanityCheck();
 		return result;
@@ -642,7 +642,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
 		assert result != weqcc1 && result != weqcc2 : "join should construct a new object";
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		assert checkJoinResult(weqcc1, weqcc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		bmEnd(WeqCcBmNames.JOIN);
@@ -651,7 +651,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private void freezeIfNecessary(final WeqCongruenceClosure<NODE> weqcc) {
 		if (!weqcc.isFrozen()) {
-			weqcc.freeze();
+			weqcc.freezeAndClose();
 		}
 	}
 
@@ -1120,7 +1120,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mNonTheoryLiteralNodes.forEach(n -> result.addElement(n, false));
 
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		return result;
 	}
@@ -1245,7 +1245,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			reportEquality(result, weqVarNode, ithNode, true);
 		}
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		return result;
 	}
@@ -1513,7 +1513,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 //		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original, true);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original);
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		return result;
 	}
@@ -1672,7 +1672,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, ISSTRONGERTHAN, ADDNODE, REPORTEQUALITY,
 		REPORTDISEQUALITY, REPORTWEQ, REPORTCONTAINS, PROJECTAWAY, FLATTENLABELS, RENAMEVARS, ADDALLNODES,
-		MEETEDGELABELS, ISLABELSTRONGERTHAN, ISWEQGRAPHSTRONGERTHAN, WEQGRAPHJOIN, FREEZE;
+		MEETEDGELABELS, ISLABELSTRONGERTHAN, ISWEQGRAPHSTRONGERTHAN, WEQGRAPHJOIN, FREEZE_AND_CLOSE, FREEZEONLY,
+		EXT_AND_TRIANGLE_CLOSURE;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];

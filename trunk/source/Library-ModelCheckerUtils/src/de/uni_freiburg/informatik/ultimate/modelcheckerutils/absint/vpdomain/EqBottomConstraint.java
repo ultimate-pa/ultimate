@@ -65,7 +65,7 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 	}
 
 	@Override
-	public void freeze() {
+	public void freezeAndClose() {
 		// do nothing;
 	}
 

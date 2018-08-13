@@ -53,11 +53,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters
  */
 public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
-//	/**
-//	 * more of a dummy right now, for keeping the old in-place/mutable data code
-//	 */
-//	private static final boolean INPLACE = false;
-
 	private final EqConstraint<NODE> mBottomConstraint;
 
 	private final EqConstraint<NODE> mEmptyConstraint;
@@ -103,10 +98,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				nonTheoryLiteralNodes);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
-		mBottomConstraint.freeze();
+		mBottomConstraint.freezeAndClose();
 
 		mEmptyConstraint = new EqConstraint<>(1, mWeqCcManager.getEmptyWeqCc(true), this);
-		mEmptyConstraint.freeze();
+		mEmptyConstraint.freezeAndClose();
 		mEmptyDisjunctiveConstraint = new EqDisjunctiveConstraint<>(Collections.singleton(mEmptyConstraint), this);
 
 		mConstraintIdCounter = 2;
@@ -254,7 +249,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private void freezeIfNecessary(final EqConstraint<NODE> constraint1) {
 		if (!constraint1.isFrozen()) {
-			constraint1.freeze();
+			constraint1.freezeAndClose();
 		}
 	}
 
@@ -291,14 +286,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			mWeqCcManager.reportWeakEquivalence(inputConstraint.getWeqCc(), array1, array2, storeIndex, true);
 			debugEnd(BmNames.ADD_WEAK_EQUALITY);
 			return inputConstraint;
-
-//			final EqConstraint<NODE> newConstraint = unfreeze(inputConstraint);
-//			newConstraint.reportWeakEquivalenceInPlace(array1, array2, storeIndex);
-//			if (newConstraint.isInconsistent()) {
-//				return mBottomConstraint;
-//			}
-//			newConstraint.freeze();
-//			return newConstraint;
 		} else {
 			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.reportWeakEquivalence(inputConstraint.getWeqCc(),
 					array1, array2, storeIndex, false);
@@ -598,35 +585,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			return result;
 		}
-
-//		static final String BM_NO_PROJECTAWAY = "#projectAway";
-//		static final String BM_TIME_PROJECTAWAY = "time_projectAway";
-//		static final String BM_NO_UNFREEZE = "#unfreeze";
-//		static final String BM_TIME_UNFREEZE = "time_unfreeze";
-//		static final String BM_NO_ADD_EQUALITY = "#reportEquality";
-//		static final String BM_TIME_ADD_EQUALITY = "time_reportEquality";
-//		static final String BM_NO_ADD_DISEQUALITY = "#reportDisequality";
-//		static final String BM_TIME_ADD_DISEQUALITY = "time_reportDisequality";
-//		static final String BM_NO_ADD_WEAK_EQUALITY = "#reportWeakEquality";
-//		static final String BM_TIME_ADD_WEAK_EQUALITY = "time_reportWeakEquality";
-//		static final String BM_NO_CONJOIN = "#conjoin";
-//		static final String BM_TIME_CONJOIN = "time_conjoin";
-//		static final String BM_NO_CONJOIN_DISJUNCTIVE = "#conjoin_disjunctive";
-//		static final String BM_TIME_CONJOIN_DISJUNCTIVE = "time_conjoin_disjunctive";
-//		static final String BM_NO_DISJOIN = "#conjoin";
-//		static final String BM_TIME_DISJOIN = "time_conjoin";
-//		static final String BM_NO_DISJOIN_DISJUNCTIVE = "#conjoin_disjunctive";
-//		static final String BM_TIME_DISJOIN_DISJUNCTIVE = "time_conjoin_disjunctive";
-
-//		enum entries {
-//			PROJECTAWAY, UNFREEZE;
-//		};
-
-//		public static void registerCountersAndWatches(final BenchmarkWithCounters benchmark) {
-//
-//			for ()
-//
-//		}
 	}
 
 	public WeqSettings getWeqSettings() {

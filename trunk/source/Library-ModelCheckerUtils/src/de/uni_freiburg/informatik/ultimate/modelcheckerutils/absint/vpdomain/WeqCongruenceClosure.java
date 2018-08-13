@@ -207,12 +207,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mIsFrozen;
 	}
 
-	@Override
-	public void freezeIfNecessary() {
-		if (!isFrozen()) {
-			freeze();
-		}
-	}
+//	@Override
+//	public void freezeIfNecessary() {
+//		if (!isFrozen()) {
+//			freezeAndClose();
+//		}
+//	}
 
 	/**
 	 * Call this, when you are sure that this WeqCc is already closed.
@@ -220,7 +220,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void freezeOmitPropagations() {
 		// set the flags
 		if (mCongruenceClosure != null) {
-			mCongruenceClosure.freezeIfNecessary();;
+			mManager.getCcManager().freezeIfNecessary(mCongruenceClosure);
 		}
 //		if (mWeakEquivalenceGraph != null) {
 		if (!isInconsistent()) {
@@ -231,8 +231,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public void freeze() {
-		mManager.bmStart(WeqCcBmNames.FREEZE);
+	public void freezeAndClose() {
+		mManager.bmStart(WeqCcBmNames.FREEZE_AND_CLOSE);
 		assert !mIsFrozen;
 		/*
 		 *  Do all possible propagations that were delayed.
@@ -242,7 +242,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		extAndTriangleClosure(false);
 
 		freezeOmitPropagations();
-		mManager.bmEnd(WeqCcBmNames.FREEZE);
+		mManager.bmEnd(WeqCcBmNames.FREEZE_AND_CLOSE);
 	}
 
 	@Override
@@ -1027,6 +1027,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public void extAndTriangleClosure(final boolean omitSanityChecks) {
+		mManager.bmStart(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
 		if (WeqCcManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
@@ -1040,6 +1041,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				while (madeChanges) {
 					if (this.isInconsistent()) {
 						assert mManager.checkEquivalence(originalCopy, this);
+						mManager.bmEnd(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 						return;
 					}
 
@@ -1062,11 +1064,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (!getWeakEquivalenceGraph().hasArrayEqualities()) {
 				// status: closed under ext and under triangle --> done
 				assert mManager.checkEquivalence(originalCopy, this);
+				mManager.bmEnd(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 				return;
 			}
 			reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 		}
-
 	}
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
@@ -1513,7 +1515,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (!inplace) {
 				assert mManager.checkMeetResult(this, other, result,
 						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
-				result.freeze();
+				result.freezeAndClose();
 			}
 			assert inplace != result.isFrozen();
 			return result;
@@ -1542,7 +1544,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert mManager.checkMeetResult(this, other, result,
 					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
 //					mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
-			result.freeze();
+			result.freezeAndClose();
 		}
 
 		assert inplace != result.isFrozen();

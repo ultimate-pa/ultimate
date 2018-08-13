@@ -949,7 +949,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 	public void freeze() {
 		for (final DISJUNCT disjunct : getDisjuncts()) {
-			disjunct.freezeIfNecessary();
+			mWeqCcManager.freezeIfNecessary(disjunct);
 		}
 		mIsFrozen = true;
 	}
@@ -1015,7 +1015,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			return;
 		}
 		for (final DISJUNCT disjunct : getDisjuncts()) {
-			disjunct.freezeIfNecessary();
+			mWeqCcManager.freezeIfNecessary(disjunct);
 		}
 		mIsFrozen = true;
 	}

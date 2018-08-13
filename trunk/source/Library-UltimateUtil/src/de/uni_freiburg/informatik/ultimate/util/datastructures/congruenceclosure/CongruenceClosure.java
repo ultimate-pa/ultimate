@@ -235,10 +235,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	/**
-	 * Sets the flag for isFrozen() to true.
+	 * Sets the flag for isFrozen() to true. (Propagations in CongruenceClosure are done immediately so no closure
+	 * needs to be executed here.)
 	 */
 	@Override
-	public void freeze() {
+	public void freezeAndClose() {
 		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
@@ -2021,12 +2022,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.getLogger();
 	}
 
-	@Override
-	public void freezeIfNecessary() {
-		 if (!isFrozen()) {
-			 freeze();
-		 }
-	}
+//	@Override
+//	public void freezeIfNecessary() {
+//		 if (!isFrozen()) {
+//			 freezeAndClose();
+//		 }
+//	}
 
 	public Set<ELEM> getEquivalenceClass(final ELEM elem) {
 		return Collections.unmodifiableSet(mElementTVER.getEquivalenceClass(elem));

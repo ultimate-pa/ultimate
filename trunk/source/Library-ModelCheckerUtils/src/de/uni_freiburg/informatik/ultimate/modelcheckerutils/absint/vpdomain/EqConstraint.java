@@ -83,12 +83,21 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeqCc = cClosure;
 	}
 
-	public void freeze() {
+	public void freezeAndClose() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
 //		assert mWeqCc.isFrozen();
 		assert sanityCheck();
 		assert !mIsFrozen;
-		mWeqCc.freeze();
+		mWeqCc.freezeAndClose();
+		mIsFrozen = true;
+	}
+
+	public void freezeAndDontClose() {
+		assert !isInconsistent() : "use EqBottomConstraint instead!!";
+//		assert mWeqCc.isFrozen();
+		assert sanityCheck();
+		assert !mIsFrozen;
+		mWeqCc.freezeOmitPropagations();
 		mIsFrozen = true;
 	}
 
@@ -202,7 +211,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		final WeqCongruenceClosure<NODE> unfrozen = manager.unfreeze(mWeqCc);
 		manager.addNode(node1, unfrozen, true, false);
 		manager.addNode(node2, unfrozen, true, false);
-		unfrozen.freeze();
+		unfrozen.freezeAndClose();
 		return unfrozen;
 	}
 
@@ -417,7 +426,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void freezeIfNecessary() {
 		if (!isFrozen()) {
-			freeze();
+			freezeAndClose();
 		}
 	}
 

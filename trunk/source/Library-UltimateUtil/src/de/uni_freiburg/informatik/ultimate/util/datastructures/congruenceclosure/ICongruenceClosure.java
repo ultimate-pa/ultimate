@@ -20,9 +20,9 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	Collection<ELEM> getAllElements();
 
-	void freeze();
+	void freezeAndClose();
 
-	void freezeIfNecessary();
+//	void freezeIfNecessary();
 
 	String toLogString();
 

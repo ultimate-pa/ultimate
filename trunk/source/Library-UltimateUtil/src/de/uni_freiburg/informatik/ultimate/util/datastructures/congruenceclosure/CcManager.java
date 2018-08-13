@@ -68,10 +68,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mSetConstraintManager = new SetConstraintManager<>();
 
 		mInconsistentCc = new CongruenceClosure<>(true);
-		mInconsistentCc.freeze();
+		mInconsistentCc.freezeAndClose();
 
 		mEmptyFrozenCc = new CongruenceClosure<>(this);
-		mEmptyFrozenCc.freeze();
+		mEmptyFrozenCc.freezeAndClose();
 
 		if (CcSettings.UNIFY_CCS) {
 	 		mPartialOrderCache = new PartialOrderCache<>(mCcComparator);
@@ -217,7 +217,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final CongruenceClosure<ELEM> result = cc1.join(cc2);
 
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		assert modifiable != result.isFrozen();
 
@@ -280,7 +280,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
 			unfrozen.reportEquality(node1, node2);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
 			bmEnd(CcBmNames.REPORT_EQUALITY);
@@ -299,7 +299,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
 			unfrozen.reportDisequality(node1, node2);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 
 			assert unfrozen.isInconsistent()
 				|| unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
@@ -339,7 +339,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 ////					Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
 //			unfrozen.reportContainsConstraint(elem, newSetCc.getSetConstraints());
 			unfrozen.reportContainsConstraint(elem, elementSet);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
 			bmEnd(CcBmNames.REPORTCONTAINS);
@@ -384,7 +384,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final CongruenceClosure<ELEM> result = unfreeze(origCc);
 		RemoveCcElement.removeSimpleElement(result, elem);
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		assert modifiable != result.isFrozen();
 
@@ -402,7 +402,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		RemoveCcElement.removeSimpleElementDontIntroduceNewNodes(result, elem);
 
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		assert modifiable != result.isFrozen();
 
@@ -438,7 +438,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(congruenceClosure);
 			unfrozen.addElement(elem, newEqualityTarget, omitSanityCheck);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
 			return resultPp;
@@ -512,7 +512,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final boolean modifiable) {
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver);//, literalConstraints);
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		return result;
 	}
@@ -524,7 +524,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, literalConstraints,
 				removeElementInfo);
 		if (!modifiable) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 		return result;
 	}
@@ -543,7 +543,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(cc);
 
 		if (cc.isFrozen()) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 //		assert result.isFrozen() == cc.isFrozen();
 //		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
@@ -567,7 +567,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreezeIfNecessary(cc);
 			unfrozen.transformElementsAndFunctions(transformer);
-			unfrozen.freeze();
+			unfrozen.freezeAndClose();
 			// TODO: implement a result check here?
 			result = unfrozen;
 		}
@@ -587,7 +587,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			 * needed */
 			final CongruenceClosure<ELEM> unfrozen = unfreezeIfNecessary(cc);
 			final CongruenceClosure<ELEM> result = unfrozen.projectToElements(nodesToKeep, remInfo);
-			result.freeze();
+			result.freezeAndClose();
 			// TODO: implement a result check here?
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
 			bmEnd(CcBmNames.PROJECT_TO_ELEMENTS);
@@ -617,7 +617,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		if (!inplace) {
-			result.freeze();
+			result.freezeAndClose();
 		}
 
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
@@ -635,7 +635,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public void freezeIfNecessary(final CongruenceClosure<ELEM> cc) {
 		if (!cc.isFrozen()) {
-			cc.freeze();
+			cc.freezeAndClose();
 		}
 	}
 
@@ -646,7 +646,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 *  them here.
 		 */
 		if (!modifiable) {
-			copy.freeze();
+			copy.freezeAndClose();
 		}
 		return copy;
 	}
@@ -805,8 +805,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			}
 
-			cc1Aligned.freeze();
-			cc2Aligned.freeze();
+			cc1Aligned.freezeAndClose();
+			cc2Aligned.freezeAndClose();
 
 			bmEnd(CcBmNames.ALIGN_ELEMENTS);
 			return new Pair<>(cc1Aligned, cc2Aligned);
