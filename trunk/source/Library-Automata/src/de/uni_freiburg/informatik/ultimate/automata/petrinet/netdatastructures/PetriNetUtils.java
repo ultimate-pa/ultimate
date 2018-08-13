@@ -37,14 +37,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class PetriNetUtils {
+public final class PetriNetUtils {
 
 	private PetriNetUtils() {
 		// do not instantiate
 	}
 
-	public static <LETTER, PLACE> boolean similarPredecessorPlaces(final Collection<ITransition<LETTER, PLACE>> transitions,
-			final IPetriNet<LETTER, PLACE> net) {
+	public static <LETTER, PLACE> boolean similarPredecessorPlaces(
+			final Collection<ITransition<LETTER, PLACE>> transitions, final IPetriNet<LETTER, PLACE> net) {
 		if (transitions.isEmpty()) {
 			return true;
 		} else {
