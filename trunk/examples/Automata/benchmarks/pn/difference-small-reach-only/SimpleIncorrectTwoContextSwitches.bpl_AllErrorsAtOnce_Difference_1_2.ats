@@ -1,0 +1,48 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/08/13 05:05:48)
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/08/13 05:05:48)
+
+PetriNet net = (
+	alphabet = {"g := -2;" "assume true;" "g := 0;" "assume true;" "g := g + 1;" "assume !(g != -1);" "assume g != -1;" "assume true;" "g := 0;assume true;" },
+	places = {"5#Thread2FINALtrue" "6#Thread2ENTRYtrue" "8#~initENTRYtrue" "10#L25-1true" "11#Thread1ENTRYtrue" "12#L26true" "13#Thread1FINALtrue" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "16#~initENTRYtrue" "17#true" "19#(<= 0 g)" "Black: 17#true" "Black: 19#(<= 0 g)" },
+	transitions = {
+		({"13#Thread1FINALtrue" } "assume true;" {})
+		({"10#L25-1true" } "assume g != -1;" {"13#Thread1FINALtrue" })
+		({"17#true" "Black: 19#(<= 0 g)" "11#Thread1ENTRYtrue" } "g := 0;" {"19#(<= 0 g)" "Black: 17#true" "10#L25-1true" })
+		({"Black: 19#(<= 0 g)" "10#L25-1true" } "assume !(g != -1);" {"Black: 19#(<= 0 g)" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"5#Thread2FINALtrue" } "assume true;" {})
+		({"Black: 17#true" "11#Thread1ENTRYtrue" } "g := 0;" {"Black: 17#true" "10#L25-1true" })
+		({"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" } "g := -2;" {"17#true" "5#Thread2FINALtrue" "Black: 19#(<= 0 g)" })
+		({"16#~initENTRYtrue" "17#true" "Black: 19#(<= 0 g)" "8#~initENTRYtrue" } "g := 0;assume true;" {"19#(<= 0 g)" "Black: 17#true" "6#Thread2ENTRYtrue" "11#Thread1ENTRYtrue" })
+		({"12#L26true" } "g := g + 1;" {"10#L25-1true" })
+		({"10#L25-1true" } "assume true;" {"12#L26true" })
+	},
+	initialMarking = {"16#~initENTRYtrue" "17#true" "Black: 19#(<= 0 g)" "8#~initENTRYtrue" },
+	acceptingPlaces = {"15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"g := -2;" "assume true;" "g := 0;" "assume true;" "g := g + 1;" "assume !(g != -1);" "assume g != -1;" "assume true;" "g := 0;assume true;" },
+	states = {"23#true" "24#false" "25#(<= (+ g 2) 0)" },
+	initialStates = {"23#true" },
+	finalStates = {"24#false" },
+	transitions = {
+		("23#true" "g := -2;" "25#(<= (+ g 2) 0)")
+		("23#true" "assume true;" "23#true")
+		("23#true" "g := 0;" "23#true")
+		("23#true" "assume true;" "23#true")
+		("23#true" "g := g + 1;" "23#true")
+		("23#true" "assume !(g != -1);" "23#true")
+		("23#true" "assume g != -1;" "23#true")
+		("23#true" "assume true;" "23#true")
+		("23#true" "g := 0;assume true;" "23#true")
+		("25#(<= (+ g 2) 0)" "assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "g := 0;" "23#true")
+		("25#(<= (+ g 2) 0)" "assume true;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "g := g + 1;" "23#true")
+		("25#(<= (+ g 2) 0)" "assume !(g != -1);" "24#false")
+		("25#(<= (+ g 2) 0)" "assume g != -1;" "25#(<= (+ g 2) 0)")
+		("25#(<= (+ g 2) 0)" "assume true;" "25#(<= (+ g 2) 0)")
+	}
+);

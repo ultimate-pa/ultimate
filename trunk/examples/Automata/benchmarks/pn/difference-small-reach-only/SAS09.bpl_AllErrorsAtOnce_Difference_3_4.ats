@@ -1,0 +1,69 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SAS09.bpl_AllErrorsAtOnce_Iteration3_AbstractionAfterDifference.ats (2018/08/13 05:05:47)
+// SAS09.bpl_AllErrorsAtOnce_Iteration4_EagerFloydHoareAutomaton.ats (2018/08/13 05:05:47)
+
+PetriNet net = (
+	alphabet = {"critical := 0;assume true;" "a := 0;" "b := 0;" "assume true;" "a := a + 1;" "assume !(a != -1);" "assume a != -1;" "assume !(b != -1);" "assume b != -1;" "assume true;" "x := 0;" "y := 0;" "g := 0;" "assume true;" "x := x + 1;" "g := g + 1;" "assume !(x != -1);" "assume x != -1;" "assume !(y != -1);" "assume y != -1;" "assume !(g != -1);" "assume g != -1;" "assume true;" },
+	places = {"34#true" "5#Thread2FINALtrue" "6#L53-1true" "38#true" "8#L59true" "9#L54true" "11#Thread2ENTRYtrue" "12#L51true" "14#~initENTRYtrue" "16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" "17#Thread1ENTRYtrue" "18#L37true" "19#L38true" "20#L28true" "21#Thread1Err1ASSERT_VIOLATIONASSERTtrue" "22#L29true" "23#L31-1true" "24#Thread1FINALtrue" "25#L32true" "28#L33true" "29#~initENTRYtrue" "30#true" },
+	transitions = {
+		({"6#L53-1true" } "assume a != -1;" {"8#L59true" })
+		({"34#true" "12#L51true" } "b := 0;" {"6#L53-1true" })
+		({"18#L37true" } "assume y != -1;" {"19#L38true" })
+		({"17#Thread1ENTRYtrue" "38#true" } "x := 0;" {"20#L28true" })
+		({"5#Thread2FINALtrue" } "assume true;" {})
+		({"11#Thread2ENTRYtrue" "30#true" } "a := 0;" {"12#L51true" })
+		({"25#L32true" } "x := x + 1;" {"28#L33true" })
+		({"8#L59true" } "assume b != -1;" {"5#Thread2FINALtrue" })
+		({"20#L28true" } "y := 0;" {"22#L29true" })
+		({"18#L37true" } "assume !(y != -1);" {"21#Thread1Err1ASSERT_VIOLATIONASSERTtrue" })
+		({"9#L54true" } "a := a + 1;" {"6#L53-1true" })
+		({"22#L29true" } "g := 0;" {"23#L31-1true" })
+		({"28#L33true" } "g := g + 1;" {"23#L31-1true" })
+		({"29#~initENTRYtrue" "14#~initENTRYtrue" } "critical := 0;assume true;" {"17#Thread1ENTRYtrue" "11#Thread2ENTRYtrue" })
+		({"24#Thread1FINALtrue" } "assume true;" {})
+		({"23#L31-1true" } "assume x != -1;" {"18#L37true" })
+		({"19#L38true" } "assume g != -1;" {"24#Thread1FINALtrue" })
+		({"23#L31-1true" } "assume true;" {"25#L32true" })
+		({"6#L53-1true" } "assume true;" {"9#L54true" })
+		({"19#L38true" } "assume !(g != -1);" {"16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" })
+	},
+	initialMarking = {"34#true" "38#true" "29#~initENTRYtrue" "14#~initENTRYtrue" "30#true" },
+	acceptingPlaces = {"16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" "21#Thread1Err1ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"critical := 0;assume true;" "a := 0;" "b := 0;" "assume true;" "a := a + 1;" "assume !(a != -1);" "assume a != -1;" "assume !(b != -1);" "assume b != -1;" "assume true;" "x := 0;" "y := 0;" "g := 0;" "assume true;" "x := x + 1;" "g := g + 1;" "assume !(x != -1);" "assume x != -1;" "assume !(y != -1);" "assume y != -1;" "assume !(g != -1);" "assume g != -1;" "assume true;" },
+	states = {"42#true" "43#false" "44#(<= 0 Thread1_y)" },
+	initialStates = {"42#true" },
+	finalStates = {"43#false" },
+	transitions = {
+		("42#true" "critical := 0;assume true;" "42#true")
+		("42#true" "a := 0;" "42#true")
+		("42#true" "y := 0;" "44#(<= 0 Thread1_y)")
+		("42#true" "b := 0;" "42#true")
+		("42#true" "assume true;" "42#true")
+		("42#true" "a := a + 1;" "42#true")
+		("42#true" "assume a != -1;" "42#true")
+		("42#true" "assume b != -1;" "42#true")
+		("42#true" "assume true;" "42#true")
+		("42#true" "x := 0;" "42#true")
+		("44#(<= 0 Thread1_y)" "a := 0;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "b := 0;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume true;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "a := a + 1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume a != -1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume b != -1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume true;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "g := 0;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume true;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "x := x + 1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "g := g + 1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume x != -1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume !(y != -1);" "43#false")
+		("44#(<= 0 Thread1_y)" "assume y != -1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume !(g != -1);" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume g != -1;" "44#(<= 0 Thread1_y)")
+		("44#(<= 0 Thread1_y)" "assume true;" "44#(<= 0 Thread1_y)")
+	}
+);

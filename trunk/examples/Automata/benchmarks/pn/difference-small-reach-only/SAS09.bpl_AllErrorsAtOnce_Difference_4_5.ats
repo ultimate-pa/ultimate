@@ -1,0 +1,67 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SAS09.bpl_AllErrorsAtOnce_Iteration4_AbstractionAfterDifference.ats (2018/08/13 05:05:47)
+// SAS09.bpl_AllErrorsAtOnce_Iteration5_EagerFloydHoareAutomaton.ats (2018/08/13 05:05:47)
+
+PetriNet net = (
+	alphabet = {"critical := 0;assume true;" "a := 0;" "b := 0;" "assume true;" "a := a + 1;" "assume !(a != -1);" "assume a != -1;" "assume !(b != -1);" "assume b != -1;" "assume true;" "x := 0;" "y := 0;" "g := 0;" "assume true;" "x := x + 1;" "g := g + 1;" "assume !(x != -1);" "assume x != -1;" "assume !(y != -1);" "assume y != -1;" "assume !(g != -1);" "assume g != -1;" "assume true;" },
+	places = {"34#true" "5#Thread2FINALtrue" "6#L53-1true" "38#true" "8#L59true" "9#L54true" "42#true" "11#Thread2ENTRYtrue" "12#L51true" "14#~initENTRYtrue" "16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" "17#Thread1ENTRYtrue" "18#L37true" "19#L38true" "20#L28true" "22#L29true" "23#L31-1true" "24#Thread1FINALtrue" "25#L32true" "28#L33true" "29#~initENTRYtrue" "30#true" },
+	transitions = {
+		({"6#L53-1true" } "assume a != -1;" {"8#L59true" })
+		({"18#L37true" } "assume y != -1;" {"19#L38true" })
+		({"34#true" "12#L51true" } "b := 0;" {"6#L53-1true" })
+		({"17#Thread1ENTRYtrue" "38#true" } "x := 0;" {"20#L28true" })
+		({"5#Thread2FINALtrue" } "assume true;" {})
+		({"11#Thread2ENTRYtrue" "30#true" } "a := 0;" {"12#L51true" })
+		({"25#L32true" } "x := x + 1;" {"28#L33true" })
+		({"8#L59true" } "assume b != -1;" {"5#Thread2FINALtrue" })
+		({"20#L28true" "42#true" } "y := 0;" {"22#L29true" })
+		({"9#L54true" } "a := a + 1;" {"6#L53-1true" })
+		({"22#L29true" } "g := 0;" {"23#L31-1true" })
+		({"28#L33true" } "g := g + 1;" {"23#L31-1true" })
+		({"29#~initENTRYtrue" "14#~initENTRYtrue" } "critical := 0;assume true;" {"17#Thread1ENTRYtrue" "11#Thread2ENTRYtrue" })
+		({"24#Thread1FINALtrue" } "assume true;" {})
+		({"23#L31-1true" } "assume x != -1;" {"18#L37true" })
+		({"23#L31-1true" } "assume true;" {"25#L32true" })
+		({"19#L38true" } "assume g != -1;" {"24#Thread1FINALtrue" })
+		({"6#L53-1true" } "assume true;" {"9#L54true" })
+		({"19#L38true" } "assume !(g != -1);" {"16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" })
+	},
+	initialMarking = {"34#true" "38#true" "42#true" "29#~initENTRYtrue" "14#~initENTRYtrue" "30#true" },
+	acceptingPlaces = {"16#Thread1Err2ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"critical := 0;assume true;" "a := 0;" "b := 0;" "assume true;" "a := a + 1;" "assume !(a != -1);" "assume a != -1;" "assume !(b != -1);" "assume b != -1;" "assume true;" "x := 0;" "y := 0;" "g := 0;" "assume true;" "x := x + 1;" "g := g + 1;" "assume !(x != -1);" "assume x != -1;" "assume !(y != -1);" "assume y != -1;" "assume !(g != -1);" "assume g != -1;" "assume true;" },
+	states = {"48#(<= 0 g)" "46#true" "47#false" },
+	initialStates = {"46#true" },
+	finalStates = {"47#false" },
+	transitions = {
+		("48#(<= 0 g)" "a := 0;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "b := 0;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume true;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "a := a + 1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume a != -1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume b != -1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume true;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume true;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "x := x + 1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "g := g + 1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume x != -1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume y != -1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume !(g != -1);" "47#false")
+		("48#(<= 0 g)" "assume g != -1;" "48#(<= 0 g)")
+		("48#(<= 0 g)" "assume true;" "48#(<= 0 g)")
+		("46#true" "critical := 0;assume true;" "46#true")
+		("46#true" "a := 0;" "46#true")
+		("46#true" "y := 0;" "46#true")
+		("46#true" "b := 0;" "46#true")
+		("46#true" "g := 0;" "48#(<= 0 g)")
+		("46#true" "assume true;" "46#true")
+		("46#true" "a := a + 1;" "46#true")
+		("46#true" "assume a != -1;" "46#true")
+		("46#true" "assume b != -1;" "46#true")
+		("46#true" "assume true;" "46#true")
+		("46#true" "x := 0;" "46#true")
+	}
+);

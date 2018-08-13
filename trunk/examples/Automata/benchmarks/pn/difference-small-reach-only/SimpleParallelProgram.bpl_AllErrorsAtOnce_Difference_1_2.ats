@@ -1,0 +1,47 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleParallelProgram.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/08/13 05:05:49)
+// SimpleParallelProgram.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/08/13 05:05:49)
+
+PetriNet net = (
+	alphabet = {"x := x + 2;" "assume true;" "x := x + 1;" "assume !(x <= 3);" "assume x <= 3;" "assume true;" "x := 0;assume true;" },
+	places = {"5#Thread1ENTRYtrue" "6#Thread1FINALtrue" "8#~initENTRYtrue" "10#Thread0FINALtrue" "11#Thread0ENTRYtrue" "13#Thread0Err0ASSERT_VIOLATIONASSERTtrue" "14#L27true" "15#~initENTRYtrue" "16#true" "18#(<= x 0)" "19#(<= x 1)" "Black: 18#(<= x 0)" "Black: 19#(<= x 1)" },
+	transitions = {
+		({"Black: 18#(<= x 0)" "11#Thread0ENTRYtrue" } "x := x + 1;" {"Black: 18#(<= x 0)" "14#L27true" })
+		({"16#true" "Black: 18#(<= x 0)" "8#~initENTRYtrue" "15#~initENTRYtrue" } "x := 0;assume true;" {"18#(<= x 0)" "5#Thread1ENTRYtrue" "11#Thread0ENTRYtrue" })
+		({"19#(<= x 1)" "5#Thread1ENTRYtrue" } "x := x + 2;" {"16#true" "Black: 19#(<= x 1)" "6#Thread1FINALtrue" })
+		({"6#Thread1FINALtrue" } "assume true;" {})
+		({"10#Thread0FINALtrue" } "assume true;" {})
+		({"Black: 19#(<= x 1)" "14#L27true" } "assume !(x <= 3);" {"Black: 19#(<= x 1)" "13#Thread0Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"18#(<= x 0)" "Black: 19#(<= x 1)" "11#Thread0ENTRYtrue" } "x := x + 1;" {"19#(<= x 1)" "Black: 18#(<= x 0)" "14#L27true" })
+		({"14#L27true" } "assume x <= 3;" {"10#Thread0FINALtrue" })
+		({"18#(<= x 0)" "5#Thread1ENTRYtrue" } "x := x + 2;" {"16#true" "Black: 18#(<= x 0)" "6#Thread1FINALtrue" })
+	},
+	initialMarking = {"16#true" "Black: 18#(<= x 0)" "Black: 19#(<= x 1)" "8#~initENTRYtrue" "15#~initENTRYtrue" },
+	acceptingPlaces = {"13#Thread0Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"x := x + 2;" "assume true;" "x := x + 1;" "assume !(x <= 3);" "assume x <= 3;" "assume true;" "x := 0;assume true;" },
+	states = {"23#true" "24#false" "25#(<= x 0)" "26#(<= x 2)" "27#(<= x 3)" },
+	initialStates = {"23#true" },
+	finalStates = {"24#false" },
+	transitions = {
+		("23#true" "assume true;" "23#true")
+		("23#true" "assume !(x <= 3);" "23#true")
+		("23#true" "assume x <= 3;" "27#(<= x 3)")
+		("23#true" "assume true;" "23#true")
+		("23#true" "x := 0;assume true;" "25#(<= x 0)")
+		("25#(<= x 0)" "x := x + 2;" "26#(<= x 2)")
+		("25#(<= x 0)" "x := x + 1;" "26#(<= x 2)")
+		("26#(<= x 2)" "x := x + 2;" "23#true")
+		("26#(<= x 2)" "assume true;" "26#(<= x 2)")
+		("26#(<= x 2)" "x := x + 1;" "27#(<= x 3)")
+		("26#(<= x 2)" "assume x <= 3;" "26#(<= x 2)")
+		("26#(<= x 2)" "assume true;" "26#(<= x 2)")
+		("27#(<= x 3)" "assume true;" "27#(<= x 3)")
+		("27#(<= x 3)" "assume !(x <= 3);" "24#false")
+		("27#(<= x 3)" "assume x <= 3;" "27#(<= x 3)")
+		("27#(<= x 3)" "assume true;" "27#(<= x 3)")
+	}
+);
