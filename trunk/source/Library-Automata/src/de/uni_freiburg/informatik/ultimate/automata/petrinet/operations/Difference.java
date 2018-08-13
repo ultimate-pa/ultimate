@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  * Computes the difference L(N)-(L(A)◦Σ^*) between a {@link BoundedPetriNet} N and an {@link INestedWordAutomaton} A.
@@ -131,14 +130,14 @@ public final class Difference
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
 		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC);
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
@@ -146,7 +145,7 @@ public final class Difference
 		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod));
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
@@ -161,12 +160,9 @@ public final class Difference
 			mLogger.info(startMessage());
 		}
 		assert checkSubtrahendProperties();
-		if (subtrahendDfa.isFinal(onlyElement(subtrahendDfa.getInitialStates()))) {
-			// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
+		if (resultTriviallyEmpty()) {
+			mLogger.debug("Difference trivially empty");
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
-			// TODO consider removing the following two lines. A net can be empty. The empty net's language is empty.
-			final PLACE sinkContent = factory.createSinkStateContent();
-			mResult.addPlace(sinkContent, true, false);
 		} else {
 			partitionStates();
 			copyNetPlaces();
@@ -178,6 +174,14 @@ public final class Difference
 		}
 	}
 
+	private boolean resultTriviallyEmpty() {
+		// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
+		return mSubtrahend.isFinal(onlyElement(mSubtrahend.getInitialStates()))
+				// minuend L(N) is empty ==> difference is empty 
+				|| mMinuend.getInitialPlaces().isEmpty()
+				|| mMinuend.getAcceptingPlaces().isEmpty();
+	}
+	
 	private boolean checkSubtrahendProperties() {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(mSubtrahend)) {
 			throw new IllegalArgumentException("subtrahend must be a finite automaton");
