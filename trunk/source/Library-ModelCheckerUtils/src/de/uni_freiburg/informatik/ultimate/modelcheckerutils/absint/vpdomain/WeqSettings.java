@@ -79,6 +79,11 @@ public class WeqSettings {
 	 */
 	private final boolean mAddNodesBeforeAnsweringQuery = true;
 
+	/**
+	 * See {@link WeqSettings#closeAllEqConstraints()}.
+	 */
+	private final boolean mCloseAllEqConstraints = false;
+
 	public WeqSettings() {
 
 	}
@@ -183,6 +188,6 @@ public class WeqSettings {
 	 * @return
 	 */
 	public boolean closeAllEqConstraints() {
-		return !true;
+		return mCloseAllEqConstraints;
 	}
 }

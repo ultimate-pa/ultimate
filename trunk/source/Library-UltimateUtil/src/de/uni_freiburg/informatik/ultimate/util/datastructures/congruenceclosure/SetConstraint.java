@@ -245,4 +245,47 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return Collections.unmodifiableSet(mNonLiterals);
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (mIsInconsistent ? 1231 : 1237);
+		result = prime * result + ((mLiterals == null) ? 0 : mLiterals.hashCode());
+		result = prime * result + ((mNonLiterals == null) ? 0 : mNonLiterals.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final SetConstraint<ELEM> other = (SetConstraint<ELEM>) obj;
+		if (mIsInconsistent != other.mIsInconsistent) {
+			return false;
+		}
+		if (mLiterals == null) {
+			if (other.mLiterals != null) {
+				return false;
+			}
+		} else if (!mLiterals.equals(other.mLiterals)) {
+			return false;
+		}
+		if (mNonLiterals == null) {
+			if (other.mNonLiterals != null) {
+				return false;
+			}
+		} else if (!mNonLiterals.equals(other.mNonLiterals)) {
+			return false;
+		}
+		return true;
+	}
+
+
 }
