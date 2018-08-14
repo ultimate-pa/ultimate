@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
@@ -156,23 +157,23 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE> cc,
-			final IRemovalInfo<NODE> remInfo, final boolean inplace) {
-
-		final WeqCongruenceClosure<NODE> result;
-		if (remInfo == null) {
-			result = weqcc.meetRec(cc, inplace);
-		} else {
-			assert false : "do we need this case?";
-			result = null;
-		}
-		return result;
-	}
-
-	public WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc,
-			final CongruenceClosure<NODE> cc, final boolean inplace) {
-		return getWeqMeet(weqcc, cc, null, inplace);
-	}
+//	WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE> cc,
+//			final IRemovalInfo<NODE> remInfo, final boolean inplace) {
+//
+//		final WeqCongruenceClosure<NODE> result;
+//		if (remInfo == null) {
+//			result = weqcc.meetRec(cc, inplace);
+//		} else {
+//			assert false : "do we need this case?";
+//			result = null;
+//		}
+//		return result;
+//	}
+//
+//	public WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc,
+//			final CongruenceClosure<NODE> cc, final boolean inplace) {
+//		return getWeqMeet(weqcc, cc, null, inplace);
+//	}
 
 //	/**
 //	 * Add a node in a Cc. Let the CcManager decide about inplace.
@@ -462,6 +463,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final WeqCongruenceClosure<NODE> unfrozen = unfreezeIfNecessary(closed);
 
+		assert unfrozen.isClosed();
+
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
 		unfrozen.freezeAndClose();
 		assert checkProjectAwayResult(origWeqCc, node, unfrozen,
@@ -560,6 +563,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 					inplace);
 			return result;
 		} else {
+			assert mSettings.isUseFullWeqccDuringProjectaway();
 			assert icc1.getClass().equals(WeqCongruenceClosure.class);
 			final DISJUNCT result = (DISJUNCT) meet((WeqCongruenceClosure<NODE>) icc1,
 					(WeqCongruenceClosure<NODE>) icc2, inplace);
@@ -587,7 +591,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 //				weqcc1_old = getFrozenCopy(weqcc1);
 				weqcc1_old = copyWeqCc(weqcc1, false);
 			}
-			weqcc1.meet(weqcc2, true);
+//			weqcc1.meet(weqcc2, true);
+			weqcc1.meet(weqcc2);
 			if (mDebug) {
 				assert checkMeetResult(weqcc1_old, weqcc2, weqcc1,
 						getNonTheoryLiteralDisequalitiesIfNecessary());
@@ -595,10 +600,19 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			bmEnd(WeqCcBmNames.MEET);
 			return weqcc1;
 		} else {
-//			weqcc1.freezeIfNecessary(mSettings.closeAllEqConstraints());
-			weqcc1.freezeIfNecessary();
-			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, false);
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(weqcc1);
 
+//			weqcc1.freezeIfNecessary(mSettings.closeAllEqConstraints());
+//			weqcc1.freezeIfNecessary();
+//			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, false);
+			final WeqCongruenceClosure<NODE> meetResult = unfrozen.meet(weqcc2);
+
+			WeqCongruenceClosure<NODE> result;
+			if (mSettings.closeAllEqConstraints()) {
+				result = closeIfNecessary(meetResult);
+			} else {
+				result = meetResult;
+			}
 //			result.freezeIfNecessary(mSettings.closeAllEqConstraints());
 			result.freezeIfNecessary();
 
@@ -743,8 +757,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		bmStart(WeqCcBmNames.ISSTRONGERTHAN);
 		if (CcSettings.ALIGN_INPLACE && !weqcc1.isFrozen() && !weqcc2.isFrozen()) {
 
-			weqcc1.extAndTriangleClosure(false);
-			weqcc2.extAndTriangleClosure(false);
+			alignElements(weqcc1, weqcc2, true);
+
+			closeIfNecessary(weqcc1);
+			closeIfNecessary(weqcc2);
+//			weqcc1.extAndTriangleClosure(false);
+//			weqcc2.extAndTriangleClosure(false);
 
 			final boolean result = weqcc1.isStrongerThan(weqcc2);
 			bmEnd(WeqCcBmNames.ISSTRONGERTHAN);
@@ -752,6 +770,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> weqcc1Copy = copyWeqCc(weqcc1, true);
 			final WeqCongruenceClosure<NODE> weqcc2Copy = copyWeqCc(weqcc2, true);
+
+			alignElements(weqcc1Copy, weqcc2Copy, true);
 
 			final WeqCongruenceClosure<NODE> weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
 			final WeqCongruenceClosure<NODE> weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
@@ -762,6 +782,58 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final boolean result = weqcc1Copy.isStrongerThan(weqcc2Copy);
 			bmEnd(WeqCcBmNames.ISSTRONGERTHAN);
 			return result;
+		}
+	}
+
+	public Pair<WeqCongruenceClosure<NODE>, WeqCongruenceClosure<NODE>> alignElements(
+			final WeqCongruenceClosure<NODE> cc1, final WeqCongruenceClosure<NODE> cc2, final boolean inplace) {
+		assert !inplace || !cc1.isFrozen();
+		assert !inplace || !cc2.isFrozen();
+		if (inplace) {
+			bmStart(WeqCcBmNames.ALIGN_ELEMENTS);
+
+//			addAllElements(cc1, cc2.getAllElements(), null, true);
+//			addAllElements(cc2, cc1.getAllElements(), null, true);
+
+			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			 * elements are added based on equalities in that constraint
+			 */
+			while (!cc1.getAllElements().containsAll(cc2.getAllElements())
+					|| !cc2.getAllElements().containsAll(cc1.getAllElements())) {
+				addAllElements(cc1, cc2.getAllElements(), null, true);
+				addAllElements(cc2, cc1.getAllElements(), null, true);
+			}
+
+			bmEnd(WeqCcBmNames.ALIGN_ELEMENTS);
+			return new Pair<>(cc1, cc2);
+		} else {
+			// not inplace
+
+			bmStart(WeqCcBmNames.ALIGN_ELEMENTS);
+
+			final WeqCongruenceClosure<NODE> cc1Aligned = copyWeqCc(cc1, true);
+			final WeqCongruenceClosure<NODE> cc2Aligned = copyWeqCc(cc2, true);
+
+//			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+//			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+
+			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			 * elements are added based on equalities in that constraint
+			 */
+			while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
+					|| !cc2Aligned.getAllElements().containsAll(cc1Aligned.getAllElements())) {
+				addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+				addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+
+			}
+
+//			cc1Aligned.freezeAndClose();
+//			cc2Aligned.freezeAndClose();
+			cc1.freezeIfNecessary();
+			cc2.freezeIfNecessary();
+
+			bmEnd(WeqCcBmNames.ALIGN_ELEMENTS);
+			return new Pair<>(cc1Aligned, cc2Aligned);
 		}
 	}
 
@@ -1736,7 +1808,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, ISSTRONGERTHAN, ADDNODE, REPORTEQUALITY,
 		REPORTDISEQUALITY, REPORTWEQ, REPORTCONTAINS, PROJECTAWAY, FLATTENLABELS, RENAMEVARS, ADDALLNODES,
 		MEETEDGELABELS, ISLABELSTRONGERTHAN, ISWEQGRAPHSTRONGERTHAN, WEQGRAPHJOIN, FREEZE_AND_CLOSE, FREEZEONLY,
-		EXT_AND_TRIANGLE_CLOSURE;
+		EXT_AND_TRIANGLE_CLOSURE, ALIGN_ELEMENTS;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];
