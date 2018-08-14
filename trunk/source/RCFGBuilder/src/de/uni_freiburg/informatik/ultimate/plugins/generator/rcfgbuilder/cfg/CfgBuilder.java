@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,8 +78,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -92,6 +95,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -376,7 +383,18 @@ public class CfgBuilder {
 	    }
 
 	    final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st);
-	    fork.setTransitionFormula(arguments2InParams.getTransFormula());
+	    final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
+	    final BoogieNonOldVar threadIdVar = null;
+		final Expression forkIdExpression = null;
+		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, forkIdExpression);
+		final BoogieNonOldVar threadInUseVar = null;
+		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar);
+		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices, 
+				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false, 
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, 
+				SimplificationTechnique.NONE, 
+				Arrays.asList(new UnmodifiableTransFormula[] {parameterAssignment, forkIdAssignment, threadInUseAssignment}));
+	    fork.setTransitionFormula(forkTransformula);
 	}
 	
 	/**
@@ -402,6 +420,61 @@ public class CfgBuilder {
 		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st);
 		joinOtherThread.setTransitionFormula(outParams2CallerVars.getTransFormula());		
 	}
+	
+	/**
+	 * TODO Concurrent Boogie: 
+	 */
+	private BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort) {
+		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
+		mgdScript.lock(this);
+		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, this);
+		mgdScript.unlock(this);
+		return var;
+	}
+	
+	/**
+	 * TODO Concurrent Boogie: 
+	 */
+	private UnmodifiableTransFormula constructForkInUseAssignment(final BoogieNonOldVar threadInUseVar) {
+		// TODO Matthias
+		return null;
+	}
+
+	/**
+	 * TODO Concurrent Boogie: 
+	 */
+	private UnmodifiableTransFormula constructForkIdAssignment(final BoogieNonOldVar threadIdVar, final Expression forkIdExpression) {
+		// TODO Matthias
+		return null;
+	}
+
+	/**
+	 * TODO Concurrent Boogie: 
+	 * @return A {@link TransFormula} that represents the assume statement {@code var == true}.
+	 */
+	private UnmodifiableTransFormula constructThreadInUseViolationAssumption(final BoogieNonOldVar threadInUseVar) {
+		// TODO Matthias
+		return null;
+	}
+
+	/**
+	 * TODO Concurrent Boogie: 
+	 */
+	private UnmodifiableTransFormula constructJoinMatchingThreadIdAssumption(final BoogieNonOldVar threadIdVar,
+			final Expression joinIdExpression) {
+		// TODO Matthias
+		return null;
+	}
+	
+	/**
+	 * TODO Concurrent Boogie: 
+	 * @return A {@link TransFormula} that represents the assingment statement
+	 *         {@code var := false}.
+	 */
+	private UnmodifiableTransFormula constructThreadNotInUseAssingment(final BoogieNonOldVar threadInUseVar) {
+		// TODO Matthias
+		return null;
+	}	
 
 	/**
 	 * Build control flow graph of single procedures.
@@ -1251,7 +1324,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation joinCurrentNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, joinCurrentNode);
 			
-			JoinCurrentThread joinCurrentThreadEdge = mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
+			final JoinCurrentThread joinCurrentThreadEdge = mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
 			final IIcfgElement cb = joinCurrentThreadEdge;
 			ModelUtils.copyAnnotations(st, cb);
 			mJoinCurrentThreads.add(joinCurrentThreadEdge);
