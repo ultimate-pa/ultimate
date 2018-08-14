@@ -911,6 +911,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> other) {
 		assert this.isClosed() && other.isClosed() : "caller ensures this, right?";
+		assert this.getAllElements().equals(other.getAllElements());
 
 		if (!mManager.isStrongerThan(this.mCongruenceClosure, other.mCongruenceClosure)) {
 			return false;
@@ -1034,6 +1035,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
+		assert this.isClosed();
 
 		for (final NODE etr : elementsToRemove) {
 			getWeakEquivalenceGraph().replaceVertex(etr, nodeToReplacementNode.get(etr));
@@ -1390,6 +1392,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> other) {
+		assert this.isClosed() && other.isClosed();
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological()
 			: "catch this case in WeqCcManager";
 
@@ -1401,63 +1404,72 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return result;
 	}
 
-	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
-		assert inplace != isFrozen();
+	/**
+	 * Note that this works inplace and changes "this"
+	 *
+	 * @param other
+	 * @return
+	 */
+//	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
+	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other) {
+//		assert inplace != isFrozen();
 
-		final WeqCongruenceClosure<NODE> result = meetRec(other, inplace);
+		final WeqCongruenceClosure<NODE> result = meetRec(other);
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			result.executeFloydWarshallAndReportResultToWeqCc(false);
 		} else {
 			mIsClosed = false;
 		}
-		if (result.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc(false);
-		}
+//		if (result.isInconsistent() && !inplace) {
+//			return mManager.getInconsistentWeqCc(false);
+//		}
 		result.reportAllArrayEqualitiesFromWeqGraph(false);
 
-		if (result.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc(false);
-		}
+//		if (result.isInconsistent() && !inplace) {
+//			return mManager.getInconsistentWeqCc(false);
+//		}
 
 		assert result.sanityCheck();
 		return result;
 	}
 
-	public WeqCongruenceClosure<NODE> meetRec(final CongruenceClosure<NODE> other, final boolean inplace) {
-		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other, inplace);
+//	public WeqCongruenceClosure<NODE> meetRec(final CongruenceClosure<NODE> other, final boolean inplace) {
+//		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other, inplace);
+//
+//		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
+//			assert gPaMeet.sanityCheck();
+//		}
+//
+//		if (gPaMeet.isInconsistent() && !inplace) {
+//			return mManager.getInconsistentWeqCc(false);
+//		}
+//		assert gPaMeet.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
+//		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
+//
+//		return gPaMeet;
+//	}
 
-		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
-			assert gPaMeet.sanityCheck();
-		}
 
-		if (gPaMeet.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc(false);
-		}
-		assert gPaMeet.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
-		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
+	private WeqCongruenceClosure<NODE> meetRec(final WeqCongruenceClosure<NODE> other) {
+//		assert inplace != isFrozen();
 
-		return gPaMeet;
-	}
+//		final WeqCongruenceClosure<NODE> thisUnfrozenIfNec = inplace ? this : mManager.unfreeze(this);
 
-
-	public WeqCongruenceClosure<NODE> meetRec(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
-		assert inplace != isFrozen();
-
-		final WeqCongruenceClosure<NODE> thisUnfrozenIfNec = inplace ? this : mManager.unfreeze(this);
-
-		final WeqCongruenceClosure<NODE> result = thisUnfrozenIfNec.meetWeqWithCc(other.mCongruenceClosure, true);
+//		final WeqCongruenceClosure<NODE> result = thisUnfrozenIfNec.meetWeqWithCc(other.mCongruenceClosure, true);
+//		final WeqCongruenceClosure<NODE> result = this.meetWeqWithCc(other.mCongruenceClosure, true);
+		final WeqCongruenceClosure<NODE> result = this.meetWeqWithCc(other.mCongruenceClosure);
 
 		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert result.sanityCheck();
 		}
 
 		if (result.isInconsistent()) {
-			if (inplace) {
+//			if (inplace) {
 				return result;
-			} else {
-				return mManager.getInconsistentWeqCc(false);
-			}
+//			} else {
+//				return mManager.getInconsistentWeqCc(false);
+//			}
 		}
 
 		assert result.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
@@ -1473,18 +1485,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
-			if (!inplace) {
-				assert mManager.checkMeetResult(this, other, result,
-						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
-//				result.freezeAndClose();
-//				result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
-				WeqCongruenceClosure<NODE> closed = result;
-				if (mManager.getSettings().closeAllEqConstraints()) {
-					closed = mManager.closeIfNecessary(result);
-				}
-				closed.freezeIfNecessary();
-			}
-			assert inplace != result.isFrozen();
+//			if (!inplace) {
+//				assert mManager.checkMeetResult(this, other, result,
+//						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
+////				result.freezeAndClose();
+////				result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+//				WeqCongruenceClosure<NODE> closed = result;
+//				if (mManager.getSettings().closeAllEqConstraints()) {
+//					closed = mManager.closeIfNecessary(result);
+//				}
+//				closed.freezeIfNecessary();
+//			}
+//			assert inplace != result.isFrozen();
 			return result;
 		}
 
@@ -1499,27 +1511,27 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert result.sanityCheck();
 
 			if (result.isInconsistent()) {
-				if (inplace) {
+//				if (inplace) {
 					return result;
-				} else {
-					return mManager.getInconsistentWeqCc(false);
-				}
+//				} else {
+//					return mManager.getInconsistentWeqCc(false);
+//				}
 			}
 		}
 
-		if (!inplace) {
-			assert mManager.checkMeetResult(this, other, result,
-					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
-//			result.freezeAndClose();
-//			result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
-			WeqCongruenceClosure<NODE> closed = result;
-			if (mManager.getSettings().closeAllEqConstraints()) {
-				closed = mManager.closeIfNecessary(result);
-			}
-			closed.freezeIfNecessary();
-		}
+//		if (!inplace) {
+//			assert mManager.checkMeetResult(this, other, result,
+//					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
+////			result.freezeAndClose();
+////			result.freezeIfNecessary(mManager.getSettings().closeAllEqConstraints());
+//			WeqCongruenceClosure<NODE> closed = result;
+//			if (mManager.getSettings().closeAllEqConstraints()) {
+//				closed = mManager.closeIfNecessary(result);
+//			}
+//			closed.freezeIfNecessary();
+//		}
 
-		assert inplace != result.isFrozen();
+//		assert inplace != result.isFrozen();
 		return result;
 	}
 
@@ -1545,32 +1557,35 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 
-	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other, final boolean inplace) {
+	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other) {
 		assert !this.isInconsistent() && !other.isInconsistent();
-		assert inplace != isFrozen();
+//		assert inplace != isFrozen();
 
 		WeqCongruenceClosure<NODE> thisAligned = mManager.addAllElements(this, other.getAllElements(), null,
-				inplace);
+				true);
 
 		for (final Entry<NODE, NODE> eq : other.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
-				return mManager.getInconsistentWeqCc(inplace);
+//				return mManager.getInconsistentWeqCc(true);
+				return this;
 			}
-			thisAligned = mManager.reportEquality(thisAligned, eq.getKey(), eq.getValue(), inplace);
+			thisAligned = mManager.reportEquality(thisAligned, eq.getKey(), eq.getValue(), true);
 		}
 		for (final Entry<NODE, NODE> deq : other.getElementDisequalities()) {
 			if (thisAligned.isInconsistent()) {
-				return mManager.getInconsistentWeqCc(inplace);
+//				return mManager.getInconsistentWeqCc(true);
+				return this;
 			}
-			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), inplace);
+			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), true);
 		}
 		for (final Entry<NODE, SetConstraintConjunction<NODE>> en :
 				other.getLiteralSetConstraints().getConstraints().entrySet()) {
 			if (thisAligned.isInconsistent()) {
-				return mManager.getInconsistentWeqCc(inplace);
+//				return mManager.getInconsistentWeqCc(true);
+				return this;
 			}
 			thisAligned = mManager.reportContainsConstraint(en.getKey(), en.getValue().getSetConstraints(),
-					thisAligned, inplace);
+					thisAligned, true);
 		}
 		assert thisAligned.sanityCheck();
 		return thisAligned;
