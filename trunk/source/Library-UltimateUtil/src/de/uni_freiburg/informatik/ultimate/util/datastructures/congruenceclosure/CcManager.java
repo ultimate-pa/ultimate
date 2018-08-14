@@ -770,8 +770,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (inplace) {
 			bmStart(CcBmNames.ALIGN_ELEMENTS);
 
-			addAllElements(cc1, cc2.getAllElements(), null, true);
-			addAllElements(cc2, cc1.getAllElements(), null, true);
+//			addAllElements(cc1, cc2.getAllElements(), null, true);
+//			addAllElements(cc2, cc1.getAllElements(), null, true);
 
 			/* this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint
@@ -792,8 +792,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
 			final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
 
-			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
-			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+//			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+//			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
 
 			/* this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint

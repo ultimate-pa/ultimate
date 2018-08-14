@@ -327,12 +327,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mFactory.getWeqCcManager().isStrongerThan(mWeqCc, other.mWeqCc);
 	}
 
-	public void projectAway(final NODE elemToHavoc) {
-		mFactory.getWeqCcManager().projectAway(mWeqCc, elemToHavoc);
-
-		assert mWeqCc.assertSingleElementIsFullyRemoved(elemToHavoc);
-		assert mWeqCc.sanityCheck();
-	}
+//	public void projectAway(final NODE elemToHavoc) {
+//		mFactory.getWeqCcManager().projectAway(mWeqCc, elemToHavoc);
+//
+//		assert mWeqCc.assertSingleElementIsFullyRemoved(elemToHavoc);
+//		assert mWeqCc.sanityCheck();
+//	}
 
 	/**
 	 *
