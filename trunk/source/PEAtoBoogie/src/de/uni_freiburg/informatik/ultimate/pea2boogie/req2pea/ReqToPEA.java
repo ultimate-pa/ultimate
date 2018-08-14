@@ -75,7 +75,8 @@ public class ReqToPEA {
 			}
 			final PhaseEventAutomata old = req2automata.put(pat, pea);
 			if (old != null) {
-				throw new AssertionError();
+				mResult.transformationError(pat, "Duplicate automaton: " + old.getName() + " and " + pea.getName());
+				continue;
 			}
 		}
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
