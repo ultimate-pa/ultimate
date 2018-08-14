@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
@@ -29,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
@@ -70,6 +73,26 @@ public class CodeBlockFactory implements IStorable {
 	public Call constructCall(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement call) {
 		return new Call(makeFreshSerial(), source, target, call, mLogger);
+	}
+	
+	public ForkCurrentThread constructForkCurrentThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ForkStatement fork, final boolean forkedProcedureHasImplementation) {
+		return new ForkCurrentThread(makeFreshSerial(), source, target, fork, forkedProcedureHasImplementation, mLogger);
+	}
+	
+	public JoinCurrentThread constructJoinCurrentThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final JoinStatement join) {
+		return new JoinCurrentThread(makeFreshSerial(), source, target, join, mLogger);
+	}
+	
+	public ForkOtherThread constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ForkStatement fork) {
+		return new ForkOtherThread(makeFreshSerial(), source, target, fork, mLogger);		
+	}
+	
+	public JoinOtherThread constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final JoinStatement join) {
+		return new JoinOtherThread(makeFreshSerial(), source, target, join, mLogger);
 	}
 
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {

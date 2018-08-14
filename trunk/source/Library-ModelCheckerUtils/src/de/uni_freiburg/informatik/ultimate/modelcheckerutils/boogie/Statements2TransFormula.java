@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
  * Copyright (C) 2012-2015 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -43,7 +44,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -464,6 +467,14 @@ public class Statements2TransFormula {
 		}
 	}
 
+	private void addForkCurrentThread(final ForkStatement fork) {
+		// TODO: Implement
+	}
+	
+	private void addJoinCurrentThread(final JoinStatement join) {
+		// TODO: Implement
+	}
+	
 	/**
 	 * Remove boogieVars from inVars mapping, if the inVar is not an outVar, add it to he auxilliary variables auxVar.
 	 */
@@ -695,6 +706,10 @@ public class Statements2TransFormula {
 				addHavoc((HavocStatement) st);
 			} else if (st instanceof CallStatement) {
 				addSummary((CallStatement) st);
+			} else if (st instanceof ForkStatement) {
+				addForkCurrentThread((ForkStatement) st);
+			} else if (st instanceof JoinStatement) {
+				addJoinCurrentThread((JoinStatement) st);				
 			} else {
 				throw new IllegalArgumentException(
 						"Intenal Edge only contains" + " Assume, Assignment or Havoc Statement");
@@ -711,12 +726,36 @@ public class Statements2TransFormula {
 	 */
 	public TranslationResult inParamAssignment(final CallStatement st,
 			final SimplificationTechnique simplicationTechnique) {
-		final String callee = st.getMethodName();
+		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);		
+	}
+	
+	/**
+	 * Returns a TransFormula that describes the assignment of arguments to callees (local) input parameters. The
+	 * (local) input parameters of the callee are the only outVars. For each inParameter we construct a new BoogieVar
+	 * which is equivalent to the BoogieVars which were constructed while processing the callee.
+	 */
+	public TranslationResult inParamAssignment(final ForkStatement st,
+			final SimplificationTechnique simplicationTechnique) {
+		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);		
+	}
+	
+	/**
+	 * Outsourced method for getting the inParamAssignment.
+	 * For detailed documentation look at the fork and call specific function.
+	 * 
+	 * @param callee Name of the method called/forked.
+	 * @param arguments arguments of the method.
+	 * @param simplificationTechnique
+	 * @return The final transFormula.
+	 */
+	private TranslationResult inParamAssignment(final String callee, final Expression[] arguments,
+			final SimplificationTechnique simplificationTechnique) {
+		
 		initialize(callee);
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
-		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, st.getArguments());
+		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term[] argTerms = tlres.getTerms();
@@ -724,7 +763,7 @@ public class Statements2TransFormula {
 		mTransFormulaBuilder.clearOutVars();
 
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, callee);
-		final Term[] assignments = new Term[st.getArguments().length];
+		final Term[] assignments = new Term[arguments.length];
 		int offset = 0;
 		for (final VarList varList : calleeImpl.getInParams()) {
 			for (final String var : varList.getIdentifiers()) {
@@ -737,9 +776,9 @@ public class Statements2TransFormula {
 				offset++;
 			}
 		}
-		assert st.getArguments().length == offset;
+		assert arguments.length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		return getTransFormula(false, true, simplicationTechnique);
+		return getTransFormula(false, true, simplificationTechnique);
 	}
 
 	/**
@@ -776,6 +815,34 @@ public class Statements2TransFormula {
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplicationTechnique);
+	}
+	
+	public TranslationResult resultAssignment(final JoinStatement st, final String caller,
+			final String callee, final SimplificationTechnique simplificationTechnique) {
+		initialize(caller);
+		final Procedure impl = mBoogieDeclarations.getProcImplementation().get(callee);
+		int offset = 0;
+		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, callee);
+		final Term[] assignments = new Term[st.getLhs().length];
+		for (final VarList ourParamVarList : impl.getOutParams()) {
+			for (final String outParamId : ourParamVarList.getIdentifiers()) {
+				final IProgramVar outParamBv = mBoogie2SmtSymbolTable.getBoogieVar(outParamId, declInfo, false);
+				final String suffix = "OutParam";
+				final TermVariable outParamTv = constructTermVariableWithSuffix(outParamBv, suffix);
+				mTransFormulaBuilder.addInVar(outParamBv, outParamTv);
+				final String callLhsId = st.getLhs()[offset].getIdentifier();
+				final DeclarationInformation callLhsDeclInfo = st.getLhs()[offset].getDeclarationInformation();
+				final IProgramVar callLhsBv = mBoogie2SmtSymbolTable.getBoogieVar(callLhsId, callLhsDeclInfo, false);
+				final TermVariable callLhsTv = mBoogie2SMT.getManagedScript().constructFreshTermVariable(
+						callLhsBv.getGloballyUniqueId(), callLhsBv.getTermVariable().getSort());
+				mTransFormulaBuilder.addOutVar(callLhsBv, callLhsTv);
+				assignments[offset] = mScript.term("=", callLhsTv, outParamTv);
+				offset++;
+			}
+		}
+		assert st.getLhs().length == offset;
+		mAssumes = SmtUtils.and(mScript, assignments);
+		return getTransFormula(false, true, simplificationTechnique);
 	}
 
 	/**

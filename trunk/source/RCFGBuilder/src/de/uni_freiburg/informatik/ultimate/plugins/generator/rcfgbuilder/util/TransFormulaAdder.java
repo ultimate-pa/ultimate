@@ -42,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkCurrentThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinCurrentThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -86,6 +88,10 @@ public class TransFormulaAdder {
 			statements = ((StatementSequence) cb).getStatements();
 		} else if (cb instanceof Summary) {
 			statements = Collections.singletonList(((Summary) cb).getCallStatement());
+		} else if (cb instanceof ForkCurrentThread) {
+			statements = Collections.singletonList(((ForkCurrentThread) cb).getForkStatement());
+		} else if (cb instanceof JoinCurrentThread) {
+			statements = Collections.singletonList(((JoinCurrentThread) cb).getJoinStatement());
 		} else if (cb instanceof GotoEdge) {
 			statements = Collections.emptyList();
 		} else {

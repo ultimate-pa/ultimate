@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -852,6 +854,33 @@ public class BoogieOutput {
 				comma = ", ";
 			}
 			sb.append(");");
+		} else if (s instanceof ForkStatement) {
+			final ForkStatement fork = (ForkStatement) s;
+			String comma;
+			sb.append("fork ");
+			sb.append(BoogiePrettyPrinter.print(fork.getForkID()));
+			sb.append(" ").append(fork.getMethodName());
+			sb.append("(");
+			comma = "";
+			for (final Expression arg : fork.getArguments()) {
+				sb.append(comma);
+				appendExpression(sb, arg, 0);
+				comma = ", ";
+			}
+			sb.append(");");
+		} else if (s instanceof JoinStatement) {
+			final JoinStatement join = (JoinStatement)s;
+			String comma;
+			sb.append("join ");
+			if (join.getLhs().length > 0) {
+				comma = "";
+				for (final VariableLHS lhs : join.getLhs()) {
+					sb.append(comma).append(lhs.getIdentifier());
+					comma = ", ";
+				}
+				sb.append(" := ");
+			}
+			sb.append(BoogiePrettyPrinter.print(join.getForkID()));
 		} else if (s instanceof BreakStatement) {
 			final String label = ((BreakStatement) s).getLabel();
 			sb.append("break");
@@ -915,19 +944,21 @@ public class BoogieOutput {
 		sb.append(LINEBREAK);
 	}
 
-	/**
+	/*
+	
 	 * Print statement.
 	 *
 	 * @param s
 	 *            the statement to print.
 	 * @param indent
 	 *            the current indent level.
-	 */
+	 *
 	public void printStatement(final Statement s, final String indent) {
 		final StringBuilder sb = new StringBuilder();
 		appendStatement(sb, s, indent);
 		mWriter.print(sb.toString());
 	}
+	*/
 
 	/**
 	 * Append left hand side.

@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
- * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
  *
@@ -46,11 +45,16 @@ public class ForkCurrentThread extends CodeBlock implements IIcfgForkTransitionC
 	private static final long serialVersionUID = -2032583850030703623L;
 	protected ForkStatement mForkStatement;
 	protected String mPrettyPrintedStatements;
+	
+	@Visualizable
+	private final boolean mForkedProcedureHasImplementation;
+	
 
 	ForkCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, 
-			final ForkStatement st, final ILogger logger) {
+			final ForkStatement st, final boolean forkedProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mForkStatement = st;
+		mForkedProcedureHasImplementation = forkedProcedureHasImplementation;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 	
