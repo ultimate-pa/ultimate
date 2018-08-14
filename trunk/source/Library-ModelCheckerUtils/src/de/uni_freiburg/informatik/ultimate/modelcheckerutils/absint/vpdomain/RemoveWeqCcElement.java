@@ -112,8 +112,12 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		boolean becameInconsistentWhenAddingANode = false;
 		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
-		// TODO: seems out of place here, somehow..
+
+		// add constraints that were made possible by adding nodes
 		mWeqCc.reportAllArrayEqualitiesFromWeqGraph(false);
+		// tried (14/08/2018): induces massive (!) performance loss, consequences for precision unclear
+//		mWeqCc.extAndTriangleClosure(true);
+//		mWeqCc.getManager().closeIfNecessary(mWeqCc);
 
 		if (becameInconsistentWhenAddingANode) {
 			assert mWeqCc.isInconsistent();
