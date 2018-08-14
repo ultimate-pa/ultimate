@@ -98,13 +98,14 @@ public class EqStateFactory {
 	public EqState getEqState(final EqConstraint<EqNode> constraint,
 				final Set<IProgramVarOrConst> variables) {
 //		constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
+		EqConstraint<EqNode> closed = constraint;
 		if (mEqConstraintFactory.getWeqSettings().closeAllEqConstraints()) {
-			final EqConstraint<EqNode> closed = mEqConstraintFactory.closeIfNecessary(constraint);
+			closed = mEqConstraintFactory.closeIfNecessary(constraint);
 		}
-		constraint.freezeIfNecessary();
+		closed.freezeIfNecessary();
 
 		// TODO manage EqStates smarter?
-		return new EqState(constraint, mEqNodeAndFunctionFactory, this, variables);
+		return new EqState(closed, mEqNodeAndFunctionFactory, this, variables);
 	}
 
 	public EqConstraintFactory<EqNode> getEqConstraintFactory() {
