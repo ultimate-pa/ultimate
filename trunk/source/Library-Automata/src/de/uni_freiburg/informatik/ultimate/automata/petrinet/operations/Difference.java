@@ -63,10 +63,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *       <li>There is exactly one initial state
  *       <li>For every state and letter there is at most one outgoing edge.
  *   </ul>
- *   <li>For every minuend word w ∈ L(N) there is an explicit run in A
+ *   <li>For every minuend word uv ∈ L(N)
  *   <ul>
- *       <li>either consuming the whole word w
- *       <li>or reaching one of A's final states by consuming a prefix of w.
+ *       <li>there is an explicit run in A consuming the whole word uv
+ *       <li>or u ∈ L(A).
  *   </ul>
  * </ul>
  * <p>
