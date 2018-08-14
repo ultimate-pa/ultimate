@@ -608,7 +608,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> meetResult = unfrozen.meet(weqcc2);
 
 			WeqCongruenceClosure<NODE> result;
-			if (mSettings.closeAllEqConstraints()) {
+//			if (mSettings.closeAllEqConstraints()) {
+			if (mSettings.closeAllEqConstraints() || mSettings.closeAfterInplaceMeet()) {
 				result = closeIfNecessary(meetResult);
 			} else {
 				result = meetResult;

@@ -1035,7 +1035,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
-		assert this.isClosed();
+		// not the case (see caller, if we close fully after addNodesToKeep, we loose performance massively)
+//		assert this.isClosed();
 
 		for (final NODE etr : elementsToRemove) {
 			getWeakEquivalenceGraph().replaceVertex(etr, nodeToReplacementNode.get(etr));

@@ -124,6 +124,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		// TODO: this filter might be redundant because it is done outside every time (or the others are redundant..)
 		mDisjuncts = mWeqCcManager.filterRedundantICcs(newLabelContents);
+
 		if (mDisjuncts.size() == 1 && mDisjuncts.iterator().next().isInconsistent()) {
 			//case mLabel = "[False]" -- filterRedundantCcs leaves this case so we have to clean up manually to "[]"
 			mDisjuncts.clear();

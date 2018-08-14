@@ -84,6 +84,12 @@ public class WeqSettings {
 	 */
 	private final boolean mCloseAllEqConstraints = false;
 
+
+	/**
+	 * See {@link #closeAfterInplaceMeet()}.
+	 */
+	private final boolean mCloseAfterInplaceMeet = false;
+
 	public WeqSettings() {
 
 	}
@@ -178,6 +184,16 @@ public class WeqSettings {
 
 	public boolean isAddNodesBeforeAnsweringQuery() {
 		return mAddNodesBeforeAnsweringQuery;
+	}
+
+	/**
+	 * Makes an exception to {@link WeqSettings#closeAllEqConstraints()} = false, if set to true.
+	 * Makes a difference in performance and precision.
+	 *
+	 * @return
+	 */
+	public boolean closeAfterInplaceMeet() {
+		return mCloseAfterInplaceMeet;
 	}
 
 	/**
