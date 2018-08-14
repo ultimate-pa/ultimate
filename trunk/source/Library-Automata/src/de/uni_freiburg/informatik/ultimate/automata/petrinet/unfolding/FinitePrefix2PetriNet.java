@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
@@ -72,6 +71,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
 	private final UnionFind<Condition<LETTER, PLACE>> mRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
+	private final boolean mUsePetrification = false;
 
 	/**
 	 * Constructor.
@@ -100,9 +100,15 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		}
 
 		final BoundedPetriNet<LETTER, PLACE> oldNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
-		mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
-		mRepresentatives = new UnionFind<>();
-		constructNet(bp, oldNet);
+		if (mUsePetrification) {
+			mNet = buildPetrification(bp);
+			mRepresentatives = null;
+		} else {
+			mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
+			mRepresentatives = new UnionFind<>();
+			constructNet(bp, oldNet);
+		}
+
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -428,7 +434,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	}
 
 
-	private IPetriNet<LETTER, PLACE> buildPetrification(final BranchingProcess<LETTER, PLACE> bp) {
+	private BoundedPetriNet<LETTER, PLACE> buildPetrification(final BranchingProcess<LETTER, PLACE> bp) {
 		final LinkedHashSet<Condition<LETTER, PLACE>> relevantConditions = collectRelevantEvents();
 		final Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> equivalenceClasses = computeEquivalenceClasses(relevantConditions);
 		final Map<Condition<LETTER, PLACE>, PLACE> condition2Place = computeCondition2Place(equivalenceClasses, mStateFactory);
@@ -453,10 +459,13 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			final Map<Condition<LETTER, PLACE>, PLACE> condition2Place) {
 		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors = new HashRelation3<>();
 		for (final Event<LETTER, PLACE> event : events) {
-			final LETTER letter = event.getTransition().getSymbol();
-			final Set<PLACE> predecessors = event.getPredecessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
-			final Set<PLACE> successors = event.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
-			letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);
+			if (event.getTransition() != null) {
+				// skip auxiliary initial event
+				final LETTER letter = event.getTransition().getSymbol();
+				final Set<PLACE> predecessors = event.getPredecessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				final Set<PLACE> successors = event.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);
+			}
 		}
 		return letterPredecessorsSuccessors;
 	}
