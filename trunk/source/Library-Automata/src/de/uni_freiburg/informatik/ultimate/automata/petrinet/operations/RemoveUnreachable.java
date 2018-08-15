@@ -36,20 +36,19 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Removes parts of a Petri Net that do not change its behavior.
+ * Removes unreachable nodes of a Petri Net preserving its behavior.
+ * Nodes are either transitions or places.
  * <p>
  * A transition is unreachable iff it can never fire
  * (because there is no reachable marking covering all of its preceding places).
@@ -74,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
 public class RemoveUnreachable<LETTER, PLACE, CRSF extends
-		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+		IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
@@ -90,11 +89,16 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	}
 	
 	/**
+	 * Copies the reachable parts of a net.
+	 * 
 	 * @param operand
-	 *     Petri net to be copied such that only reachable transitions remain.
+	 *     Petri net to be copied such that only reachable nodes remain.
 	 * @param reachableTransitions
 	 *     The reachable transitions (or a superset) of {@code operand}.
-	 *     Can be computed from an existing finite prefix using {@link #reachableTransitions(BranchingProcess)}.
+	 *     Can be computed from an existing finite prefix using {@link #reachableTransitions(BranchingProcess)}
+	 *     or automatically when using {@link #RemoveUnreachable(AutomataLibraryServices, BoundedPetriNet)}.
+	 * 
+	 * @throws AutomataOperationCanceledException The operation was canceled
 	 */
 	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
 			Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
@@ -138,19 +142,13 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + getOperationName());
 		}
-		final boolean correct = new IsEquivalent<>(mServices, stateFactory,
-				netToNwa(stateFactory, mOperand), netToNwa(stateFactory, mResult)).getResult();
+		final boolean correct = PetriNetUtils.isEquivalent(mServices, stateFactory, mOperand, mResult);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}
 
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(
-			final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net) {
-		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
-	}
-	
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();

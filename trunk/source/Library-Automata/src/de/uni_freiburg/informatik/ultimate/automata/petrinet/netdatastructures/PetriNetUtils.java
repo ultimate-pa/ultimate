@@ -29,8 +29,15 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
  * Provides static methods for Petri nets.
@@ -57,6 +64,31 @@ public final class PetriNetUtils {
 			}
 			return true;
 		}
+	}
+
+	/**
+	 * Checks equivalent of two Petri nets.
+	 * Two Petri nets are equivalent iff they accept the same language.
+	 * <p>
+	 * This is a naive implementation and may be very slow. 
+	 * 
+	 * @param net1 Petri net
+	 * @param net2 Petri net
+	 * @return net1 and net2 accept the same language
+	 * @throws AutomataLibraryException The operation was canceled
+	 */
+	public static <LETTER, PLACE, CRSF extends
+			IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+			boolean isEquivalent( final AutomataLibraryServices services, final CRSF stateFactory,
+			final IPetriNet<LETTER, PLACE> net1, final IPetriNet<LETTER, PLACE> net2) throws AutomataLibraryException {
+		return new IsEquivalent<>(services, stateFactory, netToNwa(services, stateFactory, net1),
+				netToNwa(services, stateFactory, net2)).getResult();
+	}
+
+	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>>
+			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(AutomataLibraryServices mServices,
+			final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net) {
+		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
 
 }
