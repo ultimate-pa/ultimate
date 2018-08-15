@@ -444,7 +444,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 
 		for (final Entry<Condition<LETTER, PLACE>, PLACE> entry : condition2Place.entrySet()) {
 			if (!result.getPlaces().contains(entry.getValue())) {
-				final boolean isInitial = bp.getNet().getInitialPlaces().contains(entry.getKey().getPlace());
+				final boolean isInitial = (entry.getKey().getPredecessorEvent() == bp.getDummyRoot());
 				final boolean isAccepting = bp.getNet().isAccepting(entry.getKey().getPlace());
 				result.addPlace(entry.getValue(), isInitial, isAccepting);
 			}
@@ -459,11 +459,22 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			final Map<Condition<LETTER, PLACE>, PLACE> condition2Place) {
 		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors = new HashRelation3<>();
 		for (final Event<LETTER, PLACE> event : events) {
+			// skip auxiliary initial event
 			if (event.getTransition() != null) {
-				// skip auxiliary initial event
 				final LETTER letter = event.getTransition().getSymbol();
 				final Set<PLACE> predecessors = event.getPredecessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
-				final Set<PLACE> successors = event.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				assert !predecessors.contains(null);
+				final Set<PLACE> successors;
+				if (event.getCompanion() != null) {
+					final Event<LETTER, PLACE> companion = event.getCompanion();
+					if (companion.getTransition() != event.getTransition()) {
+						throw new UnsupportedOperationException("finite prefix with same transition cut-off required");
+					}
+					successors = companion.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				} else {
+					successors = event.getSuccessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				}
+				assert !successors.contains(null);
 				letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);
 			}
 		}
