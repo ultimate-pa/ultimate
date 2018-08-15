@@ -86,12 +86,12 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Performing identity transformation for " + tf);
 		}
-		return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
+		return new TransformulaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
 				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 	}
 

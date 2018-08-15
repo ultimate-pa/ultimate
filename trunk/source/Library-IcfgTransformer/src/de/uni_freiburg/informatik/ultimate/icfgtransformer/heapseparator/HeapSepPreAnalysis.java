@@ -49,19 +49,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Does a preanalysis on the program before the actual heap separation is done
- *
- * Computes of each icfg edge the subterms of the edge's TransFormula that are subject to transformation by the heap
- * separator.
- * These are divided into:
+ * Does an auxiliary analysis on the program before the actual heap separation is done.
+ * <p>
+ * Computes of each {@link IcfgEdge} the subterms of the edge's TransFormula that are subject to transformation by the
+ * heap separator.
+ * <p>
+ * These subterms are divided into:
  * <ul>
  * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable, "array writes")
  * <li> array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
  *  updates )
  * <li> cell accesses (essentially select terms, "array reads")
  * </ul>
- * Furthermore from the result of this preanalysis we can compute the groups of arrays whose partitioning has to be
- * aligned because they are assigned to each other.
+ * Furthermore from the result of this analysis we can compute the groups of arrays whose partitioning has to be
+ * aligned because they are assigned to each other {@link ArrayGroup}.
  *
  * @author Alexander Nutz
  *
@@ -89,6 +90,7 @@ public class HeapSepPreAnalysis {
 	private final HeapSeparatorBenchmark mStatistics;
 
 	/**
+	 * See {@link HeapSepPreAnalysis}.
 	 *
 	 * @param logger
 	 * @param heapArrays

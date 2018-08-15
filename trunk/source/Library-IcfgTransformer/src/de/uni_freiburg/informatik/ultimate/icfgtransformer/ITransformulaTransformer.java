@@ -67,7 +67,7 @@ public interface ITransformulaTransformer {
 	 *
 	 * @return The result of the transformation through this transformer.
 	 */
-	TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf);
 
 	/**
@@ -107,7 +107,7 @@ public interface ITransformulaTransformer {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public static final class TransforumlaTransformationResult {
+	public static final class TransformulaTransformationResult {
 		private final UnmodifiableTransFormula mTransformedTransformula;
 		private final boolean mIsOverapproximation;
 
@@ -117,7 +117,7 @@ public interface ITransformulaTransformer {
 		 * @param transformedTransformula
 		 *            the transformula.
 		 */
-		public TransforumlaTransformationResult(final UnmodifiableTransFormula transformedTransformula) {
+		public TransformulaTransformationResult(final UnmodifiableTransFormula transformedTransformula) {
 			mTransformedTransformula = transformedTransformula;
 			mIsOverapproximation = false;
 		}
@@ -131,7 +131,7 @@ public interface ITransformulaTransformer {
 		 *            true iff the transformula is an overapproximation of, false if it is equivalent to the original
 		 *            transformula.
 		 */
-		public TransforumlaTransformationResult(final UnmodifiableTransFormula transformedTransformula,
+		public TransformulaTransformationResult(final UnmodifiableTransFormula transformedTransformula,
 				final boolean isOverappoximation) {
 			mTransformedTransformula = transformedTransformula;
 			mIsOverapproximation = isOverappoximation;

@@ -128,7 +128,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 		assert !mQueriedStoreAndLitInfo;
 
@@ -144,7 +144,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
-			return new TransforumlaTransformationResult(tf);
+			return new TransformulaTransformationResult(tf);
 		}
 
 		/*
@@ -254,7 +254,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
 
 		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
-		return new TransforumlaTransformationResult(newTf);
+		return new TransformulaTransformationResult(newTf);
 	}
 
 	private IProgramConst getLocationLiteral(final StoreIndexInfo storeIndexInfo) {
@@ -280,19 +280,6 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		return "mll_" + storeIndexInfo.getEdgeInfo().getSourceLocation() + "_" + mMemLocLitCounter ++;
 	}
 
-//	private StoreIndexInfo getOrConstructStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
-//		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
-//		if (sii == null) {
-//			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
-//			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
-//		}
-//		return sii;
-//	}
-
-//	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
-//		return mEdgeToIndexToStoreIndexInfo;
-//	}
-
 	/**
 	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
 	 * @return
@@ -315,8 +302,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransforumlaTransformationResult;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransformulaTransformationResult;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -246,7 +246,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			final UnmodifiableTransFormula transformula, final IPayload payload, final boolean isOverapprox) {
 		assert !mIsFinished;
 		final IcfgInternalTransition localTrans = createNewLocalTransition(source, target,
-				new TransforumlaTransformationResult(transformula, isOverapprox), payload);
+				new TransformulaTransformationResult(transformula, isOverapprox), payload);
 		source.addOutgoing(localTrans);
 		target.addIncoming(localTrans);
 		rememberNewVariables(transformula, source.getProcedure());
@@ -441,7 +441,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final IcfgCallTransition newCorrespondingCall = mOldCalls2NewCalls.get(oldCorrespondingCall);
 		assert newCorrespondingCall != null : "The Icfg has been traversed out of order "
 				+ "(found return before having found the corresponding call)";
-		final TransforumlaTransformationResult retAssign =
+		final TransformulaTransformationResult retAssign =
 				mTransformer.transform(oldTransition, oldTransition.getAssignmentOfReturn());
 		final IcfgReturnTransition newTrans = mEdgeFactory.createReturnTransition(source, target, newCorrespondingCall,
 				getPayloadIfAvailable(oldTransition), retAssign.getTransformula(),
@@ -454,7 +454,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 	private IcfgCallTransition createNewCallTransition(final IcfgLocation source, final IcfgLocation target,
 			final IIcfgCallTransition<INLOC> oldTransition) {
-		final TransforumlaTransformationResult unmodTf =
+		final TransformulaTransformationResult unmodTf =
 				mTransformer.transform(oldTransition, oldTransition.getLocalVarsAssignment());
 		final IcfgCallTransition newTrans = mEdgeFactory.createCallTransition(source, target,
 				getPayloadIfAvailable(oldTransition), unmodTf.getTransformula());
@@ -468,14 +468,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IIcfgInternalTransition<INLOC> oldTransition) {
-		final TransforumlaTransformationResult unmodTf =
+		final TransformulaTransformationResult unmodTf =
 				mTransformer.transform(oldTransition, oldTransition.getTransformula());
 		final IPayload payload = getPayloadIfAvailable(oldTransition);
 		return createNewLocalTransition(source, target, unmodTf, payload);
 	}
 
 	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
-			final TransforumlaTransformationResult unmodTf, final IPayload payload) {
+			final TransformulaTransformationResult unmodTf, final IPayload payload) {
 		final IcfgInternalTransition newTrans =
 				mEdgeFactory.createInternalTransition(source, target, payload, unmodTf.getTransformula());
 

@@ -179,7 +179,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
@@ -324,7 +324,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		log(tf, newTransformula);
 
-		return new TransforumlaTransformationResult(newTransformula);
+		return new TransformulaTransformationResult(newTransformula);
 	}
 
 	@Override

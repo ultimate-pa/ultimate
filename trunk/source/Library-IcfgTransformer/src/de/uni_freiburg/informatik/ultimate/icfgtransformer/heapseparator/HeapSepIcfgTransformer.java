@@ -193,7 +193,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 * 1. Execute the preprocessing
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
-		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		final MemlocArrayManager memlocArrayManager;
@@ -307,7 +306,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			preprocessedIcfg = icfgWMemlocInitialized;
 
-			storeIndexInfoToFreezeVar = null;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
 

@@ -56,7 +56,6 @@ public class StoreIndexInfo {
 	 * Note that this is only an optimization and not conceptually relevant as it drops conjuncts that would be
 	 *  redundant anyway.
 	 */
-//	private final HashRelation<IProgramVarOrConst, Integer> mArrayToAccessDimensions;
 	private final HashRelation<ArrayGroup, Integer> mArrayToAccessDimensions;
 
 	private final Set<Integer> mAccessDimensions;
@@ -77,19 +76,11 @@ public class StoreIndexInfo {
 		super();
 		mEdgeInfo = edgeInfo;
 		mTerm = term;
-		mArrayToAccessDimensions = new HashRelation<>();// = computeArrayToAccessDimensions(edgeInfo, term);
+		mArrayToAccessDimensions = new HashRelation<>();
 		mAccessDimensions = new HashSet<>();
 		mId = storeIndexInfoCounter;
 	}
 
-//	private HashRelation<IProgramVarOrConst, Integer> computeArrayToAccessDimensions(final EdgeInfo edgeInfo, final Term term) {
-//		final ApplicationTermFinder atf = new
-//		for (SmtUtils.find)
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
-//	public void addArrayAccessDimension(final IProgramVarOrConst array, final Integer accessDimension) {
 	public void addArrayAccessDimension(final ArrayGroup array, final Integer accessDimension) {
 		mArrayToAccessDimensions.addPair(array, accessDimension);
 		mAccessDimensions.add(accessDimension);
@@ -111,12 +102,10 @@ public class StoreIndexInfo {
 	 *
 	 * @return all the arrays that the stores with mTerm refer to in mEdgeInfo.
 	 */
-//	public Set<IProgramVarOrConst> getArrays() {
 	public Set<ArrayGroup> getArrays() {
 		return mArrayToAccessDimensions.getDomain();
 	}
 
-//	public HashRelation<IProgramVarOrConst, Integer> getArrayToAccessDimensions() {
 	public HashRelation<ArrayGroup, Integer> getArrayToAccessDimensions() {
 		return mArrayToAccessDimensions;
 	}
@@ -155,46 +144,4 @@ public class StoreIndexInfo {
 	public int getId() {
 		return mId;
 	}
-
-//	@Override
-//	public int hashCode() {
-//		final int prime = 31;
-//		int result = 1;
-//		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
-//		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
-//		return result;
-//	}
-//
-//	@Override
-//	public boolean equals(final Object obj) {
-//		if (this == obj) {
-//			return true;
-//		}
-//		if (obj == null) {
-//			return false;
-//		}
-//		if (getClass() != obj.getClass()) {
-//			return false;
-//		}
-//		final StoreIndexInfo other = (StoreIndexInfo) obj;
-//		if (mEdgeInfo == null) {
-//			if (other.mEdgeInfo != null) {
-//				return false;
-//			}
-//		} else if (!mEdgeInfo.equals(other.mEdgeInfo)) {
-//			return false;
-//		}
-//		if (mTerm == null) {
-//			if (other.mTerm != null) {
-//				return false;
-//			}
-//		} else if (!mTerm.equals(other.mTerm)) {
-//			return false;
-//		}
-//		return true;
-//	}
-//
-
-
-
 }

@@ -45,7 +45,7 @@ public class MonniauxMapElimination implements ITransformulaTransformer {
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 		// TODO Auto-generated method stub
 		return null;

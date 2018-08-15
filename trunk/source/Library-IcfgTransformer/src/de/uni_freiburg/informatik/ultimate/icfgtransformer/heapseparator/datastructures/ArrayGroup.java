@@ -29,9 +29,19 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepPreAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
+/**
+ * Represents a set of arrays that the heap separator treats like one array.
+ * <p>
+ * Arrays that are equated within the program are put into one array group. The array groups are computed by
+ * {@link HeapSepPreAnalysis}.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class ArrayGroup {
 	private final Set<IProgramVarOrConst> mArraysInThisGroup;
 	private final int mDimensionality;

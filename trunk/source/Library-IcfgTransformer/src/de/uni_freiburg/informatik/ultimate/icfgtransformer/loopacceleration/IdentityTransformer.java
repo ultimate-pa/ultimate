@@ -67,9 +67,9 @@ public class IdentityTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-		return new TransforumlaTransformationResult(tf);
+		return new TransformulaTransformationResult(tf);
 	}
 
 	@Override

@@ -93,7 +93,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula transformula) {
 		final ModifiableTransFormula modifiable = mTransFormulas.get(transformula);
 		final EqualityAnalysisResult equalityAnalysisBefore =
@@ -103,7 +103,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		final ModifiableTransFormula newTf =
 				mMapEliminator.getRewrittenTransFormula(modifiable, equalityAnalysisBefore, equalityAnalysisAfter);
 		// TODO: How can we decide whether the transformation is an overapproximation or not?
-		return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, newTf,
+		return new TransformulaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, newTf,
 				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()), true);
 	}
 
