@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +37,10 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +35,14 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSeparatorBenchmark;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.SubArrayManager;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayCellAccess;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;

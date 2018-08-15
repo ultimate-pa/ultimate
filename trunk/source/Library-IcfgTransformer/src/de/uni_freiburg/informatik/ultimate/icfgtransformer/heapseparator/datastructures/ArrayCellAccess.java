@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.ArrayList;
 import java.util.HashSet;

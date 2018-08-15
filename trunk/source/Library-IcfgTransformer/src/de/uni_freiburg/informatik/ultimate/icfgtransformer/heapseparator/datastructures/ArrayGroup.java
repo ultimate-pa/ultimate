@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.Collections;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class ArrayGroup {
 		mDimensionality = mdSort.getDimension();
 	}
 
-	Set<IProgramVarOrConst> getArrays() {
+	public Set<IProgramVarOrConst> getArrays() {
 		return mArraysInThisGroup;
 	}
 
@@ -105,7 +105,7 @@ public class ArrayGroup {
 		}
 
 		@Override
-		Set<IProgramVarOrConst> getArrays() {
+		public Set<IProgramVarOrConst> getArrays() {
 			return Collections.emptySet();
 		}
 

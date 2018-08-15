@@ -1,3 +1,4 @@
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers;
 ///*
 // * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
 // * Copyright (C) 2016 University of Freiburg

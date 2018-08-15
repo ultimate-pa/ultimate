@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-class EdgeInfo {
+public class EdgeInfo {
 	IcfgEdge mEdge;
 
-	EdgeInfo(final IcfgEdge edge) {
+	public EdgeInfo(final IcfgEdge edge) {
 		mEdge = edge;
 	}
 
