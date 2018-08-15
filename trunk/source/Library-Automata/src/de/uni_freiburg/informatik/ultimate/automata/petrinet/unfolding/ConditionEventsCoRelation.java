@@ -130,15 +130,13 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		final boolean result = mCoRelation.containsPair(c1, c2.getPredecessorEvent())
 				|| mCoRelation.containsPair(c2, c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
-		if (result) {
-			assert !mBranchingProcess.inCausalRelation(c1, c2) : c1 + " , " + c2
-					+ " in causal relation, not in co-relation!";
-			assert !mBranchingProcess.inConflict(c1, c2) : c1 + " , " + c2 + " in conflict, not in co-relation!";
-		} else {
-			assert mBranchingProcess.inCausalRelation(c1, c2) || mBranchingProcess.inConflict(c1, c2) : c1 + " , " + c2
-					+ " missing in co-relation!";
-		}
+		assert result == isInCoRelationNaive(c1, c2) :
+				String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
 		return result;
+	}
+	
+	private boolean isInCoRelationNaive(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
+		return !mBranchingProcess.inCausalRelation(c1, c2) && !mBranchingProcess.inConflict(c1, c2);
 	}
 
 	/**
