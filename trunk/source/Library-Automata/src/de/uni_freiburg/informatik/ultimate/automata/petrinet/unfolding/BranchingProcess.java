@@ -138,7 +138,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		for (final Condition<LETTER, PLACE> condition : event.getSuccessorConditions()) {
 			final Set<Condition<LETTER, PLACE>> existing = mPlace2Conds.getImage(condition.getPlace());
 			for (final Condition<LETTER, PLACE> c : existing) {
-				if (c != condition && isInCoRelation(c, condition)) {
+				if (c != condition && mCoRelation.isInCoRelation(c, condition)) {
 					mLogger.debug(c + " in coRelation with " + condition + " but they belong to the same place.");
 					return false;
 				}
@@ -180,44 +180,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return mPlace2Conds.getImage(place);
 	}
 
-	/**
-	 * @param c1
-	 *            The first condition.
-	 * @param c2
-	 *            second condition
-	 * @return {@code true} iff the conditions are in co-relation
-	 */
-	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		return mCoRelation.isInCoRelation(c1, c2);
-	}
-
-	public int getCoRelationQueries() {
-		return mCoRelation.getCoRelationQueries();
-	}
-
-	@SuppressWarnings("unused")
-	private boolean isInCoRelationChecker(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		return !(isAncestorChecker(c1, c2) || inConflict(c1, c2));
-	}
-
-	private boolean isAncestorChecker(final Condition<LETTER, PLACE> leaf, final Condition<LETTER, PLACE> ancestor) {
-		if (leaf == ancestor) {
-			return true;
-		}
-		final Event<LETTER, PLACE> p = leaf.getPredecessorEvent();
-		if (p == null || p.getPredecessorConditions() == null) {
-			return false;
-		}
-		for (final Condition<LETTER, PLACE> parentOfLeaf : p.getPredecessorConditions()) {
-			if (isAncestorChecker(parentOfLeaf, ancestor)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	boolean isCoset(final Collection<Condition<LETTER, PLACE>> coSet, final Condition<LETTER, PLACE> condition) {
-		return mCoRelation.isCoset(coSet, condition);
+	public ICoRelation<LETTER, PLACE> getCoRelation() {
+		return mCoRelation;
 	}
 
 	public Collection<Condition<LETTER, PLACE>> getConditions() {

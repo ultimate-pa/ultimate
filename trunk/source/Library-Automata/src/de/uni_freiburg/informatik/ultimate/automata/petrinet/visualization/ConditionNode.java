@@ -76,7 +76,7 @@ public final class ConditionNode<LETTER, PLACE> extends PetriNetVisualizationNod
 			final BranchingProcess<LETTER, PLACE> bc) {
 		final ArrayList<Condition<LETTER, PLACE>> conditionsInCoRelation = new ArrayList<>();
 		for (final Condition<LETTER, PLACE> c : bc.getConditions()) {
-			if (bc.isInCoRelation(condition, c)) {
+			if (bc.getCoRelation().isInCoRelation(condition, c)) {
 				conditionsInCoRelation.add(c);
 			}
 		}

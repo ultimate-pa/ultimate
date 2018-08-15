@@ -1,0 +1,29 @@
+// Dead Transition because of missing accepting successor
+
+PetriNet result = removeDead(n);
+
+assert(numberOfTransitions(result) == 3);
+assert(numberOfPlaces(result) == 3);       // place p2 can be removed
+
+assert(accepts(result, [a b]));
+assert(accepts(result, [b a]));
+assert(accepts(result, [a b c]));
+assert(accepts(result, [a b c c]));
+assert(accepts(result, [b c]));
+assert(!accepts(result, []));
+assert(!accepts(result, [a]));
+
+//print(finitePrefix(n));
+//print(n);
+
+PetriNet n = (
+  alphabet = {a b c},
+  places = {p0 p1 p2 p3},
+  transitions = {
+    ({p0} a {p2}) 
+    ({p1} b {p3})
+    ({p3} c {p3})
+  },
+  initialMarking = {p1 p0},
+  acceptingPlaces = {p3}
+);

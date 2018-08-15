@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Removes dead transitions in a Petri Net preserving its language.
  * A transition t is dead iff there is no firing sequence containing t and ending in an accepting marking.
- * Dead transitions do not contribute to the accepted language.
+ * In other words: Dead transitions do not contribute to the accepted language.
+ * Unreachable transitions are a subset of the dead transitions.
  * <p>
  * This operation may also remove places that do not contribute to the accepted language.
  * 
@@ -73,6 +74,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
+	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
 	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
@@ -84,7 +86,6 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	public RemoveDead(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
 			BranchingProcess<LETTER, PLACE> finPre) throws AutomataOperationCanceledException {
 		super(services);
-		mLogger.warn("Operation not fully implemented. Some dead transitions won't removed.");
 		mOperand = operand;
 		mFinPre = finPre;
 		mVitalTransitions = vitalTransitions();
@@ -93,28 +94,34 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 
 	private Set<ITransition<LETTER, PLACE>> vitalTransitions() throws AutomataOperationCanceledException {
 		Set<ITransition<LETTER, PLACE>> vitalTransitions = transitivePredecessors(mOperand.getAcceptingPlaces());
+
 		if (vitalTransitions.size() == mOperand.getTransitions().size()) {
 			mLogger.debug("Skipping co-relation queries. All transitions lead to accepting places.");
-			return vitalTransitions;
+		} else {
+			mFinPre = new FinitePrefix<>(mServices, mOperand).getResult();
+			mAcceptingConditions = acceptingConditions();
+			mFinPre.getEvents().stream()
+				// optimization to reduce number of co-relation queries
+				.filter(event -> !vitalTransitions.contains(event.getTransition()))
+				.filter(event -> !timeout())
+				.filter(this::coRelatedToAnyAccCond)
+				.map(Event::getTransition).forEach(vitalTransitions::add);
+			if (timeout()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
-		mFinPre = new FinitePrefix<>(mServices, mOperand).getResult();
-		final Collection<Condition<LETTER, PLACE>> acceptingConditions = acceptingConditions();
-		mFinPre.getEvents().stream()
-			// optimization to reduce number of co-relation queries
-			.filter(event -> !vitalTransitions.contains(event.getTransition()))
-			.filter(event -> !timeout())
-			.filter(event -> coRelatedToAny(event, acceptingConditions))
-			.map(Event::getTransition).forEach(vitalTransitions::add);
-
-		if (timeout()) {
-			throw new AutomataOperationCanceledException(this.getClass());
-		}
+		vitalTransitions.retainAll(RemoveUnreachable.reachableTransitions(mFinPre));
 
 		return vitalTransitions;
 	}
 
 	private boolean timeout() {
 		return !mServices.getProgressAwareTimer().continueProcessing();
+	}
+
+	private boolean coRelatedToAnyAccCond(final Event<LETTER, PLACE> event) {
+		return mAcceptingConditions.stream()
+				.anyMatch(condition -> mFinPre.getCoRelation().isInCoRelation(condition, event));
 	}
 
 	private Set<ITransition<LETTER, PLACE>> transitivePredecessors(final Collection<PLACE> places) {
@@ -130,12 +137,6 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			}
 		}
 		return transitivePredecessors;
-	}
-
-	private boolean coRelatedToAny(Event<LETTER, PLACE> event, Collection<Condition<LETTER, PLACE>> conditions) {
-		// TODO implement
-
-		return false;
 	}
 
 	private Collection<Condition<LETTER, PLACE>> acceptingConditions() {

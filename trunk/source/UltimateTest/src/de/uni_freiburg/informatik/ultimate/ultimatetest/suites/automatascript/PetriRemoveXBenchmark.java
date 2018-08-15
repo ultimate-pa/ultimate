@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public class PetriRemoveXBenchmark extends UltimateTestSuite {
 
 	// @formatter:off
-	private static final int TIMEOUT_MS = 30 * 60 * 1_000;
+	private static final int TIMEOUT_MS = 5 * 60 * 1_000;
 	private static final File TOOLCHAIN_FILE =
 			new File(TestUtil.getPathFromTrunk("examples/toolchains/AutomataScriptInterpreter.xml"));
 	private static final String[] DIRECTORIES = {
@@ -58,10 +58,10 @@ public class PetriRemoveXBenchmark extends UltimateTestSuite {
 	};
 	private static final String[] FILE_ENDINGS = { ".ats" };
 	private static final String[] SETTINGS = {
-		//"AutomataScript/petriRemoveUnreachable.epf",
-		//"AutomataScript/petriRemoveDead.epf",
-		"AutomataScript/petriRemoveUnreachableDead.epf",
-		"AutomataScript/petriRemoveDeadUnreachable.epf",
+		"AutomataScript/petriRemoveUnreachable.epf",
+		"AutomataScript/petriRemoveDead.epf",
+		//"AutomataScript/petriRemoveUnreachableDead.epf",
+		//"AutomataScript/petriRemoveDeadUnreachable.epf",
 	};
 	// @formatter:on
 	

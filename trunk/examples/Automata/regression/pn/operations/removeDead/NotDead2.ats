@@ -1,0 +1,36 @@
+// Counterexample for our second idea to identify dead transitions.
+// Transitions are dead if they do not change the accepted language.
+//
+// ({p3} d {p4}) is not dead and a vital part of the net.
+//
+// schaetzc, 2018-08-15
+
+PetriNet result = removeDead(n);
+
+assert(numberOfTransitions(result) == 4); // d-transition should be still there
+assert(numberOfPlaces(result) == 4); // place p4 can be deleted
+
+assert(accepts(result, [a]));
+assert(accepts(result, [b]));
+assert(accepts(result, [a c]));
+assert(accepts(result, [b c]));
+assert(accepts(result, [a c d]));
+assert(accepts(result, [b c d]));
+assert(!accepts(result, [a b]));
+assert(!accepts(result, [c d]));
+assert(!accepts(result, [a c c d]));
+
+//print(n);
+
+PetriNet n = (
+  alphabet = {a b c d},
+  places = {p0 p1 p2 p3 p4},
+  transitions = {
+    ({p0} a {p1})
+    ({p0} b {p1}) 
+    ({p1 p2} c {p1 p3}) 
+    ({p3} d {p4})
+  },
+  initialMarking = {p0 p2},
+  acceptingPlaces = {p1}
+);

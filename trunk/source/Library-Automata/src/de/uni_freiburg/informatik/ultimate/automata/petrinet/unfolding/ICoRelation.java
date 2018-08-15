@@ -70,9 +70,18 @@ public interface ICoRelation<LETTER, PLACE> {
 	boolean isInCoRelation(Condition<LETTER, PLACE> cond1, Condition<LETTER, PLACE> cond2);
 
 	/**
+	 * @param cond
+	 *            One condition.
+	 * @param event
+	 *            An event.
+	 * @return The condition and the event are in co-relation.
+	 */
+	boolean isInCoRelation(Condition<LETTER, PLACE> cond, Event<LETTER, PLACE> event);
+	
+	/**
 	 * @return The number of co-relation queries that have been issued.
 	 */
-	int getCoRelationQueries();
+	int getQueryCounter();
 
 	/**
 	 * All initial Conditions in a branchin process are in co relation. Hence, all pairs of Conditions from

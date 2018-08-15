@@ -1,0 +1,29 @@
+// Transition without accepting successors
+// in conflict to only acc. place
+
+PetriNet result = removeDead(n);
+
+assert(numberOfTransitions(result) == 2); // a-transition should be removed 
+assert(numberOfPlaces(result) == 2);      // place p2 should be removed    
+
+assert(accepts(result, [b]));
+assert(accepts(result, [b c]));
+assert(accepts(result, [b c c]));
+assert(!accepts(result, []));
+assert(!accepts(result, [a]));
+assert(!accepts(result, [a b]));
+
+//print(finitePrefix(n));
+//print(n);
+
+PetriNet n = (
+  alphabet = {a b c},
+  places = {p1 p2 p3},
+  transitions = {
+    ({p1} a {p2}) 
+    ({p1} b {p3})
+    ({p3} c {p3})
+  },
+  initialMarking = {p1},
+  acceptingPlaces = {p3}
+);

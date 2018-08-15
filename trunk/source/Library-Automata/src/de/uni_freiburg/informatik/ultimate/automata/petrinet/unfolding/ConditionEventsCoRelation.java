@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
-	private int mCoRelationQueries;
+	private int mQueryCounter;
 
 	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
@@ -59,8 +59,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	@Override
-	public int getCoRelationQueries() {
-		return mCoRelationQueries;
+	public int getQueryCounter() {
+		return mQueryCounter;
 	}
 
 	@Override
@@ -124,9 +124,14 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 	*/
 
+	public boolean isInCoRelation(final Condition<LETTER, PLACE> cond, final Event<LETTER, PLACE> event) {
+		mQueryCounter++;
+		return mCoRelation.containsPair(cond, event);
+	}
+
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		mCoRelationQueries++;
+		mQueryCounter++;
 		final boolean result = mCoRelation.containsPair(c1, c2.getPredecessorEvent())
 				|| mCoRelation.containsPair(c2, c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
@@ -134,7 +139,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 				String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
 		return result;
 	}
-	
+
 	private boolean isInCoRelationNaive(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		return !mBranchingProcess.inCausalRelation(c1, c2) && !mBranchingProcess.inConflict(c1, c2);
 	}

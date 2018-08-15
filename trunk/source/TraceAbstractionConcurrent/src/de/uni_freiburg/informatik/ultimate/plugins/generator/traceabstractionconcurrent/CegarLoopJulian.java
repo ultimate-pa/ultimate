@@ -133,7 +133,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final PetriNetUnfolder<LETTER, IPredicate> unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
 				abstraction, ord, cutOffSameTrans, !mPref.unfoldingToNet());
 		mUnfolding = unf.getFinitePrefix();
-		mCoRelationQueries += mUnfolding.getCoRelationQueries();
+		mCoRelationQueries += mUnfolding.getCoRelation().getQueryCounter();
 
 		mCounterexample = unf.getAcceptingRun();
 		if (mCounterexample == null) {
