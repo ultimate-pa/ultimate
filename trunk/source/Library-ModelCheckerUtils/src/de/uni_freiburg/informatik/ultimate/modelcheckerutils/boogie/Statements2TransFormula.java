@@ -254,7 +254,7 @@ public class Statements2TransFormula {
 	}
 
 	private IIdentifierTranslator[]
-			getIdentifierTranslatorsIntraprocedural(final TransFormulaBuilder transFormulaBuilder) {
+			getIdentifierTranslatorsIntraprocedural() {
 		return new IIdentifierTranslator[] { new LocalVarTranslatorWithInOutVarManagement(),
 				new GlobalVarTranslatorWithInOutVarManagement(mCurrentProcedure, false),
 				mConstOnlyIdentifierTranslator };
@@ -283,7 +283,7 @@ public class Statements2TransFormula {
 				removeInVar(boogieVar);
 			}
 		}
-		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
 		for (final TermVariable tv : addedEqualities.keySet()) {
 
@@ -315,7 +315,7 @@ public class Statements2TransFormula {
 	}
 
 	private void addAssume(final AssumeStatement assume) {
-		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assume.getFormula());
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
@@ -330,7 +330,7 @@ public class Statements2TransFormula {
 
 	private void addAssert(final AssertStatement assertstmt) {
 		if (s_ComputeAsserts) {
-			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
+			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
 			mOverapproximations.putAll(tlres.getOverappoximations());
@@ -406,7 +406,7 @@ public class Statements2TransFormula {
 
 		Term[] argumentTerms;
 		{
-			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
+			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
 			mOverapproximations.putAll(tlres.getOverappoximations());
@@ -754,7 +754,7 @@ public class Statements2TransFormula {
 		initialize(callee);
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
 
-		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural(mTransFormulaBuilder);
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
