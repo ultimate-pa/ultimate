@@ -55,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Removes dead transitions in a Petri Net preserving its language.
  * A transition t is dead iff there is no firing sequence containing t and ending in an accepting marking.
  * In other words: Dead transitions do not contribute to the accepted language.
- * Unreachable transitions are a subset of the dead transitions.
  * <p>
- * This operation may also remove places that do not contribute to the accepted language.
+ * Unreachable transitions are a subset of the dead transitions.
+ * Use only one of {@link RemoveDead} and {@link RemoveUnreachable}, not both.
+ * <p>
+ * This operation also removes some places that do not contribute to the accepted language.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  *

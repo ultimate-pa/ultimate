@@ -2,7 +2,10 @@
 // Author: schaetzc@tf.uni-freiburg.de
 
 PetriNet result = removeUnreachable(n);
-assert(numberOfPlaces(result) == 1);
+
+// One of the places would be sufficient, but we should keep them, because
+// removeUnreachable would be non-deterministc if it removed only some of them.
+assert(numberOfPlaces(result) == 3);
 assert(numberOfTransitions(result) == 0);
 assert(accepts(result, []));
 

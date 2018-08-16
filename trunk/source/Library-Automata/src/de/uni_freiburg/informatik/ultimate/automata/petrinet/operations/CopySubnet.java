@@ -37,15 +37,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
- * Copy a Petri net N partially, creating a sub-net N'.
+ * Copies a Petri net N partially, creating a sub-net N'.
  * <p>
  * Given a Petri net N and a subset T' ⊆ T of its transitions,
- * create a Petri net N' with transitions T' only and places as required.
- * A place p is NOT required in N' iff N' without p still accepts L(N').
+ * creates a Petri net N' with transitions T' only.
+ * Some (!) of the unused places can also be removed, see {@link #requiredPlaces()}.
  * <p>
- * For a faster operation, some places that are not required may still be in N',
- * see {@link #requiredPlaces()}.
- * 
+ * To remove even more nodes from a Petri net, use {@link RemoveDead}.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <LETTER>
@@ -126,7 +125,8 @@ public class CopySubnet<LETTER, PLACE> {
 			// or if they are accepting
 		}
 		acceptingSuccPlaces().forEach(requiredPlaces::add);
-		alwaysAcceptingPlaces().findAny().ifPresent(requiredPlaces::add);
+		// one of all always accepting places would be sufficient, but not deterministic
+		alwaysAcceptingPlaces().forEach(requiredPlaces::add);
 		return requiredPlaces;
 	}
 	
