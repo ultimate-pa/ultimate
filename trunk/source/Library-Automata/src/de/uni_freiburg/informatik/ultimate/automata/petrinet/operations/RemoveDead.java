@@ -73,7 +73,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
-	private BranchingProcess<LETTER, PLACE> mFinPre;
+	private final BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
 	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
@@ -87,7 +87,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			BranchingProcess<LETTER, PLACE> finPre) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mFinPre = finPre;
+		mFinPre = finPre != null ? finPre : new FinitePrefix<>(mServices, mOperand).getResult();
 		mVitalTransitions = vitalTransitions();
 		mResult = new CopySubnet<>(services, mOperand, mVitalTransitions).getResult();
 	}
@@ -98,7 +98,6 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		if (vitalTransitions.size() == mOperand.getTransitions().size()) {
 			mLogger.debug("Skipping co-relation queries. All transitions lead to accepting places.");
 		} else {
-			mFinPre = new FinitePrefix<>(mServices, mOperand).getResult();
 			mAcceptingConditions = acceptingConditions();
 			mFinPre.getEvents().stream()
 				// optimization to reduce number of co-relation queries

@@ -1,0 +1,23 @@
+// All transitions lead to an accepting places,
+// but some transitions are unreachable.
+// Unreachable transitions are dead and should be removed too.
+
+PetriNet result = removeDead(n);
+
+// b-transition and place p2 can be deleted 
+assert(numberOfTransitions(result) == 1);
+assert(numberOfPlaces(result) == 2);
+
+assert(accepts(result, [a]));
+assert(!accepts(result, [b]));
+
+PetriNet n = (
+  alphabet = {a b},
+  places = {p1 p2 p3},
+  transitions = {
+    ({p1} a {p3})
+    ({p1 p2} b {p3}) 
+  },
+  initialMarking = {p1},
+  acceptingPlaces = {p3}
+);
