@@ -2,7 +2,7 @@
 // but some transitions are unreachable.
 // Unreachable transitions are dead and should be removed too.
 
-PetriNet result = removeDead(n);
+PetriNet result = removeDead(removeUnreachable(n));
 
 // b-transition and place p2 can be deleted 
 assert(numberOfTransitions(result) == 1);

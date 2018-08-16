@@ -55,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Removes dead transitions in a Petri Net preserving its language.
  * A transition t is dead iff there is no firing sequence containing t and ending in an accepting marking.
  * In other words: Dead transitions do not contribute to the accepted language.
- * <p>
  * Unreachable transitions are a subset of the dead transitions.
- * Use only one of {@link RemoveDead} and {@link RemoveUnreachable}, not both.
+ * <p>
+ * This operation assumes that unreachable transitions were already removed.
+ * Call {@link RemoveUnreachable} before {@link RemoveDead}
+ * or some dead (but not necessarily unreachable) transitions might not be removed.
  * <p>
  * This operation also removes some places that do not contribute to the accepted language.
  * 
@@ -75,7 +77,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
-	private final BranchingProcess<LETTER, PLACE> mFinPre;
+	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
 	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
@@ -89,7 +91,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			BranchingProcess<LETTER, PLACE> finPre) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mFinPre = finPre != null ? finPre : new FinitePrefix<>(mServices, mOperand).getResult();
+		mFinPre = finPre;
 		mVitalTransitions = vitalTransitions();
 		mResult = new CopySubnet<>(services, mOperand, mVitalTransitions).getResult();
 	}
@@ -100,8 +102,10 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		if (vitalTransitions.size() == mOperand.getTransitions().size()) {
 			mLogger.debug("Skipping co-relation queries. All transitions lead to accepting places.");
 		} else {
+			ensureFinPreExists();
 			mAcceptingConditions = acceptingConditions();
 			mFinPre.getEvents().stream()
+				.filter(event -> event != mFinPre.getDummyRoot())
 				// optimization to reduce number of co-relation queries
 				.filter(event -> !vitalTransitions.contains(event.getTransition()))
 				.filter(event -> !timeout())
@@ -111,11 +115,16 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
-		vitalTransitions.retainAll(RemoveUnreachable.reachableTransitions(mFinPre));
-
 		return vitalTransitions;
 	}
 
+	private void ensureFinPreExists() throws AutomataOperationCanceledException {
+		if (mFinPre == null) {
+			mLogger.info("Computing finite prefix for " + getOperationName());
+			mFinPre = new FinitePrefix<>(mServices, mOperand).getResult();
+		}
+	}
+	
 	private boolean timeout() {
 		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
