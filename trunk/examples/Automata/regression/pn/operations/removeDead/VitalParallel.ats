@@ -13,8 +13,12 @@ assert(accepts(result, [b c]));
 assert(!accepts(result, []));
 assert(!accepts(result, [a]));
 
-//print(finitePrefix(n));
-//print(n);
+/*
+print(n);
+print(finitePrefix(n));
+print(result);
+*/
+
 
 PetriNet n = (
   alphabet = {a b c},

@@ -45,6 +45,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
 	private int mQueryCounter;
 
+	/**
+	 * TODO schaetzc 2018-08-16: This does not seem to store all co-relations between conditions and events.
+	 * Document which subset is stored.
+	 * For [1] the co-relation between the only a-event and all p3-conditions were missing.
+	 * [1] trunk/examples/Automata/regression/pn/operations/removeDead/VitalParallel.ats
+	 */
 	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
@@ -61,6 +67,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	@Override
 	public int getQueryCounter() {
 		return mQueryCounter;
+	}
+
+	@Override
+	public void initialize(final Set<Condition<LETTER, PLACE>> initialConditions) {
+		// there are no events the conditions could be in relation with yet.
+		// hence there's nothing to do here
 	}
 
 	@Override
@@ -124,11 +136,6 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 	*/
 
-	public boolean isInCoRelation(final Condition<LETTER, PLACE> cond, final Event<LETTER, PLACE> event) {
-		mQueryCounter++;
-		return mCoRelation.containsPair(cond, event);
-	}
-
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		mQueryCounter++;
@@ -145,32 +152,27 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	/**
-	 * <p>
-	 * true, if both events are in irreflexive co-relation, hereafter "ic".
-	 * </p>
+	 * Checks if two events are in irreflexive co-relation, hereafter "ic".
 	 * <p>
 	 * x ic y iif (x co y and x != y)
-	 * </p>
 	 * <p>
-	 * with *e i denote the predecessor-nodes of e.
-	 * </p>
+	 * with *e we denote the predecessor-nodes of e.
 	 * <p>
 	 * 1. If e1 ic e2 then their parents are pairwise in irreflexive co-relation.<br>
 	 * <b>Proof:</b> <br>
 	 * let e1 co e2. Furthermore let ci be a predecessor of ei for i \in {1,2}
-	 * </p>
 	 * <p>
 	 * If c1#c2 then e1#e2 _|_.<br>
 	 * If c1 and c2 are equal then e1#e2 or e1=e2 _|_.<br>
-	 * If c1 and c2 are in causal relation, then one of the following must hold: e1 is in causal relation to e2 e1 # e2
-	 * _|_ <br>
+	 * If c1 and c2 are in causal relation, then e1 is in causal relation to e2 or e1 # e2 _|_<br>
 	 * q.e.d.
-	 * </p>
 	 * <p>
 	 * 2. If for all c1 \in *e1, c2 \in *e2: c1 ic c2 then e1 ci e2.<br>
-	 * <b>Proof:</b>Assume the left side of the implication.
-	 * </p>
-	 * <p>
+	 * <b>Proof:</b>Assume the left side of the implication.<br>
+	 * 
+	 * <u>TODO schaetzc 2018-08-16: The next line is not true in the general case.
+	 * It is possible for a transition/event to have no successors.</u><br>
+	 * 
 	 * If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
 	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t. \exists c1 \in *e1 s.t. c1 < e2. For each
 	 * parent c2 \in *e2 then c1 < c2 holds. (e1 > e2 analogously) _|_<br>
@@ -180,9 +182,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * If e2 = e2' then c \in *e2 _|_ (e1=e1' analogously). <br>
 	 * If e1 != e1' and e2 != e2' then there are predecessor-conditions c1 \in *e1, c2 \in *e2 s.t. c1#c2 _|_. <br>
 	 * q.e.d.
-	 * </p>
+	 * 
+	 * @param e1 An event
+	 * @param e2 Another event
+	 * @return e1 ic e2 (e1 and e2 are in irreflexive co-relation)
 	 */
-	private boolean isInIrreflexiveCoRelation(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
+	public boolean isInIrreflexiveCoRelation(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
 		if (e1 == e2) {
 			return false;
 		}
@@ -201,9 +206,11 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	@Override
-	public void initialize(final Set<Condition<LETTER, PLACE>> initialConditions) {
-		// there are no events the conditions could be in relation with yet.
-		// hence there's nothing to do here
+	public boolean isInCoRelation(final Condition<LETTER, PLACE> cond, final Event<LETTER, PLACE> event) {
+		if (event.getPredecessorConditions().contains(cond)) {
+			return false;
+		}
+		return isCoset(event.getPredecessorConditions(), cond);
 	}
 
 	@Override

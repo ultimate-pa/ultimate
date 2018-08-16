@@ -70,14 +70,14 @@ public interface ICoRelation<LETTER, PLACE> {
 	boolean isInCoRelation(Condition<LETTER, PLACE> cond1, Condition<LETTER, PLACE> cond2);
 
 	/**
-	 * @param cond
-	 *            One condition.
+	 * @param event
+	 *            A condition.
 	 * @param event
 	 *            An event.
-	 * @return The condition and the event are in co-relation.
+	 * @return The event and the condition are in co-relation.
 	 */
-	boolean isInCoRelation(Condition<LETTER, PLACE> cond, Event<LETTER, PLACE> event);
-	
+	boolean isInCoRelation(final Condition<LETTER, PLACE> condition, final Event<LETTER, PLACE> event);
+
 	/**
 	 * @return The number of co-relation queries that have been issued.
 	 */

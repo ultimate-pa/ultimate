@@ -20,7 +20,11 @@ assert(!accepts(result, [a b]));
 assert(!accepts(result, [c d]));
 assert(!accepts(result, [a c c d]));
 
-//print(n);
+/*
+print(n);
+print(finitePrefix(n));
+print(result);
+*/
 
 PetriNet n = (
   alphabet = {a b c d},

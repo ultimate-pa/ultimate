@@ -89,7 +89,20 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		mOperand = operand;
 		mFinPre = finPre;
 		mVitalTransitions = vitalTransitions();
+		checkCo();
 		mResult = new CopySubnet<>(services, mOperand, mVitalTransitions).getResult();
+	}
+
+	private void checkCo() {
+		for (Event<LETTER, PLACE> event : mFinPre.getEvents()) {
+			if (event.getTransition() == null) {
+				continue;
+			}
+			for (Condition<LETTER, PLACE> cond : mFinPre.getConditions()) {
+				mLogger.warn(String.format("%s co %s = %b", cond, event,
+						mFinPre.getCoRelation().isInCoRelation(cond, event)));
+			}
+		}
 	}
 
 	private Set<ITransition<LETTER, PLACE>> vitalTransitions() throws AutomataOperationCanceledException {
@@ -120,8 +133,8 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	}
 
 	private boolean coRelatedToAnyAccCond(final Event<LETTER, PLACE> event) {
-		return mAcceptingConditions.stream()
-				.anyMatch(condition -> mFinPre.getCoRelation().isInCoRelation(condition, event));
+		return mAcceptingConditions.stream().anyMatch(condition -> mFinPre.getCoRelation()
+				.isInCoRelation(condition, event));
 	}
 
 	private Set<ITransition<LETTER, PLACE>> transitivePredecessors(final Collection<PLACE> places) {
