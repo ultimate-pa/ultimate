@@ -148,26 +148,26 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	public enum AutomatonType {
 		FLOYD_HOARE, ERROR;
 
-		private String longString;
+		private String mLongString;
 
 		static {
-			FLOYD_HOARE.longString = "FloydHoare";
-			ERROR.longString = "Error";
+			FLOYD_HOARE.mLongString = "FloydHoare";
+			ERROR.mLongString = "Error";
 		}
 
-		private String shortString;
+		private String mShortString;
 
 		static {
-			FLOYD_HOARE.longString = "Fh";
-			ERROR.longString = "Err";
+			FLOYD_HOARE.mShortString = "Fh";
+			ERROR.mShortString = "Err";
 		}
 
 		public String getLongString() {
-			return longString;
+			return mLongString;
 		}
 
 		public String getShortString() {
-			return shortString;
+			return mShortString;
 		}
 
 	}
