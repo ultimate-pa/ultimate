@@ -5,15 +5,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.ComputeStoreIndexInfosAndArrayGroups.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityAllowStores;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -30,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * A Note on the notion of array writes in our setting:
@@ -48,20 +48,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @param <LOC>
  */
-class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
+class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
-	final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
-	final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup = new HashMap<>();
+	private final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> mEdgeToStoreToArrayToStoreInfo = new NestedMap3<>();
 
-	private int mStoreIndexInfoCounter;
+	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup = new HashMap<>();
+	/**
+	 * We need this internal partitions when inserting the loc-array updates later.
+	 */
+	private final Map<EdgeInfo, UnionFind<Term>> mEdgeToPerEdgeArrayPartition = new HashMap<>();
 
-	public ComputeStoreIndexInfosAndArrayGroups(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays) {
+	/**
+	 * Note that index -1 is reserved for the "NoStoreInfo" object. This counter should always be non-negative, so no
+	 * mId-clash occurs.
+	 */
+	private int mStoreInfoCounter;
+
+	public ComputeStoreInfosAndArrayGroups(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays) {
 
 		final UnionFind<IProgramVarOrConst> globalArrayPartition = new UnionFind<>();
 		// base line for the array groups: the heap arrays
 		heapArrays.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
-		final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition = new HashMap<>();
 		{
 			final IcfgEdgeIterator edgeIt = new IcfgEdgeIterator(icfg);
 			while (edgeIt.hasNext()) {
@@ -85,7 +93,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 					perTfArrayPartition.union(lhsArrayTerm, rhsArrayTerm);
 				}
 
-				edgeToPerEdgeArrayPartition.put(edgeInfo, perTfArrayPartition);
+				mEdgeToPerEdgeArrayPartition.put(edgeInfo, perTfArrayPartition);
 
 				/*
 				 * update the global array partition
@@ -127,7 +135,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 		// set up the mapping of terms to ArrayGroups for each edge/TransFormula
 		final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup = new NestedMap2<>();
 		{
-			for (final Entry<EdgeInfo, UnionFind<Term>> en : edgeToPerEdgeArrayPartition.entrySet()) {
+			for (final Entry<EdgeInfo, UnionFind<Term>> en : mEdgeToPerEdgeArrayPartition.entrySet()) {
 				for (final Term arrayTerm : en.getValue().getAllElements()) {
 
 					/*
@@ -157,9 +165,9 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final Map<Term, ArrayGroup> arrayTermToArrayGroup = edgeToTermToArrayGroup.get(edgeInfo);
 
 				/*
-				 * construct the StoreIndexInfos
+				 * construct the StoreInfos
 				 */
-				for (final StoreInfo store : StoreInfo.extractStores(tf.getFormula(), arrayTermToArrayGroup)) {
+				for (final StoreInfo2 store : StoreInfo2.extractStores(tf.getFormula(), arrayTermToArrayGroup)) {
 
 					if (DataStructureUtils.intersection(new HashSet<>(heapArrays), store.getWrittenArray().getArrays())
 							.isEmpty()) {
@@ -167,8 +175,9 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 						continue;
 					}
 
-					final StoreIndexInfo storeIndexInfo = getOrConstructStoreIndexInfo(edgeInfo, store.getWriteIndex());
-					storeIndexInfo.addArrayAccessDimension(store.getWrittenArray(), store.getWrittenDimension());
+//					final StoreInfo storeIndexInfo = getOrConstructStoreInfo(edgeInfo, store.getWriteIndex());
+//					storeIndexInfo.addArrayAccessDimension(store.getWrittenArray(), store.getWrittenDimension());
+					getOrConstructStoreInfo(edgeInfo, store.getStoreTerm(), store.getWrittenArray());
 				}
 			}
 		}
@@ -189,50 +198,64 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 		return null;
 	}
 
-	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
-		return mEdgeToIndexToStoreIndexInfo;
-	}
+//	public NestedMap2<EdgeInfo, Term, StoreInfo> getEdgeToIndexToStoreIndexInfo() {
+//		return mEdgeToStoreToArrayToStoreInfo;
+//	}
+
+
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
 		return Collections.unmodifiableMap(mArrayToArrayGroup);
 	}
 
+	public NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> getEdgeToStoreToArrayToStoreInfo() {
+		return mEdgeToStoreToArrayToStoreInfo;
+	}
+
+	public Map<EdgeInfo, UnionFind<Term>> getEdgeToPerEdgeArrayPartition() {
+		return mEdgeToPerEdgeArrayPartition;
+	}
+
 	/**
-	 * updates mEdgeToIndexToStoreIndexInfo
+	 * updates mEdgeToIndexToStoreInfo
 	 *
 	 * @param tfInfo
-	 * @param indexTerm
+	 * @param storeTerm
 	 * @return
 	 */
-	private StoreIndexInfo getOrConstructStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
-		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
+	private StoreInfo getOrConstructStoreInfo(final EdgeInfo tfInfo, final Term storeTerm,
+			final ArrayGroup array) {
+		StoreInfo sii = mEdgeToStoreToArrayToStoreInfo.get(tfInfo, storeTerm, array);
 		if (sii == null) {
-			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
-			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
+//			sii = new StoreInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
+			sii = new StoreInfo(tfInfo, storeTerm, array, mStoreInfoCounter++);
+			mEdgeToStoreToArrayToStoreInfo.put(tfInfo, storeTerm, array, sii);
 		}
 		return sii;
 	}
 
 
-	static class StoreInfo {
+	static class StoreInfo2 {
 
 		//	private final IProgramVarOrConst mWrittenArray;
+		private final Term mStoreTerm;
 		private final ArrayGroup mWrittenArray;
 		private final int mWrittenDimension;
-		private final Term writeIndex;
+		private final Term mWriteIndex;
 
 		//	public StoreInfo(final IProgramVarOrConst writtenArray, final int writtenDimension, final Term writeIndex) {
-		public StoreInfo(final ArrayGroup writtenArray, final int writtenDimension, final Term writeIndex) {
-			super();
+		public StoreInfo2(final Term storeTerm, final ArrayGroup writtenArray, final int writtenDimension,
+				final Term writeIndex) {
+			mStoreTerm = storeTerm;
 			mWrittenArray = writtenArray;
 			mWrittenDimension = writtenDimension;
-			this.writeIndex = writeIndex;
+			mWriteIndex = writeIndex;
 		}
 
 
 		//	public static Set<StoreInfo> extractStores(final Term inputTerm, final TransFormula tf) {
-		public static Set<StoreInfo> extractStores(final Term inputTerm, final Map<Term, ArrayGroup> termToArrayGroup) {
-			final Set<StoreInfo> result = new HashSet<>();
+		public static Set<StoreInfo2> extractStores(final Term inputTerm, final Map<Term, ArrayGroup> termToArrayGroup) {
+			final Set<StoreInfo2> result = new HashSet<>();
 
 			final Set<ApplicationTerm> allStores = new ApplicationTermFinder("store", false)
 					.findMatchingSubterms(inputTerm);
@@ -266,7 +289,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				}
 //				assert arrayPvoc != null;
 
-				result.add(new StoreInfo(arrayPvoc, writtenDimension, index));
+				result.add(new StoreInfo2(storeTerm, arrayPvoc, writtenDimension, index));
 			}
 
 			return result;
@@ -284,9 +307,12 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 
 		public Term getWriteIndex() {
-			return writeIndex;
+			return mWriteIndex;
 		}
 
+		public Term getStoreTerm() {
+			return mStoreTerm;
+		}
 
 		@Override
 		public int hashCode() {
@@ -294,7 +320,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 			int result = 1;
 			result = prime * result + ((mWrittenArray == null) ? 0 : mWrittenArray.hashCode());
 			result = prime * result + mWrittenDimension;
-			result = prime * result + ((writeIndex == null) ? 0 : writeIndex.hashCode());
+			result = prime * result + ((mWriteIndex == null) ? 0 : mWriteIndex.hashCode());
 			return result;
 		}
 
@@ -310,7 +336,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final StoreInfo other = (StoreInfo) obj;
+			final StoreInfo2 other = (StoreInfo2) obj;
 			if (mWrittenArray == null) {
 				if (other.mWrittenArray != null) {
 					return false;
@@ -321,11 +347,11 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 			if (mWrittenDimension != other.mWrittenDimension) {
 				return false;
 			}
-			if (writeIndex == null) {
-				if (other.writeIndex != null) {
+			if (mWriteIndex == null) {
+				if (other.mWriteIndex != null) {
 					return false;
 				}
-			} else if (!writeIndex.equals(other.writeIndex)) {
+			} else if (!mWriteIndex.equals(other.mWriteIndex)) {
 				return false;
 			}
 			return true;

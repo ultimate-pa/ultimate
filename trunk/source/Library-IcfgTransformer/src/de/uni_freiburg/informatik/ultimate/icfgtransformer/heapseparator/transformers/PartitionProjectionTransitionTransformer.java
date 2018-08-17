@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -85,7 +85,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 	private final HashRelation3<ArrayGroup, Integer, LocationBlock> mArrayGroupToDimensionToLocationBlocks;
 
-	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	/**
@@ -129,7 +129,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 */
 	public PartitionProjectionTransitionTransformer(final ILogger logger,
 			final NestedMap2<SelectInfo, Integer, LocationBlock> selectInfoToDimensionToLocationBlock,
-			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
+			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final List<IProgramVarOrConst> heapArrays,
 			final HeapSeparatorBenchmark statistics,

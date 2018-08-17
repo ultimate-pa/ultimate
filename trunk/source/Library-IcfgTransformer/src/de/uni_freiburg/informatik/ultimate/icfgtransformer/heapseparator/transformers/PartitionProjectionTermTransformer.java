@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -110,7 +110,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	private final EdgeInfo mEdgeInfo;
 
-	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
 	private final NestedMap2<Term, IProgramVarOrConst, Term> mOriginalTermToSubArrayToReplacementTerm;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
@@ -154,7 +154,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			final EdgeInfo edgeInfo,
 			final HashRelation3<ArrayGroup, Integer, LocationBlock> arrayGroupToDimensionToLocationBlocks,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
+			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
 			final List<IProgramVarOrConst> heapArrays) {
 		mLogger = Objects.requireNonNull(logger);
 		mMgdScript = Objects.requireNonNull(mgdScript);
@@ -508,7 +508,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 */
 	private boolean fallsInto(final Term indexSubterm, final LocationBlock locationBlock) {
 		// look up the StoreIndexInfo for the given term and mEdgeInfo
-		final StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(mEdgeInfo, indexSubterm);
+		final StoreInfo sii = mEdgeToIndexToStoreIndexInfo.get(mEdgeInfo, indexSubterm);
 		return locationBlock.contains(sii);
 	}
 

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * Applies the "memloc-array transformation"
@@ -86,9 +86,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements ITransformulaTransformer {
 
-	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
+	private final Map<StoreInfo, IProgramConst> mStoreInfoToLocLiteral;
 
-	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+	private final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> mEdgeToStoreToArrayToStoreInfo;
 
 	private final static boolean TRACK_CONSTANTS = false;
 	private final Set<ConstantTerm> mAllConstantTerms;
@@ -98,7 +98,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
-	private final MemlocArrayManager mMemlocArrayManager;
+	private final MemlocArrayManager mLocArrayManager;
 
 	ManagedScript mMgdScript;
 
@@ -115,12 +115,12 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 			final CfgSmtToolkit oldCsToolkit,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
-			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
+			final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayToStoreInfo) {
 		mMgdScript = oldCsToolkit.getManagedScript();
-		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+		mEdgeToStoreToArrayToStoreInfo = edgeToStoreToArrayToStoreInfo;
 		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
-		mMemlocArrayManager = memlocArrayManager;
-		mStoreIndexInfoToLocLiteral = new HashMap<>();
+		mLocArrayManager = memlocArrayManager;
+		mStoreInfoToLocLiteral = new HashMap<>();
 		mHeapArrays = heapArrays;
 
 		mNewSymbolTable = new DefaultIcfgSymbolTable(oldCsToolkit.getSymbolTable(), oldCsToolkit.getProcedures());
@@ -142,7 +142,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 					.collect(Collectors.toList()));
 		}
 
-		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
+		if (mEdgeToStoreToArrayToStoreInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
 			return new TransformulaTransformationResult(tf);
 		}
@@ -157,15 +157,22 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		mMgdScript.lock(this);
 
-		final NestedMap2<Integer, Term, Term> memlocUpdatesPerDim = new NestedMap2<>();
+//		/*
+//		 * per StoreInfo: dimension -> storeIndex -> loc literal
+//		 */
+//		final NestedMap2<Integer, Term, Term> memlocUpdatesPerDim = new NestedMap2<>();
 
-		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
+		/*
+		 * create a literal for each StoreInfo.
+		 */
+//		for (final Triple<Term, ArrayGroup, StoreInfo> en : mEdgeToStoreToArrayToStoreInfo.get(edgeInfo).entrySet()) {
+		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
 
-			final StoreIndexInfo storeIndexInfo = en.getValue();
+//			final StoreInfo storeInfo = en.getThird();
 
-			final Term indexTerm = storeIndexInfo.getIndexTerm();
+//			final Term indexTerm = storeInfo.getIndexTerm();
 
-			final IProgramConst locLit = getLocationLiteral(storeIndexInfo);
+			final IProgramConst locLit = getOrConstructLocationLiteral(storeInfo);
 			extraConstants.add(locLit);
 
 //			/*
@@ -178,39 +185,48 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 //			 */
 //			memlocUpdates.put(indexTerm, locLit.getTerm());
 
-			// TODO: think again about the store chain business..
-			for (final Entry<ArrayGroup, Integer> en2 : storeIndexInfo.getArrayToAccessDimensions().entrySet()) {
-				memlocUpdatesPerDim.put(en2.getValue(), indexTerm, locLit.getTerm());
-			}
+//			// TODO: think again about the store chain business..
+//			for (final Entry<ArrayGroup, Integer> en2 : storeInfo.getArrayToAccessDimensions().entrySet()) {
+//				memlocUpdatesPerDim.put(en2.getValue(), indexTerm, locLit.getTerm());
+//			}
+//			memlocUpdatesPerDim.put(storeInfo.getDimension(), storeInfo.getStoreIndex(), locLit.getTerm());
 		}
 
-		// construct a store chain for the memlocUpdates
+		/*
+		 * Construct code that updates the loc array corresponding to each StoreInfo
+		 */
 		final List<Term> memlocUpdateConjuncts = new ArrayList<>();
-		for (int dim = 0; memlocUpdatesPerDim.get(dim) != null; dim++) {
+//		for (int dim = 0; memlocUpdatesPerDim.get(dim) != null; dim++) {
 //		{
-			final TermVariable memlocIntInVar;
-			final TermVariable memlocIntOutVar;
+		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
+
+			final Integer dim = storeInfo.getDimension();
+			final ArrayGroup updatedArray = storeInfo.getUpdatedArray();
+
+			final TermVariable locInVar;
+			final TermVariable locIntOutVar;
 			{
 				// TODO not nice, with the locking..
 				mMgdScript.unlock(this);
-				final IProgramNonOldVar currentMemlocArrayInt = mMemlocArrayManager.getMemlocArray(dim);
+				final IProgramNonOldVar currentLocArray =
+						mLocArrayManager.getOrConstructLocArray(updatedArray, dim);
 				mMgdScript.lock(this);
 
-				assert !extraOutVars.containsKey(mMemlocArrayManager.getMemlocArray(dim));
-				memlocIntInVar = mMgdScript.constructFreshCopy(currentMemlocArrayInt.getTermVariable());
-				memlocIntOutVar = mMgdScript.constructFreshCopy(currentMemlocArrayInt.getTermVariable());
-				extraInVars.put(currentMemlocArrayInt, memlocIntInVar);
-				extraOutVars.put(currentMemlocArrayInt, memlocIntOutVar);
+				assert !extraOutVars.containsKey(mLocArrayManager.getOrConstructLocArray(updatedArray, dim));
+				locInVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
+				locIntOutVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
+				extraInVars.put(currentLocArray, locInVar);
+				extraOutVars.put(currentLocArray, locIntOutVar);
 
 				assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure());
-				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentMemlocArrayInt);
+				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentLocArray);
 			}
 
-			Term storeChain = memlocIntInVar;
+			Term storeChain = locInVar;
 			for (final Entry<Term, Term> en : memlocUpdatesPerDim.get(dim).entrySet()) {
 				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
 			}
-			memlocUpdateConjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), memlocIntOutVar, storeChain));
+			memlocUpdateConjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), locIntOutVar, storeChain));
 		}
 
 		mMgdScript.unlock(this);
@@ -257,8 +273,8 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		return new TransformulaTransformationResult(newTf);
 	}
 
-	private IProgramConst getLocationLiteral(final StoreIndexInfo storeIndexInfo) {
-		IProgramConst result = mStoreIndexInfoToLocLiteral.get(storeIndexInfo);
+	private IProgramConst getOrConstructLocationLiteral(final StoreInfo storeIndexInfo) {
+		IProgramConst result = mStoreInfoToLocLiteral.get(storeIndexInfo);
 		if (result == null) {
 			assert mMgdScript.isLocked();
 			final String locLitName = getLocationLitName(storeIndexInfo);
@@ -266,17 +282,17 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 			// any dim should work as the index sort must be the same at all dimensions accessted via that index
 			final int sampleDim = storeIndexInfo.getArrayToAccessDimensions().entrySet().iterator().next().getValue();
-			final Sort sort = mMemlocArrayManager.getMemlocSort(sampleDim);
+			final Sort sort = mLocArrayManager.getMemlocSort(sampleDim);
 
 			mMgdScript.declareFun(this, locLitName, new Sort[0], sort);
 			final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, locLitName);
 			result = new HeapSepProgramConst(locLitTerm);
-			mStoreIndexInfoToLocLiteral.put(storeIndexInfo, result);
+			mStoreInfoToLocLiteral.put(storeIndexInfo, result);
 		}
 		return result;
 	}
 
-	private String getLocationLitName(final StoreIndexInfo storeIndexInfo) {
+	private String getLocationLitName(final StoreInfo storeIndexInfo) {
 		return "mll_" + storeIndexInfo.getEdgeInfo().getSourceLocation() + "_" + mMemLocLitCounter ++;
 	}
 
@@ -292,12 +308,12 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	}
 
 	public Set<IProgramConst> getLocationLiterals() {
-		return new HashSet<>(getStoreIndexInfoToLocLiteral().values());
+		return new HashSet<>(getStoreInfoToLocLiteral().values());
 	}
 
-	public Map<StoreIndexInfo, IProgramConst> getStoreIndexInfoToLocLiteral() {
+	public Map<StoreInfo, IProgramConst> getStoreInfoToLocLiteral() {
 		mQueriedStoreAndLitInfo = true;
-		return mStoreIndexInfoToLocLiteral;
+		return mStoreInfoToLocLiteral;
 	}
 
 	@Override

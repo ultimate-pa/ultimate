@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.AddInitializingEdgesIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.MemlocArrayUpdaterIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PartitionProjectionTransitionTransformer;
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  *
@@ -179,13 +179,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
 
-		final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo;
+		final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayToStoreInfo;
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
 		{
-			final ComputeStoreIndexInfosAndArrayGroups<INLOC> csiiaag =
-					new ComputeStoreIndexInfosAndArrayGroups<>(originalIcfg, mHeapArrays);
-			edgeToIndexToStoreIndexInfo =
-					csiiaag.getEdgeToIndexToStoreIndexInfo();
+			final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
+					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays);
+			edgeToStoreToArrayToStoreInfo =
+					csiiaag.getEdgeToStoreToArrayToStoreInfo();
 			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
 		}
 
@@ -194,11 +194,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
 
-		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
+		final Map<StoreInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		final MemlocArrayManager memlocArrayManager;
 
-		//			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
-		mLogger.info("Heap separator: starting memloc-array-style preprocessing");
+		mLogger.info("Heap separator: starting loc-array-style preprocessing");
 
 		memlocArrayManager = new MemlocArrayManager(mMgdScript);
 
@@ -213,14 +212,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
 							originalIcfg.getCfgSmtToolkit(),
 							memlocArrayManager,
-							mHeapArrays, edgeToIndexToStoreIndexInfo);
+							mHeapArrays, edgeToStoreToArrayToStoreInfo);
 
 
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 					backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
 
-			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
+			storeIndexInfoToLocLiteral = mauit.getStoreInfoToLocLiteral();
 			/*
 			 * make sure the literals are all treated as pairwise unequal
 			 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
@@ -311,7 +310,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
 
-		mLogger.debug("edgeToIndexToStoreIndexInfo: " + DataStructureUtils.prettyPrint(edgeToIndexToStoreIndexInfo));
+		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayToStoreInfo));
 
 		/*
 		 * 2. run the equality analysis
@@ -352,7 +351,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
-						edgeToIndexToStoreIndexInfo,
+						edgeToStoreToArrayToStoreInfo,
 						arrayToArrayGroup,
 						mHeapArrays,
 						mStatistics,

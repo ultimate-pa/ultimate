@@ -33,9 +33,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreIndexInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -56,18 +56,18 @@ public class HeapPartitionManager {
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	// input
-	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar;
+	private final Map<StoreInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar;
 
 	// output
 	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
 
-	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreIndexInfo>>
+	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreInfo>>
 		mArrayGroupToDimensionToStoreIndexInfoPartition;
 
 	/**
 	 * maps a selectInfo to any one of the StoreIndexInfos that may be equal to the selectInfo
 	 */
-	NestedMap2<SelectInfo, Integer, StoreIndexInfo> mSelectInfoToDimensionToToSampleStoreIndexInfo;
+	NestedMap2<SelectInfo, Integer, StoreInfo> mSelectInfoToDimensionToToSampleStoreIndexInfo;
 
 	private boolean mIsFinished = false;
 
@@ -78,16 +78,16 @@ public class HeapPartitionManager {
 	/**
 	 * map for caching/unifying LocationBlocks
 	 */
-	private final NestedMap3<Set<StoreIndexInfo>, ArrayGroup, Integer, LocationBlock>
+	private final NestedMap3<Set<StoreInfo>, ArrayGroup, Integer, LocationBlock>
 		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
 
 	private final HeapSeparatorBenchmark mStatistics;
 
-	private final Set<StoreIndexInfo> mStoreIndexInfos;
+	private final Set<StoreInfo> mStoreIndexInfos;
 
 	private final ManagedScript mMgdScript;
 
-	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
+	private final Map<StoreInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
 
 	private final MemlocArrayManager mMemLocArrayManager;
 
@@ -105,7 +105,7 @@ public class HeapPartitionManager {
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
 			final MemlocArrayManager memlocArrayManager,
-			final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral) {
+			final Map<StoreInfo, IProgramConst> storeIndexInfoToLocLiteral) {
 		mMgdScript = mgdScript;
 
 		mLogger = logger;
@@ -136,7 +136,7 @@ public class HeapPartitionManager {
 	 * @param preprocessing
 	 */
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
-		final HashRelation<Integer, StoreIndexInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
+		final HashRelation<Integer, StoreInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
 
 		if (eps.isBottom()) {
 			mLogger.warn("equality analysis on preprocessed graph computed array read to be unreachable: "
@@ -145,7 +145,7 @@ public class HeapPartitionManager {
 
 		final ArrayIndex selectIndex = selectInfo.getIndex();
 
-		for (final StoreIndexInfo sii : mStoreIndexInfos) {
+		for (final StoreInfo sii : mStoreIndexInfos) {
 
 			final IProgramConst locLit;
 
@@ -172,7 +172,7 @@ public class HeapPartitionManager {
 
 				// aliasing question to ask: memloc[selectIndex] (mayequal) locLiteral_sii
 				final Term memlocSelect = SmtUtils.select(mMgdScript.getScript(),
-						mMemLocArrayManager.getMemlocArray(dim).getTermVariable(),
+						mMemLocArrayManager.getOrConstructLocArray(dim).getTermVariable(),
 						selectIndexNormalized);
 				if (eps.areUnequal(memlocSelect, locLit.getTerm())) {
 					// nothing to do
@@ -184,7 +184,7 @@ public class HeapPartitionManager {
 
 
 		for (int dim = 0; dim < selectIndex.size(); dim++) {
-			final Set<StoreIndexInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(dim);
+			final Set<StoreInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(dim);
 
 
 			if (mayEqualStoreIndexInfos.size() == 0) {
@@ -192,19 +192,19 @@ public class HeapPartitionManager {
 				 *  --> this is a special case, we can replace the array that is read here with an uninitialized array
 				 *    of the correct sort
 				 */
-				final NoStoreIndexInfo nsii = new NoStoreIndexInfo();
+				final NoStoreInfo nsii = new NoStoreInfo();
 				createPartitionAndBlockIfNecessary(selectInfo, dim, nsii);
 				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, nsii);
 				continue;
 			}
 
-			final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
+			final StoreInfo sample = mayEqualStoreIndexInfos.iterator().next();
 
 			mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
 
 			createPartitionAndBlockIfNecessary(selectInfo, dim, sample);
 
-			for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
+			for (final StoreInfo sii : mayEqualStoreIndexInfos) {
 				if (sii == sample) {
 					// no need to merge sii with itself
 					continue;
@@ -223,11 +223,11 @@ public class HeapPartitionManager {
 		}
 	}
 
-	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sample) {
+	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreInfo sample) {
 		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
 		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
 
-		UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+		UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 		if (partition == null) {
 			partition = new UnionFind<>();
 			mArrayGroupToDimensionToStoreIndexInfoPartition.put(arrayGroup, dim, partition);
@@ -235,12 +235,12 @@ public class HeapPartitionManager {
 		partition.findAndConstructEquivalenceClassIfNeeded(sample);
 	}
 
-	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sii1,
-			final StoreIndexInfo sii2) {
+	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreInfo sii1,
+			final StoreInfo sii2) {
 		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
 		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
 
-		final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+		final UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 		if (partition == null) {
 			throw new AssertionError("should have been created in createBlockIfNecessary");
 		}
@@ -255,19 +255,19 @@ public class HeapPartitionManager {
 		/*
 		 * rewrite the collected information into our output format
 		 */
-		for (final Triple<SelectInfo, Integer, StoreIndexInfo> en :
+		for (final Triple<SelectInfo, Integer, StoreInfo> en :
 				mSelectInfoToDimensionToToSampleStoreIndexInfo.entrySet()) {
 
-			final StoreIndexInfo sampleSii = en.getThird();
+			final StoreInfo sampleSii = en.getThird();
 
 			final SelectInfo selectInfo = en.getFirst();
 			final Integer dim = en.getSecond();
 
 			final ArrayGroup arrayGroup = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
 
-			final UnionFind<StoreIndexInfo> partition =
+			final UnionFind<StoreInfo> partition =
 					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-			final Set<StoreIndexInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
+			final Set<StoreInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
 
 			final LocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
 			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, locationBlock);
@@ -286,7 +286,7 @@ public class HeapPartitionManager {
 			mLogger.info("\t location blocks for array group " + arrayGroup);
 
 			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
-				final UnionFind<StoreIndexInfo> partition =
+				final UnionFind<StoreInfo> partition =
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 				final int noWrites = partition == null ? 0 : partition.getAllElements().size();
 
@@ -303,7 +303,7 @@ public class HeapPartitionManager {
 
 				mLogger.debug("\t location block contents:");
 				if (mLogger.isDebugEnabled() && partition != null) {
-					for (final Set<StoreIndexInfo> eqc : partition.getAllEquivalenceClasses()) {
+					for (final Set<StoreInfo> eqc : partition.getAllEquivalenceClasses()) {
 						mLogger.debug("\t\t " + eqc);
 					}
 				}
@@ -314,7 +314,7 @@ public class HeapPartitionManager {
 		assert sanityCheck();
 	}
 
-	private LocationBlock getOrConstructLocationBlock(final Set<StoreIndexInfo> eqc, final ArrayGroup arrayGroup,
+	private LocationBlock getOrConstructLocationBlock(final Set<StoreInfo> eqc, final ArrayGroup arrayGroup,
 			final Integer dim) {
 		LocationBlock result = mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.get(eqc, arrayGroup, dim);
 		if (result == null) {
@@ -328,9 +328,9 @@ public class HeapPartitionManager {
 		return result;
 	}
 
-	private boolean assertWritesAreToReadArray(final Set<StoreIndexInfo> eqc, final SelectInfo selectInfo) {
-		for (final StoreIndexInfo sii : eqc) {
-			if (sii instanceof NoStoreIndexInfo) {
+	private boolean assertWritesAreToReadArray(final Set<StoreInfo> eqc, final SelectInfo selectInfo) {
+		for (final StoreInfo sii : eqc) {
+			if (sii instanceof NoStoreInfo) {
 				continue;
 			}
 			if (!sii.getArrays().contains(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()))) {

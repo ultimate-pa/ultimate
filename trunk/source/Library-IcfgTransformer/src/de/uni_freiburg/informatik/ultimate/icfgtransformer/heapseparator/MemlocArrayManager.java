@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,7 +41,8 @@ public class MemlocArrayManager {
 		mIsFrozen = false;
 	}
 
-	public IProgramNonOldVar getMemlocArray(final int dim) {
+	public IProgramNonOldVar getOrConstructLocArray(final ArrayGroup updatedArray, final int dim) {
+		final todo: take updatedArray into final account
 		IProgramNonOldVar result = mDimToMemlocArrayInt.get(dim);
 		if (result == null) {
 			assert !mIsFrozen;

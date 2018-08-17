@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Represents a set of array write locations (which are represented by the class {@link StoreIndexInfo}. An array write
+ * Represents a set of array write locations (which are represented by the class {@link StoreInfo}. An array write
  *  location consists of a program location, represented by an IcfgEdge or an EdgeInfo instance, and a Term that is used
  *  as index of the written array cell in the IcfgEdge.
  *
@@ -53,11 +53,11 @@ public class LocationBlock {
 	 */
 	private final int mDimension;
 
-	private final Set<StoreIndexInfo> mStoreIndexInfos;
+	private final Set<StoreInfo> mStoreIndexInfos;
 
 //	private final Set<Integer> mArrayAccessDimensions;
 
-	public LocationBlock(final Set<StoreIndexInfo> eqc, final ArrayGroup associatedArrayGroup, final int dimension) {
+	public LocationBlock(final Set<StoreInfo> eqc, final ArrayGroup associatedArrayGroup, final int dimension) {
 		mStoreIndexInfos = Collections.unmodifiableSet(eqc);
 		mArrayGroup = associatedArrayGroup;
 		mDimension = dimension;
@@ -68,7 +68,7 @@ public class LocationBlock {
 //		}
 	}
 
-	public boolean contains(final StoreIndexInfo sii) {
+	public boolean contains(final StoreInfo sii) {
 		return mStoreIndexInfos.contains(sii);
 	}
 
@@ -81,7 +81,7 @@ public class LocationBlock {
 		return "locs_" + (mStoreIndexInfos.hashCode() % 100);
 	}
 
-	public Set<StoreIndexInfo> getLocations() {
+	public Set<StoreInfo> getLocations() {
 		return mStoreIndexInfos;
 	}
 
