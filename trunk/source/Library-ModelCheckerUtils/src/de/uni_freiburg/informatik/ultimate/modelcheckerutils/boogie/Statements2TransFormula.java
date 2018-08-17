@@ -780,6 +780,51 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
+	
+	
+	public TranslationResult forkThreadIdAssignment(final IProgramVar threadTemplateIdVar,
+			final String forkingProcedureId, final Expression forkThreadIdExpression,
+			final SimplificationTechnique simplificationTechnique) {
+
+		initialize(forkingProcedureId);
+
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
+		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, forkThreadIdExpression);
+		mAuxVars.addAll(tlres.getAuxiliaryVars());
+		mOverapproximations.putAll(tlres.getOverappoximations());
+		final Term argTerm = tlres.getTerm();
+
+		// FIXME Matthias 2018-08-17 test and probably remove the following line
+		mTransFormulaBuilder.clearOutVars();
+
+		final String suffix = "ThreadTemplateId";
+		final TermVariable tv = constructTermVariableWithSuffix(threadTemplateIdVar, suffix);
+		mTransFormulaBuilder.addOutVar(threadTemplateIdVar, tv);
+		final Term assignment = mScript.term("=", tv, argTerm);
+		mAssumes = assignment;
+		return getTransFormula(false, true, simplificationTechnique);
+	}
+	
+
+	public TranslationResult joinThreadIdAssumption(final IProgramVar forkIdAuxVar,
+			final String joiningThreadProcedureId, final Expression joinedThreadIdExpression,
+			final SimplificationTechnique simplificationTechnique) {
+
+		initialize(joiningThreadProcedureId);
+
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
+		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, joinedThreadIdExpression);
+		mAuxVars.addAll(tlres.getAuxiliaryVars());
+		mOverapproximations.putAll(tlres.getOverappoximations());
+		final Term argTerm = tlres.getTerm();
+
+		final TermVariable tv = createInVar(forkIdAuxVar);
+		mTransFormulaBuilder.addOutVar(forkIdAuxVar, tv);
+		final Term assignment = mScript.term("=", tv, argTerm);
+		mAssumes = assignment;
+		return getTransFormula(false, true, simplificationTechnique);
+	}
+	
 
 	/**
 	 * Returns a TransFormula that describes the assignment of (local) out parameters to variables that take the result.
