@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -79,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
@@ -149,6 +151,9 @@ public class CfgBuilder {
 	Collection<JoinCurrentThread> mJoinCurrentThreads = new ArrayList<>();
 	
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
+	
+	Map<String, BoogieNonOldVar> mProcedureNameThreadIdMap = new HashMap<String, BoogieNonOldVar>();
+	Map<String, BoogieNonOldVar> mProcedureNameThreadInUseMap = new HashMap<String, BoogieNonOldVar>();
 
 	private final RCFGBacktranslator mBacktranslator;
 
@@ -273,14 +278,14 @@ public class CfgBuilder {
 		
 		// Add all transitions to the forked procedure entry locations.
 		for (final ForkCurrentThread fct : mImplementationForkCurrentThreads ) {
-			addForkOtherThreadTransition(fct, mSimplificationTechnique);
+			BoogieIcfgLocation errorNode = procCfgBuilder.addErrorNode(fct.getPrecedingProcedure(), fct.getForkStatement());
+			addForkOtherThreadTransition(fct, mSimplificationTechnique, errorNode);			
 		}
 		
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final String procName : mForkedProcedureNames) {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-				// Question!
 				for (final JoinCurrentThread jot : mJoinCurrentThreads) {
 					addJoinOtherThreadTransition(jot, procName, mSimplificationTechnique);
 				}
@@ -364,16 +369,24 @@ public class CfgBuilder {
 	 * @param edge that points to the next step in the current thread.
 	 * @param simplificationTechnique
 	 */
-	private void addForkOtherThreadTransition(final ForkCurrentThread forkCurrentEdge, final SimplificationTechnique simplificationTechnique) {
+	private void addForkOtherThreadTransition(final ForkCurrentThread forkCurrentEdge, final SimplificationTechnique simplificationTechnique,
+			final BoogieIcfgLocation errorNode) {
+		
 		final ForkStatement st = forkCurrentEdge.getForkStatement();
 	    final String callee = st.getMethodName();
 	    assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
 	    
+	    Sort booleanSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(BoogieType.TYPE_BOOL, st);
+		Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
+		BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + callee + "_inUse", booleanSort);
+		BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee, expressionSort);
+		mProcedureNameThreadInUseMap.put(callee, threadInUseVar);
+		mProcedureNameThreadIdMap.put(callee, threadIdVar);
+		
 	    // Add fork transition from callerNode to procedures entry node.
 	    final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkCurrentEdge.getSource();
 	    final BoogieIcfgLocation calleeEntryLoc = mIcfg.getProcedureEntryNodes().get(callee);
 	    
-	    // Question
 	    final TranslationResult arguments2InParams = mIcfg.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
 	    
 	    final Map<String, ILocation> overapproximations = new HashMap<>();
@@ -381,13 +394,10 @@ public class CfgBuilder {
 	    if (!overapproximations.isEmpty()) {
 	      new Overapprox(overapproximations).annotate(forkCurrentEdge);
 	    }
-
+	    
 	    final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st);
 	    final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
-	    final BoogieNonOldVar threadIdVar = null;
-		final Expression forkIdExpression = null;
-		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, forkIdExpression);
-		final BoogieNonOldVar threadInUseVar = null;
+		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID());
 		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar);
 		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices, 
 				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false, 
@@ -395,6 +405,15 @@ public class CfgBuilder {
 				SimplificationTechnique.NONE, 
 				Arrays.asList(new UnmodifiableTransFormula[] {parameterAssignment, forkIdAssignment, threadInUseAssignment}));
 	    fork.setTransitionFormula(forkTransformula);
+	    
+	    
+	    // Add the assume statement for the error location and construct the
+	    final ILocation forkLocation = st.getLocation();
+	    final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar);
+	    final Expression formula = mIcfg.getBoogie2SMT().getTerm2Expression().translate(forkErrorTransFormula.getFormula());
+	    final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
+	    final StatementSequence errorStatement = mCbf.constructStatementSequence(callerNode, errorNode, assumeError);
+	    errorStatement.setTransitionFormula(forkErrorTransFormula);
 	}
 	
 	/**
@@ -408,6 +427,9 @@ public class CfgBuilder {
 		final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procName);
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) joinCurrentEdge.getTarget();
 		
+		final BoogieNonOldVar threadInUse = mProcedureNameThreadInUseMap.get(procName);
+		final BoogieNonOldVar threadId = mProcedureNameThreadIdMap.get(procName);
+		
 		final String caller = callerNode.getProcedure();
 
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula().resultAssignment(st, caller, procName, simplificationTechnique);
@@ -417,8 +439,18 @@ public class CfgBuilder {
 			new Overapprox(overapproximations).annotate(joinCurrentEdge);
 		}
 		
+		// Create JoinOtherThread object and add TransFormulas.
 		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st);
-		joinOtherThread.setTransitionFormula(outParams2CallerVars.getTransFormula());		
+		
+		final UnmodifiableTransFormula threadIdAssumption = constructJoinMatchingThreadIdAssumption(threadId, st.getForkID());
+		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUse);
+		final UnmodifiableTransFormula parameterAssignment = outParams2CallerVars.getTransFormula();
+		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices, 
+				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false, 
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, 
+				SimplificationTechnique.NONE, 
+				Arrays.asList(new UnmodifiableTransFormula[] {parameterAssignment, threadIdAssumption, threadInUseAssignment}));		
+		joinOtherThread.setTransitionFormula(joinTransformula);
 	}
 	
 	/**
@@ -739,6 +771,8 @@ public class CfgBuilder {
 				type = ProcedureErrorType.ENSURES_VIOLATION;
 			} else if (boogieASTNode instanceof CallStatement) {
 				type = ProcedureErrorType.REQUIRES_VIOLATION;
+			} else if (boogieASTNode instanceof ForkStatement) {
+				type = ProcedureErrorType.INUSE_VIOLATION;
 			} else {
 				throw new IllegalArgumentException();
 			}
