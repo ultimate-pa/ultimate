@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
-public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOtherThread<IcfgLocation, ForkOtherThread> {
+public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOtherThread<IcfgLocation> {
 
 	private static final long serialVersionUID = 6045590312545516354L;
 
@@ -73,7 +73,7 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	}
 
 	@Override
-	public IIcfgJoinTransitionCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread() {
+	public IIcfgJoinTransitionCurrentThread<IcfgLocation> getCorrespondingIIcfgJoinTransitionCurrentThread() {
 		return mJoinCurrentThread;
 	}
 }

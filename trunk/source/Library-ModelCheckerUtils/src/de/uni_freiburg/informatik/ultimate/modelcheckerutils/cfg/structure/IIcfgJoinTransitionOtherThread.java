@@ -37,8 +37,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfgJoinTransitionOtherThread<LOC extends IcfgLocation, T
-		extends IIcfgForkTransitionOtherThread<LOC>> extends IIcfgTransition<LOC>, IJoinActionOtherThread {
+public interface IIcfgJoinTransitionOtherThread<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IJoinActionOtherThread {
 
-	IIcfgJoinTransitionCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread();
+	IIcfgJoinTransitionCurrentThread<LOC> getCorrespondingIIcfgJoinTransitionCurrentThread();
 }
