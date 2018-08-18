@@ -86,13 +86,13 @@ public class CodeBlockFactory implements IStorable {
 	}
 	
 	public ForkOtherThread constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement fork) {
-		return new ForkOtherThread(makeFreshSerial(), source, target, fork, mLogger);		
+			final ForkStatement fork, final ForkCurrentThread forkCurrentThread) {
+		return new ForkOtherThread(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);		
 	}
 	
 	public JoinOtherThread constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement join) {
-		return new JoinOtherThread(makeFreshSerial(), source, target, join, mLogger);
+			final JoinStatement join, final JoinCurrentThread joinCurrentThread) {
+		return new JoinOtherThread(makeFreshSerial(), source, target, join, joinCurrentThread, mLogger);
 	}
 
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {

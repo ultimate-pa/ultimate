@@ -41,12 +41,14 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	private static final long serialVersionUID = 6045590312545516354L;
 
 	protected JoinStatement mJoinStatement;
+	protected JoinCurrentThread mJoinCurrentThread;
 	protected String mPrettyPrintedStatements;
 
 	JoinOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement st, final ILogger logger) {
+			final JoinStatement st, final JoinCurrentThread corresponsingCurrentJoin, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mJoinStatement = st;
+		mJoinCurrentThread = corresponsingCurrentJoin;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 
@@ -54,7 +56,6 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	public JoinStatement getJoinStatement() {
 		return mJoinStatement;
 	}
-
 
 	@Override
 	public String getPrettyPrintedStatements() {
@@ -73,7 +74,6 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 
 	@Override
 	public IIcfgJoinTransitionCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread() {
-		// TODO Auto-generated method stub
-		return null;
+		return mJoinCurrentThread;
 	}
 }

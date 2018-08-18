@@ -47,12 +47,14 @@ public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOth
 
 	private static final long serialVersionUID = 5866537291870187570L;
 	protected ForkStatement mForkStatement;
+	protected ForkCurrentThread mForkCurrentThread;
 	protected String mPrettyPrintedStatements;
 
 	ForkOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement st, final ILogger logger) {
+			final ForkStatement st, final ForkCurrentThread forkCurrentThread, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mForkStatement = st;
+		mForkCurrentThread = forkCurrentThread;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 
@@ -78,7 +80,6 @@ public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOth
 
 	@Override
 	public IIcfgForkTransitionCurrentThread<IcfgLocation> getCorrespondingIIcfgForkTransitionCurrentThread() {
-		// TODO Auto-generated method stub
-		return null;
+		return mForkCurrentThread;
 	}
 }

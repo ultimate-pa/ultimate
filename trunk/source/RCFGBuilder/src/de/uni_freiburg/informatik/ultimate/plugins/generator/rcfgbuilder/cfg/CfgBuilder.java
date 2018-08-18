@@ -400,7 +400,7 @@ public class CfgBuilder {
 	      new Overapprox(overapproximations).annotate(forkCurrentEdge);
 	    }
 	    
-	    final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st);
+	    final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkCurrentEdge);
 	    final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
 		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
 		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
@@ -452,7 +452,7 @@ public class CfgBuilder {
 		}
 		
 		// Create JoinOtherThread object and add TransFormulas.
-		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st);
+		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st, joinCurrentEdge);
 
 		final UnmodifiableTransFormula threadIdAssumption = constructJoinMatchingThreadIdAssumption(threadId,
 				st.getForkID(), caller, simplificationTechnique);
