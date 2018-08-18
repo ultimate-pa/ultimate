@@ -13,16 +13,13 @@ modifies n;
 
 implementation Main()
 {
-    var x := int;
-    x := 4;
+    var x : int;
+    x := 1;
     fork 1 foo();
-    fork 2 foo();
-    
     n := 2;
     
     join x;
     x := 4;
-    join x;
 }
 
 procedure foo();

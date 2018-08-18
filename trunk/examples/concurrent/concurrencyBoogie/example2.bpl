@@ -6,6 +6,8 @@
  * 
  */
 
+procedure Main();
+
 implementation Main()
 {
     var x : int;
