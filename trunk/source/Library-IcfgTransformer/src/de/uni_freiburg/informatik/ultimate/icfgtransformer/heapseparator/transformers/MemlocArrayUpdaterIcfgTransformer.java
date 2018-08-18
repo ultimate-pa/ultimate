@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,6 +68,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Applies the "memloc-array transformation"
+ *
+ * Transformation rules (assuming a is a heap array group):
+ * <ul>
+ *  <li> havoc a (i.e., a is completely unconstrained in the given formula)
+ *     --> conjoin a-loc-n := (const l_0) (for every dimension n)
+ *  <li> a' = a[i:=v]
+ *     -->  conjoin a-loc-1' = a-loc-1[i:=s] (where s is the literal belonging to that store term)
+ *  <li> a' = a[i:=a[i][j:=v]]
+ *     --> conjoin a-loc-1' = a-loc-1[i:=s]  /\ a-loc-2' = a-loc-2[i:=a-loc-2[i][j:=s']]
+ *     (where s,s' are the literals belonging to those store terms)
+ *  <li> a' = b (a an in-var b an out-var)
+ *     --> conjoin a-loc-n' = b-loc-n (for every dimension n)
+ *  <li> a = b (a, b being invars) --> error! forbidden syntax
+ * </ul>
+ *
+ *
+ * old (17/08/2018):
  * Performs the following steps:
  * <ul>
  *  <li> introduce a fresh array-type variable, called the memloc-array
@@ -172,6 +188,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 //			final Term indexTerm = storeInfo.getIndexTerm();
 
+			// TODO move to other class (preanalysis)
 			final IProgramConst locLit = getOrConstructLocationLiteral(storeInfo);
 			extraConstants.add(locLit);
 
@@ -195,39 +212,39 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		/*
 		 * Construct code that updates the loc array corresponding to each StoreInfo
 		 */
-		final List<Term> memlocUpdateConjuncts = new ArrayList<>();
+//		final List<Term> memlocUpdateConjuncts = new ArrayList<>();
 //		for (int dim = 0; memlocUpdatesPerDim.get(dim) != null; dim++) {
 //		{
-		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
-
-			final Integer dim = storeInfo.getDimension();
-			final ArrayGroup updatedArray = storeInfo.getUpdatedArray();
-
-			final TermVariable locInVar;
-			final TermVariable locIntOutVar;
-			{
-				// TODO not nice, with the locking..
-				mMgdScript.unlock(this);
-				final IProgramNonOldVar currentLocArray =
-						mLocArrayManager.getOrConstructLocArray(updatedArray, dim);
-				mMgdScript.lock(this);
-
-				assert !extraOutVars.containsKey(mLocArrayManager.getOrConstructLocArray(updatedArray, dim));
-				locInVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
-				locIntOutVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
-				extraInVars.put(currentLocArray, locInVar);
-				extraOutVars.put(currentLocArray, locIntOutVar);
-
-				assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure());
-				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentLocArray);
-			}
-
-			Term storeChain = locInVar;
-			for (final Entry<Term, Term> en : memlocUpdatesPerDim.get(dim).entrySet()) {
-				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
-			}
-			memlocUpdateConjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), locIntOutVar, storeChain));
-		}
+//		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
+//
+//			final Integer dim = storeInfo.getDimension();
+//			final ArrayGroup updatedArray = storeInfo.getArrayGroup();
+//
+//			final TermVariable locInVar;
+//			final TermVariable locIntOutVar;
+//			{
+//				// TODO not nice, with the locking..
+//				mMgdScript.unlock(this);
+//				final IProgramNonOldVar currentLocArray =
+//						mLocArrayManager.getOrConstructLocArray(updatedArray, dim);
+//				mMgdScript.lock(this);
+//
+//				assert !extraOutVars.containsKey(mLocArrayManager.getOrConstructLocArray(updatedArray, dim));
+//				locInVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
+//				locIntOutVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
+//				extraInVars.put(currentLocArray, locInVar);
+//				extraOutVars.put(currentLocArray, locIntOutVar);
+//
+//				assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure());
+//				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentLocArray);
+//			}
+//
+//			Term storeChain = locInVar;
+//			for (final Entry<Term, Term> en : memlocUpdatesPerDim.get(dim).entrySet()) {
+//				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
+//			}
+//			memlocUpdateConjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), locIntOutVar, storeChain));
+//		}
 
 		mMgdScript.unlock(this);
 

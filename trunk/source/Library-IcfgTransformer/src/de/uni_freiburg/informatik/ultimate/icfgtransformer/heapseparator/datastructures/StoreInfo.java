@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 
 /**
@@ -51,6 +53,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * The last three parameters are extracted from the store term for convenience. The "value" argument of the store term
  *  (which may contain another store) is ignored.
  *
+ *  EDIT:
+ *   Note that a storeInfo is not identified only by the program location and the store term. That store Term may appear
+ *    in many places in the TransFormula! In particular the enclosing indices may change. We want a different StoreInfo
+ *    for each occurrence of that store Term in that TransFormula!
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
@@ -60,7 +67,7 @@ public class StoreInfo {
 
 	private final Term mStoreTerm;
 
-	private final ArrayGroup mUpdatedArray;
+	private final ArrayGroup mArrayGroup;
 
 	private final ArrayIndex mEnclosingIndices;
 
@@ -74,26 +81,39 @@ public class StoreInfo {
 	 */
 	private final int mId;
 
+	private final IProgramConst mLocLit;
+
 	/**
 	 *
 	 * @param edgeInfo
 	 * @param storeTerm
 	 * @param id
+	 * @param enclosingIndices
+	 * @param iProgramConst
 	 */
-	public StoreInfo(final EdgeInfo edgeInfo, final Term storeTerm, final ArrayGroup array, final int id) {
+	public StoreInfo(final int id, final EdgeInfo edgeInfo, final Term storeTerm, final ArrayGroup array,
+			final ArrayIndex enclosingIndices, final IProgramConst locLit) {
+		assert this instanceof NoStoreInfo ||
+			(Objects.nonNull(edgeInfo) &&
+					Objects.nonNull(storeTerm) &&
+					Objects.nonNull(array) &&
+					Objects.nonNull(locLit) &&
+					id >= 0);
 		mEdgeInfo = edgeInfo;
 		mStoreTerm = storeTerm;
-		mUpdatedArray = array;
+		mArrayGroup = array;
+		mEnclosingIndices = enclosingIndices;
+		mLocLit = locLit;
 
 		assert SmtUtils.isFunctionApplication(storeTerm, "store") : "expecting store term";
 
 		{
 			final ApplicationTerm at = (ApplicationTerm) storeTerm;
-			final Term stArray = at.getParameters()[0];
+//			final Term stArray = at.getParameters()[0];
 			final Term stIndex = at.getParameters()[1];
 
-			final MultiDimensionalSelect mdSel = new MultiDimensionalSelect(stArray);
-			mEnclosingIndices = mdSel.getIndex();
+//			final MultiDimensionalSelect mdSel = new MultiDimensionalSelect(stArray);
+//			mEnclosingIndices = mdSel.getIndex();
 
 			mStoreIndex = stIndex;
 		}
@@ -125,13 +145,11 @@ public class StoreInfo {
 	}
 
 	/**
-	 * The array on which the store is made.
-	 * (strictly speaking the array on the other side of the equality gets updated, but it's in the same ArrayGroup..)
 	 *
 	 * @return
 	 */
-	public ArrayGroup getUpdatedArray() {
-		return mUpdatedArray;
+	public ArrayGroup getArrayGroup() {
+		return mArrayGroup;
 	}
 
 	/**

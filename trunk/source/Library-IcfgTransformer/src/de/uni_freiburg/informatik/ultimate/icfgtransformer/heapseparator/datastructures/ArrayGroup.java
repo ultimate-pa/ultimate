@@ -38,6 +38,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * <p>
  * Arrays that are equated within the program are put into one array group. The array groups are computed by
  * {@link HeapSepPreAnalysis}.
+ * <p>
+ * Update (17/08/2018):
+ * The purpose of array groups is now only to enable the restriction of the separation to some arrays (the "heap
+ *  arrays"). I.e., they will be used simply to determine for a given TermVariable or IProgramVarOrConst, if it is
+ *  subject to heap/array separation (e.g. a loc-array should be introduced for it).
+ * It is not
+ * <ul>
+ *  <li> about "aligning" sub-arrays
+ *  <li> about tracking which arrays are assumed equal in the program (we do handle programs with assumes between heap
+ *    arrays)
+ * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *

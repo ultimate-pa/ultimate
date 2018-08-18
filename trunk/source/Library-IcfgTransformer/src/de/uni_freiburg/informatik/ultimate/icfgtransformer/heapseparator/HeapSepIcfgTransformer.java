@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
@@ -179,27 +180,36 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
 
-		final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayToStoreInfo;
+		/*
+		 * Some analysis upfront:
+		 *  Discover all relevant store terms, construct StoreInfo objects for them.
+		 *  To know what is relevant (i.e. Pvocs and Terms related to heap arrays), we need array groups, both on
+		 *   program level and on edge level (i.e. for each term).
+		 */
+		final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayGroupToStoreInfo;
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
+		NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
+		final MemlocArrayManager locArrayManager;
+//		final Map<StoreInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		{
 			final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
 					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays);
-			edgeToStoreToArrayToStoreInfo =
+			edgeToStoreToArrayGroupToStoreInfo =
 					csiiaag.getEdgeToStoreToArrayToStoreInfo();
 			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
+			edgeToTermToArrayGroup = csiiaag.getEdgeToTermToArrayGroup();
+			locArrayManager = csiiaag.getLocArrayManager();
 		}
 
 		/*
-		 * 1. Execute the preprocessing
+		 * 1. Preprocess the program for the static analysis.
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
 
-		final Map<StoreInfo, IProgramConst> storeIndexInfoToLocLiteral;
-		final MemlocArrayManager memlocArrayManager;
 
 		mLogger.info("Heap separator: starting loc-array-style preprocessing");
 
-		memlocArrayManager = new MemlocArrayManager(mMgdScript);
+//		memlocArrayManager = new MemlocArrayManager(mMgdScript);
 
 		/*
 		 * add the memloc array updates to each transition with an array update
@@ -211,13 +221,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
 							originalIcfg.getCfgSmtToolkit(),
-							memlocArrayManager,
-							mHeapArrays, edgeToStoreToArrayToStoreInfo);
+							locArrayManager,
+							mHeapArrays, edgeToStoreToArrayGroupToStoreInfo);
 
 
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
-					backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
+					backtranslationTracker, outLocationClass, "icfg_with_locarrays", mauit);
 
 			storeIndexInfoToLocLiteral = mauit.getStoreInfoToLocLiteral();
 			/*
@@ -246,7 +256,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		{
 
 			final ComputeMemlocInitializingTransformula mlit =
-					new ComputeMemlocInitializingTransformula(memlocArrayManager, validArray, mSettings,
+					new ComputeMemlocInitializingTransformula(locArrayManager, validArray, mSettings,
 							mMgdScript);
 
 			final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
@@ -272,7 +282,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			//				icfgWMemlocInitialized = icgtf.getResult();
 
-			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+			memlocLiterals.addAll(locArrayManager.getMemLocLits());
 			//			}
 
 
@@ -310,7 +320,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
 
-		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayToStoreInfo));
+		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayGroupToStoreInfo));
 
 		/*
 		 * 2. run the equality analysis
@@ -332,7 +342,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
 
 		final HeapPartitionManager partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup,
-				mHeapArrays, mStatistics, memlocArrayManager, storeIndexInfoToLocLiteral);
+				mHeapArrays, mStatistics, locArrayManager, storeIndexInfoToLocLiteral);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -351,7 +361,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
-						edgeToStoreToArrayToStoreInfo,
+						edgeToStoreToArrayGroupToStoreInfo,
 						arrayToArrayGroup,
 						mHeapArrays,
 						mStatistics,
