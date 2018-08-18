@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2008-2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2016 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitkze (lars.nitzke@outlook.com)
  * Copyright (C) 2015-2016 University of Freiburg
  *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -780,7 +781,6 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		} else if (statement instanceof ForkStatement) {
-			// TODO: implement type checker for fork statement
 			final ForkStatement fork = (ForkStatement) statement;
 			final ProcedureInfo procInfo = mDeclaredProcedures.get(fork.getMethodName());
 			if (procInfo == null) {
@@ -800,13 +800,15 @@ public class TypeChecker extends BaseObserver {
 				if (!inParams[i].getType().unify(t, typeParams)) {
 					typeError(statement, "Wrong parameter type at index " + i + ": " + fork);
 				}
-			}
+			}			
+			typecheckExpression(fork.getForkID());
 		} else if (statement instanceof JoinStatement) {
 			final JoinStatement join = (JoinStatement) statement;
 			final Expression expr = join.getForkID();
 			if (expr == null) {
 				typeError(statement, "Expression " + expr + " does not exist.");
 			}
+			typecheckExpression(join.getForkID());
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
