@@ -283,7 +283,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
 					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
 						final IIcfgJoinTransitionCurrentThread<?> current =
-								((IIcfgJoinTransitionOtherThread<?, ?>) edge)
+								((IIcfgJoinTransitionOtherThread<?>) edge)
 										.getCorrespondingIIcfgJoinTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getSource();
 						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
