@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -73,7 +72,7 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	}
 
 	@Override
-	public IIcfgJoinTransitionCurrentThread<IcfgLocation> getCorrespondingIIcfgJoinTransitionCurrentThread() {
+	public JoinCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread() {
 		return mJoinCurrentThread;
 	}
 }

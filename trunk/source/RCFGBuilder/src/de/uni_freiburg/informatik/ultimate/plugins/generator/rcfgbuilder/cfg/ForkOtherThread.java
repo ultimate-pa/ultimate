@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -79,7 +78,7 @@ public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOth
 	}
 
 	@Override
-	public IIcfgForkTransitionCurrentThread<IcfgLocation> getCorrespondingIIcfgForkTransitionCurrentThread() {
+	public ForkCurrentThread getCorrespondingIIcfgForkTransitionCurrentThread() {
 		return mForkCurrentThread;
 	}
 }
