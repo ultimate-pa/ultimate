@@ -800,7 +800,7 @@ public class TypeChecker extends BaseObserver {
 				if (!inParams[i].getType().unify(t, typeParams)) {
 					typeError(statement, "Wrong parameter type at index " + i + ": " + fork);
 				}
-			}			
+			}
 			typecheckExpression(fork.getForkID());
 		} else if (statement instanceof JoinStatement) {
 			final JoinStatement join = (JoinStatement) statement;
@@ -809,6 +809,9 @@ public class TypeChecker extends BaseObserver {
 				typeError(statement, "Expression " + expr + " does not exist.");
 			}
 			typecheckExpression(join.getForkID());
+			for (int i = 0; i < join.getLhs().length; i++) {
+				typecheckLeftHandSide(join.getLhs()[i]);
+			}
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
@@ -885,14 +888,14 @@ public class TypeChecker extends BaseObserver {
 	private void checkModifiesTransitive(final CallStatement call, final String callee) {
 		checkModifiesTransitive((Statement)call, callee);
 	}
-	
+
 	/**
 	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
 	 */
 	private void checkModifiesTransitive(final ForkStatement fork, final String callee) {
 		checkModifiesTransitive((Statement)fork, callee);
 	}
-	
+
 	/**
 	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
 	 */
@@ -908,8 +911,8 @@ public class TypeChecker extends BaseObserver {
 			}
 		}
 	}
-	
-	
+
+
 
 	private void processBody(final Body body, final String prodecureId) {
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.LOCAL, prodecureId);
