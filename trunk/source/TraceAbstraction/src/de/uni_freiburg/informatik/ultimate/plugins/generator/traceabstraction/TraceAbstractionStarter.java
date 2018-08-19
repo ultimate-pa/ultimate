@@ -93,6 +93,10 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
+	public static final String ULTIMATE_INIT = "ULTIMATE.init";
+
+	public static final String ULTIMATE_START = "ULTIMATE.start";
+
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	private final ILogger mLogger;
@@ -521,7 +525,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private static boolean isAuxilliaryProcedure(final String proc) {
-		return "ULTIMATE.init".equals(proc) || "ULTIMATE.start".equals(proc);
+		return ULTIMATE_INIT.equals(proc) || ULTIMATE_START.equals(proc);
 	}
 
 	private void reportResult(final IResult res) {
