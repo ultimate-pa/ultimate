@@ -8,10 +8,10 @@
 
 var n: int;
 
-procedure Main();
+procedure ULTIMATE.start();
 modifies n;
 
-implementation Main()
+implementation ULTIMATE.start()
 {
     var x : int;
     x := 1;

@@ -6,9 +6,9 @@
  * 
  */
 
-procedure Main();
+procedure ULTIMATE.start();
 
-implementation Main()
+implementation ULTIMATE.start()
 {
     var x : int;
     x := 4;
