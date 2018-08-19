@@ -82,6 +82,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
+	/**
+	 * Do not enhance the interpolant automaton into a total automaton but construct
+	 * the enhancement only on-demand and add only transitions that will be needed
+	 * for the difference.
+	 */
 	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
 
 	public CegarLoopJulian(final DebugIdentifier name, final BoogieIcfgContainer rootNode,
