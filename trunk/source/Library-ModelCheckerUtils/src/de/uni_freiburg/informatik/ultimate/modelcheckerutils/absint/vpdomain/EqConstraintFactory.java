@@ -177,7 +177,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return
 	 */
 	public EqConstraint<NODE> getEqConstraint(final WeqCongruenceClosure<NODE> newWeqCc, final boolean modifiable) {
-		if (newWeqCc.isInconsistent()) {
+		if (newWeqCc.isInconsistent(mWeqCcManager.getSettings().closeAllEqConstraints())) {
 			return getBottomConstraint();
 		}
 		assert modifiable != newWeqCc.isFrozen();
@@ -508,7 +508,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				if (!getEqNodeAndFunctionFactory().hasNode(term)) {
 					continue;
 				}
-				if (newWeqCc.isInconsistent()) {
+				if (newWeqCc.isInconsistent(false)) {
 					postProjectHelper(original, termsToProjectAway, getBottomConstraint());
 					return getBottomConstraint();
 				}
@@ -517,7 +517,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				final NODE nodeToProjectAway = getEqNodeAndFunctionFactory().getExistingNode(term);
 				newWeqCc = mWeqCcManager.projectAway(newWeqCc, nodeToProjectAway);
 
-				if (newWeqCc.isInconsistent()) {
+				if (newWeqCc.isInconsistent(false)) {
 					postProjectHelper(original, termsToProjectAway, getBottomConstraint());
 					return getBottomConstraint();
 				}

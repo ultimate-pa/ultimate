@@ -90,9 +90,11 @@ public class WeqSettings {
 	 */
 	private final boolean mCloseAfterInplaceMeet = false;
 
-	public WeqSettings() {
+	private final boolean mCloseBeforeIsInconsistentCheck = false;
 
-	}
+//	public WeqSettings() {
+//
+//	}
 
 	public boolean isFlattenWeqEdgesBeforeMeetWWeqGpa() {
 		return mFlattenWeqEdgesBeforeWeqFatten;
@@ -205,5 +207,16 @@ public class WeqSettings {
 	 */
 	public boolean closeAllEqConstraints() {
 		return mCloseAllEqConstraints;
+	}
+
+	/**
+	 * By our paradigm, we must close before lossy operations an query operations.
+	 * {@link WeqCongruenceClosure#isInconsistent()} is a query operation, so we should close.
+	 * However, this might be expensive, so we have this setting.
+	 *
+	 * @return
+	 */
+	public boolean closeBeforeIsInconsistentCheck() {
+		return mCloseBeforeIsInconsistentCheck;
 	}
 }

@@ -10,6 +10,8 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	boolean isInconsistent();
 
+	boolean isInconsistent(boolean close);
+
 	boolean isTautological();
 
 	boolean isFrozen();

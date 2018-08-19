@@ -125,7 +125,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mCongruenceClosure = manager.copyCcNoRemInfo(cc);
 
 		assert manager != null;
-		if (cc.isInconsistent()) {
+		if (cc.isInconsistent(false)) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		mManager = manager;
@@ -184,7 +184,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public boolean isFrozen() {
-		assert isInconsistent() || mIsFrozen == mCongruenceClosure.isFrozen();
+		assert isInconsistent(false) || mIsFrozen == mCongruenceClosure.isFrozen();
 		return mIsFrozen;
 	}
 
@@ -196,7 +196,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mCongruenceClosure != null) {
 			mManager.getCcManager().freezeIfNecessary(mCongruenceClosure);
 		}
-		if (!isInconsistent()) {
+		if (!isInconsistent(false)) {
 			getWeakEquivalenceGraph().freezeIfNecessary();
 		}
 		mIsFrozen = true;
@@ -218,8 +218,24 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mManager.bmEnd(WeqCcBmNames.FREEZE_AND_CLOSE);
 	}
 
+	/**
+	 * closes depending on the setting
+	 */
 	@Override
 	public boolean isInconsistent() {
+		return isInconsistent(mManager.getSettings().closeBeforeIsInconsistentCheck());
+	}
+
+	/**
+	 * use this if you want to enforce or avoid closure
+	 * @param close
+	 * @return
+	 */
+	@Override
+	public boolean isInconsistent(final boolean close) {
+		if (close) {
+			mManager.closeIfNecessary(this);
+		}
 		return mCongruenceClosure == null || mCongruenceClosure.isInconsistent();
 	}
 
@@ -255,7 +271,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private void reportWeakEquivalence(final NODE array1, final NODE array2,
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return;
 		}
 
@@ -265,7 +281,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	boolean executeFloydWarshallAndReportResultToWeqCc(final boolean omitSanityChecks) {
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return false;
 		}
 
@@ -299,7 +315,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !array1.isUntrackedArray();
 		assert !array2.isUntrackedArray();
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return false;
 		}
 
@@ -338,7 +354,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					+ "nonsense..)");
 		}
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 				return true;
 		}
 
@@ -363,7 +379,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				continue;
 			}
 			for (final NODE ccp2 : ccps2) {
-				if (isInconsistent()) {
+				if (isInconsistent(false)) {
 					return true;
 				}
 
@@ -395,7 +411,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet()) {
 			for (final Entry<NODE, NODE> ccc2 :
 					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet()) {
-				if (isInconsistent()) {
+				if (isInconsistent(false)) {
 					return true;
 				}
 
@@ -453,7 +469,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
 					assert containsConstraint == null
-							|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint) : "uncaught inconsistent case";
+							|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint)
+							: "uncaught inconsistent case";
 				}
 			}
 
@@ -516,7 +533,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		assert !isFrozen();
 		assert node1.hasSameTypeAs(node2);
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			throw new IllegalStateException();
 		}
 
@@ -566,12 +583,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final NODE newRep = getRepresentativeElement(node1);
 		getWeakEquivalenceGraph().updateForNewRep(node1OldRep, node2OldRep, newRep);
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return true;
 		}
 
 		CongruenceClosure.doFwccAndBwccPropagationsFromMerge(propInfo, this);
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return true;
 		}
 
@@ -580,7 +597,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
 		}
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return true;
 		}
 
@@ -614,7 +631,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	private void doRoweqPropagationsOnMerge(final NODE node1, final NODE node2, final NODE node1OldRep,
 			final NODE node2OldRep, final CcAuxData<NODE> oldAuxData, final boolean omitSanityChecks) {
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return;
 		}
 
@@ -805,7 +822,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		while (getWeakEquivalenceGraph().hasArrayEqualities()) {
 			final Entry<NODE, NODE> aeq = getWeakEquivalenceGraph().pollArrayEquality();
 			madeChanges |= reportEquality(aeq.getKey(), aeq.getValue(), omitSanityChecks);
-			if (isInconsistent()) {
+			if (isInconsistent(false)) {
 				assert sanityCheck();
 				assert madeChanges;
 				return true;
@@ -837,7 +854,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return false;
 		}
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			// no need for further propagations
 			return true;
 		}
@@ -848,7 +865,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert weqGraphFreeOfArrayEqualities();
 		}
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			// omit sanity checks
 			return true;
 		}
@@ -891,7 +908,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private boolean reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 			final Predicate<CongruenceClosure<NODE>> reporter) {
 		assert sanityCheck();
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return false;
 		}
 		boolean madeChanges = false;
@@ -933,7 +950,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void fatten(final boolean useWeqGpa) {
 		assert !isFrozen();
 
-		if (this.isInconsistent()) {
+		if (this.isInconsistent(false)) {
 			return;
 		}
 
@@ -997,7 +1014,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			{
 				boolean madeChanges = true;
 				while (madeChanges) {
-					if (this.isInconsistent()) {
+					if (this.isInconsistent(false)) {
 						assert mManager.checkEquivalence(originalCopy, this);
 						mIsClosed = true;
 						mManager.bmEnd(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
@@ -1188,7 +1205,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private void registerNewElement(final NODE elem) {
 
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			// nothing more to do
 			return;
 		}
@@ -1246,7 +1263,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem, ccp, projectedLabel, true);
 
-			if (isInconsistent()) {
+			if (isInconsistent(false)) {
 				// propagation made this inconsistent --> no more propagations needed
 				return;
 			}
@@ -1394,8 +1411,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> other) {
 		assert this.isClosed() && other.isClosed();
-		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological()
-			: "catch this case in WeqCcManager";
+		assert !this.isInconsistent(false) && !other.isInconsistent(false)
+			&& !this.isTautological() && !other.isTautological() : "catch this case in WeqCcManager";
 
 		final WeqCongruenceClosure<NODE> result = mManager.getWeqCongruenceClosure(
 				mManager.join(mCongruenceClosure, other.mCongruenceClosure, true),
@@ -1465,7 +1482,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert result.sanityCheck();
 		}
 
-		if (result.isInconsistent()) {
+		if (result.isInconsistent(false)) {
 //			if (inplace) {
 				return result;
 //			} else {
@@ -1511,7 +1528,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					true);
 			assert result.sanityCheck();
 
-			if (result.isInconsistent()) {
+			if (result.isInconsistent(false)) {
 //				if (inplace) {
 					return result;
 //				} else {
@@ -1559,21 +1576,21 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other) {
-		assert !this.isInconsistent() && !other.isInconsistent();
+		assert !this.isInconsistent(false) && !other.isInconsistent(false);
 //		assert inplace != isFrozen();
 
 		WeqCongruenceClosure<NODE> thisAligned = mManager.addAllElements(this, other.getAllElements(), null,
 				true);
 
 		for (final Entry<NODE, NODE> eq : other.getSupportingElementEqualities().entrySet()) {
-			if (thisAligned.isInconsistent()) {
+			if (thisAligned.isInconsistent(false)) {
 //				return mManager.getInconsistentWeqCc(true);
 				return this;
 			}
 			thisAligned = mManager.reportEquality(thisAligned, eq.getKey(), eq.getValue(), true);
 		}
 		for (final Entry<NODE, NODE> deq : other.getElementDisequalities()) {
-			if (thisAligned.isInconsistent()) {
+			if (thisAligned.isInconsistent(false)) {
 //				return mManager.getInconsistentWeqCc(true);
 				return this;
 			}
@@ -1581,7 +1598,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		for (final Entry<NODE, SetConstraintConjunction<NODE>> en :
 				other.getLiteralSetConstraints().getConstraints().entrySet()) {
-			if (thisAligned.isInconsistent()) {
+			if (thisAligned.isInconsistent(false)) {
 //				return mManager.getInconsistentWeqCc(true);
 				return this;
 			}
@@ -1593,7 +1610,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public boolean sanityCheck() {
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return true;
 		}
 
@@ -1607,7 +1624,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			res &= getWeakEquivalenceGraph().sanityCheck();
 		}
 
-		if (!isInconsistent()
+		if (!isInconsistent(false)
 				&& !mIsWeqFatEdgeLabel
 				&& mDiet != Diet.WEQCCFAT
 				&& mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
@@ -1628,7 +1645,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (isTautological()) {
 			return "True";
 		}
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return "False";
 		}
 		if (getAllElements().size() < mManager.getSettings().getMaxNoElementsForVerboseToString()) {
@@ -1653,7 +1670,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (isTautological()) {
 			return "True";
 		}
-		if (isInconsistent()) {
+		if (isInconsistent(false)) {
 			return "False";
 		}
 		final StringBuilder sb = new StringBuilder();

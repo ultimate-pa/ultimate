@@ -677,11 +677,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final WeqCongruenceClosure<NODE> weqcc2 = closeIfNecessary(weqcc2Raw);
 		weqcc2.freezeIfNecessary();
 
-		if (weqcc1.isInconsistent()) {
+		if (weqcc1.isInconsistent(false)) {
 			bmEnd(WeqCcBmNames.JOIN);
 			return weqcc2;
 		}
-		if (weqcc2.isInconsistent()) {
+		if (weqcc2.isInconsistent(false)) {
 			bmEnd(WeqCcBmNames.JOIN);
 			return weqcc1;
 		}
@@ -1157,8 +1157,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final Set<DISJUNCT> result, final Term literalDisequalities) {
 
 		{
-			if (!input.stream().anyMatch(d -> d.isInconsistent())
-					&& !result.stream().anyMatch(d -> d.isInconsistent())) {
+			if (!input.stream().anyMatch(d -> d.isInconsistent(false))
+					&& !result.stream().anyMatch(d -> d.isInconsistent(false))) {
 				// the result may not contain any nodes that the input does not
 				final Set<NODE> nodesInput = new HashSet<>();
 				input.stream().forEach(d -> nodesInput.addAll(d.getAllElements()));
@@ -1216,7 +1216,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
 			final WeqCongruenceClosure<NODE> weqCc, final Term literalDisequalities) {
-		if (weqCc.isInconsistent()) {
+		if (weqCc.isInconsistent(false)) {
 			return script.term("false");
 		}
 
@@ -1300,7 +1300,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT projectToElements(final DISJUNCT cc,
 			final Set<NODE> nodesToKeep, final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
-		assert !cc.isInconsistent() : "catch this outside";
+		assert !cc.isInconsistent(false) : "catch this outside";
 		if (cc.getClass().equals(CongruenceClosure.class)) {
 			return (DISJUNCT) projectToElements((CongruenceClosure<NODE>) cc, nodesToKeep, remInfo, modifiable);
 		} else {
@@ -1310,7 +1310,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
 			final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
-		assert !cc.isInconsistent() : "catch this outside";
+		assert !cc.isInconsistent(false) : "catch this outside";
 		CongruenceClosure<NODE> result = mCcManager.projectToElements(cc, nodesToKeep, remInfo);
 		assert result.isFrozen() : "projectToElements always freezes, right?.. (because it cannot work inplace)";
 		if (modifiable) {
@@ -1324,7 +1324,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		bmStart(WeqCcBmNames.ADDALLNODES);
 		if (inplace) {
 			for (final NODE e : nodesToAdd) {
-				if (weqcc.isInconsistent()) {
+				if (weqcc.isInconsistent(false)) {
 					return weqcc;
 				}
 				addNode(e, weqcc, true, false);
@@ -1334,7 +1334,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			WeqCongruenceClosure<NODE> result = unfreeze(weqcc);
 			for (final NODE e : nodesToAdd) {
-				if (weqcc.isInconsistent()) {
+				if (weqcc.isInconsistent(false)) {
 					return weqcc;
 				}
 				result = addNode(e, weqcc, false, false);

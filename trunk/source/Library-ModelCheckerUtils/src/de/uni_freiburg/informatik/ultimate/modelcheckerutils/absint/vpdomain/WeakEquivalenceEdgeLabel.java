@@ -685,13 +685,13 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 			// report all constraints from the label into the copy of the weqCc
 			for (final Entry<NODE, NODE> eq : labelWithWeqVarsPrimed.getSupportingElementEqualities().entrySet()) {
-				if (weqCcCopy.isInconsistent()) {
+				if (weqCcCopy.isInconsistent(false)) {
 					break;
 				}
 				weqCcCopy = mWeqCcManager.reportEquality(weqCcCopy, eq.getKey(), eq.getValue(), MEET_IN_PLACE);
 			}
 			for (final Entry<NODE, NODE> deq : labelWithWeqVarsPrimed.getElementDisequalities().entrySet()) {
-				if (weqCcCopy.isInconsistent()) {
+				if (weqCcCopy.isInconsistent(false)) {
 					break;
 				}
 				weqCcCopy = mWeqCcManager.reportDisequality(weqCcCopy, deq.getKey(), deq.getValue(), MEET_IN_PLACE);
@@ -706,7 +706,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				return result;
 			}
 
-			if (!weqCcCopy.isInconsistent()) {
+			if (!weqCcCopy.isInconsistent(false)) {
 //				newLabelContents.add(weqCcCopy.getCongruenceClosure());
 				newLabelContents.add(weqCcCopy);
 			}

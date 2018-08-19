@@ -961,7 +961,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	}
 
 	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> ccFattenEdgeLabels() {
-		assert !mWeqCc.isInconsistent();
+		assert !mWeqCc.isInconsistent(false);
 		assert mWeqCc.getDiet() == Diet.TRANSITORY_THIN_TO_CCFAT || mWeqCc.getDiet() == Diet.TRANSITORY_CCREFATTEN;
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edgeLabel : getWeqEdgesEntrySet()) {
@@ -1086,7 +1086,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	boolean sanityCheck() {
 		assert mWeqCcManager != null;
 
-		if (mWeqCc != null && mWeqCc.isInconsistent()) {
+		if (mWeqCc != null && mWeqCc.isInconsistent(false)) {
 			// we will drop this weak equivalence graph anyway
 			return true;
 		}

@@ -313,7 +313,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 * (fwcc)
 		 */
 		for (final Entry<ELEM, ELEM> congruentParents : equalitiesToPropagate) {
-			if (icc.isInconsistent()) {
+			if (icc.isInconsistent(false)) {
 				return;
 			}
 			icc.reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
@@ -323,7 +323,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 * (bwcc1), (bwcc2)  (-- they're only separate cases during reportDisequality)
 		 */
 		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
-			if (icc.isInconsistent()) {
+			if (icc.isInconsistent(false)) {
 				return;
 			}
 			icc.reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
@@ -625,11 +625,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
 		 *   then we add the element g(x)
 		 */
-		if (elem.getAppliedFunction().isConstantFunction() && !congruenceClosure.isInconsistent()) {
+		if (elem.getAppliedFunction().isConstantFunction() && !congruenceClosure.isInconsistent(false)) {
 			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
 		}
 		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
-			if (congruenceClosure.isInconsistent()) {
+			if (congruenceClosure.isInconsistent(false)) {
 				return;
 			}
 			if (equivalentFunction == elem.getAppliedFunction()) {
@@ -714,7 +714,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction1.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction1 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep2)) {
-					if (congruenceClosure.isInconsistent()) {
+					if (congruenceClosure.isInconsistent(false)) {
 						return;
 					}
 					assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
@@ -727,7 +727,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction2.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction2 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep1)) {
-					if (congruenceClosure.isInconsistent()) {
+					if (congruenceClosure.isInconsistent(false)) {
 						return;
 					}
 					assert !equivalentFunction2.equals(ccpar.getAppliedFunction());
@@ -1174,6 +1174,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	@Override
 	public boolean isInconsistent() {
 		return mElementTVER == null || mElementTVER.isInconsistent() || mLiteralSetConstraints.isInconsistent();
+	}
+
+	@Override
+	public boolean isInconsistent(final boolean close) {
+		// CongruenceClosure is always closed immediately..
+		return isInconsistent();
 	}
 
 	private boolean assertElementsAreSuperset(final Set<ELEM> a, final Set<ELEM> b) {

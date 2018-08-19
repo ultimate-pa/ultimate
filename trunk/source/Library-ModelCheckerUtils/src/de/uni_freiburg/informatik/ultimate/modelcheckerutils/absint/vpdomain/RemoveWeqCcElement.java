@@ -32,7 +32,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			final boolean introduceNewNodes, final boolean useWeqGpa) {
 		assert !elem.isFunctionApplication() : "unexpected..";
 
-		if (elementContainer.isInconsistent()) {
+		if (elementContainer.isInconsistent(false)) {
 			throw new IllegalStateException();
 		}
 
@@ -107,7 +107,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			.isEmpty();
 		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mWeqCc);
 
-		assert !mWeqCc.isInconsistent();
+		assert !mWeqCc.isInconsistent(false);
 
 
 		boolean becameInconsistentWhenAddingANode = false;
@@ -120,13 +120,13 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 //		mWeqCc.getManager().closeIfNecessary(mWeqCc);
 
 		if (becameInconsistentWhenAddingANode) {
-			assert mWeqCc.isInconsistent();
+			assert mWeqCc.isInconsistent(false);
 			mDidRemoval = true;
 			return;
 		}
 
 		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mWeqCc);
-		assert !mWeqCc.isInconsistent();
+		assert !mWeqCc.isInconsistent(false);
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			mWeqCc.extAndTriangleClosure(false);
@@ -135,7 +135,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 //			mWeqCc.mIsClosed = false;
 		}
 
-		assert !mWeqCc.isInconsistent();
+		assert !mWeqCc.isInconsistent(false);
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 		mWeqCc.fatten(mUseWeqGpa);
@@ -156,7 +156,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		for (final NODE nail : nodesAddedInLabels) {
 			mWeqCc.addElementRec(nail);
 
-			if (mWeqCc.isInconsistent()) {
+			if (mWeqCc.isInconsistent(false)) {
 				// Cc became inconsistent through adding proxyElem --> nothing more to do
 				if (mWeqCc.isDebugMode()) {
 					mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
@@ -169,7 +169,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		assert mWeqCc.sanityCheck();
 		mWeqCc.extAndTriangleClosure(false);
 
-		if (mWeqCc.isDebugMode() && mWeqCc.isInconsistent()) {
+		if (mWeqCc.isDebugMode() && mWeqCc.isInconsistent(false)) {
 			mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
 					" became inconsistent during closure operation");
 		}
@@ -235,7 +235,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 				mWeqCc.addElementRec(proxyElem);
 
-				if (mWeqCc.isInconsistent()) {
+				if (mWeqCc.isInconsistent(false)) {
 					// Cc became inconsistent through adding proxyElem --> nothing more to do
 					if (mWeqCc.isDebugMode()) {
 						mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
@@ -290,7 +290,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		if (elem.isFunctionApplication()) {
 			throw new IllegalArgumentException();
 		}
-		if (cc.isInconsistent()) {
+		if (cc.isInconsistent(false)) {
 			throw new IllegalStateException();
 		}
 

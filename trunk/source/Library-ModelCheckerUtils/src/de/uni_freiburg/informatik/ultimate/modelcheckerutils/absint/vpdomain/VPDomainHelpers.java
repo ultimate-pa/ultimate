@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -48,11 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -80,29 +76,29 @@ public class VPDomainHelpers {
 		return result;
 	}
 
-	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1,
-			final Map<IProgramVar, TermVariable> map2) {
-		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
-	}
+//	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1,
+//			final Map<IProgramVar, TermVariable> map2) {
+//		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
+//	}
+//
+//	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
+//		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
+//	}
 
-	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
-		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
-	}
-
-	/**
-	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
-	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
-	 *
-	 * @param c
-	 * @return
-	 */
-	public static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
-		final Map<Term, Term> substitionMap = new HashMap<>();
-		for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
-			substitionMap.put(en.getKey(), en.getValue().getTerm());
-		}
-		return substitionMap;
-	}
+//	/**
+//	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
+//	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
+//	 *
+//	 * @param c
+//	 * @return
+//	 */
+//	public static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
+//		final Map<Term, Term> substitionMap = new HashMap<>();
+//		for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
+//			substitionMap.put(en.getKey(), en.getValue().getTerm());
+//		}
+//		return substitionMap;
+//	}
 
 	public static IProgramVar getProgramVar(final TermVariable newArray, final Map<IProgramVar, TermVariable> map) {
 		for (final Entry<IProgramVar, TermVariable> en : map.entrySet()) {
@@ -338,31 +334,31 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
-		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
-		return new Substitution(mgdScript, subs).transform(term);
-	}
+//	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
+//		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
+//		return new Substitution(mgdScript, subs).transform(term);
+//	}
 
-	public static Term normalizeTerm(final Term t, final Map<IProgramVar, TermVariable> newInVars,
-			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript mgdScript) {
-		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
-		return new Substitution(mgdScript, subs).transform(t);
-	}
+//	public static Term normalizeTerm(final Term t, final Map<IProgramVar, TermVariable> newInVars,
+//			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript mgdScript) {
+//		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
+//		return new Substitution(mgdScript, subs).transform(t);
+//	}
 
-	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf,
-			final ManagedScript script) {
-		return new ArrayIndex(index.stream()
-				.map(t -> normalizeTerm(t, tf, script))
-				.collect(Collectors.toList()));
-	}
+//	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf,
+//			final ManagedScript script) {
+//		return new ArrayIndex(index.stream()
+//				.map(t -> normalizeTerm(t, tf, script))
+//				.collect(Collectors.toList()));
+//	}
 
 
-	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final Map<IProgramVar, TermVariable> newInVars,
-			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript script) {
-		return new ArrayIndex(index.stream()
-				.map(t -> normalizeTerm(t, newInVars, newOutVars, script))
-				.collect(Collectors.toList()));
-	}
+//	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final Map<IProgramVar, TermVariable> newInVars,
+//			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript script) {
+//		return new ArrayIndex(index.stream()
+//				.map(t -> normalizeTerm(t, newInVars, newOutVars, script))
+//				.collect(Collectors.toList()));
+//	}
 
 	public static <T> boolean arrayContains(final T[] array, final T elem) {
 		for (final T t : array) {
