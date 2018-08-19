@@ -88,6 +88,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	 * for the difference.
 	 */
 	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
+	/**
+	 * Remove unreachable nodes of mAbstraction in each iteration.
+	 */
+	private final boolean mRemoveUnreachable = true;
 
 	public CegarLoopJulian(final DebugIdentifier name, final BoogieIcfgContainer rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -188,6 +192,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 				abstraction, dia).getResult();
+
+		if (mRemoveUnreachable) {
+			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable(
+					new AutomataLibraryServices(mServices), (BoundedPetriNet) mAbstraction).getResult();
+		}
 
 		if (mPref.dumpAutomata()) {
 			// TODO Matthias: Iteration should probably added to TaskIdentifier
