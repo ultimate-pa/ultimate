@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -192,6 +194,7 @@ public class CfgBuilder {
 		final ManagedScript maScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
+		final List<ForkStatement> mForkStatements = extractForkStatements(mBoogieDeclarations); 
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
@@ -200,6 +203,33 @@ public class CfgBuilder {
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
+	}
+
+	/**
+	 * Returns list of all {@link ForkStatement}s from all declarations. Expects
+	 * that the input has been "unstructured", i.e., all {@link WhileStatement}s and
+	 * {@link IfStatement}s have been removed.
+	 */
+	private static List<ForkStatement> extractForkStatements(final BoogieDeclarations boogieDeclarations) {
+		final List<ForkStatement> result = new ArrayList<>();
+		for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
+			final Procedure proc = entry.getValue();
+			final Body body = proc.getBody();
+			for (final Statement st : body.getBlock()) {
+				if ((st instanceof ForkStatement)) {
+					result.add((ForkStatement) st);
+				} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
+						|| (st instanceof HavocStatement) || (st instanceof GotoStatement) || (st instanceof Label)
+						|| (st instanceof JoinStatement)) {
+					// do nothing
+				} else {
+					throw new UnsupportedOperationException(
+							"Did not expect statement of type " + st.getClass().getSimpleName());
+				}
+			}
+
+		}
+		return result;
 	}
 
 	/**
