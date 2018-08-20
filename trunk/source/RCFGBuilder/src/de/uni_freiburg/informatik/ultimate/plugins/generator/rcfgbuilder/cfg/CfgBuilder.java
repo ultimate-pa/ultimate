@@ -108,6 +108,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -397,6 +399,24 @@ public class CfgBuilder {
 		final BoogieIcfgLocation calleeExitLoc = mIcfg.getProcedureExitNodes().get(callee);
 		final Return returnAnnot = mCbf.constructReturn(calleeExitLoc, returnNode, call);
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
+	}
+	
+	/**
+	 * TODO Concurrent Boogie:
+	 */
+	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
+			final ManagedScript mgdScript) {
+		mgdScript.lock(id);
+		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
+		mgdScript.unlock(id);
+		return var;
+	}
+
+	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
+		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getMethodName() + "_inUse",
+				booleanSort, mgdScript);
+		return threadInUseVar;
 	}
 
 	/**

@@ -178,24 +178,6 @@ public class Boogie2SMT {
 		services.getProgressMonitorService().cancelToolchain();
 	}
 	
-	/**
-	 * TODO Concurrent Boogie:
-	 */
-	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
-			final ManagedScript mgdScript) {
-		mgdScript.lock(id);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
-		mgdScript.unlock(id);
-		return var;
-	}
-
-	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
-		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getMethodName() + "_inUse",
-				booleanSort, mgdScript);
-		return threadInUseVar;
-	}
-
 	public class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
 		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
