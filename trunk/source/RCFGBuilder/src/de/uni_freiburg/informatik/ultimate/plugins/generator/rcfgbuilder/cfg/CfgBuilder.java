@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -414,10 +415,11 @@ public class CfgBuilder {
 	    final String callee = st.getMethodName();
 	    assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
 
-	    final Sort booleanSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(BoogieType.TYPE_BOOL, st);
 		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + callee + "_inUse", booleanSort);
-		final BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee, expressionSort);
+		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
+		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + callee + "_inUse", booleanSort, mgdScript);
+		final BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee, expressionSort, mgdScript);
 		mProcedureNameThreadInUseMap.put(callee, threadInUseVar);
 		mProcedureNameThreadIdMap.put(callee, threadIdVar);
 
@@ -504,11 +506,11 @@ public class CfgBuilder {
 	/**
 	 * TODO Concurrent Boogie:
 	 */
-	private BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort) {
-		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
-		mgdScript.lock(this);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, this);
-		mgdScript.unlock(this);
+	private static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
+			final ManagedScript mgdScript) {
+		mgdScript.lock(id);
+		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
+		mgdScript.unlock(id);
 		return var;
 	}
 
