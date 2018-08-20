@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -43,14 +44,17 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 	@Override
 	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
-		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack =
-				s -> super.createStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory);
+		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack = s -> super.createStrategy(
+				counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider);
+		
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 
 		return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-				mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+				mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 				mPrefsConsolidation, taskIdentifier, emptyStackFactory) {
 			@Override
 			protected InteractiveCegar getInteractive() {

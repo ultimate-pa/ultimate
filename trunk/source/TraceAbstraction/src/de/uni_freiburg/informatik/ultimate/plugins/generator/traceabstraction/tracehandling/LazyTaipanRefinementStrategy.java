@@ -70,11 +70,11 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
-				assertionOrderModulation, counterexample, abstraction, taskIdentifier, emptyStackFactory);
+				assertionOrderModulation, counterexample, precondition, abstraction, taskIdentifier, emptyStackFactory);
 	}
 
 	@Override

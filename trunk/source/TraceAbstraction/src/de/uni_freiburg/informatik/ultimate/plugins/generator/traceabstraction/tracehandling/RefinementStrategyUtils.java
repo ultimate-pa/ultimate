@@ -63,7 +63,7 @@ public class RefinementStrategyUtils {
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
 			final ITraceCheck traceCheck, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
 			final RefinementEngineStatisticsGenerator statistics) {
 		final ITraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
@@ -75,7 +75,7 @@ public class RefinementStrategyUtils {
 				try {
 					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
 					final InterpolantConsolidation<LETTER> interpConsoli =
-							new InterpolantConsolidation<>(predicateUnifier.getTruePredicate(),
+							new InterpolantConsolidation<>(precondition,
 									predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
 									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
 									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,

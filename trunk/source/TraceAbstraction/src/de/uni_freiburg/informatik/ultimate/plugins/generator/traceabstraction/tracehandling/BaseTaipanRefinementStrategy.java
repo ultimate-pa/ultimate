@@ -91,6 +91,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	protected final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IPredicate mPrecondition;
 	protected final IAutomaton<LETTER, IPredicate> mAbstraction;
 
 	private Mode mCurrentMode;
@@ -106,6 +107,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
+
 
 
 	/**
@@ -134,7 +136,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
@@ -146,6 +148,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mAbsIntRunner = absIntRunner;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
+		mPrecondition = precondition;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
@@ -294,7 +297,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		TraceCheckConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
+					mPredicateUnifierSmt, mCounterexample, mPrecondition, assertionOrder, interpolationTechnique,
+					mTaskIdentifier);
 		} else {
 			result = new TraceCheckConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);

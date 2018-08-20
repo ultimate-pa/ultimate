@@ -63,6 +63,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IPredicate mPrecondition;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
@@ -99,7 +100,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	public FixedRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
@@ -107,13 +108,14 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 		mLogger = logger;
 		mPrefs = prefs;
 		mCounterexample = counterexample;
+		mPrecondition = precondition;
 		mAbstraction = abstraction;
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 		mFunConstructFromPrefs = new TraceCheckConstructor<>(prefs, managedScript, services, predicateFactory,
-				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), taskIdentifier);
+				predicateUnifier, counterexample, precondition, mPrefs.getInterpolationTechnique(), taskIdentifier);
 	}
 
 	@Override
@@ -151,7 +153,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample, mRefinementEngineStatisticsGenerator);
+					mCounterexample, mPrecondition, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
 	}

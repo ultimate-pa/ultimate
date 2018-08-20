@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -144,14 +145,17 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            counterexample
 	 * @param abstraction
 	 *            abstraction
+	 * @param iPreconditionProvider 
 	 * @param benchmark
 	 *            benchmark
 	 * @return refinement strategy
 	 */
 	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		mPathProgramCache.addRun(counterexample);
 
 		switch (mStrategy) {
@@ -159,53 +163,53 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
 			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices, mPredicateFactory,
-					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
+					predicateUnifier, counterexample, precondition, abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case CAMEL:
 		case CAMEL_NO_AM:
 			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case WALRUS:
 			return new WalrusRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case WOLF:
 			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case WARTHOG_NO_AM:
 		case WARTHOG:
 			return new WarthogRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case RUBBER_TAIPAN:
 			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, taskIdentifier, emptyStackFactory);
 		case TAIPAN:
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, taskIdentifier, emptyStackFactory);
 		case LAZY_TAIPAN:
 			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, taskIdentifier, emptyStackFactory);
 		case TOOTHLESS_TAIPAN:
 			return new ToothlessTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, taskIdentifier, emptyStackFactory);
 		case SMTINTERPOL:
 			return new SmtInterpolRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case MAMMOTH:
 		case MAMMOTH_NO_AM:
 			return new MammothRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition, abstraction,
 					mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		default:
 			throw new IllegalArgumentException(

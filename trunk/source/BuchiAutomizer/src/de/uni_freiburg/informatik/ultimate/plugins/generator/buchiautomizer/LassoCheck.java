@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
@@ -450,8 +451,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		private TraceAbstractionRefinementEngine<LETTER> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
-			final BaseRefinementStrategy<LETTER> strategy =
-					mRefinementStrategyFactory.createStrategy(run, mAbstraction, taskIdentifier, null);
+			final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(run, mAbstraction,
+					taskIdentifier, null, IPreconditionProvider.constructDefaultPreconditionProvider());
 
 			final TraceAbstractionRefinementEngine<LETTER> result;
 			try {

@@ -418,7 +418,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
 		final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mCounterexample,
-				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mPredicateFactoryInterpolantAutomata);
+				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+				mPredicateFactoryInterpolantAutomata, getPreconditionProvider());
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mRefinementStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
@@ -1071,5 +1072,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			return mFloydHoareAutomata;
 		}
 		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
+	}
+	
+	public IPreconditionProvider getPreconditionProvider() {
+		return IPreconditionProvider.constructDefaultPreconditionProvider();
 	}
 }

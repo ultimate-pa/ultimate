@@ -71,6 +71,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IPredicate mPrecondition;
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final TaskIdentifier mTaskIdentifier;
 	private final AssertCodeBlockOrder mAssertionOrder;
@@ -94,8 +95,9 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
-		this(prefs, managedScript, services, predicateFactory, predicateUnifier, counterexample,
+			final IPredicate precondition, final InterpolationTechnique interpolationTechnique,
+			final TaskIdentifier taskIdentifier) {
+		this(prefs, managedScript, services, predicateFactory, predicateUnifier, counterexample, precondition,
 				prefs.getAssertCodeBlocksOrder(), interpolationTechnique, taskIdentifier);
 	}
 
@@ -116,7 +118,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	public TraceCheckConstructor(final TraceCheckConstructor<LETTER> other, final ManagedScript managedScript,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique) {
 		this(other.mPrefs, managedScript, other.mServices, other.mPredicateFactory, other.mPredicateUnifier,
-				other.mCounterexample, assertOrder, interpolationTechnique, other.mTaskIdentifier);
+				other.mCounterexample, other.mPrecondition, assertOrder, interpolationTechnique, other.mTaskIdentifier);
 	}
 
 	/**
@@ -143,7 +145,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 */
 	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
 			final TaskIdentifier taskIdentifier) {
 		mPrefs = prefs;
@@ -152,6 +154,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mCounterexample = counterexample;
+		mPrecondition = precondition;
 		mAssertionOrder = assertOrder;
 		mInterpolationTechnique = interpolationTechnique;
 		mTaskIdentifier = taskIdentifier;
@@ -193,21 +196,19 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private TraceCheck<LETTER> constructDefault() {
-		final IPredicate precondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 
-		return new TraceCheck<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
+		return new TraceCheck<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mServices, mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
 	}
 
 	private TraceCheck<LETTER> constructCraig() {
-		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		return new InterpolatingTraceCheckCraig<>(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+		return new InterpolatingTraceCheckCraig<>(mPrecondition, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()),
 				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), mServices,
 				mPrefs.getCfgSmtToolkit(), mManagedScript, mPredicateFactory, mPredicateUnifier, mAssertionOrder,
@@ -216,12 +217,11 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private TraceCheck<LETTER> constructForwardBackward() {
-		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		return new TraceCheckSpWp<>(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+		return new TraceCheckSpWp<>(mPrecondition, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
 				mPredicateFactory, mPredicateUnifier, mInterpolationTechnique, mManagedScript, xnfConversionTechnique,
@@ -262,7 +262,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 				new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores,
 						useAbstractInterpretationPredicates, useWeakestPrecondition, true);
 
-		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(truePredicate, falsePredicate,
+		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<LETTER, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(),
 				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings,

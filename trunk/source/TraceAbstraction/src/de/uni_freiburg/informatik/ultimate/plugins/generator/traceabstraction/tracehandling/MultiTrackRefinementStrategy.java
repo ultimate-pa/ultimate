@@ -127,6 +127,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IPredicate mPrecondition;
 
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
@@ -155,6 +156,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	protected final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
+
 	/**
 	 * @param prefs
 	 *            Preferences. pending contexts
@@ -173,6 +175,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	 *            temporary argument, should be removed
 	 * @param assertionOrderModulation
 	 *            assertion order modulation
+	 * @param precondition 
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
@@ -181,7 +184,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
@@ -191,6 +194,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		mCsToolkit = cfgSmtToolkit;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
+		mPrecondition = precondition;
 		mAbstraction = abstraction;
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
@@ -272,7 +276,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample, mRefinementEngineStatisticsGenerator);
+					mCounterexample, mPrecondition, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
 	}
@@ -311,7 +315,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		TraceCheckConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory, mPredicateUnifier,
-					mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
+					mCounterexample, mPrecondition, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
 			result = new TraceCheckConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
