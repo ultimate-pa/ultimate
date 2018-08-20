@@ -242,7 +242,8 @@ public class CfgBuilder {
 					result.add((ForkStatement) st);
 				} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
 						|| (st instanceof HavocStatement) || (st instanceof GotoStatement) || (st instanceof Label)
-						|| (st instanceof JoinStatement)) {
+						|| (st instanceof JoinStatement) || (st instanceof CallStatement)
+						|| (st instanceof ReturnStatement)|| (st instanceof AssertStatement)) {
 					// do nothing
 				} else {
 					throw new UnsupportedOperationException(
