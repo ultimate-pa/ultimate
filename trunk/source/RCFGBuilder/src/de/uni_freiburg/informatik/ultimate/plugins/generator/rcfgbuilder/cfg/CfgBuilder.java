@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
@@ -195,14 +196,23 @@ public class CfgBuilder {
 		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final List<ForkStatement> mForkStatements = extractForkStatements(mBoogieDeclarations);
-		mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(mForkStatements, mgdScript);
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization);
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
+		
+		ConcurrencyInformation concurInfo;
+		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
+		if (forkStatements.isEmpty()) {
+			concurInfo = null;
+		} else {
+			mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(forkStatements, mgdScript);
+			concurInfo = new ConcurrencyInformation(
+					mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
+		}
+		
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}

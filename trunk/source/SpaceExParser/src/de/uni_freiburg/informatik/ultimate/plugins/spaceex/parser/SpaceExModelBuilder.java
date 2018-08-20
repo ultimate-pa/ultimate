@@ -180,7 +180,7 @@ public class SpaceExModelBuilder {
 			}
 		};
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures,
-				new IcfgEdgeFactory());
+				new IcfgEdgeFactory(), null);
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -97,7 +98,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Set<BoogieIcfgLocation> mInitialNodes;
 
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
-			final Boogie2SMT mBoogie2smt) {
+			final Boogie2SMT mBoogie2smt, final ConcurrencyInformation concurInfo) {
 
 		mEntryNodes = new HashMap<>();
 		mExitNode = new HashMap<>();
@@ -117,7 +118,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 				new ModifiableGlobalsTable(
 						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
 				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs,
-				new IcfgEdgeFactory());
+				new IcfgEdgeFactory(), concurInfo);
 		mCodeBlockFactory =
 				new CodeBlockFactory(services, mgScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload();

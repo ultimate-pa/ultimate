@@ -49,10 +49,11 @@ public class CfgSmtToolkit {
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
+	private final ConcurrencyInformation mConcurrencyInformation;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures,
-			final IcfgEdgeFactory icfgEdgeFactory) {
+			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -60,6 +61,7 @@ public class CfgSmtToolkit {
 		mAxioms = axioms;
 		mProcedures = procedures;
 		mIcfgEdgeFactory = icfgEdgeFactory;
+		mConcurrencyInformation = concurInfo; 
 	}
 
 	public ManagedScript getManagedScript() {
@@ -88,6 +90,14 @@ public class CfgSmtToolkit {
 
 	public IcfgEdgeFactory getIcfgEdgeFactory() {
 		return mIcfgEdgeFactory;
+	}
+	
+	/**
+	 * Object that provides additional information about concurrency in the program.
+	 * Returns null if the program is not a concurrent program.
+	 */
+	public ConcurrencyInformation getConcurrencyInformation() {
+		return mConcurrencyInformation;
 	}
 
 }

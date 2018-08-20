@@ -341,7 +341,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final IPredicate transformedAxioms = transformAxioms(oldToolkit.getAxioms());
 		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
-				newSymbolTable, transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
+				newSymbolTable, transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory(),
+				oldToolkit.getConcurrencyInformation());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 

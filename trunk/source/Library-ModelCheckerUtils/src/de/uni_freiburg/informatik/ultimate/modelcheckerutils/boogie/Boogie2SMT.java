@@ -75,7 +75,8 @@ public class Boogie2SMT {
 	private final IUltimateServiceProvider mServices;
 
 	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
-			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services, final boolean simplePartialSkolemization) {
+			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services,
+			final boolean simplePartialSkolemization) {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
@@ -105,10 +106,13 @@ public class Boogie2SMT {
 			final Term term = declareAxiom(decl, mExpression2Term);
 			axiomList.add(term);
 		}
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList), maScript.getScript(), mBoogie2SmtSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList),
+				maScript.getScript(), mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
-		mAxioms = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
-		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
+		mAxioms = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(), tvp.getFormula(),
+				tvp.getVars(), tvp.getClosedFormula());
+		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term,
+				simplePartialSkolemization);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, maScript);
 
 	}
@@ -174,6 +178,8 @@ public class Boogie2SMT {
 		services.getProgressMonitorService().cancelToolchain();
 	}
 	
+
+
 	public class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
 		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
