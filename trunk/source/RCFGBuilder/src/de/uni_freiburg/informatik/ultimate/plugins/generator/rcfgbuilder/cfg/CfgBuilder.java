@@ -163,7 +163,7 @@ public class CfgBuilder {
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
 
 	Map<String, BoogieNonOldVar> mProcedureNameThreadIdMap = new HashMap<String, BoogieNonOldVar>();
-	Map<String, BoogieNonOldVar> mProcedureNameThreadInUseMap = new HashMap<String, BoogieNonOldVar>();
+	Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = new HashMap<String, BoogieNonOldVar>();
 
 	private final RCFGBacktranslator mBacktranslator;
 
@@ -192,18 +192,29 @@ public class CfgBuilder {
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
 		final Script script = constructAndInitializeSolver(services, storage, filename);
-		final ManagedScript maScript = new ManagedScript(mServices, script);
+		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final List<ForkStatement> mForkStatements = extractForkStatements(mBoogieDeclarations); 
+		final List<ForkStatement> mForkStatements = extractForkStatements(mBoogieDeclarations);
+		mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(mForkStatements, mgdScript);
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
-		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
+		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
+	}
+
+	private Map<String, BoogieNonOldVar> constructProcedureNameToThreadInUseMap(
+			final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
+		final Map<String, BoogieNonOldVar> result = new HashMap<>();
+		for (final ForkStatement st : forkStatements) {
+			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
+			result.put(st.getMethodName(), threadInUseVar);
+		}
+		return result;
 	}
 
 	/**
@@ -435,10 +446,8 @@ public class CfgBuilder {
 
 		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
 		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
-		final BoogieNonOldVar threadInUseVar = Boogie2SMT.constructThreadInUseVariable(st, mgdScript);
-		final BoogieNonOldVar threadIdVar = Boogie2SMT.constructThreadAuxiliaryVariable("th_id_" + callee,
+		final BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee,
 				expressionSort, mgdScript);
-		mProcedureNameThreadInUseMap.put(callee, threadInUseVar);
 		mProcedureNameThreadIdMap.put(callee, threadIdVar);
 
 	    // Add fork transition from callerNode to procedures entry node.
@@ -459,6 +468,7 @@ public class CfgBuilder {
 		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
 		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
 				nameOfForkingProcedure, simplificationTechnique);
+		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getMethodName());
 		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
 		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
@@ -494,7 +504,7 @@ public class CfgBuilder {
 		final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procName);
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) joinCurrentEdge.getTarget();
 
-		final BoogieNonOldVar threadInUse = mProcedureNameThreadInUseMap.get(procName);
+		final BoogieNonOldVar threadInUse = mProcedureNameToThreadInUseMap.get(procName);
 		final BoogieNonOldVar threadId = mProcedureNameThreadIdMap.get(procName);
 
 		final String caller = callerNode.getProcedure();
