@@ -108,8 +108,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -417,9 +415,9 @@ public class CfgBuilder {
 
 		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
 		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
-		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + callee + "_inUse", booleanSort, mgdScript);
-		final BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee, expressionSort, mgdScript);
+		final BoogieNonOldVar threadInUseVar = Boogie2SMT.constructThreadInUseVariable(st, mgdScript);
+		final BoogieNonOldVar threadIdVar = Boogie2SMT.constructThreadAuxiliaryVariable("th_id_" + callee,
+				expressionSort, mgdScript);
 		mProcedureNameThreadInUseMap.put(callee, threadInUseVar);
 		mProcedureNameThreadIdMap.put(callee, threadIdVar);
 
@@ -460,6 +458,8 @@ public class CfgBuilder {
 	    final StatementSequence errorStatement = mCbf.constructStatementSequence(callerNode, errorNode, assumeError);
 	    errorStatement.setTransitionFormula(forkErrorTransFormula);
 	}
+
+
 
 	/**
 	 * Add JoinOtherThreadEdge from
@@ -503,16 +503,7 @@ public class CfgBuilder {
 		joinOtherThread.setTransitionFormula(joinTransformula);
 	}
 
-	/**
-	 * TODO Concurrent Boogie:
-	 */
-	private static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
-			final ManagedScript mgdScript) {
-		mgdScript.lock(id);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
-		mgdScript.unlock(id);
-		return var;
-	}
+
 
 	/**
 	 * TODO Concurrent Boogie:
