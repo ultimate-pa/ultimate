@@ -40,10 +40,11 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTrack
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityLocUpdateInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.AddInitializingEdgesIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.MemlocArrayUpdaterIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PartitionProjectionTransitionTransformer;
@@ -63,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  *
@@ -186,19 +186,18 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  To know what is relevant (i.e. Pvocs and Terms related to heap arrays), we need array groups, both on
 		 *   program level and on edge level (i.e. for each term).
 		 */
-		final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayGroupToStoreInfo;
+		final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo;
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
-		NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
+		final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
 		final MemlocArrayManager locArrayManager;
-//		final Map<StoreInfo, IProgramConst> storeIndexInfoToLocLiteral;
+		final Set<IProgramConst> locLiterals = new HashSet<>();
 		{
 			final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
-					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays);
-			edgeToStoreToArrayGroupToStoreInfo =
-					csiiaag.getEdgeToStoreToArrayToStoreInfo();
+					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays, mMgdScript);
+			edgeToPositionToLocUpdateInfo = csiiaag.getEdgeToPositionToLocUpdateInfo();
 			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
-			edgeToTermToArrayGroup = csiiaag.getEdgeToTermToArrayGroup();
 			locArrayManager = csiiaag.getLocArrayManager();
+			locLiterals.addAll(csiiaag.getLocLiterals());
 		}
 
 		/*
@@ -209,39 +208,26 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		mLogger.info("Heap separator: starting loc-array-style preprocessing");
 
-//		memlocArrayManager = new MemlocArrayManager(mMgdScript);
-
 		/*
 		 * add the memloc array updates to each transition with an array update
 		 * the values the memloc array is set to are location literals, those are pairwise different by axiom
 		 */
-		final Set<IProgramConst> memlocLiterals = new HashSet<>();
 		final IIcfg<OUTLOC> icfgWithMemlocUpdates;
 		{
 			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
 							originalIcfg.getCfgSmtToolkit(),
 							locArrayManager,
-							mHeapArrays, edgeToStoreToArrayGroupToStoreInfo);
-
-
+							mHeapArrays, edgeToPositionToLocUpdateInfo);
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 					backtranslationTracker, outLocationClass, "icfg_with_locarrays", mauit);
 
-			storeIndexInfoToLocLiteral = mauit.getStoreInfoToLocLiteral();
-			/*
-			 * make sure the literals are all treated as pairwise unequal
-			 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-			 */
-			memlocLiterals.addAll(mauit.getLocationLiterals());
-
-
 			icfgWithMemlocUpdates = icgtf.getResult();
 
-
-			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
-					" location literals (each corresponds to one heap write)");
+			mLogger.info("finished MemlocArrayUpdater");
+//			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
+//					" location literals (each corresponds to one heap write)");
 		}
 
 
@@ -282,23 +268,21 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			//				icfgWMemlocInitialized = icgtf.getResult();
 
-			memlocLiterals.addAll(locArrayManager.getMemLocLits());
+			locLiterals.addAll(locArrayManager.getMemLocLits());
 			//			}
 
 
 			// literal handling (different ways)
 			{
+				equalityProvider.announceAdditionalLiterals(locLiterals);
 
-				equalityProvider.announceAdditionalLiterals(memlocLiterals);
-
-				final Set<Term> literalTerms = memlocLiterals.stream()
+				final Set<Term> literalTerms = locLiterals.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toSet());
+				assert mSettings.isAssertFreezeVarLitDisequalitiesIntoScript() !=
+						 mSettings.isAddLiteralDisequalitiesAsAxioms() : "exactly one solution for literals in script "
+						 		+ "should be enabled";
 				if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
-					/*
-					 * TODO: this is somewhere between inelegant and highly problematic -- make the axiom-style solution
-					 * work!
-					 */
 					assertLiteralDisequalitiesIntoScript(literalTerms);
 				}
 				if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
@@ -312,9 +296,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 							.getResult();
 				}
 			}
-
 			preprocessedIcfg = icfgWMemlocInitialized;
-
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
 
@@ -383,8 +365,12 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * For the moment this will return the EqState of the source location of edgeInfo, but in order to be able to
-	 *  deal with select indices that are aux vars, we need to have something different here
+	 * In order to be able to deal with selects where not all TermVariables are in-vars, we need a "intermediate states"
+	 * here.
+	 *
+	 * The intermediate state for an edge is the meet of the analysis result of its source location with the abstracted
+	 * transition relation of the edge.
+	 *
 	 * @param edgeInfo
 	 * @param equalityProvider
 	 * @return

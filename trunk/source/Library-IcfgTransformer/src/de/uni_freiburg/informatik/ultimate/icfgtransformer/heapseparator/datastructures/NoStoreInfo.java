@@ -9,10 +9,11 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
+@Deprecated
 public class NoStoreInfo extends StoreInfo {
 
 	public NoStoreInfo() {
-		super(null, null, null, -1);
+		super(-1, null, null, null, null, null, null, null, null);
 	}
 
 	@Override

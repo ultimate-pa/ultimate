@@ -31,21 +31,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityLocUpdateInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -61,17 +58,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Applies the "memloc-array transformation"
  *
  * Transformation rules (assuming a is a heap array group):
  * <ul>
- *  <li> havoc a (i.e., a is completely unconstrained in the given formula)
+ *  <li> havoc a (i.e., a is completely unconstrained in the given formula TODO: how to determine that??)
  *     --> conjoin a-loc-n := (const l_0) (for every dimension n)
  *  <li> a' = a[i:=v]
  *     -->  conjoin a-loc-1' = a-loc-1[i:=s] (where s is the literal belonging to that store term)
@@ -104,13 +102,12 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final Map<StoreInfo, IProgramConst> mStoreInfoToLocLiteral;
 
-	private final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> mEdgeToStoreToArrayToStoreInfo;
+	private final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo;
 
-	private final static boolean TRACK_CONSTANTS = false;
-	private final Set<ConstantTerm> mAllConstantTerms;
+//	private final static boolean TRACK_CONSTANTS = false;
+//	private final Set<ConstantTerm> mAllConstantTerms;
 
-
-	private int mMemLocLitCounter = 0;
+	private final int mMemLocLitCounter = 0;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
@@ -127,14 +124,16 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
 
+	private HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVars;
+
 	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
 			final CfgSmtToolkit oldCsToolkit,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
-			final NestedMap3<EdgeInfo, Term, ArrayGroup, StoreInfo> edgeToStoreToArrayToStoreInfo) {
+			final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo) {
 		mMgdScript = oldCsToolkit.getManagedScript();
-		mEdgeToStoreToArrayToStoreInfo = edgeToStoreToArrayToStoreInfo;
-		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
+		mEdgeToPositionToLocUpdateInfo = edgeToPositionToLocUpdateInfo;
+//		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
 		mLocArrayManager = memlocArrayManager;
 		mStoreInfoToLocLiteral = new HashMap<>();
 		mHeapArrays = heapArrays;
@@ -150,188 +149,130 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
-		if (TRACK_CONSTANTS) {
-			/* update the all constants tracking */
-			mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
-					.findMatchingSubterms(tf.getFormula())
-					.stream().map(t -> (ConstantTerm) t)
-					.collect(Collectors.toList()));
-		}
+//		if (TRACK_CONSTANTS) {
+//			/* update the all constants tracking */
+//			mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
+//					.findMatchingSubterms(tf.getFormula())
+//					.stream().map(t -> (ConstantTerm) t)
+//					.collect(Collectors.toList()));
+//		}
 
-		if (mEdgeToStoreToArrayToStoreInfo.get(edgeInfo) == null) {
-			// edge does not have any array writes --> return it unchanged
+		if (mEdgeToPositionToLocUpdateInfo.get(edgeInfo) == null
+				&& mEdgeToUnconstrainedVars.getImage(edgeInfo) == null) {
+			// edge does not have any array equalities or unconstrained vars --> nothing to do
 			return new TransformulaTransformationResult(tf);
 		}
 
-		/*
-		 * core business from here on..
-		 */
-
+		// replace array equations by themselves conjoined with equations on loc arrays
+		final Term transitionFormulaWithLocUpdates;
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 		final Set<IProgramConst> extraConstants = new HashSet<>();
-
-		mMgdScript.lock(this);
-
-//		/*
-//		 * per StoreInfo: dimension -> storeIndex -> loc literal
-//		 */
-//		final NestedMap2<Integer, Term, Term> memlocUpdatesPerDim = new NestedMap2<>();
-
-		/*
-		 * create a literal for each StoreInfo.
-		 */
-//		for (final Triple<Term, ArrayGroup, StoreInfo> en : mEdgeToStoreToArrayToStoreInfo.get(edgeInfo).entrySet()) {
-		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
-
-//			final StoreInfo storeInfo = en.getThird();
-
-//			final Term indexTerm = storeInfo.getIndexTerm();
-
-			// TODO move to other class (preanalysis)
-			final IProgramConst locLit = getOrConstructLocationLiteral(storeInfo);
-			extraConstants.add(locLit);
-
-//			/*
-//			 * updated the memloc array
-//			 *  in Boogie we would add memloc_int[indexTerm] := locLit
-//			 *  note that just adding the conjunct "memloc_int' = (store memloc_int indexTerm locLit)" is wrong here,
-//			 *   because if we add several of these constraints (always with the same in/outvar), then the overall
-//			 *    constraint has a much narrower meaning than intended!
-//			 *    (describing this because the first implementation did it wrong..)
-//			 */
-//			memlocUpdates.put(indexTerm, locLit.getTerm());
-
-//			// TODO: think again about the store chain business..
-//			for (final Entry<ArrayGroup, Integer> en2 : storeInfo.getArrayToAccessDimensions().entrySet()) {
-//				memlocUpdatesPerDim.put(en2.getValue(), indexTerm, locLit.getTerm());
-//			}
-//			memlocUpdatesPerDim.put(storeInfo.getDimension(), storeInfo.getStoreIndex(), locLit.getTerm());
-		}
-
-		/*
-		 * Construct code that updates the loc array corresponding to each StoreInfo
-		 */
-//		final List<Term> memlocUpdateConjuncts = new ArrayList<>();
-//		for (int dim = 0; memlocUpdatesPerDim.get(dim) != null; dim++) {
-//		{
-//		for (final StoreInfo storeInfo : mEdgeToStoreToArrayToStoreInfo.values().collect(Collectors.toList())) {
-//
-//			final Integer dim = storeInfo.getDimension();
-//			final ArrayGroup updatedArray = storeInfo.getArrayGroup();
-//
-//			final TermVariable locInVar;
-//			final TermVariable locIntOutVar;
-//			{
-//				// TODO not nice, with the locking..
-//				mMgdScript.unlock(this);
-//				final IProgramNonOldVar currentLocArray =
-//						mLocArrayManager.getOrConstructLocArray(updatedArray, dim);
-//				mMgdScript.lock(this);
-//
-//				assert !extraOutVars.containsKey(mLocArrayManager.getOrConstructLocArray(updatedArray, dim));
-//				locInVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
-//				locIntOutVar = mMgdScript.constructFreshCopy(currentLocArray.getTermVariable());
-//				extraInVars.put(currentLocArray, locInVar);
-//				extraOutVars.put(currentLocArray, locIntOutVar);
-//
-//				assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure());
-//				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentLocArray);
-//			}
-//
-//			Term storeChain = locInVar;
-//			for (final Entry<Term, Term> en : memlocUpdatesPerDim.get(dim).entrySet()) {
-//				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
-//			}
-//			memlocUpdateConjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), locIntOutVar, storeChain));
-//		}
-
-		mMgdScript.unlock(this);
-
-		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
-		newInVars.putAll(extraInVars);
-		for (final IProgramVar iv : extraInVars.keySet()) {
-			if (iv instanceof IProgramOldVar) {
-				continue;
+		final Set<TermVariable> extraAuxVars = new HashSet<>();
+		final Map<SubtreePosition, ArrayEqualityLocUpdateInfo> posToLocUpdateInfo =
+					mEdgeToPositionToLocUpdateInfo.get(edgeInfo);
+		if (posToLocUpdateInfo != null) {
+			final Map<SubtreePosition, Term> arrayEqualityPosToTermWithLocUpdates = new HashMap<>();
+			for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en : posToLocUpdateInfo.entrySet()) {
+				arrayEqualityPosToTermWithLocUpdates.put(en.getKey(), en.getValue().getFormulaWithLocUpdates());
+				extraInVars.putAll(en.getValue().getExtraInVars());
+				extraOutVars.putAll(en.getValue().getExtraOutVars());
+				extraAuxVars.addAll(en.getValue().getExtraAuxVars());
+				extraConstants.addAll(en.getValue().getExtraConstants());
 			}
-			mNewSymbolTable.add(iv);
+
+			transitionFormulaWithLocUpdates =
+					new PositionAwareSubstitution(mMgdScript, arrayEqualityPosToTermWithLocUpdates)
+						.transform(tf.getFormula());
+		} else {
+			transitionFormulaWithLocUpdates = tf.getFormula();
 		}
 
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
-		newOutVars.putAll(extraOutVars);
-		for (final IProgramVar ov : extraOutVars.keySet()) {
-			if (ov instanceof IProgramOldVar) {
-				continue;
+		// conjoin initialization code for unconstrained loc array variables
+		if (!SmtUtils.isNNF(tf.getFormula()) || SmtUtils.containsFunctionApplication(tf.getFormula(), "or")) {
+			throw new AssertionError("the code below only works for conjunctive formulas");
+		}
+		final Term transitionFormulaWithLocUpdatesAndLocInitialization;
+		{
+			final Set<TermVariable> unconstrainedVars = mEdgeToUnconstrainedVars.getImage(edgeInfo);
+			final List<Term> tfWithUpdatesAndInitConjuncts = new ArrayList<>();
+			tfWithUpdatesAndInitConjuncts.add(transitionFormulaWithLocUpdates);
+			for (final TermVariable ucv : unconstrainedVars) {
+				final MultiDimensionalSort mds = new MultiDimensionalSort(ucv.getSort());
+				final int dimensionality = mds.getDimension();
+				assert dimensionality > 0;
+				for (int dim = 0; dim < dimensionality; dim++) {
+					final Term locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
+					final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(),
+							locArray,
+							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
+					tfWithUpdatesAndInitConjuncts.add(initConjunct);
+				}
 			}
-			mNewSymbolTable.add(ov);
+			transitionFormulaWithLocUpdatesAndLocInitialization =
+					SmtUtils.and(mMgdScript.getScript(), tfWithUpdatesAndInitConjuncts);
 		}
 
-		final Set<IProgramConst> newNonTheoryConsts = new HashSet<>(tf.getNonTheoryConsts());
-		newNonTheoryConsts.addAll(extraConstants);
-		for (final IProgramConst pc : extraConstants) {
-			mNewSymbolTable.add(pc);
+		final Map<IProgramVar, TermVariable> newInVars;
+		{
+			newInVars = new HashMap<>(tf.getInVars());
+			newInVars.putAll(extraInVars);
+			for (final IProgramVar iv : extraInVars.keySet()) {
+				if (iv instanceof IProgramOldVar) {
+					continue;
+				}
+				mNewSymbolTable.add(iv);
+			}
+		}
+
+		final Map<IProgramVar, TermVariable> newOutVars;
+		{
+			newOutVars = new HashMap<>(tf.getOutVars());
+			newOutVars.putAll(extraOutVars);
+			for (final IProgramVar ov : extraOutVars.keySet()) {
+				if (ov instanceof IProgramOldVar) {
+					continue;
+				}
+				mNewSymbolTable.add(ov);
+			}
+		}
+
+		final Set<IProgramConst> newNonTheoryConsts;
+		{
+			newNonTheoryConsts = new HashSet<>(tf.getNonTheoryConsts());
+			newNonTheoryConsts.addAll(extraConstants);
+			for (final IProgramConst pc : extraConstants) {
+				mNewSymbolTable.add(pc);
+			}
 		}
 
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(newInVars, newOutVars,
 				newNonTheoryConsts.isEmpty(), newNonTheoryConsts, tf.getBranchEncoders().isEmpty(),
-				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
+				tf.getBranchEncoders(), tf.getAuxVars().isEmpty() && extraAuxVars.isEmpty());
 
-
-
-		final List<Term> newFormulaConjuncts = new ArrayList<>();
-		newFormulaConjuncts.add(tf.getFormula());
-		newFormulaConjuncts.addAll(memlocUpdateConjuncts);
-
-		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
+		tfBuilder.setFormula(transitionFormulaWithLocUpdatesAndLocInitialization);
 		tfBuilder.setInfeasibility(tf.isInfeasible());
-		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
+		tfBuilder.addAuxVarsButRenameToFreshCopies(DataStructureUtils.union(tf.getAuxVars(), extraAuxVars), mMgdScript);
 
 		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
 		return new TransformulaTransformationResult(newTf);
 	}
 
-	private IProgramConst getOrConstructLocationLiteral(final StoreInfo storeIndexInfo) {
-		IProgramConst result = mStoreInfoToLocLiteral.get(storeIndexInfo);
-		if (result == null) {
-			assert mMgdScript.isLocked();
-			final String locLitName = getLocationLitName(storeIndexInfo);
-//			mMgdScript.declareFun(this, locLitName, new Sort[0], mMemLocSort);
-
-			// any dim should work as the index sort must be the same at all dimensions accessted via that index
-			final int sampleDim = storeIndexInfo.getArrayToAccessDimensions().entrySet().iterator().next().getValue();
-			final Sort sort = mLocArrayManager.getMemlocSort(sampleDim);
-
-			mMgdScript.declareFun(this, locLitName, new Sort[0], sort);
-			final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, locLitName);
-			result = new HeapSepProgramConst(locLitTerm);
-			mStoreInfoToLocLiteral.put(storeIndexInfo, result);
-		}
-		return result;
-	}
-
-	private String getLocationLitName(final StoreInfo storeIndexInfo) {
-		return "mll_" + storeIndexInfo.getEdgeInfo().getSourceLocation() + "_" + mMemLocLitCounter ++;
-	}
-
-	/**
-	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
-	 * @return
-	 */
-	public Set<ConstantTerm> getAllConstantTerms() {
-		if (!TRACK_CONSTANTS) {
-			throw new IllegalStateException();
-		}
-		return mAllConstantTerms;
-	}
-
-	public Set<IProgramConst> getLocationLiterals() {
-		return new HashSet<>(getStoreInfoToLocLiteral().values());
-	}
-
-	public Map<StoreInfo, IProgramConst> getStoreInfoToLocLiteral() {
-		mQueriedStoreAndLitInfo = true;
-		return mStoreInfoToLocLiteral;
-	}
+//	/**
+//	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
+//	 *
+//	 * EDIT 18/8/2018: I think this will not be needed anymore.. was needed when loc literals did not have their
+//	 *  own {@link Sort} to assert them being different from other literals
+//	 *
+//	 * @return
+//	 */
+//	@Deprecated
+//	public Set<ConstantTerm> getAllConstantTerms() {
+//		if (!TRACK_CONSTANTS) {
+//			throw new IllegalStateException();
+//		}
+//		return mAllConstantTerms;
+//	}
 
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
@@ -353,7 +294,91 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
 		return mNewModifiableGlobals;
 	}
+
 }
 
-
-
+//class LocArrayUpdateInserter extends PositionAwareTermTransformer {
+//
+//	Map<SubtreePosition, StoreInfo> mPosToStoreInfo;
+//	private Script mScript;
+//
+//	public LocArrayUpdateInserter() {
+//		// TODO Auto-generated constructor stub
+//	}
+//
+//	public Map<IProgramVar, TermVariable> getExtraInVars() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	public Set<TermVariable> getExtraAuxVars() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	public Set<IProgramConst> getExtraConstants() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	public Map<IProgramVar, TermVariable> getExtraOutVars() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	@Override
+//	protected void convert(final Term term, final SubtreePosition pos) {
+//		final StoreInfo storeInfo = mPosToStoreInfo.get(pos);
+//		if (storeInfo != null) {
+//			assert SmtUtils.isFunctionApplication(term, "store");
+//
+//			enqueueWalker(item);
+////			final List<Term> conjuncts = new ArrayList<>(storeInfo.getDimension() + 1);
+////			// keep the original term
+////			conjuncts.add(term);
+////			/*
+////			 * For each dimension of t
+////			 */
+////			for (int i = 0; i < storeInfo.getDimension(); i++) {
+////
+////			}
+////			setResult(SmtUtils.and(mScript, conjuncts));
+//		} else {
+//			// leave term unchanged
+//			super.convert(term, pos);
+//		}
+//	}
+//
+//	protected static class BuildConjunction implements Walker {
+//
+//		// how many terms to pop from the converted stack and put into the result conjunction
+//		int mNumberOfConjuncts;
+//
+//		// a script to construct the fresh term
+//		Script mScript;
+//
+//		public BuildConjunction(final int noConjuncts, final Script script) {
+//			mNumberOfConjuncts = noConjuncts;
+//			mScript = script;
+//		}
+//
+//		@Override
+//		public void walk(final NonRecursive engine) {
+//			final LocArrayUpdateInserter transformer = (LocArrayUpdateInserter) engine;
+//
+//			final Term[] conjuncts = new Term[mNumberOfConjuncts];
+//
+//			for (int i = 0; i < mNumberOfConjuncts; i++) {
+//				conjuncts[i] = transformer.getConverted();
+//			}
+//
+//			transformer.setResult(SmtUtils.and(mScript, conjuncts));
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "and\\^" + mNumberOfConjuncts;
+//		}
+//	}
+//
+//}

@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -47,14 +43,10 @@ public class SelectInfo {
 
 	private final EdgeInfo mEdgeInfo;
 
-	private final List<Term> mNormalizedArrayIndex;
-
 	public SelectInfo(final ArrayCellAccess arrayCellAccess, final EdgeInfo edgeInfo, final ManagedScript mgdScript) {
 		super();
 		mArrayCellAccess = arrayCellAccess;
 		mEdgeInfo = edgeInfo;
-		mNormalizedArrayIndex = VPDomainHelpers.normalizeArrayIndex(arrayCellAccess.getIndex(),
-				edgeInfo.getEdge().getTransformula(), mgdScript);
 	}
 
 //	public ArrayCellAccess getArrayCellAccess() {
@@ -65,6 +57,13 @@ public class SelectInfo {
 		return mEdgeInfo;
 	}
 
+	/**
+	 *
+	 * deprecated because array may not have a pvoc (i.e. be an auxvar)
+	 *
+	 * @return
+	 */
+	@Deprecated
 	public IProgramVarOrConst getArrayPvoc() {
 		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
 	}
@@ -119,10 +118,4 @@ public class SelectInfo {
 		}
 		return true;
 	}
-
-	public Term getNormalizedArrayIndex(final int dim) {
-		return mNormalizedArrayIndex.get(dim);
-	}
-
-
 }

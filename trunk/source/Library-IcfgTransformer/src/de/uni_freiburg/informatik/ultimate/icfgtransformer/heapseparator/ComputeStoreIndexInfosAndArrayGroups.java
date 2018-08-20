@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,9 +13,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityAllowStores;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityLocUpdateInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -38,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -82,13 +86,16 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 */
 	private int mStoreInfoCounter;
 
-	private int mMemLocLitCounter;
-
-//	private final Map<StoreInfo, IProgramConst> mStoreInfoToLocLiteral = new HashMap<>();
-
 	private final MemlocArrayManager mLocArrayManager;
 
 	private final ManagedScript mMgdScript;
+
+	private NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo;
+
+	private final Set<HeapSepProgramConst> mLocLiterals;
+
+
+	final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
 
 	public ComputeStoreInfosAndArrayGroups(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays,
 			final ManagedScript mgdScript) {
@@ -96,6 +103,8 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		mMgdScript = mgdScript;
 
 		mLocArrayManager = new MemlocArrayManager(mgdScript);
+
+		mLocLiterals = new HashSet<>();
 
 		run(icfg, heapArrays);
 	}
@@ -125,6 +134,12 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final UnmodifiableTransFormula tf = edge.getTransformula();
 				final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
+				if (SmtUtils.containsFunctionApplication(tf.getFormula(), "or")
+						|| !SmtUtils.isNNF(tf.getFormula())) {
+					throw new UnsupportedOperationException("this computation can only handle conjunctive formulas at"
+							+ "the moment");
+				}
+
 				/*
 				 * construct the per-edge (or per-transformula, the difference does not matter here) array partition
 				 */
@@ -132,14 +147,16 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 				final List<ArrayEqualityAllowStores> aeass = ArrayEqualityAllowStores
 						.extractArrayEqualityAllowStores(tf.getFormula());
+
+				// compute edge-specific array groups
 				for (final ArrayEqualityAllowStores aeas : aeass) {
 					final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
 					final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
+
 					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsArrayTerm);
 					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsArrayTerm);
 					perTfArrayPartition.union(lhsArrayTerm, rhsArrayTerm);
 				}
-
 				edgeToPerEdgeArrayPartition.put(edgeInfo, perTfArrayPartition);
 
 				/*
@@ -154,6 +171,10 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 					eqcPvocs.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 					globalArrayPartition.union(eqcPvocs);
 				}
+
+				// compute constrained variables
+				final Set<TermVariable> unconstrainedVars = computeUnconstrainedVariables(tf, aeass);
+				mEdgeToUnconstrainedVariables.addAllPairs(edgeInfo, unconstrainedVars);
 			}
 		}
 
@@ -207,38 +228,8 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 			}
 		}
 
-		// more or less accidentally duplicated this code above.. leaving the old for
-		// comparison, for the moment.
-		// // set up the mapping of terms to ArrayGroups for each edge/TransFormula
-		// final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup = new
-		// NestedMap2<>();
-		// {
-		// for (final Entry<EdgeInfo, UnionFind<Term>> en :
-		// edgeToPerEdgeArrayPartition.entrySet()) {
-		// for (final Term arrayTerm : en.getValue().getAllElements()) {
-		//
-		// /*
-		// * does the current arrayTerm's partition block contain a term that belongs to
-		// a pvoc?
-		// * if yes: map it to that pvoc's array group
-		// * if no: map it to the "NoArrayGroup" dummy array group
-		// */
-		// final IProgramVarOrConst pvocInSameBlock =
-		// findPvoc(en.getKey().getEdge().getTransformula(),
-		// en.getValue().getEquivalenceClassMembers(arrayTerm));
-		// if (pvocInSameBlock == null) {
-		// edgeToTermToArrayGroup.put(en.getKey(), arrayTerm,
-		// ArrayGroup.getNoArrayGroup());
-		// } else {
-		// edgeToTermToArrayGroup.put(en.getKey(), arrayTerm,
-		// mArrayToArrayGroup.get(pvocInSameBlock));
-		// }
-		// }
-		// }
-		// }
-
 		/*
-		 * Construct StoreInfos for later use
+		 * Construct StoreInfos for later use. Store them in a map with keys in EdgeInfos x SubtreePositions.
 		 */
 		{
 			final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
@@ -249,242 +240,123 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final Map<Term, ArrayGroup> termToArrayGroupForCurrentEdge = mEdgeToTermToArrayGroup.get(edgeInfo);
 
 				final BuildStoreInfos bsi = new BuildStoreInfos(edgeInfo, termToArrayGroupForCurrentEdge, mMgdScript,
-						mLocArrayManager);
+						mLocArrayManager, mStoreInfoCounter);
 				bsi.buildStoreInfos();
-				bsi.getLocLiterals();
-				bsi.getStoreInfos();
-
-//				final Map<Term, ArrayGroup> arrayTermToArrayGroup = mEdgeToTermToArrayGroup.get(edgeInfo);
-//
-//				/*
-//				 * construct the StoreInfos
-//				 */
-//				for (final StoreInfo2 store : StoreInfo2.extractStores(tf.getFormula(), arrayTermToArrayGroup)) {
-//
-//					if (DataStructureUtils.intersection(new HashSet<>(heapArrays), store.getArrayGroup().getArrays())
-//							.isEmpty()) {
-//						/* we are only interested in writes to heap arrays */
-//						continue;
-//					}
-//
-//					// final StoreInfo storeIndexInfo = getOrConstructStoreInfo(edgeInfo,
-//					// store.getWriteIndex());
-//					// storeIndexInfo.addArrayAccessDimension(store.getWrittenArray(),
-//					// store.getWrittenDimension());
-//					getOrConstructStoreInfo(edgeInfo, store.getStoreTerm(), store.getArrayGroup());
-//				}
+				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en :
+						bsi.getLocArrayUpdateInfos().entrySet()) {
+					mEdgeToPositionToLocUpdateInfo.put(edgeInfo, en.getKey(), en.getValue());
+				}
+				mLocLiterals.addAll(bsi.getLocLiterals());
+				// (managing the store counter this way is a bit inelegant..)
+				mStoreInfoCounter = bsi.getStoreInfoCounter();
 			}
 		}
 	}
 
-//	/**
-//	 * Search through the set of terms for a term that belongs to a pvoc according
-//	 * to the given TransFormula.
-//	 *
-//	 * @return
-//	 */
-//	private static IProgramVarOrConst findPvoc(final TransFormula edge, final Set<Term> terms) {
-//		for (final Term term : terms) {
-//			final IProgramVarOrConst pvoc = TransFormulaUtils.getProgramVarOrConstForTerm(edge, term);
-//			if (pvoc != null) {
-//				return pvoc;
-//			}
-//		}
-//		return null;
-//	}
+	private Set<TermVariable> computeUnconstrainedVariables(final UnmodifiableTransFormula tf,
+			final List<ArrayEqualityAllowStores> aeass) {
+		final Set<TermVariable> constrainedVars = new HashSet<>();
+		final Set<TermVariable> unconstrainedVars =
+				new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+		boolean goOn = true;
+		while (goOn) {
+			goOn = false;
+			for (final ArrayEqualityAllowStores aeas : aeass) {
+				final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
+				final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
 
-	// public NestedMap2<EdgeInfo, Term, StoreInfo> getEdgeToIndexToStoreIndexInfo()
-	// {
-	// return mEdgeToStoreToArrayToStoreInfo;
-	// }
+				final TermVariable lhsArrayTv =
+						(lhsArrayTerm instanceof TermVariable) ? (TermVariable) lhsArrayTerm : null;
+				final TermVariable rhsArrayTv =
+								(rhsArrayTerm instanceof TermVariable) ? (TermVariable) rhsArrayTerm : null;
+
+				// code for determining which variables are unconstrained ("havocced") in this edge
+				final boolean lhsIsAStore = lhsArrayTerm != aeas.getLhsArray();
+				final boolean rhsIsAStore = rhsArrayTerm != aeas.getRhsArray();
+				final boolean neitherIsAStore = !lhsIsAStore && !rhsIsAStore;
+
+				if (lhsArrayTv == null && rhsArrayTv != null) {
+					// constants are constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, rhsArrayTv);
+				}
+				if (rhsArrayTv == null && lhsArrayTv != null) {
+					// constants are constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, lhsArrayTv);
+				}
+
+				if (tf.getInVars().containsValue(lhsArrayTv)) {
+					// in vars are constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, lhsArrayTv);
+				}
+				if (tf.getInVars().containsValue(rhsArrayTv)) {
+					// in vars are constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, rhsArrayTv);
+				}
+
+				if (neitherIsAStore && constrainedVars.contains(lhsArrayTv) && rhsArrayTv != null) {
+					// strong equality, lhs is constrained --> rhs is constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, rhsArrayTv);
+				}
+
+				if (neitherIsAStore && constrainedVars.contains(rhsArrayTv) && lhsArrayTv != null) {
+					// strong equality, rhs is constrained --> lhs is constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, lhsArrayTv);
+				}
+
+				if (lhsIsAStore && rhsArrayTv != null && unconstrainedVars.contains(rhsArrayTv)) {
+					// lhs is a store --> rhs is constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, rhsArrayTv);
+				}
+				if (rhsIsAStore && lhsArrayTv != null && unconstrainedVars.contains(lhsArrayTv)) {
+					// rhs is a store --> lhs is constrained
+					goOn |= markAsConstrainedIfNecessary(constrainedVars, unconstrainedVars, lhsArrayTv);
+				}
+			}
+		}
+		return unconstrainedVars;
+	}
+
+	/**
+	 *
+	 * @param constrainedVars
+	 * @param unconstrainedVars
+	 * @param tv
+	 * @return true iff changes were made
+	 */
+	private boolean markAsConstrainedIfNecessary(final Set<TermVariable> constrainedVars,
+			final Set<TermVariable> unconstrainedVars, final TermVariable tv) {
+		if (constrainedVars.contains(tv)) {
+			assert !unconstrainedVars.contains(tv);
+			return false;
+		}
+		unconstrainedVars.remove(tv);
+		constrainedVars.add(tv);
+		return true;
+	}
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
 		return Collections.unmodifiableMap(mArrayToArrayGroup);
 	}
 
-	public NestedMap2<EdgeInfo, Term, StoreInfo> getEdgeToStoreToStoreInfo() {
-		return mEdgeToStoreToStoreInfo;
-	}
-
-	// public Map<EdgeInfo, UnionFind<Term>> getEdgeToPerEdgeArrayPartition() {
-	// return edgeToPerEdgeArrayPartition;
-	// }
-
-	public NestedMap2<EdgeInfo, Term, ArrayGroup> getEdgeToTermToArrayGroup() {
-		return mEdgeToTermToArrayGroup;
-	}
-
-
-
 	public MemlocArrayManager getLocArrayManager() {
 		return mLocArrayManager;
 	}
 
-//	/**
-//	 * updates mEdgeToIndexToStoreInfo
-//	 *
-//	 * @param tfInfo
-//	 * @param storeTerm
-//	 * @param array
-//	 *            (aux info, not part of the identifier of a StoreInfo)
-//	 * @return
-//	 */
-//	private StoreInfo getOrConstructStoreInfo(final EdgeInfo tfInfo, final Term storeTerm, final ArrayGroup array) {
-//		StoreInfo sii = mEdgeToStoreToStoreInfo.get(tfInfo, storeTerm);
-//		if (sii == null) {
-//			// sii = new StoreInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
-//			final int storeInfoId = mStoreInfoCounter++;
-//
-//			locLit = getOrConstructLocationLiteral(tfInfo, storeInfoId, storeDim);
-//
-//			sii = new StoreInfo(tfInfo, storeTerm, array, storeInfoId);
-////			final sii.addLoc
-//			mEdgeToStoreToStoreInfo.put(tfInfo, storeTerm, sii);
-//		}
-//		return sii;
-//	}
-//
-//	private IProgramConst getOrConstructLocationLiteral(final EdgeInfo edgeInfo, final int storeInfoId,
-//			final int storeDim) {
-//
-//		assert storeInfoId > 0 : "use a long if this may overflow";
-//
-//		mMgdScript.lock(this);
-//
-//		final String locLitName = getLocationLitName(edgeInfo, storeInfoId);
-//
-//		final Sort sort = mLocArrayManager.getMemlocSort(storeDim);
-//
-//		mMgdScript.declareFun(this, locLitName, new Sort[0], sort);
-//		final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, locLitName);
-//
-//		mMgdScript.unlock(this);
-//
-//		return new HeapSepProgramConst(locLitTerm);
-//
-//	}
-
-	private String getLocationLitName(final EdgeInfo location, final int storeInfoId) {
-		return "lit_" + location.getSourceLocation() + "_" + storeInfoId;
+	public NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> getEdgeToPositionToLocUpdateInfo() {
+		return mEdgeToPositionToLocUpdateInfo;
 	}
 
-//	static class StoreInfo2 {
-//
-//		// private final IProgramVarOrConst mWrittenArray;
-//		private final Term mStoreTerm;
-//		private final ArrayGroup mArrayGroup;
-//		private final int mWrittenDimension;
-//		private final Term mWriteIndex;
-//
-//		// public StoreInfo(final IProgramVarOrConst writtenArray, final int
-//		// writtenDimension, final Term writeIndex) {
-//		public StoreInfo2(final Term storeTerm, final ArrayGroup arrayGroup, final int writtenDimension,
-//				final Term writeIndex) {
-//			mStoreTerm = storeTerm;
-//			mArrayGroup = arrayGroup;
-//			mWrittenDimension = writtenDimension;
-//			mWriteIndex = writeIndex;
-//		}
-//
-//		public static Set<StoreInfo2> extractStores(final Term inputTerm,
-//				final Map<Term, ArrayGroup> termToArrayGroup) {
-//			final Set<StoreInfo2> result = new HashSet<>();
-//
-//			final Set<ApplicationTerm> allStores = new ApplicationTermFinder("store", false)
-//					.findMatchingSubterms(inputTerm);
-//
-//			for (final ApplicationTerm storeTerm : allStores) {
-//
-//				final Term arrayTerm = storeTerm.getParameters()[0];
-//				final Term index = storeTerm.getParameters()[1];
-//
-//				final Term arrayId = SmtUtils.getBasicArrayTerm(arrayTerm);
-//
-//				/*
-//				 * @formatter:off Example: 1 (store a i1 2 (store (select a i1) i2 3 (store
-//				 * (select (select a i1) i2) i3 v))) Now say the current storeTerm is the one in
-//				 * line 3 and we want to know at which dimension a is accessed by i3. We compute
-//				 * (dimensionality of a) - (dimensionality of store3) = 3 - 1 = 2 . (so, by
-//				 * convention we count the access dimensions starting from 0)
-//				 *
-//				 * @formatter:on
-//				 */
-//				final int writtenDimension = new MultiDimensionalSort(arrayId.getSort()).getDimension()
-//						- new MultiDimensionalSort(storeTerm.getSort()).getDimension();
-//
-//				final ArrayGroup arrayPvoc = termToArrayGroup.get(arrayId);
-//				if (arrayPvoc == null) {
-//					// array is not tracked: do not make a StoreInfo for it
-//					continue;
-//				}
-//				// assert arrayPvoc != null;
-//
-//				result.add(new StoreInfo2(storeTerm, arrayPvoc, writtenDimension, index));
-//			}
-//
-//			return result;
-//		}
-//
-//		// public IProgramVarOrConst getWrittenArray() {
-//		public ArrayGroup getArrayGroup() {
-//			return mArrayGroup;
-//		}
-//
-//		public int getWrittenDimension() {
-//			return mWrittenDimension;
-//		}
-//
-//		public Term getWriteIndex() {
-//			return mWriteIndex;
-//		}
-//
-//		public Term getStoreTerm() {
-//			return mStoreTerm;
-//		}
-//
-//		@Override
-//		public int hashCode() {
-//			final int prime = 31;
-//			int result = 1;
-//			result = prime * result + ((mArrayGroup == null) ? 0 : mArrayGroup.hashCode());
-//			result = prime * result + mWrittenDimension;
-//			result = prime * result + ((mWriteIndex == null) ? 0 : mWriteIndex.hashCode());
-//			return result;
-//		}
-//
-//		@Override
-//		public boolean equals(final Object obj) {
-//			if (this == obj) {
-//				return true;
-//			}
-//			if (obj == null) {
-//				return false;
-//			}
-//			if (getClass() != obj.getClass()) {
-//				return false;
-//			}
-//			final StoreInfo2 other = (StoreInfo2) obj;
-//			if (mArrayGroup == null) {
-//				if (other.mArrayGroup != null) {
-//					return false;
-//				}
-//			} else if (!mArrayGroup.equals(other.mArrayGroup)) {
-//				return false;
-//			}
-//			if (mWrittenDimension != other.mWrittenDimension) {
-//				return false;
-//			}
-//			if (mWriteIndex == null) {
-//				if (other.mWriteIndex != null) {
-//					return false;
-//				}
-//			} else if (!mWriteIndex.equals(other.mWriteIndex)) {
-//				return false;
-//			}
-//			return true;
-//		}
-//
-//	}
+	public Set<HeapSepProgramConst> getLocLiterals() {
+		return mLocLiterals;
+	}
+
+	/**
+	 * @return per edge, the variables that are unconstrained/havocced by that edge. (Assuming purely conjunctive edges
+	 *  at the moment.)
+	 */
+	public HashRelation<EdgeInfo, TermVariable> getEdgeToUnconstrainedVariables() {
+		return mEdgeToUnconstrainedVariables;
+	}
 }
 
 class BuildStoreInfos extends NonRecursive {
@@ -496,29 +368,45 @@ class BuildStoreInfos extends NonRecursive {
 	private final Map<Term, ArrayGroup> mTermToArrayGroup;
 	private final ManagedScript mMgdScript;
 
-	private final List<StoreInfo> mCollectedStoreInfos = new ArrayList<>();
+	private final Map<SubtreePosition, StoreInfo> mCollectedStoreInfos = new HashMap<>();
 	private final MemlocArrayManager mLocArrayManager;
 	private final List<HeapSepProgramConst> mLocLiterals = new ArrayList<>();
+	private int mSiidCtr;
+	private Map<SubtreePosition, ArrayEqualityLocUpdateInfo> mPositionToLocArrayUpdateInfos;
 
 
 	BuildStoreInfos(final EdgeInfo edge, final Map<Term, ArrayGroup> termToArrayGroup, final ManagedScript mgdScript,
-			final MemlocArrayManager locArrayManager) {
+			final MemlocArrayManager locArrayManager, final int storeInfoCounter) {
 		mEdge = edge;
 		mTermToArrayGroup = termToArrayGroup;
 		mMgdScript = mgdScript;
 		mLocArrayManager = locArrayManager;
+		mSiidCtr = storeInfoCounter;
+	}
+
+	public Map<SubtreePosition, ArrayEqualityLocUpdateInfo> getLocArrayUpdateInfos() {
+		return mPositionToLocArrayUpdateInfos;
 	}
 
 	public void buildStoreInfos() {
-		run();
+		run(new BuildStoreInfoWalker(mEdge.getEdge().getTransformula().getFormula(), new SubtreePosition(),
+				new ArrayIndex(), null, null));
 	}
 
-	public List<StoreInfo> getStoreInfos() {
+	public Map<SubtreePosition, StoreInfo> getStoreInfos() {
 		return mCollectedStoreInfos;
+	}
+
+	public Map<SubtreePosition, ArrayEqualityLocUpdateInfo> getPositionToLocArrayUpdateInfos() {
+		return mPositionToLocArrayUpdateInfos;
 	}
 
 	public List<HeapSepProgramConst> getLocLiterals() {
 		return mLocLiterals;
+	}
+
+	public int getStoreInfoCounter() {
+		return mSiidCtr;
 	}
 
 	/**
@@ -528,13 +416,28 @@ class BuildStoreInfos extends NonRecursive {
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
+//	private class BuildStoreInfoWalker extends PositionTrackingTermWalker {
 	private class BuildStoreInfoWalker extends TermWalker {
 
 		private final ArrayIndex mEnclosingStoreIndices;
+		private final SubtreePosition mSubTreePosition;
+		/**
+		 * position relative to the equality the current Term occurs in.
+		 */
+		private final SubtreePosition mRelativePosition;
+//		private final StoreInfo mOuterMostStore;
+		private final ArrayEqualityLocUpdateInfo mEnclosingEquality;
 
-		public BuildStoreInfoWalker(final Term term, final ArrayIndex enclosingStoreIndices) {
+		public BuildStoreInfoWalker(final Term term, final SubtreePosition position,
+				final ArrayIndex enclosingStoreIndices, final ArrayEqualityLocUpdateInfo enclosingEquality,
+				final SubtreePosition relativePosition) {
+//			super(term, position);
 			super(term);
 			mEnclosingStoreIndices = enclosingStoreIndices;
+			mSubTreePosition = position;
+//			mOuterMostStore = outerMostStore;
+			mEnclosingEquality = enclosingEquality;
+			mRelativePosition = relativePosition;
 		}
 
 		@Override
@@ -544,7 +447,8 @@ class BuildStoreInfos extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
-			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubterm(), mEnclosingStoreIndices));
+			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubterm(), mSubTreePosition.append(0),
+					mEnclosingStoreIndices, mEnclosingEquality, mRelativePosition.append(0)));
 		}
 
 		@Override
@@ -555,45 +459,61 @@ class BuildStoreInfos extends NonRecursive {
 			{
 				final int siId = getNextStoreInfoId();
 				final int siDim = mEnclosingStoreIndices.size() + 1;
-				final StoreInfo si = new StoreInfo(siId, mEdge, term, mTermToArrayGroup.get(term),
-						mEnclosingStoreIndices, constructLocationLiteral(mEdge, siId, siDim));
-				mCollectedStoreInfos.add(si);
+				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term,
+						mTermToArrayGroup.get(term), mEnclosingStoreIndices,
+						constructLocationLiteral(mEdge, siId, siDim), mEnclosingEquality, mRelativePosition);
+				mCollectedStoreInfos.put(mSubTreePosition, si);
 			}
-
 			{
-				final ArrayIndex newEnclosingStoreIndices = new ArrayIndex(mEnclosingStoreIndices);
-				newEnclosingStoreIndices.add(term.getParameters()[1]);
-				walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[2], newEnclosingStoreIndices));
+				// dive deeper into the array (no change to enclosing store indices)
+				walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
+						mEnclosingStoreIndices, mEnclosingEquality, mRelativePosition.append(0)));
+				// dive deeper into the value
+				final ArrayIndex newEnclosingStoreIndicesForValue =
+						mEnclosingStoreIndices.append(term.getParameters()[1]);
+				walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[2], mSubTreePosition.append(2),
+						newEnclosingStoreIndicesForValue, mEnclosingEquality, mRelativePosition.append(2)));
 			}
 				break;
 			case "=":
 				if (term.getParameters()[0].getSort().isArraySort()) {
-					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[1], mEnclosingStoreIndices));
-					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[2], mEnclosingStoreIndices));
+					assert mEnclosingEquality == null;
+					final ArrayEqualityLocUpdateInfo newEnclosingEquality =
+							new ArrayEqualityLocUpdateInfo(mEdge, mLocArrayManager);
+					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
+						 mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(0)));
+					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[1], mSubTreePosition.append(1),
+							mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(1)));
+					mPositionToLocArrayUpdateInfos.put(mSubTreePosition, newEnclosingEquality);
 				}
+				// do nothing if the equated terms are not of array type
 				break;
 			default:
 				if ("Bool".equals(term.getSort().getName()) && SmtUtils.allParamsAreBool(term)) {
+					assert mEnclosingEquality == null;
 					// we have a Boolean connective --> dive deeper
-					for (final Term param : term.getParameters()) {
-						walker.enqueueWalker(new BuildStoreInfoWalker(param, mEnclosingStoreIndices));
+					for (int i = 0; i < term.getParameters().length; i++) {
+						final Term param = term.getParameters()[i];
+						walker.enqueueWalker(new BuildStoreInfoWalker(param, mSubTreePosition.append(i),
+								mEnclosingStoreIndices, null, null));
 					}
-
 				} else {
 					// do nothing
 				}
 			}
-
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
-			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubTerm(), mEnclosingStoreIndices));
+			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubTerm(), mSubTreePosition.append(0),
+					mEnclosingStoreIndices, mEnclosingEquality, mRelativePosition.append(0)));
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubformula(), mEnclosingStoreIndices));
+			assert mEnclosingEquality == null;
+			walker.enqueueWalker(new BuildStoreInfoWalker(term.getSubformula(), mSubTreePosition.append(0),
+					mEnclosingStoreIndices, null, null));
 		}
 
 		@Override
@@ -604,8 +524,8 @@ class BuildStoreInfos extends NonRecursive {
 	}
 
 	private int getNextStoreInfoId() {
-		// TODO Auto-generated method stub
-		return 0;
+		mSiidCtr++;
+		return mSiidCtr;
 	}
 
 	private IProgramConst constructLocationLiteral(final EdgeInfo edgeInfo, final int storeInfoId, final int storeDim) {

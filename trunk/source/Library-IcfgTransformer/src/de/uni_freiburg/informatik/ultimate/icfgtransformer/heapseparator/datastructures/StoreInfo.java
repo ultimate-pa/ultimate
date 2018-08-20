@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * Represents a store term somewhere in the program and the location in the program where that
  * store happens; colloquially: a "write location".
  *
+ * A StoreInfo is identified by a {@link SubtreePosition} and an {@link EdgeInfo}. (It represents the store term at that position
+ * in the edge's transition formula.)
+ *
  * A write location has the following properties:
  * <ul>
  *  <li> the program location it occurs in
@@ -83,16 +86,29 @@ public class StoreInfo {
 
 	private final IProgramConst mLocLit;
 
+	private final SubtreePosition mSubtreePosition;
+
+
+//	private LocUpdateInfo mLocUpdateInfo;
+
+	private final ArrayEqualityLocUpdateInfo mEnclosingEquality;
+
+	private final SubtreePosition mPositionOfStoredValueRelativeToEquality;
+
+
 	/**
 	 *
 	 * @param edgeInfo
 	 * @param storeTerm
 	 * @param id
+	 * @param subTreePosition
 	 * @param enclosingIndices
 	 * @param iProgramConst
 	 */
-	public StoreInfo(final int id, final EdgeInfo edgeInfo, final Term storeTerm, final ArrayGroup array,
-			final ArrayIndex enclosingIndices, final IProgramConst locLit) {
+	public StoreInfo(final int id, final EdgeInfo edgeInfo, final SubtreePosition subTreePosition,
+			final Term storeTerm, final ArrayGroup array, final ArrayIndex enclosingIndices,
+			final IProgramConst locLit, final ArrayEqualityLocUpdateInfo enclosingEquality,
+			final SubtreePosition posRelativeToEquality) {
 		assert this instanceof NoStoreInfo ||
 			(Objects.nonNull(edgeInfo) &&
 					Objects.nonNull(storeTerm) &&
@@ -100,27 +116,44 @@ public class StoreInfo {
 					Objects.nonNull(locLit) &&
 					id >= 0);
 		mEdgeInfo = edgeInfo;
+		mSubtreePosition = subTreePosition;
 		mStoreTerm = storeTerm;
 		mArrayGroup = array;
 		mEnclosingIndices = enclosingIndices;
 		mLocLit = locLit;
+		mEnclosingEquality = enclosingEquality;
+
+		// need to append, be cause the given position is that of the store term
+		mPositionOfStoredValueRelativeToEquality = posRelativeToEquality.append(2);
+
+		assert (mEnclosingIndices.size() == 0) == (mEnclosingEquality != null);
 
 		assert SmtUtils.isFunctionApplication(storeTerm, "store") : "expecting store term";
 
+		mEnclosingEquality.addEnclosedStoreInfo(this, posRelativeToEquality);
+
 		{
 			final ApplicationTerm at = (ApplicationTerm) storeTerm;
-//			final Term stArray = at.getParameters()[0];
 			final Term stIndex = at.getParameters()[1];
-
-//			final MultiDimensionalSelect mdSel = new MultiDimensionalSelect(stArray);
-//			mEnclosingIndices = mdSel.getIndex();
 
 			mStoreIndex = stIndex;
 		}
 
-
 		mId = id;
 	}
+
+
+
+//	/**
+//	 * Builds {@link #mLocUpdateTerm}.
+//	 * @param script
+//	 *
+//	 * @return
+//	 */
+//	private LocUpdateInfo buildLocUpdateTerm(final ManagedScript script) {
+//		mFinalized = true;
+//		return new LocUpdateInfo(script);
+//	}
 
 	public EdgeInfo getEdgeInfo() {
 		return mEdgeInfo;
@@ -194,7 +227,109 @@ public class StoreInfo {
 		return true;
 	}
 
+	public IProgramConst getLocLiteral() {
+		return mLocLit;
+	}
+
+
+
 	public int getId() {
 		return mId;
+	}
+
+//	public LocUpdateInfo getLocUpdateInfo(final ManagedScript script) {
+//		assert isOutermost();
+//		mLocUpdateInfo = buildLocUpdateTerm(script);
+//		assert mFinalized;
+//		return mLocUpdateInfo;
+//	}
+
+	/**
+	 * Determine if this store is "top-level", i.e., it is not inside another store.
+	 *
+	 * @return
+	 */
+	public boolean isOutermost() {
+		return getDimension() == 1;
+	}
+
+	public SubtreePosition getPositionOfStoredValueRelativeToEquality() {
+		return mPositionOfStoredValueRelativeToEquality;
+	}
+
+//	public class LocUpdateInfo {
+//
+//		/**
+//		 * The term that the store must be replaced with in order to have the static analysis compute reaching definitions
+//		 * information through loc-arrays.
+//		 */
+//		private final Term mTermWithLocUpdates;
+//		private final Map<IProgramVar, TermVariable> mExtraInVars;
+//		private final Set<TermVariable> mExtraAuxVars;
+//		private final Set<IProgramConst> mExtraConstants;
+//		private final Map<IProgramVar, TermVariable> mExtraOutVars;
+//
+//		public LocUpdateInfo(final ManagedScript script, final MemlocArrayManager locArrayManager) {
+//			assert mOuterMost == null;
+//			assert mEnclosingIndices.isEmpty();
+//			assert mRelPositionToInnerStoreInfo != null;
+//
+//			final List<Term> conjuncts = new ArrayList<>(getDimension() + 1);
+//			conjuncts.add(getStoreTerm());
+//
+//			for (int dim = 0; dim < getDimension(); dim++) {
+//				// construct loc update conjunct for dimension dim
+//
+//				locArrayForDim = locArrayManager.getOrConstructLocArray(mEdgeInfo, m, dim)
+//
+//				conjunctForDim =
+//
+//			}
+//
+//			mTermWithLocUpdates = SmtUtils.and(script.getScript(), conjuncts);
+//		}
+//
+//		public Term getTermWithLocUpdates() {
+//			return mTermWithLocUpdates;
+//		}
+//
+//		public Map<IProgramVar, TermVariable> getExtraInVars() {
+//			return mExtraInVars;
+//		}
+//
+//		public Set<TermVariable> getExtraAuxVars() {
+//			return mExtraAuxVars;
+//		}
+//
+//		public Set<IProgramConst> getExtraConstants() {
+//			return mExtraConstants;
+//		}
+//
+//		public Map<IProgramVar, TermVariable> getExtraOutVars() {
+//			return mExtraOutVars;
+//		}
+//
+//	}
+
+
+
+	/**
+	 * unclear if this method is needed or if we can just use the constructor..
+	 *
+	 * @param siId
+	 * @param edge
+	 * @param subTreePosition
+	 * @param term
+	 * @param arrayGroup
+	 * @param enclosingStoreIndices
+	 * @param locLit
+	 * @return
+	 */
+	public static StoreInfo buildStoreInfo(final int siId, final EdgeInfo edge,
+			final SubtreePosition subTreePosition, final ApplicationTerm term, final ArrayGroup arrayGroup,
+			final ArrayIndex enclosingStoreIndices, final IProgramConst locLit,
+			final ArrayEqualityLocUpdateInfo enclosingEquality, final SubtreePosition posRelativeToOutermost) {
+		return new StoreInfo(siId, edge, subTreePosition, term, arrayGroup, enclosingStoreIndices, locLit,
+				enclosingEquality, posRelativeToOutermost);
 	}
 }

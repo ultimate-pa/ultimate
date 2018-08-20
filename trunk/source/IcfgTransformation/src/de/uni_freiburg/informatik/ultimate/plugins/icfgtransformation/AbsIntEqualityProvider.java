@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -166,7 +164,8 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	 */
 	@Override
 	public IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final IcfgEdge edge) {
-		return (EqState) getEqualityProvidingStateForLocationSet(Collections.singleton(edge.getSource()));
+//		mEdge
+		throw new AssertionError("TODO");
 	}
 
 	public ICsvProviderProvider<Object> getAbsIntBenchmark() {
