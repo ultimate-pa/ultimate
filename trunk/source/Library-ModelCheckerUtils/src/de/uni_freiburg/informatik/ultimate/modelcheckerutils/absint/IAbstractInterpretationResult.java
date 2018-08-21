@@ -61,15 +61,6 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 */
 	Map<LOCATION, STATE> getLoc2SingleStates();
 
-//	/**
-//	 * @return the analysis result like {@link IAbstractInterpretationResult#getLoc2States()}, except the returned
-//	 * states contain information about all the variables in the given ACTION. (Not only its in-vars, like the state at
-//	 * the source of the edge does, but also aux-vars and out-vars.)
-//	 */
-//	Map<ACTION, Set<STATE>> getAction2States();
-//
-//	Map<ACTION, Set<STATE>> getAction2SingleState();
-
 	/**
 	 * @return a {@link Set} containing all fixpoints computed during the analysis as {@link Term}s.
 	 */
