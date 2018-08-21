@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -50,14 +49,17 @@ class ComputeMemlocInitializingTransformula {
 			mMemlocInVars = new HashMap<>();
 			mMemlocOutVars = new HashMap<>();
 
-			final Map<IProgramNonOldVar, Term> memlocArrayToInitiLit =
-					memlocArrayManager.getMemlocArrayToInitConstantArray();
+//			final Map<IProgramNonOldVar, Term> memlocArrayToInitiLit =
+//					memlocArrayManager.getMemlocArrayToInitConstantArray();
+
+			final Set<IProgramNonOldVar> globalLocArrays = memlocArrayManager.getGlobalLocArrays();
 
 			// is this locking necessary? the script is used for creating Terms only
 			mMgdScript.lock(this);
 
 			final List<Term> initializingEquations = new ArrayList<>();
-			for (final Entry<IProgramNonOldVar, Term> en : memlocArrayToInitiLit.entrySet()) {
+//			for (final Entry<IProgramNonOldVar, Term> en : memlocArrayToInitiLit.entrySet()) {
+			for (final IProgramNonOldVar locArray : globalLocArrays) {
 
 				// variable for memloc array "memmloc_dim_sort"
 				final TermVariable memlocArrayTv;
@@ -68,30 +70,36 @@ class ComputeMemlocInitializingTransformula {
 //					memlocArrayTv = originalTransFormula.getInVars().get(en.getKey());
 //				} else {
 //					memlocUpdateInTf = false;
-					memlocArrayTv = mMgdScript.constructFreshTermVariable(en.getKey().getGloballyUniqueId(),
-							en.getKey().getSort());
+//					memlocArrayTv = mMgdScript.constructFreshTermVariable(en.getKey().getGloballyUniqueId(),
+					memlocArrayTv = mMgdScript.constructFreshTermVariable(locArray.getGloballyUniqueId(),
+							locArray.getSort());
 //				}
 
 				// constant array (const-Array-sort1-sort2 memmloc_dim_sort_lit)
-				final Term initConstArray = en.getValue();
+//				final Term initConstArray = en.getValue();
+				final Term initConstArray = mMemlocArrayManager.getInitConstArrayForGlobalLocArray(locArray);
 
 				// "memloc_dim_sort = (const-Array-Int-Sort memloc_dim_sort_lit)" (assume statement so to say)
-				initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), memlocArrayTv, initConstArray));
+				initializingEquations.add(
+						SmtUtils.binaryEquality(mMgdScript.getScript(), memlocArrayTv, initConstArray));
 
 //				if (!memlocUpdateInTf) {
-					mMemlocInVars.put(en.getKey(), memlocArrayTv);
-					mMemlocOutVars.put(en.getKey(), memlocArrayTv);
+//					mMemlocInVars.put(en.getKey(), memlocArrayTv);
+					mMemlocInVars.put(locArray, memlocArrayTv);
+//					mMemlocOutVars.put(en.getKey(), memlocArrayTv);
+					mMemlocOutVars.put(locArray, memlocArrayTv);
 //				}
 			}
 
 			/*
 			 * furthermore add disequalities between all freeze var literals
 			 */
-			final List<Term> freezeLitDisequalities = new ArrayList<>();
+//			final List<Term> freezeLitDisequalities = new ArrayList<>();
 
-			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(),
-					SmtUtils.and(mMgdScript.getScript(), initializingEquations),
-					SmtUtils.and(mMgdScript.getScript(), freezeLitDisequalities));
+//			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(),
+//					SmtUtils.and(mMgdScript.getScript(), initializingEquations),
+//					SmtUtils.and(mMgdScript.getScript(), freezeLitDisequalities));
+			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(), initializingEquations);
 
 			mMgdScript.unlock(this);
 

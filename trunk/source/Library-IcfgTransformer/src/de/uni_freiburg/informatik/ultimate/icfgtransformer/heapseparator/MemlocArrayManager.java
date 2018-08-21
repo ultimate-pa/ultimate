@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -36,12 +38,17 @@ public class MemlocArrayManager {
 
 	private final Map<Integer, Sort> mDimToLocSort = new HashMap<>();
 
-	private final NestedMap3<EdgeInfo, Term, Integer, LocArrayInfo> mEdgeToArrayTermToDimToLocArray =
-			new NestedMap3<>();
+	private final NestedMap3<EdgeInfo, Term, Integer, LocArrayInfo> mEdgeToArrayTermToDimToLocArray = new NestedMap3<>();
 
-	private NestedMap2<IProgramVarOrConst, Integer, IProgramVarOrConst> mArrayPvocToDimToLocArrayPvoc;
+	/**
+	 * used for internal caching
+	 */
+	private final NestedMap2<IProgramVarOrConst, Integer, IProgramVarOrConst> mArrayPvocToDimToLocArrayPvoc =
+			new NestedMap2<>();
 
 	private Map<Sort, HeapSepProgramConst> mLocArraySortToInitLocLit;
+
+	private final Set<IProgramNonOldVar> mGlobalLocArrays = new HashSet<>();
 
 	public MemlocArrayManager(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
@@ -49,9 +56,9 @@ public class MemlocArrayManager {
 	}
 
 	/**
-	 * We have different sorts for different dimensions.
-	 * Note that it does not make sense to have different sorts for different arrays (perhaps for differentarray
-	 * groups..)
+	 * We have different sorts for different dimensions. Note that it does not make
+	 * sense to have different sorts for different arrays (perhaps for
+	 * differentarray groups..)
 	 *
 	 * @param dim
 	 * @return
@@ -88,13 +95,16 @@ public class MemlocArrayManager {
 
 					if (invar != null) {
 						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
-						term = pvoc.getTerm();
+						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+								locArraySort);
 					} else if (outvar != null) {
 						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
-						term = pvoc.getTerm();
+						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+								locArraySort);
 					} else if (isAuxVar) {
 						pvoc = null;
-						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + "_dim", locArraySort);
+						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+								locArraySort);
 					} else {
 						throw new AssertionError();
 					}
@@ -111,6 +121,21 @@ public class MemlocArrayManager {
 			mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
 		}
 		return result;
+	}
+
+	public Term getInitConstArrayForGlobalLocArray(final IProgramNonOldVar pnov) {
+		final Sort locArraySort = pnov.getSort();
+		final int dim = new MultiDimensionalSort(locArraySort).getDimension();
+		final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
+		return computeInitConstantArrayForLocArray(initLocLit, locArraySort);
+	}
+
+	public Set<IProgramNonOldVar> getGlobalLocArrays() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+//		return mEdgeToArrayTermToDimToLocArray.values().filter(lai -> lai.isGlobalPvoc()).collect(Collectors.toSet());
+		return Collections.unmodifiableSet(mGlobalLocArrays);
 	}
 
 	private HeapSepProgramConst getOrConstructInitLocLitForLocArraySort(final Sort locArraySort, final int dim) {
@@ -135,11 +160,14 @@ public class MemlocArrayManager {
 		if (result == null) {
 			if (pvoc instanceof IProgramNonOldVar) {
 				result = ProgramVarUtils.constructGlobalProgramVarPair(
-						LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort,
-						locArraySort,
-						mMgdScript, this);
-			} else {
+						LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort, locArraySort, mMgdScript, this);
+				mGlobalLocArrays.add((IProgramNonOldVar) result);
+			} else if (pvoc instanceof ILocalProgramVar) {
+				throw new UnsupportedOperationException("todo: deal local variables");
+			} else if (pvoc instanceof IProgramConst) {
 				throw new UnsupportedOperationException("todo: deal with constants");
+			} else {
+				throw new AssertionError("unforseen case");
 			}
 		}
 		return result;
