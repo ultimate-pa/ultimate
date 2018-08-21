@@ -1,12 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -15,109 +15,155 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 public class MemlocArrayManager {
 
-	private boolean mIsFrozen;
+	private final boolean mFinalized;
 
-	public static final String MEMLOC = "##memloc";
-	public static final String MEMLOC_SORT_INT = "##mmlc_sort_int";
-
-	final Map<Integer, IProgramNonOldVar> mDimToMemlocArrayInt = new HashMap<>();
-	final Map<Integer, Sort> mDimToMemLocSort = new HashMap<>();
-
-	boolean mAlreadyDeclaredMemlocSort;
+	public static final String LOC_ARRAY_PREFIX = "#loc";
+	public static final String LOC_SORT_PREFIX = "#locsort";
+	public static final String INITLOCLIT_PREFIX = "#initloclit";
 
 	private final ManagedScript mMgdScript;
 
-	private Map<IProgramNonOldVar, Term> mMemlocArrayToInitConstArray;
+	private final Map<Integer, Sort> mDimToLocSort = new HashMap<>();
 
-	private Map<IProgramVarOrConst, IProgramConst> mMemlocArrayToLit;
+	private final NestedMap3<EdgeInfo, Term, Integer, LocArrayInfo> mEdgeToArrayTermToDimToLocArray =
+			new NestedMap3<>();
+
+	private NestedMap2<IProgramVarOrConst, Integer, IProgramVarOrConst> mArrayPvocToDimToLocArrayPvoc;
+
+	private Map<Sort, HeapSepProgramConst> mLocArraySortToInitLocLit;
 
 	public MemlocArrayManager(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
-		mIsFrozen = false;
+		mFinalized = false;
 	}
 
-	public IProgramNonOldVar getOrConstructLocArray(final ArrayGroup updatedArray, final int dim) {
-		final todo: take updatedArray into final account
-		IProgramNonOldVar result = mDimToMemlocArrayInt.get(dim);
+	/**
+	 * We have different sorts for different dimensions.
+	 * Note that it does not make sense to have different sorts for different arrays (perhaps for differentarray
+	 * groups..)
+	 *
+	 * @param dim
+	 * @return
+	 */
+	public Sort getMemlocSort(final int dim) {
+		Sort result = mDimToLocSort.get(dim);
 		if (result == null) {
-			assert !mIsFrozen;
-			mMgdScript.lock(this);
-			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
-					SmtSortUtils.getIntSort(mMgdScript), getMemlocSort(dim));
-			result = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int_" + dim, intToLocations, mMgdScript,
-					this);
-			mMgdScript.unlock(this);
-
-			mDimToMemlocArrayInt.put(dim, result);
-
+			final String name = LOC_SORT_PREFIX + dim;
+			mMgdScript.getScript().declareSort(name, 0);
+			result = mMgdScript.getScript().sort(name);
 		}
 		return result;
 	}
 
-	public Sort getMemlocSort(final int dim) {
-		// TODO: should we have a different sort per dimension?
-		if (!mAlreadyDeclaredMemlocSort) {
-			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
-			mAlreadyDeclaredMemlocSort = true;
-		}
-		return mMgdScript.getScript().sort(MEMLOC_SORT_INT);
+	public Set<IProgramConst> getInitLocLits() {
+		return new HashSet<>(mLocArraySortToInitLocLit.values());
 	}
 
-	public Map<IProgramNonOldVar, Term> getMemlocArrayToInitConstantArray() {
-		// this may be called only after all memloc arrays that we need have been created.";
+	public LocArrayInfo getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim) {
+		LocArrayInfo result = mEdgeToArrayTermToDimToLocArray.get(edgeInfo, baseArrayTerm, dim);
+		if (result == null) {
+			assert !mFinalized;
 
-		if (!mIsFrozen){
-			mIsFrozen = true;
 			mMgdScript.lock(this);
+			final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
 
-			assert mMemlocArrayToInitConstArray == null;
-			mMemlocArrayToInitConstArray = new HashMap<>();
-			assert mMemlocArrayToLit == null;
-			mMemlocArrayToLit = new HashMap<>();
+			final IProgramVarOrConst pvoc;
+			final Term term;
+			{
+				if (baseArrayTerm instanceof TermVariable) {
+					final IProgramVar invar = edgeInfo.getInVar(baseArrayTerm);
+					final IProgramVar outvar = edgeInfo.getOutVar(baseArrayTerm);
+					final boolean isAuxVar = edgeInfo.getAuxVars().contains(baseArrayTerm);
 
-			for (final Entry<Integer, IProgramNonOldVar> en : mDimToMemlocArrayInt.entrySet()) {
-				final Integer dim = en.getKey();
-				final IProgramNonOldVar memlocArray = en.getValue();
-
-				// literal has value sort (the sort of the memloc literals), we will create a constant array from it
-				final String memlocLitName = getMemlocLitName(memlocArray);
-				mMgdScript.declareFun(this, memlocLitName, new Sort[0], getMemlocSort(dim));
-
-				final ApplicationTerm memlocLitTerm = (ApplicationTerm) mMgdScript.term(this, memlocLitName);
-
-				mMemlocArrayToLit.put(memlocArray, new HeapSepProgramConst(memlocLitTerm));
-
-				final Term constArray = mMgdScript.term(this, "const", null, memlocArray.getSort(), memlocLitTerm);
-				mMemlocArrayToInitConstArray.put(memlocArray, constArray);
+					if (invar != null) {
+						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
+						term = pvoc.getTerm();
+					} else if (outvar != null) {
+						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
+						term = pvoc.getTerm();
+					} else if (isAuxVar) {
+						pvoc = null;
+						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + "_dim", locArraySort);
+					} else {
+						throw new AssertionError();
+					}
+				} else {
+					throw new UnsupportedOperationException("todo: deal with constants");
+				}
 			}
+			final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
+			result = new LocArrayInfo(edgeInfo, pvoc, term,
+					computeInitConstantArrayForLocArray(initLocLit, locArraySort));
+
 			mMgdScript.unlock(this);
+
+			mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
 		}
-		return mMemlocArrayToInitConstArray;
+		return result;
 	}
 
-	private String getMemlocLitName(final IProgramNonOldVar memlocVar) {
-		// TODO make _really_ sure that the new id is unique
-		return memlocVar.getGloballyUniqueId() + "_lit";
+	private HeapSepProgramConst getOrConstructInitLocLitForLocArraySort(final Sort locArraySort, final int dim) {
+		assert new MultiDimensionalSort(locArraySort).getDimension() == dim;
+		HeapSepProgramConst result = mLocArraySortToInitLocLit.get(locArraySort);
+
+		if (result == null) {
+			mMgdScript.lock(this);
+			final String litName = INITLOCLIT_PREFIX + dim;
+			mMgdScript.declareFun(this, litName, new Sort[0], getMemlocSort(dim));
+			final ApplicationTerm memlocLitTerm = (ApplicationTerm) mMgdScript.term(this, litName);
+			result = new HeapSepProgramConst(memlocLitTerm);
+			mMgdScript.unlock(this);
+			mLocArraySortToInitLocLit.put(locArraySort, result);
+		}
+		return result;
 	}
 
-	public Set<IProgramConst> getMemLocLits() {
-		return new HashSet<>(mMemlocArrayToLit.values());
+	private IProgramVarOrConst getLocArrayPvocForArrayPvoc(final IProgramVarOrConst pvoc, final int dim,
+			final Sort locArraySort) {
+		IProgramVarOrConst result = mArrayPvocToDimToLocArrayPvoc.get(pvoc, dim);
+		if (result == null) {
+			if (pvoc instanceof IProgramNonOldVar) {
+				result = ProgramVarUtils.constructGlobalProgramVarPair(
+						LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort,
+						locArraySort,
+						mMgdScript, this);
+			} else {
+				throw new UnsupportedOperationException("todo: deal with constants");
+			}
+		}
+		return result;
 	}
 
-	public Term getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+	/**
+	 * Replace the last entry in the given array sort by the loc array sort
+	 *
+	 * @param sort
+	 * @return
+	 */
+	private Sort computeLocArraySort(final Sort sort) {
+		final MultiDimensionalSort mds = new MultiDimensionalSort(sort);
+		assert mds.getDimension() > 0;
+		final Deque<Sort> sortDeque = new ArrayDeque<>(mds.getIndexSorts());
+		Sort resultSort = getMemlocSort(mds.getDimension());
+		while (!sortDeque.isEmpty()) {
+			final Sort last = sortDeque.pollLast();
+			resultSort = SmtSortUtils.getArraySort(mMgdScript.getScript(), last, resultSort);
+		}
+		return resultSort;
 	}
 
-	public Term getInitConstantArrayForLocArray(final Term locArray) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+	private Term computeInitConstantArrayForLocArray(final HeapSepProgramConst locLit, final Sort locArraySort) {
+		return mMgdScript.term(this, "const", null, locArraySort, locLit.getTerm());
 	}
 }

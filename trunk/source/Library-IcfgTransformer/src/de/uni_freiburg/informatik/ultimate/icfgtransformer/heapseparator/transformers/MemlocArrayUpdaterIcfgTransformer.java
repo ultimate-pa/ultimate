@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.LocArrayInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityLocUpdateInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
@@ -202,10 +203,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 				final int dimensionality = mds.getDimension();
 				assert dimensionality > 0;
 				for (int dim = 0; dim < dimensionality; dim++) {
-					final Term locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
+					final LocArrayInfo locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
 					final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(),
-							locArray,
-							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
+							locArray.getTerm(),
+							locArray.getInitializingConstantArray());
+//							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
 					tfWithUpdatesAndInitConjuncts.add(initConjunct);
 				}
 			}

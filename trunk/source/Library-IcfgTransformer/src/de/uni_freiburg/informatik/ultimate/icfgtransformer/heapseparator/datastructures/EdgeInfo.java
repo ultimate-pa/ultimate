@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
@@ -127,6 +129,14 @@ public class EdgeInfo {
 
 	public Map<IProgramVar, TermVariable> getOutVars() {
 		return mEdge.getTransformula().getOutVars();
+	}
+
+	public Set<TermVariable> getAuxVars() {
+		return mEdge.getTransformula().getAuxVars();
+	}
+
+	public Set<IProgramConst> getNonTheoryConsts() {
+		return mEdge.getTransformula().getNonTheoryConsts();
 	}
 
 

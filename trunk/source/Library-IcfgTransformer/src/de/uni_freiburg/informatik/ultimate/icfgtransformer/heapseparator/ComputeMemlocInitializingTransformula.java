@@ -140,7 +140,7 @@ class ComputeMemlocInitializingTransformula {
 			 * Note that the symbol table will be automatically updated with the new constants by the
 			 *  TransformedIcfgBuilder (in its .finish() method).
 			 */
-			final Set<IProgramConst> newNonTheoryConstants = new HashSet<>(mMemlocArrayManager.getMemLocLits());
+			final Set<IProgramConst> newNonTheoryConstants = new HashSet<>(mMemlocArrayManager.getInitLocLits());
 //			final Set<IProgramConst> newNonTheoryConstants = DataStructureUtils.union(
 //					oldTransformula.getNonTheoryConsts(),
 //					new HashSet<>(mMemlocArrayManager.getMemLocLits()));

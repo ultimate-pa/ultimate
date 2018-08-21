@@ -253,24 +253,11 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 							outLocationClass,
 							icfgWithMemlocUpdates,
 							mlit.getResult(),
-							"icfg_with_initialized_freeze_vars");
+							"icfg_with_initialized_loc_arrays");
 
 			icfgWMemlocInitialized = initTf.getResult();
 
-			//				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
-			//						icfgWithMemlocUpdates.getCfgSmtToolkit(),
-			//						memlocArrayManager, validArray, mSettings,
-			//						icfgWithMemlocUpdates.getInitialNodes());
-
-
-			//				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
-			//						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
-
-			//				icfgWMemlocInitialized = icgtf.getResult();
-
-			locLiterals.addAll(locArrayManager.getMemLocLits());
-			//			}
-
+			locLiterals.addAll(locArrayManager.getInitLocLits());
 
 			// literal handling (different ways)
 			{
@@ -300,9 +287,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
 
-		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
+//		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
 
-		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayGroupToStoreInfo));
+//		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayGroupToStoreInfo));
 
 		/*
 		 * 2. run the equality analysis

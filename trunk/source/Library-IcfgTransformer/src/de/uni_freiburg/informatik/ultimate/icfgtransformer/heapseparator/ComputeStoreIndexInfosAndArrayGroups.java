@@ -479,7 +479,7 @@ class BuildStoreInfos extends NonRecursive {
 				if (term.getParameters()[0].getSort().isArraySort()) {
 					assert mEnclosingEquality == null;
 					final ArrayEqualityLocUpdateInfo newEnclosingEquality =
-							new ArrayEqualityLocUpdateInfo(mEdge, mLocArrayManager);
+							new ArrayEqualityLocUpdateInfo(mMgdScript, term, mEdge, mLocArrayManager);
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
 						 mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(0)));
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[1], mSubTreePosition.append(1),

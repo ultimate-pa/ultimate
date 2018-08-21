@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * <p>
  * Update (17/08/2018):
  * The purpose of array groups is now only to enable the restriction of the separation to some arrays (the "heap
- *  arrays"). I.e., they will be used simply to determine for a given TermVariable or IProgramVarOrConst, if it is
- *  subject to heap/array separation (e.g. a loc-array should be introduced for it).
+ *  arrays"). I.e., array groups will be used simply to determine for a given TermVariable or IProgramVarOrConst, if it
+ *  is subject to heap/array separation (e.g. a loc-array should be introduced for it).
  * It is not
  * <ul>
  *  <li> about "aligning" sub-arrays

@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.LocArrayInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PositionAwareSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -41,13 +42,13 @@ public class ArrayEqualityLocUpdateInfo {
 
 	private Term mFormulaWithLocUpdates;
 
-	private final Map<? extends IProgramVar, ? extends TermVariable> mExtraInVars = new HashMap<>();
+	private final Map<IProgramVar, TermVariable> mExtraInVars = new HashMap<>();
 
-	private final Map<? extends IProgramVar, ? extends TermVariable> mExtraOutVars = new HashMap<>();
+	private final Map<IProgramVar, TermVariable> mExtraOutVars = new HashMap<>();
 
-	private final Collection<? extends TermVariable> mExtraAuxVars = new HashSet<>();
+	private final Collection<TermVariable> mExtraAuxVars = new HashSet<>();
 
-	private final Collection<? extends IProgramConst> mExtraConstants = new HashSet<>();
+	private final Collection<IProgramConst> mExtraConstants = new HashSet<>();
 
 	private final ApplicationTerm mEquality;
 
@@ -78,8 +79,8 @@ public class ArrayEqualityLocUpdateInfo {
 
 		final Set<Term> baseArrayTerms = extractBaseArrayTerms(mEquality);
 
-		final StoreInfo lhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0));
-		final StoreInfo rhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1));
+//		final StoreInfo lhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0));
+//		final StoreInfo rhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1));
 
 		final int dimensionality = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0))
 				.getArrayGroup().getDimensionality();
@@ -92,7 +93,7 @@ public class ArrayEqualityLocUpdateInfo {
 
 
 		// compute the conjuncts for each dimension
-		for (final int dim = 0; dim < dimensionality; dim++) {
+		for (int dim = 0; dim < dimensionality; dim++) {
 			// used to make lambda expression work, which needs a final variable, nothing else..
 			final int currentDim = dim;
 
@@ -101,17 +102,35 @@ public class ArrayEqualityLocUpdateInfo {
 			{
 				final Map<Term, Term> subs = new HashMap<>();
 				for (final Term bat : baseArrayTerms) {
-					final Term locArray = mLocArrayManager.getOrConstructLocArray(mEdge, bat, currentDim);
-					subs.put(bat, locArray);
+					// obtain the loc array for the given base array term (typically a term-variable like a, or mem..)
+					final LocArrayInfo locArray =
+							mLocArrayManager.getOrConstructLocArray(mEdge, bat, currentDim);
 
+					// update the substitution mapping (e.g. with a pair (a, a-loc-dim))
+					subs.put(bat, locArray.getTerm());
+
+					/* update invars, outvars, etc. E.g. if a was an invar and we introduced a-loc-1, then a-loc-1
+					 *  must also be an invar. */
 					if (mEdge.getInVars().containsValue(bat)) {
-						mExtra
+						mExtraInVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
+					}
+					if (mEdge.getOutVars().containsValue(bat)) {
+						mExtraOutVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
+					}
+					if (mEdge.getAuxVars().contains(bat)) {
+						mExtraAuxVars.add((TermVariable) locArray.getTerm());
+					}
+					if (mEdge.getNonTheoryConsts().stream()
+							.map(ntc -> ntc.getTerm())
+							.anyMatch(t -> t.equals(bat))) {
+						mExtraConstants.add((IProgramConst) locArray.getPvoc());
 					}
 				}
 				equalityWithLocArrays = new Substitution(mMgdScript, subs).transform(mEquality);
 			}
 
-			// substitute store-values with their corresponding loc literals for the current dimension
+			/* substitute store-values with their corresponding loc literals for the current dimension
+			 * e.g. phi(a) becomes phi(a-loc-currentDim) */
 			final Term equalityWithLocArraysAndLocLiterals;
 			{
 				final List<StoreInfo> storeInfosForCurrentDimension = mRelPositionToInnerStoreInfo.values().stream()
@@ -125,7 +144,6 @@ public class ArrayEqualityLocUpdateInfo {
 				equalityWithLocArraysAndLocLiterals =
 					new PositionAwareSubstitution(mMgdScript, substitutionMapping).transform(equalityWithLocArrays);
 			}
-
 			conjuncts.add(equalityWithLocArraysAndLocLiterals);
 		}
 
@@ -134,7 +152,7 @@ public class ArrayEqualityLocUpdateInfo {
 		mFinalized = true;
 	}
 
-	private Set<Term> extractBaseArrayTerms(final ApplicationTerm equality) {
+	private static Set<Term> extractBaseArrayTerms(final ApplicationTerm equality) {
 		final Predicate<Term> pred =
 				subterm -> (subterm.getSort().isArraySort() && !SmtUtils.isFunctionApplication(subterm, "store"));
 		return new SubTermFinder(pred).findMatchingSubterms(equality);
