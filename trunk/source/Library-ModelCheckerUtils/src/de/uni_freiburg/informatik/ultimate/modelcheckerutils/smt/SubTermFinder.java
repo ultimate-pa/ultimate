@@ -40,8 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- *
- * Adapted from {@link ApplicationTermFinder}.
+ * Collects all the subterms of a given {@link Term} that match the given {@link Predicate}.
+ * <p>
+ * Generalization of {@link ApplicationTermFinder}.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -54,10 +55,22 @@ public class SubTermFinder extends NonRecursive {
 	private HashSet<Term> mResult;
 	private HashSet<Term> mVisitedSubterms;
 
+	/**
+	 * See {@link SubTermFinder}.
+	 *
+	 * @param predicate subterms fulfilling this predicate are collected.
+	 */
 	public SubTermFinder(final Predicate<Term> predicate) {
 		this(predicate, false);
 	}
 
+	/**
+	 * See {@link SubTermFinder}.
+	 *
+	 * @param predicate subterms fulfilling this predicate are collected.
+	 * @param onlyOutermost if a subterm is collected, don't look further inside for subterms also matching the
+	 * 		predicate
+	 */
 	public SubTermFinder(final Predicate<Term> predicate, final boolean onlyOutermost) {
 		mPredicate = predicate;
 		mOnlyOutermost = onlyOutermost;
