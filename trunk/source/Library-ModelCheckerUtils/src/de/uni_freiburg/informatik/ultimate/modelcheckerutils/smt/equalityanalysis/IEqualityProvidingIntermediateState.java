@@ -53,14 +53,15 @@ public interface IEqualityProvidingIntermediateState {
 	 */
 	boolean areUnequal(Term t1, Term t2);
 
-	/**
-	 * Compute the join of two states, i.e., compute a state which only contains constraints that are implied by this
-	 *  and the given other state
-	 *
-	 * @param other
-	 * @return
-	 */
-	IEqualityProvidingIntermediateState join(IEqualityProvidingIntermediateState other);
+//	/**
+//	 * Compute the join of two states, i.e., compute a state which only contains constraints that are implied by this
+//	 *  and the given other state
+//	 *
+//	 * @param other
+//	 * @return
+//	 */
+//	@Deprecated
+//	IEqualityProvidingIntermediateState join(IEqualityProvidingIntermediateState other);
 
 	boolean isBottom();
 }

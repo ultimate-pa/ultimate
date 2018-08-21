@@ -110,6 +110,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mTransFormulaConverter =
 				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory,
 						mSettings);
+		mEqStateFactory.registerTransformulaConverter(mTransFormulaConverter);
 
 		mDoubleCheckPredicateTransformer =
 				new PredicateTransformer<>(mMgdScript, new TermDomainOperationProvider(mServices, mMgdScript));

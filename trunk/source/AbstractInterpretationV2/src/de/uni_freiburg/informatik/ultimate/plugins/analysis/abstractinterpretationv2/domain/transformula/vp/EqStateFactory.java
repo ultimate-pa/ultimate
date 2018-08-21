@@ -59,6 +59,7 @@ public class EqStateFactory {
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	private final VPDomainSettings mVpDomainSettings;
+	private TransFormulaConverterCache mTransformulaConverter;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
@@ -167,5 +168,19 @@ public class EqStateFactory {
 
 	public VPDomainSettings getVpDomainSettings() {
 		return mVpDomainSettings;
+	}
+
+	public void registerTransformulaConverter(final TransFormulaConverterCache transformulaConverter) {
+		if (mTransformulaConverter != null) {
+			throw new AssertionError("a transformula converter has already been registered");
+		}
+		mTransformulaConverter = transformulaConverter;
+	}
+
+	public TransFormulaConverterCache getTransformulaConverter() {
+		if (mTransformulaConverter == null) {
+			throw new AssertionError("no transformula converter has been registered, yet");
+		}
+		return mTransformulaConverter;
 	}
 }

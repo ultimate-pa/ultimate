@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,13 +41,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 
 /**
@@ -52,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqState implements IAbstractState<EqState>, IEqualityProvidingState, IEqualityProvidingIntermediateState {
+public class EqState implements IAbstractState<EqState>, IEqualityProvidingState {
 
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
@@ -64,6 +69,8 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	private final EqStateFactory mFactory;
 	private final ILogger mLogger;
+
+	private Map<IcfgEdge, EqIntermediateState> mIntermediateStatesForOutgoinEdges;
 
 	public EqState(final EqConstraint<EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory eqStateFactory,
@@ -334,14 +341,37 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		return union((EqState) other);
 	}
 
-	/**
-	 * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on any
-	 * auxVar.
-	 * TODO
-	 */
-	@Override
-	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
-		return union((EqState) other);
+	public EqIntermediateState getIntermediateStateForOutgoingEdge(final IcfgEdge edge) {
+		if (mIntermediateStatesForOutgoinEdges == null) {
+			mIntermediateStatesForOutgoinEdges = new HashMap<>();
+		}
+
+		EqIntermediateState result = mIntermediateStatesForOutgoinEdges.get(edge);
+		if (result == null) {
+			final TransFormulaConverterCache tfConverter = mFactory.getTransformulaConverter();
+
+			final EqTransitionRelation transRel =
+					tfConverter.getEqTransitionRelationFromTransformula(edge.getTransformula());
+
+			final EqConstraintFactory<EqNode> constraintFac = mFactory.getEqConstraintFactory();
+
+			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = Arrays.asList(new EqDisjunctiveConstraint[] {
+					constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)),
+					transRel.getEqConstraint() });
+			final EqDisjunctiveConstraint<EqNode> res = constraintFac.conjoinDisjunctiveConstraints(bothConstraints);
+			result = new EqIntermediateState(res);
+		}
+		return result;
 	}
+
+//	/**
+//	 * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on any
+//	 * auxVar.
+//	 * TODO
+//	 */
+//	@Override
+//	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
+//		return union((EqState) other);
+//	}
 
 }

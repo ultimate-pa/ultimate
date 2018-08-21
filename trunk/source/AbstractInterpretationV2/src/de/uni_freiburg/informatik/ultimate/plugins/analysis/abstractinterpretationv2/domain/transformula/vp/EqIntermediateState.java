@@ -1,0 +1,37 @@
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
+
+public class EqIntermediateState implements IEqualityProvidingIntermediateState {
+
+	private final EqDisjunctiveConstraint<EqNode> mConstraint;
+
+	public EqIntermediateState(final EqDisjunctiveConstraint<EqNode> constraint) {
+		mConstraint = constraint;
+	}
+
+	@Override
+	public boolean areEqual(final Term t1, final Term t2) {
+		return mConstraint.areEqual(t1, t2);
+	}
+
+	@Override
+	public boolean areUnequal(final Term t1, final Term t2) {
+		return mConstraint.areUnequal(t1, t2);
+	}
+
+//	@Override
+//	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+
+	@Override
+	public boolean isBottom() {
+		return mConstraint.isBottom();
+	}
+
+}
