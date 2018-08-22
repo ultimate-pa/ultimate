@@ -300,4 +300,21 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	public EqConstraintFactory<NODE> getFactory() {
 		return mFactory;
 	}
+
+	public Set<Term> getSetConstraintForExpression(final Term exp) {
+//		for (EqConstraint<NODE> c : mConstraints) {
+//			sc = c.getSetConstraintForExpression(locArraySelect);
+//
+//		}
+		final NODE node = mNodeAndFunctionFactory.getExistingNode(exp);
+
+		final EqConstraint<NODE> flat = this.flatten();
+		if (!flat.getAllNodes().contains(exp)) {
+			// add it before querying!
+			throw new IllegalArgumentException();
+		}
+
+		final Set<NODE> nodes = flat.getSetConstraintForExpression(node);
+		return nodes.stream().map(n -> n.getTerm()).collect(Collectors.toSet());
+	}
 }

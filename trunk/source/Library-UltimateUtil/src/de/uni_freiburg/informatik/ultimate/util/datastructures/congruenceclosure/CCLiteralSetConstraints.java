@@ -734,4 +734,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		result.remove(rep);
 		return result;
 	}
+
+	public SetConstraintConjunction<ELEM> getContainsConstraint(final ELEM elem) {
+		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
+		return mContainsConstraints.get(rep);
+	}
 }

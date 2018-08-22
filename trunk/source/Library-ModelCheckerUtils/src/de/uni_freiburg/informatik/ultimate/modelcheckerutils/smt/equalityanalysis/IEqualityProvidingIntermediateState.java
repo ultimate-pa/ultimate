@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -64,4 +66,6 @@ public interface IEqualityProvidingIntermediateState {
 //	IEqualityProvidingIntermediateState join(IEqualityProvidingIntermediateState other);
 
 	boolean isBottom();
+
+	Set<Term> getSetConstraintForExpression(Term locArraySelect);
 }

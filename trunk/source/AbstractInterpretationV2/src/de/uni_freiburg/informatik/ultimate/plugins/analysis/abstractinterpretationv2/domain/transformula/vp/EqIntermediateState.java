@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
@@ -32,6 +34,11 @@ public class EqIntermediateState implements IEqualityProvidingIntermediateState 
 	@Override
 	public boolean isBottom() {
 		return mConstraint.isBottom();
+	}
+
+	@Override
+	public Set<Term> getSetConstraintForExpression(final Term locArraySelect) {
+		return mConstraint.getSetConstraintForExpression(locArraySelect);
 	}
 
 }

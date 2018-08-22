@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CCLiteralSetConstraints;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 
 /**
  *
@@ -442,5 +444,19 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public boolean isClosed() {
 		return mWeqCc.isClosed();
+	}
+
+	public Set<NODE> getSetConstraintForExpression(final NODE exp) {
+		if (!this.getAllNodes().contains(exp)) {
+			// add it before querying!
+			throw new IllegalArgumentException();
+		}
+
+		final CCLiteralSetConstraints<NODE> lsc = mWeqCc.getCongruenceClosure().getLiteralSetConstraints();
+		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
+		if (!c.hasOnlyLiterals()) {
+			throw new AssertionError();
+		}
+		return c.getLiterals();
 	}
 }
