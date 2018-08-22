@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -64,9 +62,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @param <LOC>
  */
-class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
+public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
-	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToStoreToStoreInfo = new NestedMap2<>();
+//	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToStoreToStoreInfo = new NestedMap2<>();
 
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup = new HashMap<>();
 
@@ -92,10 +90,20 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo;
 
-	private final Set<HeapSepProgramConst> mLocLiterals;
+//	private final Set<HeapSepProgramConst> mLocLiterals;
 
 
-	final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
+	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
+
+	private final HashRelation<EdgeInfo, StoreInfo> mEdgeToStoreInfos = new HashRelation<>();
+
+	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
+
+	private boolean mFinalized;
+
+	private final Map<Term, HeapSepProgramConst> mLocLitTermToLocLitPvoc = new HashMap<>();
+
+	private final NestedMap2<EdgeInfo, SubtreePosition, StoreInfo> mEdgeToPositionToStoreInfo = new NestedMap2<>();
 
 	public ComputeStoreInfosAndArrayGroups(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays,
 			final ManagedScript mgdScript) {
@@ -104,28 +112,136 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 		mLocArrayManager = new MemlocArrayManager(mgdScript);
 
-		mLocLiterals = new HashSet<>();
+//		mLocLiterals = new HashSet<>();
 
 		run(icfg, heapArrays);
 	}
 
 	private void run(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays) throws AssertionError {
+		if (mFinalized) {
+			throw new AssertionError();
+		}
+
 		final UnionFind<IProgramVarOrConst> globalArrayPartition = new UnionFind<>();
 		// base line for the array groups: the heap arrays
 		heapArrays.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
+
+		final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition = computeEdgeLevelArrayGroups(icfg,
+				globalArrayPartition);
+
+
+		computeProgramLevelArrayGroups(heapArrays, globalArrayPartition, edgeToPerEdgeArrayPartition);
+
 		/*
-		 * Build edge-level array groups.
-		 * I.e. Terms that are weakly/strongly equivalent in an edge are in an edge-level array group.
-		 *
-		 * Note that the notion of edge-level array group is already imprecise in some sense:
-		 *  Example: edge formula: a = b \/ b = c
-		 *      we would put a, b, c into one array group here, even though a and c are never related in the edge.
-		 * (our algorithm here does not account for Boolean structure of the formula, it simply considers all =
-		 *  predicates)
-		 * However this overapproximation does not hurt soundness of our heap separation.
-		 *
+		 * Construct StoreInfos for later use. Store them in a map with keys in EdgeInfos x SubtreePositions.
 		 */
+		{
+			final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
+			while (it.hasNext()) {
+				final IcfgEdge edge = it.next();
+				final EdgeInfo edgeInfo = new EdgeInfo(edge);
+
+				final Map<Term, ArrayGroup> termToArrayGroupForCurrentEdge = mEdgeToTermToArrayGroup.get(edgeInfo);
+
+				final BuildStoreInfos bsi = new BuildStoreInfos(edgeInfo, termToArrayGroupForCurrentEdge, mMgdScript,
+						mLocArrayManager, mStoreInfoCounter);
+				bsi.buildStoreInfos();
+				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en :
+						bsi.getLocArrayUpdateInfos().entrySet()) {
+					mEdgeToPositionToLocUpdateInfo.put(edgeInfo, en.getKey(), en.getValue());
+				}
+				mLocLitToStoreInfo.putAll(bsi.getLocLitToStoreInfo());
+				bsi.getLocLitToStoreInfo().keySet().forEach(hspc -> mLocLitTermToLocLitPvoc.put(hspc.getTerm(), hspc));
+				bsi.getLocLitToStoreInfo().values()
+					.forEach(si -> mEdgeToPositionToStoreInfo.put(edgeInfo, si.getPosition(), si));
+				// (managing the store counter this way is a bit inelegant..)
+				mStoreInfoCounter = bsi.getStoreInfoCounter();
+			}
+		}
+
+		mFinalized = true;
+	}
+
+	/**
+	 * Construct the program-level array groups.
+	 */
+	private void computeProgramLevelArrayGroups(final List<IProgramVarOrConst> heapArrays,
+
+			final UnionFind<IProgramVarOrConst> globalArrayPartition,
+			final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition) throws AssertionError {
+		if (mFinalized) {
+			throw new AssertionError();
+		}
+
+		{
+			final Set<ArrayGroup> arrayGroups = new HashSet<>();
+			for (final Set<IProgramVarOrConst> block : globalArrayPartition.getAllEquivalenceClasses()) {
+				arrayGroups.add(new ArrayGroup(block));
+			}
+
+			for (final ArrayGroup ag : arrayGroups) {
+				if (DataStructureUtils.intersection(new HashSet<>(heapArrays), ag.getArrays()).isEmpty()) {
+					/* we are only interested in writes to heap arrays */
+					continue;
+				}
+				for (final IProgramVarOrConst a : ag.getArrays()) {
+					mArrayToArrayGroup.put(a, ag);
+				}
+			}
+		}
+
+		/**
+		 * Construct the map {@link #mEdgeToTermToArrayGroup}, which links each Term in an edge to a program-level
+		 * array group. (or to null, if we do not track the term)
+		 */
+		{
+			for (final Entry<EdgeInfo, UnionFind<Term>> en : edgeToPerEdgeArrayPartition.entrySet()) {
+				final EdgeInfo edgeInfo = en.getKey();
+
+				for (final Set<Term> block : en.getValue().getAllEquivalenceClasses()) {
+					/*
+					 * find a Term that has an IProgramVarOrConst according to the EdgeInfo (there
+					 * must be one as the above analysis starts from IProgramVarOrConsts, right (the
+					 * heap arrays)? (a formula relating a group of auxVars only within itself would
+					 * be weird anyway) (if that assertion does not hold, see commented out code
+					 * below for a possible fix)
+					 */
+					final Optional<IProgramVarOrConst> opt = block.stream()
+							.map(t -> edgeInfo.getProgramVarOrConstForTerm(t)).filter(pvoc -> pvoc != null).findAny();
+					if (!opt.isPresent()) {
+						throw new AssertionError("see comment");
+					}
+					final ArrayGroup arrayGroup = mArrayToArrayGroup.get(opt.get());
+
+					for (final Term t : block) {
+						mEdgeToTermToArrayGroup.put(edgeInfo, t, arrayGroup);
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Build edge-level array groups.
+	 * I.e. Terms that are weakly/strongly equivalent in an edge are in an edge-level array group.
+	 *
+	 * Note that the notion of edge-level array group is already imprecise in some sense:
+	 *  Example: edge formula: a = b \/ b = c
+	 *      we would put a, b, c into one array group here, even though a and c are never related in the edge.
+	 * (our algorithm here does not account for Boolean structure of the formula, it simply considers all =
+	 *  predicates)
+	 * However this overapproximation does not hurt soundness of our heap separation.
+	 *
+	 * EDIT : Note there are a few places where we currently assume TransFormulas to be conjunctive, so we may
+	 *  consider computing more precise array groups once that is changed
+	 *
+	 */
+	private Map<EdgeInfo, UnionFind<Term>> computeEdgeLevelArrayGroups(final IIcfg<LOC> icfg,
+			final UnionFind<IProgramVarOrConst> globalArrayPartition) {
+		if (mFinalized) {
+			throw new AssertionError();
+		}
+
 		final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition = new HashMap<>();
 		{
 			final IcfgEdgeIterator edgeIt = new IcfgEdgeIterator(icfg);
@@ -177,84 +293,15 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				mEdgeToUnconstrainedVariables.addAllPairs(edgeInfo, unconstrainedVars);
 			}
 		}
-
-		/*
-		 * Construct the program-level array groups.
-		 */
-		{
-			final Set<ArrayGroup> arrayGroups = new HashSet<>();
-			for (final Set<IProgramVarOrConst> block : globalArrayPartition.getAllEquivalenceClasses()) {
-				arrayGroups.add(new ArrayGroup(block));
-			}
-
-			for (final ArrayGroup ag : arrayGroups) {
-				if (DataStructureUtils.intersection(new HashSet<>(heapArrays), ag.getArrays()).isEmpty()) {
-					/* we are only interested in writes to heap arrays */
-					continue;
-				}
-				for (final IProgramVarOrConst a : ag.getArrays()) {
-					mArrayToArrayGroup.put(a, ag);
-				}
-			}
-		}
-
-		/**
-		 * Construct the map {@link #mEdgeToTermToArrayGroup}, which link each Term in an edge to a program-level
-		 * array group. (or to null, if we do not track the term)
-		 */
-		{
-			for (final Entry<EdgeInfo, UnionFind<Term>> en : edgeToPerEdgeArrayPartition.entrySet()) {
-				final EdgeInfo edgeInfo = en.getKey();
-
-				for (final Set<Term> block : en.getValue().getAllEquivalenceClasses()) {
-					/*
-					 * find a Term that has an IProgramVarOrConst according to the EdgeInfo (there
-					 * must be one as the above analysis starts from IProgramVarOrConsts, right (the
-					 * heap arrays)? (a formula relating a group of auxVars only within itself would
-					 * be weird anyway) (if that assertion does not hold, see commented out code
-					 * below for a possible fix)
-					 */
-					final Optional<IProgramVarOrConst> opt = block.stream()
-							.map(t -> edgeInfo.getProgramVarOrConstForTerm(t)).filter(pvoc -> pvoc != null).findAny();
-					if (!opt.isPresent()) {
-						throw new AssertionError("see comment");
-					}
-					final ArrayGroup arrayGroup = mArrayToArrayGroup.get(opt.get());
-
-					for (final Term t : block) {
-						mEdgeToTermToArrayGroup.put(edgeInfo, t, arrayGroup);
-					}
-				}
-			}
-		}
-
-		/*
-		 * Construct StoreInfos for later use. Store them in a map with keys in EdgeInfos x SubtreePositions.
-		 */
-		{
-			final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
-			while (it.hasNext()) {
-				final IcfgEdge edge = it.next();
-				final EdgeInfo edgeInfo = new EdgeInfo(edge);
-
-				final Map<Term, ArrayGroup> termToArrayGroupForCurrentEdge = mEdgeToTermToArrayGroup.get(edgeInfo);
-
-				final BuildStoreInfos bsi = new BuildStoreInfos(edgeInfo, termToArrayGroupForCurrentEdge, mMgdScript,
-						mLocArrayManager, mStoreInfoCounter);
-				bsi.buildStoreInfos();
-				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en :
-						bsi.getLocArrayUpdateInfos().entrySet()) {
-					mEdgeToPositionToLocUpdateInfo.put(edgeInfo, en.getKey(), en.getValue());
-				}
-				mLocLiterals.addAll(bsi.getLocLiterals());
-				// (managing the store counter this way is a bit inelegant..)
-				mStoreInfoCounter = bsi.getStoreInfoCounter();
-			}
-		}
+		return edgeToPerEdgeArrayPartition;
 	}
 
 	private Set<TermVariable> computeUnconstrainedVariables(final UnmodifiableTransFormula tf,
 			final List<ArrayEqualityAllowStores> aeass) {
+		if (mFinalized) {
+			throw new AssertionError();
+		}
+
 		final Set<TermVariable> constrainedVars = new HashSet<>();
 		final Set<TermVariable> unconstrainedVars =
 				new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
@@ -325,6 +372,11 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 */
 	private boolean markAsConstrainedIfNecessary(final Set<TermVariable> constrainedVars,
 			final Set<TermVariable> unconstrainedVars, final TermVariable tv) {
+		if (mFinalized) {
+			throw new AssertionError();
+		}
+
+
 		if (constrainedVars.contains(tv)) {
 			assert !unconstrainedVars.contains(tv);
 			return false;
@@ -335,19 +387,42 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
 		return Collections.unmodifiableMap(mArrayToArrayGroup);
 	}
 
 	public MemlocArrayManager getLocArrayManager() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
 		return mLocArrayManager;
 	}
 
 	public NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> getEdgeToPositionToLocUpdateInfo() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+
 		return mEdgeToPositionToLocUpdateInfo;
 	}
 
+	public Map<HeapSepProgramConst, StoreInfo> getLocLitToStoreInfo() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+
+		return Collections.unmodifiableMap(mLocLitToStoreInfo);
+	}
+
 	public Set<HeapSepProgramConst> getLocLiterals() {
-		return mLocLiterals;
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+
+		return Collections.unmodifiableSet(mLocLitToStoreInfo.keySet());
+//		return mLocLiterals;
 	}
 
 	/**
@@ -355,7 +430,46 @@ class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 *  at the moment.)
 	 */
 	public HashRelation<EdgeInfo, TermVariable> getEdgeToUnconstrainedVariables() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+
 		return mEdgeToUnconstrainedVariables;
+	}
+
+//	public NestedMap2<EdgeInfo, Term, ArrayGroup> getEdgeToTermToArrayGroup() {
+//		return mEdgeToTermToArrayGroup;
+//	}
+
+	public StoreInfo getStoreInfoForLocLitTerm(final Term locLitTerm) {
+		final HeapSepProgramConst hspc = getLocLitPvocForLocLitTerm(locLitTerm);
+		return mLocLitToStoreInfo.get(hspc);
+	}
+
+	public HeapSepProgramConst getLocLitPvocForLocLitTerm(final Term locLitTerm) {
+		return mLocLitTermToLocLitPvoc.get(locLitTerm);
+	}
+
+	public ArrayGroup getArrayGroupForTermInEdge(final EdgeInfo edgeInfo, final Term term) {
+		final ArrayGroup result = mEdgeToTermToArrayGroup.get(edgeInfo, term);
+		assert result != null;
+		return result;
+	}
+
+//	public boolean doesTermHaveArrayGroup(final EdgeInfo edgeInfo, final Term term) {
+//		return mEdgeToTermToArrayGroup.get(edgeInfo, term) != null;
+//	}
+
+	public StoreInfo getStoreInfoForStoreTermAtPositionInEdge(final EdgeInfo edgeInfo, final SubtreePosition pos) {
+		return mEdgeToPositionToStoreInfo.get(edgeInfo, pos);
+	}
+
+	public boolean isArrayTermSubjectToSeparation(final EdgeInfo edgeInfo, final Term term) {
+		final ArrayGroup ag = mEdgeToTermToArrayGroup.get(edgeInfo, term);
+		// check if array group is a tracked one
+		throw new AssertionError("TODO");
+//		 TODO Auto-generated method stub
+//		return false;
 	}
 }
 
@@ -370,9 +484,9 @@ class BuildStoreInfos extends NonRecursive {
 
 	private final Map<SubtreePosition, StoreInfo> mCollectedStoreInfos = new HashMap<>();
 	private final MemlocArrayManager mLocArrayManager;
-	private final List<HeapSepProgramConst> mLocLiterals = new ArrayList<>();
 	private int mSiidCtr;
 	private Map<SubtreePosition, ArrayEqualityLocUpdateInfo> mPositionToLocArrayUpdateInfos;
+	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
 
 	BuildStoreInfos(final EdgeInfo edge, final Map<Term, ArrayGroup> termToArrayGroup, final ManagedScript mgdScript,
@@ -384,6 +498,10 @@ class BuildStoreInfos extends NonRecursive {
 		mSiidCtr = storeInfoCounter;
 	}
 
+	public Map<HeapSepProgramConst, StoreInfo> getLocLitToStoreInfo() {
+		return mLocLitToStoreInfo;
+	}
+
 	public Map<SubtreePosition, ArrayEqualityLocUpdateInfo> getLocArrayUpdateInfos() {
 		return mPositionToLocArrayUpdateInfos;
 	}
@@ -393,16 +511,12 @@ class BuildStoreInfos extends NonRecursive {
 				new ArrayIndex(), null, null));
 	}
 
-	public Map<SubtreePosition, StoreInfo> getStoreInfos() {
-		return mCollectedStoreInfos;
-	}
+//	public Map<SubtreePosition, StoreInfo> getStoreInfos() {
+//		return mCollectedStoreInfos;
+//	}
 
 	public Map<SubtreePosition, ArrayEqualityLocUpdateInfo> getPositionToLocArrayUpdateInfos() {
 		return mPositionToLocArrayUpdateInfos;
-	}
-
-	public List<HeapSepProgramConst> getLocLiterals() {
-		return mLocLiterals;
 	}
 
 	public int getStoreInfoCounter() {
@@ -459,9 +573,11 @@ class BuildStoreInfos extends NonRecursive {
 			{
 				final int siId = getNextStoreInfoId();
 				final int siDim = mEnclosingStoreIndices.size() + 1;
+				final HeapSepProgramConst locLit = constructLocationLiteral(mEdge, siId, siDim);
 				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term,
 						mTermToArrayGroup.get(term), mEnclosingStoreIndices,
-						constructLocationLiteral(mEdge, siId, siDim), mEnclosingEquality, mRelativePosition);
+						locLit, mEnclosingEquality, mRelativePosition);
+				mLocLitToStoreInfo.put(locLit, si);
 				mCollectedStoreInfos.put(mSubTreePosition, si);
 			}
 			{
@@ -528,7 +644,8 @@ class BuildStoreInfos extends NonRecursive {
 		return mSiidCtr;
 	}
 
-	private IProgramConst constructLocationLiteral(final EdgeInfo edgeInfo, final int storeInfoId, final int storeDim) {
+	private HeapSepProgramConst constructLocationLiteral(final EdgeInfo edgeInfo, final int storeInfoId,
+			final int storeDim) {
 
 		assert storeInfoId > 0 : "use a long if this may overflow";
 
@@ -544,7 +661,7 @@ class BuildStoreInfos extends NonRecursive {
 		mMgdScript.unlock(this);
 
 		final HeapSepProgramConst result = new HeapSepProgramConst(locLitTerm);
-		mLocLiterals .add(result);
+//		mLocLiterals .add(result);
 		return result;
 	}
 

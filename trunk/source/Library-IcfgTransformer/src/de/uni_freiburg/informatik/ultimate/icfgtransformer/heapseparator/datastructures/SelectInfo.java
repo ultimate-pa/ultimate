@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -43,10 +42,14 @@ public class SelectInfo {
 
 	private final EdgeInfo mEdgeInfo;
 
-	public SelectInfo(final ArrayCellAccess arrayCellAccess, final EdgeInfo edgeInfo, final ManagedScript mgdScript) {
+	private final ArrayGroup mArrayGroup;
+
+	public SelectInfo(final ArrayCellAccess arrayCellAccess, final EdgeInfo edgeInfo, final ArrayGroup arrayGroup,
+			final ManagedScript mgdScript) {
 		super();
 		mArrayCellAccess = arrayCellAccess;
 		mEdgeInfo = edgeInfo;
+		mArrayGroup = arrayGroup;
 	}
 
 //	public ArrayCellAccess getArrayCellAccess() {
@@ -57,16 +60,16 @@ public class SelectInfo {
 		return mEdgeInfo;
 	}
 
-	/**
-	 *
-	 * deprecated because array may not have a pvoc (i.e. be an auxvar)
-	 *
-	 * @return
-	 */
-	@Deprecated
-	public IProgramVarOrConst getArrayPvoc() {
-		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
-	}
+//	/**
+//	 *
+//	 * deprecated because array may not have a pvoc (i.e. be an auxvar)
+//	 *
+//	 * @return
+//	 */
+//	@Deprecated
+//	public IProgramVarOrConst getArrayPvoc() {
+//		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
+//	}
 
 	@Override
 	public String toString() {
@@ -79,6 +82,10 @@ public class SelectInfo {
 
 	public ArrayCellAccess getArrayCellAccess() {
 		return mArrayCellAccess;
+	}
+
+	public ArrayGroup getArrayGroup() {
+		return mArrayGroup;
 	}
 
 	@Override

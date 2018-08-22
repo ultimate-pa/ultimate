@@ -194,4 +194,15 @@ public class MemlocArrayManager {
 	private Term computeInitConstantArrayForLocArray(final HeapSepProgramConst locLit, final Sort locArraySort) {
 		return mMgdScript.term(this, "const", null, locArraySort, locLit.getTerm());
 	}
+
+	public LocArrayInfo getLocArray(final EdgeInfo edgeInfo, final Term array, final int dim) {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
+		final LocArrayInfo result = mEdgeToArrayTermToDimToLocArray.get(edgeInfo, array, dim);
+		if (result == null) {
+			throw new IllegalArgumentException();
+		}
+		return result;
+	}
 }

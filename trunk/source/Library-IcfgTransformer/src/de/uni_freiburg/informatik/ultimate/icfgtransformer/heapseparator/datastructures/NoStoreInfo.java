@@ -9,15 +9,14 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-@Deprecated
 public class NoStoreInfo extends StoreInfo {
 
-	public NoStoreInfo() {
-		super(-1, null, null, null, null, null, null, null, null);
+	public NoStoreInfo(final ArrayGroup arrayGroup, final int dim) {
+		super(dim, null, null, null, arrayGroup, null, null, null, null);
 	}
 
 	@Override
 	public String toString() {
-		return "NoStoreIndexInfo";
+		return String.format("NoStoreIndexInfo_%d_%s", getDimension(), getArrayGroup());
 	}
 }

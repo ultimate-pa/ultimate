@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,11 +39,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTrack
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayEqualityLocUpdateInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.AddInitializingEdgesIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.MemlocArrayUpdaterIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PartitionProjectionTransitionTransformer;
@@ -62,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -186,19 +180,22 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  To know what is relevant (i.e. Pvocs and Terms related to heap arrays), we need array groups, both on
 		 *   program level and on edge level (i.e. for each term).
 		 */
-		final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo;
-		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
-		final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
-		final MemlocArrayManager locArrayManager;
-		final Set<IProgramConst> locLiterals = new HashSet<>();
-		{
+//		final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo;
+//		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
+//		final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
+//		final MemlocArrayManager locArrayManager;
+//		final Set<IProgramConst> locLiterals = new HashSet<>();
+//		Map<HeapSepProgramConst, StoreInfo> locLitToStoreInfo;
+//		{
 			final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
 					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays, mMgdScript);
-			edgeToPositionToLocUpdateInfo = csiiaag.getEdgeToPositionToLocUpdateInfo();
-			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
-			locArrayManager = csiiaag.getLocArrayManager();
-			locLiterals.addAll(csiiaag.getLocLiterals());
-		}
+//			edgeToPositionToLocUpdateInfo = csiiaag.getEdgeToPositionToLocUpdateInfo();
+//			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
+//			locArrayManager = csiiaag.getLocArrayManager();
+//			locLiterals.addAll(csiiaag.getLocLiterals());
+//			locLitToStoreInfo = csiiaag.getLocLitToStoreIndexInfo();
+//		}
+		final MemlocArrayManager locArrayManager = csiiaag.getLocArrayManager();
 
 		/*
 		 * 1. Preprocess the program for the static analysis.
@@ -218,7 +215,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
 							originalIcfg.getCfgSmtToolkit(),
 							locArrayManager,
-							mHeapArrays, edgeToPositionToLocUpdateInfo);
+							mHeapArrays, csiiaag.getEdgeToPositionToLocUpdateInfo());
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 					backtranslationTracker, outLocationClass, "icfg_with_locarrays", mauit);
@@ -257,6 +254,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			icfgWMemlocInitialized = initTf.getResult();
 
+
+			final Set<IProgramConst> locLiterals = new HashSet<>();
+			locLiterals.addAll(csiiaag.getLocLiterals());
 			locLiterals.addAll(locArrayManager.getInitLocLits());
 
 			// literal handling (different ways)
@@ -301,22 +301,22 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		/*
 		 * 3a.
 		 */
-		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mMgdScript, mHeapArrays,
-				mStatistics, arrayToArrayGroup);
-		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
-		heapSepPreanalysis.finish();
-		mLogger.info("Finished pre analysis before partitioning");
-		mLogger.info("  array groups: " + DataStructureUtils.prettyPrint(
-				new HashSet<>(heapSepPreanalysis.getArrayToArrayGroup().values())));
-		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
+		final FindSelects findSelects = new FindSelects(mLogger, mMgdScript, mHeapArrays,
+				mStatistics, csiiaag);
+		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> findSelects.processEdge(edge));
+		findSelects.finish();
+		mLogger.info("Finished detection of select terms (\"array reads\")");
+//		mLogger.info("  array groups: " + DataStructureUtils.prettyPrint(
+//				new HashSet<>(findSelects.getArrayToArrayGroup().values())));
+//		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(findSelects.getSelectInfos()));
 
-		final HeapPartitionManager partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup,
-				mHeapArrays, mStatistics, locArrayManager, storeIndexInfoToLocLiteral);
+		final HeapPartitionManager partitionManager = new HeapPartitionManager(mLogger, mMgdScript,
+				mHeapArrays, mStatistics, locArrayManager, csiiaag);
 
 		/*
 		 * 3b. compute an array partitioning
 		 */
-		for (final SelectInfo si : heapSepPreanalysis.getSelectInfos()) {
+		for (final SelectInfo si : findSelects.getSelectInfos()) {
 			partitionManager.processSelect(si, getEqualityProvidingIntermediateState(si.getEdgeInfo(),
 					equalityProvider));
 		}
@@ -330,8 +330,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
-						edgeToStoreToArrayGroupToStoreInfo,
-						arrayToArrayGroup,
+						csiiaag,
+//						edgeToStoreToArrayGroupToStoreInfo,
+//						arrayToArrayGroup,
 						mHeapArrays,
 						mStatistics,
 						originalIcfg.getCfgSmtToolkit());

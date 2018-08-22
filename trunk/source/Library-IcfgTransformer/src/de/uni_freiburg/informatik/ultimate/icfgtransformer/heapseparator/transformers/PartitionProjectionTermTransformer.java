@@ -40,14 +40,15 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.ComputeStoreInfosAndArrayGroups;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.SubArrayManager;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayCellAccess;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class PartitionProjectionTermTransformer extends TermTransformer {
+public class PartitionProjectionTermTransformer extends PositionAwareTermTransformer {
 
 	/**
 	 * keeps track of the LocationBlocks that guide the projection in each scope.
@@ -106,11 +106,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	private final HashMap<IProgramVar, TermVariable> mNewInVars;
 	private final HashMap<IProgramVar, TermVariable> mNewOutVars;
 
-	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+//	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	private final EdgeInfo mEdgeInfo;
 
-	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
+//	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
 	private final NestedMap2<Term, IProgramVarOrConst, Term> mOriginalTermToSubArrayToReplacementTerm;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
@@ -131,6 +131,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 * Afterwards we eliminate them from the formula (and invars/outvars) through a postprocessing.
 	 */
 	private final Set<IProgramVarOrConst> mUpdatedSubarrays;
+
+	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
 
 	/**
 	 *
@@ -153,16 +155,18 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock,
 			final EdgeInfo edgeInfo,
 			final HashRelation3<ArrayGroup, Integer, LocationBlock> arrayGroupToDimensionToLocationBlocks,
-			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
+			final ComputeStoreInfosAndArrayGroups<?> csiag,
+//			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+//			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
 			final List<IProgramVarOrConst> heapArrays) {
 		mLogger = Objects.requireNonNull(logger);
 		mMgdScript = Objects.requireNonNull(mgdScript);
 
 		mSubArrayManager = Objects.requireNonNull(subArrayManager);
 		mHeapArrays = Objects.requireNonNull(heapArrays);
-		mArrayToArrayGroup = Objects.requireNonNull(arrayToArrayGroup);
+//		mArrayToArrayGroup = Objects.requireNonNull(arrayToArrayGroup);
 
+		mCsiag = csiag;
 
 		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock)
 			|| !ArrayCellAccess.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
@@ -172,7 +176,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 		mArrayGroupToDimensionToLocationBlocks = arrayGroupToDimensionToLocationBlocks;
 
-		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+//		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 
 		mEdgeInfo = edgeInfo;
 
@@ -191,7 +195,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	@Override
-	protected void convert(final Term term) {
+	protected void convert(final Term term, final SubtreePosition pos) {
 		final List<LocationBlock> projectList = mProjectLists.peek();
 		assert projectList.stream().allMatch(Objects::nonNull);
 		if (term instanceof ConstantTerm
@@ -225,28 +229,36 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				final Term lhs = at.getParameters()[0];
 				final Term rhs = at.getParameters()[1];
 
-				final IProgramVarOrConst lhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
-				final IProgramVarOrConst rhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(rhs));
+//				final IProgramVarOrConst lhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
+//				final IProgramVarOrConst rhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(rhs));
+				final Term lhsBaseArray = extractSimpleArrayTerm(lhs);
+				final Term rhsBaseArray = extractSimpleArrayTerm(rhs);
 
-				if (!mHeapArrays.contains(lhsPvoc) && !mHeapArrays.contains(rhsPvoc)) {
-					super.convert(term);
+//				if (!mHeapArrays.contains(lhsPvoc) && !mHeapArrays.contains(rhsPvoc)) {
+				if (!mCsiag.isArrayTermSubjectToSeparation(mEdgeInfo, lhsBaseArray)) {
+					assert !mCsiag.isArrayTermSubjectToSeparation(mEdgeInfo, rhsBaseArray);
+					super.convert(term, pos);
 					return;
 				}
+				assert mCsiag.isArrayTermSubjectToSeparation(mEdgeInfo, rhsBaseArray);
 
-				final IProgramVarOrConst lhsArray = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
-				final ArrayGroup arrayGroup = mArrayToArrayGroup.get(lhsArray);
-				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
+//				final IProgramVarOrConst lhsArray = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
+//				final ArrayGroup arrayGroup = mArrayToArrayGroup.get(lhsArray);
+				final ArrayGroup arrayGroup = mCsiag.getArrayGroupForTermInEdge(mEdgeInfo, lhsBaseArray);
+//				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
 
 				// holds the combinations of L1i .. Lni we will build a conjunct for each
-				final List<List<LocationBlock>> locationBlockTuples = getAllLocationBlockTuplesForHeapArray(lhsArray);
+				final List<List<LocationBlock>> locationBlockTuples =
+//						getAllLocationBlockTuplesForHeapArray(lhsArray);
+						getAllLocationBlockTuplesForHeapArray(arrayGroup);
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
 
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					enqueueWalker(new EndScope());
 
-					enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
-					pushTerms(at.getParameters());
+					enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term, pos));
+					pushTerms(at.getParameters(), pos);
 
 					enqueueWalker(new BeginScope(Collections.unmodifiableList(lbt)));
 				}
@@ -259,7 +271,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 						mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(array));
 
 				if (!mHeapArrays.contains(arrayPvoc)) {
-					super.convert(term);
+					super.convert(term, pos);
 					return;
 				}
 
@@ -273,7 +285,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 				// convert the index terms under an empty scope
 				enqueueWalker(new EndScope());
-				pushTerms(aca.getIndex().toArray(new Term[aca.getIndex().size()]));
+				pushTerms(aca.getIndex().toArray(new Term[aca.getIndex().size()]), pos.append(1));
 				enqueueWalker(new BeginScope(Collections.emptyList()));
 
 				// construct a list of location blocks according to the indices
@@ -288,7 +300,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 					locationBlockList.add(locationBlock);
 				}
 				enqueueWalker(new EndScope());
-				pushTerm(aca.getArray());
+				pushTerm(aca.getArray(), pos.append(2));
 				enqueueWalker(new BeginScope(append(locationBlockList, projectList)));
 
 			} else if (functionName.equals("store")) {
@@ -300,12 +312,13 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				final Term baseArray = extractSimpleArrayTerm(arraySubterm);
 				final IProgramVarOrConst baseArrayPvoc = mEdgeInfo.getProgramVarOrConstForTerm(baseArray);
 				if (!mHeapArrays.contains(baseArrayPvoc)) {
-					super.convert(term);
+					super.convert(term, pos);
 					return;
 				}
 
 				assert projectList.size() > 0 : "(IndexOutOfBoundsExceptions are hard to catch somehow..";
-				if (fallsInto(indexSubterm, projectList.get(0))) {
+//				if (fallsInto(indexSubterm, projectList.get(0))) {
+				if (fallsInto(pos, term, projectList.get(0))) {
 					// i in L1 --> keep the store
 
 					/*
@@ -319,20 +332,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 						mUpdatedSubarrays.add(subArrayPvoc);
 					}
 
-					enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
+					enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term, pos));
 
 					/*
 					 * deal with value
 					 */
 					enqueueWalker(new EndScope());
-					pushTerm(valueSubterm);
+					pushTerm(valueSubterm, pos.append(2));
 					enqueueWalker(new BeginScope(dropFirst(projectList)));
 
 					/*
 					 * deal with index
 					 */
 					enqueueWalker(new EndScope());
-					pushTerm(indexSubterm);
+					pushTerm(indexSubterm, pos.append(1));
 					enqueueWalker(new BeginScope(Collections.emptyList()));
 
 
@@ -340,44 +353,47 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 					 * deal with array
 					 */
 					enqueueWalker(new EndScope());
-					pushTerm(arraySubterm);
+					pushTerm(arraySubterm, pos.append(0));
 					enqueueWalker(new BeginScope(projectList));
 
 				} else {
 					// i not in L1 --> drop the store, convert the array according to current scope
 
 					// no extra scoping needed, right?
-					pushTerm(arraySubterm);
+					pushTerm(arraySubterm, pos.append(0));
 				}
 			} else {
 				// leave the term as is, convert its subterms
 
 				// no extra scoping needed, right?
-				enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
-				pushTerms(((ApplicationTerm) term).getParameters());
+				enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term, pos));
+				pushTerms(((ApplicationTerm) term).getParameters(), pos);
 //				pushNLocationBlockLists(at.getParameters().length, Collections.emptyList());
 			}
 		} else if (term instanceof LetTerm) {
-			enqueueWalker(new StartLetTerm((LetTerm) term));
-			pushTerms(((LetTerm) term).getValues());
+//			enqueueWalker(new StartLetTerm((LetTerm) term, pos));
+//			pushTerms(((LetTerm) term).getValues(), pos);
+			super.convert(term, pos);
 		} else if (term instanceof QuantifiedFormula) {
-			enqueueWalker(new BuildQuantifier((QuantifiedFormula) term));
-			pushTerm(((QuantifiedFormula) term).getSubformula());
-			beginScope();
+//			enqueueWalker(new BuildQuantifier((QuantifiedFormula) term, pos));
+//			pushTerm(((QuantifiedFormula) term).getSubformula(), pos.append(0));
+//			beginScope();
+			super.convert(term, pos);
 		} else if (term instanceof AnnotatedTerm) {
-			final AnnotatedTerm annterm = (AnnotatedTerm) term;
-			enqueueWalker(new BuildAnnotation(annterm));
-			final Annotation[] annots = annterm.getAnnotations();
-			for (int i = annots.length - 1; i >= 0; i--) {
-				final Object value = annots[i].getValue();
-				if (value instanceof Term) {
-					pushTerm((Term) value);
-				} else if (value instanceof Term[]) {
-					pushTerms((Term[]) value);
-				}
-			}
-			pushTerm(annterm.getSubterm());
-			return;
+//			final AnnotatedTerm annterm = (AnnotatedTerm) term;
+//			enqueueWalker(new BuildAnnotation(annterm, pos));
+//			final Annotation[] annots = annterm.getAnnotations();
+//			for (int i = annots.length - 1; i >= 0; i--) {
+//				final Object value = annots[i].getValue();
+//				if (value instanceof Term) {
+//					pushTerm((Term) value);
+//				} else if (value instanceof Term[]) {
+//					pushTerms((Term[]) value);
+//				}
+//			}
+//			pushTerm(annterm.getSubterm());
+//			return;
+			super.convert(term, pos);
 		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 		}
@@ -459,7 +475,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			return false;
 		}
 		// the given array term is not in an array group with one of the heap arrays
-		if (!mArrayToArrayGroup.containsKey(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
+//		if (!mArrayToArrayGroup.containsKey(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
+		if (!mCsiag.isArrayTermSubjectToSeparation(mEdgeInfo, term)) {
 			// the given array term is not in an array group with one of the heap arrays
 			return false;
 		}
@@ -481,10 +498,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return result;
 	}
 
-	private ArrayGroup getArrayGroup(final Term term) {
-		assert isPartitionedArray(term);
-		return mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term));
-	}
+//	private ArrayGroup getArrayGroup(final Term term) {
+//		assert isPartitionedArray(term);
+//		return mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term));
+//	}
 
 	private static <E> List<E> addToFront(final E locationBlockForIndex, final List<E> projectList) {
 		final List<E> newList = new ArrayList<>();
@@ -506,9 +523,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 * @param locationBlock
 	 * @return
 	 */
-	private boolean fallsInto(final Term indexSubterm, final LocationBlock locationBlock) {
+	private boolean fallsInto(final SubtreePosition pos, final Term storeTerm, final LocationBlock locationBlock) {
 		// look up the StoreIndexInfo for the given term and mEdgeInfo
-		final StoreInfo sii = mEdgeToIndexToStoreIndexInfo.get(mEdgeInfo, indexSubterm);
+		assert SmtUtils.isFunctionApplication(storeTerm, "store");
+//mEdgeToIndexToStoreIndexInfo.get(mEdgeInfo, indexSubterm);
+		final StoreInfo sii = mCsiag.getStoreInfoForStoreTermAtPositionInEdge(mEdgeInfo, pos);
 		return locationBlock.contains(sii);
 	}
 
@@ -675,7 +694,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				 * --> add invar entries for all subarrays (with fresh Termvars)
 				 */
 				final List<List<LocationBlock>> locationBlockTuples =
-						getAllLocationBlockTuplesForHeapArray(en.getKey());
+//						getAllLocationBlockTuplesForHeapArray(en.getKey());
+						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayToArrayGroup().get(en.getKey()));
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
 					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());
@@ -693,7 +713,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				 * --> add invar entries for all subarrays (with fresh Termvars)
 				 */
 				final List<List<LocationBlock>> locationBlockTuples =
-						getAllLocationBlockTuplesForHeapArray(en.getKey());
+//						getAllLocationBlockTuplesForHeapArray(en.getKey());
+						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayToArrayGroup().get(en.getKey()));
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
 					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());
@@ -717,8 +738,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		mIsFinished = true;
 	}
 
-	private List<List<LocationBlock>> getAllLocationBlockTuplesForHeapArray(final IProgramVarOrConst array) {
-		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+//	private List<List<LocationBlock>> getAllLocationBlockTuplesForHeapArray(final IProgramVarOrConst array) {
+	private List<List<LocationBlock>> getAllLocationBlockTuplesForHeapArray(final ArrayGroup arrayGroup) {
+//		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
 		assert arrayGroup != null
 				&& !DataStructureUtils.intersection(new HashSet<>(mHeapArrays), arrayGroup.getArrays()).isEmpty();
 		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);

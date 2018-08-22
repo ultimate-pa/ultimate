@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepPreAnalysis;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.FindSelects;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * Represents a set of arrays that the heap separator treats like one array.
  * <p>
  * Arrays that are equated within the program are put into one array group. The array groups are computed by
- * {@link HeapSepPreAnalysis}.
+ * {@link FindSelects}.
  * <p>
  * Update (17/08/2018):
  * The purpose of array groups is now only to enable the restriction of the separation to some arrays (the "heap

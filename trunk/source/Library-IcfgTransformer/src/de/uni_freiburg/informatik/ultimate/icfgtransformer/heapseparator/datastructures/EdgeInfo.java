@@ -52,6 +52,10 @@ public class EdgeInfo {
 		mEdge = edge;
 	}
 
+	/**
+	 * @param term
+	 * @return
+	 */
 	public IProgramVarOrConst getProgramVarOrConstForTerm(final Term term) {
 		return TransFormulaUtils.getProgramVarOrConstForTerm(mEdge.getTransformula(), term);
 	}

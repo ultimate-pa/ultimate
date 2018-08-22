@@ -311,6 +311,14 @@ public class StoreInfo {
 //
 //	}
 
+	/**
+	 * Tree position of the mStoreTerm in mEdgeInfo's formula.
+	 * @return
+	 */
+	public SubtreePosition getPosition() {
+		return mSubtreePosition;
+	}
+
 
 
 	/**

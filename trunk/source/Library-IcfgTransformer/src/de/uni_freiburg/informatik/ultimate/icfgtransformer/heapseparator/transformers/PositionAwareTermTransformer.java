@@ -63,6 +63,10 @@ class PositionAwareTermTransformer extends NonRecursive {
 
 	/**
 	 * Push all terms in the array on the todo stack as CONVERT work item.
+	 *
+	 * NB: give this method the position of the base term and it will call pushterm with appropriate positions for the
+	 *  arguments
+	 *
 	 * @param terms the array of terms.
 	 */
 	protected final void pushTerms(final Term[] terms, final SubtreePosition pos) {
@@ -73,6 +77,9 @@ class PositionAwareTermTransformer extends NonRecursive {
 
 	/**
 	 * Push a term on the todo stack as CONVERT work item.
+	 *
+	 * NB: pos must already be updated, if a subterm is pushed
+	 *
 	 * @param term the term to convert.
 	 */
 	protected final void pushTerm(final Term term, final SubtreePosition pos) {
