@@ -120,6 +120,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -528,5 +529,9 @@ public class PRDispatcher extends Dispatcher {
 		final SymbolTableValue value = st.findCSymbol(hook, cid);
 		// getVariablesOnHeap().add(value.getDeclarationNode());
 		addToVariablesOnHeap(value.getDeclarationNode());
+	}
+
+	public Set<CFunction> getFunctionSignatures() {
+		return mCHandler.getProcedureManager().getAllFunctionSignatures();
 	}
 }

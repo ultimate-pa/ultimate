@@ -39,8 +39,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -201,11 +203,11 @@ public class ProcedureManager {
 		 */
 		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
 				new ISuccessorProvider<BoogieProcedureInfo>() {
-					@Override
-					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-						return mInverseCallGraph.getImage(node).iterator();
-					}
-				};
+			@Override
+			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
+				return mInverseCallGraph.getImage(node).iterator();
+			}
+		};
 
 		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
 		final ILogger logger = main.getLogger();
@@ -270,8 +272,8 @@ public class ProcedureManager {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
 					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
 					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName))
-							&& main.getPreferences()
-									.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
+					&& main.getPreferences()
+					.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
 
 				final Expression vIe = main.mCHandler.getMemoryHandler().getValidArray(loc);
@@ -287,7 +289,7 @@ public class ProcedureManager {
 				if (main.getPreferences()
 						.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
 					new Overapprox(Collections.singletonMap("memtrack", ensLoc))
-							.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
+					.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				}
 			} else {
 				newSpecWithExtraEnsuresClauses = newSpec;
@@ -805,6 +807,11 @@ public class ProcedureManager {
 			return mResult;
 		}
 
+	}
+
+	public Set<CFunction> getAllFunctionSignatures() {
+		return mProcedureNameToProcedureInfo.entrySet().stream().map(Entry::getValue).filter(x -> x.hasCType())
+				.map(x -> x.getCType()).collect(Collectors.toSet());
 	}
 
 }

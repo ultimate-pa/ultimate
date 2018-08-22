@@ -141,6 +141,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
@@ -264,6 +265,8 @@ public class MainDispatcher extends Dispatcher {
 	protected boolean mOverapproximateFloatingPointOperations;
 	protected Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
+	private Set<CFunction> mFunctionSignatures;
+
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger, final MultiparseSymbolTable mst) {
@@ -326,6 +329,10 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	public LinkedHashSet<IASTNode> getVariablesForHeap() {
 		return mVariablesOnHeap;
+	}
+
+	public Set<CFunction> getFunctionSignatures() {
+		return mFunctionSignatures;
 	}
 
 	@Override
@@ -399,6 +406,7 @@ public class MainDispatcher extends Dispatcher {
 		prd.init();
 		prd.dispatch(nodes);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
+		mFunctionSignatures.addAll(prd.getFunctionSignatures());
 
 		mIndexToFunction = new LinkedHashMap<>();
 		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
@@ -647,7 +655,7 @@ public class MainDispatcher extends Dispatcher {
 	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
 			final ExtractedWitnessInvariant invariant,
 			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition, final IASTNode hook)
-			throws AssertionError {
+					throws AssertionError {
 		if (invariant != null) {
 			if (!funHasCorrectPosition.test(invariant)) {
 				return Collections.emptyList();
