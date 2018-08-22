@@ -514,10 +514,16 @@ public class CfgBuilder {
 		final JoinStatement st = joinCurrentEdge.getJoinStatement();
 		final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procName);
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) joinCurrentEdge.getTarget();
+		
+		
 
 		final BoogieNonOldVar threadInUse = mProcedureNameToThreadInUseMap.get(procName);
 		final BoogieNonOldVar threadId = mProcedureNameThreadIdMap.get(procName);
-
+		
+		if (st.getForkID().getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator().getType(threadId.getSort())) {
+			return;
+		}
+		
 		final String caller = callerNode.getProcedure();
 
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
