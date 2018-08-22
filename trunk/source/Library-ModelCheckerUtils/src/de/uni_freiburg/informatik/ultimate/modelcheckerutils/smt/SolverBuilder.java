@@ -105,7 +105,7 @@ public class SolverBuilder {
 	 * Only used for when we want to use the function const-Array-Int-Int from Boogie (via "builtin" attribute). Other
 	 * uses of constant arrays use the z3 (const ..) syntax directly right now.
 	 */
-	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = true;
+	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = false;
 	/**
 	 * Only used for when we want to use the function mix-Array-Int-Int from Boogie (via "builtin" attribute). Other
 	 * uses of the mix function trigger the declarations and axiomatization themselves.
