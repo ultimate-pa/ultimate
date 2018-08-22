@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -144,7 +145,7 @@ public class StandardFunctionHandler {
 	public Result translateStandardFunction(final Dispatcher main, final IASTFunctionCallExpression node,
 			final IASTIdExpression astIdExpression) {
 		assert node
-				.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
+		.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
 		final String name = astIdExpression.getName().toString();
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {
@@ -166,8 +167,8 @@ public class StandardFunctionHandler {
 
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
-		final IFunctionModelHandler dieFloat =
-				(main, node, loc, name) -> handleByUnsupportedSyntaxExceptionKnown(loc, "math.h", name);
+		final IFunctionModelHandler dieFloat = (main, node, loc, name) -> handleByUnsupportedSyntaxExceptionKnown(loc,
+				"math.h", name);
 
 		for (final String unsupportedFloatFunction : FloatSupportInUltimate.getUnsupportedFloatOperations()) {
 			fill(map, unsupportedFloatFunction, dieFloat);
@@ -195,22 +196,28 @@ public class StandardFunctionHandler {
 		fill(map, "free", this::handleFree);
 
 		/*
-		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
-		 * "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns the return
-		 * address of the current function, or of one of its callers. The level argument is number of frames to scan up
-		 * the call stack. A value of 0 yields the return address of the current function, a value of 1 yields the
-		 * return address of the caller of the current function, and so forth. When inlining the expected behavior is
-		 * that the function returns the address of the function that is returned to. To work around this behavior use
-		 * the noinline function attribute.
+		 * The GNU C online documentation at
+		 * https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
+		 * "— Built-in Function: void * __builtin_return_address (unsigned int level)
+		 * This function returns the return address of the current function, or of one
+		 * of its callers. The level argument is number of frames to scan up the call
+		 * stack. A value of 0 yields the return address of the current function, a
+		 * value of 1 yields the return address of the caller of the current function,
+		 * and so forth. When inlining the expected behavior is that the function
+		 * returns the address of the function that is returned to. To work around this
+		 * behavior use the noinline function attribute.
 		 *
-		 * The level argument must be a constant integer. On some machines it may be impossible to determine the return
-		 * address of any function other than the current one; in such cases, or when the top of the stack has been
-		 * reached, this function returns 0 or a random value. In addition, __builtin_frame_address may be used to
-		 * determine if the top of the stack has been reached. Additional post-processing of the returned value may be
-		 * needed, see __builtin_extract_return_addr. Calling this function with a nonzero argument can have
-		 * unpredictable effects, including crashing the calling program. As a result, calls that are considered unsafe
-		 * are diagnosed when the -Wframe-address option is in effect. Such calls should only be made in debugging
-		 * situations."
+		 * The level argument must be a constant integer. On some machines it may be
+		 * impossible to determine the return address of any function other than the
+		 * current one; in such cases, or when the top of the stack has been reached,
+		 * this function returns 0 or a random value. In addition,
+		 * __builtin_frame_address may be used to determine if the top of the stack has
+		 * been reached. Additional post-processing of the returned value may be needed,
+		 * see __builtin_extract_return_addr. Calling this function with a nonzero
+		 * argument can have unpredictable effects, including crashing the calling
+		 * program. As a result, calls that are considered unsafe are diagnosed when the
+		 * -Wframe-address option is in effect. Such calls should only be made in
+		 * debugging situations."
 		 *
 		 * Current solution: replace call by a havocced aux variable.
 		 */
@@ -223,9 +230,10 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.ULONG)));
 
 		/*
-		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
-		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
-		 * value
+		 * builtin_prefetch according to
+		 * https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
+		 * 5.6.2015) triggers the processor to load something into cache, does nothing
+		 * else is void thus has no return value
 		 */
 		fill(map, "__builtin_prefetch", skip);
 		fill(map, "__builtin_va_start", skip);
@@ -242,6 +250,10 @@ public class StandardFunctionHandler {
 		fill(map, "strlen", this::handleStrLen);
 		fill(map, "__builtin_strcmp", this::handleStrCmp);
 		fill(map, "strcmp", this::handleStrCmp);
+
+		/** functions of pthread library **/
+		fill(map, "pthread_create", this::handleFork);
+		fill(map, "pthread_join", this::handleJoin);
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -320,7 +332,8 @@ public class StandardFunctionHandler {
 		fill(map, "fabsl", this::handleUnaryFloatFunction);
 
 		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
-		// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the
+		// NaN arguments are treated as missing data: if one argument is a NaN and the
+		// other numeric, then the
 		// fmin/fmax functions choose the numeric value.
 		fill(map, "fmax", this::handleBinaryFloatFunction);
 		fill(map, "fmaxf", this::handleBinaryFloatFunction);
@@ -496,12 +509,12 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult argS = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
 		builder.addDeclarations(argS.mDecl).addStatements(argS.mStmt).addOverapprox(argS.mOverappr)
-				.addAuxVars(argS.getAuxVars()).addNeighbourUnionFields(argS.mOtherUnionFields);
+		.addAuxVars(argS.getAuxVars()).addNeighbourUnionFields(argS.mOtherUnionFields);
 
 		// dispatch second argument -- only for its sideeffects
 		final ExpressionResult argC = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
 		builder.addDeclarations(argC.mDecl).addStatements(argC.mStmt).addOverapprox(argC.mOverappr)
-				.addAuxVars(argC.getAuxVars()).addNeighbourUnionFields(argC.mOtherUnionFields);
+		.addAuxVars(argC.getAuxVars()).addNeighbourUnionFields(argC.mOtherUnionFields);
 
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
@@ -583,6 +596,39 @@ public class StandardFunctionHandler {
 		builder.setLrValue(lrVal);
 
 		return builder.build();
+	}
+
+
+	/**
+	 * TOOD pthread support
+	 */
+	private Result handleFork(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 4, name, arguments);
+		final ExpressionResult argThreadId = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult argThreadAttributes = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		final ExpressionResult argStartRoutine = dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
+		final ExpressionResult startRoutineArguments = dispatchAndConvertFunctionArgument(main, loc, arguments[3]);
+
+		final String methodName = null;
+		final Expression[] forkArguments = null;
+		final ForkStatement fs = new ForkStatement(loc, argThreadId.getLrValue().getValue(), methodName, forkArguments);
+
+		final ExpressionResultBuilder build = new ExpressionResultBuilder();
+		return build.build();
+	}
+
+	/**
+	 * TOOD pthread support
+	 */
+	private Result handleJoin(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+
+		final ExpressionResultBuilder build = new ExpressionResultBuilder();
+		return build.build();
 	}
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
