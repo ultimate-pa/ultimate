@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -76,7 +77,7 @@ public class Boogie2SMT {
 
 	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
 			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services,
-			final boolean simplePartialSkolemization) {
+			final boolean simplePartialSkolemization, final Set<IProgramVar> cfgAuxVars) {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
@@ -84,7 +85,7 @@ public class Boogie2SMT {
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
 					mScript.getScript(), mServices);
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, cfgAuxVars);
 			// mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator =
 					new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -93,7 +94,7 @@ public class Boogie2SMT {
 		} else {
 			mTypeSortTranslator =
 					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, cfgAuxVars);
 
 			// mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -177,7 +178,7 @@ public class Boogie2SMT {
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
 		services.getProgressMonitorService().cancelToolchain();
 	}
-	
+
 
 
 	public class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {

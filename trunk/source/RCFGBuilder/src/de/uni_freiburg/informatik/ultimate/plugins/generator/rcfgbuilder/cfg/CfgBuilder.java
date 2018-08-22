@@ -199,10 +199,7 @@ public class CfgBuilder {
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
-		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
-				simplePartialSkolemization);
-		
-		ConcurrencyInformation concurInfo;
+		final ConcurrencyInformation concurInfo;
 		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
 		if (forkStatements.isEmpty()) {
 			concurInfo = null;
@@ -211,7 +208,11 @@ public class CfgBuilder {
 			concurInfo = new ConcurrencyInformation(
 					mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
 		}
-		
+
+		final Set<IProgramVar> concurVars = new HashSet<>(concurInfo.getThreadInUseVars());
+		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
+				simplePartialSkolemization, concurVars);
+
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
@@ -395,7 +396,7 @@ public class CfgBuilder {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
 		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
-				+ " but no such procedure.";
+		+ " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) edge.getSource();
@@ -422,7 +423,7 @@ public class CfgBuilder {
 		final Return returnAnnot = mCbf.constructReturn(calleeExitLoc, returnNode, call);
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
-	
+
 	/**
 	 * TODO Concurrent Boogie:
 	 */
@@ -452,8 +453,8 @@ public class CfgBuilder {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and overapproximation flags
 
 		final ForkStatement st = forkCurrentEdge.getForkStatement();
-	    final String callee = st.getMethodName();
-	    assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
+		final String callee = st.getMethodName();
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
 
 		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
 		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
@@ -461,21 +462,21 @@ public class CfgBuilder {
 				expressionSort, mgdScript);
 		mProcedureNameThreadIdMap.put(callee, threadIdVar);
 
-	    // Add fork transition from callerNode to procedures entry node.
-	    final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkCurrentEdge.getSource();
-	    final BoogieIcfgLocation calleeEntryLoc = mIcfg.getProcedureEntryNodes().get(callee);
+		// Add fork transition from callerNode to procedures entry node.
+		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkCurrentEdge.getSource();
+		final BoogieIcfgLocation calleeEntryLoc = mIcfg.getProcedureEntryNodes().get(callee);
 
 		final TranslationResult arguments2InParams = mIcfg.getBoogie2SMT().getStatements2TransFormula()
 				.inParamAssignment(st, simplificationTechnique);
 
-	    final Map<String, ILocation> overapproximations = new HashMap<>();
-	    overapproximations.putAll(arguments2InParams.getOverapproximations());
-	    if (!overapproximations.isEmpty()) {
-	      new Overapprox(overapproximations).annotate(forkCurrentEdge);
-	    }
+		final Map<String, ILocation> overapproximations = new HashMap<>();
+		overapproximations.putAll(arguments2InParams.getOverapproximations());
+		if (!overapproximations.isEmpty()) {
+			new Overapprox(overapproximations).annotate(forkCurrentEdge);
+		}
 
-	    final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkCurrentEdge);
-	    final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
+		final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkCurrentEdge);
+		final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
 		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
 		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
 				nameOfForkingProcedure, simplificationTechnique);
@@ -487,17 +488,17 @@ public class CfgBuilder {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				SimplificationTechnique.NONE,
 				Arrays.asList(new UnmodifiableTransFormula[] {parameterAssignment, forkIdAssignment, threadInUseAssignment}));
-	    fork.setTransitionFormula(forkTransformula);
+		fork.setTransitionFormula(forkTransformula);
 
 
-	    // Add the assume statement for the error location and construct the
-	    final ILocation forkLocation = st.getLocation();
+		// Add the assume statement for the error location and construct the
+		final ILocation forkLocation = st.getLocation();
 		final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
-	    final Expression formula = mIcfg.getBoogie2SMT().getTerm2Expression().translate(forkErrorTransFormula.getFormula());
-	    final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
-	    final StatementSequence errorStatement = mCbf.constructStatementSequence(callerNode, errorNode, assumeError);
-	    errorStatement.setTransitionFormula(forkErrorTransFormula);
+		final Expression formula = mIcfg.getBoogie2SMT().getTerm2Expression().translate(forkErrorTransFormula.getFormula());
+		final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
+		final StatementSequence errorStatement = mCbf.constructStatementSequence(callerNode, errorNode, assumeError);
+		errorStatement.setTransitionFormula(forkErrorTransFormula);
 	}
 
 
@@ -590,7 +591,7 @@ public class CfgBuilder {
 		final Map<IProgramVar, TermVariable> inVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
 		final Map<IProgramVar, TermVariable> outVars = inVars;
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), outVars, true,
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true,
 				Collections.emptySet(), true, Collections.emptySet(), true);
 		tfb.setFormula(threadInUseVar.getTermVariable());
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
@@ -614,7 +615,7 @@ public class CfgBuilder {
 	/**
 	 * TODO Concurrent Boogie:
 	 * @param mgdScript
-	 * @return A {@link TransFormula} that represents the assingment statement
+	 * @return A {@link TransFormula} that represents the assignment statement
 	 *         {@code var := false}.
 	 */
 	private UnmodifiableTransFormula constructThreadNotInUseAssingment(final BoogieNonOldVar threadInUseVar,
@@ -745,19 +746,19 @@ public class CfgBuilder {
 					if (mCurrent instanceof BoogieIcfgLocation) {
 						assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
 								|| mLastStmt instanceof Label : "If st is Label"
-										+ " and mcurrent is LocNode lastSt is Label";
+								+ " and mcurrent is LocNode lastSt is Label";
 						mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
 								+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
 								+ " CFG only the first label of those two (or" + " more) will be used");
 					}
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If st"
-										+ " is a Label and the last constructed node"
-										+ " was a TransEdge, then the last"
-										+ " Statement must not be a Label, Return or" + " Goto";
-						mLogger.warn("Label in the middle of a codeblock.");
+						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+						|| mLastStmt instanceof CallStatement : "If st"
+						+ " is a Label and the last constructed node"
+						+ " was a TransEdge, then the last"
+						+ " Statement must not be a Label, Return or" + " Goto";
+					mLogger.warn("Label in the middle of a codeblock.");
 					}
 
 					processLabel((Label) st);
@@ -767,11 +768,11 @@ public class CfgBuilder {
 						|| st instanceof HavocStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If the"
-										+ " last constructed node is a TransEdge, then"
-										+ " the last Statement must not be a Label,"
-										+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
+						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+						|| mLastStmt instanceof CallStatement : "If the"
+						+ " last constructed node is a TransEdge, then"
+						+ " the last Statement must not be a Label,"
+						+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
 					}
 					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 				}
@@ -779,11 +780,11 @@ public class CfgBuilder {
 				else if (st instanceof AssertStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If the"
-										+ " last constructed node is a TransEdge, then"
-										+ " the last Statement must not be a Label,"
-										+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
+						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+						|| mLastStmt instanceof CallStatement : "If the"
+						+ " last constructed node is a TransEdge, then"
+						+ " the last Statement must not be a Label,"
+						+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
 					}
 					processAssertStatement((AssertStatement) st);
 				}
@@ -801,15 +802,15 @@ public class CfgBuilder {
 				else if (st instanceof CallStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
-										+ " must not be a Label, Return or Goto."
-										+ " (i.e. this is not the first Statemnt" + " of the block)";
+						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+						|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
+						+ " must not be a Label, Return or Goto."
+						+ " (i.e. this is not the first Statemnt" + " of the block)";
 					}
 					if (mCurrent instanceof BoogieIcfgLocation) {
 						assert mLastStmt instanceof Label
-								|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
-										+ " first statement of a block or fist" + " statement after a call";
+						|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
+						+ " first statement of a block or fist" + " statement after a call";
 					}
 					processCallStatement((CallStatement) st);
 				}
@@ -1628,8 +1629,8 @@ public class CfgBuilder {
 				return false;
 			}
 			assert incoming instanceof StatementSequence || incoming instanceof SequentialComposition
-					|| incoming instanceof ParallelComposition || incoming instanceof Summary
-					|| incoming instanceof GotoEdge;
+			|| incoming instanceof ParallelComposition || incoming instanceof Summary
+			|| incoming instanceof GotoEdge;
 			final IcfgEdge outgoing = pp.getOutgoingEdges().get(0);
 			if (outgoing instanceof IIcfgForkTransitionCurrentThread
 					|| outgoing instanceof IIcfgForkTransitionOtherThread
@@ -1642,8 +1643,8 @@ public class CfgBuilder {
 				return false;
 			}
 			assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
-					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
-					|| outgoing instanceof GotoEdge;
+			|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
+			|| outgoing instanceof GotoEdge;
 			return true;
 		}
 

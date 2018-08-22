@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTableVariableProvider,
-		ITerm2ExpressionSymbolTable {
+ITerm2ExpressionSymbolTable {
 	/**
 	 * Identifier of attribute that we use to state that
 	 * <ul>
@@ -108,11 +108,18 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
-			final TypeSortTranslator typeSortTranslator) {
+			final TypeSortTranslator typeSortTranslator, final Set<IProgramVar> cfgAuxVars) {
 		super();
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
 		mBoogieDeclarations = boogieDeclarations;
+
+		for (final IProgramVar cfgAuxVar : cfgAuxVars) {
+			final BoogieASTNode someAstNode = boogieDeclarations.getProcImplementation().entrySet().iterator().next()
+					.getValue();
+			mICfgSymbolTable.add(cfgAuxVar);
+			mBoogieVar2AstNode.put(cfgAuxVar, someAstNode);
+		}
 
 		mScript.lock(this);
 		mScript.echo(this, new QuotedObject("Start declaration of constants"));
@@ -655,10 +662,10 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 
 	@Override
 	public ILocation getLocation(final IProgramVar pv) {
-			final BoogieASTNode astNode = getAstNode(pv);
-			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
-			final ILocation loc = astNode.getLocation();
-			return loc;
+		final BoogieASTNode astNode = getAstNode(pv);
+		assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
+		final ILocation loc = astNode.getLocation();
+		return loc;
 	}
 
 }

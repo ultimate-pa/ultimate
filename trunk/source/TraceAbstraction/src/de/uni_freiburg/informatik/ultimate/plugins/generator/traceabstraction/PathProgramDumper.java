@@ -130,16 +130,16 @@ public class PathProgramDumper {
 	private final ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC =
 			new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
 
-				private int mCounter = 0;
+		private int mCounter = 0;
 
-				@Override
-				public String constructValue(final IcfgLocation key) {
-					final String result = "loc" + String.valueOf(mCounter);
-					mCounter++;
-					return result;
-				}
+		@Override
+		public String constructValue(final IcfgLocation key) {
+			final String result = "loc" + String.valueOf(mCounter);
+			mCounter++;
+			return result;
+		}
 
-			};
+	};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
 	private final PathProgram mPathProgram;
 	private final IIcfg<?> mOriginalIcfg;
@@ -547,7 +547,7 @@ public class PathProgramDumper {
 	}
 
 	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation>
-			constructTransitionStatements(IcfgEdge edge) {
+	constructTransitionStatements(IcfgEdge edge) {
 		final String proc = edge.getPrecedingProcedure();
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
@@ -640,7 +640,7 @@ public class PathProgramDumper {
 			for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
 				lhs[offset] = new VariableLHS(constructNewLocation(),
 						((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
-								.getIdentifier());
+						.getIdentifier());
 				rhs[offset] = mTerm2Expression.translate(entry.getValue());
 				offset++;
 			}
@@ -745,7 +745,7 @@ public class PathProgramDumper {
 
 		public FakeBoogie2SmtSymbolTable(final ManagedScript script, final TypeSortTranslator typeSortTranslator,
 				final IIcfgSymbolTable symbolTable, final BoogieDeclarations boogieDeclarations) {
-			super(boogieDeclarations, script, typeSortTranslator);
+			super(boogieDeclarations, script, typeSortTranslator, Collections.emptySet());
 			mIIcfgSymbolTable = symbolTable;
 		}
 

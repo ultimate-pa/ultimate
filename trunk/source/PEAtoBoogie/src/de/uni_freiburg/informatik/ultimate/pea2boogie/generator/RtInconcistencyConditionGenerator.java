@@ -139,7 +139,8 @@ public class RtInconcistencyConditionGenerator {
 		mManagedScript = new ManagedScript(services, mScript);
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
-		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
+		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false,
+				Collections.emptySet());
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mSeparateInvariantHandling = separateInvariantHandling;
