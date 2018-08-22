@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class DeterministicInterpolantAutomaton<LETTER extends IAction>
-		extends BasicAbstractInterpolantAutomaton<LETTER> {
+extends BasicAbstractInterpolantAutomaton<LETTER> {
 
 	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = new HashRelation<>();
@@ -112,10 +113,24 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			}
 		}
 
-		assert mIaTrueState.getFormula().toString().equals("true");
-		assert allPredicates.contains(mIaTrueState);
-		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
-		mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
+		// FIXME Matthias 2018-08-22:
+		// check this more carefully:
+		// add mIaTrueState to allPredicates
+		// is there similar code in related classes?
+
+		final IPredicate initialState = inputInterpolantAutomaton.getInitialStates().iterator().next();
+		mAlreadyConstructedAutomaton.addState(true, false, initialState);
+		mResPred2InputPreds.addPair(initialState, initialState);
+
+		if (initialState != mIaTrueState) {
+			assert SmtUtils.isTrue(mIaTrueState.getFormula());
+			//			assert allPredicates.contains(mIaTrueState);
+			mAlreadyConstructedAutomaton.addState(false, false, mIaTrueState);
+		}
+		if (!allPredicates.contains(mIaTrueState)) {
+			//			allPredicates.add(mIaTrueState);
+			mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
+		}
 		assert mIaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(mIaFalseState);
 		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
@@ -224,8 +239,12 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 		if (resPredConjuncts == null) {
 			resPredConjuncts = Collections.emptySet();
 		}
-		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue =
-				new IterableWithAdditionalElement<>(resPredConjuncts, mIaTrueState);
+		final Iterable<IPredicate> resPredConjunctsEnhanced;
+		if (mInputInterpolantAutomaton.getStates().contains(mIaTrueState)) {
+			resPredConjunctsEnhanced = new IterableWithAdditionalElement<>(resPredConjuncts, mIaTrueState);
+		} else {
+			resPredConjunctsEnhanced = resPredConjuncts;
+		}
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;
 		if (resHier == null) {
 			resHierConjunctsWithTrue = null;
@@ -234,7 +253,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			resHierConjuncts = mResPred2InputPreds.getImage(resHier);
 			resHierConjunctsWithTrue = new IterableWithAdditionalElement<>(resHierConjuncts, mIaTrueState);
 		}
-		for (final IPredicate inputPred : resPredConjunctsWithTrue) {
+		for (final IPredicate inputPred : resPredConjunctsEnhanced) {
 			if (resHier == null) {
 				inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, null, letter));
 			} else {
@@ -262,7 +281,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 				mInputPreds2ResultPreds.put(succs, resSucc);
 				for (final IPredicate succ : succs) {
 					assert mAlreadyConstructedAutomaton.contains(succ)
-							|| mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
+					|| mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
 					if (mNonTrivialPredicates.contains(succ)) {
 						mResPred2InputPreds.addPair(resSucc, succ);
 					}
