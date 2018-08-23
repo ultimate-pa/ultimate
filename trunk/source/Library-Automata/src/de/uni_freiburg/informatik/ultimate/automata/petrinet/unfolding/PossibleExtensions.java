@@ -56,7 +56,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
-	private boolean mLazySuccessorComputation = false;
+	private final boolean mLazySuccessorComputation = !false;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
