@@ -207,10 +207,12 @@ public class CfgBuilder {
 		} else {
 			mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(forkStatements, mgdScript);
 			concurInfo = new ConcurrencyInformation(
-					mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
+					mProcedureNameToThreadInUseMap);
 		}
 
-		final Set<IProgramNonOldVar> concurVars = (concurInfo != null) ? new HashSet<>(concurInfo.getThreadInUseVars())
+		final Set<IProgramNonOldVar> concurVars = (concurInfo != null)
+				? new HashSet<>(mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue)
+						.collect(Collectors.toSet()))
 				: Collections.emptySet();
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization, concurVars);

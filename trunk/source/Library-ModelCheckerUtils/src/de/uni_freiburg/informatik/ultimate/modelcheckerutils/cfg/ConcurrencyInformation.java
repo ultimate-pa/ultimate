@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import java.util.Set;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 
@@ -38,23 +38,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOld
  *
  */
 public class ConcurrencyInformation {
-	
-	private final Set<BoogieNonOldVar> mThreadInUseVars;
-	
-	
 
-	public ConcurrencyInformation(final Set<BoogieNonOldVar> threadInUseVars) {
+	private final Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap;
+
+
+
+	public ConcurrencyInformation(final Map<String, BoogieNonOldVar> procedureNameToThreadInUseMap) {
 		super();
-		mThreadInUseVars = threadInUseVars;
+		mProcedureNameToThreadInUseMap = procedureNameToThreadInUseMap;
 	}
 
 
 
-	public Set<BoogieNonOldVar> getThreadInUseVars() {
-		return mThreadInUseVars;
+	public Map<String, BoogieNonOldVar> getThreadInUseVars() {
+		return mProcedureNameToThreadInUseMap;
 	}
-	
-	
+
+
 
 
 }
