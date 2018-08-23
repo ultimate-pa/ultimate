@@ -127,10 +127,10 @@ extends BasicAbstractInterpolantAutomaton<LETTER> {
 			//			assert allPredicates.contains(mIaTrueState);
 			mAlreadyConstructedAutomaton.addState(false, false, mIaTrueState);
 		}
-		if (!allPredicates.contains(mIaTrueState)) {
-			//			allPredicates.add(mIaTrueState);
-			mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
-		}
+//		if (!allPredicates.contains(mIaTrueState)) {
+//			//			allPredicates.add(mIaTrueState);
+//			mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
+//		}
 		assert mIaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(mIaFalseState);
 		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
