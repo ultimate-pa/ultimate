@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 /**
  * Classes that implement this interface represent an {@link IAction} that
  * defines the effect that a join has to the (non-control-flow)
- * variables of the system. A join is the transition that brings the system 
+ * variables of the system. A join is the transition that brings the system
  * from a forked procedure back to the joining procedure. This means that the
  * effect of the join is that
  * <ul>
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author Lars Nitzke (lars.nitzke@outlook.com)
  *
  */
-public interface IJoinActionOtherThread extends IAction {
+public interface IJoinActionOtherThread extends IInternalAction {
 	/**
 	 * @return {@link TransFormula} which defines how the variables that are explicitly mentioned in the fork are
 	 *         updated on the join (this does not include information about modifiable global variables that are

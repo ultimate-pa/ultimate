@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author Lars Nitzke (lars.nitzke@outlook.com)
  *
  */
-public interface IForkActionOtherThread extends IAction {
+public interface IForkActionOtherThread extends IInternalAction {
 	/**
-	 * @return {@link TransFormula} which defines how the local variables of the 
+	 * @return {@link TransFormula} which defines how the local variables of the
 	 * forked procedure are modified while executing this action.
 	 */
 	UnmodifiableTransFormula getLocalVarsAssignment();
