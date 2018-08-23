@@ -7,9 +7,9 @@
  * 
  */
 
-procedure Main();
+procedure ULTIMATE.start();
 
-implementation Main()
+implementation ULTIMATE.start()
 {
     var x : int;
     var y : bool;
