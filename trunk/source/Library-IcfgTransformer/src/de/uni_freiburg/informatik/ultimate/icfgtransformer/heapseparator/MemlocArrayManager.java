@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,6 +52,10 @@ public class MemlocArrayManager {
 
 	private final Set<IProgramNonOldVar> mGlobalLocArrays = new HashSet<>();
 
+	private final Map<Term, HeapSepProgramConst> mInitLocLitTermToPvoc = new HashMap<>();
+
+	private final Map<HeapSepProgramConst, NoStoreInfo> mInitLocPvocToNoStoreInfo = new HashMap<>();
+
 	public MemlocArrayManager(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
 		mFinalized = false;
@@ -74,7 +80,10 @@ public class MemlocArrayManager {
 		return result;
 	}
 
-	public Set<IProgramConst> getInitLocLits() {
+	public Set<HeapSepProgramConst> getInitLocLits() {
+		if (!mFinalized) {
+			throw new AssertionError();
+		}
 		return new HashSet<>(mLocArraySortToInitLocLit.values());
 	}
 
@@ -138,7 +147,6 @@ public class MemlocArrayManager {
 		if (!mFinalized) {
 			throw new AssertionError();
 		}
-//		return mEdgeToArrayTermToDimToLocArray.values().filter(lai -> lai.isGlobalPvoc()).collect(Collectors.toSet());
 		return Collections.unmodifiableSet(mGlobalLocArrays);
 	}
 
@@ -147,14 +155,14 @@ public class MemlocArrayManager {
 		HeapSepProgramConst result = mLocArraySortToInitLocLit.get(locArraySort);
 
 		if (result == null) {
-//			mMgdScript.lock(this);
 			assert mMgdScript.isLockOwner(this);
 			final String litName = INITLOCLIT_PREFIX + dim;
 			mMgdScript.declareFun(this, litName, new Sort[0], getMemlocSort(dim));
-			final ApplicationTerm memlocLitTerm = (ApplicationTerm) mMgdScript.term(this, litName);
-			result = new HeapSepProgramConst(memlocLitTerm);
-//			mMgdScript.unlock(this);
+			final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, litName);
+			result = new HeapSepProgramConst(locLitTerm);
+			mInitLocLitTermToPvoc.put(locLitTerm, result);
 			mLocArraySortToInitLocLit.put(locArraySort, result);
+			mInitLocPvocToNoStoreInfo.put(result, new NoStoreInfo(dim));
 		}
 		return result;
 	}
@@ -217,5 +225,19 @@ public class MemlocArrayManager {
 			throw new IllegalArgumentException();
 		}
 		return result;
+	}
+
+	public HeapSepProgramConst getInitLocLitPvocForLocLitTerm(final Term locLitTerm) {
+		return mInitLocLitTermToPvoc.get(locLitTerm);
+	}
+
+	public boolean isInitLocPvoc(final HeapSepProgramConst hspc) {
+		final boolean result = mInitLocPvocToNoStoreInfo.containsKey(hspc);
+		assert result == mInitLocLitTermToPvoc.values().contains(hspc);
+		return result;
+	}
+
+	public StoreInfo getNoStoreInfo(final HeapSepProgramConst hspc) {
+		return mInitLocPvocToNoStoreInfo.get(hspc);
 	}
 }

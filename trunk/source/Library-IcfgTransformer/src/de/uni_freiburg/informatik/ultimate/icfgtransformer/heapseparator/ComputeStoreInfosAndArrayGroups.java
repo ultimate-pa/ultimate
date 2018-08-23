@@ -65,8 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
-//	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToStoreToStoreInfo = new NestedMap2<>();
-
 	/**
 	 * Note that this map only contains arrays that are subject to heap separation.
 	 * (in contrast to {@link #mEdgeToTermToArrayGroup})
@@ -75,7 +73,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	/**
 	 * Note that this map also contains arrays that not subject to heap separation.
-	 * (because that would require a postprocessing)
+	 * (because that would require a post-processing)
 	 * For checking that, see {@link #isArrayTermSubjectToSeparation(EdgeInfo, Term)}.
 	 */
 	private final NestedMap2<EdgeInfo, Term, ArrayGroup> mEdgeToTermToArrayGroup = new NestedMap2<>();
@@ -119,7 +117,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 		mLocArrayManager = new MemlocArrayManager(mgdScript);
 
-//		mLocLiterals = new HashSet<>();
 		mHeapArrays = heapArrays;
 
 		run(icfg, heapArrays);
@@ -393,18 +390,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		return true;
 	}
 
-//	/**
-//	 * Return
-//	 *
-//	 * @return
-//	 */
-//	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
-//		if (!mFinalized) {
-//			throw new AssertionError();
-//		}
-//		return Collections.unmodifiableMap(mArrayToArrayGroup);
-//	}
-
 	public MemlocArrayManager getLocArrayManager() {
 		if (!mFinalized) {
 			throw new AssertionError();
@@ -434,7 +419,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		}
 
 		return Collections.unmodifiableSet(mLocLitToStoreInfo.keySet());
-//		return mLocLiterals;
 	}
 
 	/**
@@ -449,17 +433,20 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		return mEdgeToUnconstrainedVariables;
 	}
 
-//	public NestedMap2<EdgeInfo, Term, ArrayGroup> getEdgeToTermToArrayGroup() {
-//		return mEdgeToTermToArrayGroup;
-//	}
-
 	public StoreInfo getStoreInfoForLocLitTerm(final Term locLitTerm) {
 		final HeapSepProgramConst hspc = getLocLitPvocForLocLitTerm(locLitTerm);
+		if (mLocArrayManager.isInitLocPvoc(hspc)) {
+			return mLocArrayManager.getNoStoreInfo(hspc);
+		}
 		assert hspc != null;
 		return mLocLitToStoreInfo.get(hspc);
 	}
 
-	public HeapSepProgramConst getLocLitPvocForLocLitTerm(final Term locLitTerm) {
+	private HeapSepProgramConst getLocLitPvocForLocLitTerm(final Term locLitTerm) {
+		final HeapSepProgramConst initLocLitPvoc = mLocArrayManager.getInitLocLitPvocForLocLitTerm(locLitTerm);
+		if (initLocLitPvoc != null) {
+			return initLocLitPvoc;
+		}
 		return mLocLitTermToLocLitPvoc.get(locLitTerm);
 	}
 
@@ -468,10 +455,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		assert result != null;
 		return result;
 	}
-
-//	public boolean doesTermHaveArrayGroup(final EdgeInfo edgeInfo, final Term term) {
-//		return mEdgeToTermToArrayGroup.get(edgeInfo, term) != null;
-//	}
 
 	public StoreInfo getStoreInfoForStoreTermAtPositionInEdge(final EdgeInfo edgeInfo, final SubtreePosition pos) {
 		return mEdgeToPositionToStoreInfo.get(edgeInfo, pos);
@@ -535,10 +518,6 @@ class BuildStoreInfos extends NonRecursive {
 				new ArrayIndex(), null, null));
 	}
 
-//	public Map<SubtreePosition, StoreInfo> getStoreInfos() {
-//		return mCollectedStoreInfos;
-//	}
-
 	public Map<SubtreePosition, ArrayEqualityLocUpdateInfo> getPositionToLocArrayUpdateInfos() {
 		return mPositionToLocArrayUpdateInfos;
 	}
@@ -554,7 +533,6 @@ class BuildStoreInfos extends NonRecursive {
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
-//	private class BuildStoreInfoWalker extends PositionTrackingTermWalker {
 	private class BuildStoreInfoWalker extends TermWalker {
 
 		private final ArrayIndex mEnclosingStoreIndices;
@@ -563,17 +541,14 @@ class BuildStoreInfos extends NonRecursive {
 		 * position relative to the equality the current Term occurs in.
 		 */
 		private final SubtreePosition mRelativePosition;
-//		private final StoreInfo mOuterMostStore;
 		private final ArrayEqualityLocUpdateInfo mEnclosingEquality;
 
 		public BuildStoreInfoWalker(final Term term, final SubtreePosition position,
 				final ArrayIndex enclosingStoreIndices, final ArrayEqualityLocUpdateInfo enclosingEquality,
 				final SubtreePosition relativePosition) {
-//			super(term, position);
 			super(term);
 			mEnclosingStoreIndices = enclosingStoreIndices;
 			mSubTreePosition = position;
-//			mOuterMostStore = outerMostStore;
 			mEnclosingEquality = enclosingEquality;
 			mRelativePosition = relativePosition;
 		}
@@ -685,7 +660,6 @@ class BuildStoreInfos extends NonRecursive {
 		mMgdScript.unlock(this);
 
 		final HeapSepProgramConst result = new HeapSepProgramConst(locLitTerm);
-//		mLocLiterals .add(result);
 		return result;
 	}
 

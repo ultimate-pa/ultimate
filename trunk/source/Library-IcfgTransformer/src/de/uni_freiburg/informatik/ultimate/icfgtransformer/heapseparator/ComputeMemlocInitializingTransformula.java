@@ -40,7 +40,6 @@ class ComputeMemlocInitializingTransformula {
 			mMemlocArrayManager = memlocArrayManager;
 			computeInitializingTerm(Objects.requireNonNull(memlocArrayManager),
 					Objects.requireNonNull(validArray));
-//					Objects.requireNonNull(originalTransFormula));
 			mResult = computeInitializingTransformula();
 		}
 
@@ -49,56 +48,32 @@ class ComputeMemlocInitializingTransformula {
 			mMemlocInVars = new HashMap<>();
 			mMemlocOutVars = new HashMap<>();
 
-//			final Map<IProgramNonOldVar, Term> memlocArrayToInitiLit =
-//					memlocArrayManager.getMemlocArrayToInitConstantArray();
-
 			final Set<IProgramNonOldVar> globalLocArrays = memlocArrayManager.getGlobalLocArrays();
 
 			// is this locking necessary? the script is used for creating Terms only
 			mMgdScript.lock(this);
 
 			final List<Term> initializingEquations = new ArrayList<>();
-//			for (final Entry<IProgramNonOldVar, Term> en : memlocArrayToInitiLit.entrySet()) {
 			for (final IProgramNonOldVar locArray : globalLocArrays) {
 
 				// variable for memloc array "memmloc_dim_sort"
-				final TermVariable memlocArrayTv;
-//				boolean memlocUpdateInTf;
-//				if (originalTransFormula.getInVars().containsKey(en.getKey())) {
-//					// invar already present (i.e. there already is an memloc update in this transformula)
-//					memlocUpdateInTf = true;
-//					memlocArrayTv = originalTransFormula.getInVars().get(en.getKey());
-//				} else {
-//					memlocUpdateInTf = false;
-//					memlocArrayTv = mMgdScript.constructFreshTermVariable(en.getKey().getGloballyUniqueId(),
-					memlocArrayTv = mMgdScript.constructFreshTermVariable(locArray.getGloballyUniqueId(),
+				final TermVariable memlocArrayTv = mMgdScript.constructFreshTermVariable(locArray.getGloballyUniqueId(),
 							locArray.getSort());
-//				}
 
 				// constant array (const-Array-sort1-sort2 memmloc_dim_sort_lit)
-//				final Term initConstArray = en.getValue();
 				final Term initConstArray = mMemlocArrayManager.getInitConstArrayForGlobalLocArray(locArray);
 
 				// "memloc_dim_sort = (const-Array-Int-Sort memloc_dim_sort_lit)" (assume statement so to say)
 				initializingEquations.add(
 						SmtUtils.binaryEquality(mMgdScript.getScript(), memlocArrayTv, initConstArray));
 
-//				if (!memlocUpdateInTf) {
-//					mMemlocInVars.put(en.getKey(), memlocArrayTv);
-					mMemlocInVars.put(locArray, memlocArrayTv);
-//					mMemlocOutVars.put(en.getKey(), memlocArrayTv);
-					mMemlocOutVars.put(locArray, memlocArrayTv);
-//				}
+				mMemlocInVars.put(locArray, memlocArrayTv);
+				mMemlocOutVars.put(locArray, memlocArrayTv);
 			}
 
 			/*
 			 * furthermore add disequalities between all freeze var literals
 			 */
-//			final List<Term> freezeLitDisequalities = new ArrayList<>();
-
-//			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(),
-//					SmtUtils.and(mMgdScript.getScript(), initializingEquations),
-//					SmtUtils.and(mMgdScript.getScript(), freezeLitDisequalities));
 			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(), initializingEquations);
 
 			mMgdScript.unlock(this);
@@ -121,40 +96,16 @@ class ComputeMemlocInitializingTransformula {
 			 *  <li> add all l_x_frz as assigned vars to the invars/outvars
 			 */
 
-//			final ComputeInitializingTerm cit =
-//					new ComputeInitializingTerm(mMemlocArrayManager, mValidArray, oldTransformula, mSettings);
 
 			final Map<IProgramVar, TermVariable> newInVars = getMemlocInVars();
-//			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
-//			newInVars.putAll(cit.getMemlocInVars());
-//			for (final IProgramVar iv : cit.getMemlocInVars().keySet()) {
-//				if (iv instanceof IProgramOldVar) {
-//					continue;
-//				}
-//				mNewSymbolTable.add(iv);
-//			}
 
 			final Map<IProgramVar, TermVariable> newOutVars = getMemlocOutVars();
-//			final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(oldTransformula.getOutVars());
-//			newOutVars.putAll(cit.getMemlocOutVars());
-//			for (final IProgramVar iv : cit.getMemlocOutVars().keySet()) {
-//				if (iv instanceof IProgramOldVar) {
-//					continue;
-//				}
-//				mNewSymbolTable.add(iv);
-//			}
 
 			/*
 			 * Note that the symbol table will be automatically updated with the new constants by the
 			 *  TransformedIcfgBuilder (in its .finish() method).
 			 */
 			final Set<IProgramConst> newNonTheoryConstants = new HashSet<>(mMemlocArrayManager.getInitLocLits());
-//			final Set<IProgramConst> newNonTheoryConstants = DataStructureUtils.union(
-//					oldTransformula.getNonTheoryConsts(),
-//					new HashSet<>(mMemlocArrayManager.getMemLocLits()));
-//			for (final IProgramConst lit : mMemlocArrayManager.getMemLocLits()) {
-//				mNewSymbolTable.add(lit);
-//			}
 
 			final TransFormulaBuilder newTfBuilder = new TransFormulaBuilder(
 					newInVars, newOutVars, newNonTheoryConstants.isEmpty(), newNonTheoryConstants,
@@ -167,7 +118,6 @@ class ComputeMemlocInitializingTransformula {
 
 			newTfBuilder.setFormula(newFormula);
 			newTfBuilder.setInfeasibility(Infeasibility.UNPROVEABLE);
-//			newTfBuilder.addAuxVarsButRenameToFreshCopies(oldTransformula.getAuxVars(), mMgdScript);
 
 			final UnmodifiableTransFormula newTransformula = newTfBuilder.finishConstruction(mMgdScript);
 

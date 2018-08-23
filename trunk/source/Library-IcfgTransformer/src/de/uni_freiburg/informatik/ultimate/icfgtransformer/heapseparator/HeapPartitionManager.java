@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,12 +49,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapPartitionManager {
-
-	// input
-//	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
-
-	// input
-//	private final Map<StoreInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar;
 
 	// output
 	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
@@ -80,11 +75,7 @@ public class HeapPartitionManager {
 
 	private final HeapSeparatorBenchmark mStatistics;
 
-//	private final Set<StoreInfo> mStoreIndexInfos;
-
 	private final ManagedScript mMgdScript;
-
-//	private final Map<StoreInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
 
 	private final MemlocArrayManager mMemLocArrayManager;
 
@@ -107,18 +98,11 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		mMgdScript = mgdScript;
 
 		mLogger = logger;
-//		mArrayToArrayGroup = csiaag.getArrayToArrayGroup();//arrayToArrayGroup;
-//		mStoreIndexInfos = new HashSet<>(locLitToStoreInfo.values());
-//		mStoreIndexInfos = new HashSet<>(csiaag.getLocLitToStoreInfo().values());
 		mHeapArrays = heapArrays;
 		mStatistics = statistics;
 		mMemLocArrayManager = memlocArrayManager;
-//		mStoreIndexInfoToLocLiteral = locLitToStoreInfo;
 
 		mCsiaag = csiaag;
-
-//		mStoreIndexInfoToFreezeVar = null;
-
 
 		mArrayGroupToDimensionToStoreIndexInfoPartition = new NestedMap2<>();
 		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
@@ -171,90 +155,10 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 				final List<StoreInfo> setConstraintAsStoreInfos =
 						setConstraint.stream().map(t -> mCsiaag.getStoreInfoForLocLitTerm(t))
 							.collect(Collectors.toList());
-
-//				createPartitionAndBlockIfNecessary(selectInfo, dim, setConstraintAsStoreInfos.iterator().next());
 				mergeBlocks(selectInfo, dim, setConstraintAsStoreInfos);
 
 			}
 		}
-//
-//		for (final StoreInfo sii : mStoreIndexInfos) {
-//
-//			final IProgramConst locLit;
-//
-////			locLit = mStoreIndexInfoToLocLiteral.get(sii);
-//			locLit = sii.getLocLiteral();
-//
-//			if (!sii.getArrays().contains(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()))) {
-//				// arrays don't match (coarse check failed..)
-//				continue;
-//			}
-//
-//			for (int dim = 0; dim < selectIndex.size(); dim++) {
-//
-//				if (!sii.getArrayToAccessDimensions()
-//						.containsPair(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()), dim)) {
-//					/*
-//					 * not the right base-array/dimension combination --> continue
-//					 *  (more detailed: the array write(s) that the storeIndexInfo represents are not to the array that
-//					 *   the SelectInfo reads or not to the current dimension dim that the current element of the
-//					 *   SelectInfo's index tuple refers to)
-//					 */
-//					continue;
-//				}
-//				final Term selectIndexNormalized = selectInfo.getNormalizedArrayIndex(dim);
-//
-//				// aliasing question to ask: memloc[selectIndex] (mayequal) locLiteral_sii
-//				final Term memlocSelect = SmtUtils.select(mMgdScript.getScript(),
-//						mMemLocArrayManager.getOrConstructLocArray(dim).getTermVariable(),
-//						selectIndexNormalized);
-//				if (eps.areUnequal(memlocSelect, locLit.getTerm())) {
-//					// nothing to do
-//				} else {
-//					dimensionToMayEqualStoreIndexInfos.addPair(dim, sii);
-//				}
-//			}
-//		}
-//
-//
-//		for (int dim = 0; dim < selectIndex.size(); dim++) {
-//			final Set<StoreInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(dim);
-//
-//
-//			if (mayEqualStoreIndexInfos.size() == 0) {
-//				/* there is no array write/StoreIndexInfo that has a data flow to this array read/SelectInfo
-//				 *  --> this is a special case, we can replace the array that is read here with an uninitialized array
-//				 *    of the correct sort
-//				 */
-//				final NoStoreInfo nsii = new NoStoreInfo();
-//				createPartitionAndBlockIfNecessary(selectInfo, dim, nsii);
-//				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, nsii);
-//				continue;
-//			}
-//
-//			final StoreInfo sample = mayEqualStoreIndexInfos.iterator().next();
-//
-//			mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
-//
-//			createPartitionAndBlockIfNecessary(selectInfo, dim, sample);
-//
-//			for (final StoreInfo sii : mayEqualStoreIndexInfos) {
-//				if (sii == sample) {
-//					// no need to merge sii with itself
-//					continue;
-//				}
-////				mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
-//				mLogger.debug("merging partition blocks for array group" +
-//							mArrayToArrayGroup.get(selectInfo.getArrayPvoc()) + " :");
-//				mLogger.debug("\t" + sii);
-//				mLogger.debug("\t and");
-//				mLogger.debug("\t" + sample);
-//				mLogger.debug("\t because of possible aliasing at dimension " + dim);
-//				mLogger.debug("\t at array read " + selectInfo + ".");
-//				mergeBlocks(selectInfo, dim, sii, sample);
-//			}
-////			}
-//		}
 	}
 
 	private void mergeBlocks(final SelectInfo selectInfo, final int dim,
@@ -271,14 +175,18 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		}
 
 		for (int i = 1; i < setConstraintAsStoreInfos.size(); i++) {
-			partition.findAndConstructEquivalenceClassIfNeeded(setConstraintAsStoreInfos.get(i - 1));
-//			partition.findAndConstructEquivalenceClassIfNeeded(sii2);
-			partition.union(setConstraintAsStoreInfos.get(i - 1), setConstraintAsStoreInfos.get(i));
+			final StoreInfo si1 = setConstraintAsStoreInfos.get(i - 1);
+			final StoreInfo si2 = setConstraintAsStoreInfos.get(i);
+			partition.findAndConstructEquivalenceClassIfNeeded(si1);
+			if (si1 instanceof NoStoreInfo || si2 instanceof NoStoreInfo) {
+				// partition intersection on "uninitialized/havoc array writes" does not trigger a merge
+				continue;
+			}
+			partition.union(si1, si2);
 		}
 	}
 
 	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreInfo sample) {
-//		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
 		final ArrayGroup arrayGroup = selectInfo.getArrayGroup();//mArrayToArrayGroup.get(array);
 		assert selectInfo.getArrayGroup().equals(sample.getArrayGroup());
 
@@ -290,23 +198,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		partition.findAndConstructEquivalenceClassIfNeeded(sample);
 	}
 
-//	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreInfo sii1,
-//			final StoreInfo sii2) {
-//		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
-//		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
-//
-//		final UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-//		if (partition == null) {
-//			throw new AssertionError("should have been created in createBlockIfNecessary");
-//		}
-//
-//		partition.findAndConstructEquivalenceClassIfNeeded(sii1);
-//		partition.findAndConstructEquivalenceClassIfNeeded(sii2);
-//		partition.union(sii1, sii2);
-//	}
-
 	public void finish() {
-
 		/*
 		 * rewrite the collected information into our output format
 		 */
@@ -319,7 +211,6 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			final Integer dim = en.getSecond();
 
 			final ArrayGroup arrayGroup = selectInfo.getArrayGroup();
-			//mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
 
 			final UnionFind<StoreInfo> partition =
 					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
@@ -367,7 +258,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		}
 
 		mIsFinished = true;
-//		assert sanityCheck();
+		assert sanityCheck();
 	}
 
 	private LocationBlock getOrConstructLocationBlock(final Set<StoreInfo> eqc, final ArrayGroup arrayGroup,
@@ -384,35 +275,11 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		return result;
 	}
 
-//	private boolean assertWritesAreToReadArray(final Set<StoreInfo> eqc, final SelectInfo selectInfo) {
-//		for (final StoreInfo sii : eqc) {
-//			if (sii instanceof NoStoreInfo) {
-//				continue;
-//			}
-//			if (!sii.getArrays().contains(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()))) {
-//				assert false;
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
 
-//	private boolean sanityCheck() {
-//		/*
-//		 * each location block in the image of a selectInfo must only contain StoreIndexInfos that refer to the same
-//		 *  array
-//		 * (a write cannot influence a read if it is to a different array)
-//		 */
-//		for (final Triple<SelectInfo, Integer, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
-//			assert assertWritesAreToReadArray(en.getThird().getLocations(), en.getFirst());
-//
-//			if (!en.getSecond().equals(en.getThird().getDimension())) {
-//				assert false;
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
+	private boolean sanityCheck() {
+		// nothing here, yet
+		return true;
+	}
 
 	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
 		if (!mIsFinished) {

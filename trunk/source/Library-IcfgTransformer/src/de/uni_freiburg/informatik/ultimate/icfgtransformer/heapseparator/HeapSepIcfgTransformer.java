@@ -174,27 +174,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
 
-		/*
-		 * Some analysis upfront:
-		 *  Discover all relevant store terms, construct StoreInfo objects for them.
-		 *  To know what is relevant (i.e. Pvocs and Terms related to heap arrays), we need array groups, both on
-		 *   program level and on edge level (i.e. for each term).
-		 */
-//		final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo;
-//		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup;
-//		final NestedMap2<EdgeInfo, Term, ArrayGroup> edgeToTermToArrayGroup;
-//		final MemlocArrayManager locArrayManager;
-//		final Set<IProgramConst> locLiterals = new HashSet<>();
-//		Map<HeapSepProgramConst, StoreInfo> locLitToStoreInfo;
-//		{
-			final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
+		final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
 					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays, mMgdScript);
-//			edgeToPositionToLocUpdateInfo = csiiaag.getEdgeToPositionToLocUpdateInfo();
-//			arrayToArrayGroup = csiiaag.getArrayToArrayGroup();
-//			locArrayManager = csiiaag.getLocArrayManager();
-//			locLiterals.addAll(csiiaag.getLocLiterals());
-//			locLitToStoreInfo = csiiaag.getLocLitToStoreIndexInfo();
-//		}
 		final MemlocArrayManager locArrayManager = csiiaag.getLocArrayManager();
 
 		/*
@@ -331,8 +312,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				new PartitionProjectionTransitionTransformer<>(mLogger,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
 						csiiaag,
-//						edgeToStoreToArrayGroupToStoreInfo,
-//						arrayToArrayGroup,
 						mHeapArrays,
 						mStatistics,
 						originalIcfg.getCfgSmtToolkit());
