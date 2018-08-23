@@ -171,7 +171,9 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * <b>Proof:</b>Assume the left side of the implication.<br>
 	 * 
 	 * <u>TODO schaetzc 2018-08-16: The next line is not true in the general case.
-	 * It is possible for a transition/event to have no predecessors. Do we support such transitions?</u><br>
+	 * It is possible for a transition/event to have no predecessors.
+	 * In a bounded net such transition must also have no successors.
+	 * Do we support such transitions?</u><br>
 	 * 
 	 * If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
 	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t. \exists c1 \in *e1 s.t. c1 < e2. For each
