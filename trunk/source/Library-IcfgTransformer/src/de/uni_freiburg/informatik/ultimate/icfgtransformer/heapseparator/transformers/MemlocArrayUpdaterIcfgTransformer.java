@@ -125,7 +125,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
 
-	private HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVars;
+	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVars = new HashRelation<>();
 
 	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
 			final CfgSmtToolkit oldCsToolkit,

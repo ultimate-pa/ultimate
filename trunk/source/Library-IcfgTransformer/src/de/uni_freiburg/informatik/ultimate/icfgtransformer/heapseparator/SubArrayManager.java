@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -63,22 +62,22 @@ public class SubArrayManager {
 	private final NestedMap2<IProgramVarOrConst, List<LocationBlock>, IProgramVarOrConst>
 		mArrayToLocationBlockListToSubArray;
 
-	private final Map<IProgramVarOrConst, ArrayGroup> mArrayIdToArrayGroup;
-
 	Set<IProgramVarOrConst> mAllSubArrays;
 
 	private final ManagedScript mManagedScript;
 
 	private final HeapSeparatorBenchmark mStatistics;
 
+	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
+
 	public SubArrayManager(final CfgSmtToolkit csToolkit, final HeapSeparatorBenchmark statistics,
-			final Map<IProgramVarOrConst, ArrayGroup> arrayIdToArrayGroup) {
+			final ComputeStoreInfosAndArrayGroups<?> csiag) {
 
 		mManagedScript = csToolkit.getManagedScript();
 
 		mStatistics = statistics;
 
-		mArrayIdToArrayGroup = arrayIdToArrayGroup;
+		mCsiag = csiag;
 
 		mArrayToLocationBlockListToSubArray = new NestedMap2<>();
 
@@ -93,7 +92,7 @@ public class SubArrayManager {
 	}
 
 	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<LocationBlock> projectList) {
-		final ArrayGroup arrayGroup = mArrayIdToArrayGroup.get(programVar);
+		final ArrayGroup arrayGroup = mCsiag.getArrayGroupForArrayPvoc(programVar);
 		assert Objects.nonNull(arrayGroup);
 		if (projectList.size() != arrayGroup.getDimensionality()) {
 			throw new AssertionError("list of location blocks does not have the right length for the given array!");

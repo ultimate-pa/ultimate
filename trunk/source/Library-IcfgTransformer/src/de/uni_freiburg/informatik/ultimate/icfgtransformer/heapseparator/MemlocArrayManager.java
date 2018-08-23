@@ -46,7 +46,7 @@ public class MemlocArrayManager {
 	private final NestedMap2<IProgramVarOrConst, Integer, IProgramVarOrConst> mArrayPvocToDimToLocArrayPvoc =
 			new NestedMap2<>();
 
-	private Map<Sort, HeapSepProgramConst> mLocArraySortToInitLocLit;
+	private final Map<Sort, HeapSepProgramConst> mLocArraySortToInitLocLit = new HashMap<>();
 
 	private final Set<IProgramNonOldVar> mGlobalLocArrays = new HashSet<>();
 
@@ -69,6 +69,7 @@ public class MemlocArrayManager {
 			final String name = LOC_SORT_PREFIX + dim;
 			mMgdScript.getScript().declareSort(name, 0);
 			result = mMgdScript.getScript().sort(name);
+			mDimToLocSort.put(dim, result);
 		}
 		return result;
 	}
@@ -95,15 +96,18 @@ public class MemlocArrayManager {
 
 					if (invar != null) {
 						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
-						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+						term = mMgdScript.constructFreshTermVariable(
+								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
 								locArraySort);
 					} else if (outvar != null) {
-						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
-						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+						pvoc = getLocArrayPvocForArrayPvoc(outvar, dim, locArraySort);
+						term = mMgdScript.constructFreshTermVariable(
+								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
 								locArraySort);
 					} else if (isAuxVar) {
 						pvoc = null;
-						term = mMgdScript.constructFreshTermVariable(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim,
+						term = mMgdScript.constructFreshTermVariable(
+								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
 								locArraySort);
 					} else {
 						throw new AssertionError();
@@ -143,12 +147,13 @@ public class MemlocArrayManager {
 		HeapSepProgramConst result = mLocArraySortToInitLocLit.get(locArraySort);
 
 		if (result == null) {
-			mMgdScript.lock(this);
+//			mMgdScript.lock(this);
+			assert mMgdScript.isLockOwner(this);
 			final String litName = INITLOCLIT_PREFIX + dim;
 			mMgdScript.declareFun(this, litName, new Sort[0], getMemlocSort(dim));
 			final ApplicationTerm memlocLitTerm = (ApplicationTerm) mMgdScript.term(this, litName);
 			result = new HeapSepProgramConst(memlocLitTerm);
-			mMgdScript.unlock(this);
+//			mMgdScript.unlock(this);
 			mLocArraySortToInitLocLit.put(locArraySort, result);
 		}
 		return result;
@@ -160,7 +165,7 @@ public class MemlocArrayManager {
 		if (result == null) {
 			if (pvoc instanceof IProgramNonOldVar) {
 				result = ProgramVarUtils.constructGlobalProgramVarPair(
-						LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort, locArraySort, mMgdScript, this);
+						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort), locArraySort, mMgdScript, this);
 				mGlobalLocArrays.add((IProgramNonOldVar) result);
 			} else if (pvoc instanceof ILocalProgramVar) {
 				throw new UnsupportedOperationException("todo: deal local variables");
@@ -169,6 +174,14 @@ public class MemlocArrayManager {
 			} else {
 				throw new AssertionError("unforseen case");
 			}
+		}
+		return result;
+	}
+
+	private String sanitizeVarName(final String string) {
+		final String result = string.replaceAll("\\|", "");
+		if (result.isEmpty()) {
+			throw new AssertionError();
 		}
 		return result;
 	}

@@ -172,7 +172,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 //		mArrayToArrayGroup = arrayToArrayGroup;
 
-		mSubArrayManager = new SubArrayManager(inputCfgCsToolkit, mStatistics, csiag.getArrayToArrayGroup());
+		mSubArrayManager = new SubArrayManager(inputCfgCsToolkit, mStatistics, csiag);
 
 //		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mCsiag = csiag;

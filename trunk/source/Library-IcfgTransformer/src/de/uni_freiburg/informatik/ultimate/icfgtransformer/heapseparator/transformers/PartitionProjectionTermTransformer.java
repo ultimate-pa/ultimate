@@ -695,7 +695,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				 */
 				final List<List<LocationBlock>> locationBlockTuples =
 //						getAllLocationBlockTuplesForHeapArray(en.getKey());
-						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayToArrayGroup().get(en.getKey()));
+						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayGroupForArrayPvoc(en.getKey()));
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
 					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());
@@ -714,7 +714,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				 */
 				final List<List<LocationBlock>> locationBlockTuples =
 //						getAllLocationBlockTuplesForHeapArray(en.getKey());
-						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayToArrayGroup().get(en.getKey()));
+						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayGroupForArrayPvoc(en.getKey()));
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
 					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());

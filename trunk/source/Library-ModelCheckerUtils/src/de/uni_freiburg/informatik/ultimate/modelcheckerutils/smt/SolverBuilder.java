@@ -368,8 +368,9 @@ public class SolverBuilder {
 				&& solverSettings.getCommandExternalSolver().trim().startsWith("z3")
 				|| solverMode == SolverMode.External_Z3InterpolationMode;
 		if (ENABLE_Z3_CONSTANT_ARRAYS && solverIsZ3 && "ALL".equals(logicForExternalSolver)) {
-			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
-			final TermVariable argTv = result.variable("x", script.sort("Int"));
+			final Sort arrayIntIntSort = SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getIntSort(script));
+			final TermVariable argTv = result.variable("x", SmtSortUtils.getIntSort(script));
 			script.defineFun("const-Array-Int-Int", new TermVariable[] { argTv }, arrayIntIntSort,
 					script.term("const", null, arrayIntIntSort, argTv));
 		}
@@ -385,8 +386,10 @@ public class SolverBuilder {
 		if (ENABLE_ARRAY_MIX_FUNCTION) {
 			assert solverIsZ3 : "other cases are unsupported right now (but may work..)";
 
-			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
-			final Sort arrayIntBoolSort = script.sort("Array", script.sort("Int"), script.sort("Bool"));
+			final Sort arrayIntIntSort = SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getIntSort(script));
+			final Sort arrayIntBoolSort = SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getBoolSort(script));
 
 			script.declareFun(MIX_ARRAY_INT_INT_NAME, new Sort[] { arrayIntIntSort, arrayIntIntSort, arrayIntBoolSort },
 					arrayIntIntSort);

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,11 +67,16 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 //	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToStoreToStoreInfo = new NestedMap2<>();
 
+	/**
+	 * Note that this map only contains arrays that are subject to heap separation.
+	 * (in contrast to {@link #mEdgeToTermToArrayGroup})
+	 */
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup = new HashMap<>();
 
 	/**
-	 * (Actually, we are probably only interested if each term belongs to the array
-	 * group of any heap array)
+	 * Note that this map also contains arrays that not subject to heap separation.
+	 * (because that would require a postprocessing)
+	 * For checking that, see {@link #isArrayTermSubjectToSeparation(EdgeInfo, Term)}.
 	 */
 	private final NestedMap2<EdgeInfo, Term, ArrayGroup> mEdgeToTermToArrayGroup = new NestedMap2<>();
 
@@ -88,9 +94,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final ManagedScript mMgdScript;
 
-	private NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo;
-
-//	private final Set<HeapSepProgramConst> mLocLiterals;
+	private final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo
+		= new NestedMap2<>();
 
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
@@ -105,6 +110,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final NestedMap2<EdgeInfo, SubtreePosition, StoreInfo> mEdgeToPositionToStoreInfo = new NestedMap2<>();
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
 	public ComputeStoreInfosAndArrayGroups(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays,
 			final ManagedScript mgdScript) {
 
@@ -113,6 +120,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		mLocArrayManager = new MemlocArrayManager(mgdScript);
 
 //		mLocLiterals = new HashSet<>();
+		mHeapArrays = heapArrays;
 
 		run(icfg, heapArrays);
 	}
@@ -167,7 +175,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 * Construct the program-level array groups.
 	 */
 	private void computeProgramLevelArrayGroups(final List<IProgramVarOrConst> heapArrays,
-
 			final UnionFind<IProgramVarOrConst> globalArrayPartition,
 			final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition) throws AssertionError {
 		if (mFinalized) {
@@ -386,12 +393,17 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		return true;
 	}
 
-	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
-		if (!mFinalized) {
-			throw new AssertionError();
-		}
-		return Collections.unmodifiableMap(mArrayToArrayGroup);
-	}
+//	/**
+//	 * Return
+//	 *
+//	 * @return
+//	 */
+//	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
+//		if (!mFinalized) {
+//			throw new AssertionError();
+//		}
+//		return Collections.unmodifiableMap(mArrayToArrayGroup);
+//	}
 
 	public MemlocArrayManager getLocArrayManager() {
 		if (!mFinalized) {
@@ -443,6 +455,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	public StoreInfo getStoreInfoForLocLitTerm(final Term locLitTerm) {
 		final HeapSepProgramConst hspc = getLocLitPvocForLocLitTerm(locLitTerm);
+		assert hspc != null;
 		return mLocLitToStoreInfo.get(hspc);
 	}
 
@@ -466,10 +479,21 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	public boolean isArrayTermSubjectToSeparation(final EdgeInfo edgeInfo, final Term term) {
 		final ArrayGroup ag = mEdgeToTermToArrayGroup.get(edgeInfo, term);
-		// check if array group is a tracked one
-		throw new AssertionError("TODO");
-//		 TODO Auto-generated method stub
-//		return false;
+		return mArrayToArrayGroup.values().contains(ag);
+	}
+
+	public ArrayGroup getArrayGroupForArrayPvoc(final IProgramVarOrConst pvoc) {
+		final ArrayGroup result = mArrayToArrayGroup.get(pvoc);
+		assert result != null;
+		return result;
+	}
+
+	/**
+	 *  Note that this only returns arrays that are subject to heap separation.
+	 * @return
+	 */
+	public Collection<ArrayGroup> getArrayGroups() {
+		return Collections.unmodifiableCollection(mArrayToArrayGroup.values());
 	}
 }
 
@@ -485,7 +509,7 @@ class BuildStoreInfos extends NonRecursive {
 	private final Map<SubtreePosition, StoreInfo> mCollectedStoreInfos = new HashMap<>();
 	private final MemlocArrayManager mLocArrayManager;
 	private int mSiidCtr;
-	private Map<SubtreePosition, ArrayEqualityLocUpdateInfo> mPositionToLocArrayUpdateInfos;
+	private final Map<SubtreePosition, ArrayEqualityLocUpdateInfo> mPositionToLocArrayUpdateInfos = new HashMap<>();
 	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
 

@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transfo
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -24,6 +25,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ * For an array equality in a given {@link TransFormula}, this collects, computes and provides information required for
+ * the program transformation that inserts loc-arrays.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class ArrayEqualityLocUpdateInfo {
 
 	/**
@@ -82,11 +90,7 @@ public class ArrayEqualityLocUpdateInfo {
 //		final StoreInfo lhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0));
 //		final StoreInfo rhsStoreInfo = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1));
 
-		final int dimensionality = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0))
-				.getArrayGroup().getDimensionality();
-		assert dimensionality == mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1))
-				.getArrayGroup().getDimensionality();
-		assert dimensionality == new MultiDimensionalSort(mEquality.getParameters()[0].getSort()).getDimension();
+		final int dimensionality = computeDimensionality();
 
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.add(mEquality);
@@ -152,6 +156,22 @@ public class ArrayEqualityLocUpdateInfo {
 		mFinalized = true;
 	}
 
+	public int computeDimensionality() {
+//		final int dimensionality = mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0))
+//				.getArrayGroup().getDimensionality();
+//		assert dimensionality == mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1))
+//				.getArrayGroup().getDimensionality();
+//		assert dimensionality == new MultiDimensionalSort(mEquality.getParameters()[0].getSort()).getDimension();
+		final int dimensionality = new MultiDimensionalSort(mEquality.getParameters()[0].getSort()).getDimension();
+		assert mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0)) == null
+				|| dimensionality == mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0))
+						.getArrayGroup().getDimensionality();
+		assert mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1)) == null
+				|| dimensionality == mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(1))
+						.getArrayGroup().getDimensionality();
+		return dimensionality;
+	}
+
 	private static Set<Term> extractBaseArrayTerms(final ApplicationTerm equality) {
 		final Predicate<Term> pred =
 				subterm -> (subterm.getSort().isArraySort() && !SmtUtils.isFunctionApplication(subterm, "store"));
@@ -193,4 +213,8 @@ public class ArrayEqualityLocUpdateInfo {
 		return mExtraConstants;
 	}
 
+	@Override
+	public String toString() {
+		return "ArrayEqualityLocUpdateInfo [mEquality=" + mEquality + "]";
+	}
 }

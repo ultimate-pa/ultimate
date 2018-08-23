@@ -335,7 +335,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 
 		mLogger.info("partitioning result:");
-		for (final ArrayGroup arrayGroup : mCsiaag.getArrayToArrayGroup().values()) {
+		for (final ArrayGroup arrayGroup : mCsiaag.getArrayGroups()) {
 
 			mStatistics.registerArrayGroup(arrayGroup);
 
