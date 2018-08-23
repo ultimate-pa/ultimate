@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -100,6 +101,7 @@ ITerm2ExpressionSymbolTable {
 	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation = new HashMap<>();
 	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<>();
 	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<>();
+	private final Set<IProgramNonOldVar> mCfgAuxVars;
 
 	final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
 	final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
@@ -107,12 +109,14 @@ ITerm2ExpressionSymbolTable {
 
 	final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
 
+
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
-			final TypeSortTranslator typeSortTranslator, final Set<IProgramVar> cfgAuxVars) {
+			final TypeSortTranslator typeSortTranslator, final Set<IProgramNonOldVar> cfgAuxVars) {
 		super();
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
 		mBoogieDeclarations = boogieDeclarations;
+		mCfgAuxVars = cfgAuxVars;
 
 		for (final IProgramVar cfgAuxVar : cfgAuxVars) {
 			final BoogieASTNode someAstNode = boogieDeclarations.getProcImplementation().entrySet().iterator().next()
@@ -657,6 +661,21 @@ ITerm2ExpressionSymbolTable {
 				result.addPair(proc2vars.getKey(), pv);
 			}
 		}
+
+		// assume that add auxVar are modifiable by all procedures
+		final Set<String> procedures = new HashSet<>();
+		for (final String procId : mSpecificationInParam.keySet()) {
+			procedures.add(procId);
+		}
+		for (final String procId : mImplementationInParam.keySet()) {
+			procedures.add(procId);
+		}
+		for (final String procId : procedures) {
+			for (final IProgramNonOldVar var : mCfgAuxVars) {
+				result.addPair(procId, var);
+			}
+		}
+
 		return result;
 	}
 

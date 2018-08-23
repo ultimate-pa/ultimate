@@ -108,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
@@ -209,7 +210,7 @@ public class CfgBuilder {
 					mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
 		}
 
-		final Set<IProgramVar> concurVars = (concurInfo != null) ? new HashSet<>(concurInfo.getThreadInUseVars())
+		final Set<IProgramNonOldVar> concurVars = (concurInfo != null) ? new HashSet<>(concurInfo.getThreadInUseVars())
 				: Collections.emptySet();
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization, concurVars);
