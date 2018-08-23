@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2P
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -311,9 +314,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 			@Override
 			public IPredicate constructPrecondition(final PredicateUnifier predicateUnifier) {
-				final List<Term> negated = mIcfg
-						.getCfgSmtToolkit().getConcurrencyInformation().getThreadInUseVars().stream().map(x -> SmtUtils
-								.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
+				final Set<BoogieNonOldVar> threadInUseVars = mIcfg.getCfgSmtToolkit().getConcurrencyInformation()
+						.getThreadInUseVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
+				final List<Term> negated = threadInUseVars.stream().map(
+						x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
 						.collect(Collectors.toList());
 				final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
 				return predicateUnifier.getOrConstructPredicate(conjunction);
