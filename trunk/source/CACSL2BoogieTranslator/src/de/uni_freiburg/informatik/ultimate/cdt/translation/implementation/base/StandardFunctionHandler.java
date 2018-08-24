@@ -616,8 +616,8 @@ public class StandardFunctionHandler {
 		final ExpressionResult argStartRoutine = dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
 		final ExpressionResult startRoutineArguments = dispatchAndConvertFunctionArgument(main, loc, arguments[3]);
 
-		final String methodName = null;
-		final Expression[] forkArguments = null;
+		final String methodName = "foo";
+		final Expression[] forkArguments = {startRoutineArguments.getLrValue().getValue()};
 		final ForkStatement fs = new ForkStatement(loc, argThreadId.getLrValue().getValue(), methodName, forkArguments);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -629,6 +629,7 @@ public class StandardFunctionHandler {
 		final Expression value = auxvarinfo.getExp();
 		final LRValue val = new RValue(value, cType);
 		builder.setLrValue(val);
+		builder.addStatement(fs);
 		return builder.build();
 	}
 
