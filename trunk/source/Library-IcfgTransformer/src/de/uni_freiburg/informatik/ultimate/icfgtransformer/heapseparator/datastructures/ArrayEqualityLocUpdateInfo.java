@@ -96,8 +96,8 @@ public class ArrayEqualityLocUpdateInfo {
 		conjuncts.add(mEquality);
 
 
-		// compute the conjuncts for each dimension
-		for (int dim = 0; dim < dimensionality; dim++) {
+		// compute the conjuncts for each dimension, dimensions are 1-based (e.g. a[i] accesses first dimension)
+		for (int dim = 1; dim <= dimensionality; dim++) {
 			// used to make lambda expression work, which needs a final variable, nothing else..
 			final int currentDim = dim;
 
