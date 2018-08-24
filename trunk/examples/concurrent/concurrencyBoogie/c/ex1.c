@@ -2,6 +2,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+typedef unsinged long int pthread_t;
+
 void *worker_thread(void *arg) {
         return (void*)792;
 }
