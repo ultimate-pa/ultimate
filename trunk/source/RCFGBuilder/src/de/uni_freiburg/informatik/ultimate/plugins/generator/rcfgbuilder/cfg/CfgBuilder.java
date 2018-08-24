@@ -108,10 +108,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -200,37 +197,19 @@ public class CfgBuilder {
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
-		final ConcurrencyInformation concurInfo;
 		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
-		if (forkStatements.isEmpty()) {
-			concurInfo = null;
-		} else {
-			mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(forkStatements, mgdScript);
-			concurInfo = new ConcurrencyInformation(
-					mProcedureNameToThreadInUseMap);
-		}
-
-		final Set<IProgramNonOldVar> concurVars = (concurInfo != null)
-				? new HashSet<>(mProcedureNameToThreadInUseMap.entrySet().stream().map(Entry::getValue)
-						.collect(Collectors.toSet()))
-				: Collections.emptySet();
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
-				simplePartialSkolemization, concurVars);
+				simplePartialSkolemization, forkStatements);
+		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
+		if (concurInfo != null) {
+			mProcedureNameToThreadInUseMap = concurInfo.getThreadInUseVars();
+		}
 
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}
 
-	private Map<String, BoogieNonOldVar> constructProcedureNameToThreadInUseMap(
-			final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
-		final Map<String, BoogieNonOldVar> result = new HashMap<>();
-		for (final ForkStatement st : forkStatements) {
-			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
-			result.put(st.getMethodName(), threadInUseVar);
-		}
-		return result;
-	}
 
 	/**
 	 * Returns list of all {@link ForkStatement}s from all declarations. Expects
@@ -428,23 +407,8 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
-	/**
-	 * TODO Concurrent Boogie:
-	 */
-	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
-			final ManagedScript mgdScript) {
-		mgdScript.lock(id);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
-		mgdScript.unlock(id);
-		return var;
-	}
 
-	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
-		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getMethodName() + "_inUse",
-				booleanSort, mgdScript);
-		return threadInUseVar;
-	}
+
 
 	/**
 	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry location of the forked procedure.
@@ -462,7 +426,7 @@ public class CfgBuilder {
 
 		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
 		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
-		final BoogieNonOldVar threadIdVar = constructThreadAuxiliaryVariable("th_id_" + callee,
+		final BoogieNonOldVar threadIdVar = Boogie2SMT.constructThreadAuxiliaryVariable("th_id_" + callee,
 				expressionSort, mgdScript);
 		mProcedureNameThreadIdMap.put(callee, threadIdVar);
 
