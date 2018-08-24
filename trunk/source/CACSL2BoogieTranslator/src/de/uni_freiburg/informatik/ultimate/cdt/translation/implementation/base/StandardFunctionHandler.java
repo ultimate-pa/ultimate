@@ -44,6 +44,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -616,7 +618,22 @@ public class StandardFunctionHandler {
 		final ExpressionResult argStartRoutine = dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
 		final ExpressionResult startRoutineArguments = dispatchAndConvertFunctionArgument(main, loc, arguments[3]);
 
-		final String methodName = "foo";
+		final CASTIdExpression castIdExpr = ((CASTIdExpression) arguments[2]);
+		final String rawProcName = castIdExpr.getName().toString();
+
+		final String multiParseProcedureName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(),
+				rawProcName);
+		if (!mCHandler.getProcedureManager().hasProcedure(multiParseProcedureName)) {
+			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
+					+ " Ultimate does not support pthread_create in combination with function pointers");
+		}
+
+		final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
+		final String prefix = idExpr.getIdentifier().substring(0, 9);
+		if (!prefix.equals("#funAddr~")) {
+			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
+		}
+		final String methodName = idExpr.getIdentifier().substring(9);
 		final Expression[] forkArguments = {startRoutineArguments.getLrValue().getValue()};
 		final ForkStatement fs = new ForkStatement(loc, argThreadId.getLrValue().getValue(), methodName, forkArguments);
 
