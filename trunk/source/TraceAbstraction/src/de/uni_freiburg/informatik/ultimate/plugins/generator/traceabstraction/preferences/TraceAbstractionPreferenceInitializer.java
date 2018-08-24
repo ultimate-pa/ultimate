@@ -323,7 +323,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE, Minimization.MINIMIZE_SEVPA, PreferenceType.Combo,
 						Minimization.values()),
-				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, Concurrency.FINITE_AUTOMATA, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, Concurrency.PETRI_NET, PreferenceType.Combo,
 						Concurrency.values()),
 				new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
 						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
