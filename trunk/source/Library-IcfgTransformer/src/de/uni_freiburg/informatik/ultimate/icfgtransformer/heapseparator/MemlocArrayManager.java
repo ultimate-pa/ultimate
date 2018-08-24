@@ -182,12 +182,14 @@ public class MemlocArrayManager {
 			} else {
 				throw new AssertionError("unforseen case");
 			}
+			mArrayPvocToDimToLocArrayPvoc.put(pvoc, dim, result);
 		}
 		return result;
 	}
 
 	private String sanitizeVarName(final String string) {
-		final String result = string.replaceAll("\\|", "");
+		final String result = string.replaceAll("\\|", "")
+				.replaceAll("\\ ", "-");
 		if (result.isEmpty()) {
 			throw new AssertionError();
 		}
