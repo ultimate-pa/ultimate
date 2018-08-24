@@ -620,8 +620,16 @@ public class StandardFunctionHandler {
 		final Expression[] forkArguments = null;
 		final ForkStatement fs = new ForkStatement(loc, argThreadId.getLrValue().getValue(), methodName, forkArguments);
 
-		final ExpressionResultBuilder build = new ExpressionResultBuilder();
-		return build.build();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.addAuxVar(auxvarinfo);
+		final Expression value = auxvarinfo.getExp();
+		final LRValue val = new RValue(value, cType);
+		builder.setLrValue(val);
+		return builder.build();
 	}
 
 	/**
