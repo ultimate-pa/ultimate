@@ -106,6 +106,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class StandardFunctionHandler {
 
+	private static final boolean ENABLE_PTHREAD_SUPPORT = true;
+
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
 
 	private final ExpressionTranslation mExpressionTranslation;
@@ -174,7 +176,13 @@ public class StandardFunctionHandler {
 			fill(map, unsupportedFloatFunction, dieFloat);
 		}
 
-		fill(map, "pthread_create", die);
+		if (ENABLE_PTHREAD_SUPPORT) {
+			/** functions of pthread library **/
+			fill(map, "pthread_create", this::handleFork);
+			fill(map, "pthread_join", this::handleJoin);
+		} else {
+			fill(map, "pthread_create", die);
+		}
 
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 
@@ -250,10 +258,6 @@ public class StandardFunctionHandler {
 		fill(map, "strlen", this::handleStrLen);
 		fill(map, "__builtin_strcmp", this::handleStrCmp);
 		fill(map, "strcmp", this::handleStrCmp);
-
-		/** functions of pthread library **/
-		fill(map, "pthread_create", this::handleFork);
-		fill(map, "pthread_join", this::handleJoin);
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
