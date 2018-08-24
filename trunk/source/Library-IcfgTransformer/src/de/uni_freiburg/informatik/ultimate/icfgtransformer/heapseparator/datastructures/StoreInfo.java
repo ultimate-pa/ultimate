@@ -115,6 +115,7 @@ public class StoreInfo {
 					Objects.nonNull(array) &&
 					Objects.nonNull(locLit) &&
 					id >= 0);
+
 		mEdgeInfo = edgeInfo;
 		mSubtreePosition = subTreePosition;
 		mStoreTerm = storeTerm;
@@ -124,20 +125,27 @@ public class StoreInfo {
 		mEnclosingEquality = enclosingEquality;
 
 		// need to append, be cause the given position is that of the store term
-		mPositionOfStoredValueRelativeToEquality = posRelativeToEquality.append(2);
+		if (this instanceof NoStoreInfo) {
+			mPositionOfStoredValueRelativeToEquality = null;
 
-		assert (mEnclosingIndices.size() == 0) == (mEnclosingEquality != null);
+			mStoreIndex = null;
+		} else {
+			mPositionOfStoredValueRelativeToEquality = posRelativeToEquality.append(2);
 
-		assert SmtUtils.isFunctionApplication(storeTerm, "store") : "expecting store term";
+			assert (mEnclosingIndices.size() == 0) == (mEnclosingEquality != null);
 
-		mEnclosingEquality.addEnclosedStoreInfo(this, posRelativeToEquality);
+			assert SmtUtils.isFunctionApplication(storeTerm, "store") : "expecting store term";
 
-		{
-			final ApplicationTerm at = (ApplicationTerm) storeTerm;
-			final Term stIndex = at.getParameters()[1];
+			mEnclosingEquality.addEnclosedStoreInfo(this, posRelativeToEquality);
 
-			mStoreIndex = stIndex;
+			{
+				final ApplicationTerm at = (ApplicationTerm) storeTerm;
+				final Term stIndex = at.getParameters()[1];
+
+				mStoreIndex = stIndex;
+			}
 		}
+
 
 		mId = id;
 	}
