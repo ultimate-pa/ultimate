@@ -2,7 +2,7 @@
  * This example shows how fork and join works for different types as expression.
  *
  * Author: Lars Nitzke (lars.nitzke@outlook.com)
- * Date: 22.08.2018
+ * Date: 24.08.2018
  * 
  */
 
@@ -16,19 +16,19 @@ implementation ULTIMATE.start()
     y := true;
 
     fork 1 foo();
-    join x;
-    fork y bar();
+    fork 1 bar();
+    fork 1 sam();
     
-    join true;
+    join x := 1;
 }
 
-procedure foo();
+procedure foo() returns (ret : int);
 
-implementation foo()
+implementation foo() returns (ret : int)
 {
     var x : int;
     x := 5;
-    x := x + 1;
+    ret := x + 1;
 }
 
 procedure bar();
@@ -37,4 +37,10 @@ implementation bar() {
     var x : int;
     x := 5;
     x := x + 1;
+}
+
+procedure sam() returns (ret : bool);
+
+implementation sam() returns (ret : bool) {
+    ret := true;
 }

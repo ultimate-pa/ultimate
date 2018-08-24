@@ -153,7 +153,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		} else if (orderString.equals(UnfoldingOrder.ERV_MARK.getDescription())) {
 			ord = UnfoldingOrder.ERV_MARK;
 		} else {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Unknown order " + orderString);
 		}
 
 		final PetriNetUnfolder<LETTER, IPredicate> unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
