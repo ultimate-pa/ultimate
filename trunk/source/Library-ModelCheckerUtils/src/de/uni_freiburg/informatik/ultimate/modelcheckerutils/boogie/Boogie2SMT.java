@@ -98,11 +98,17 @@ public class Boogie2SMT {
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
 					mScript.getScript(), mServices);
-			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript);
-			final Set<IProgramNonOldVar> concurVars = (mConcurrencyInformation != null)
-					? new HashSet<>(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
-							.collect(Collectors.toSet()))
-					: Collections.emptySet();
+			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript, mTypeSortTranslator);
+			final Set<IProgramNonOldVar> concurVars;
+			if (mConcurrencyInformation == null) {
+				concurVars = Collections.emptySet();
+			} else {
+				concurVars = new HashSet<>();
+				concurVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
+						.collect(Collectors.toSet()));
+				concurVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream().map(Entry::getValue)
+						.collect(Collectors.toSet()));
+			}
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurVars);
 			mOperationTranslator =
 					new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -111,11 +117,17 @@ public class Boogie2SMT {
 		} else {
 			mTypeSortTranslator =
 					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
-			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript);
-			final Set<IProgramNonOldVar> concurVars = (mConcurrencyInformation != null)
-					? new HashSet<>(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
-							.collect(Collectors.toSet()))
-					: Collections.emptySet();
+			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript, mTypeSortTranslator);
+			final Set<IProgramNonOldVar> concurVars;
+			if (mConcurrencyInformation == null) {
+				concurVars = Collections.emptySet();
+			} else {
+				concurVars = new HashSet<>();
+				concurVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
+						.collect(Collectors.toSet()));
+				concurVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream().map(Entry::getValue)
+						.collect(Collectors.toSet()));
+			}
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurVars);
 
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -204,19 +216,22 @@ public class Boogie2SMT {
 		services.getProgressMonitorService().cancelToolchain();
 	}
 
-	private ConcurrencyInformation constructConcurrencyInformation(final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
+	private static ConcurrencyInformation constructConcurrencyInformation(final List<ForkStatement> forkStatements,
+			final ManagedScript mgdScript, final TypeSortTranslator typeSortTranslator) {
 		ConcurrencyInformation concurInfo;
 		if (forkStatements.isEmpty()) {
 			concurInfo = null;
 		} else {
-			final Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(forkStatements, mgdScript);
-			concurInfo = new ConcurrencyInformation(
-					mProcedureNameToThreadInUseMap);
+			final Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(
+					forkStatements, mgdScript);
+			final Map<String, BoogieNonOldVar> procedureNameToThreadInUseMap = constructProcedureNameToThreadIdMap(
+					forkStatements, mgdScript, typeSortTranslator);
+			concurInfo = new ConcurrencyInformation(mProcedureNameToThreadInUseMap, procedureNameToThreadInUseMap);
 		}
 		return concurInfo;
 	}
 
-	private Map<String, BoogieNonOldVar> constructProcedureNameToThreadInUseMap(
+	private static Map<String, BoogieNonOldVar> constructProcedureNameToThreadInUseMap(
 			final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
 		final Map<String, BoogieNonOldVar> result = new HashMap<>();
 		for (final ForkStatement st : forkStatements) {
@@ -226,10 +241,29 @@ public class Boogie2SMT {
 		return result;
 	}
 
+	private static Map<String, BoogieNonOldVar> constructProcedureNameToThreadIdMap(
+			final List<ForkStatement> forkStatements, final ManagedScript mgdScript,
+			final TypeSortTranslator typeSortTranslator) {
+		final Map<String, BoogieNonOldVar> result = new HashMap<>();
+		for (final ForkStatement st : forkStatements) {
+			final BoogieNonOldVar threadInUseVar = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
+			result.put(st.getMethodName(), threadInUseVar);
+		}
+		return result;
+	}
+
 	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
 		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getMethodName() + "_inUse",
 				booleanSort, mgdScript);
+		return threadInUseVar;
+	}
+
+	public static BoogieNonOldVar constructThreadIdVariable(final ForkStatement st, final ManagedScript mgdScript,
+			final TypeSortTranslator typeSortTranslator) {
+		final Sort expressionSort = typeSortTranslator.getSort(st.getForkID().getType(), st);
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_id_" + st.getMethodName(),
+				expressionSort, mgdScript);
 		return threadInUseVar;
 	}
 

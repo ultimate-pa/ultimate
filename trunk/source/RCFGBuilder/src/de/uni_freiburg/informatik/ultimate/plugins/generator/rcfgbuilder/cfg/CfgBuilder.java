@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -203,6 +202,7 @@ public class CfgBuilder {
 		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
 		if (concurInfo != null) {
 			mProcedureNameToThreadInUseMap = concurInfo.getThreadInUseVars();
+			mProcedureNameThreadIdMap = concurInfo.getProcedureNameThreadIdMap();
 		}
 
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
@@ -424,12 +424,6 @@ public class CfgBuilder {
 		final String callee = st.getMethodName();
 		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
 
-		final Sort expressionSort = mIcfg.getBoogie2SMT().getTypeSortTranslator().getSort(st.getForkID().getType() , st);
-		final ManagedScript mgdScript = mIcfg.getBoogie2SMT().getManagedScript();
-		final BoogieNonOldVar threadIdVar = Boogie2SMT.constructThreadAuxiliaryVariable("th_id_" + callee,
-				expressionSort, mgdScript);
-		mProcedureNameThreadIdMap.put(callee, threadIdVar);
-
 		// Add fork transition from callerNode to procedures entry node.
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkCurrentEdge.getSource();
 		final BoogieIcfgLocation calleeEntryLoc = mIcfg.getProcedureEntryNodes().get(callee);
@@ -446,6 +440,8 @@ public class CfgBuilder {
 		final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkCurrentEdge);
 		final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
 		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
+
+		final BoogieNonOldVar threadIdVar = mProcedureNameThreadIdMap.get(st.getMethodName());
 		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
 				nameOfForkingProcedure, simplificationTechnique);
 		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getMethodName());
