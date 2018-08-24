@@ -339,6 +339,7 @@ public class MainDispatcher extends Dispatcher {
 	protected void preRun(final List<DecoratedUnit> nodes) {
 		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
+		mFunctionSignatures = new LinkedHashSet<>();
 
 		// Build the function table
 		executePreRun(new FunctionTableBuilder(mFlatTable), nodes,
