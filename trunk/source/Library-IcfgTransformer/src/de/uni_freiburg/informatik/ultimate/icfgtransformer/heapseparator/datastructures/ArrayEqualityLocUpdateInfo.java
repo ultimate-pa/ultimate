@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -102,16 +101,17 @@ public class ArrayEqualityLocUpdateInfo {
 			final int currentDim = dim;
 
 			// substitute arrays with their loc-arrays for the current dimension
-			final Term equalityWithLocArrays;
+//			final Term equalityWithLocArrays;
+			final Map<Term, Term> termSubstitutionMapping = new HashMap<>();
 			{
-				final Map<Term, Term> subs = new HashMap<>();
+//				final Map<Term, Term> subs = new HashMap<>();
 				for (final Term bat : baseArrayTerms) {
 					// obtain the loc array for the given base array term (typically a term-variable like a, or mem..)
 					final LocArrayInfo locArray =
 							mLocArrayManager.getOrConstructLocArray(mEdge, bat, currentDim);
 
 					// update the substitution mapping (e.g. with a pair (a, a-loc-dim))
-					subs.put(bat, locArray.getTerm());
+					termSubstitutionMapping.put(bat, locArray.getTerm());
 
 					/* update invars, outvars, etc. E.g. if a was an invar and we introduced a-loc-1, then a-loc-1
 					 *  must also be an invar. */
@@ -130,7 +130,7 @@ public class ArrayEqualityLocUpdateInfo {
 						mExtraConstants.add((IProgramConst) locArray.getPvoc());
 					}
 				}
-				equalityWithLocArrays = new Substitution(mMgdScript, subs).transform(mEquality);
+//				equalityWithLocArrays = new Substitution(mMgdScript, subs).transform(mEquality);
 			}
 
 			/* substitute store-values with their corresponding loc literals for the current dimension
@@ -139,14 +139,16 @@ public class ArrayEqualityLocUpdateInfo {
 			{
 				final List<StoreInfo> storeInfosForCurrentDimension = mRelPositionToInnerStoreInfo.values().stream()
 						.filter(si -> (si.getDimension() == currentDim)).collect(Collectors.toList());
-				final Map<SubtreePosition, Term> substitutionMapping = new HashMap<>();
+				final Map<SubtreePosition, Term> positionSubstitutionMapping = new HashMap<>();
 				for (final StoreInfo si : storeInfosForCurrentDimension) {
-					substitutionMapping.put(si.getPositionOfStoredValueRelativeToEquality(),
+					positionSubstitutionMapping.put(si.getPositionOfStoredValueRelativeToEquality(),
 							si.getLocLiteral().getTerm());
 
 				}
 				equalityWithLocArraysAndLocLiterals =
-					new PositionAwareSubstitution(mMgdScript, substitutionMapping).transform(equalityWithLocArrays);
+//					new PositionAwareSubstitution(mMgdScript, substitutionMapping).transform(equalityWithLocArrays);
+					new PositionAwareSubstitution(mMgdScript, positionSubstitutionMapping, termSubstitutionMapping)
+						.transform(mEquality);
 			}
 			conjuncts.add(equalityWithLocArraysAndLocLiterals);
 		}

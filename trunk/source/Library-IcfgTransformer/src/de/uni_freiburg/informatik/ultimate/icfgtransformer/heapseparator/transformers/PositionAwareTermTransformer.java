@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -146,7 +147,19 @@ class PositionAwareTermTransformer extends NonRecursive {
 		if (newArgs != appTerm.getParameters()) {
 			final FunctionSymbol fun = appTerm.getFunction();
 			final Theory theory = fun.getTheory();
-			newTerm = theory.term(fun, newArgs);
+
+			/*
+			 * Difference to {@link Substitution}:
+			 *  PositionAwareSubstition may replace Terms with Terms of different type.
+			 *  Thus the type of an instance of a polymorphic function symbol has to be recomputed.
+			 */
+			final Sort[] paramTypes = new Sort[newArgs.length];
+			for (int i = 0; i < newArgs.length; i++) {
+				paramTypes[i] = newArgs[i].getSort();
+			}
+			final FunctionSymbol newFun = theory.getFunction(fun.getName(), paramTypes);
+
+			newTerm = theory.term(newFun, newArgs);
 		}
 		setResult(newTerm);
 	}
