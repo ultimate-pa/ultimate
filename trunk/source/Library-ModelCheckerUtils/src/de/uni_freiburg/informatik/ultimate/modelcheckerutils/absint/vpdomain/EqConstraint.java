@@ -447,10 +447,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public Set<NODE> getSetConstraintForExpression(final NODE exp) {
-		if (!this.getAllNodes().contains(exp)) {
-			// add it before querying!
-			throw new IllegalArgumentException();
-		}
+//		if (!this.getAllNodes().contains(exp)) {
+//			// add it before querying!
+//			throw new IllegalArgumentException();
+//		}
+
+		mWeqCc.addElement(exp, false);
 
 		final CCLiteralSetConstraints<NODE> lsc = mWeqCc.getCongruenceClosure().getLiteralSetConstraints();
 		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);

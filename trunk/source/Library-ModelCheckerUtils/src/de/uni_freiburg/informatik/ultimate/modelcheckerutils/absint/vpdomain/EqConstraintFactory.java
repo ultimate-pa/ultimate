@@ -608,4 +608,12 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqSettings getWeqSettings() {
 		return mWeqCcManager.getSettings();
 	}
+
+	public EqDisjunctiveConstraint<NODE> closeIfNecessary(final EqDisjunctiveConstraint<NODE> resNotClosed) {
+		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
+		for (final EqConstraint<NODE> c : resNotClosed.getConstraints()) {
+			constraintList.add(closeIfNecessary(c));
+		}
+		return getDisjunctiveConstraint(constraintList);
+	}
 }
