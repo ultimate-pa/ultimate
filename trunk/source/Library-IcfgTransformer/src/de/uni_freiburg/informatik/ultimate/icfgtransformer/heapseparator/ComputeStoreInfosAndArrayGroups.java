@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -102,7 +103,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
-	private boolean mFinalized;
+	private boolean mFrozen;
 
 	private final Map<Term, HeapSepProgramConst> mLocLitTermToLocLitPvoc = new HashMap<>();
 
@@ -123,7 +124,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	private void run(final IIcfg<LOC> icfg, final List<IProgramVarOrConst> heapArrays) throws AssertionError {
-		if (mFinalized) {
+		if (mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -165,7 +166,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 			}
 		}
 
-		mFinalized = true;
+		mFrozen = true;
 	}
 
 	/**
@@ -174,7 +175,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	private void computeProgramLevelArrayGroups(final List<IProgramVarOrConst> heapArrays,
 			final UnionFind<IProgramVarOrConst> globalArrayPartition,
 			final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition) throws AssertionError {
-		if (mFinalized) {
+		if (mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -242,7 +243,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 */
 	private Map<EdgeInfo, UnionFind<Term>> computeEdgeLevelArrayGroups(final IIcfg<LOC> icfg,
 			final UnionFind<IProgramVarOrConst> globalArrayPartition) {
-		if (mFinalized) {
+		if (mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -265,16 +266,22 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				 */
 				final UnionFind<Term> perTfArrayPartition = new UnionFind<>();
 
-				final List<ArrayEqualityAllowStores> aeass = ArrayEqualityAllowStores
-						.extractArrayEqualityAllowStores(tf.getFormula());
+				/* before we do the array groups based on array equalities, we initialize the groups for all array terms
+				 * in the formula (this makes sure that also arrays that occur in select terms only in the formula get
+				 * an array group) */
+				final Set<Term> baseArrayTerms =
+						new SubTermFinder(SmtUtils::isBasicArrayTerm).findMatchingSubterms(tf.getFormula());
+				baseArrayTerms.forEach(perTfArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
 				// compute edge-specific array groups
+				final List<ArrayEqualityAllowStores> aeass = ArrayEqualityAllowStores
+						.extractArrayEqualityAllowStores(tf.getFormula());
 				for (final ArrayEqualityAllowStores aeas : aeass) {
 					final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
 					final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
 
-					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsArrayTerm);
-					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsArrayTerm);
+//					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsArrayTerm);
+//					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsArrayTerm);
 					perTfArrayPartition.union(lhsArrayTerm, rhsArrayTerm);
 				}
 				edgeToPerEdgeArrayPartition.put(edgeInfo, perTfArrayPartition);
@@ -302,7 +309,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private Set<TermVariable> computeUnconstrainedVariables(final UnmodifiableTransFormula tf,
 			final List<ArrayEqualityAllowStores> aeass) {
-		if (mFinalized) {
+		if (mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -376,7 +383,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 */
 	private boolean markAsConstrainedIfNecessary(final Set<TermVariable> constrainedVars,
 			final Set<TermVariable> unconstrainedVars, final TermVariable tv) {
-		if (mFinalized) {
+		if (mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -391,14 +398,14 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	public MemlocArrayManager getLocArrayManager() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 		return mLocArrayManager;
 	}
 
 	public NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> getEdgeToPositionToLocUpdateInfo() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -406,7 +413,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	public Map<HeapSepProgramConst, StoreInfo> getLocLitToStoreInfo() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -414,7 +421,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	public Set<HeapSepProgramConst> getLocLiterals() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -426,7 +433,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 *  at the moment.)
 	 */
 	public HashRelation<EdgeInfo, TermVariable> getEdgeToUnconstrainedVariables() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 
@@ -443,6 +450,9 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	private HeapSepProgramConst getLocLitPvocForLocLitTerm(final Term locLitTerm) {
+		if (!mFrozen) {
+			throw new AssertionError();
+		}
 		final HeapSepProgramConst initLocLitPvoc = mLocArrayManager.getInitLocLitPvocForLocLitTerm(locLitTerm);
 		if (initLocLitPvoc != null) {
 			return initLocLitPvoc;
@@ -451,21 +461,35 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	public ArrayGroup getArrayGroupForTermInEdge(final EdgeInfo edgeInfo, final Term term) {
+		if (!mFrozen) {
+			throw new AssertionError();
+		}
 		final ArrayGroup result = mEdgeToTermToArrayGroup.get(edgeInfo, term);
-		assert result != null;
+		if (result == null) {
+			throw new AssertionError();
+		}
 		return result;
 	}
 
 	public StoreInfo getStoreInfoForStoreTermAtPositionInEdge(final EdgeInfo edgeInfo, final SubtreePosition pos) {
+		if (!mFrozen) {
+			throw new AssertionError();
+		}
 		return mEdgeToPositionToStoreInfo.get(edgeInfo, pos);
 	}
 
 	public boolean isArrayTermSubjectToSeparation(final EdgeInfo edgeInfo, final Term term) {
+		if (!mFrozen) {
+			throw new AssertionError();
+		}
 		final ArrayGroup ag = mEdgeToTermToArrayGroup.get(edgeInfo, term);
 		return mArrayToArrayGroup.values().contains(ag);
 	}
 
 	public ArrayGroup getArrayGroupForArrayPvoc(final IProgramVarOrConst pvoc) {
+		if (!mFrozen) {
+			throw new AssertionError();
+		}
 		final ArrayGroup result = mArrayToArrayGroup.get(pvoc);
 		assert result != null;
 		return result;
