@@ -1,8 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
@@ -47,4 +50,17 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 //	void reportContainsConstraint(ELEM elem, SetConstraintConjunction<ELEM> literalSet);
 	void reportContainsConstraint(ELEM elem, Collection<SetConstraint<ELEM>> literalSet);
+
+	Set<ELEM> getNodesToIntroduceBeforeRemoval(ELEM elemToRemove, Set<ELEM> elementsToRemove,
+			Map<ELEM, ELEM> nodeToReplacementNode);
+
+	boolean hasElement(ELEM n);
+
+	boolean sanityCheck();
+
+	boolean isDebugMode();
+
+	ILogger getLogger();
+
+	boolean addElement(ELEM proxyElem, boolean b);
 }

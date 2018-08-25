@@ -12,9 +12,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRestoreNodesBeforeRemove;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
 
-public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements IRemovalInfo<NODE> {
+public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
+		implements IRemovalInfo<NODE>, IRestoreNodesBeforeRemove<NODE> {
 
 	private final NODE mElem;
 	private final boolean mIntroduceNewNodes;
@@ -111,7 +115,8 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 
 		boolean becameInconsistentWhenAddingANode = false;
-		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
+		becameInconsistentWhenAddingANode =
+				RemoveCcElement.addNodesToKeepInformation(this, elementsToRemove, nodeToReplacementNode);
 
 		// add constraints that were made possible by adding nodes
 		mWeqCc.reportAllArrayEqualitiesFromWeqGraph(false);
@@ -196,64 +201,6 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		return true;
 	}
 
-	private boolean addNodesToKeepInformation(final Set<NODE> elementsToRemove,
-			final Map<NODE, NODE> nodeToReplacementNode) {
-		if (!mIntroduceNewNodes) {
-			return false;
-		}
-		while (true) {
-			final Set<NODE> nodesToAdd = new HashSet<>();
-
-			for (final NODE elemToRemove : elementsToRemove) {
-				if (elemToRemove.isFunctionApplication() && mWeqCc.isConstrained(elemToRemove)) {
-					// we don't have a replacement, but we want one, try if we can get one
-					final Set<NODE> nodes = mWeqCc.getNodesToIntroduceBeforeRemoval(elemToRemove,
-							elementsToRemove, nodeToReplacementNode);
-
-					nodesToAdd.addAll(nodes);
-				}
-			}
-
-			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
-			assert nodesToAdd.stream().allMatch(n -> !mWeqCc.hasElement(n));
-			assert mWeqCc.sanityCheck();
-
-			if (nodesToAdd.isEmpty()) {
-				break;
-			}
-
-			if (mWeqCc.isDebugMode()) {
-				mWeqCc.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
-			}
-
-			// add proxy elements
-			for (final NODE proxyElem : nodesToAdd) {
-				if (mWeqCc.isDebugMode()) {
-					mWeqCc.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
-							mWeqCc.hashCode() + " because it was added in weq graph label");
-				}
-
-				mWeqCc.addElementRec(proxyElem);
-
-				if (mWeqCc.isInconsistent(false)) {
-					// Cc became inconsistent through adding proxyElem --> nothing more to do
-					if (mWeqCc.isDebugMode()) {
-						mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
-								" became inconsistent when adding" + proxyElem);
-					}
-					return true;
-				}
-
-				assert mWeqCc.sanityCheck();
-			}
-
-			if (mIntroduceNewNodes && !mUseWeqGpa) {
-				mAddedNodes.addAll(nodesToAdd);
-			}
-		}
-		return false;
-	}
-
 	public boolean madeChanges() {
 		assert mDidRemoval;
 		return mMadeChanges;
@@ -324,6 +271,26 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		final RemoveWeqCcElement<NODE> re =
 				removeSimpleElement(lab, elem, true, false);
 		return re.getAddedNodes();
+	}
+
+	@Override
+	public boolean isIntroduceNewNodes() {
+		return mIntroduceNewNodes;
+	}
+
+	@Override
+	public NODE getElem() {
+		return mElem;
+	}
+
+	@Override
+	public ICongruenceClosure<NODE> getElementContainer() {
+		return mWeqCc;
+	}
+
+	@Override
+	public void registerAddedNodes(final Set<NODE> nodesToAdd) {
+		mAddedNodes.addAll(nodesToAdd);
 	}
 
 }

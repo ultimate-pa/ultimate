@@ -11,7 +11,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
-public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> implements IRemovalInfo<ELEM> {
+public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //implements IRemovalInfo<ELEM> {
+		implements IRemovalInfo<ELEM>, IRestoreNodesBeforeRemove<ELEM> {
 
 	private final ELEM mElem;
 	private final boolean mIntroduceNewNodes;
@@ -106,7 +107,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 
 
 		boolean becameInconsistentWhenAddingANode = false;
-		becameInconsistentWhenAddingANode = addNodesToKeepInformation(mElementsToRemove, nodeToReplacementNode);
+		becameInconsistentWhenAddingANode = addNodesToKeepInformation(this, mElementsToRemove, nodeToReplacementNode);
 		if (becameInconsistentWhenAddingANode) {
 			assert mElementContainer.isInconsistent();
 			mDidRemoval = true;
@@ -163,63 +164,66 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 		return true;
 	}
 
-	private boolean addNodesToKeepInformation(final Set<ELEM> elementsToRemove,
-			final Map<ELEM, ELEM> nodeToReplacementNode) {
-		if (!mIntroduceNewNodes) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
+			addNodesToKeepInformation(final IRestoreNodesBeforeRemove<ELEM> rce, final Set<ELEM> elementsToRemove,
+					final Map<ELEM, ELEM> nodeToReplacementNode) {
+		if (!rce.isIntroduceNewNodes()) {
 			return false;
 		}
 		while (true) {
 			final Set<ELEM> nodesToAdd = new HashSet<>();
 
 			for (final ELEM elemToRemove : elementsToRemove) {
-				if (elemToRemove.isFunctionApplication() && mElementContainer.isConstrained(elemToRemove)) {
+				if (elemToRemove.isFunctionApplication() && rce.getElementContainer().isConstrained(elemToRemove)) {
 					// we don't have a replacement, but we want one, try if we can get one
-					final Set<ELEM> nodes = mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove,
+					final Set<ELEM> nodes = rce.getElementContainer().getNodesToIntroduceBeforeRemoval(elemToRemove,
 							elementsToRemove, nodeToReplacementNode);
 
 					nodesToAdd.addAll(nodes);
 				}
 			}
 
-			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
-			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
+			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e,
+					Collections.singleton(rce.getElem())));
+			assert nodesToAdd.stream().allMatch(n -> !rce.getElementContainer().hasElement(n));
 			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
-				assert mElementContainer.sanityCheck();
+				assert rce.getElementContainer().sanityCheck();
 			}
 
 			if (nodesToAdd.isEmpty()) {
 				break;
 			}
 
-			if (mElementContainer.isDebugMode()) {
-				mElementContainer.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
+			if (rce.getElementContainer().isDebugMode()) {
+				rce.getElementContainer().getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
 			}
 
 			// add proxy elements
 			for (final ELEM proxyElem : nodesToAdd) {
-				if (mElementContainer.isDebugMode()) {
-					mElementContainer.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
-							mElementContainer.hashCode() + " because it was added in weq graph label");
+				if (rce.getElementContainer().isDebugMode()) {
+					rce.getElementContainer().getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
+							rce.getElementContainer().hashCode() + " because it was added in weq graph label");
 				}
 
-				mElementContainer.addElement(proxyElem, true);
+				rce.getElementContainer().addElement(proxyElem, true);
 
-				if (mElementContainer.isInconsistent()) {
+				if (rce.getElementContainer().isInconsistent()) {
 					// Cc became inconsistent through adding proxyElem --> nothing more to do
-					if (mElementContainer.isDebugMode()) {
-						mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+					if (rce.getElementContainer().isDebugMode()) {
+						rce.getElementContainer().getLogger().debug("RemoveElement: " +
+								rce.getElementContainer().hashCode() +
 								" became inconsistent when adding" + proxyElem);
 					}
 					return true;
 				}
 
 				if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
-					assert mElementContainer.sanityCheck();
+					assert rce.getElementContainer().sanityCheck();
 				}
 			}
 
-			if (mIntroduceNewNodes) {
-				mAddedNodes.addAll(nodesToAdd);
+			if (rce.isIntroduceNewNodes()) {
+				rce.registerAddedNodes(nodesToAdd);
 			}
 		}
 		return false;
@@ -300,6 +304,26 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || cc.sanityCheck();
 		return re;
+	}
+
+	@Override
+	public boolean isIntroduceNewNodes() {
+		return mIntroduceNewNodes;
+	}
+
+	@Override
+	public ELEM getElem() {
+		return mElem;
+	}
+
+	@Override
+	public ICongruenceClosure<ELEM> getElementContainer() {
+		return mElementContainer;
+	}
+
+	@Override
+	public void registerAddedNodes(final Set<ELEM> nodesToAdd) {
+		mAddedNodes.addAll(nodesToAdd);
 	}
 
 }

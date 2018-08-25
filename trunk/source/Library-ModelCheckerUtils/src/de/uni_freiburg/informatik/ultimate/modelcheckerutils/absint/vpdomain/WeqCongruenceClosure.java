@@ -165,7 +165,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !mIsFrozen;
 	}
 
-	public void addElement(final NODE elem, final boolean omitSanityChecks) {
+	/**
+	 *
+	 * @return always "true", meaning something might have changed
+	 * 	 (added just to match the {@link ICongruenceClosure} interface)
+	 */
+	@Override
+	public boolean addElement(final NODE elem, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		addElementRec(elem);
 		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
@@ -180,6 +186,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 
 		assert omitSanityChecks || sanityCheck();
+		return true;
 	}
 
 	@Override
@@ -1069,6 +1076,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return nodesToAddInGpa;
 	}
 
+	@Override
 	public Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> elemToRemoveToReplacement) {
 
@@ -1188,6 +1196,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
+	@Override
 	public boolean hasElement(final NODE node) {
 		return mCongruenceClosure.hasElement(node);
 	}
@@ -1609,6 +1618,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return thisAligned;
 	}
 
+	@Override
 	public boolean sanityCheck() {
 		if (isInconsistent(false)) {
 			return true;
@@ -1759,10 +1769,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mCongruenceClosure.setElementCurrentlyBeingRemoved(re);
 	}
 
+	@Override
 	public boolean isDebugMode() {
 		return mLogger != null;
 	}
 
+	@Override
 	public ILogger getLogger() {
 		return mLogger;
 	}
