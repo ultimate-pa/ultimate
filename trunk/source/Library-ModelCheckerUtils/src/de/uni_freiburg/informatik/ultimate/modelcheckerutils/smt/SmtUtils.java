@@ -1302,8 +1302,12 @@ public final class SmtUtils {
 
 	/**
 	 * Takes a Term with array sort and unwraps all select and store terms until it hits the TermVariable or
-	 * ConstantTerm that can no longer be unwrapped. Examples: let a be an array variable, i1, i2, v some terms a
-	 * returns a (store a i v) returns a (store (select a i1) i2 v) returns a
+	 * ConstantTerm that can no longer be unwrapped. Examples: let a be an array variable, i1, i2, v some terms
+	 * <ul>
+	 *  <li> a returns a
+	 *  <li> (store a i v) returns a
+	 *  <li> (store (select a i1) i2 v) returns a
+	 * </ul>
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -1319,6 +1323,31 @@ public final class SmtUtils {
 		assert result.getSort().isArraySort();
 		assert result instanceof TermVariable || result instanceof ConstantTerm || isConstant(result);
 		return result;
+	}
+
+	/**
+	 * Checks if the given {@link Term} is a basic array term (i.e. a constant or a variable with an array sort).
+	 * (In the same sense as in {@link #getBasicArrayTerm(Term)})
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 * @param term
+	 * @return true if term is a basic array term
+	 */
+	public static boolean isBasicArrayTerm(final Term term) {
+		if (!term.getSort().isArraySort()) {
+			return false;
+		}
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm at = (ApplicationTerm) term;
+			if (at.getParameters().length > 0) {
+				return false;
+			}
+			// term is a constant
+		}
+		assert term instanceof ApplicationTerm || term instanceof TermVariable || term instanceof ConstantTerm;
+
+		return true;
 	}
 
 	/**
