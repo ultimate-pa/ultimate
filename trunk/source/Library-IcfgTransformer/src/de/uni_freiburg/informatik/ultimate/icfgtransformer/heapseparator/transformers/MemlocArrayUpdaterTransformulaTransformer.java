@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <INLOC>
  * @param <OUTLOC>
  */
-public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
+public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements ITransformulaTransformer {
 
 	private final Map<StoreInfo, IProgramConst> mStoreInfoToLocLiteral;
@@ -127,7 +127,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVars = new HashRelation<>();
 
-	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
+	public MemlocArrayUpdaterTransformulaTransformer(final ILogger logger,
 			final CfgSmtToolkit oldCsToolkit,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
