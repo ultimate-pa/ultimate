@@ -131,7 +131,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		final ArrayIndex selectIndex = selectInfo.getIndex();
 
 		// say a is the base array, i the indexvector
-		for (int dim = 1; dim < selectIndex.size(); dim++) {
+		for (int dim = 1; dim <= selectIndex.size(); dim++) {
 			// i_dim is the index prefix up to the current dimension
 			final ArrayIndex indexForCurrentDim = selectIndex.getFirst(dim);
 
