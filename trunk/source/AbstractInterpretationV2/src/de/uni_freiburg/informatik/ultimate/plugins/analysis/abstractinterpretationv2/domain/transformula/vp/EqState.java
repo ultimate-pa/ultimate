@@ -26,19 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
@@ -48,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqN
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 
@@ -346,22 +350,88 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 			mIntermediateStatesForOutgoinEdges = new HashMap<>();
 		}
 
+		/*
+		 * TODO
+		 *  - rename pre-state to edge-naming
+		 *  - close conjunction
+		 */
+		final Map<Term, Term> subsForPred = getSubstitutionForPredecessor(edge.getTransformula());
+
 		EqIntermediateState result = mIntermediateStatesForOutgoinEdges.get(edge);
 		if (result == null) {
 			final TransFormulaConverterCache tfConverter = mFactory.getTransformulaConverter();
 
 			final EqTransitionRelation transRel =
-					tfConverter.getEqTransitionRelationFromTransformula(edge.getTransformula());
+					tfConverter.getTransitionRelationForTransformula(edge.getTransformula());
 
 			final EqConstraintFactory<EqNode> constraintFac = mFactory.getEqConstraintFactory();
 
-			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = Arrays.asList(new EqDisjunctiveConstraint[] {
-					constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)),
-					transRel.getEqConstraint() });
-			final EqDisjunctiveConstraint<EqNode> res = constraintFac.conjoinDisjunctiveConstraints(bothConstraints);
+//			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = Arrays.asList(new EqDisjunctiveConstraint<EqNode>[] {
+//					constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)),
+//					transRel.getEqConstraint() });
+			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = new ArrayList<>();
+
+			final EqDisjunctiveConstraint<EqNode> predRenamed =
+					constraintFac.renameVariables(
+							constraintFac.getDisjunctiveConstraint(
+									Collections.singleton(mConstraint)), subsForPred);
+
+			bothConstraints.add(predRenamed);
+			bothConstraints.add(transRel.getEqConstraint());
+
+			final EqDisjunctiveConstraint<EqNode> resNotClosed = constraintFac.conjoinDisjunctiveConstraints(bothConstraints);
+			final EqDisjunctiveConstraint<EqNode> res = constraintFac.closeIfNecessary(resNotClosed);
 			result = new EqIntermediateState(res);
 		}
 		return result;
+	}
+
+	private Map<Term, Term> getSubstitutionForPredecessor(final TransFormula transRel) {
+//		final Set<TermVariable> varsToProject = new HashSet<>();
+//		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
+//				new IValueConstruction<IProgramVar, TermVariable>() {
+//
+//					@Override
+//					public TermVariable constructValue(final IProgramVar pv) {
+//						throw new AssertionError();
+////						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+////						varsToProject.add(result);
+////						return result;
+//					}
+//
+//				};
+//		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
+//				new ConstructionCache<>(substituentConstruction);
+
+//		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
+		final Map<Term, Term> substitutionForPredecessor = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : transRel.getInVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+//			if (entry.getValue() == transRel.getOutVars().get(pv)) {
+//				// special case, variable unchanged will be renamed when
+//				// considering outVars
+//			} else {
+//				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(pv);
+//				substitutionForTransFormula.put(entry.getValue(), substituent);
+//				if (p.getVars().contains(pv)) {
+				if (this.getVariables().contains(pv)) {
+//					substitutionForPredecessor.put(pv.getTermVariable(), substituent);
+					substitutionForPredecessor.put(pv.getTermVariable(), entry.getValue());
+				}
+//			}
+		}
+
+//		for (final Entry<IProgramVar, TermVariable> entry : transRel.getOutVars().entrySet()) {
+//			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
+//			if (!transRel.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
+//			if (!transRel.getInVars().containsKey(entry.getKey()) && this.getVariables().contains(entry.getKey())) {
+//			if (this.getVariables().contains(entry.getKey())) {
+//				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
+//				substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
+//				substitutionForPredecessor.put(entry.getKey().getTermVariable(), entry.getValue());
+//			}
+//		}
+		return substitutionForPredecessor;
 	}
 
 //	/**
