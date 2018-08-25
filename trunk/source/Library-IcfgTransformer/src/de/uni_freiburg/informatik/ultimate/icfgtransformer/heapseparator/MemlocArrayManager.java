@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class MemlocArrayManager {
 
-	private final boolean mFinalized;
+	private boolean mFrozen;
 
 	public static final String LOC_ARRAY_PREFIX = "#loc";
 	public static final String LOC_SORT_PREFIX = "#locsort";
@@ -58,7 +58,7 @@ public class MemlocArrayManager {
 
 	public MemlocArrayManager(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
-		mFinalized = false;
+		mFrozen = false;
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class MemlocArrayManager {
 	}
 
 	public Set<HeapSepProgramConst> getInitLocLits() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 		return new HashSet<>(mLocArraySortToInitLocLit.values());
@@ -90,7 +90,7 @@ public class MemlocArrayManager {
 	public LocArrayInfo getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim) {
 		LocArrayInfo result = mEdgeToArrayTermToDimToLocArray.get(edgeInfo, baseArrayTerm, dim);
 		if (result == null) {
-			assert !mFinalized;
+			assert !mFrozen;
 
 			mMgdScript.lock(this);
 			final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
@@ -144,7 +144,7 @@ public class MemlocArrayManager {
 	}
 
 	public Set<IProgramNonOldVar> getGlobalLocArrays() {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 		return Collections.unmodifiableSet(mGlobalLocArrays);
@@ -219,7 +219,7 @@ public class MemlocArrayManager {
 	}
 
 	public LocArrayInfo getLocArray(final EdgeInfo edgeInfo, final Term array, final int dim) {
-		if (!mFinalized) {
+		if (!mFrozen) {
 			throw new AssertionError();
 		}
 		final LocArrayInfo result = mEdgeToArrayTermToDimToLocArray.get(edgeInfo, array, dim);
@@ -241,5 +241,12 @@ public class MemlocArrayManager {
 
 	public StoreInfo getNoStoreInfo(final HeapSepProgramConst hspc) {
 		return mInitLocPvocToNoStoreInfo.get(hspc);
+	}
+
+	public void freeze() {
+		if (mFrozen) {
+			throw new AssertionError();
+		}
+		mFrozen = true;
 	}
 }

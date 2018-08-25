@@ -127,15 +127,16 @@ public class FindSelects {
 		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);
 
 		// not sure if the mdSelects are good enough, therefore making a check here
-		{
+		if (!mdSelects.isEmpty()) {
 			final Set<ApplicationTerm> allSelects =
 				new ApplicationTermFinder("select", false).findMatchingSubterms(tf.getFormula());
 
 			final Set<ApplicationTerm> selectsInMdSelects = mdSelects.stream()
-			.map(mds -> new ApplicationTermFinder("select", false)
+					.map(mds -> new ApplicationTermFinder("select", false)
 					.findMatchingSubterms(mds.getSelectTerm()))
-			.reduce((s1, s2) -> DataStructureUtils.union(s1, s2)).get();
-			if (allSelects.equals(selectsInMdSelects)) {
+					.reduce((s1, s2) -> DataStructureUtils.union(s1, s2)).get();
+
+			if (!allSelects.equals(selectsInMdSelects)) {
 				throw new AssertionError();
 			}
 		}
