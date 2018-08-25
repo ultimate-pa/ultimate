@@ -134,7 +134,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 
 		final EqTransitionRelation transitionRelation =
-				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
+				mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(transition.getTransformula());
 
 		final EqDisjunctiveConstraint<EqNode> postConstraint =
 				mPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(), transitionRelation);
@@ -203,12 +203,12 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final String calledProcedure = transition.getSucceedingProcedure();
 
 			final EqTransitionRelation localVarAssignments = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((ICallAction) transition).getLocalVarsAssignment());
+					.getOrConstructEqTransitionRelationFromTransformula(((ICallAction) transition).getLocalVarsAssignment());
 			final EqTransitionRelation globalVarAssignments =
-					mTransFormulaConverter.getEqTransitionRelationFromTransformula(
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure));
 			final EqTransitionRelation oldVarAssignments =
-					mTransFormulaConverter.getEqTransitionRelationFromTransformula(
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure));
 
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
@@ -237,11 +237,11 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqPredicate callPred = hier.toEqPredicate();
 
 			final EqTransitionRelation returnTF = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
-			final EqTransitionRelation callTF = mTransFormulaConverter.getEqTransitionRelationFromTransformula(
+					.getOrConstructEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
+			final EqTransitionRelation callTF = mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
 					((IReturnAction) transition).getLocalVarsAssignmentOfCall());
 			final EqTransitionRelation oldVarAssignments =
-					mTransFormulaConverter.getEqTransitionRelationFromTransformula(mCfgSmtToolkit
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(mCfgSmtToolkit
 							.getOldVarsAssignmentCache().getOldVarsAssignment(transition.getPrecedingProcedure()));
 			final Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
 					.getModifiedBoogieVars(transition.getPrecedingProcedure());

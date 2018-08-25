@@ -81,7 +81,21 @@ public class TransFormulaConverterCache {
 		mVPDomainSettings = settings;
 	}
 
-	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
+	/**
+	 * Crashes if transition relation has not been constructed, yet.
+	 *
+	 * @param tf
+	 * @return
+	 */
+	public EqTransitionRelation getTransitionRelationForTransformula(final TransFormula tf) {
+		final EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
+		if (result == null) {
+			throw new AssertionError();
+		}
+		return result;
+	}
+
+	public EqTransitionRelation getOrConstructEqTransitionRelationFromTransformula(final TransFormula tf) {
 		EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
 			result = convertTransformulaToEqTransitionRelation(tf);
