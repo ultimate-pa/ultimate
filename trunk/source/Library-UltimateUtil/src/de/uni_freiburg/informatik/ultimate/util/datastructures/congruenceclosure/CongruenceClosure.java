@@ -483,6 +483,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
+	@Override
 	public boolean addElement(final ELEM elem, final boolean omitSanityCheck) {
 		return addElement(elem, this, omitSanityCheck);
 	}
@@ -803,12 +804,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	/**
 	 *
 	 * @param elemToRemove
-	 * @param elemToRemoveIsAppliedFunctionNotArgument serves as info which elements are currently being removed -- we don't want to schedule
-	 *   any of these for adding
+	 * @param elemToRemoveIsAppliedFunctionNotArgument serves as info which elements are currently being removed
+	 * 		-- we don't want to schedule any of these for adding
 	 * @param elemToRemoveToReplacement this method may schedule elements for adding that can replace elements being
 	 *   removed -- it should update this map accordingly
 	 * @return
 	 */
+	@Override
 	public Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove, final Set<ELEM> elementsToRemove,
 			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
 
@@ -1289,6 +1291,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mExternalRemovalInfo != null;
 	}
 
+	@Override
 	public boolean sanityCheck() {
 		return sanityCheck(null);
 	}
@@ -1654,6 +1657,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
+	@Override
 	public boolean hasElement(final ELEM elem) {
 		return getAllElements().contains(elem);
 	}
@@ -1673,6 +1677,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return false;
 		}
 		if (mElementTVER.isConstrained(elem)) {
+			return true;
+		}
+		if (mLiteralSetConstraints.isContrained(elem)) {
 			return true;
 		}
 		for (final ELEM afpar : mFaAuxData.getAfParents(elem)) {
@@ -2020,10 +2027,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mElementCurrentlyBeingRemoved = re;
 	}
 
+	@Override
 	public boolean isDebugMode() {
 		return mManager.isDebugMode();
 	}
 
+	@Override
 	public ILogger getLogger() {
 		return mManager.getLogger();
 	}

@@ -739,4 +739,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 		return mContainsConstraints.get(rep);
 	}
+
+	public boolean isContrained(final ELEM elem) {
+		if (elem != mCongruenceClosure.getRepresentativeElement(elem)) {
+			throw new AssertionError("this is only called when elem is "
+				+ "unconstrained on mCongruenceClosure.mElementTVER, right?");
+		}
+		return mContainsConstraints.get(elem) != null;
+	}
 }
