@@ -159,6 +159,8 @@ class PositionAwareTermTransformer extends NonRecursive {
 			}
 			final FunctionSymbol newFun = theory.getFunction(fun.getName(), paramTypes);
 
+			assert newFun != null : "could not find an instance for the polymorphic function";
+
 			newTerm = theory.term(newFun, newArgs);
 		}
 		setResult(newTerm);

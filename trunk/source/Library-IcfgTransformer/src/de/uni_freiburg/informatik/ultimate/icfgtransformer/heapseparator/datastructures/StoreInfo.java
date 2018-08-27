@@ -132,7 +132,7 @@ public class StoreInfo {
 		} else {
 			mPositionOfStoredValueRelativeToEquality = posRelativeToEquality.append(2);
 
-			assert (mEnclosingIndices.size() == 0) == (mEnclosingEquality != null);
+			assert mEnclosingEquality != null;
 
 			assert SmtUtils.isFunctionApplication(storeTerm, "store") : "expecting store term";
 

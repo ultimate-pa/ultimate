@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -121,7 +120,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 	 * @param preprocessing
 	 */
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
-		final HashRelation<Integer, StoreInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
+//		final HashRelation<Integer, StoreInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
 
 		if (eps.isBottom()) {
 			mLogger.warn("equality analysis on preprocessed graph computed array read to be unreachable: "

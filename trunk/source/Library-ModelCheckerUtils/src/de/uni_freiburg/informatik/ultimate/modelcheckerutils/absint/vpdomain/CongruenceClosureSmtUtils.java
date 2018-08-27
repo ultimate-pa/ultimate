@@ -88,9 +88,13 @@ public class CongruenceClosureSmtUtils {
 	public static List<Term> createDisequalityTermsForNonTheoryLiterals(final Script script,
 			final Set<Term> literalTerms) {
 		final List<Term> nonTheoryLiteralDisequalities = new ArrayList<>();
-		// the theory knows that normal constants are different from each other --> don't add those disequalities
+		/*
+		 * the theory knows that normal constants are different from each other, also terms of different sorts
+		 *  --> don't add those disequalities
+		 */
 		final BiPredicate<Term, Term> pairSelector = (l1, l2) -> l1 != l2
-				&& (!(l1 instanceof ConstantTerm) || !(l2 instanceof ConstantTerm));
+				&& (!(l1 instanceof ConstantTerm) || !(l2 instanceof ConstantTerm))
+				&& l1.getSort().getRealSort() == l2.getSort().getRealSort() ;
 		for (final Entry<Term, Term> en :
 				CrossProducts.binarySelectiveCrossProduct(literalTerms, false, pairSelector)) {
 			nonTheoryLiteralDisequalities.add(script.term("not", script.term("=", en.getKey(), en.getValue())));

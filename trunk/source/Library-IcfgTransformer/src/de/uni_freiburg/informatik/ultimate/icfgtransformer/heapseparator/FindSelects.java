@@ -144,68 +144,15 @@ public class FindSelects {
 		for (final MultiDimensionalSelect mds : mdSelects) {
 			final ArrayCellAccess aca = new ArrayCellAccess(mds);
 
-//			mEdgeToTermToArrayGroup.get(edgeInfo, aca.getArray());
-			final ArrayGroup ag = mCsiag.getArrayGroupForTermInEdge(edgeInfo, aca.getArray());
-			if (ag != null) {
-				final SelectInfo si = new SelectInfo(aca, edgeInfo, ag, mMgdScript);
-				mSelectInfos.add(si);
-			} else {
-				// array in the select is not tracked/separated --> do not consider its select
+			if (!mCsiag.isArrayTermSubjectToSeparation(edgeInfo, aca.getArray())) {
+				// not a separated array --> do nothing
+				continue;
 			}
-		}
 
-//		/*
-//		 * subterms that have already been put into one of the maps
-//		 */
-//		final Set<Term> visitedSubTerms = new HashSet<>();
-//
-//		for (final ArrayUpdate au : ArrayUpdate.extractArrayUpdates(tf.getFormula())) {
-//			final IProgramVarOrConst newArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
-//			final IProgramVarOrConst oldArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
-//
-//			assert au.getNewArray() != au.getOldArray() : "that would be a strange case, no?..";
-//			assert !au.isNegatedEquality() : "strange case";
-//
-//			/*
-//			 * only track updates to one of the heap arrays
-//			 */
-//			if (!mHeapArrays.contains(newArrayPv)) {
-//				continue;
-//			}
-//
-//			/* we only keep array updates that have the same ProgramVar lhs und rhs
-//			 * (the others are processed as ArrayEqualityAllowStores')
-//			 */
-//			if (newArrayPv.equals(oldArrayPv)) {
-//				mEdgeToCellUpdates.addPair(edgeInfo, au);
-//				visitedSubTerms.add(au.getArrayUpdateTerm());
-//			}
-//		}
-//
-//		for (final ArrayEqualityAllowStores aeas
-//				: ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula())) {
-//			if (visitedSubTerms.contains(aeas.getTerm(mMgdScript.getScript()))) {
-//				// term is already stored as a cell update
-//				continue;
-//			}
-//
-//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
-//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
-//			// filter out aeas that do not relate to a heap array
-//			if (!mHeapArrays.contains(lhsPvoc) && !mHeapArrays.contains(rhsPvoc)) {
-//				continue;
-//			}
-//
-//			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
-//		}
-//
-//		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
-//
-//			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo, mMgdScript);
-//			if (mHeapArrays.contains(selectInfo.getArrayPvoc())) {
-//				mSelectInfos.add(selectInfo);
-//			}
-//		}
+			final ArrayGroup ag = mCsiag.getArrayGroupForTermInEdge(edgeInfo, aca.getArray());
+			final SelectInfo si = new SelectInfo(aca, edgeInfo, ag, mMgdScript);
+			mSelectInfos.add(si);
+		}
 	}
 
 	public Set<SelectInfo> getSelectInfos() {
@@ -214,11 +161,6 @@ public class FindSelects {
 		}
 		return mSelectInfos;
 	}
-
-//	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
-//
-//		return Collections.unmodifiableMap(mArrayToArrayGroup);
-//	}
 
 	public void finish() {
 //		/*

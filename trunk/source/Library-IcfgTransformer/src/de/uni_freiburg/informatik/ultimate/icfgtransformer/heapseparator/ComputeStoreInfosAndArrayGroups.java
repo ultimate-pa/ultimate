@@ -116,7 +116,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 		mMgdScript = mgdScript;
 
-		mLocArrayManager = new MemlocArrayManager(mgdScript);
+		mLocArrayManager = new MemlocArrayManager(mgdScript, this);
 
 		mHeapArrays = heapArrays;
 
@@ -255,11 +255,11 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final UnmodifiableTransFormula tf = edge.getTransformula();
 				final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
-				if (SmtUtils.containsFunctionApplication(tf.getFormula(), "or")
-						|| !SmtUtils.isNNF(tf.getFormula())) {
-					throw new UnsupportedOperationException("this computation can only handle conjunctive formulas at"
-							+ "the moment");
-				}
+//				if (SmtUtils.containsFunctionApplication(tf.getFormula(), "or")
+//						|| !SmtUtils.isNNF(tf.getFormula())) {
+//					throw new UnsupportedOperationException("this computation can only handle conjunctive formulas at"
+//							+ "the moment");
+//				}
 
 				/*
 				 * construct the per-edge (or per-transformula, the difference does not matter here) array partition
@@ -594,11 +594,18 @@ class BuildStoreInfos extends NonRecursive {
 			switch (funcName) {
 			case "store":
 			{
+				final ArrayGroup arrayGroup = mTermToArrayGroup.get(SmtUtils.getBasicArrayTerm(term));
+
+				if (arrayGroup == null) {
+					// array that is stored on is not subject to separation --> nothing to do here
+					break;
+				}
+
 				final int siId = getNextStoreInfoId();
 				final int siDim = mEnclosingStoreIndices.size() + 1;
 				final HeapSepProgramConst locLit = constructLocationLiteral(mEdge, siId, siDim);
 				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term,
-						mTermToArrayGroup.get(SmtUtils.getBasicArrayTerm(term)), mEnclosingStoreIndices,
+						arrayGroup, mEnclosingStoreIndices,
 						locLit, mEnclosingEquality, mRelativePosition);
 				mLocLitToStoreInfo.put(locLit, si);
 				mCollectedStoreInfos.put(mSubTreePosition, si);

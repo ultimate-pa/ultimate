@@ -56,9 +56,13 @@ public class MemlocArrayManager {
 
 	private final Map<HeapSepProgramConst, NoStoreInfo> mInitLocPvocToNoStoreInfo = new HashMap<>();
 
-	public MemlocArrayManager(final ManagedScript mgdScript) {
+	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
+
+	public MemlocArrayManager(final ManagedScript mgdScript,
+			final ComputeStoreInfosAndArrayGroups<?> computeStoreInfosAndArrayGroups) {
 		mMgdScript = mgdScript;
 		mFrozen = false;
+		mCsiag = computeStoreInfosAndArrayGroups;
 	}
 
 	/**
@@ -112,7 +116,7 @@ public class MemlocArrayManager {
 				assert edgeInfo.getInVar(baseArrayTerm) == pvoc;
 				assert !edgeInfo.getEdge().getTransformula().getAssignedVars().contains(pvoc);
 
-				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
+				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort(), dim);
 				final IProgramVarOrConst locPvoc = getLocArrayPvocForArrayPvoc(pvoc, dim, locArraySort);
 
 				/*
@@ -126,7 +130,7 @@ public class MemlocArrayManager {
 				assert !mFrozen;
 
 				mMgdScript.lock(this);
-				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
+				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort(), dim);
 
 				final IProgramVarOrConst pvoc;
 				final Term term;
@@ -232,16 +236,29 @@ public class MemlocArrayManager {
 	}
 
 	/**
-	 * Replace the last entry in the given array sort by the loc array sort
+	 * Replace the last entry in the given array sort by the loc array sort. Also account for the given dimension by
+	 * dropping the innermost dimensions.
+	 * (e.g.  if sort is Int x Real -> Int, and dim is 1, then construct the sort Int -> locsort1
+	 *
 	 *
 	 * @param sort
+	 * @param dim
 	 * @return
 	 */
-	private Sort computeLocArraySort(final Sort sort) {
+	private Sort computeLocArraySort(final Sort sort, final int dim) {
 		final MultiDimensionalSort mds = new MultiDimensionalSort(sort);
 		assert mds.getDimension() > 0;
 		final Deque<Sort> sortDeque = new ArrayDeque<>(mds.getIndexSorts());
-		Sort resultSort = getMemlocSort(mds.getDimension());
+
+		// drop 'innermost' sorts so #dim sorts remain
+		for (int i = 0; i < mds.getDimension() - dim; i++) {
+			sortDeque.pollLast();
+		}
+		assert sortDeque.size() == dim;
+
+//		Sort resultSort = getMemlocSort(mds.getDimension());
+		Sort resultSort = getMemlocSort(dim);
+
 		while (!sortDeque.isEmpty()) {
 			final Sort last = sortDeque.pollLast();
 			resultSort = SmtSortUtils.getArraySort(mMgdScript.getScript(), last, resultSort);
@@ -251,7 +268,14 @@ public class MemlocArrayManager {
 
 	private Term computeInitConstantArrayForLocArray(final HeapSepProgramConst locLit, final Sort locArraySort,
 			final Object lockOwner) {
-		return mMgdScript.term(lockOwner, "const", null, locArraySort, locLit.getTerm());
+		final MultiDimensionalSort mds = new MultiDimensionalSort(locArraySort);
+		if (mds.getDimension() == 1) {
+			return mMgdScript.term(lockOwner, "const", null, locArraySort, locLit.getTerm());
+		} else {
+			assert !locArraySort.getArguments()[0].isArraySort();
+			final Term inner = computeInitConstantArrayForLocArray(locLit, locArraySort.getArguments()[1], lockOwner);
+			return mMgdScript.term(lockOwner, "const", null, locArraySort, inner);
+		}
 	}
 
 	public LocArrayInfo getLocArray(final EdgeInfo edgeInfo, final Term array, final int dim) {
@@ -284,5 +308,9 @@ public class MemlocArrayManager {
 			throw new AssertionError();
 		}
 		mFrozen = true;
+	}
+
+	public boolean isArrayTermSubjectToSeparation(final EdgeInfo edge, final Term bat) {
+		return mCsiag.isArrayTermSubjectToSeparation(edge, bat);
 	}
 }
