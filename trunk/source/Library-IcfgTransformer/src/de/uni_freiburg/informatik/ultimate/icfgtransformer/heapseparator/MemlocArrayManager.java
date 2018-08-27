@@ -160,7 +160,7 @@ public class MemlocArrayManager {
 				}
 				final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
 				result = new LocArrayInfo(edgeInfo, pvoc, term,
-						computeInitConstantArrayForLocArray(initLocLit, locArraySort));
+						computeInitConstantArrayForLocArray(initLocLit, locArraySort, this));
 
 				mMgdScript.unlock(this);
 
@@ -170,11 +170,12 @@ public class MemlocArrayManager {
 		return result;
 	}
 
-	public Term getInitConstArrayForGlobalLocArray(final IProgramNonOldVar pnov) {
+	public Term getInitConstArrayForGlobalLocArray(final IProgramNonOldVar pnov,
+			final Object lockOwner) {
 		final Sort locArraySort = pnov.getSort();
 		final int dim = new MultiDimensionalSort(locArraySort).getDimension();
 		final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
-		return computeInitConstantArrayForLocArray(initLocLit, locArraySort);
+		return computeInitConstantArrayForLocArray(initLocLit, locArraySort, lockOwner);
 	}
 
 	public Set<IProgramNonOldVar> getGlobalLocArrays() {
@@ -248,8 +249,9 @@ public class MemlocArrayManager {
 		return resultSort;
 	}
 
-	private Term computeInitConstantArrayForLocArray(final HeapSepProgramConst locLit, final Sort locArraySort) {
-		return mMgdScript.term(this, "const", null, locArraySort, locLit.getTerm());
+	private Term computeInitConstantArrayForLocArray(final HeapSepProgramConst locLit, final Sort locArraySort,
+			final Object lockOwner) {
+		return mMgdScript.term(lockOwner, "const", null, locArraySort, locLit.getTerm());
 	}
 
 	public LocArrayInfo getLocArray(final EdgeInfo edgeInfo, final Term array, final int dim) {

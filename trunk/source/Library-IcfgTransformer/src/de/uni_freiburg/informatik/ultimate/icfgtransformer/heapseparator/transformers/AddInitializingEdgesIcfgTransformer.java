@@ -190,7 +190,7 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 				// the source of the init edge is unchanged
 				final OUTLOC initEdgeSource = mBuilder.createNewLocation((INLOC) initEdge.getSource());
 
-				assert !mBuilder.hasNewLoc(oldInitTarget) : "init edge target should not have been recreated " + "here";
+//				assert !mBuilder.hasNewLoc(oldInitTarget) : "init edge target should not have been recreated " + "here";
 
 				final OUTLOC s1 = createAndAddNewLocation(oldInitTarget, false, false, true, false, false,
 						new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));

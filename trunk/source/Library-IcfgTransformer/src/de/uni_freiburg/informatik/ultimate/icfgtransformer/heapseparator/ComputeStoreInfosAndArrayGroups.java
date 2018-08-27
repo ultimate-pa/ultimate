@@ -598,7 +598,7 @@ class BuildStoreInfos extends NonRecursive {
 				final int siDim = mEnclosingStoreIndices.size() + 1;
 				final HeapSepProgramConst locLit = constructLocationLiteral(mEdge, siId, siDim);
 				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term,
-						mTermToArrayGroup.get(term), mEnclosingStoreIndices,
+						mTermToArrayGroup.get(SmtUtils.getBasicArrayTerm(term)), mEnclosingStoreIndices,
 						locLit, mEnclosingEquality, mRelativePosition);
 				mLocLitToStoreInfo.put(locLit, si);
 				mCollectedStoreInfos.put(mSubTreePosition, si);

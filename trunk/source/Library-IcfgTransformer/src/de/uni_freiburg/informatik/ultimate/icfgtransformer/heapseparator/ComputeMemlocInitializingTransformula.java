@@ -61,7 +61,7 @@ class ComputeMemlocInitializingTransformula {
 							locArray.getSort());
 
 				// constant array (const-Array-sort1-sort2 memmloc_dim_sort_lit)
-				final Term initConstArray = mMemlocArrayManager.getInitConstArrayForGlobalLocArray(locArray);
+				final Term initConstArray = mMemlocArrayManager.getInitConstArrayForGlobalLocArray(locArray, this);
 
 				// "memloc_dim_sort = (const-Array-Int-Sort memloc_dim_sort_lit)" (assume statement so to say)
 				initializingEquations.add(

@@ -198,6 +198,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			partition = new UnionFind<>();
 			mArrayGroupToDimensionToStoreIndexInfoPartition.put(arrayGroup, dim, partition);
 		}
+		mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
 		partition.findAndConstructEquivalenceClassIfNeeded(sample);
 	}
 

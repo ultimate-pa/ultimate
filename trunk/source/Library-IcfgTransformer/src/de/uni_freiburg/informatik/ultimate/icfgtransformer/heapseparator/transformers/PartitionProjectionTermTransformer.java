@@ -196,8 +196,8 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 	@Override
 	protected void convert(final Term term, final SubtreePosition pos) {
+		assert mProjectLists.stream().allMatch(l -> l.stream().allMatch(Objects::nonNull));
 		final List<LocationBlock> projectList = mProjectLists.peek();
-		assert projectList.stream().allMatch(Objects::nonNull);
 		if (term instanceof ConstantTerm
 				|| term instanceof TermVariable) {
 			final IProgramVar invar = mEdgeInfo.getInVar(term);
@@ -290,7 +290,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 				// construct a list of location blocks according to the indices
 				final List<LocationBlock> locationBlockList = new ArrayList<>();
-				for (int dim = 0; dim < aca.getIndex().size(); dim++) {
+				for (int dim = 1; dim <= aca.getIndex().size(); dim++) {
 					/*
 					 * TODO: indeed for this field it might be nicer to use Map<ArrayCellAccess, List<LocationBlock>>
 					 *   instead of a NestedMap2...
@@ -492,7 +492,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 	 */
 	private List<Set<LocationBlock>> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup) {
 		final List<Set<LocationBlock>> result = new ArrayList<>();
-		for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
+		for (int dim = 1; dim <= arrayGroup.getDimensionality(); dim++) {
 			result.add(mArrayGroupToDimensionToLocationBlocks.projectToTrd(arrayGroup, dim));
 		}
 		return result;

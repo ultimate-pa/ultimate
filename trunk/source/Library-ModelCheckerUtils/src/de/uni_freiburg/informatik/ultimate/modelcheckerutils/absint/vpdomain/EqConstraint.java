@@ -452,9 +452,13 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 //			throw new IllegalArgumentException();
 //		}
 
-		mWeqCc.addElement(exp, false);
+		final WeqCongruenceClosure<NODE> unfrozen = mFactory.getWeqCcManager().unfreezeIfNecessary(mWeqCc);
 
-		final CCLiteralSetConstraints<NODE> lsc = mWeqCc.getCongruenceClosure().getLiteralSetConstraints();
+//		mWeqCc.addElement(exp, false);
+		unfrozen.addElement(exp, false);
+
+//		final CCLiteralSetConstraints<NODE> lsc = mWeqCc.getCongruenceClosure().getLiteralSetConstraints();
+		final CCLiteralSetConstraints<NODE> lsc = unfrozen.getCongruenceClosure().getLiteralSetConstraints();
 		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
 		if (!c.hasOnlyLiterals()) {
 			throw new AssertionError();

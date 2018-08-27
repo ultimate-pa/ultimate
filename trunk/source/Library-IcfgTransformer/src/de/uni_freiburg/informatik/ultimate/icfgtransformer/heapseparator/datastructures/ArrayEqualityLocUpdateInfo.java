@@ -144,6 +144,7 @@ public class ArrayEqualityLocUpdateInfo {
 					positionSubstitutionMapping.put(si.getPositionOfStoredValueRelativeToEquality(),
 							si.getLocLiteral().getTerm());
 
+					mExtraConstants.add(si.getLocLiteral());
 				}
 				equalityWithLocArraysAndLocLiterals =
 //					new PositionAwareSubstitution(mMgdScript, substitutionMapping).transform(equalityWithLocArrays);
