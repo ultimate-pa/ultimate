@@ -88,50 +88,84 @@ public class MemlocArrayManager {
 	}
 
 	public LocArrayInfo getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim) {
+		return getOrConstructLocArray(edgeInfo, baseArrayTerm, dim, false);
+	}
+
+	/**
+	 *
+	 * @param edgeInfo
+	 * @param baseArrayTerm
+	 * @param dim
+	 * @param calledFromProcessSelect not called during preprocessing before abstract interpretation but because
+	 *   of an array read..
+	 * @return
+	 */
+	public LocArrayInfo getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim,
+			final boolean calledFromProcessSelect) {
 		LocArrayInfo result = mEdgeToArrayTermToDimToLocArray.get(edgeInfo, baseArrayTerm, dim);
 		if (result == null) {
-			assert !mFrozen;
+			if (calledFromProcessSelect) {
+				// called from after-ai querying --> no update to the array should happen in the edge
+				final IProgramVarOrConst pvoc = edgeInfo.getProgramVarOrConstForTerm(baseArrayTerm);
+				// pvoc should be in an out, with tv baseArrayTerm
+				assert edgeInfo.getOutVar(baseArrayTerm) == pvoc;
+				assert edgeInfo.getInVar(baseArrayTerm) == pvoc;
+				assert !edgeInfo.getEdge().getTransformula().getAssignedVars().contains(pvoc);
 
-			mMgdScript.lock(this);
-			final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
+				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
+				final IProgramVarOrConst locPvoc = getLocArrayPvocForArrayPvoc(pvoc, dim, locArraySort);
 
-			final IProgramVarOrConst pvoc;
-			final Term term;
-			{
-				if (baseArrayTerm instanceof TermVariable) {
-					final IProgramVar invar = edgeInfo.getInVar(baseArrayTerm);
-					final IProgramVar outvar = edgeInfo.getOutVar(baseArrayTerm);
-					final boolean isAuxVar = edgeInfo.getAuxVars().contains(baseArrayTerm);
+				/*
+				 *  because there is no update to the array, no LocArray was constructed here during pre-ai-processing
+				 *  also, the loc-array is not updated, and not read in the ai-preprocessed program, thus, in the
+				 *  EqualityProvidingIntermediateState, it must be queried via the standard-pvoc-term
+				 */
+				result = new LocArrayReadInfo(edgeInfo, locPvoc, locPvoc.getTerm());
+				mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
+			} else {
+				assert !mFrozen;
 
-					if (invar != null) {
-						pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
-						term = mMgdScript.constructFreshTermVariable(
-								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-								locArraySort);
-					} else if (outvar != null) {
-						pvoc = getLocArrayPvocForArrayPvoc(outvar, dim, locArraySort);
-						term = mMgdScript.constructFreshTermVariable(
-								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-								locArraySort);
-					} else if (isAuxVar) {
-						pvoc = null;
-						term = mMgdScript.constructFreshTermVariable(
-								sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-								locArraySort);
+				mMgdScript.lock(this);
+				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort());
+
+				final IProgramVarOrConst pvoc;
+				final Term term;
+				{
+					if (baseArrayTerm instanceof TermVariable) {
+						final IProgramVar invar = edgeInfo.getInVar(baseArrayTerm);
+						final IProgramVar outvar = edgeInfo.getOutVar(baseArrayTerm);
+						final boolean isAuxVar = edgeInfo.getAuxVars().contains(baseArrayTerm);
+
+						if (invar != null) {
+							pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
+							term = mMgdScript.constructFreshTermVariable(
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
+									locArraySort);
+						} else if (outvar != null) {
+							pvoc = getLocArrayPvocForArrayPvoc(outvar, dim, locArraySort);
+							term = mMgdScript.constructFreshTermVariable(
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
+									locArraySort);
+						} else if (isAuxVar) {
+							pvoc = null;
+							term = mMgdScript.constructFreshTermVariable(
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
+									locArraySort);
+						} else {
+							throw new AssertionError();
+						}
 					} else {
-						throw new AssertionError();
+						throw new UnsupportedOperationException("todo: deal with constants");
 					}
-				} else {
-					throw new UnsupportedOperationException("todo: deal with constants");
 				}
+				final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
+				result = new LocArrayInfo(edgeInfo, pvoc, term,
+						computeInitConstantArrayForLocArray(initLocLit, locArraySort));
+
+				mMgdScript.unlock(this);
+
+				mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
 			}
-			final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
-			result = new LocArrayInfo(edgeInfo, pvoc, term,
-					computeInitConstantArrayForLocArray(initLocLit, locArraySort));
-
-			mMgdScript.unlock(this);
-
-			mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
 		}
 		return result;
 	}

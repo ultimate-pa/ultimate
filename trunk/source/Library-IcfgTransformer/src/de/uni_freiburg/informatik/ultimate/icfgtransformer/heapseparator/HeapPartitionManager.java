@@ -135,8 +135,10 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			// i_dim is the index prefix up to the current dimension
 			final ArrayIndex indexForCurrentDim = selectIndex.getFirst(dim);
 
-			final LocArrayInfo locArray = mMemLocArrayManager.getLocArray(selectInfo.getEdgeInfo(),
-					selectInfo.getArrayCellAccess().getArray(), dim);
+//			final LocArrayInfo locArray = mMemLocArrayManager.getLocArray(selectInfo.getEdgeInfo(),
+			final LocArrayInfo locArray = mMemLocArrayManager.getOrConstructLocArray(selectInfo.getEdgeInfo(),
+//					selectInfo.getArrayCellAccess().getArray(), dim);
+					selectInfo.getArrayCellAccess().getArray(), dim, true);
 
 			// build the term a-loc-dim[i_dim]
 			mMgdScript.lock(this);
@@ -174,10 +176,11 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			throw new AssertionError("should have been created in createBlockIfNecessary");
 		}
 
+		partition.findAndConstructEquivalenceClassIfNeeded(setConstraintAsStoreInfos.get(0));
 		for (int i = 1; i < setConstraintAsStoreInfos.size(); i++) {
 			final StoreInfo si1 = setConstraintAsStoreInfos.get(i - 1);
 			final StoreInfo si2 = setConstraintAsStoreInfos.get(i);
-			partition.findAndConstructEquivalenceClassIfNeeded(si1);
+			partition.findAndConstructEquivalenceClassIfNeeded(si2);
 			if (si1 instanceof NoStoreInfo || si2 instanceof NoStoreInfo) {
 				// partition intersection on "uninitialized/havoc array writes" does not trigger a merge
 				continue;
@@ -232,7 +235,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 			mLogger.info("\t location blocks for array group " + arrayGroup);
 
-			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
+			for (int dim = 1; dim <= arrayGroup.getDimensionality(); dim++) {
 				final UnionFind<StoreInfo> partition =
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 				final int noWrites = partition == null ? 0 : partition.getAllElements().size();

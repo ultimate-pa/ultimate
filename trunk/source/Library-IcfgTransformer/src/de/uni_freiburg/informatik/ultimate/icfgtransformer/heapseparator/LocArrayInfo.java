@@ -26,6 +26,7 @@ public class LocArrayInfo {
 		mEdge = edge;
 		mPvoc = pvoc;
 		mTerm = term;
+		assert this instanceof LocArrayReadInfo || initializingConstantArray != null;
 		mInitializingConstantArray = initializingConstantArray;
 	}
 
