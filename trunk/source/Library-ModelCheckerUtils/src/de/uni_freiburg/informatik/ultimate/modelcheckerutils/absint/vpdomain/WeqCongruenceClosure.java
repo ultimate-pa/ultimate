@@ -336,29 +336,31 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mManager.addNode(array1, this, true, omitSanityChecks);
 		mManager.addNode(array2, this, true, omitSanityChecks);
 
-		final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
-		final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
+		final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> strengthenedEdgeLabel;
+		{
+			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
 
-		if (array1Rep == array2Rep) {
-			// no need to have a weq edge from the node to itself
-			return addedNewNode;
-		}
+			if (array1Rep == array2Rep) {
+				// no need to have a weq edge from the node to itself
+				return addedNewNode;
+			}
 
-		final boolean reportedNewWeq = getCcWeakEquivalenceGraph().reportWeakEquivalence(array1Rep, array2Rep,
-				edgeLabel, omitSanityChecks);
+			final boolean reportedNewWeq = getCcWeakEquivalenceGraph().reportWeakEquivalence(array1Rep, array2Rep,
+					edgeLabel, omitSanityChecks);
 
-		if (!reportedNewWeq) {
-			// nothing to propagate
-			return addedNewNode;
-		}
+			if (!reportedNewWeq) {
+				// nothing to propagate
+				return addedNewNode;
+			}
 
-		final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> strengthenedEdgeLabel =
-				getCcWeakEquivalenceGraph().getEdgeLabel(array1Rep, array2Rep);
+			strengthenedEdgeLabel = getCcWeakEquivalenceGraph().getEdgeLabel(array1Rep, array2Rep);
 
-		if (strengthenedEdgeLabel == null) {
-			// edge became "false";
-			throw new AssertionError("TODO : check this case, this does not happen, right? (and the comment above is "
-					+ "nonsense..)");
+			if (strengthenedEdgeLabel == null) {
+				// edge became "false";
+				throw new AssertionError("TODO : check this case, this does not happen, right? (and the comment above is "
+						+ "nonsense..)");
+			}
 		}
 
 		if (isInconsistent(false)) {
@@ -367,6 +369,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 		{
+
+			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
+
 			CongruenceClosure.constantAndMixFunctionTreatmentOnAddEquality(array1Rep, array2Rep,
 					mCongruenceClosure.getEquivalenceClass(array1),
 					mCongruenceClosure.getEquivalenceClass(array2), mCongruenceClosure.getAuxData(),
@@ -379,62 +385,77 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 *
 		 * look for fitting c[i], d[j] with i ~ j, array1 ~ c, array2 ~ d
 		 */
-		final Collection<NODE> ccps1 = mCongruenceClosure.getAuxData().getAfCcPars(array1Rep);
-		final Collection<NODE> ccps2 = mCongruenceClosure.getAuxData().getAfCcPars(array2Rep);
-		for (final NODE ccp1 : ccps1) {
-			if (!mCongruenceClosure.hasElements(ccp1, ccp1.getArgument(), ccp1.getAppliedFunction())) {
-				continue;
-			}
-			for (final NODE ccp2 : ccps2) {
-				if (isInconsistent(false)) {
-					return true;
-				}
+		{
+			// picking the reps again, because propagations may have changed them
+			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
 
-				if (!mCongruenceClosure.hasElements(ccp2, ccp2.getArgument(), ccp2.getAppliedFunction())) {
+			final Collection<NODE> ccps1 = mCongruenceClosure.getAuxData().getAfCcPars(array1Rep);
+			final Collection<NODE> ccps2 = mCongruenceClosure.getAuxData().getAfCcPars(array2Rep);
+			for (final NODE ccp1 : ccps1) {
+				if (!mCongruenceClosure.hasElements(ccp1, ccp1.getArgument(), ccp1.getAppliedFunction())) {
 					continue;
 				}
+				for (final NODE ccp2 : ccps2) {
+					if (isInconsistent(false)) {
+						return true;
+					}
 
-				if (mCongruenceClosure.getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
-					continue;
-				}
-				/*
-				 * i ~ j holds propagate array1[i] -- -- array2[j] (note that this adds the
-				 * arrayX[Y] nodes, possibly -- EDIT: not..)
-				 */
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
-						getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(
-								strengthenedEdgeLabel, ccp1.getArgument(),
+					if (!mCongruenceClosure.hasElements(ccp2, ccp2.getArgument(), ccp2.getAppliedFunction())) {
+						continue;
+					}
+
+					if (mCongruenceClosure.getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
+						continue;
+					}
+					/*
+					 * i ~ j holds propagate array1[i] -- -- array2[j] (note that this adds the
+					 * arrayX[Y] nodes, possibly -- EDIT: not..)
+					 */
+					final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
+							getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(
+									strengthenedEdgeLabel, ccp1.getArgument(),
 									mManager.getAllWeqVarsNodeForFunction(array1));
 
-				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, omitSanityChecks);
+					// recursive call
+					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, omitSanityChecks);
+				}
 			}
 		}
 
-		/*
-		 * roweq-1 propagations
-		 */
-		for (final Entry<NODE, NODE> ccc1 :
-					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet()) {
-			for (final Entry<NODE, NODE> ccc2 :
-					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet()) {
-				if (isInconsistent(false)) {
-					return true;
+		{
+			// picking the reps again, because propagations may have changed them
+			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
+			/*
+			 * roweq-1 propagations
+			 */
+			final Set<Entry<NODE, NODE>> array1RepCcChildren =
+					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet();
+			final Set<Entry<NODE, NODE>> array2RepCcChildren =
+					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet();
+
+			for (final Entry<NODE, NODE> ccc1 : array1RepCcChildren) {
+				for (final Entry<NODE, NODE> ccc2 : array2RepCcChildren) {
+					if (isInconsistent(false)) {
+						return true;
+					}
+
+					if (mCongruenceClosure.getEqualityStatus(ccc1.getValue(), ccc2.getValue())
+							!= EqualityStatus.EQUAL) {
+						continue;
+					}
+
+					final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> shiftedLabelWithException =
+							getCcWeakEquivalenceGraph().shiftLabelAndAddException(strengthenedEdgeLabel,
+									ccc1.getValue(), mManager.getAllWeqVarsNodeForFunction(ccc1.getKey()));
+
+					// recursive call
+					reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
+							shiftedLabelWithException, omitSanityChecks);
 				}
 
-				if (mCongruenceClosure.getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
-					continue;
-				}
-
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> shiftedLabelWithException =
-						getCcWeakEquivalenceGraph().shiftLabelAndAddException(strengthenedEdgeLabel, ccc1.getValue(),
-								mManager.getAllWeqVarsNodeForFunction(ccc1.getKey()));
-
-				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
-						shiftedLabelWithException, omitSanityChecks);
 			}
-
 		}
 
 
@@ -445,6 +466,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 *   a[i] in L cup {l}
 		 */
 		{
+			// picking the reps again, because propagations may have changed them
+			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
+
 			final NODE nonConstantArray;
 			final NODE constantArray;
 			if (array1Rep.isConstantFunction()) {

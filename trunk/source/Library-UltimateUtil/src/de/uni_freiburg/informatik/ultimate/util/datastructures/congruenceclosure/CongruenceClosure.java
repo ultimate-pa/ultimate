@@ -710,7 +710,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			final ELEM elemRep1, final ELEM elemRep2, final Set<ELEM> elem1EquivalenceClass,
 			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement,
 			final ICongruenceClosure<ELEM> congruenceClosure) {
-		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
+		for (final ELEM equivalentFunction1 : new HashSet<>(elem1EquivalenceClass)) {
 			if ((CcSettings.SUPPORT_MIX_FUNCTION && equivalentFunction1.isMixFunction()) ||
 					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction1.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction1 is g
@@ -723,7 +723,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				}
 			}
 		}
-		for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
+		for (final ELEM equivalentFunction2 : new HashSet<>(elem2EquivalenceClass)) {
 			if ((CcSettings.SUPPORT_MIX_FUNCTION && equivalentFunction2.isMixFunction()) ||
 					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction2.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction2 is g
