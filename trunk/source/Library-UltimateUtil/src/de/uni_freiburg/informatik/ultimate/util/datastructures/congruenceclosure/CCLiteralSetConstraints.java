@@ -446,11 +446,23 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 //			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(eqMember)));
 //		}
 
-		final SetConstraintConjunction<ELEM> scc = mContainsConstraints.get(rep);
-
-		if (scc != null) {
-			result.addAll(scc.getSetConstraints());
+		{
+			final SetConstraintConjunction<ELEM> sccRep = mContainsConstraints.get(rep);
+			if (sccRep != null) {
+				result.addAll(sccRep.getSetConstraints());
+			}
+			/*
+			 * for good measure: also check if there is a constraint stored under elem when elem is not rep (happens during
+			 *   CCLiteralSetConstraint.reportEquality
+			 */
+			final SetConstraintConjunction<ELEM> sccEl = mContainsConstraints.get(elem);
+			if (sccEl != null) {
+				result.addAll(sccEl.getSetConstraints());
+			}
 		}
+
+
+
 
 		if (result.isEmpty()) {
 			// could not find any elements for the set constraint
