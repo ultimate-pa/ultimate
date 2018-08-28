@@ -307,7 +307,7 @@ public class Req2BoogieTranslator {
 			final Expression clockID = mSymboltable.getIdentifierExpression(clockVar);
 			final Expression expr = ExpressionFactory.newBinaryExpression(lhs.getLocation(),
 					BinaryExpression.Operator.ARITHPLUS, clockID, deltaID);
-			stmts.add(new AssignmentStatement(lhs.getLocation(), new VariableLHS[] { lhs }, new Expression[] { expr }));
+			stmts.add(genAssignmentStmt(lhs.getLocation(), lhs, expr));
 		}
 		return stmts;
 	}
@@ -493,29 +493,13 @@ public class Req2BoogieTranslator {
 	}
 
 	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
-		final VariableLHS reset = new VariableLHS(bl, resetVar);
-
 		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
-		final LeftHandSide[] lhs = new LeftHandSide[1];
-		lhs[0] = reset;
-		final Expression[] expr = new Expression[1];
-		expr[0] = realLiteral;
-		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
-
-		return assignment;
+		return genAssignmentStmt(bl, resetVar, realLiteral);
 	}
 
 	private static Statement genPCAssign(final String pcName, final int phaseIndex, final BoogieLocation bl) {
-		final VariableLHS pc = new VariableLHS(bl, pcName);
-
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
-		final LeftHandSide[] lhs = new LeftHandSide[1];
-		lhs[0] = pc;
-		final Expression[] expr = new Expression[1];
-		expr[0] = intLiteral;
-		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
-
-		return assignment;
+		return genAssignmentStmt(bl, pcName, intLiteral);
 	}
 
 	private Statement[] genInnerIfBody(final PhaseEventAutomata automaton, final String pcName,
@@ -582,10 +566,8 @@ public class Req2BoogieTranslator {
 
 	private AssignmentStatement genStateVarAssign(final String stateVar) {
 		final VariableLHS lhsVar = mSymboltable.getVariableLhs(stateVar);
-		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(stateVar);
-		final LeftHandSide[] lhs = new LeftHandSide[] { lhsVar };
-		final Expression[] expr = new Expression[] { rhs };
-		return new AssignmentStatement(rhs.getLocation(), lhs, expr);
+		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(ReqSymboltable.getPrimedVarId(stateVar));
+		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 
 	@SafeVarargs
@@ -922,9 +904,17 @@ public class Req2BoogieTranslator {
 		return statements;
 	}
 
-	private static AssignmentStatement genAssignmentStmt(final BoogieLocation bl, final String id,
+	/**
+	 * Generates an {@link AssignmentStatement} of the form <code>id := val</code>.
+	 */
+	private static AssignmentStatement genAssignmentStmt(final ILocation bl, final String id, final Expression val) {
+		return genAssignmentStmt(bl, new VariableLHS(bl, id), val);
+	}
+
+	private static AssignmentStatement genAssignmentStmt(final ILocation bl, final VariableLHS lhs,
 			final Expression val) {
-		return new AssignmentStatement(bl, new LeftHandSide[] { new VariableLHS(bl, id) }, new Expression[] { val });
+		assert lhs.getLocation() == bl;
+		return new AssignmentStatement(bl, new LeftHandSide[] { lhs }, new Expression[] { val });
 	}
 
 	/**
