@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XJu
  */
 public abstract class XnfTransformer extends NnfTransformer {
 
+	public static final boolean POSET_SIMPLIFICATION = true;
+
 	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean omitSoundnessCheck) {
 		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck);
@@ -167,6 +169,9 @@ public abstract class XnfTransformer extends NnfTransformer {
 		}
 
 		private Set<XJunction> simplifyWithPosetMinimalElements(final Set<XJunction> resOuterJunction) {
+			if (!POSET_SIMPLIFICATION) {
+				return resOuterJunction;
+			}
 			final boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
 			if (timeConsumingSimplification) {
 				mLogger.warn("Simplifying " + outerJunctionName() + " of " + resOuterJunction.size() + " "
