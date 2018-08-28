@@ -114,6 +114,7 @@ public final class SmtUtils {
 	 * {@link ElimStorePlain}.
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
+	private static final boolean LOG_SIMPLIFICATION_CALL_ORIGIN = false;
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -124,6 +125,10 @@ public final class SmtUtils {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
+		}
+		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
+			logger.info(
+					String.format("Current caller to simplify is %s", CoreUtil.getCallerClassName(3).getSimpleName()));
 		}
 		final long startTime = System.nanoTime();
 		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgScript.getScript());
@@ -806,13 +811,12 @@ public final class SmtUtils {
 
 	/**
 	 * @param term
-	 *            A {@link Term} whose {@link Sort} is "Bool". For other
-	 *            {@link Sort}s the notion of atomicity is not defined
-	 * @return true iff the given term is an atomic formula, which means it does not
-	 *         contain any logical symbols (e.g., and, or, not, implication,
-	 *         biimplication, quantifiers) FIXME 2017-07-31 Matthias: provides
-	 *         incorrect result for user defined or theory defined (does such a
-	 *         theory exists?) function symbols with Boolean parameters.
+	 *            A {@link Term} whose {@link Sort} is "Bool". For other {@link Sort}s the notion of atomicity is not
+	 *            defined
+	 * @return true iff the given term is an atomic formula, which means it does not contain any logical symbols (e.g.,
+	 *         and, or, not, implication, biimplication, quantifiers) FIXME 2017-07-31 Matthias: provides incorrect
+	 *         result for user defined or theory defined (does such a theory exists?) function symbols with Boolean
+	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
 		if (isTrue(term) || isFalse(term) || isConstant(term)) {

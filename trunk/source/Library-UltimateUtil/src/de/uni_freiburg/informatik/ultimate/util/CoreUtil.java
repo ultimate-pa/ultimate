@@ -69,6 +69,7 @@ public class CoreUtil {
 	private static final String PLATFORM_LINE_SEPARATOR = System.getProperty("line.separator");
 	public static final String OS = System.getProperty("os.name");
 	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
+	private final static ExposedSecurityManager EXPOSED_SECURITY_MANAGER = new ExposedSecurityManager();
 
 	public static String getPlatformLineSeparator() {
 		return PLATFORM_LINE_SEPARATOR;
@@ -773,6 +774,18 @@ public class CoreUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * A (hopefully rather fast) method to obtain the class of a method caller.
+	 *
+	 * @param callStackDepth
+	 *            The position in the current call stack for which you want to see the class. You are probably
+	 *            interested in depth 3.
+	 * @return The {@link Class} of the caller at the specified position.
+	 */
+	public static Class<?> getCallerClassName(final int callStackDepth) {
+		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth);
+	}
+
 	@FunctionalInterface
 	public interface IReduce<T, K> {
 		T reduce(K entry);
@@ -786,5 +799,14 @@ public class CoreUtil {
 	@FunctionalInterface
 	private interface IWriterConsumer {
 		void consume(Writer fw) throws IOException;
+	}
+
+	/**
+	 * A custom security manager that exposes the getClassContext() information
+	 */
+	private static final class ExposedSecurityManager extends SecurityManager {
+		public Class<?> getCallerClass(final int callStackDepth) {
+			return getClassContext()[callStackDepth];
+		}
 	}
 }
