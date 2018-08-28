@@ -96,6 +96,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  */
 public class RtInconcistencyConditionGenerator {
 
+	private static final boolean ONLY_CONJUNCTIVE_INVARIANTS = false;
+
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
@@ -161,7 +163,42 @@ public class RtInconcistencyConditionGenerator {
 		} else {
 			mPrimedInvariant = mTrue;
 		}
+	}
 
+	/**
+	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
+	 */
+	public List<Entry<PatternType, PhaseEventAutomata>>
+			getRelevantRequirements(final Map<PatternType, PhaseEventAutomata> req2Automata) {
+		if (mSeparateInvariantHandling) {
+			// we only consider automata that do not represent invariants or which have a disjunctive invariant
+			return req2Automata.entrySet().stream().filter(this::filterReqs).collect(Collectors.toList());
+		}
+		return req2Automata.entrySet().stream().collect(Collectors.toList());
+	}
+
+	/**
+	 * Return true of this requirement should be used for generating rt-inconsistency checks.
+	 *
+	 * @param entry
+	 * @return
+	 */
+	private boolean filterReqs(final Entry<PatternType, PhaseEventAutomata> entry) {
+		final Phase[] phases = entry.getValue().getPhases();
+		if (phases.length != 1) {
+			// this is not an invariant, take it
+			return true;
+		}
+		if (!ONLY_CONJUNCTIVE_INVARIANTS) {
+			return false;
+		}
+		assert phases.length == 1;
+		final Term stateInv = toSmt(phases[0].getStateInvariant());
+		if (SmtUtils.getDisjuncts(stateInv).length != 1) {
+			// this is an invariant with a top-level disjunction, take it
+			return true;
+		}
+		return false;
 	}
 
 	private Script buildSolver(final IUltimateServiceProvider services, final IToolchainStorage storage)
@@ -320,7 +357,8 @@ public class RtInconcistencyConditionGenerator {
 
 		final Map<PatternType, CDD> primedStateInvariants = new HashMap<>();
 		for (final Entry<PatternType, PhaseEventAutomata> entry : req2Automata.entrySet()) {
-			if (entry.getValue().getPhases().length != 1) {
+			if (filterReqs(entry)) {
+				// this is not an invariant we want to consider
 				continue;
 			}
 			primedStateInvariants.put(entry.getKey(), entry.getValue().getPhases()[0].getStateInvariant().prime());

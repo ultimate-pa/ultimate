@@ -745,19 +745,15 @@ public class Req2BoogieTranslator {
 		}
 
 		// get all automata for which conditions should be generated
-		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata;
-		if (mSeparateInvariantHandling) {
-			// we only consider automata that do not represent invariants
-			consideredAutomata = mReq2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length != 1)
-					.collect(Collectors.toList());
-		} else {
-			consideredAutomata = mReq2Automata.entrySet().stream().collect(Collectors.toList());
-		}
 
-		final int total = mReq2Automata.size();
+		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata =
+				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReq2Automata);
+
 		final int count = consideredAutomata.size();
-		final int invariant = total - count;
+
 		if (mSeparateInvariantHandling) {
+			final int total = mReq2Automata.size();
+			final int invariant = total - count;
 			mLogger.info(String.format("%s of %s requirements are invariant", invariant, total));
 		}
 
