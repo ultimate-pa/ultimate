@@ -493,7 +493,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
 
 
-				if (aIs != null) {
+				if (!aIs.isEmpty()) {
 					final NODE sampleAi = aIs.iterator().next();
 					// node that corresponds to a[q] in the rule
 					final NODE aQ = sampleAi.replaceArgument(
