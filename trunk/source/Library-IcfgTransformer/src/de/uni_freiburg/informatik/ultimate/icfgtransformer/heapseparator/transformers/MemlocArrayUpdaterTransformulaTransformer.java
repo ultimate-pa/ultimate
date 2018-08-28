@@ -189,31 +189,41 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 			transitionFormulaWithLocUpdates = tf.getFormula();
 		}
 
+
 		// conjoin initialization code for unconstrained loc array variables
-		if (!SmtUtils.isNNF(tf.getFormula()) || SmtUtils.containsFunctionApplication(tf.getFormula(), "or")) {
-			throw new AssertionError("the code below only works for conjunctive formulas");
-		}
-		final Term transitionFormulaWithLocUpdatesAndLocInitialization;
-		{
-			final Set<TermVariable> unconstrainedVars = mEdgeToUnconstrainedVars.getImage(edgeInfo);
-			final List<Term> tfWithUpdatesAndInitConjuncts = new ArrayList<>();
-			tfWithUpdatesAndInitConjuncts.add(transitionFormulaWithLocUpdates);
-			for (final TermVariable ucv : unconstrainedVars) {
-				final MultiDimensionalSort mds = new MultiDimensionalSort(ucv.getSort());
-				final int dimensionality = mds.getDimension();
-				assert dimensionality > 0;
-				for (int dim = 0; dim < dimensionality; dim++) {
-					final LocArrayInfo locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
-					final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(),
-							locArray.getTerm(),
-							locArray.getInitializingConstantArray());
-//							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
-					tfWithUpdatesAndInitConjuncts.add(initConjunct);
-				}
+
+		// assuming the formula is in DNF
+		final List<Term> disjunctsWithLocUpdatesAndLocInitialization = new ArrayList<>();
+		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
+			if (!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or")) {
+				throw new AssertionError("the code below only works for conjunctive formulas");
 			}
-			transitionFormulaWithLocUpdatesAndLocInitialization =
-					SmtUtils.and(mMgdScript.getScript(), tfWithUpdatesAndInitConjuncts);
+
+			final Term disjunctWithLocUpdatesAndLocInitialization;
+			{
+				final Set<TermVariable> unconstrainedVars = mEdgeToUnconstrainedVars.getImage(edgeInfo);
+				final List<Term> tfWithUpdatesAndInitConjuncts = new ArrayList<>();
+				tfWithUpdatesAndInitConjuncts.add(transitionFormulaWithLocUpdates);
+				for (final TermVariable ucv : unconstrainedVars) {
+					final MultiDimensionalSort mds = new MultiDimensionalSort(ucv.getSort());
+					final int dimensionality = mds.getDimension();
+					assert dimensionality > 0;
+					for (int dim = 1; dim <= dimensionality; dim++) {
+						final LocArrayInfo locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
+						final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(),
+								locArray.getTerm(),
+								locArray.getInitializingConstantArray());
+						//							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
+						tfWithUpdatesAndInitConjuncts.add(initConjunct);
+					}
+				}
+				disjunctWithLocUpdatesAndLocInitialization =
+						SmtUtils.and(mMgdScript.getScript(), tfWithUpdatesAndInitConjuncts);
+			}
+			disjunctsWithLocUpdatesAndLocInitialization.add(disjunctWithLocUpdatesAndLocInitialization);
 		}
+		final Term transitionFormulaWithLocUpdatesAndLocInitialization =
+				SmtUtils.or(mMgdScript.getScript(), disjunctsWithLocUpdatesAndLocInitialization);
 
 		final Map<IProgramVar, TermVariable> newInVars;
 		{
