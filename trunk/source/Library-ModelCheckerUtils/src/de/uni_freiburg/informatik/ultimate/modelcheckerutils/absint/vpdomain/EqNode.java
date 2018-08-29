@@ -52,7 +52,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	protected final Term mTerm;
 
-	private boolean mIsUntrackedArray;
+	private final boolean mDependsOnUntrackedArray;
 
 //	private final MultiDimensionalSort mMdSort;
 
@@ -61,7 +61,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 
-		mIsUntrackedArray = isUntrackedArray;
+		mDependsOnUntrackedArray = isUntrackedArray;
 //		mMdSort = mEqNodeFactory.isFunction(term) ? new MultiDimensionalSort(mTerm.getSort()) : null;
 	}
 
@@ -161,16 +161,9 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public boolean isUntrackedArray() {
-		return mIsUntrackedArray;
+	public boolean dependsOnUntrackedArray() {
+		return mDependsOnUntrackedArray;
 	}
-
-	@Override
-	public void markAsTrackedArray() {
-		assert isUntrackedArray();
-		mIsUntrackedArray = false;
-	}
-
 
 
 //	@Override

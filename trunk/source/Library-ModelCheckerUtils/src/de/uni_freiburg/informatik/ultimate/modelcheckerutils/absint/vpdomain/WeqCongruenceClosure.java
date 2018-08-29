@@ -319,8 +319,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		assert !mManager.getSettings().isDeactivateWeakEquivalences();
-		assert !array1.isUntrackedArray();
-		assert !array2.isUntrackedArray();
+		assert !array1.dependsOnUntrackedArray();
+		assert !array2.dependsOnUntrackedArray();
 
 		if (isInconsistent(false)) {
 			return false;
@@ -624,8 +624,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		if (!mManager.getSettings().isDeactivateWeakEquivalences() || node1.isUntrackedArray()
-				|| node2.isUntrackedArray()) {
+		if (!mManager.getSettings().isDeactivateWeakEquivalences()
+				&& (!node1.dependsOnUntrackedArray() && !node2.dependsOnUntrackedArray())) {
+//			assert !node1.dependsOnUntrackedArray() && !node2.dependsOnUntrackedArray()
+//					: "user must mark arrays correctly";
 			doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
 		}
 
@@ -689,6 +691,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (ccc1AfReplaced == null || ccc1ArgReplaced == null) {
 				continue;
 			}
+			if (ccc1AfReplaced.dependsOnUntrackedArray() || ccc1ArgReplaced.dependsOnUntrackedArray()) {
+				continue;
+			}
 
 			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
 
@@ -743,7 +748,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 						getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(aToBLabel, ccp1.getArgument(),
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, omitSanityChecks);
+				if (!ccp1.dependsOnUntrackedArray() && !ccp2.dependsOnUntrackedArray()) {
+					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, omitSanityChecks);
+				}
 
 				/*
 				 * roweq-1, explicit trigger, i.e.,
@@ -756,8 +763,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 						getCcWeakEquivalenceGraph().shiftLabelAndAddException(aiToBjLabel, node1,
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
-						ccp2.getAppliedFunction(), shiftedLabelWithException, omitSanityChecks);
+				if (!ccp1.getAppliedFunction().dependsOnUntrackedArray() &&
+						!ccp2.getAppliedFunction().dependsOnUntrackedArray()) {
+					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
+							ccp2.getAppliedFunction(), shiftedLabelWithException, omitSanityChecks);
+				}
 
 				/*
 				 * roweqMerge
@@ -765,7 +775,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				 *  the weak equivalence is actually strong, i.e. the label is "false"
 				 *  e.g. a[i']~b[j'] ==> a--(q!=i)--b
 				 */
-				if (getEqualityStatus(ccp1, ccp2) == EqualityStatus.EQUAL) {
+				if (getEqualityStatus(ccp1, ccp2) == EqualityStatus.EQUAL
+						&& !ccp1.getAppliedFunction().dependsOnUntrackedArray()
+						&& !ccp2.getAppliedFunction().dependsOnUntrackedArray()) {
 					// we have node1 = i, node2 = j, ccp1 = a[i], ccp2 = b[j]
 					final NODE firstWeqVar = mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()).get(0);
 					assert mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction())
@@ -1253,7 +1265,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean madeChanges = false;
 
 
-		if (mManager.getSettings().isDeactivateWeakEquivalences() || elem.isUntrackedArray()) {
+		if (mManager.getSettings().isDeactivateWeakEquivalences() || elem.dependsOnUntrackedArray()) {
 			return;
 		}
 
@@ -1296,7 +1308,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(weqEdgeLabelContents, ccp.getArgument(),
 							mManager.getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
 
-			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem, ccp, projectedLabel, true);
+			if (!ccp.dependsOnUntrackedArray()) {
+				madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem, ccp, projectedLabel, true);
+			}
 
 			if (isInconsistent(false)) {
 				// propagation made this inconsistent --> no more propagations needed

@@ -249,7 +249,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
 			// return new EqAtomicBaseNode(term, isTermALiteral(term), this);
-			return new EqAtomicBaseNode(term, isLiteral, this, isUntrackedArray(term));
+			return new EqAtomicBaseNode(term, isLiteral, this, dependsOnUntrackedArray(term));
 		} else {
 //			final Object constantArrayNode = checkForConstantArray(term);
 //			if (constantArrayNode != null) {
@@ -263,7 +263,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			for (final TermVariable fv : term.getFreeVars()) {
 				supportingNodes.add(getOrConstructNode(fv));
 			}
-			return new EqNonAtomicBaseNode(term, supportingNodes, this, isUntrackedArray(term));
+			return new EqNonAtomicBaseNode(term, supportingNodes, this, dependsOnUntrackedArray(term));
 		}
 	}
 
@@ -378,17 +378,17 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return newConstArrayNode;
 	}
 
-	private boolean isUntrackedArray(final Term term) {
+	private boolean dependsOnUntrackedArray(final Term term) {
 		if (mTrackedArraySubstrings == null) {
 			return false;
 		}
-		if (!term.getSort().isArraySort()) {
-			return false;
-		}
+//		if (!term.getSort().isArraySort()) {
+//			return false;
+//		}
 		if (SmtUtils.isFunctionApplication(term, "select")) {
-			return isUntrackedArray(((ApplicationTerm) term).getParameters()[0]);
+			return dependsOnUntrackedArray(((ApplicationTerm) term).getParameters()[0]);
 		}
-		if (SmtUtils.isConstant(term) || term instanceof TermVariable) {
+		if (term.getSort().isArraySort() && (SmtUtils.isConstant(term) || term instanceof TermVariable)) {
 			for (final String s : mTrackedArraySubstrings) {
 				if (term.toString().contains(s)) {
 					return false;
@@ -402,7 +402,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	@Override
 	protected EqNode newFuncAppElement(final EqNode func, final EqNode arg) {
 		final Term selectTerm = buildSelectTerm(func, arg);
-		return new EqFunctionApplicationNode(func, arg, selectTerm, this, isUntrackedArray(selectTerm));
+		return new EqFunctionApplicationNode(func, arg, selectTerm, this, dependsOnUntrackedArray(selectTerm));
 	}
 
 	private Term buildSelectTerm(final EqNode func, final EqNode arg) {
