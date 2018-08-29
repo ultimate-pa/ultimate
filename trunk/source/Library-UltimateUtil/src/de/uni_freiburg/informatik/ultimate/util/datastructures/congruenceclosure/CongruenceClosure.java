@@ -1676,10 +1676,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (!hasElement(elem)) {
 			return false;
 		}
-		if (mElementTVER.isConstrained(elem)) {
-			return true;
-		}
-		if (mLiteralSetConstraints.isContrained(elem)) {
+		if (isConstrainedDirectly(elem)) {
 			return true;
 		}
 		for (final ELEM afpar : mFaAuxData.getAfParents(elem)) {
@@ -1691,6 +1688,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			if (isConstrained(argpar)) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+
+	@Override
+	public boolean isConstrainedDirectly(final ELEM elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+		if (mElementTVER.isConstrained(elem)) {
+			return true;
+		}
+		if (mLiteralSetConstraints.isContrained(elem)) {
+			return true;
 		}
 		return false;
 	}

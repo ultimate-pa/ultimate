@@ -711,6 +711,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final NODE firstWeqVar = mManager.getAllWeqVarsNodeForFunction(ccc1AfReplaced).get(0);
 				final CongruenceClosure<NODE> qUnequalI = mManager.getSingleDisequalityCc(firstWeqVar, ccc1ArgReplaced,
 						true);
+
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
 						mManager.getSingletonEdgeLabel(getWeakEquivalenceGraph(), qUnequalI), omitSanityChecks);
 			}
@@ -1972,6 +1973,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public boolean isClosed() {
 		return mIsClosed;
+	}
+
+	@Override
+	public boolean isConstrainedDirectly(final NODE elem) {
+		throw new UnsupportedOperationException("we are not using weq fattening anymore, right? (otherwise: implement "
+				+ "similarly as in CongruenceClosure..)");
 	}
 }
 

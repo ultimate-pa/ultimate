@@ -32,11 +32,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Implementation of the Floyd-Warshall algorithm. Takes an undirected weighted graph as input, together with an
@@ -53,13 +56,57 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 class FloydWarshall<VERTEX, EDGELABEL> {
 
 	private final BiPredicate<EDGELABEL, EDGELABEL> mSmallerThan;
-	private final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mPlus;
+
+	private BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mPlus;
+//	private TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> mOtherPlus;
+
+	private BiFunction<Pair<EDGELABEL, EDGELABEL>, Triple<VERTEX, VERTEX, VERTEX>, EDGELABEL> mOtherPlus;
+
+
 	private final EDGELABEL mNullLabel;
 
 	private final Map<Doubleton<VERTEX>, EDGELABEL> mDist;
 	private final List<VERTEX> mVertices;
 	private boolean mPerformedChanges;
 	private final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mMeet;
+
+	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
+			final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
+			final Function<EDGELABEL, EDGELABEL> labelCloner) {
+		this(smallerThan, meet, nullLabel, graph, labelCloner);
+		mPlus = Objects.requireNonNull(plus);
+		run();
+	}
+
+	/**
+	 *
+	 * @param smallerThan
+	 * @param plus
+	 * @param meet
+	 * @param nullLabel
+	 * @param graph
+	 * @param labelCloner
+	 * @param useOtherPlus just so the erasures are not equal
+	 */
+	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
+//			final TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> plus,
+			final BiFunction<
+				Pair<EDGELABEL, EDGELABEL>,
+				Triple<VERTEX, VERTEX, VERTEX>,
+				EDGELABEL> plus,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
+			final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
+			final Function<EDGELABEL, EDGELABEL> labelCloner,
+			final boolean useOtherPlus) {
+		this(smallerThan, meet, nullLabel, graph, labelCloner);
+		mOtherPlus = Objects.requireNonNull(plus);
+		run();
+	}
+
 
 	/**
 	 *
@@ -70,14 +117,14 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	 * @param graph
 	 * @param labelCloner
 	 */
-	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
-			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
+	private FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
+//			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
 			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
 			final EDGELABEL nullLabel,
 			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
 			final Function<EDGELABEL, EDGELABEL> labelCloner) {
 		mSmallerThan = smallerThan;
-		mPlus = plus;
+//		mPlus = plus;
 		mMeet = meet;
 		mNullLabel = nullLabel;
 		mPerformedChanges = false;
@@ -95,7 +142,6 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 		}
 		mVertices = new ArrayList<>(verticeSet);
 
-		run();
 	}
 
 	public boolean performedChanges() {
@@ -118,7 +164,11 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 					final EDGELABEL distIj = getDist(i, j);
 					final EDGELABEL distIk = getDist(i, k);
 					final EDGELABEL distKj = getDist(k, j);
-					final EDGELABEL ikPlusKj = mPlus.apply(distIk, distKj);
+					assert (mPlus == null) != (mOtherPlus == null);
+					final EDGELABEL ikPlusKj = mPlus != null ?
+							mPlus.apply(distIk, distKj) :
+								mOtherPlus.apply(new Pair<>(distIk, distKj),
+										new Triple<>(mVertices.get(i), mVertices.get(k), mVertices.get(j)));
 
 					if (!mSmallerThan.test(distIj, ikPlusKj)) {
 						final EDGELABEL ikPlusKjMeetIj = mMeet.apply(ikPlusKj, distIj);

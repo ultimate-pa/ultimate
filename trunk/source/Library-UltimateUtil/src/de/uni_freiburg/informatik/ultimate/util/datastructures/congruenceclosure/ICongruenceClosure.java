@@ -21,6 +21,8 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	boolean isConstrained(ELEM elem);
 
+	boolean isConstrainedDirectly(ELEM elem);
+
 	void transformElementsAndFunctions(Function<ELEM, ELEM> transformer);
 
 	Collection<ELEM> getAllElements();

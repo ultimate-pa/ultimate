@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * (short: weq graph)
@@ -396,10 +398,93 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		return !mArrayEqualities.isEmpty();
 	}
 
+	/**
+	 * Idea:
+	 *  Say we have a weak equivalence between a and b, with label L (which is a disjunction).
+	 *  Then, if one of the disjuncts of L
+	 *
+	 *  the second node is the one not touching the new edge
+	 *
+	 * @param l1
+	 * @param l2
+	 * @param node
+	 * @return
+	 */
+//	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherPlus(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToB,
+//			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> bToC, final NODE a, final NODE b, final NODE c) {
+	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherPlus(
+			final Pair<WeakEquivalenceEdgeLabel<NODE, DISJUNCT>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edges,
+			final Triple<NODE, NODE, NODE> nodes) {
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToB = edges.getFirst();
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> bToC = edges.getSecond();
+		final NODE a = nodes.getFirst();
+		final NODE b = nodes.getSecond();
+		final NODE c = nodes.getThird();
+
+		assert a.getSort() == b.getSort() && b.getSort() == c.getSort();
+
+		final boolean aToBVanishesOnProjectOfB = mayVanishOnProjectOfArray(aToB, b);
+		final boolean bToCVanishesOnProjectOfB = mayVanishOnProjectOfArray(bToC, b);
+
+		if (!aToBVanishesOnProjectOfB) {
+
+			final NODE aOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), a);
+			final NODE bOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), b);
+
+//			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToBNew = mWeqCcManager.replaceElement(aToB, aOfQ, bOfQ);
+			mWeqCcManager.replaceElement(aToB, aOfQ, bOfQ);
+			return aToB.union(bToC, null);
+		}
+		if (!bToCVanishesOnProjectOfB) {
+			// replace b[q] by c[q] in bToC
+			final NODE cOfQ = constructAOfQ(new MultiDimensionalSort(c.getSort()), c);
+			final NODE bOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), b);
+			mWeqCcManager.replaceElement(aToB, cOfQ, bOfQ);
+			return aToB.union(bToC, null);
+		}
+		return aToB.union(bToC, null);
+	}
+
+	private NODE constructAOfQ(final MultiDimensionalSort mds, NODE innerArray) {
+		final int dimensionality = mds.getDimension();
+		for (int dim = dimensionality - 1; dim >= 0; dim--) {
+			final NODE qDim = mWeqCcManager.getWeqVariableNodeForDimension(dim, mds.getIndexSorts().get(dim));
+			innerArray =
+					mWeqCcManager.getEqNodeAndFunctionFactory().getOrConstructFuncAppElement(innerArray, qDim);
+		}
+		return innerArray;
+	}
+
+	/**
+	 * (vanish == becomes "T")
+	 * @param l1
+	 * @param thirdArray
+	 * @return
+	 */
+	private boolean mayVanishOnProjectOfArray(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
+			final NODE array) {
+		if (l1.getDisjuncts().stream().anyMatch(d -> mayVanishOnProjectOfArray(d, array))) {
+			// if a disjunct becomes T, the whole disjunction does
+			return true;
+		}
+		return false;
+	}
+
+	private boolean mayVanishOnProjectOfArray(final DISJUNCT d, final NODE array) {
+		// possible optimization: pick only the q's mattering for that dimension
+		if (mWeqCcManager.getAllWeqNodes().stream().anyMatch(q -> d.isConstrainedDirectly(q))) {
+			// if a q is constrained directly, the label will not disappear when we project an array
+			// --> this is a broad check, but might be enough for our purposes..
+			return false;
+		}
+		return true;
+	}
+
 	Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> propagateViaTriangleRule() {
 		if (mWeakEquivalenceEdges.isEmpty()) {
 			return Collections.emptyMap();
 		}
+		assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1() || sanityCheck();
 
 		//(the following variable are declared just to make their types clear, and detect type errors easier)
 
@@ -408,12 +493,25 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final BiPredicate<WeakEquivalenceEdgeLabel<NODE, DISJUNCT>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> smallerThan =
 //				cwelpc::isStrongerOrEqual;
 				(label1, label2) -> mWeqCcManager.isStrongerThan(label1, label2, mWeqCcManager::isStrongerThan);
-		final BiFunction<
-				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
-				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
+//		final BiFunction<
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> plus
+////			= cwelpc::union;
+////			= (l1, l2) -> l1.union(l2, null); // TODO: reactivate cache
+//			= (l1, l2) -> otherPlus(l1, l2); // TODO: reactivate cache
+//		final TriFunction<
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
+//				NODE,
+//				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> plus
+//				= this::otherPlus;
+		final BiFunction<Pair<WeakEquivalenceEdgeLabel<NODE, DISJUNCT>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>>,
+				Triple<NODE, NODE, NODE>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> plus
-//			= cwelpc::union;
-			= (l1, l2) -> l1.union(l2, null); // TODO: reactivate cache
+				= this::otherPlus;
+
+
 		final BiFunction<
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
@@ -431,7 +529,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		//execute the floyd-warshall algorithm
 		final FloydWarshall<NODE, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> fw =
 				new FloydWarshall<NODE, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>>(
-						smallerThan, plus, meet, nullLabel, graph, labelCloner);
+//						smallerThan, plus, meet, nullLabel, graph, labelCloner, true);
+						smallerThan, (l1, l2) -> l1.union(l2), meet, nullLabel, graph, labelCloner);
 
 		if (!fw.performedChanges()) {
 			return Collections.emptyMap();
@@ -1089,6 +1188,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		if (mWeqCc != null && mWeqCc.isInconsistent(false)) {
 			// we will drop this weak equivalence graph anyway
 			return true;
+		}
+
+		/*
+		 * all edges must be between arrays of the same sort
+		 */
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en
+				: getWeqEdgesEntrySet()) {
+			if (!en.getKey().getOneElement().getSort().equals(en.getKey().getOtherElement().getSort())) {
+				assert false : "weq graph has edge between arrays of different sorts";
+				return false;
+			}
 		}
 
 		/*
