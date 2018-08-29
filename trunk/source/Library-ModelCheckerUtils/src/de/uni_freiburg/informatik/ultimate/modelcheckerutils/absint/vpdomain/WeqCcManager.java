@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -386,6 +387,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
+		updateTrackingStatusOnReporWeq(array1, array2);
+
 		if (mSettings.isDeactivateWeakEquivalences() || array1.isUntrackedArray() || array2.isUntrackedArray()) {
 			assert origWeqCc.getWeakEquivalenceGraph().getNumberOfEdgesStatistic() == 0;
 			return origWeqCc;
@@ -402,6 +405,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			assert checkReportWeakEquivalenceResult(origWeqCc, array1, array2, storeIndex, unfrozen);
 			bmEnd(WeqCcBmNames.REPORTWEQ);
 			return unfrozen;
+		}
+	}
+
+	/**
+	 * When one array is trackand and a weak equivalence to another array is reported, that other array will be marked
+	 * as tracked, too.
+	 *
+	 * @param array1
+	 * @param array2
+	 */
+	public void updateTrackingStatusOnReporWeq(final NODE array1, final NODE array2) {
+		if (array1.isUntrackedArray() && !array2.isUntrackedArray()) {
+			array1.markAsTrackedArray();
+		} else if (!array1.isUntrackedArray() && array2.isUntrackedArray()) {
+			array2.markAsTrackedArray();
 		}
 	}
 
@@ -1818,6 +1836,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			return result;
 		}
+	}
+
+//	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> replaceElement(
+	public <DISJUNCT extends ICongruenceClosure<NODE>> void replaceElement(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToB, final NODE replacer, final NODE replacee) {
+
+		final Function<NODE, NODE> transformer = n -> n.equals(replacee) ? replacer : n;
+//		return aToB.transformElements(transformer);
+		aToB.transformElements(transformer);
 	}
 
 }

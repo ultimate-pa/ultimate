@@ -50,4 +50,6 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 	Sort getSort();
 
 	boolean isUntrackedArray();
+
+	void markAsTrackedArray();
 }

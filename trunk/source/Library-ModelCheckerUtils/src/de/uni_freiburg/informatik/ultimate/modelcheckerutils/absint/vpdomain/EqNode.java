@@ -52,7 +52,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	protected final Term mTerm;
 
-	private final boolean mIsUntrackedArray;
+	private boolean mIsUntrackedArray;
 
 //	private final MultiDimensionalSort mMdSort;
 
@@ -164,6 +164,14 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	public boolean isUntrackedArray() {
 		return mIsUntrackedArray;
 	}
+
+	@Override
+	public void markAsTrackedArray() {
+		assert isUntrackedArray();
+		mIsUntrackedArray = false;
+	}
+
+
 
 //	@Override
 //	public boolean isConstantFunction() {
