@@ -57,6 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrde
  * variables of the EqConstraint together with #a special variables that are implicitly universally quantified
  * and range over the array positions.
  *
+ * @param <NODE> node in the weak equivalence graph
+ * @param <DISJUNCT> the label is a disjunction -- type of one element of that
+ *
  */
 class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT extends ICongruenceClosure<NODE>> {
 

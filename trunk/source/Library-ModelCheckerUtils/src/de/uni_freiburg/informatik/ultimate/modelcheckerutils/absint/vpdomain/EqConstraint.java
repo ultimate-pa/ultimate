@@ -427,14 +427,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mIsFrozen = true;
 	}
 
-//	public void freezeIfNecessary(final boolean close) {
 	public void freezeIfNecessary() {
 		if (!isFrozen()) {
-//			if (close) {
-//				freezeAndClose();
-//			} else {
-				freezeAndDontClose();
-//			}
+			freezeAndDontClose();
 		}
 	}
 
@@ -447,17 +442,11 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public Set<NODE> getSetConstraintForExpression(final NODE exp) {
-//		if (!this.getAllNodes().contains(exp)) {
-//			// add it before querying!
-//			throw new IllegalArgumentException();
-//		}
 
 		final WeqCongruenceClosure<NODE> unfrozen = mFactory.getWeqCcManager().unfreezeIfNecessary(mWeqCc);
 
-//		mWeqCc.addElement(exp, false);
 		unfrozen.addElement(exp, false);
 
-//		final CCLiteralSetConstraints<NODE> lsc = mWeqCc.getCongruenceClosure().getLiteralSetConstraints();
 		final CCLiteralSetConstraints<NODE> lsc = unfrozen.getCongruenceClosure().getLiteralSetConstraints();
 		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
 		if (!c.hasOnlyLiterals()) {
