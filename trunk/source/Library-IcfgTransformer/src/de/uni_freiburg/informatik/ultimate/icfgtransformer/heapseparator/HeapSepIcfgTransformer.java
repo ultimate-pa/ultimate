@@ -291,6 +291,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final List<String> trackedArraySubstrings = new ArrayList<>();
 			trackedArraySubstrings.add(MemlocArrayManager.LOC_ARRAY_PREFIX);
 			trackedArraySubstrings.add("valid");
+//			trackedArraySubstrings.add("rep");
 			equalityProvider.setTrackedArrays(trackedArraySubstrings);
 			equalityProvider.preprocess(preprocessedIcfg);
 			mLogger.info("finished equality analysis");

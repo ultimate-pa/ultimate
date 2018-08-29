@@ -1354,6 +1354,11 @@ public final class SmtUtils {
 		return true;
 	}
 
+	public static String sanitizeStringAsSmtIdentifier(final String name) {
+		return name.replaceAll("\\|", "BAR")
+				.replaceAll(" ", "_");
+	}
+
 	/**
 	 * Returns a possibly simplified version of the Term (div dividend divisor). If dividend and divisor are both
 	 * literals the returned Term is a literal which is equivalent to the result of the operation

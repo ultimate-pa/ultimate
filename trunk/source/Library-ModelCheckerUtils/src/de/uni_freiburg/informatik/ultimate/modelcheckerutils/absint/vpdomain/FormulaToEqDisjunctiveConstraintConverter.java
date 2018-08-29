@@ -409,6 +409,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 	 */
 	class StoreChainSquisher extends TermTransformer {
 
+		private static final String SQUISHERREPARRAYNAME = "rep";
+
 		Script mScript = mMgdScript.getScript();
 
 		private final List<Term> mReplacementEquations = new ArrayList<>();
@@ -462,7 +464,12 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		private TermVariable getReplacementTv(final Term term) {
 			TermVariable res = mReplacedTermToReplacementTv.get(term);
 			if (res == null) {
-				res = mMgdScript.constructFreshTermVariable("rep", term.getSort());
+				/* note: it is important for untracked array business (see EqNode) that the name of the term is part of
+				 * the name of the replacement term
+				 */
+				final String name =
+						SmtUtils.sanitizeStringAsSmtIdentifier(SQUISHERREPARRAYNAME + "_" + term.toString());
+				res = mMgdScript.constructFreshTermVariable(name, term.getSort());
 				mReplacedTermToReplacementTv.put(term, res);
 			}
 			return res;
