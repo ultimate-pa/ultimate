@@ -109,6 +109,8 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
  */
 public class Req2BoogieTranslator {
 
+	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
+
 	private final Unit mUnit;
 	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
 	private final Map<PatternType, BoogieLocation> mReq2Loc;
@@ -786,6 +788,11 @@ public class Req2BoogieTranslator {
 			final Statement assertStmt = genAssertRTInconsistency(subset);
 			if (assertStmt != null) {
 				stmtList.add(assertStmt);
+				if (DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY) {
+					mLogger.warn(
+							"Considering only the first non-trivial rt-inconsistency assertion and skipping all others");
+					break;
+				}
 			}
 			subsetsSize--;
 		}
