@@ -415,32 +415,59 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherPlus(
 			final Pair<WeakEquivalenceEdgeLabel<NODE, DISJUNCT>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edges,
 			final Triple<NODE, NODE, NODE> nodes) {
+
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToB = edges.getFirst();
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> bToC = edges.getSecond();
+		assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1() || aToB.sanityCheck();
+		assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1() || bToC.sanityCheck();
+
 		final NODE a = nodes.getFirst();
 		final NODE b = nodes.getSecond();
 		final NODE c = nodes.getThird();
 
-		assert a.getSort() == b.getSort() && b.getSort() == c.getSort();
+		// fw will not insert an edge if we return "T", here (TODO: not nice.. in fw-impl)
+		if (a.getSort() != b.getSort()) {
+			assert aToB.isTautological();
+			return aToB;
+		}
+		if (b.getSort() != c.getSort()) {
+			assert bToC.isTautological();
+			return bToC;
+		}
+
+//		assert a.getSort() == b.getSort() && b.getSort() == c.getSort();
 
 		final boolean aToBVanishesOnProjectOfB = mayVanishOnProjectOfArray(aToB, b);
 		final boolean bToCVanishesOnProjectOfB = mayVanishOnProjectOfArray(bToC, b);
 
-		if (!aToBVanishesOnProjectOfB) {
 
+
+		if (aToBVanishesOnProjectOfB) {
+			// replace b[q] by a[q] in aToB
 			final NODE aOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), a);
 			final NODE bOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), b);
 
 //			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToBNew = mWeqCcManager.replaceElement(aToB, aOfQ, bOfQ);
-			mWeqCcManager.replaceElement(aToB, aOfQ, bOfQ);
-			return aToB.union(bToC, null);
+//			mWeqCcManager.replaceElement(aToB, aOfQ, bOfQ);
+
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> aToBNew = mWeqCcManager.reportEquality(aToB, aOfQ, bOfQ, false);
+
+			assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1() || aToBNew.sanityCheck();
+
+
+//			return aToB.union(bToC, null);
+			return aToBNew.union(bToC, null);
 		}
-		if (!bToCVanishesOnProjectOfB) {
+		if (bToCVanishesOnProjectOfB) {
 			// replace b[q] by c[q] in bToC
 			final NODE cOfQ = constructAOfQ(new MultiDimensionalSort(c.getSort()), c);
 			final NODE bOfQ = constructAOfQ(new MultiDimensionalSort(a.getSort()), b);
-			mWeqCcManager.replaceElement(aToB, cOfQ, bOfQ);
-			return aToB.union(bToC, null);
+//			mWeqCcManager.replaceElement(aToB, cOfQ, bOfQ);
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> bToCNew = mWeqCcManager.reportEquality(bToC, cOfQ, bOfQ, false);
+
+			assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1() || bToCNew.sanityCheck();
+
+			return aToB.union(bToCNew, null);
 		}
 		return aToB.union(bToC, null);
 	}
@@ -463,6 +490,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 */
 	private boolean mayVanishOnProjectOfArray(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
 			final NODE array) {
+		if (l1.isTautological() || l1.isInconsistent()) {
+			// is "T"/"Bottom" anyway, won't vanish in our sense
+			return false;
+		}
+
 		if (l1.getDisjuncts().stream().anyMatch(d -> mayVanishOnProjectOfArray(d, array))) {
 			// if a disjunct becomes T, the whole disjunction does
 			return true;
@@ -529,12 +561,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		//execute the floyd-warshall algorithm
 		final FloydWarshall<NODE, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> fw =
 				new FloydWarshall<NODE, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>>(
-//						smallerThan, plus, meet, nullLabel, graph, labelCloner, true);
-						smallerThan, (l1, l2) -> l1.union(l2), meet, nullLabel, graph, labelCloner);
+						smallerThan, plus, meet, nullLabel, graph, labelCloner, true);
+//						smallerThan, (l1, l2) -> l1.union(l2), meet, nullLabel, graph, labelCloner);
 
 		if (!fw.performedChanges()) {
 			return Collections.emptyMap();
 		}
+
+		assert mWeqCcManager.getSettings().omitSanitycheckFineGrained1()
+			||  fw.getResult().keySet().stream()
+					.allMatch(dton -> dton.getOneElement().getSort().equals(dton.getOtherElement().getSort()));
+
 		return fw.getResult();
 	}
 

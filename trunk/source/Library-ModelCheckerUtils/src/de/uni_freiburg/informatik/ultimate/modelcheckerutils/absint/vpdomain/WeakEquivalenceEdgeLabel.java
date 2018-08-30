@@ -536,6 +536,20 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> union(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> other,
 			final PartialOrderCache<DISJUNCT> ccPoCache) {
 		assert this.sanityCheck() && other.sanityCheck();
+		if (this.isTautological()) {
+			return this;
+		}
+		if (other.isTautological()) {
+			return other;
+		}
+		if (this.isInconsistent()) {
+			return other;
+		}
+		if (other.isInconsistent()) {
+			return this;
+		}
+
+
 		final List<DISJUNCT> unionList = new ArrayList<>(getNumberOfDisjuncts()
 				+ other.getNumberOfDisjuncts());
 		unionList.addAll(this.getDisjuncts());

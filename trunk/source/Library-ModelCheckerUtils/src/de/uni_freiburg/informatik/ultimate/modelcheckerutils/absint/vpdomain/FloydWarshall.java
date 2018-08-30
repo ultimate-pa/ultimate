@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -189,6 +190,6 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	}
 
 	public Map<Doubleton<VERTEX>, EDGELABEL> getResult() {
-		return mDist;
+		return Collections.unmodifiableMap(mDist);
 	}
 }

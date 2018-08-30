@@ -341,6 +341,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
+	public <DISJUNCT extends ICongruenceClosure<NODE>>
+		DISJUNCT reportEquality(final DISJUNCT d, final NODE node1,
+			final NODE node2, final boolean inplace) {
+		if (d instanceof CongruenceClosure<?>) {
+			return (DISJUNCT) reportEquality((CongruenceClosure<NODE>) d, node1, node2, inplace);
+		} else {
+			return (DISJUNCT) reportEquality((WeqCongruenceClosure<NODE>) d, node1, node2, inplace);
+		}
+	}
+
 	public WeqCongruenceClosure<NODE> reportEquality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
 			final NODE node2, final boolean inplace) {
 		bmStart(WeqCcBmNames.REPORTEQUALITY);
@@ -1846,6 +1856,28 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final Function<NODE, NODE> transformer = n -> n.equals(replacee) ? replacer : n;
 //		return aToB.transformElements(transformer);
 		aToB.transformElements(transformer);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> reportEquality(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label, final NODE n1, final NODE n2,
+			final boolean inplace) {
+		if (inplace) {
+			for (final DISJUNCT d : label.getDisjuncts()) {
+				reportEquality(d, n1, n2, true);
+			}
+			return label;
+		} else {
+			final Set<DISJUNCT> newDisjuncts = new HashSet<>();
+			for (final DISJUNCT d : label.getDisjuncts()) {
+				freezeIfNecessary(d);
+				final DISJUNCT newD = reportEquality(d, n1, n2, false);
+				if (!newD.isInconsistent()) {
+					newDisjuncts.add(newD);
+				}
+			}
+			return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), newDisjuncts);
+		}
+
 	}
 
 }
