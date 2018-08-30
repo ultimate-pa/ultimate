@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -72,10 +72,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -114,16 +115,16 @@ public final class TransFormulaUtils {
 
 	/**
 	 * @param services
-	 * @param tryAuxVarElimination Apply our partial quantifier elimination
-	 * and try to eliminate auxVars. This is a postprocessing that we apply to
-	 * the resulting formula which produces an equivalent formula with less
-	 * auxvars.
+	 * @param tryAuxVarElimination
+	 *            Apply our partial quantifier elimination and try to eliminate auxVars. This is a postprocessing that
+	 *            we apply to the resulting formula which produces an equivalent formula with less auxvars.
 	 * @return the relational composition (concatenation) of transformula1 and transformula2
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
-			final boolean tryAuxVarElimination, final boolean tranformToCNF, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final List<UnmodifiableTransFormula> transFormula) {
+			final boolean tryAuxVarElimination, final boolean tranformToCNF,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
+			final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
 		}
@@ -205,7 +206,9 @@ public final class TransFormulaUtils {
 			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
 
-		formula = new FormulaUnLet().unlet(formula);
+		assert !new SubtermPropertyChecker(a -> a instanceof LetTerm)
+				.isPropertySatisfied(formula) : "formula contains LetTerm";
+
 		if (simplify) {
 			try {
 				final Term simplified = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
@@ -646,7 +649,7 @@ public final class TransFormulaUtils {
 			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<Term, IPredicate, TransFormula>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
@@ -803,7 +806,7 @@ public final class TransFormulaUtils {
 			final Set<IProgramNonOldVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<Term, IPredicate, TransFormula>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
@@ -877,10 +880,9 @@ public final class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-
 	/**
-	 * The "guarded havoc" is the transition relation in which we keep the
-	 * guard (for all inVars) but havoc all variables that are updated.
+	 * The "guarded havoc" is the transition relation in which we keep the guard (for all inVars) but havoc all
+	 * variables that are updated.
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
@@ -888,25 +890,26 @@ public final class TransFormulaUtils {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : tf.getAssignedVars()) {
-            if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
-    			final Set<ApplicationTerm> stores = new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
-    			for (final ApplicationTerm appTerm : stores) {
-    				final Term storedValue = appTerm.getParameters()[2];
-    				if (!SmtSortUtils.isArraySort(storedValue.getSort())) {
-    					final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
-    					final Term array = appTerm.getParameters()[0];
-    					final Term index = appTerm.getParameters()[1];
-    					final Term newSelect = mgdScript.getScript().term("store", array, index, aux);
-    					substitutionMapping.put(appTerm, newSelect);
-    					auxVars.add(aux);
-    				}
-    			}
-            } else {
-                    final TermVariable outVar = tf.getOutVars().get(bv);
-                    final TermVariable aux = mgdScript.constructFreshCopy(outVar);
-                    substitutionMapping.put(outVar, aux);
-                    auxVars.add(aux);
-            }
+			if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
+				final Set<ApplicationTerm> stores =
+						new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
+				for (final ApplicationTerm appTerm : stores) {
+					final Term storedValue = appTerm.getParameters()[2];
+					if (!SmtSortUtils.isArraySort(storedValue.getSort())) {
+						final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
+						final Term array = appTerm.getParameters()[0];
+						final Term index = appTerm.getParameters()[1];
+						final Term newSelect = mgdScript.getScript().term("store", array, index, aux);
+						substitutionMapping.put(appTerm, newSelect);
+						auxVars.add(aux);
+					}
+				}
+			} else {
+				final TermVariable outVar = tf.getOutVars().get(bv);
+				final TermVariable aux = mgdScript.constructFreshCopy(outVar);
+				substitutionMapping.put(outVar, aux);
+				auxVars.add(aux);
+			}
 		}
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
@@ -923,8 +926,6 @@ public final class TransFormulaUtils {
 		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
-
-
 
 	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
@@ -977,17 +978,17 @@ public final class TransFormulaUtils {
 		return markhor;
 	}
 
-	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula altPath,
-			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
+	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf,
+			final UnmodifiableTransFormula altPath, final ManagedScript maScript,
+			final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 
-		final UnmodifiableTransFormula blockEnoded = parallelComposition(logger, services, tf.hashCode(), maScript, null,
-				false, xnfConversionTechnique, tf, altPath);
+		final UnmodifiableTransFormula blockEnoded = parallelComposition(logger, services, tf.hashCode(), maScript,
+				null, false, xnfConversionTechnique, tf, altPath);
 		return blockEnoded;
 
 	}
-
 
 	/**
 	 * Add all elements of progConsts to tfb that occur in formula, ignore the those that do not occur in the formula.
@@ -1027,7 +1028,6 @@ public final class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-
 	/**
 	 * This method first computes the guards of the input {@link UnmodifiableTransFormula}s. It then returns a
 	 * {@link UnmodifiableTransFormula} that is satisfied for some input variables iff none of the guards is satisfied.
@@ -1051,8 +1051,8 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
 			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... transFormulas) {
-		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript, null,
-				false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript,
+				null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
 		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
 		return negate(guardOfDisjunction, mgdScript, services, logger,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
@@ -1137,7 +1137,7 @@ public final class TransFormulaUtils {
 	/**
 	 * Pretty print a TransFormula by adding some line breaks to its normal {@link Object#toString()} representation.
 	 * Uses some simple heuristics like "align equality constraints which are argument to the same and/or by the same
-	 *  indentation".
+	 * indentation".
 	 *
 	 * @param tf
 	 * @return
