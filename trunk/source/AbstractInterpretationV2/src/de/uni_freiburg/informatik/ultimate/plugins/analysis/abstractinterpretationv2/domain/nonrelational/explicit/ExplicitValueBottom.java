@@ -84,154 +84,130 @@ public class ExplicitValueBottom extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue add(final BaseExplicitValueValue other) {
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue subtract(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue multiply(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue negate() {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue divideInteger(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
-	public BaseExplicitValueValue divide(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+	public BaseExplicitValueValue divideReal(final BaseExplicitValueValue other) {
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue modulo(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BooleanValue compareEquality(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BooleanValue compareInequality(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BooleanValue isGreaterThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BooleanValue isGreaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BaseExplicitValueValue lessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BooleanValue isLessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BaseExplicitValueValue lessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BooleanValue isLessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return BooleanValue.BOTTOM;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseModulo(final BaseExplicitValueValue referenceValue,
 			final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseEquality(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseNotEqual(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term referenceTerm) {
-		// TODO Auto-generated method stub
-		return null;
+		return script.term("false");
 	}
 
 }

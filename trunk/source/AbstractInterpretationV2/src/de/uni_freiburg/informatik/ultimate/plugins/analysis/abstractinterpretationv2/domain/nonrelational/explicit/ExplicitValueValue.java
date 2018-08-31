@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -67,56 +69,47 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue intersect(final BaseExplicitValueValue other) {
-		if (other instanceof ExplicitValueValue) {
-			final ExplicitValueValue evv = (ExplicitValueValue) other;
+		return commutativeOp(other, other::intersect, evv -> {
 			if (evv.mValue.equals(mValue)) {
 				return this;
 			}
 			return ExplicitValueBottom.DEFAULT;
-		}
-		return other.intersect(this);
+		});
 	}
 
 	@Override
 	public BaseExplicitValueValue merge(final BaseExplicitValueValue other) {
-		if (other instanceof ExplicitValueValue) {
-			final ExplicitValueValue evv = (ExplicitValueValue) other;
+		return commutativeOp(other, other::merge, evv -> {
 			if (evv.mValue.equals(mValue)) {
 				return this;
 			}
 			return ExplicitValueTop.DEFAULT;
-		}
-		return other.intersect(this);
+		});
 	}
 
 	@Override
 	public Collection<BaseExplicitValueValue> complement() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.singleton(ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public Collection<BaseExplicitValueValue> complementInteger() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.singleton(ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public boolean isEqualTo(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return false;
+		return commutativeOp(other, other::isEqualTo, evv -> evv.mValue.equals(mValue));
 	}
 
 	@Override
 	public boolean isContainedIn(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return false;
+		return isEqualTo(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue add(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return commutativeOp(other, other::add, evv -> new ExplicitValueValue(mValue.add(evv.mValue)));
 	}
 
 	@Override
@@ -127,14 +120,12 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue multiply(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return commutativeOp(other, other::multiply, evv -> new ExplicitValueValue(mValue.mul(evv.mValue)));
 	}
 
 	@Override
 	public BaseExplicitValueValue negate() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ExplicitValueValue(mValue.negate());
 	}
 
 	@Override
@@ -144,7 +135,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	}
 
 	@Override
-	public BaseExplicitValueValue divide(final BaseExplicitValueValue other) {
+	public BaseExplicitValueValue divideReal(final BaseExplicitValueValue other) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -264,6 +255,15 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	public Term getTerm(final Script script, final Sort sort, final Term variable) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	private <T> T commutativeOp(final BaseExplicitValueValue other, final Function<BaseExplicitValueValue, T> distFun,
+			final Function<ExplicitValueValue, T> fun) {
+		if (other instanceof ExplicitValueValue) {
+			final ExplicitValueValue evv = (ExplicitValueValue) other;
+			return fun.apply(evv);
+		}
+		return distFun.apply(this);
 	}
 
 }

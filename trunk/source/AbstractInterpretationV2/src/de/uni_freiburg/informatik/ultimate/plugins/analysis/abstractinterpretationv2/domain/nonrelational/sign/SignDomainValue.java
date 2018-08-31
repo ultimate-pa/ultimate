@@ -281,7 +281,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 	}
 
 	@Override
-	public SignDomainValue divide(final SignDomainValue other) {
+	public SignDomainValue divideReal(final SignDomainValue other) {
 		// TODO Auto-generated method stub
 		return null;
 	}

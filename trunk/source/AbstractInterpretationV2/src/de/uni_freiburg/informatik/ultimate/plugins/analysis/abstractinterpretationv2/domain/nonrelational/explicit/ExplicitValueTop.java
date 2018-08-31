@@ -91,17 +91,17 @@ public class ExplicitValueTop extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue add(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue subtract(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue multiply(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
@@ -111,124 +111,132 @@ public class ExplicitValueTop extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue divideInteger(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
-	public BaseExplicitValueValue divide(final BaseExplicitValueValue other) {
-		return this;
+	public BaseExplicitValueValue divideReal(final BaseExplicitValueValue other) {
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue modulo(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterThan(final BaseExplicitValueValue other) {
-		return this;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BooleanValue compareEquality(final BaseExplicitValueValue other) {
-		return BooleanValue.TOP;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BooleanValue compareInequality(final BaseExplicitValueValue other) {
-		return BooleanValue.TOP;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BooleanValue isGreaterThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BooleanValue isGreaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue lessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BooleanValue isLessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue lessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(other);
 	}
 
 	@Override
 	public BooleanValue isLessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThisBoolean(other);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseModulo(final BaseExplicitValueValue referenceValue,
 			final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(referenceValue, oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseEquality(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(referenceValue, oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(oldValue);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseNotEqual(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return bottomOrThis(referenceValue, oldValue);
 	}
 
 	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term referenceTerm) {
-		return null;
+		return script.term("true");
+	}
+
+	private BooleanValue bottomOrThisBoolean(final BaseExplicitValueValue other) {
+		if (other.isBottom()) {
+			return BooleanValue.BOTTOM;
+		}
+		return BooleanValue.TOP;
+	}
+
+	private BaseExplicitValueValue bottomOrThis(final BaseExplicitValueValue referenceValue,
+			final BaseExplicitValueValue oldValue) {
+		if (oldValue.isBottom() || referenceValue.isBottom()) {
+			return oldValue;
+		}
+		return this;
+	}
+
+	private BaseExplicitValueValue bottomOrThis(final BaseExplicitValueValue other) {
+		if (other.isBottom()) {
+			return other;
+		}
+		return this;
 	}
 
 }
