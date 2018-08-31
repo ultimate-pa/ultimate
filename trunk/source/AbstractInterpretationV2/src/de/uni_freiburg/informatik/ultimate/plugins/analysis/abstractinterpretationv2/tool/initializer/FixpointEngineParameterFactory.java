@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
@@ -193,6 +194,9 @@ public class FixpointEngineParameterFactory {
 					mVariableProvider);
 		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
 			return new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider);
+		} else if (ExplicitValueDomain.class.getSimpleName().equals(domainName)) {
+			return new ExplicitValueDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
+					mServices, mBoogieIcfg, mVariableProvider);
 		}
 		return null;
 	}

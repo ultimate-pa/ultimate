@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
@@ -70,7 +71,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 			EmptyDomain.class.getSimpleName(), SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(),
 			OctagonDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
-			CompoundDomain.class.getSimpleName(), ArrayDomain.class.getSimpleName()
+			CompoundDomain.class.getSimpleName(), ArrayDomain.class.getSimpleName(),
+			ExplicitValueDomain.class.getSimpleName()
 
 	};
 
