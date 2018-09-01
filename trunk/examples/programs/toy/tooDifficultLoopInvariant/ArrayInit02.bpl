@@ -16,8 +16,6 @@ procedure ULTIMATE.start()
 	var genericCell1ForA : int;
 	var readAuxVar : int;
 
-	assume genericIndex1ForA >= 0;
-	assume genericIndex1ForA < n;
 	i := 0;
 	while (i<n) {
 		if (i == genericIndex1ForA) {
