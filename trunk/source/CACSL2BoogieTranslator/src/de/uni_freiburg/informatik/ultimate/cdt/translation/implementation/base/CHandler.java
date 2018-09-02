@@ -4026,12 +4026,12 @@ public class CHandler implements ICHandler {
 		final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 		final String enumId = cEnum.getIdentifier();
 
-		Expression oldValue = null;
-		Integer oldValueInt = -1;
+		Integer valueOfPrecedingEnumConstantAsInt = -1;
 
 		// C standard says: "The identifiers in an enumerator list are declared
 		// as constants that have type int ..."
 
+		boolean isFirstEnumField = true;
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
 			final String fId = cEnum.getFieldIds()[i];
 			final String bId = enumId + "~" + fId;
@@ -4043,9 +4043,9 @@ public class CHandler implements ICHandler {
 			final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(enumAstType), bId,
 					new DeclarationInformation(StorageClass.GLOBAL, null));
-			Expression newValue = oldValue;
-			Integer newValueInt = oldValueInt;
 
+			final Expression value;
+			final Integer valueAsInt;
 			if (cEnum.getFieldValue(fId) != null) {
 				// case where the value of the enum constant is explicitly defined by an integer
 				// constant expression
@@ -4054,34 +4054,35 @@ public class CHandler implements ICHandler {
 				if (bi == null) {
 					throw new AssertionError("not an integer constant: " + cEnum.getFieldValue(fId));
 				}
-				newValueInt = bi.intValue();
-				newValue = cEnum.getFieldValue(fId);
+				valueAsInt = bi.intValue();
+				value = cEnum.getFieldValue(fId);
 			} else {
 				// case where the value of the enum constant is not explicitly defined by an
 				// integer constant expression and hence the value of the preceding enumeration constant
 				// in the list defines the value of this enumeration constant
 				// (see C11 6.7.2.2.3)
-				if (oldValue == null) {
-					// case where this is the first enumeratin constant in the list
+				if (isFirstEnumField) {
+					// case where this is the first enumeration constant in the list
+					assert (valueOfPrecedingEnumConstantAsInt == -1);
 					final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 							typeOfEnumIdentifiers, BigInteger.ZERO);
-					newValue = zero;
-					newValueInt = 0;
+					value = zero;
+					valueAsInt = 0;
 				} else {
-					newValueInt = oldValueInt + 1;
-					newValue = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-							new BigInteger(newValueInt.toString()));
+					valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
+					value = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+							new BigInteger(valueAsInt.toString()));
 				}
 			}
-			oldValue = newValue;
-			oldValueInt = newValueInt;
 			mAxioms.add(new Axiom(loc, new Attribute[0],
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, value)));
 			mSymbolTable.storeCSymbol(node, fId,
 					new SymbolTableValue(bId, cd,
 							new CDeclaration(typeOfEnumIdentifiers, fId,
 									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
-							DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, newValue));
+							DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
+			isFirstEnumField = false;
+			valueOfPrecedingEnumConstantAsInt = valueAsInt;
 		}
 	}
 
