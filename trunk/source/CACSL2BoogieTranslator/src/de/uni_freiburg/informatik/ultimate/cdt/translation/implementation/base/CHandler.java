@@ -4025,7 +4025,6 @@ public class CHandler implements ICHandler {
 		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
 		final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 		final String enumId = cEnum.getIdentifier();
-		final Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
 
 		Expression oldValue = null;
 		Integer oldValueInt = -1;
@@ -4067,7 +4066,6 @@ public class CHandler implements ICHandler {
 			}
 			oldValue = newValue;
 			oldValueInt = newValueInt;
-			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0],
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
 			mSymbolTable.storeCSymbol(node, fId,
