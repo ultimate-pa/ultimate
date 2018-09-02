@@ -4045,17 +4045,10 @@ public class CHandler implements ICHandler {
 					new DeclarationInformation(StorageClass.GLOBAL, null));
 			Expression newValue = oldValue;
 			Integer newValueInt = oldValueInt;
-			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
-				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
-						typeOfEnumIdentifiers, BigInteger.ZERO);
-				newValue = zero;
-				newValueInt = 0;
-			} else if (cEnum.getFieldValue(fId) == null) {
-				newValueInt = oldValueInt + 1;
-				newValue = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						new BigInteger(newValueInt.toString()));
 
-			} else {
+			if (cEnum.getFieldValue(fId) != null) {
+				// case where the value of the enum constant is explicitly defined by an integer
+				// constant expression
 				final BigInteger bi = mExpressionTranslation.extractIntegerValue(cEnum.getFieldValue(fId),
 						typeOfEnumIdentifiers, node);
 				if (bi == null) {
@@ -4063,6 +4056,22 @@ public class CHandler implements ICHandler {
 				}
 				newValueInt = bi.intValue();
 				newValue = cEnum.getFieldValue(fId);
+			} else {
+				// case where the value of the enum constant is not explicitly defined by an
+				// integer constant expression and hence the value of the preceding enumeration constant
+				// in the list defines the value of this enumeration constant
+				// (see C11 6.7.2.2.3)
+				if (oldValue == null) {
+					// case where this is the first enumeratin constant in the list
+					final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+							typeOfEnumIdentifiers, BigInteger.ZERO);
+					newValue = zero;
+					newValueInt = 0;
+				} else {
+					newValueInt = oldValueInt + 1;
+					newValue = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+							new BigInteger(newValueInt.toString()));
+				}
 			}
 			oldValue = newValue;
 			oldValueInt = newValueInt;
