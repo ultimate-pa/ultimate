@@ -4021,19 +4021,17 @@ public class CHandler implements ICHandler {
 		final TypesResult rt = (TypesResult) r;
 		assert rt.cType instanceof CEnum;
 		final CEnum cEnum = (CEnum) rt.cType;
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 		final String enumId = cEnum.getIdentifier();
 
-		Integer valueOfPrecedingEnumConstantAsInt = -1;
+		Expression valueOfPrecedingEnumConstant = null;
 
-		// C standard says: "The identifiers in an enumerator list are declared
-		// as constants that have type int ..."
-
-		boolean isFirstEnumField = true;
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
 			final String fId = cEnum.getFieldIds()[i];
+			final ILocation loc = main.getLocationFactory().createCLocation(node);
+			// as constants that have type int ..."
+			// C standard says: "The identifiers in an enumerator list are declared
+			final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+			final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 			final String bId = enumId + "~" + fId;
 			final VarList vl = new VarList(loc, new String[] { bId }, enumAstType);
 			final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
@@ -4045,33 +4043,30 @@ public class CHandler implements ICHandler {
 					new DeclarationInformation(StorageClass.GLOBAL, null));
 
 			final Expression value;
-			final Integer valueAsInt;
 			if (cEnum.getFieldValue(fId) != null) {
 				// case where the value of the enum constant is explicitly defined by an integer
 				// constant expression
-				final BigInteger bi = mExpressionTranslation.extractIntegerValue(cEnum.getFieldValue(fId),
-						typeOfEnumIdentifiers, node);
-				if (bi == null) {
-					throw new AssertionError("not an integer constant: " + cEnum.getFieldValue(fId));
-				}
-				valueAsInt = bi.intValue();
 				value = cEnum.getFieldValue(fId);
 			} else {
 				// case where the value of the enum constant is not explicitly defined by an
 				// integer constant expression and hence the value of the preceding enumeration constant
 				// in the list defines the value of this enumeration constant
 				// (see C11 6.7.2.2.3)
-				if (isFirstEnumField) {
+				if (valueOfPrecedingEnumConstant == null) {
 					// case where this is the first enumeration constant in the list
-					assert (valueOfPrecedingEnumConstantAsInt == -1);
 					final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 							typeOfEnumIdentifiers, BigInteger.ZERO);
 					value = zero;
-					valueAsInt = 0;
 				} else {
-					valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
+					final BigInteger bi = mExpressionTranslation.extractIntegerValue(valueOfPrecedingEnumConstant,
+							typeOfEnumIdentifiers, node);
+					if (bi == null) {
+						throw new AssertionError("not an integer constant: " + cEnum.getFieldValue(fId));
+					}
+					final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
+					final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
 					value = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-							new BigInteger(valueAsInt.toString()));
+							BigInteger.valueOf(valueAsInt));
 				}
 			}
 			mAxioms.add(new Axiom(loc, new Attribute[0],
@@ -4081,8 +4076,7 @@ public class CHandler implements ICHandler {
 							new CDeclaration(typeOfEnumIdentifiers, fId,
 									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
 							DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
-			isFirstEnumField = false;
-			valueOfPrecedingEnumConstantAsInt = valueAsInt;
+			valueOfPrecedingEnumConstant = value;
 		}
 	}
 
