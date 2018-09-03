@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CCLiteralSetConstraints;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 
 /**
  *
@@ -448,10 +450,23 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		unfrozen.addElement(exp, false);
 
 		final CCLiteralSetConstraints<NODE> lsc = unfrozen.getCongruenceClosure().getLiteralSetConstraints();
-		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
-		if (!c.hasOnlyLiterals()) {
+//		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
+		final Set<SetConstraint<NODE>> c = lsc.getContainsConstraint(exp);
+
+		final Optional<SetConstraint<NODE>> cLits = c.stream().filter(sc -> sc.hasOnlyLiterals()).findFirst();
+
+		SetConstraint<NODE> result;
+		try {
+			result = cLits.get();
+		} catch (final NoSuchElementException nsee) {
 			throw new AssertionError();
 		}
-		return c.getLiterals();
+		assert result.hasOnlyLiterals();
+		return result.getLiterals();
+
+//		if (!c.hasOnlyLiterals()) {
+//			throw new AssertionError();
+//		}
+//		return c.getLiterals();
 	}
 }

@@ -1262,6 +1262,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			if (isTautological()) {
 				return true;
 			}
+			if (allWeqNodes.isEmpty()) {
+				return true;
+			}
 
 			final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
 			for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
@@ -1701,7 +1704,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (mElementTVER.isConstrained(elem)) {
 			return true;
 		}
-		if (mLiteralSetConstraints.isContrained(elem)) {
+		if (mLiteralSetConstraints.isConstrained(elem)) {
 			return true;
 		}
 		return false;

@@ -747,12 +747,19 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return result;
 	}
 
-	public SetConstraintConjunction<ELEM> getContainsConstraint(final ELEM elem) {
-		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
-		return mContainsConstraints.get(rep);
+	/**
+	 * method for queries from the outside
+	 * @param elem
+	 * @return
+	 */
+//	public SetConstraintConjunction<ELEM> getContainsConstraint(final ELEM elem) {
+	public Set<SetConstraint<ELEM>> getContainsConstraint(final ELEM elem) {
+		return getConstraint(elem);
+//		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
+//		return mContainsConstraints.get(rep);
 	}
 
-	public boolean isContrained(final ELEM elem) {
+	public boolean isConstrained(final ELEM elem) {
 		if (elem != mCongruenceClosure.getRepresentativeElement(elem)) {
 			throw new AssertionError("this is only called when elem is "
 				+ "unconstrained on mCongruenceClosure.mElementTVER, right?");
