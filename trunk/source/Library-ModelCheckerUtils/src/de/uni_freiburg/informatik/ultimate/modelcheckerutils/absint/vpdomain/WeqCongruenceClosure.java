@@ -459,7 +459,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 
-		constArrayWeqProp(array1, array2, edgeLabel);
+//		constArrayWeqProp(array1, array2, edgeLabel);
 
 //		assert sanityCheck();
 		return true;
