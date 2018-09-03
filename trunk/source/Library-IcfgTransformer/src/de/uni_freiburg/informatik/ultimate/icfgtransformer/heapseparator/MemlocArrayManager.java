@@ -58,6 +58,8 @@ public class MemlocArrayManager {
 
 	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
 
+	private int mNoStoreInfoCounter = -1;
+
 	public MemlocArrayManager(final ManagedScript mgdScript,
 			final ComputeStoreInfosAndArrayGroups<?> computeStoreInfosAndArrayGroups) {
 		mMgdScript = mgdScript;
@@ -201,7 +203,7 @@ public class MemlocArrayManager {
 			result = new HeapSepProgramConst(locLitTerm);
 			mInitLocLitTermToPvoc.put(locLitTerm, result);
 			mLocArraySortToInitLocLit.put(locArraySort, result);
-			mInitLocPvocToNoStoreInfo.put(result, new NoStoreInfo(dim));
+			mInitLocPvocToNoStoreInfo.put(result, new NoStoreInfo(mNoStoreInfoCounter --));
 		}
 		return result;
 	}
