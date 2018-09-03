@@ -69,7 +69,6 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
@@ -1965,12 +1964,23 @@ public class CHandler implements ICHandler {
 			return new SkipResult();
 		}
 
-		/*
-		 * we have an enum declaration
-		 */
-		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-			handleEnumDeclaration(main, node);
-		}
+//		/*
+//		 * we have an enum declaration
+//		 */
+//		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
+//			TODO 2018-09-02 Matthias: In the past we called here a void method
+//		    handleEnumDeclaration(main, node) which itself dispatched the
+//		    IASTEnumerationSpecifier and then added the enumeration constants
+//		    to the symbol table and the declarations of the enumeration
+//			constants to our StaticObjectsHandler. As consequence was that
+//			we could not process files in which a just defined enumeration
+//			constant is used as a value in the very same declaration.
+//			I moved the adding to symbol table and StaticObjectsHandler
+//			to the code that handles the IASTEnumerationSpecifier and now
+//			the handleEnumDeclaration seems obsolete.
+//			I did not carefully check if the new code works with incomplete
+//			enum declarations.
+//		}
 
 		/*
 		 * obtain type information from the DeclSpecifier
@@ -4006,81 +4016,9 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	/**
-	 * Handles the declaration of an enum type (-d variable).
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param node
-	 *            the node holding the enum declaration.
-	 * @return the translation of this declaration.
-	 */
-	protected void handleEnumDeclaration(final Dispatcher main, final IASTSimpleDeclaration node) {
-		final Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof TypesResult;
-		final TypesResult rt = (TypesResult) r;
-		assert rt.cType instanceof CEnum;
-		final CEnum cEnum = (CEnum) rt.cType;
-		final String enumId = cEnum.getIdentifier();
 
-		Expression valueOfPrecedingEnumConstant = null;
 
-		for (int i = 0; i < cEnum.getFieldCount(); i++) {
-			final String fId = cEnum.getFieldIds()[i];
-			final ILocation loc = main.getLocationFactory().createCLocation(node);
-			// as constants that have type int ..."
-			// C standard says: "The identifiers in an enumerator list are declared
-			final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-			final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
-			final String bId = enumId + "~" + fId;
-			final VarList vl = new VarList(loc, new String[] { bId }, enumAstType);
-			final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
-
-			mStaticObjectsHandler.addGlobalConstDeclaration(cd, new CDeclaration(cEnum, fId));
-
-			final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
-					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(enumAstType), bId,
-					new DeclarationInformation(StorageClass.GLOBAL, null));
-
-			final Expression value;
-			if (cEnum.getFieldValue(fId) != null) {
-				// case where the value of the enum constant is explicitly defined by an integer
-				// constant expression
-				value = cEnum.getFieldValue(fId);
-			} else {
-				// case where the value of the enum constant is not explicitly defined by an
-				// integer constant expression and hence the value of the preceding enumeration constant
-				// in the list defines the value of this enumeration constant
-				// (see C11 6.7.2.2.3)
-				if (valueOfPrecedingEnumConstant == null) {
-					// case where this is the first enumeration constant in the list
-					final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
-							typeOfEnumIdentifiers, BigInteger.ZERO);
-					value = zero;
-				} else {
-					final BigInteger bi = mExpressionTranslation.extractIntegerValue(valueOfPrecedingEnumConstant,
-							typeOfEnumIdentifiers, node);
-					if (bi == null) {
-						throw new AssertionError("not an integer constant: " + cEnum.getFieldValue(fId));
-					}
-					final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
-					final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
-					value = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-							BigInteger.valueOf(valueAsInt));
-				}
-			}
-			mAxioms.add(new Axiom(loc, new Attribute[0],
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, value)));
-			mSymbolTable.storeCSymbol(node, fId,
-					new SymbolTableValue(bId, cd,
-							new CDeclaration(typeOfEnumIdentifiers, fId,
-									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
-							DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
-			valueOfPrecedingEnumConstant = value;
-		}
-	}
-
-	protected CStorageClass scConstant2StorageClass(final int storageClass) {
+	public static CStorageClass scConstant2StorageClass(final int storageClass) {
 		switch (storageClass) {
 		case IASTDeclSpecifier.sc_auto:
 			return CStorageClass.AUTO;
@@ -4865,6 +4803,14 @@ public class CHandler implements ICHandler {
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
+	}
+
+	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration) {
+		mStaticObjectsHandler.addGlobalConstDeclaration(cd, cDeclaration);
+	}
+
+	public boolean addAxiom(final Axiom axiom) {
+		return mAxioms.add(axiom);
 	}
 
 	@Override

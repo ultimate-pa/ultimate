@@ -33,6 +33,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -48,9 +49,15 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -300,31 +307,42 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
-		final String rslvName =
-				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
+		final String rslvName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(),
+				cId);
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
 				main.mCHandler.getSymbolTable().getCScopeId(node), false, intType);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
+		Expression valueOfPrecedingEnumConstant = null;
 		final Expression[] fValues = new Expression[nrFields];
+		final ConstDeclaration[] constDeclarations = new ConstDeclaration[nrFields];
 		for (int i = 0; i < nrFields; i++) {
 			final IASTEnumerator e = node.getEnumerators()[i];
 			fNames[i] = e.getName().toString();
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
 				fValues[i] = rex.getLrValue().getValue();
-				// assert (fValues[i] instanceof IntegerLiteral) ||
-				// (fValues[i] instanceof BitvecLiteral) :
-				// "assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
 			} else {
 				fValues[i] = null;
 			}
+			final Expression specifiedValue = fValues[i];
+			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node,
+					mExpressionTranslation);
+			final ConstDeclaration cd = handleEnumerationConstant(loc, enumId, fNames[i],
+					value, node);
+			constDeclarations[i] = cd;
+			valueOfPrecedingEnumConstant = value;
 		}
 		final CEnum cEnum = new CEnum(enumId, fNames, fValues);
 		final ASTType at = cPrimitive2AstType(loc, intType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
+		for (int i = 0; i < nrFields; i++) {
+			final String fId = fNames[i];
+			final ConstDeclaration cd = constDeclarations[i];
+			((CHandler) main.mCHandler).addGlobalConstDeclaration(cd, new CDeclaration(cEnum, fId));
+		}
 
 		final String incompleteTypeName = "ENUM~" + rslvName;
 		if (mIncompleteType.contains(incompleteTypeName)) {
@@ -343,6 +361,76 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		return result;
+	}
+
+	/**
+	 * @param enumConstId
+	 *            Identifier of the enumeration constant as is appears in the C
+	 *            code.
+	 */
+	private ConstDeclaration handleEnumerationConstant(final ILocation loc, final String enumId,
+			final String enumConstId, final Expression value, final IASTEnumerationSpecifier node) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		// as constants that have type int ..."
+		// C standard says: "The identifiers in an enumerator list are declared
+		final ASTType enumAstType = cType2AstType(loc, typeOfEnumIdentifiers);
+		final String boogieId = enumId + "~" + enumConstId;
+		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
+		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
+
+		final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
+				mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(enumAstType), boogieId,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
+		((CHandler) mCHandler).addAxiom(new Axiom(loc, new Attribute[0],
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, value)));
+		mCHandler.getSymbolTable().storeCSymbol(node, enumConstId,
+				new SymbolTableValue(boogieId, cd,
+						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
+								CHandler.scConstant2StorageClass(node.getStorageClass())),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
+		return cd;
+	}
+
+	/**
+	 * Construct an {@link Expression} that represents the value of an enumeration
+	 * constant according to C11 6.7.2.2.3. If the value of the enumeration constant
+	 * is explicitly given in the C code, the argument for the parameter
+	 * specifiedValue of this method is not null. Otherwise the argument is null and
+	 * the value is determined by the value of the preceding enumeration constant in
+	 * the list of this enumeration specifier.
+	 */
+	private static Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
+			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node,
+			final ExpressionTranslation expressionTranslation) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final Expression value;
+		if (specifiedValue != null) {
+			// case where the value of the enumeration constant is explicitly defined by an
+			// integer constant expression
+			value = specifiedValue;
+		} else {
+			// case where the value of the enumeration constant is not explicitly defined by
+			// an integer constant expression and hence the value of the preceding
+			// enumeration constant in the list defines the value of this enumeration
+			// constant (see C11 6.7.2.2.3)
+			if (valueOfPrecedingEnumConstant == null) {
+				// case where this is the first enumeration constant in the list
+				final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						BigInteger.ZERO);
+				value = zero;
+			} else {
+				final BigInteger bi = expressionTranslation.extractIntegerValue(valueOfPrecedingEnumConstant,
+						typeOfEnumIdentifiers, node);
+				if (bi == null) {
+					throw new AssertionError("not an integer constant: " + specifiedValue);
+				}
+				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
+				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
+				value = expressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						BigInteger.valueOf(valueAsInt));
+			}
+		}
+		return value;
 	}
 
 	@Override
