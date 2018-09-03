@@ -371,8 +371,8 @@ public class TypeHandler implements ITypeHandler {
 	private ConstDeclaration handleEnumerationConstant(final ILocation loc, final String enumId,
 			final String enumConstId, final Expression value, final IASTEnumerationSpecifier node) {
 		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		// as constants that have type int ..."
 		// C standard says: "The identifiers in an enumerator list are declared
+		// as constants that have type int ..."
 		final ASTType enumAstType = cType2AstType(loc, typeOfEnumIdentifiers);
 		final String boogieId = enumId + "~" + enumConstId;
 		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
