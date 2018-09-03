@@ -289,6 +289,9 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		if (isInconsistent()) {
 			return this;
 		}
+		if (allWeqNodes.isEmpty()) {
+			return this;
+		}
 		final Set<DISJUNCT> newLabelContents = new HashSet<>();
 		for (final DISJUNCT item : getDisjuncts()) {
 			final DISJUNCT projected = mWeqCcManager.projectToElements(item, allWeqNodes,

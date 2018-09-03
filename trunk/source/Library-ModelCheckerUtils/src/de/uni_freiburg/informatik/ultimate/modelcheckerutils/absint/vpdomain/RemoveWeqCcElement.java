@@ -119,7 +119,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 				RemoveCcElement.addNodesToKeepInformation(this, elementsToRemove, nodeToReplacementNode);
 
 		// add constraints that were made possible by adding nodes
-		mWeqCc.reportAllArrayEqualitiesFromWeqGraph(false);
+		mWeqCc.reportAllConstraintsFromWeqGraph(false);
 		// tried (14/08/2018): induces massive (!) performance loss, consequences for precision unclear
 //		mWeqCc.extAndTriangleClosure(true);
 //		mWeqCc.getManager().closeIfNecessary(mWeqCc);

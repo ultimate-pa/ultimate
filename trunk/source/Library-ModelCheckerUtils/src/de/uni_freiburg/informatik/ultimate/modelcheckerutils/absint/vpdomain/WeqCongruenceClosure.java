@@ -183,7 +183,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		} else {
 			mIsClosed = false;
 		}
-		reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
+		reportAllConstraintsFromWeqGraph(omitSanityChecks);
 
 		assert omitSanityChecks || sanityCheck();
 		return true;
@@ -459,76 +459,90 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 
-		/*
-		 * propagation rule:
-		 *  a--(a[q] in L)--(const l), a[i] in exp
-		 *   ==>
-		 *   a[i] in L cup {l}
-		 */
-		{
-			// picking the reps again, because propagations may have changed them
-			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
-			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
-
-			final NODE nonConstantArray;
-			final NODE constantArray;
-			if (array1Rep.isConstantFunction()) {
-				assert !array2Rep.isConstantFunction() : "?";
-				constantArray = array1Rep;
-				nonConstantArray = array2Rep;
-			} else if (array2Rep.isConstantFunction()) {
-				assert !array1Rep.isConstantFunction() : "?";
-				constantArray = array2Rep;
-				nonConstantArray = array1Rep;
-			} else {
-				constantArray = null;
-				nonConstantArray = null;
-			}
-
-
-			// collect nodes of the form a[i] according to the rule that are present currently
-			Collection<NODE> aIs = null;
-			Set<SetConstraint<NODE>> containsConstraint = null;
-			if (nonConstantArray != null) {
-				aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
-
-
-				if (!aIs.isEmpty()) {
-					final NODE sampleAi = aIs.iterator().next();
-					// node that corresponds to a[q] in the rule
-					final NODE aQ = sampleAi.replaceArgument(
-							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
-
-					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
-					assert containsConstraint == null
-							|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint)
-							: "uncaught inconsistent case";
-				}
-			}
-
-			if (constantArray != null && !aIs.isEmpty() && containsConstraint != null) {
-
-				final NODE constantArrayConstant = constantArray.getConstantFunctionValue();
-				assert constantArrayConstant.isLiteral();
-
-				// do propagations
-				for (final NODE aI : aIs) {
-					// construct L cup {l}
-					final Set<SetConstraint<NODE>> newLiteralSet =
-							mManager.getCcManager().getSetConstraintManager().join(
-									mCongruenceClosure.getLiteralSetConstraints(),
-									containsConstraint,
-									Collections.singleton(
-											mManager.getCcManager().getSetConstraintManager()
-												.buildSetConstraint(Collections.singleton(constantArrayConstant))));
-
-					mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
-				}
-			}
-		}
+		constArrayWeqProp(array1, array2, edgeLabel);
 
 //		assert sanityCheck();
 		return true;
+	}
+
+	/**
+	 * propagation rule:
+	 *  a--(a[q] in L)--(const l), a[i] in exp
+	 *   ==>
+	 *   a[i] in L cup {l}
+	 *
+	 * TODO: this rule might be obsolete because of a more general rule involving set constraints and weak equivalences
+	 */
+	private void constArrayWeqProp(final NODE array1, final NODE array2,
+			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel) {
+		// picking the reps again, because propagations may have changed them
+		final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
+		final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
+
+		final NODE nonConstantArray;
+		final NODE constantArray;
+		if (array1Rep.isConstantFunction()) {
+			assert !array2Rep.isConstantFunction() : "?";
+			constantArray = array1Rep;
+			nonConstantArray = array2Rep;
+		} else if (array2Rep.isConstantFunction()) {
+			assert !array1Rep.isConstantFunction() : "?";
+			constantArray = array2Rep;
+			nonConstantArray = array1Rep;
+		} else {
+			constantArray = null;
+			nonConstantArray = null;
+		}
+
+
+		// collect nodes of the form a[i] according to the rule that are present currently
+		Collection<NODE> aIs = null;
+		Set<SetConstraint<NODE>> containsConstraint = null;
+		if (nonConstantArray != null) {
+			aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
+
+
+			if (!aIs.isEmpty()) {
+				final NODE sampleAi = aIs.iterator().next();
+				// node that corresponds to a[q] in the rule
+				//					final NODE aQ = sampleAi.replaceArgument(
+				//							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
+				final NODE aQ = mManager.getEqNodeAndFunctionFactory().getFuncAppElement(
+						nonConstantArray,
+						mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()),
+						true);
+
+				containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
+				assert containsConstraint == null
+						|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint)
+						: "uncaught inconsistent case";
+			}
+		}
+
+		if (constantArray != null && !aIs.isEmpty() && containsConstraint != null) {
+
+			final NODE constantArrayConstant = constantArray.getConstantFunctionValue();
+			assert constantArrayConstant.isLiteral();
+
+			// do propagations
+			for (final NODE aI : aIs) {
+				if (mCongruenceClosure.getEquivalenceClass(aI).stream().anyMatch(n -> n.isLiteral())) {
+					// aI is already equal to a literal -- reporting a set constraint will not strengthen that
+					continue;
+				}
+
+				// construct L cup {l}
+				final Set<SetConstraint<NODE>> newLiteralSet =
+						mManager.getCcManager().getSetConstraintManager().join(
+								mCongruenceClosure.getLiteralSetConstraints(),
+								containsConstraint,
+								Collections.singleton(
+										mManager.getCcManager().getSetConstraintManager()
+										.buildSetConstraint(Collections.singleton(constantArrayConstant))));
+
+				mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
+			}
+		}
 	}
 
 
@@ -858,15 +872,34 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param omitSanityChecks
 	 * @return true iff any constraints were added
 	 */
-	boolean reportAllArrayEqualitiesFromWeqGraph(final boolean omitSanityChecks) {
+	boolean reportAllConstraintsFromWeqGraph(final boolean omitSanityChecks) {
 		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 				assert omitSanityChecks || sanityCheck();
 		}
 
+		if (isInconsistent(false)) {
+			assert sanityCheck();
+			return false;
+		}
+
+
 		boolean madeChanges = false;
-		while (getWeakEquivalenceGraph().hasArrayEqualities()) {
-			final Entry<NODE, NODE> aeq = getWeakEquivalenceGraph().pollArrayEquality();
-			madeChanges |= reportEquality(aeq.getKey(), aeq.getValue(), omitSanityChecks);
+		while (getWeakEquivalenceGraph().hasConstraintsToReport()) {
+			final WeakEquivalenceGraph<NODE, ICongruenceClosure<NODE>>.ConstraintFromWeqGraph aeq =
+					getWeakEquivalenceGraph().pollStoredConstraint();
+			if (aeq.isIsArrayEquality()) {
+				madeChanges |= reportEquality(aeq.getEquality().getFirst(), aeq.getEquality().getSecond(),
+						omitSanityChecks);
+			} else if (aeq.isIsSetConstraint()) {
+				// TODO: reportContainsConstraint does not report if changes have been made --> this overapproximates..
+				madeChanges = true;
+
+				reportContainsConstraint(aeq.getSetConstraint().getFirst(),
+						Collections.singleton(aeq.getSetConstraint().getSecond()));
+			} else {
+				throw new AssertionError();
+			}
+
 			if (isInconsistent(false)) {
 				assert sanityCheck();
 				assert madeChanges;
@@ -958,7 +991,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		boolean madeChanges = false;
 		madeChanges |= getCcWeakEquivalenceGraph().reportChangeInGroundPartialArrangement(reporter);
-		reportAllArrayEqualitiesFromWeqGraph(false);
+		reportAllConstraintsFromWeqGraph(false);
 		assert sanityCheck();
 		return madeChanges;
 	}
@@ -1073,7 +1106,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					 */
 					assert omitSanityChecks || sanityCheck();
 					fatten(false);
-					madeChanges = reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
+					madeChanges = reportAllConstraintsFromWeqGraph(omitSanityChecks);
 				}
 			}
 			thin();
@@ -1082,7 +1115,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			// 2. do floyd-warshall (triangle-rule), report
 			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);
-			if (!getWeakEquivalenceGraph().hasArrayEqualities()) {
+			if (!getWeakEquivalenceGraph().hasConstraintsToReport()) {
 				// status: closed under ext and under triangle --> done
 				assert mManager.checkEquivalence(originalCopy, this);
 
@@ -1090,7 +1123,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				mManager.bmEnd(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 				return;
 			}
-			reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
+			reportAllConstraintsFromWeqGraph(omitSanityChecks);
 		}
 
 	}
@@ -1200,9 +1233,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (projectedLabel.isTautological()) {
 				continue;
 			}
-			// if a disjunct was ground, the the projectToElem(weqvars) operation should have made it "true"
-			assert mDiet != Diet.THIN || !projectedLabel.getDisjuncts().stream().anyMatch(l ->
-				DataStructureUtils.intersection(l.getAllElements(), mManager.getAllWeqNodes()).isEmpty());
+//			// if a disjunct was ground, the the projectToElem(weqvars) operation should have made it "true"
+//			assert mDiet != Diet.THIN || !projectedLabel.getDisjuncts().stream().anyMatch(l ->
+//				DataStructureUtils.intersection(l.getAllElements(), mManager.getAllWeqNodes()).isEmpty());
 
 
 			final NODE bi = mManager.getEqNodeAndFunctionFactory() .getOrConstructFuncAppElement(edge.getKey(), j);
@@ -1491,7 +1524,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		if (result.isInconsistent() && !inplace) {
 //			return mManager.getInconsistentWeqCc(false);
 //		}
-		result.reportAllArrayEqualitiesFromWeqGraph(false);
+		result.reportAllConstraintsFromWeqGraph(false);
 
 //		if (result.isInconsistent() && !inplace) {
 //			return mManager.getInconsistentWeqCc(false);
@@ -1540,7 +1573,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		assert result.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
-		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
+		assert !this.getWeakEquivalenceGraph().hasConstraintsToReport();
 
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
@@ -1743,7 +1776,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @return
 	 */
 	public boolean weqGraphFreeOfArrayEqualities() {
-		if (getWeakEquivalenceGraph().hasArrayEqualities()) {
+		if (getWeakEquivalenceGraph().hasConstraintsToReport()) {
 			assert false;
 			return false;
 		}

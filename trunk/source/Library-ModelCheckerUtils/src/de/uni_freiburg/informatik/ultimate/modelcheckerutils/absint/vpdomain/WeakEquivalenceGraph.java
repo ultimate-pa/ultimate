@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -55,8 +58,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -72,7 +76,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 	private final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> mWeakEquivalenceEdges;
 
-	private final HashRelation<NODE, NODE> mArrayEqualities;
+//	private final HashRelation<NODE, NODE> mArrayEqualities;
+	private final Queue<ConstraintFromWeqGraph> mConstraintsToReport;
+
 
 	/**
 	 * The WeqCongruenceClosure that this weq graph is part of. This may be null, if we use this weq graph as an
@@ -95,7 +101,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			final DISJUNCT emptyDisjunct) {
 		mWeqCc = pArr;
 		mWeakEquivalenceEdges = new HashMap<>();
-		mArrayEqualities = new HashRelation<>();
+//		mArrayEqualities = new HashRelation<>();
+		mConstraintsToReport = new ArrayDeque<>();
 		mWeqCcManager = manager;
 		mEmptyDisjunct = emptyDisjunct;
 		assert sanityCheck();
@@ -112,12 +119,14 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 */
 	private WeakEquivalenceGraph(
 			final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> weakEquivalenceEdges,
-			final HashRelation<NODE, NODE> arrayEqualities,
+//			final HashRelation<NODE, NODE> arrayEqualities,
+			final Queue<ConstraintFromWeqGraph> constraintsToReport,
 			final WeqCcManager<NODE> manager,
 			final DISJUNCT emptyDisjunct) {
 		mWeqCc = null;
 		mWeakEquivalenceEdges = weakEquivalenceEdges;
-		mArrayEqualities = arrayEqualities;
+//		mArrayEqualities = arrayEqualities;
+		mConstraintsToReport = constraintsToReport;
 		mWeqCcManager = manager;
 		mEmptyDisjunct = emptyDisjunct;
 		assert sanityCheck();
@@ -135,7 +144,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		mWeqCc = pArr;
 
-		mArrayEqualities = new HashRelation<>(weakEquivalenceGraph.mArrayEqualities);
+//		mArrayEqualities = new HashRelation<>(weakEquivalenceGraph.mArrayEqualities);
+		mConstraintsToReport = new ArrayDeque<>(weakEquivalenceGraph.mConstraintsToReport);
 		mWeakEquivalenceEdges = new HashMap<>();
 		mWeqCcManager = weakEquivalenceGraph.getWeqCcManager();
 		mEmptyDisjunct = weakEquivalenceGraph.mEmptyDisjunct;
@@ -153,15 +163,22 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert sanityCheck();
 	}
 
-	public  Entry<NODE, NODE> pollArrayEquality() {
-		if (!hasArrayEqualities()) {
+//	public  Entry<NODE, NODE> pollArrayEquality() {
+	public  ConstraintFromWeqGraph pollStoredConstraint() {
+		if (!hasConstraintsToReport()) {
 			throw new IllegalStateException("check hasArrayEqualities before calling this method");
 		}
-		final Entry<NODE, NODE> en = mArrayEqualities.iterator().next();
-		mArrayEqualities.removePair(en.getKey(), en.getValue());
+//		final Entry<NODE, NODE> en = mArrayEqualities.iterator().next();
+//		mArrayEqualities.removePair(en.getKey(), en.getValue());
+//		final WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph c = mConstraintsToReport.remo
+		final WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph c = mConstraintsToReport.poll();
+//		mConstraintsToReport.remove(c);
 		// (this is new:, at 20.09.17)
-		mWeakEquivalenceEdges.remove(new Doubleton<>(en.getKey(), en.getValue()));
-		return en;
+//		mWeakEquivalenceEdges.remove(new Doubleton<>(en.getKey(), en.getValue()));
+		mWeakEquivalenceEdges.remove(c.getRelatedWeqEdge());
+
+//		return en;
+		return c;
 	}
 
 	@Deprecated
@@ -172,16 +189,19 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : weqCopy.entrySet())  {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel =
 					edge.getValue().reportChangeInGroundPartialArrangement(action);
-			if (newLabel.isInconsistent()) {
-				/*
-				 *  edge label became inconsistent
-				 *   <li> report a strong equivalence
-				 *   <li> keep the edge for now, as we may still want to do propagations based on it, it will be removed
-				 *     later
-				 */
-				addArrayEquality(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
-				madeChanges = true;
-			}
+//			if (newLabel.isInconsistent()) {
+//				/*
+//				 *  edge label became inconsistent
+//				 *   <li> report a strong equivalence
+//				 *   <li> keep the edge for now, as we may still want to do propagations based on it, it will be removed
+//				 *     later
+//				 */
+//				addArrayEquality(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
+//				madeChanges = true;
+//			}
+			updateConstraintsToBePropagated(edge.getKey(), edge.getValue());
+			madeChanges = true; // overapprox
+
 			putEdgeLabel(edge.getKey(), newLabel);
 			// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
 			madeChanges |= !mWeqCcManager.isEquivalentICc(edge.getValue(), newLabel);
@@ -394,8 +414,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		return result;
 	}
 
-	boolean hasArrayEqualities() {
-		return !mArrayEqualities.isEmpty();
+	boolean hasConstraintsToReport() {
+//		return !mArrayEqualities.isEmpty();
+		return !mConstraintsToReport.isEmpty();
 	}
 
 	/**
@@ -440,7 +461,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final boolean aToBVanishesOnProjectOfB = mayVanishOnProjectOfArray(aToB, b);
 		final boolean bToCVanishesOnProjectOfB = mayVanishOnProjectOfArray(bToC, b);
 
-
+//		if (aToBVanishesOnProjectOfB && bToCVanishesOnProjectOfB) {
+//			throw new AssertionError("check this (can happen, but want to know when..)");
+//		}
 
 		if (aToBVanishesOnProjectOfB) {
 			// replace b[q] by a[q] in aToB
@@ -759,18 +782,31 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		if (inputLabelCopy.isInconsistent()) {
 			putEdgeLabel(sourceAndTarget, inputLabelCopy);
-			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+//			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+			addSetConstraintToReport(
+					new ConstraintFromWeqGraph(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement()));
 			return oldLabel == null || !oldLabel.isInconsistent();
 		}
 
+
+
+
 		if (oldLabel == null || oldLabel.isTautological()) {
+
+			// this must happen before thinning!
+			updateConstraintsToBePropagated(sourceAndTarget, inputLabelCopy);
+
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel;
 			if (mWeqCcManager.getSettings().isMeetWithGpaOnReportWeq()) {
 				inputLabelCopy.meetWithCcGpa();
-				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+//				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+				newLabel = inputLabelCopy.projectToElements(
+						new HashSet<>(mWeqCcManager.getAllWeqVarsNodeForFunction(sourceAndTarget.getOneElement())), false);
 			} else if (mWeqCc.getDiet() == Diet.THIN) {
 				// if the weq graph is thin, all labels must only have constraints on weqvars
-				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+//				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+				newLabel = inputLabelCopy.projectToElements(
+						new HashSet<>(mWeqCcManager.getAllWeqVarsNodeForFunction(sourceAndTarget.getOneElement())), false);
 			} else {
 				// we are in "fat" mode so the labels may put constraints on any NODE
 				newLabel = inputLabelCopy;
@@ -812,20 +848,47 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 
 
-		// inconsistency check
-		if (strengthenedEdgeLabel.isInconsistent()) {
-			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
-		}
+		// this must happen before thinning!
+		updateConstraintsToBePropagated(sourceAndTarget, strengthenedEdgeLabel);
 
 		if (mWeqCc.mDiet == Diet.THIN) {
-			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+			//strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(
+						new HashSet<>(mWeqCcManager.getAllWeqVarsNodeForFunction(sourceAndTarget.getOneElement())), false);
 		}
+
+		if (mWeqCcManager.isStrongerThan(oldLabel, strengthenedEdgeLabel)) {
+			// nothing to do
+			return false;
+		}
+
 
 		assert strengthenedEdgeLabel.sanityCheck();
 		// replace the edge label by the strengthened version
 		putEdgeLabel(sourceAndTarget, strengthenedEdgeLabel);
 		assert omitSanityChecks || sanityCheck();
 		return true;
+	}
+
+	private void updateConstraintsToBePropagated(final Doubleton<NODE> sourceAndTarget,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel) {
+		if (strengthenedEdgeLabel.isInconsistent()) {
+//			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+			addSetConstraintToReport(
+					new ConstraintFromWeqGraph(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement()));
+		}
+
+		if (sourceAndTarget.getOneElement().getSort().isArraySort()) {
+			// TODO do we want this??
+			return;
+		}
+
+		final Collection<WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph> impliedSetConstraints =
+				checkEdgeForImpliedSetConstraints(sourceAndTarget, strengthenedEdgeLabel);
+//		impliedSetConstraints.forEach(isc -> addSetConstraintToReport(isc));
+		for (final WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph isc : impliedSetConstraints) {
+			addSetConstraintToReport(isc);
+		}
 	}
 
 	public boolean reportWeakEquivalence(final NODE array1, final NODE array2,
@@ -883,19 +946,23 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 *
 	 * @param originalEdgeLabel
 	 * @param prefix1
-	 * @param weqVarsForThisEdge list of weqVarNodes that may appear in the given label contents (not all must appear),
-	 *     is computed from the source or target of the edge the label contents belong to
+	 * @param weqVarsForOriginalLabel list of weqVarNodes that may appear in the _input_ label contents
+	 *    (not all must appear)
 	 * @return
 	 */
 	public WeakEquivalenceEdgeLabel<NODE, DISJUNCT> projectEdgeLabelToPoint(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelContents,
-			final NODE value, final List<NODE> weqVarsForThisEdge) {
+			final NODE value, final List<NODE> weqVarsForOriginalLabel) {
 		assert !mIsFrozen;
 		assert assertFrozenInsideOut();
 
 		assert labelContents.getWeqGraph() == this;
 
-		final NODE firstDimWeqVarNode = weqVarsForThisEdge.get(0);
+		final NODE firstDimWeqVarNode = weqVarsForOriginalLabel.get(0);
+
+		final List<NODE> weqVarsForNewLabel = weqVarsForOriginalLabel.size() > 1
+				? weqVarsForOriginalLabel.subList(0, weqVarsForOriginalLabel.size() - 2)
+						: Collections.emptyList();
 
 		final DISJUNCT qEqualsICc = mWeqCcManager.getSingleEqualityCc(firstDimWeqVarNode, value, true, mEmptyDisjunct);
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> qEqualsI = mWeqCcManager.getSingletonEdgeLabel(this, qEqualsICc);
@@ -913,8 +980,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		meet.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());
 		meet.projectWeqVarNode(firstDimWeqVarNode);
 
-		meet.inOrDecreaseWeqVarIndices(-1, weqVarsForThisEdge);
-		assert !meet.getAppearingNodes().contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "double "
+		meet.inOrDecreaseWeqVarIndices(-1, weqVarsForOriginalLabel);
+		assert !meet.getAppearingNodes().contains(weqVarsForOriginalLabel.get(weqVarsForOriginalLabel.size() - 1)) : "double "
 				+ "check the condition if this assertion fails, but as we decreased all weq vars, the last one should "
 				+ "not be present in the result, right?..";
 		assert !meet.getDisjuncts().stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
@@ -924,12 +991,13 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
 
 		if (mWeqCc.mDiet == Diet.THIN) {
-			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+//			result = meet.projectToElements(new HashSet<>(weqVarsForOriginalLabel), false);
+			result = meet.projectToElements(new HashSet<>(weqVarsForNewLabel), false);
 		} else {
 			result = meet;
 		}
 
-		assert mWeqCc.mDiet != Diet.THIN || result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
+		assert mWeqCc.mDiet != Diet.THIN || result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForNewLabel));
 
 		assert result.sanityCheck();
 		return result;
@@ -1027,19 +1095,34 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 
 		// we can remove array equalities between the nodes that are merged now anyways..
-		mArrayEqualities.removePair(node1OldRep, node2OldRep);
-		mArrayEqualities.removePair(node2OldRep, node1OldRep);
+//		mArrayEqualities.removePair(node1OldRep, node2OldRep);
+//		mArrayEqualities.removePair(node2OldRep, node1OldRep);
+		// remove constraints stored for propagation, if something stronger has been reported anyways
+		mConstraintsToReport.removeIf(ctr -> ctr.isEqualityBetween(node1OldRep, node2OldRep)
+				|| ctr.vanishesOnMergeOf(node1OldRep, node2OldRep));
 
 		if (node1OldRep == newRep) {
-			mArrayEqualities.replaceDomainElement(node2OldRep, newRep);
-			mArrayEqualities.replaceRangeElement(node2OldRep, newRep);
+//			mArrayEqualities.replaceDomainElement(node2OldRep, newRep);
+//			mArrayEqualities.replaceRangeElement(node2OldRep, newRep);
+			final ArrayDeque<ConstraintFromWeqGraph>	copy = new ArrayDeque<>(mConstraintsToReport);
+			mConstraintsToReport.clear();
+			while (!copy.isEmpty()) {
+				final WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph current = copy.poll();
+				mConstraintsToReport.add(current.replaceNode(node2OldRep, newRep));
+			}
 		} else {
 			assert node2OldRep == newRep;
-			mArrayEqualities.replaceDomainElement(node1OldRep, newRep);
-			mArrayEqualities.replaceRangeElement(node1OldRep, newRep);
+			final ArrayDeque<ConstraintFromWeqGraph> copy = new ArrayDeque<>(mConstraintsToReport);
+			mConstraintsToReport.clear();
+			while (!copy.isEmpty()) {
+				final WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph current = copy.poll();
+				mConstraintsToReport.add(current.replaceNode(node1OldRep, newRep));
+			}
+//			mArrayEqualities.replaceDomainElement(node1OldRep, newRep);
+//			mArrayEqualities.replaceRangeElement(node1OldRep, newRep);
 		}
-		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
-			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
+//		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
+//			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
 	}
 
 	public Integer getNumberOfEdgesStatistic() {
@@ -1100,18 +1183,27 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert !mWeqCc.isInconsistent(false);
 		assert mWeqCc.getDiet() == Diet.TRANSITORY_THIN_TO_CCFAT || mWeqCc.getDiet() == Diet.TRANSITORY_CCREFATTEN;
 
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edgeLabel : getWeqEdgesEntrySet()) {
-			edgeLabel.getValue().meetWithCcGpa();
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en : getWeqEdgesEntrySet()) {
+			en.getValue().meetWithCcGpa();
 
-			if (edgeLabel.getValue().isInconsistent()) {
-				addArrayEquality(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
-			}
+//			if (en.getValue().isInconsistent()) {
+////				addArrayEquality(en.getKey().getOneElement(), en.getKey().getOtherElement());
+//				addSetConstraintToReport(
+//						new ConstraintFromWeqGraph(en.getKey().getOneElement(), en.getKey().getOtherElement());
+//			}
+			updateConstraintsToBePropagated(en.getKey(), en.getValue());
 		}
 		return (WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>>) this;
 	}
 
-	private void addArrayEquality(final NODE oneElement, final NODE otherElement) {
-		mArrayEqualities.addPair(oneElement, otherElement);
+//	private void addArrayEquality(final NODE oneElement, final NODE otherElement) {
+////		mArrayEqualities.addPair(oneElement, otherElement);
+//		mConstraintsToReport.add(new ConstraintFromWeqGraph(oneElement, otherElement));
+//	}
+
+//	private void addSetConstraintToReport(final NODE n, final SetConstraint<NODE> sc, final NODE src, final NODE trg) {
+	private void addSetConstraintToReport(final ConstraintFromWeqGraph c) {
+		mConstraintsToReport.add(c);
 	}
 
 	public boolean assertElementIsFullyRemoved(final NODE elem) {
@@ -1142,7 +1234,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	}
 
 	public void freeze() {
-		assert !hasArrayEqualities() : "report array equalities before freezing";
+		assert !hasConstraintsToReport() : "report array equalities before freezing";
 
 		// set the flags
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : getWeqEdgesEntrySet()) {
@@ -1340,8 +1432,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			final NODE source = edge.getKey().getOneElement();
 			final NODE target = edge.getKey().getOtherElement();
 			if (edge.getValue().isInconsistent()
-					&& !mArrayEqualities.containsPair(source, target)
-					&& !mArrayEqualities.containsPair(target, source)) {
+					&& !mConstraintsToReport.stream().anyMatch(
+							ctr -> ctr.isIsArrayEquality() && ctr.isEqualityBetween(source, target))) {
+//					&& !mArrayEqualities.containsPair(source, target)
+//					&& !mArrayEqualities.containsPair(target, source)) {
 				assert false : "lost track of an inconsistent weq edge";
 				return false;
 			}
@@ -1460,4 +1554,187 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 		return result;
 	}
+
+	/**
+	 * Rule:
+	 *  a[i] -- a[i] in L -- b[j]
+	 *   ==> a[i] in L U {b[j]}
+	 *
+	 *
+	 * @param sourceAndTarget
+	 * @param edgeLabel
+	 * @return
+	 */
+	private Collection<ConstraintFromWeqGraph> checkEdgeForImpliedSetConstraints(final Doubleton<NODE> sourceAndTarget,
+				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> edgeLabel) {
+		if (!sourceAndTarget.getOneElement().isFunctionApplication()
+				&& !sourceAndTarget.getOtherElement().isFunctionApplication()) {
+			return Collections.emptyList();
+		}
+		if (edgeLabel.isTautological()) {
+			return Collections.emptyList();
+		}
+
+		final Collection<WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph> result = new ArrayList<>();
+
+		final NODE src = sourceAndTarget.getOneElement();
+		final NODE trg = sourceAndTarget.getOtherElement();
+
+
+		final SetConstraintManager<NODE> scMan = mWeqCcManager.getCcManager().getSetConstraintManager();
+
+		final NODE oneNode = src;
+		final NODE otherNode = trg;
+
+		collectImpliedSetconstraints(scMan, result, edgeLabel, oneNode, otherNode);
+		collectImpliedSetconstraints(scMan, result, edgeLabel, otherNode, oneNode);
+
+		return result;
+	}
+
+	private void collectImpliedSetconstraints(final SetConstraintManager<NODE> scMan,
+			final Collection<WeakEquivalenceGraph<NODE, DISJUNCT>.ConstraintFromWeqGraph> result,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> edgeLabel, final NODE oneNode, final NODE otherNode) {
+		if (!oneNode.isFunctionApplication()) {
+			return;
+		}
+		final Set<SetConstraint<NODE>> containsConstraint = edgeLabel.getContainsConstraintForElement(oneNode);
+		if (containsConstraint == null) {
+			return;
+		}
+		for (final SetConstraint<NODE> sc : containsConstraint) {
+			final Set<NODE> newLiterals = new HashSet<>(sc.getLiterals());
+			final Set<NODE> newNonLiterals = new HashSet<>(sc.getNonLiterals());
+			if (otherNode.isLiteral()) {
+				newLiterals.add(otherNode);
+			} else {
+				newNonLiterals.add(otherNode);
+			}
+
+			final SetConstraint<NODE> newSc = scMan.buildSetConstraint(newLiterals, newNonLiterals);
+			result.add(new ConstraintFromWeqGraph(oneNode, newSc, oneNode, otherNode));
+		}
+	}
+
+	class ConstraintFromWeqGraph {
+
+		private final boolean mIsArrayEquality;
+		private final boolean mIsSetConstraint;
+
+		private final Pair<NODE, SetConstraint<NODE>> mSetConstraint;
+		private final Pair<NODE, NODE> mEquality;
+
+		/**
+		 * Edge that implies the constraint (can be deleted once it has been reported)
+		 */
+		private final Doubleton<NODE> mRelatedEdge;
+
+		ConstraintFromWeqGraph(final NODE n, final SetConstraint<NODE> sc, final NODE source, final NODE target) {
+			mIsArrayEquality = false;
+			mIsSetConstraint = true;
+			mSetConstraint = new Pair<>(n, sc);
+			mEquality = null;
+			mRelatedEdge = new Doubleton<>(source, target);
+		}
+
+		ConstraintFromWeqGraph(final NODE one, final NODE other) {
+			mIsArrayEquality = true;
+			mIsSetConstraint = false;
+			mSetConstraint = null;
+			mEquality = new Pair<>(one, other);
+			mRelatedEdge = new Doubleton<>(one, other);
+		}
+
+		public ConstraintFromWeqGraph replaceNode(final NODE replacee, final NODE replacer) {
+			if (mIsArrayEquality) {
+				final NODE n1 = mEquality.getFirst();
+				final NODE n2 = mEquality.getSecond();
+				return new ConstraintFromWeqGraph(n1.equals(replacee) ? replacer : n1,
+						n2.equals(replacee) ? replacer : n2);
+			} else if (mIsSetConstraint) {
+				final NODE n = mSetConstraint.getFirst();
+				final SetConstraint<NODE> sc = mSetConstraint.getSecond();
+				final SetConstraintManager<NODE> scMan = mWeqCcManager.getCcManager().getSetConstraintManager();
+				final NODE src = mRelatedEdge.getOneElement();
+				final NODE trg = mRelatedEdge.getOtherElement();
+				return new ConstraintFromWeqGraph(n.equals(replacee) ? replacer : n,
+						scMan.transformElements(sc, el -> el.equals(replacee) ? replacer : el),
+						src.equals(replacee) ? replacer : src,
+						trg.equals(replacee) ? replacer : trg);
+			} else {
+				throw new AssertionError();
+			}
+		}
+
+		public Doubleton<NODE> getRelatedWeqEdge() {
+			return mRelatedEdge;
+		}
+
+		public boolean isIsArrayEquality() {
+			return mIsArrayEquality;
+		}
+
+		public boolean isIsSetConstraint() {
+			return mIsSetConstraint;
+		}
+
+		public Pair<NODE, SetConstraint<NODE>> getSetConstraint() {
+			return mSetConstraint;
+		}
+
+		public Pair<NODE, NODE> getEquality() {
+			return mEquality;
+		}
+
+		public boolean isEqualityBetween(final NODE n1, final NODE n2) {
+			if (!isIsArrayEquality()) {
+				return false;
+			}
+			if (mEquality.getFirst().equals(n1) && mEquality.getSecond().equals(n2)) {
+				return true;
+			}
+			if (mEquality.getSecond().equals(n1) && mEquality.getFirst().equals(n2)) {
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * if we have a set constraint of the form x in {y, ...}, and we merge x and y, the constraint vanishes
+		 * (new equality constraint is stronger)
+		 */
+		public boolean vanishesOnMergeOf(final NODE n1, final NODE n2) {
+			if (!isIsSetConstraint()) {
+				return false;
+			}
+			if (mSetConstraint.getFirst().equals(n1) && mSetConstraint.getSecond().containsElement(n2)) {
+				return true;
+			}
+			if (mSetConstraint.getFirst().equals(n2) && mSetConstraint.getSecond().containsElement(n1)) {
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+
+			if (mIsArrayEquality) {
+				sb.append("equality: ");
+				sb.append(mEquality);
+			} else if (mIsSetConstraint) {
+				sb.append("set constraint: ");
+				sb.append(mSetConstraint.getFirst());
+				sb.append(" in ");
+				sb.append(mSetConstraint.getSecond());
+			} else {
+				throw new AssertionError();
+			}
+
+			return sb.toString();
+		}
+	}
 }
+
+
