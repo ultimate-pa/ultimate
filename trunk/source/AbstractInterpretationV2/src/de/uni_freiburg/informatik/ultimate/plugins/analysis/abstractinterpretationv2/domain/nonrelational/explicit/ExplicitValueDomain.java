@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
@@ -97,8 +98,10 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			mPostOperator = new ExplicitValuePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
-					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
+			final NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> stmtProc =
+					new ExplicitValueStatementProcessor(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates);
+			mPostOperator = new ExplicitValuePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, stmtProc,
+					maxParallelStates, mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
 		return mPostOperator;
 	}

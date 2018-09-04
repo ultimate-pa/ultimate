@@ -26,21 +26,48 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 
-public class ExplicitValuePostOperator extends NonrelationalPostOperator<ExplicitValueState, BaseExplicitValueValue> {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ */
+public class ExplicitValueStatementProcessor
+		extends NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> {
 
-	protected ExplicitValuePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable,
-			final NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> statementProcessor,
-			final int parallelStates, final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolki) {
-		super(logger, symbolTable, bpl2SmtSymbolTable, statementProcessor, parallelStates, boogie2Smt, cfgSmtToolki);
+	protected ExplicitValueStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
+		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
 	}
 
+	@Override
+	protected IEvaluatorFactory<BaseExplicitValueValue, ExplicitValueState>
+			createEvaluatorFactory(final int maxParallelStates) {
+
+		final EvaluatorFactory.Function<String, BaseExplicitValueValue> valueExpressionEvaluatorCreator =
+				(value, type) -> new ExplicitValueValue(Rational.valueOf(new BigInteger(value), BigInteger.ONE));
+		final INonrelationalValueFactory<BaseExplicitValueValue> valueFac =
+				new INonrelationalValueFactory<BaseExplicitValueValue>() {
+
+					@Override
+					public BaseExplicitValueValue createTopValue() {
+						return ExplicitValueTop.DEFAULT;
+					}
+
+					@Override
+					public BaseExplicitValueValue createBottomValue() {
+						return ExplicitValueBottom.DEFAULT;
+					}
+				};
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, valueFac, valueExpressionEvaluatorCreator);
+	}
 }

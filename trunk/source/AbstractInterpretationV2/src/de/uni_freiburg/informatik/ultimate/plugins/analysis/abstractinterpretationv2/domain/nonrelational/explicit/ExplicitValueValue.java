@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
 /**
@@ -114,8 +115,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue subtract(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, evv -> new ExplicitValueValue(mValue.sub(evv.mValue)));
 	}
 
 	@Override
@@ -130,131 +130,122 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue divideInteger(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: Ensure that is euclidedan
+		return nonCommutativeOpCanonical(other, evv -> new ExplicitValueValue(mValue.div(evv.mValue)));
 	}
 
 	@Override
 	public BaseExplicitValueValue divideReal(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, evv -> new ExplicitValueValue(mValue.div(evv.mValue)));
 	}
 
 	@Override
 	public BaseExplicitValueValue modulo(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Rational needs modulo support");
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, this::greaterThan);
+	}
+
+	public BaseExplicitValueValue greaterThan(final ExplicitValueValue other) {
+		// TODO: [a, b] >= [c, d] results in [max(a, c), b]
+		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public BooleanValue compareEquality(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.equals(evv.mValue) ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
 	public BooleanValue compareInequality(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.equals(evv.mValue) ? BooleanValue.FALSE : BooleanValue.TRUE);
 	}
 
 	@Override
 	public BooleanValue isGreaterThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.compareTo(evv.mValue) > 0 ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
 	public BaseExplicitValueValue greaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public BooleanValue isGreaterOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.compareTo(evv.mValue) >= 0 ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
 	public BaseExplicitValueValue lessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public BooleanValue isLessThan(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.compareTo(evv.mValue) < 0 ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
 	public BaseExplicitValueValue lessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
 	}
 
 	@Override
 	public BooleanValue isLessOrEqual(final BaseExplicitValueValue other) {
-		// TODO Auto-generated method stub
-		return null;
+		return nonCommutativeOpCanonicalBoolean(other,
+				evv -> mValue.compareTo(evv.mValue) <= 0 ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseModulo(final BaseExplicitValueValue referenceValue,
 			final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseEquality(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return referenceValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseLessThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterOrEqual(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseGreaterThan(final BaseExplicitValueValue oldValue, final boolean isLeft) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public BaseExplicitValueValue inverseNotEqual(final BaseExplicitValueValue oldValue,
 			final BaseExplicitValueValue referenceValue) {
-		// TODO Auto-generated method stub
-		return null;
+		return oldValue;
 	}
 
 	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term variable) {
-		// TODO Auto-generated method stub
-		return null;
+		return script.term("=", variable, SmtUtils.rational2Term(script, mValue, sort));
 	}
 
 	private <T> T commutativeOp(final BaseExplicitValueValue other, final Function<BaseExplicitValueValue, T> distFun,
@@ -264,6 +255,42 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 			return fun.apply(evv);
 		}
 		return distFun.apply(this);
+	}
+
+	private <T> T nonCommutativeOp(final BaseExplicitValueValue other, final Function<BaseExplicitValueValue, T> botFun,
+			final Function<BaseExplicitValueValue, T> topFun, final Function<ExplicitValueValue, T> fun) {
+		if (other.isTop()) {
+			return topFun.apply(other);
+		}
+		if (other.isBottom()) {
+			return botFun.apply(other);
+		}
+		final ExplicitValueValue evv = (ExplicitValueValue) other;
+		return fun.apply(evv);
+	}
+
+	private BaseExplicitValueValue nonCommutativeOpCanonical(final BaseExplicitValueValue other,
+			final Function<ExplicitValueValue, BaseExplicitValueValue> fun) {
+		if (other.isTop()) {
+			return ExplicitValueTop.DEFAULT;
+		}
+		if (other.isBottom()) {
+			return ExplicitValueBottom.DEFAULT;
+		}
+		final ExplicitValueValue evv = (ExplicitValueValue) other;
+		return fun.apply(evv);
+	}
+
+	private BooleanValue nonCommutativeOpCanonicalBoolean(final BaseExplicitValueValue other,
+			final Function<ExplicitValueValue, BooleanValue> fun) {
+		if (other.isTop()) {
+			return BooleanValue.TOP;
+		}
+		if (other.isBottom()) {
+			return BooleanValue.BOTTOM;
+		}
+		final ExplicitValueValue evv = (ExplicitValueValue) other;
+		return fun.apply(evv);
 	}
 
 }
