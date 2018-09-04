@@ -684,7 +684,8 @@ public class StandardFunctionHandler {
 		final Expression mutexIsUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				mutexArrayAtIndex, mMemoryHandler.getBooleanArrayHelper().constructValue(false));
 		final AssumeStatement assumeMutexUnlocked = new AssumeStatement(loc, mutexIsUnlocked);
-		final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, arg, true);
+		final Expression index = arg.getLrValue().getValue();
+		final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, true);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(arg);
 		erb.addStatement(assumeMutexUnlocked);

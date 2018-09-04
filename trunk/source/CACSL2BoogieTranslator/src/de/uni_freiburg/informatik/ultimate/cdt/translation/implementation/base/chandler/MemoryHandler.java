@@ -2895,9 +2895,8 @@ public class MemoryHandler {
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
-	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final ExpressionResult arg,
+	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
 			final boolean mutexLocked) {
-		final Expression index = arg.getLrValue().getValue();
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 				(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
