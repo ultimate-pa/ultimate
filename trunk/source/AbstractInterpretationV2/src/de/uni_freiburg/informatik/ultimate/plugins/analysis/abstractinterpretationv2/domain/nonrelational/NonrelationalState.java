@@ -804,6 +804,20 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert other != null;
 		assert hasSameVariables(other);
 
+		// Speed optimizations
+		if (other == this) {
+			return getThis();
+		}
+
+		if (isBottom()) {
+			return getThis();
+		}
+
+		if (other.isBottom()) {
+			return other;
+		}
+		// End of optimizations
+
 		final STATE returnState = createCopy();
 
 		for (final Entry<IProgramVarOrConst, V> entry : getVar2ValueNonrelational().entrySet()) {
@@ -831,11 +845,22 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public STATE union(final STATE other) {
 		assert other != null;
+		assert hasSameVariables(other);
 
-		if (!hasSameVariables(other)) {
-			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+		// Speed optimizations
+		if (other == this) {
+			return getThis();
 		}
+
+		if (isBottom()) {
+			return other;
+		}
+
+		if (other.isBottom()) {
+			return getThis();
+		}
+
+		// End of speed optimizations
 
 		final STATE returnState = createCopy();
 
