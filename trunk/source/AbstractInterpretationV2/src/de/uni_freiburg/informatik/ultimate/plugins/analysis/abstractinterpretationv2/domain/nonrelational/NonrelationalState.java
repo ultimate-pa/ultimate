@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 
@@ -135,12 +134,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	}
 
 	/**
-	 * Returns the {@link IntervalDomainValue} of the given variable. If the variable does not have a value, an
+	 * Returns the {@link INonrelationalValue} of the given variable. If the variable does not have a value, an
 	 * {@link AssertionError} is thrown.
 	 *
 	 * @param variableName
-	 *            The name of the variable to get the {@link IntervalDomainValue} for.
-	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
+	 *            The name of the variable to get the {@link INonrelationalValue} for.
+	 * @return A new {@link INonrelationalValue} containing the {@link INonrelationalValue} of the given variable.
 	 */
 	public V getValue(final IProgramVarOrConst variableName) {
 		final V val = getVar2ValueNonrelational().get(variableName);
