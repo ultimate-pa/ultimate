@@ -1419,14 +1419,16 @@ public class MemoryHandler {
 	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr,
 			final Expression index, final Expression newValue) {
 		final Expression[] singletonIndex = new Expression[] { index };
-		// return new ArrayStoreExpression(loc, arr, singletonIndex, newValue);
 		return ExpressionFactory.constructArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
 
 	/**
-	 * Construct a Boogie statement of the following form. arrayIdentifier[index] := value; TODO 2017-01-07 Matthias:
-	 * This method is not directly related to the MemoryHandler and should probably moved to a some class for utility
-	 * functions.
+	 * Construct a Boogie statement of the following form. arrayIdentifier[index] :=
+	 * value; TODO 2017-01-07 Matthias: This method is not directly related to the
+	 * MemoryHandler and should probably moved to a some class for utility
+	 * functions. But {@link MemoryHandler#constructOneDimensionalArrayAccess} and
+	 * {@link MemoryHandler#constructOneDimensionalArrayStore} should be moved to
+	 * the same class.
 	 */
 	public static AssignmentStatement constructOneDimensionalArrayUpdate(final ILocation loc, final Expression index,
 			final VariableLHS arrayLhs, final Expression value) {
