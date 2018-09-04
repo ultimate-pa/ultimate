@@ -715,9 +715,8 @@ public class PostProcessor {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
-				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(main,
-						translationUnitLoc, zero, memoryHandler.getValidArrayLhs(translationUnitLoc),
-						literalThatRepresentsFalse);
+				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc,
+						zero, memoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
 
 				// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }

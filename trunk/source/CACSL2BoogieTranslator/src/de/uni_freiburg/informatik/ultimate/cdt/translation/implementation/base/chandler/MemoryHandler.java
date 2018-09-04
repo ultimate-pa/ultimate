@@ -1428,8 +1428,8 @@ public class MemoryHandler {
 	 * This method is not directly related to the MemoryHandler and should probably moved to a some class for utility
 	 * functions.
 	 */
-	public static AssignmentStatement constructOneDimensionalArrayUpdate(final Dispatcher main, final ILocation loc,
-			final Expression index, final VariableLHS arrayLhs, final Expression value) {
+	public static AssignmentStatement constructOneDimensionalArrayUpdate(final ILocation loc, final Expression index,
+			final VariableLHS arrayLhs, final Expression value) {
 		final LeftHandSide[] lhs = new LeftHandSide[] {
 				ExpressionFactory.constructNestedArrayLHS(loc, arrayLhs, new Expression[] { index }) };
 		final Expression[] rhs = new Expression[] { value };
@@ -2882,7 +2882,7 @@ public class MemoryHandler {
 
 		final VariableLHS array = dhp.getVariableLHS();
 		final AssignmentStatement statement =
-				constructOneDimensionalArrayUpdate(main, loc, pointer, array, possiblyExtendedValueExpr);
+				constructOneDimensionalArrayUpdate(loc, pointer, array, possiblyExtendedValueExpr);
 		return statement;
 	}
 
@@ -2895,13 +2895,13 @@ public class MemoryHandler {
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
-	public AssignmentStatement constructMutexArrayAssignment(final Dispatcher main, final ILocation loc,
-			final ExpressionResult arg, final boolean mutexLocked) {
+	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final ExpressionResult arg,
+			final boolean mutexLocked) {
 		final Expression index = arg.getLrValue().getValue();
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 				(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
-		final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(main, loc, index,
+		final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
 						new DeclarationInformation(StorageClass.GLOBAL, null)),
 				getBooleanArrayHelper().constructValue(mutexLocked));
