@@ -128,7 +128,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -4639,19 +4638,8 @@ public class CHandler implements ICHandler {
 	 * @param type
 	 * @return
 	 */
-	Boolean isNullPointerEquivalent(final LRValue value, final CType type) {
-		if (type.isIntegerType() && value.getValue() instanceof IntegerLiteral) {
-			final IntegerLiteral intLit = (IntegerLiteral) value.getValue();
-			if (intLit.getValue() == "0") {
-				return true;
-			}
-		} else if (type.isIntegerType() && value.getValue() instanceof BitvecLiteral) {
-			final BitvecLiteral bitvecLit = (BitvecLiteral) value.getValue();
-			if (bitvecLit.getValue() == "0") {
-				return true;
-			}
-		}
-		return false;
+	Boolean isNullPointerEquivalent(final RValue value, final CType type) {
+		return BigInteger.ZERO.equals(mExpressionTranslation.extractIntegerValue(value, null));
 	}
 
 	/**
@@ -4673,12 +4661,12 @@ public class CHandler implements ICHandler {
 
 		// Convert integer with a value of 0 to a Null pointer if necessary
 		if (lType instanceof CPrimitive && rType instanceof CPointer
-				&& isNullPointerEquivalent(left.getLrValue(), lType)) {
+				&& isNullPointerEquivalent((RValue) left.getLrValue(), lType)) {
 			// FIXME: the following is a workaround for the null pointer
 			convert(loc, left, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		} else if (lType instanceof CPointer && rType instanceof CPrimitive
-				&& isNullPointerEquivalent(right.getLrValue(), rType)) {
+				&& isNullPointerEquivalent((RValue) right.getLrValue(), rType)) {
 			// FIXME: the following is a workaround for the null pointer
 			convert(loc, right, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			rType = right.getLrValue().getCType().getUnderlyingType();
