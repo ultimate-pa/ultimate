@@ -671,7 +671,7 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult arg = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
 
