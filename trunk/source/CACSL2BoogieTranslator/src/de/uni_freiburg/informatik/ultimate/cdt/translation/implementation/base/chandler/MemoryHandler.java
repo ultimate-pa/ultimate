@@ -2730,6 +2730,11 @@ public class MemoryHandler {
 						BoogieType.TYPE_INT));
 			case Ultimate_MemInit:
 				break;
+			case Ultimate_Pthreads_Mutex:
+				return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
+						new BoogieType[] { handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerType() },
+						handlerHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(handlerHandler
+								.getMemoryHandler().getBooleanArrayHelper().constructBoolReplacementType())));
 			case Ultimate_Valid:
 				return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
 						new BoogieType[] { handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
@@ -2757,6 +2762,8 @@ public class MemoryHandler {
 		C_Memset(SFO.C_MEMSET),
 
 		Ultimate_Length(SFO.LENGTH),
+
+		Ultimate_Pthreads_Mutex("#PthreadsMutex"),
 
 		Ultimate_Valid(SFO.VALID);
 

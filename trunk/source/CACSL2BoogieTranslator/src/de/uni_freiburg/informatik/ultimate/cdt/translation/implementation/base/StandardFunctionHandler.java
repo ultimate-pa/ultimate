@@ -182,6 +182,7 @@ public class StandardFunctionHandler {
 			/** functions of pthread library **/
 			fill(map, "pthread_create", this::handleFork);
 			fill(map, "pthread_join", this::handleJoin);
+			fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
 		} else {
 			fill(map, "pthread_create", die);
 		}
@@ -659,6 +660,11 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder build = new ExpressionResultBuilder();
 		return build.build();
+	}
+
+	private Result handlePthread_mutex_lock(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
