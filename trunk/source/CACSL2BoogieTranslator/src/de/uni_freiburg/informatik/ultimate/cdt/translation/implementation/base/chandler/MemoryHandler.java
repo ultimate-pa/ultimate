@@ -387,6 +387,10 @@ public class MemoryHandler {
 			// mProcedureManager.addCallGraphNode(MemoryModelDeclarations.C_Memmove.getName());
 			// mProcedureManager.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memmove.getName());
 		}
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.Ultimate_Pthreads_Mutex)) {
+			decl.add(declarePThreadsMutexArray(tuLoc));
+		}
 		assert assertContainsNodeProcedureDeclarations(decl) : "add procedure declarations via function handler!";
 		return decl;
 	}
@@ -1079,12 +1083,18 @@ public class MemoryHandler {
 	}
 
 	private VariableDeclaration constructMemoryArrayDeclaration(final ILocation loc, final String typeName,
-			final ASTType astType) {
+			final ASTType valueType) {
+		final String arrayName = SFO.MEMORY + "_" + typeName;
+		return constructDeclOfPointerIndexedArray(loc, valueType, arrayName);
+	}
+
+	private VariableDeclaration constructDeclOfPointerIndexedArray(final ILocation loc, final ASTType valueType,
+			final String arrayName) {
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
-				new BoogieType[] { mTypeHandler.getBoogiePointerType() }, (BoogieType) astType.getBoogieType());
+				new BoogieType[] { mTypeHandler.getBoogiePointerType() }, (BoogieType) valueType.getBoogieType());
 		final ASTType memoryArrayType = new ArrayType(loc, boogieType, new String[0],
-				new ASTType[] { mTypeHandler.constructPointerType(loc) }, astType);
-		final VarList varList = new VarList(loc, new String[] { SFO.MEMORY + "_" + typeName }, memoryArrayType);
+				new ASTType[] { mTypeHandler.constructPointerType(loc) }, valueType);
+		final VarList varList = new VarList(loc, new String[] { arrayName }, memoryArrayType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
@@ -1118,6 +1128,11 @@ public class MemoryHandler {
 
 		}
 		return result;
+	}
+
+	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
+		final String arrayName = SFO.ULTIMATE_PTHREADS_MUTEX;
+		return constructDeclOfPointerIndexedArray(loc, mBooleanArrayHelper.constructBoolReplacementType(), arrayName);
 	}
 
 	/**
@@ -2542,6 +2557,10 @@ public class MemoryHandler {
 		Expression constructFalse();
 
 		Expression compareWithTrue(Expression expr);
+
+		default Expression constructValue(final boolean value) {
+			return value ? constructTrue() : constructFalse();
+		}
 	}
 
 	public static final class BooleanArrayHelper_Bool implements IBooleanArrayHelper {
@@ -2865,6 +2884,28 @@ public class MemoryHandler {
 		final AssignmentStatement statement =
 				constructOneDimensionalArrayUpdate(main, loc, pointer, array, possiblyExtendedValueExpr);
 		return statement;
+	}
+
+	public Expression constructMutexArrayIdentifierExpression(final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+				(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
+		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
+	}
+
+	public AssignmentStatement constructMutexArrayAssignment(final Dispatcher main, final ILocation loc,
+			final ExpressionResult arg, final boolean mutexLocked) {
+		final Expression index = arg.getLrValue().getValue();
+		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+				(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
+		final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(main, loc, index,
+				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
+						new DeclarationInformation(StorageClass.GLOBAL, null)),
+				getBooleanArrayHelper().constructValue(mutexLocked));
+		return as;
 	}
 
 	public PointerCheckMode getPointerBaseValidityCheckMode() {

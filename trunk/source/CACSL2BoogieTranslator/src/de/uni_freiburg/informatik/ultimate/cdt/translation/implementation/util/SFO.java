@@ -204,6 +204,8 @@ public final class SFO {
 
 	public static final String C_MEMSET = "#Ultimate.C_memset";
 
+	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
+
 
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.

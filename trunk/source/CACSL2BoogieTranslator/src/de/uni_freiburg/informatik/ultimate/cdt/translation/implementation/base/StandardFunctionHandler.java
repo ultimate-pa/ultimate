@@ -49,6 +49,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -662,10 +663,38 @@ public class StandardFunctionHandler {
 		return build.build();
 	}
 
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we
+	 * lock a mutex that that is already locked, then the thread blocks.
+	 */
 	private Result handlePthread_mutex_lock(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		throw new UnsupportedOperationException("not yet implemented");
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+
+		final ExpressionResult arg = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		// we assume that function is always successful and returns 0
+		final BigInteger value = BigInteger.ZERO;
+		final Expression mutexArray = mMemoryHandler.constructMutexArrayIdentifierExpression(loc);
+		final Expression mutexArrayAtIndex = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
+				new Expression[] { arg.getLrValue().getValue() });
+		final Expression mutexIsUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				mutexArrayAtIndex, mMemoryHandler.getBooleanArrayHelper().constructValue(false));
+		final AssumeStatement assumeMutexUnlocked = new AssumeStatement(loc, mutexIsUnlocked);
+		final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(main, loc, arg, true);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(arg);
+		erb.addStatement(assumeMutexUnlocked);
+		erb.addStatement(lockMutex);
+		erb.setLrValue(new RValue(mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, value),
+				new CPrimitive(CPrimitives.INT)));
+		return erb.build();
 	}
+
+
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
 		/*
