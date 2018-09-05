@@ -164,7 +164,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	}
 
 //	public  Entry<NODE, NODE> pollArrayEquality() {
-	public  ConstraintFromWeqGraph pollStoredConstraint() {
+	public  ConstraintFromWeqGraph pollStoredConstraintAndRemoveRelatedWeqEdge() {
 		if (!hasConstraintsToReport()) {
 			throw new IllegalStateException("check hasArrayEqualities before calling this method");
 		}
@@ -1098,8 +1098,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 //		mArrayEqualities.removePair(node1OldRep, node2OldRep);
 //		mArrayEqualities.removePair(node2OldRep, node1OldRep);
 		// remove constraints stored for propagation, if something stronger has been reported anyways
-		mConstraintsToReport.removeIf(ctr -> ctr.isEqualityBetween(node1OldRep, node2OldRep)
-				|| ctr.vanishesOnMergeOf(node1OldRep, node2OldRep));
+//		mConstraintsToReport.removeIf(ctr -> ctr.isEqualityBetween(node1OldRep, node2OldRep)
+//				|| ctr.vanishesOnMergeOf(node1OldRep, node2OldRep));
+		mConstraintsToReport.removeIf(ctr -> ctr.vanishesOnMergeOf(node1OldRep, node2OldRep));
 
 		if (node1OldRep == newRep) {
 //			mArrayEqualities.replaceDomainElement(node2OldRep, newRep);
@@ -1599,7 +1600,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			return;
 		}
 		final Set<SetConstraint<NODE>> containsConstraint = edgeLabel.getContainsConstraintForElement(oneNode);
-		if (containsConstraint == null) {
+		if (containsConstraint == null || containsConstraint.isEmpty()) {
+			// need to make a dummy constraint in order to schedule the weq edge for deletion
+			result.add(new ConstraintFromWeqGraph(oneNode, otherNode, true));
 			return;
 		}
 		for (final SetConstraint<NODE> sc : containsConstraint) {
@@ -1620,38 +1623,73 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		private final boolean mIsArrayEquality;
 		private final boolean mIsSetConstraint;
+		private final boolean mIsDummyConstraint;
 
 		private final Pair<NODE, SetConstraint<NODE>> mSetConstraint;
 		private final Pair<NODE, NODE> mEquality;
 
 		/**
-		 * Edge that implies the constraint (can be deleted once it has been reported)
+		 * weq edge that implies the constraint (can be deleted once it has been reported).
 		 */
 		private final Doubleton<NODE> mRelatedEdge;
 
+
+		/**
+		 * Represents an empty constraint, used to schedule a weq edge on dimension 0 for deletion.
+		 *
+		 * @param source
+		 * @param target
+		 * @param isDummy used for distinction from other constructor
+		 */
+		public ConstraintFromWeqGraph(final NODE source, final NODE target, final boolean isDummy) {
+			assert isDummy;
+			mIsArrayEquality = false;
+			mIsSetConstraint = false;
+			mIsDummyConstraint = true;
+			mSetConstraint = null;
+			mEquality = null;
+			mRelatedEdge = new Doubleton<>(source, target);
+		}
+
+		/**
+		 * Represents a set constraint.
+		 *
+		 * @param n
+		 * @param sc
+		 * @param source
+		 * @param target
+		 */
 		ConstraintFromWeqGraph(final NODE n, final SetConstraint<NODE> sc, final NODE source, final NODE target) {
 			mIsArrayEquality = false;
 			mIsSetConstraint = true;
+			mIsDummyConstraint = false;
 			mSetConstraint = new Pair<>(n, sc);
 			mEquality = null;
 			mRelatedEdge = new Doubleton<>(source, target);
 		}
 
+		/**
+		 * Represents a strong equality.
+		 *
+		 * @param one
+		 * @param other
+		 */
 		ConstraintFromWeqGraph(final NODE one, final NODE other) {
 			mIsArrayEquality = true;
 			mIsSetConstraint = false;
+			mIsDummyConstraint = false;
 			mSetConstraint = null;
 			mEquality = new Pair<>(one, other);
 			mRelatedEdge = new Doubleton<>(one, other);
 		}
 
 		public ConstraintFromWeqGraph replaceNode(final NODE replacee, final NODE replacer) {
-			if (mIsArrayEquality) {
+			if (isIsArrayEquality()) {
 				final NODE n1 = mEquality.getFirst();
 				final NODE n2 = mEquality.getSecond();
 				return new ConstraintFromWeqGraph(n1.equals(replacee) ? replacer : n1,
 						n2.equals(replacee) ? replacer : n2);
-			} else if (mIsSetConstraint) {
+			} else if (isSetConstraint()) {
 				final NODE n = mSetConstraint.getFirst();
 				final SetConstraint<NODE> sc = mSetConstraint.getSecond();
 				final SetConstraintManager<NODE> scMan = mWeqCcManager.getCcManager().getSetConstraintManager();
@@ -1661,6 +1699,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 						scMan.transformElements(sc, el -> el.equals(replacee) ? replacer : el),
 						src.equals(replacee) ? replacer : src,
 						trg.equals(replacee) ? replacer : trg);
+			} else if (isDummyConstraint()) {
+				final NODE src = mRelatedEdge.getOneElement();
+				final NODE trg = mRelatedEdge.getOtherElement();
+				return new ConstraintFromWeqGraph(src.equals(replacee) ? replacer : src,
+						trg.equals(replacee) ? replacer : trg, true);
 			} else {
 				throw new AssertionError();
 			}
@@ -1674,8 +1717,12 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			return mIsArrayEquality;
 		}
 
-		public boolean isIsSetConstraint() {
+		public boolean isSetConstraint() {
 			return mIsSetConstraint;
+		}
+
+		public boolean isDummyConstraint() {
+			return mIsDummyConstraint;
 		}
 
 		public Pair<NODE, SetConstraint<NODE>> getSetConstraint() {
@@ -1704,14 +1751,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		 * (new equality constraint is stronger)
 		 */
 		public boolean vanishesOnMergeOf(final NODE n1, final NODE n2) {
-			if (!isIsSetConstraint()) {
-				return false;
-			}
-			if (mSetConstraint.getFirst().equals(n1) && mSetConstraint.getSecond().containsElement(n2)) {
+			if ((mRelatedEdge.getOneElement().equals(n1) && mRelatedEdge.getOtherElement().equals(n2))
+					|| (mRelatedEdge.getOneElement().equals(n2) && mRelatedEdge.getOtherElement().equals(n1))) {
 				return true;
 			}
-			if (mSetConstraint.getFirst().equals(n2) && mSetConstraint.getSecond().containsElement(n1)) {
-				return true;
+			if (isSetConstraint()) {
+				if (mSetConstraint.getFirst().equals(n1) && mSetConstraint.getSecond().containsElement(n2)) {
+					return true;
+				}
+				if (mSetConstraint.getFirst().equals(n2) && mSetConstraint.getSecond().containsElement(n1)) {
+					return true;
+				}
 			}
 			return false;
 		}
@@ -1728,6 +1778,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				sb.append(mSetConstraint.getFirst());
 				sb.append(" in ");
 				sb.append(mSetConstraint.getSecond());
+			} else if (mIsDummyConstraint) {
+				sb.append("DummyConstraint");
 			} else {
 				throw new AssertionError();
 			}

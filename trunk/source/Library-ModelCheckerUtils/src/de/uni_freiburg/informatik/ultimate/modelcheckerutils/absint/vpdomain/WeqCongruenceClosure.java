@@ -886,16 +886,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean madeChanges = false;
 		while (getWeakEquivalenceGraph().hasConstraintsToReport()) {
 			final WeakEquivalenceGraph<NODE, ICongruenceClosure<NODE>>.ConstraintFromWeqGraph aeq =
-					getWeakEquivalenceGraph().pollStoredConstraint();
+					getWeakEquivalenceGraph().pollStoredConstraintAndRemoveRelatedWeqEdge();
 			if (aeq.isIsArrayEquality()) {
 				madeChanges |= reportEquality(aeq.getEquality().getFirst(), aeq.getEquality().getSecond(),
 						omitSanityChecks);
-			} else if (aeq.isIsSetConstraint()) {
+			} else if (aeq.isSetConstraint()) {
 				// TODO: reportContainsConstraint does not report if changes have been made --> this overapproximates..
 				madeChanges = true;
 
 				reportContainsConstraint(aeq.getSetConstraint().getFirst(),
 						Collections.singleton(aeq.getSetConstraint().getSecond()));
+			} else if (aeq.isDummyConstraint()) {
+				// nothing to do corresponding weq edge has already been removed
 			} else {
 				throw new AssertionError();
 			}
@@ -1513,6 +1515,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
 	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other) {
 //		assert inplace != isFrozen();
+		assert !this.getWeakEquivalenceGraph().hasConstraintsToReport();
 
 		final WeqCongruenceClosure<NODE> result = meetRec(other);
 
@@ -1560,9 +1563,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		final WeqCongruenceClosure<NODE> result = this.meetWeqWithCc(other.mCongruenceClosure, true);
 		final WeqCongruenceClosure<NODE> result = this.meetWeqWithCc(other.mCongruenceClosure);
 
-		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
-			assert result.sanityCheck();
-		}
+		// the contains constraints may have introduced constraints to be propagated
+		this.reportAllConstraintsFromWeqGraph(false);
+
+		assert mManager.getSettings().omitSanitycheckFineGrained1() || result.sanityCheck();
 
 		if (result.isInconsistent(false)) {
 //			if (inplace) {
