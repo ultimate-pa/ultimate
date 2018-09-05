@@ -149,15 +149,19 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			final Set<Term> setConstraint = eps.getSetConstraintForExpression(locArraySelect);
 
 			if (setConstraint == null) {
-				// analysis found no constraint --> having to merge all
-				// throw an error for now, for debugging
-				throw new AssertionError();
+				/* analysis found no constraint --> having to merge all (this may be ok, in the sense that there still
+				 * may be separation, in particular if it happens in a dimension > 1)
+				 */
+				mLogger.warn("No literal set constraint found for loc-array access " + locArraySelect + " at "
+						+ locArray.getEdge());
+				final List<StoreInfo> allStoreInfos = mCsiaag.getStoreInfosForDimensionAndArrayGroup(dim,
+						selectInfo.getArrayGroup());
+				mergeBlocks(selectInfo, dim, allStoreInfos);
 			} else {
 				final List<StoreInfo> setConstraintAsStoreInfos =
 						setConstraint.stream().map(t -> mCsiaag.getStoreInfoForLocLitTerm(t))
 							.collect(Collectors.toList());
 				mergeBlocks(selectInfo, dim, setConstraintAsStoreInfos);
-
 			}
 		}
 	}

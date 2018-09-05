@@ -459,7 +459,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		try {
 			result = cLits.get();
 		} catch (final NoSuchElementException nsee) {
-			throw new AssertionError();
+			// no set constraint found --> return null
+			return null;
 		}
 		assert result.hasOnlyLiterals();
 		return result.getLiterals();

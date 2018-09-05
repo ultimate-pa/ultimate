@@ -5,6 +5,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
+/**
+ * Represents a loc-array.
+ * Each loc-array corresponds to one array-term (typically a TermVariable) in some IcfgEdge.
+ * The array-term may or may not be related to an {@link IProgramVarOrConst} (it is, if it belongs to an in var or out
+ * var in the given edge).
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class LocArrayInfo {
 
 	private final EdgeInfo mEdge;
@@ -13,6 +22,8 @@ public class LocArrayInfo {
 	private final Term mInitializingConstantArray;
 
 	/**
+	 *
+	 * See {@link LocArrayInfo}
 	 *
 	 * Note: the term is not the term from the pvoc (even if it exists)
 	 *
@@ -44,5 +55,9 @@ public class LocArrayInfo {
 
 	public boolean isGlobalPvoc() {
 		return mPvoc != null && mPvoc instanceof IProgramNonOldVar;
+	}
+
+	public EdgeInfo getEdge() {
+		return mEdge;
 	}
 }

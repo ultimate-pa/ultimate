@@ -307,6 +307,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		final EqConstraint<NODE> flat = this.flatten();
 
 		final Set<NODE> nodes = flat.getSetConstraintForExpression(node);
+		if (nodes == null) {
+			return null;
+		}
 
 		return nodes.stream().map(n -> n.getTerm()).collect(Collectors.toSet());
 	}

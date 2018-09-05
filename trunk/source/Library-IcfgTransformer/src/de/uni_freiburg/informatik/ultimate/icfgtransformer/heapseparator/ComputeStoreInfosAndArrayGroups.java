@@ -502,6 +502,12 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	public Collection<ArrayGroup> getArrayGroups() {
 		return Collections.unmodifiableCollection(mArrayToArrayGroup.values());
 	}
+
+	public List<StoreInfo> getStoreInfosForDimensionAndArrayGroup(final int dim, final ArrayGroup arrayGroup) {
+		return mLocLitToStoreInfo.values().stream()
+				.filter(si -> si.getDimension() == dim && si.getArrayGroup().equals(arrayGroup))
+				.collect(Collectors.toList());
+	}
 }
 
 class BuildStoreInfos extends NonRecursive {
