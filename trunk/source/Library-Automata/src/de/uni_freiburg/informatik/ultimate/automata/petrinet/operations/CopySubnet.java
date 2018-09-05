@@ -40,10 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * Copies a Petri net N partially, creating a sub-net N'.
  * <p>
  * Given a Petri net N and a subset T' ⊆ T of its transitions,
- * creates a Petri net N' with transitions T' only.
- * Some (!) of the unused places can also be removed, see {@link #requiredPlaces()}.
- * <p>
- * To remove even more nodes from a Petri net, use {@link RemoveDead}.
+ * creates a Petri net N' with transitions T' and required places (see {@link #requiredPlaces()}) only.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -76,8 +73,9 @@ public class CopySubnet<LETTER, PLACE> {
 	}
 
 	/**
-	 * Returns the result of this operation, see documentation of {@link CopySubnet}.
-	 * 
+	 * Returns the result of the operation modeled by this class,
+	 * see documentation of {@link CopySubnet}.
+	 *
 	 * @return Sub-net
 	 */
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
@@ -101,18 +99,17 @@ public class CopySubnet<LETTER, PLACE> {
 	}
 	
 	/**
-	 * Returns a superset of the required places in a sub-net N' of a Petri net N.
+	 * Returns a the required places in a sub-net N' of a Petri net N.
 	 * Sub-net N' has the same places as N, but only some transitions.
 	 * <p>
-	 * A place p is NOT required in N' iff N' without p still accepts L(N').
-	 * <p>
-	 * Even places connected to required transitions can be NOT required.
-	 * When building a new net from the returned places, make sure to restrict the
-	 * predecessors and successors of each transition to the new set places.
+	 * A place p is required in N' iff
+	 * p is predecessor of some transition in N',
+	 * or p is accepting and successor of some transition in N',
+	 * or p is accepting and initial in N'.
 	 * 
 	 * @param net Petri net N
 	 * @param transitionSubset transitions of N'
-	 * @return superset of the required places in N'
+	 * @return required places in N'
 	 * 
 	 * @return Superset of the required places
 	 */
