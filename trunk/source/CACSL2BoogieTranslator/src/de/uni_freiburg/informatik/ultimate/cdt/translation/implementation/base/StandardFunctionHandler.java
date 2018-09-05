@@ -183,7 +183,9 @@ public class StandardFunctionHandler {
 			/** functions of pthread library **/
 			fill(map, "pthread_create", this::handleFork);
 			fill(map, "pthread_join", this::handleJoin);
+			fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 			fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
+			fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		} else {
 			fill(map, "pthread_create", die);
 		}
@@ -690,6 +692,65 @@ public class StandardFunctionHandler {
 		erb.addAllExceptLrValue(arg);
 		erb.addStatement(assumeMutexUnlocked);
 		erb.addStatement(lockMutex);
+		erb.setLrValue(new RValue(mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, value),
+				new CPrimitive(CPrimitives.INT)));
+		return erb.build();
+	}
+
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we
+	 * unlock a mutex that has never been locked, the behavior is undefined. We use
+	 * a semantics where unlocking a non-locked mutex is a no-op. For the return
+	 * value we follow what GCC did in my experiments. It produced code that
+	 * returned 0 even if we unlocked a non-locked mutex.
+	 */
+	private Result handlePthread_mutex_unlock(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult arg = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		// we assume that function is always successful and returns 0
+		final BigInteger value = BigInteger.ZERO;
+		final Expression index = arg.getLrValue().getValue();
+		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(arg);
+		erb.addStatement(unlockMutex);
+		erb.setLrValue(new RValue(mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, value),
+				new CPrimitive(CPrimitives.INT)));
+		return erb.build();
+	}
+
+	private Result handlePthread_mutex_init(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+
+		final ExpressionResult arg1 = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult arg2 = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		final boolean isNullPointerLiteral = mMemoryHandler.isNullPointerLiteral(arg2.getLrValue().getValue());
+		if (!isNullPointerLiteral) {
+			final String msg = "The second argument of the pthread_mutex_init is not a null pointer. This means that "
+					+ "non-default attributes are used. We support only the default attributes.";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		// we assume that function is always successful and returns 0
+		final BigInteger value = BigInteger.ZERO;
+		final Expression index = arg1.getLrValue().getValue();
+		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(arg1);
+		erb.addStatement(unlockMutex);
 		erb.setLrValue(new RValue(mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, value),
 				new CPrimitive(CPrimitives.INT)));
 		return erb.build();

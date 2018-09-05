@@ -2927,4 +2927,23 @@ public class MemoryHandler {
 		}
 	}
 
+	public boolean isNullPointerLiteral(final Expression expr) {
+		if (expr instanceof StructConstructor) {
+			final StructConstructor sc = (StructConstructor) expr;
+			final Expression[] fieldValues = sc.getFieldValues();
+			if (fieldValues.length == 2) {
+				final BigInteger fst = mExpressionTranslation.extractIntegerValue(fieldValues[0], new CPrimitive(CPrimitives.LONG), null);
+				final BigInteger snd = mExpressionTranslation.extractIntegerValue(fieldValues[1], new CPrimitive(CPrimitives.LONG), null);
+				if (BigInteger.ZERO.equals(fst) && BigInteger.ZERO.equals(snd)) {
+					return true;
+				}
+			}
+		}
+		final BigInteger integerValue = mExpressionTranslation.extractIntegerValue(expr, new CPrimitive(CPrimitives.LONG), null);
+		if (BigInteger.ZERO.equals(integerValue)) {
+			return true;
+		}
+		return false;
+	}
+
 }
