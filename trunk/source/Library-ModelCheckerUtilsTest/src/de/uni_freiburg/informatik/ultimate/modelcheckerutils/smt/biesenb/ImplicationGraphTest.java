@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Ben Biesenbach (ben.biesenbach@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtilsTest Library.
@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -57,6 +57,7 @@ public class ImplicationGraphTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
+	private TestPredicateFactory mFactory;
 
 	@Before
 	public void setUp() {
@@ -70,6 +71,7 @@ public class ImplicationGraphTest {
 		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
+		mFactory = new TestPredicateFactory(mMgdScript);
 
 	}
 
@@ -79,31 +81,42 @@ public class ImplicationGraphTest {
 		final TestPredicate predF = new TestPredicate(mScript.term("false"), vars, mScript);
 		final TestPredicate predT = new TestPredicate(mScript.term("true"), vars, mScript);
 		final ImplicationGraph<TestPredicate> impG = new ImplicationGraph<>(mMgdScript, predF, predT);
-		final IProgramNonOldVar a = TestPredicate.constructProgramVar(mMgdScript, "a");
-		final IProgramNonOldVar b = TestPredicate.constructProgramVar(mMgdScript, "b");
+		final IProgramNonOldVar a = mFactory.constructProgramVar("a");
+		final IProgramNonOldVar b = mFactory.constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
-		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mScript);
-		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mScript);
+		final TestPredicate pred1 = pred("=", a, 1);
+		final TestPredicate pred2 = pred("=", a, 2);
+		final TestPredicate pred3 = pred(">", a, 0);
+		final TestPredicate pred4 = pred(">", a, 1);
+		final TestPredicate pred5 = pred("=", b, 0);
+		final TestPredicate pred6 = or(pred1, pred5);
 
-		impG.unifyPredicate(pred1);
-		impG.unifyPredicate(pred3);
-		impG.unifyPredicate(pred4);
-		impG.unifyPredicate(pred5);
-		impG.unifyPredicate(pred6);
-		impG.unifyPredicate(pred7);
+		Assert.assertTrue("1", impG.implication(pred1, pred1));
+		Assert.assertFalse("2", impG.implication(pred1, pred2));
+		Assert.assertTrue("3", impG.implication(pred1, pred3));
+		Assert.assertFalse("4", impG.implication(pred1, pred4));
+		Assert.assertFalse("5", impG.implication(pred1, pred5));
+		Assert.assertTrue("6", impG.implication(pred1, pred6));
+		Assert.assertTrue("7", impG.implication(pred4, pred3));
+		Assert.assertFalse("8", impG.implication(pred3, pred1));
+	}
+	
 
-		mLogger.info("\n" + impG.toString());
+	private TestPredicate neg(final TestPredicate pred) {
+		return mFactory.neg(pred);
+	}
+
+	private TestPredicate and(final TestPredicate... preds) {
+		return mFactory.and(preds);
+	}
+	
+	private TestPredicate or(final TestPredicate... preds) {
+		return mFactory.or(preds);
+	}
+
+	private TestPredicate pred(final String op, final IProgramNonOldVar var, final int value) {
+		return mFactory.pred(op, var, value);
 	}
 
 	@After

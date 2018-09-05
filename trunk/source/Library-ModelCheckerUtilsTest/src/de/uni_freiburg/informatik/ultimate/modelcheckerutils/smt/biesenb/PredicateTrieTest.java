@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Ben Biesenbach (ben.biesenbach@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtilsTest Library.
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -58,6 +59,7 @@ public class PredicateTrieTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
+	private TestPredicateFactory mFactory;
 
 	@Before
 	public void setUp() {
@@ -71,7 +73,7 @@ public class PredicateTrieTest {
 		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-
+		mFactory = new TestPredicateFactory(mMgdScript);
 	}
 
 	@Test
@@ -79,8 +81,8 @@ public class PredicateTrieTest {
 
 		final PredicateTrie<TestPredicate> ptrie = new PredicateTrie<>(mMgdScript);
 		final Set<IProgramVar> vars = new HashSet<>();
-		final IProgramNonOldVar a = TestPredicate.constructProgramVar(mMgdScript, "a");
-		final IProgramNonOldVar b = TestPredicate.constructProgramVar(mMgdScript, "b");
+		final IProgramNonOldVar a = mFactory.constructProgramVar("a");
+		final IProgramNonOldVar b = mFactory.constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
 		final TestPredicate pred1 = pred("=", a, 1);
@@ -106,15 +108,15 @@ public class PredicateTrieTest {
 	}
 
 	private TestPredicate neg(final TestPredicate pred) {
-		return TestPredicate.neg(mScript, pred);
+		return mFactory.neg(pred);
 	}
 
 	private TestPredicate and(final TestPredicate... preds) {
-		return TestPredicate.and(mScript, preds);
+		return mFactory.and(preds);
 	}
 
 	private TestPredicate pred(final String op, final IProgramNonOldVar var, final int value) {
-		return TestPredicate.pred(mScript, op, var, value);
+		return mFactory.pred(op, var, value);
 	}
 
 	@After
