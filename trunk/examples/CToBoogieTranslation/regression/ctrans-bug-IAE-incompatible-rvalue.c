@@ -9,6 +9,6 @@ Author: Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 int _oledbuffer[1];
 void  oledGetBuffer()
 {
- return _oledbuffer;
+ int* x = _oledbuffer;
+ return;
 }
-
