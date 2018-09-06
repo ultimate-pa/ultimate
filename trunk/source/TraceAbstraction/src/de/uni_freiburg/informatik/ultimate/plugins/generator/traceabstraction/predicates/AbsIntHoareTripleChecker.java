@@ -83,6 +83,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 	private static final int MAX_DISJUNCTS = 1;
 	private static final boolean ACCEPT_REJECTION_DUE_TO_IMPRECISION = true;
+	/**
+	 * 2018-09-06 DD: This flag is a hack. Try to reduce states based on the variables occurring in the transformula.
+	 * Only works correctly if transformulas were used during the analysis.
+	 *
+	 * The correct solution would be the usage of the analysis settings to determine this flag.
+	 *
+	 */
+	private static final boolean REDUCE_STATES = true;
+
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
@@ -495,6 +504,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> reducePreState(final DisjunctiveAbstractState<STATE> validPreState,
 			final DisjunctiveAbstractState<STATE> succ, final ACTION action) {
+		if (!REDUCE_STATES) {
+			return validPreState;
+		}
 		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
 		requiredVars.addAll(getVars(action));
 		requiredVars.addAll(succ.getVariables());
