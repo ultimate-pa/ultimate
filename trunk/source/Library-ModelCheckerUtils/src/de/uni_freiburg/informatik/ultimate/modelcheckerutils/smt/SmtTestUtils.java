@@ -37,15 +37,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class SmtTestUtils {
 
-
-	
-
 	private SmtTestUtils() {
 		// do not instantiate
 	}
 
-	
-	
 	public static String generateStringForTestfile(final Term term) {
 		final StringBuilder result = new StringBuilder();
 		result.append(System.lineSeparator());
@@ -66,11 +61,14 @@ public final class SmtTestUtils {
 				if (isIntIntArray(sort)) {
 					final String varName = "intintArraySort";
 					sortVarMapping.put(sort, varName);
-					declaration = String.format("final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, intSort);", varName);
+					declaration = String.format("final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, intSort);",
+							varName);
 				} else if (isIntIntIntArray(sort)) {
 					final String varName = "intintintArraySort";
 					sortVarMapping.put(sort, varName);
-					declaration = String.format("final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));", varName);
+					declaration = String.format(
+							"final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));",
+							varName);
 				} else {
 					final String varName = "arraySort" + counter;
 					counter++;
@@ -87,7 +85,8 @@ public final class SmtTestUtils {
 			result.append(System.lineSeparator());
 		}
 		for (final TermVariable tv : freeVars) {
-			final String declaration = String.format("mScript.declareFun(\"%s\", new Sort[0], %s);", tv.getName(), sortVarMapping.get(tv.getSort()));
+			final String declaration = String.format("mScript.declareFun(\"%s\", new Sort[0], %s);", tv.getName(),
+					sortVarMapping.get(tv.getSort()));
 			result.append(declaration);
 			result.append(System.lineSeparator());
 		}
@@ -96,8 +95,6 @@ public final class SmtTestUtils {
 		result.append("final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);");
 		return result.toString();
 	}
-
-
 
 	private static boolean isIntIntArray(final Sort sort) {
 		if (SmtSortUtils.isArraySort(sort)) {
@@ -111,8 +108,7 @@ public final class SmtTestUtils {
 		}
 		return false;
 	}
-	
-	
+
 	private static boolean isIntIntIntArray(final Sort sort) {
 		if (SmtSortUtils.isArraySort(sort)) {
 			if (sort.getArguments().length == 2) {
