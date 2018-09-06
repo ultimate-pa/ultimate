@@ -178,6 +178,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *         variable has been set to the given value.
 	 */
 	public STATE setValue(final IProgramVarOrConst name, final V value) {
+		if (getValue(name).isEqualTo(value)) {
+			return getThis();
+		}
 		final STATE returnState = createCopy();
 		setValueInternally(returnState, name, value);
 		return returnState;
@@ -219,6 +222,10 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	public STATE setBooleanValue(final IProgramVarOrConst name, final BooleanValue value) {
 		assert name != null;
 		assert value != null;
+
+		if (getBooleanValue(name).isEqualTo(value)) {
+			return getThis();
+		}
 
 		final STATE returnState = createCopy();
 		setValueInternally(returnState, name, value);

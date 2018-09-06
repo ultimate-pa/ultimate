@@ -234,6 +234,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @return The normalized expression or the old expression, if nothing had to be changed.
 	 */
 	protected Expression normalizeExpression(final Expression expr) {
+
 		return expr;
 	}
 

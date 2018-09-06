@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
  *
  */
 public class ExpressionNormalizer extends BoogieTransformer {
-	
+
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
 	ExpressionNormalizer() {
@@ -58,7 +58,8 @@ public class ExpressionNormalizer extends BoogieTransformer {
 	}
 
 	public Expression transform(final Expression expr) {
-		return processExpression(expr);
+		final Expression simplified = mNormalFormTransformer.simplify(expr);
+		return processExpression(simplified);
 	}
 
 	@Override
@@ -219,11 +220,11 @@ public class ExpressionNormalizer extends BoogieTransformer {
 			throw new UnsupportedOperationException("Type " + bType + " not implemented.");
 		}
 	}
-	
+
 	private static IntegerLiteral createIntegerLiteral(final Expression old, final String value) {
 		return new IntegerLiteral(old.getLocation(), BoogieType.TYPE_INT, value);
 	}
-	
+
 	private static RealLiteral createRealLiteral(final Expression old, final String value) {
 		return new RealLiteral(old.getLocation(), BoogieType.TYPE_REAL, value);
 	}

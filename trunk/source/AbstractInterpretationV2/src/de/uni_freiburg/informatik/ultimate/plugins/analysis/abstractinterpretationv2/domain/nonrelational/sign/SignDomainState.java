@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,8 +73,8 @@ public class SignDomainState extends NonrelationalState<SignDomainState, SignDom
 
 	@Override
 	protected SignDomainState createCopy() {
-		return new SignDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), getBottomFlag());
+		return new SignDomainState(getLogger(), getVariables(), getVar2ValueNonrelational(), getVar2ValueBoolean(),
+				getBottomFlag());
 	}
 
 	@Override
