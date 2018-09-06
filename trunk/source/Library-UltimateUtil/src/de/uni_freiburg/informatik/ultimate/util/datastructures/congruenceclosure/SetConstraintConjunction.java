@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
-
 /**
  * Represents a conjunction over single set constraints that all constrain the
  * same element.
@@ -65,7 +63,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			mScWithOnlyLiterals = null;
 		}
 
-		mSetConstraints = Collections.unmodifiableSet(new HashSet<>(setConstraintsRaw));// new HashSet<>(setConstraints);
+		mSetConstraints = Collections.unmodifiableSet(new HashSet<>(setConstraintsRaw));
 		assert sanityCheck();
 	}
 
@@ -105,9 +103,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		 */
 		final Set<SetConstraint<ELEM>> newSetConstraints = new HashSet<>();
 		for (final SetConstraint<ELEM> sc : mSetConstraints) {
-//			if (sc.containsElement(elem)) {
-//				mSetConstraints.remove(sc);
-//			}
 			if (!sc.containsElement(elem)) {
 				newSetConstraints.add(sc);
 			}
@@ -297,7 +292,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 						+ "SetConstraintConjunction should be normalized";
 				return false;
 			}
-
 		}
 
 		return true;
@@ -324,307 +318,5 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		}
 
 		return true;
-	}
-
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> updateOnChangedRepresentative(
-//			final Set<SetConstraint<ELEM>> setConstraints, final ELEM oldRep,
-//			final ELEM newRep) {
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
-//			result.add(SetConstraint.updateOnChangedRepresentative(setConstraint, oldRep, newRep));
-//		}
-//		return result;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> updateOnChangedRepresentative(
-//			final Set<SetConstraint<ELEM>> setConstraints, final ELEM elem1OldRep, final ELEM elem2OldRep,
-//			final ELEM newRep) {
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		boolean madeChanges = false;
-//		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
-//			final SetConstraint<ELEM> updated =
-//					SetConstraint.updateOnChangedRepresentative(setConstraint, elem1OldRep, elem2OldRep, newRep);
-//			madeChanges |= updated != setConstraint;
-//			result.add(updated);
-//		}
-//		if (!madeChanges) {
-//			return setConstraints;
-//		}
-//		return result;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> transformElements(
-//			final Set<SetConstraint<ELEM>> setConstraints, final Function<ELEM, ELEM> elemTransformer) {
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
-//			result.add(SetConstraint.transformElements(setConstraint, elemTransformer));
-//		}
-//		return result;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> meet(
-//			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
-//			final Set<SetConstraint<ELEM>> constraintConjunction1,
-//			final Set<SetConstraint<ELEM>> constraintConjunction2) {
-//		if (SetConstraintConjunction.isTautological(constraintConjunction1)) {
-//			return constraintConjunction2;
-//		}
-//		if (SetConstraintConjunction.isTautological(constraintConjunction2)) {
-//			return constraintConjunction1;
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction1)) {
-//			return getInconsistentSetConstraintConjunction();
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction2)) {
-//			return getInconsistentSetConstraintConjunction();
-//		}
-//
-//		final Collection<SetConstraint<ELEM>> newSetConstraints = DataStructureUtils.union(constraintConjunction1,
-//				constraintConjunction2);
-//
-//		return surroundingConstraint.getCongruenceClosure().getManager()
-//				.normalizeSetConstraintConjunction(surroundingConstraint, newSetConstraints);
-//	}
-//
-//	/**
-//	 * Check if the two constraints would contradict "if they were about the same
-//	 * element". (Used in getEqualityStatus..)
-//	 *
-//	 * assumes (like all methods of this kind) that the SetConstraints are aligned in terms of representatives
-//	 *
-//	 * @param litConstraint1
-//	 * @param litConstraint2
-//	 * @return
-//	 */
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean meetIsInconsistent(
-//			final CCLiteralSetConstraints<ELEM> surroundingConstraint, final Set<SetConstraint<ELEM>> litConstraint1,
-//			final Set<SetConstraint<ELEM>> litConstraint2) {
-//
-//		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1, litConstraint2);
-//		return SetConstraintConjunction.isInconsistent(meet);
-//	}
-//
-//	/**
-//	 * Can deal with "null" arguments (which represent the "Top" value).
-//	 *
-//	 * Basic law for this: A /\ B -> C /\ D <=> A -> C /\ A -> D \/ B -> C /\ B -> D
-//	 *
-//	 *
-//	 * @param constraintConjunction1
-//	 * @param constraintConjunction2
-//	 * @return
-//	 */
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isStrongerThan(
-//			final Set<SetConstraint<ELEM>> constraintConjunction1,
-//			final Set<SetConstraint<ELEM>> constraintConjunction2) {
-//		if (SetConstraintConjunction.isTautological(constraintConjunction1)) {
-//			// cc2 = Top
-//			return true;
-//		}
-//		if (SetConstraintConjunction.isTautological(constraintConjunction2)) {
-//			// cc1 = Top, cc2 != Top
-//			return false;
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction1)) {
-//			// cc1 = Bot
-//			return true;
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction2)) {
-//			// cc2 = Bot, cc1 != Bot
-//			return false;
-//		}
-//
-//		for (final SetConstraint<ELEM> lhsConjunct : constraintConjunction1) {
-//
-//			boolean conjunctionHolds = true;
-//			for (final SetConstraint<ELEM> rhsConjunct : constraintConjunction2) {
-//				if (!SetConstraint.isStrongerThan(lhsConjunct, rhsConjunct)) {
-//					conjunctionHolds = false;
-//					break;
-//				}
-//			}
-//
-//			if (conjunctionHolds) {
-//				return true;
-//			}
-//		}
-//
-//		return false;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> getInconsistentSetConstraintConjunction() {
-//		return Collections.singleton(SetConstraint.getInconsistentSetConstraint());
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> getTautologicalSetConstraintConjunction() {
-//		return Collections.emptySet();
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> join(
-//			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-//			final Set<SetConstraint<ELEM>> constraintConjunction1,
-//			final Set<SetConstraint<ELEM>> constraintConjunction2) {
-//		if (SetConstraintConjunction.isTautological(constraintConjunction1)) {
-//			return getTautologicalSetConstraintConjunction();
-//		}
-//		if (SetConstraintConjunction.isTautological(constraintConjunction2)) {
-//			return getTautologicalSetConstraintConjunction();
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction1)) {
-//			return constraintConjunction2;
-//		}
-//		if (SetConstraintConjunction.isInconsistent(constraintConjunction2)) {
-//			return constraintConjunction1;
-//		}
-//		final Set<SetConstraint<ELEM>> newSetConstraints = new HashSet<>();
-//
-//		for (final SetConstraint<ELEM> sc1 : constraintConjunction1) {
-//			for (final SetConstraint<ELEM> sc2 : constraintConjunction2) {
-//				newSetConstraints.add(SetConstraint.join(sc1, sc2));
-//			}
-//		}
-//
-//		return newSetConstraints;
-//	}
-//
-//	/**
-//	 * assumes that representatives are resolved..
-//	 *
-//	 * @param constraints
-//	 * @return
-//	 */
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
-//			final Set<SetConstraint<ELEM>> constraints) {
-//		if (constraints == null) {
-//			return true;
-//		}
-//		if (constraints.isEmpty()) {
-//			return true;
-//		}
-//		return false;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isInconsistent(
-//			final Collection<SetConstraint<ELEM>> constraints) {
-//		if (constraints == null) {
-//			return false;
-//		}
-//		return constraints.stream().anyMatch(sc -> sc.isInconsistent());
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getSingletonValues(
-//			final Set<SetConstraint<ELEM>> constraints) {
-//		return constraints.stream().filter(sc -> sc.isSingleton())
-//				.map(sc -> sc.getSingletonValue())
-//				.collect(Collectors.toSet());
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>> filterWithDisequalities(
-//			final CongruenceClosure<ELEM> congruenceClosure, final ELEM constrainedElement,
-//			final Set<SetConstraint<ELEM>> constraints) {
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		boolean madeChanges = false;
-//		for (final SetConstraint<ELEM> setConstraint : constraints) {
-//			final SetConstraint<ELEM> filtered = SetConstraint.filterWithDisequalities(setConstraint,
-//					constrainedElement, congruenceClosure);
-//			madeChanges |= filtered != setConstraint;
-//			result.add(filtered);
-//		}
-//		if (!madeChanges) {
-//			return constraints;
-//		}
-//		return result;
-//	}
-//
-//	public Set<SetConstraint<ELEM>> getSetConstraints() {
-//		return Collections.unmodifiableSet(mSetConstraints);
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
-//			final SetConstraintConjunction<ELEM> newConstraint) {
-//		if (newConstraint == null) {
-//			return true;
-//		}
-//		if (newConstraint.isTautological()) {
-//			return true;
-//		}
-//		return false;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>>
-//			filterWithDisequality(final Set<SetConstraint<ELEM>> setConstraints, final ELEM elem) {
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		boolean madeChanges = false;
-//		for (final SetConstraint<ELEM> sc : setConstraints) {
-//			final SetConstraint<ELEM> filtered = SetConstraint.filterWithDisequality(sc, elem);
-//			madeChanges |= filtered != sc;
-//			result.add(filtered);
-//		}
-//		if (!madeChanges) {
-//			return setConstraints;
-//		}
-//		return result;
-//	}
-//
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>>
-//			updateOnChangedRepresentative(final Set<SetConstraint<ELEM>> oldConstraint,
-//					final CongruenceClosure<ELEM> newCc) {
-//		if (oldConstraint == null) {
-//			return null;
-//		}
-//
-//		final Set<SetConstraint<ELEM>> result = new HashSet<>();
-//		boolean madeChanges = false;
-//		for (final SetConstraint<ELEM> sc : oldConstraint) {
-//			final SetConstraint<ELEM> updRep = SetConstraint.updateOnChangedRepresentative(sc, newCc);
-//			madeChanges |= updRep != sc;
-//			result.add(updRep);
-//		}
-//
-//		if (!madeChanges) {
-//			// TODO extra wrapping is not nice
-//			return oldConstraint;
-//		}
-//		return result;
-//	}
-
-}
-
-/**
- * note that this is sublty different from the CongruenceClosureComparator,
- * because here we want to keep the strongest, not the weakest elements when
- * filtering..
- *
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- * @param <ELEM>
- */
-class SetConstraintComparator<ELEM extends ICongruenceClosureElement<ELEM>>
-		implements IPartialComparator<SetConstraint<ELEM>> {
-
-	private final SetConstraintManager<ELEM> mSetConstraintManager;
-	public SetConstraintComparator(final SetConstraintManager<ELEM> setConstraintManager) {
-		mSetConstraintManager = setConstraintManager;
-	}
-
-	@Override
-	public ComparisonResult compare(final SetConstraint<ELEM> o1, final SetConstraint<ELEM> o2) {
-		if (o1.equals(o2)) {
-			return ComparisonResult.EQUAL;
-		}
-		final boolean o1Stronger = mSetConstraintManager.isStrongerThan(o1, o2);
-		final boolean o2Stronger = mSetConstraintManager.isStrongerThan(o2, o1);
-		if (o1Stronger && o2Stronger) {
-			return ComparisonResult.EQUAL;
-		} else if (o1Stronger) {
-			// return ComparisonResult.STRICTLY_SMALLER;
-			return ComparisonResult.STRICTLY_GREATER;
-		} else if (o2Stronger) {
-			return ComparisonResult.STRICTLY_SMALLER;
-			// return ComparisonResult.STRICTLY_GREATER;
-		} else {
-			return ComparisonResult.INCOMPARABLE;
-		}
 	}
 }
