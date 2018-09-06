@@ -3764,8 +3764,8 @@ public class CHandler implements ICHandler {
 					final Result retranslateRes = main.dispatch(mContract.get(i), node);
 					if (retranslateRes instanceof ContractResult) {
 						final ContractResult resContr = (ContractResult) retranslateRes;
-						assert resContr.specs.length == 1;
-						for (final Specification cSpec : resContr.specs) {
+						assert resContr.getSpecs().length == 1;
+						for (final Specification cSpec : resContr.getSpecs()) {
 							specList.add((LoopInvariantSpecification) cSpec);
 						}
 					} else {

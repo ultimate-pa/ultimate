@@ -710,7 +710,7 @@ public class FunctionHandler {
 				final Result retranslateRes = main.dispatch(contract.get(i));
 				assert retranslateRes instanceof ContractResult;
 				final ContractResult resContr = (ContractResult) retranslateRes;
-				specList.addAll(Arrays.asList(resContr.specs));
+				specList.addAll(Arrays.asList(resContr.getSpecs()));
 			}
 			spec = specList.toArray(new Specification[specList.size()]);
 			for (int i = 0; i < spec.length; i++) {

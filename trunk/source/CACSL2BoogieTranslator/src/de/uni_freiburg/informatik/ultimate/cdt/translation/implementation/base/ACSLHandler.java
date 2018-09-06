@@ -671,7 +671,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 
 		for (final ContractStatement stmt : node.getContractStmt()) {
-			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).specs));
+			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).getSpecs()));
 		}
 		if (node.getBehaviors() != null && node.getBehaviors().length != 0) {
 			final String msg = "Not yet implemented: Behaviour";
@@ -762,10 +762,9 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		final ArrayList<Specification> specs = new ArrayList<>();
 		for (final LoopStatement lst : node.getLoopStmt()) {
-			final Result res = main.dispatch(lst, main.getAcslHook());
-			assert res != null && res.node != null;
-			assert res.node instanceof Specification;
-			specs.add((Specification) res.node);
+			final ContractResult res = (ContractResult) main.dispatch(lst, main.getAcslHook());
+			assert res != null;
+			specs.addAll(Arrays.asList(res.getSpecs()));
 		}
 		return new ContractResult(specs.toArray(new Specification[specs.size()]));
 	}
@@ -777,11 +776,11 @@ public class ACSLHandler implements IACSLHandler {
 		assert res != null && res.getLrValue().getValue() != null;
 		final Check check = new Check(Check.Spec.INVARIANT);
 		final ILocation invLoc = main.getLocationFactory().createACSLLocation(node, check);
-		final LoopInvariantSpecification lis = new LoopInvariantSpecification(invLoc, false, (Expression) res.node);
+		final LoopInvariantSpecification lis = new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());
 		check.annotate(lis);
 
 		// TODO
-		throw new AssertionError("TOOD: revise the code below ");
+//		throw new AssertionError("TOOD: revise the code below ");
 
 		// decl.addAll(res.mDecl);
 		// stmt.addAll(res.mStmt);
@@ -791,6 +790,7 @@ public class ACSLHandler implements IACSLHandler {
 		// // return new ResultExpression(stmt, new RValue(lis, new
 		// CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
 		// return new Result(lis);
+		return new ContractResult(new Specification[] { lis } );
 	}
 
 	@Override
