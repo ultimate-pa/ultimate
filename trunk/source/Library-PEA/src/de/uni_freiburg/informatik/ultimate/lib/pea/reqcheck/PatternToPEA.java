@@ -104,48 +104,6 @@ public class PatternToPEA {
 	}
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Universality Pattern
-	// komplett und validiert
-	// Scope Globally
-	public PhaseEventAutomata universalityPattern(final String id, final CDD P, final CDD Q, final CDD R,
-			final String scope) {
-		PhaseEventAutomata ctA;
-		if (scope.contains("Globally")) {
-			final CounterTrace ct = new CounterTrace(
-					new CounterTrace.DCPhase[] { phaseTrue(), new CounterTrace.DCPhase(P.negate()), phaseTrue() });
-			ctA = mCompiler.compile(id + "_univG", ct);
-			return ctA;
-		} else if (scope.contains("Before")) {
-			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
-					new CounterTrace.DCPhase(P.negate().and(R.negate())), phaseTrue() });
-			ctA = mCompiler.compile(id + "_univB", ct);
-			return ctA;
-		} else if (scope.contains("until")) {
-			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(),
-					new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
-					new CounterTrace.DCPhase(P.negate().and(R.negate())), phaseTrue() });
-			ctA = mCompiler.compile(id + "_univU", ct);
-			return ctA;
-		} else if (scope.contains("After")) {
-			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(), phase(Q), phaseTrue(),
-					new CounterTrace.DCPhase(P.negate()), phaseTrue() });
-			ctA = mCompiler.compile(id + "_univA", ct);
-			return ctA;
-		} else if (scope.contains("Between")) {
-			final CounterTrace ct = new CounterTrace(
-					new CounterTrace.DCPhase[] { phaseTrue(), new CounterTrace.DCPhase(Q.and(R.negate())),
-							new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.negate().and(R.negate())),
-							new CounterTrace.DCPhase(R.negate()), phase(R), phaseTrue() });
-			ctA = mCompiler.compile(id + "_univBet", ct);
-			return ctA;
-
-		}
-		final CounterTrace ct = counterTrace(phaseTrue());
-		ctA = mCompiler.compile(id + "_NoKnownScope", ct);
-		return ctA;
-	}
-
-	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Existence Pattern
 	// muß noch für 3scopes erweitert werden
 	// Scope Globally
