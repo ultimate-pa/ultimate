@@ -507,9 +507,20 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()), node);
+			final ExpressionResult returnValueSwitched;
 
-			final ExpressionResult returnValueSwitched = returnValue.switchToRValueIfNecessary(main, loc, node);
-			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+			if (returnValue.getLrValue() instanceof LocalLValue
+					&& returnValue.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+				// Target value is a pointer. Decay RValue type to CPointer
+				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+				final RValue decayed =
+						((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, returnValue.getLrValue(), node);
+				erb.setLrValue(decayed);
+				returnValueSwitched = erb.build();
+			} else {
+				returnValueSwitched = returnValue.switchToRValueIfNecessary(main, loc, node);
+				returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+			}
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
