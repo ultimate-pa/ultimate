@@ -772,6 +772,20 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final LoopInvariant node) {
 		final ExpressionResult res = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
+		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
+		if (!res.getAuxVars().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
+		}
+		if (!res.getDeclarations().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
+		}
+		if (!res.getNeighbourUnionFields().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
+		}
+		if (!res.getOverapprs().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc,
+					"We support only contracts that we can translate without overapproximation.");
+		}
 
 		assert res != null && res.getLrValue().getValue() != null;
 		final Check check = new Check(Check.Spec.INVARIANT);
@@ -779,17 +793,6 @@ public class ACSLHandler implements IACSLHandler {
 		final LoopInvariantSpecification lis = new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());
 		check.annotate(lis);
 
-		// TODO
-//		throw new AssertionError("TOOD: revise the code below ");
-
-		// decl.addAll(res.mDecl);
-		// stmt.addAll(res.mStmt);
-		// overappr.addAll(res.mOverappr);
-		// auxVars.putAll(res.mAuxVars);
-		//
-		// // return new ResultExpression(stmt, new RValue(lis, new
-		// CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
-		// return new Result(lis);
 		return new ContractResult(new Specification[] { lis } );
 	}
 
