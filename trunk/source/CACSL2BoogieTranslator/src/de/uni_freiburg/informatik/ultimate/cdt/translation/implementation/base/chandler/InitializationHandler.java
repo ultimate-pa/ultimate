@@ -1071,8 +1071,8 @@ public class InitializationHandler {
 			final ExpressionResult expressionResultSwitched;
 			// TODO: 2018-09-05 Matthias: The following scheme seems to occur in several places
 			// maybe move to separate method?
-			if ((targetCType instanceof CPointer)
-					&& (first.getRootExpressionResult().getLrValue().getCType() instanceof CArray)) {
+			if ((targetCType.getUnderlyingType() instanceof CPointer)
+					&& (first.getRootExpressionResult().getLrValue().getCType().getUnderlyingType() instanceof CArray)) {
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 				erb.addAllExceptLrValue(first.getRootExpressionResult());
 				final RValue decayed = ((CHandler) main.mCHandler).decayArrayLrValToPointer(loc,
