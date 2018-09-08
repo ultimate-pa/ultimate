@@ -45,8 +45,8 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
 
 	public AA_DeterminizeReversed(final AutomataLibraryServices services,
-			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton,
-			final IEmptyStackStateFactory<BitSet> emtpyStackStateFactory) {
+			final IEmptyStackStateFactory<BitSet> emtpyStackStateFactory,
+			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		super(services);
 		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alternatingAutomaton.getAlphabet(),
 				Collections.emptySet(), Collections.emptySet());
