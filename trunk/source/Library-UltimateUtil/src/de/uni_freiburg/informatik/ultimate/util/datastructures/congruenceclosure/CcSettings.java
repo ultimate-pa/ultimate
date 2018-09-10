@@ -56,4 +56,10 @@ public class CcSettings {
 	 */
 	public static final boolean ALIGN_INPLACE = true;
 
+
+	/**
+	 * for the record: caching seems to be useless (some maps remembering the results to older queries), or detrimental
+	 * (using PartialOrderCache) for SetConstraints
+	 */
+	public static final boolean USE_CACHE_FOR_SETCONSTRAINTS = false;
 }

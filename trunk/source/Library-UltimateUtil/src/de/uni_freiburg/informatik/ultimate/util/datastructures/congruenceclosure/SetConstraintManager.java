@@ -10,18 +10,22 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private final NestedMap2<Set<ELEM>, Set<ELEM>, SetConstraint<ELEM>> mLiteralsToNonLiteralsToSetConstraint;
 	private final SetConstraint<ELEM> mInconsistentSetConstraint;
-	private final SetConstraintComparator<ELEM> mSetConstraintComparator;
+//	private final SetConstraintComparator<ELEM> mSetConstraintComparator;
+	private final IPartialComparator<SetConstraint<ELEM>> mSetConstraintComparator;
 
 	public SetConstraintManager() {
 		mLiteralsToNonLiteralsToSetConstraint = new NestedMap2<>();
 		mInconsistentSetConstraint = new SetConstraint<>(true);
-		mSetConstraintComparator = new SetConstraintComparator<>(this);
+		mSetConstraintComparator = CcSettings.USE_CACHE_FOR_SETCONSTRAINTS ?
+				new CachingSetConstraintComparator<>(this) :
+				new SetConstraintComparator<>(this);
 	}
 
 	public SetConstraint<ELEM> buildSetConstraint(
@@ -586,7 +590,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
-	public SetConstraintComparator<ELEM> getSetConstraintComparator() {
+	public IPartialComparator<SetConstraint<ELEM>> getSetConstraintComparator() {
 		return mSetConstraintComparator;
 	}
 

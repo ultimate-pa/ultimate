@@ -1,9 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 
 /**
+ * Convention: Stronger constraints are "smaller"
+ *
  * note that this is sublty different from the CongruenceClosureComparator,
  * because here we want to keep the strongest, not the weakest elements when
  * filtering..
@@ -13,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
  *
  * @param <ELEM>
  */
-class SetConstraintComparator<ELEM extends ICongruenceClosureElement<ELEM>>
+public class SetConstraintComparator<ELEM extends ICongruenceClosureElement<ELEM>>
 		implements IPartialComparator<SetConstraint<ELEM>> {
 
 	private final SetConstraintManager<ELEM> mSetConstraintManager;
