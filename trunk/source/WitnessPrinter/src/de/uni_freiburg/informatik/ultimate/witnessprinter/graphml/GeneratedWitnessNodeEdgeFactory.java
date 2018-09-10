@@ -86,6 +86,6 @@ public class GeneratedWitnessNodeEdgeFactory<TE, E> {
 	public GeneratedWitnessEdge<TE, E> createWitnessEdge(final AtomicTraceElement<TE> traceElement,
 			final ProgramState<E> state, final boolean isEnteringLoopHead) {
 		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge<>(traceElement, null, isEnteringLoopHead, mStringProvider, mCurrentEdgeId);
+		return new GeneratedWitnessEdge<>(traceElement, state, isEnteringLoopHead, mStringProvider, mCurrentEdgeId);
 	}
 }
