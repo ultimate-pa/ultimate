@@ -80,6 +80,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	 */
 	private final Map<String, List<String>> mIncludeMapping;
 	private final String mCdtPProjectHierachyFlag;
+	private final boolean mCreateFilebasedPrefixes;
 
 	/**
 	 * Constructs an empty symbol table
@@ -87,8 +88,12 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	 * @param logger
 	 *            a logger
 	 * @param cdtPProjectHierachyFlag
+	 *            A string representing the base path of the C project that is parsed
+	 * @param fileBasedPrefixes
+	 *            true iff more than one translation unit is present and therefore variables should be prefixed
 	 */
-	public MultiparseSymbolTable(final ILogger logger, final String cdtPProjectHierachyFlag) {
+	public MultiparseSymbolTable(final ILogger logger, final String cdtPProjectHierachyFlag,
+			final boolean fileBasedPrefixes) {
 		mCdtPProjectHierachyFlag = cdtPProjectHierachyFlag;
 		shouldVisitDeclarations = true;
 		shouldVisitTranslationUnit = true;
@@ -97,6 +102,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mGlobalsMapping = new HashMap<>();
 		mNamePrefixMapping = new HashMap<>();
 		mIncludeMapping = new HashMap<>();
+		mCreateFilebasedPrefixes = fileBasedPrefixes;
 	}
 
 	@Override
@@ -188,7 +194,10 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		}
 	}
 
-	private static String generatePrefixedIdentifier(final String file, final String id) {
+	private String generatePrefixedIdentifier(final String file, final String id) {
+		if (mCreateFilebasedPrefixes) {
+			return id;
+		}
 		return "__U_MULTI_f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
 	}
 

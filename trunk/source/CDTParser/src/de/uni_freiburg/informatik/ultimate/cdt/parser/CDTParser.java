@@ -153,7 +153,8 @@ public class CDTParser implements ISource {
 	public IElement parseAST(final File[] files) throws Exception {
 		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
 
-		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag);
+		final MultiparseSymbolTable mps =
+				new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag, files.length == 1);
 		for (final IASTTranslationUnit tu : tuCollection) {
 			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
 			tu.accept(mps);
