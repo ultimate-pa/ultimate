@@ -393,8 +393,10 @@ public class FunctionHandler {
 	private Result handleFunctionPointerCall(final ILocation loc, final Dispatcher main,
 			final MemoryHandler memoryHandler, final StructHandler structHandler, final IASTExpression functionName,
 			final IASTInitializerClause[] arguments) {
-
-		assert main instanceof PRDispatcher || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
+		assert functionName != null : "functionName is null";
+		assert main instanceof PRDispatcher || ((MainDispatcher) main).getFunctionToIndex()
+				.size() > 0 : "main is not PRDispatcher and getFunctionToIndex is empty, but want to process "
+						+ functionName.getRawSignature() + " as function pointer";
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
 
 		CType calledFuncType = funcNameRex.getLrValue().getCType().getUnderlyingType();
