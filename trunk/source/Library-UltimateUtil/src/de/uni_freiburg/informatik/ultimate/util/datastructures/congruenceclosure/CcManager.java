@@ -940,6 +940,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final Collection<SetConstraint<ELEM>> setConstraintsIn) {
 		bmStart(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 
+		if (setConstraintsIn.isEmpty()) {
+			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+			return Collections.emptySet();
+		}
+
+
 		// expand non-literals if possible (in-place on SetConstraints)
 		final Set<SetConstraint<ELEM>> expanded = new HashSet<>(setConstraintsIn);
 		{
@@ -956,59 +962,97 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 
-		//TODO: only instantiate SetConstraintComparator once??
-		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(
-				mSetConstraintManager.getSetConstraintComparator());
-		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
+//		//TODO: only instantiate SetConstraintComparator once??
+//		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(
+//				mSetConstraintManager.getSetConstraintComparator());
+//		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
+//
+//		// check for tautology
+//		if (filtered1.isEmpty()) {
+//			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+//			return Collections.emptySet();
+//		}
 
+
+		Set<ELEM> intersectionOfLiteralOnlyConstraints = null;
 		// check for inconsistency
-		for (final SetConstraint<ELEM> sc : filtered1) {
+		for (final SetConstraint<ELEM> sc : expanded) {
 			if (sc.isInconsistent()) {
 				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 				return Collections.singleton(sc);
 			}
+
+			if (sc.hasOnlyLiterals()) {
+				if (intersectionOfLiteralOnlyConstraints == null) {
+					intersectionOfLiteralOnlyConstraints = new HashSet<>(sc.getLiterals());
+				} else {
+					intersectionOfLiteralOnlyConstraints.retainAll(sc.getLiterals());
+					if (intersectionOfLiteralOnlyConstraints.isEmpty()) {
+						bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+						return Collections.singleton(sc);
+					}
+				}
+			}
+
 			// bs -- example: x in {1} /\ x in {0}
 //			if (sc.isSingleton()) {
 //				return Collections.singleton(sc);
 //			}
 		}
 
-		// check for tautology
-		if (filtered1.isEmpty()) {
-			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-			return Collections.emptySet();
+
+		final Set<SetConstraint<ELEM>> literalsMerged;
+		if (intersectionOfLiteralOnlyConstraints != null) {
+			literalsMerged = new HashSet<>();
+			literalsMerged.add(mSetConstraintManager.buildSetConstraint(
+					intersectionOfLiteralOnlyConstraints, Collections.emptySet()));
+
+			for (final SetConstraint<ELEM> sc : expanded) {
+				if (sc.hasOnlyLiterals()) {
+					// do nothing -- we are treating those specially
+				} else {
+					final Set<ELEM> litIntersection =
+							DataStructureUtils.intersection(intersectionOfLiteralOnlyConstraints, sc.getLiterals());
+					literalsMerged.add(mSetConstraintManager.buildSetConstraint(litIntersection, sc.getNonLiterals()));
+				}
+			}
+		} else {
+			literalsMerged = expanded;
 		}
 
-		final Set<SetConstraint<ELEM>> all = new HashSet<>();
+//		final Set<SetConstraint<ELEM>> all = new HashSet<>();
+//		onlyLiterals = filtered1.stream().filter(sc -> sc.hasOnlyLiterals())
+//				.reduce((sc1, sc2) -> mSetConstraintManager.buildSetConstraint(DataStructure, nonLiterals);
 
-		// introduce all the conjunctive constraints according to all the subsets..
-		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
-			final SetConstraint<ELEM> meet = mSetConstraintManager.meet(surroundingSetConstraints, subSet);
-
-			if (meet == null) {
-				// "Top" constraint, represented by "null", no need to add to a conjunction
-				continue;
-			}
-
-			if (meet.isInconsistent()) {
-				// created inconsistent constraint
-				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-				return Collections.singleton(meet);
-			}
-
-			all.add(meet);
-		}
+//		// introduce all the conjunctive constraints according to all the subsets..
+//		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
+//			final SetConstraint<ELEM> meet = mSetConstraintManager.meet(surroundingSetConstraints, subSet);
+//
+//			if (meet == null) {
+//				// "Top" constraint, represented by "null", no need to add to a conjunction
+//				continue;
+//			}
+//
+//			if (meet.isInconsistent()) {
+//				// created inconsistent constraint
+//				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+//				return Collections.singleton(meet);
+//			}
+//
+//			all.add(meet);
+//		}
 
 		//TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc =
 				new PartialOrderCache<>(mSetConstraintManager.getSetConstraintComparator());
-		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(all);
+		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(literalsMerged);
 
-		// check for tautology
-		if (filtered.isEmpty()) {
-			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-			return null;
-		}
+//		// check for tautology
+//		if (filtered.isEmpty()) {
+//			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+////			return null;
+//			return Collections.emptySet();
+//		}
 
 		assert SetConstraintConjunction.sanityCheck(filtered);
 		bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
