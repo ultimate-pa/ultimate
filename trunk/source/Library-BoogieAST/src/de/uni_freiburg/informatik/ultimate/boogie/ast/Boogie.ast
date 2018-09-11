@@ -454,9 +454,9 @@ Statement ::=
 	     */
 	    ForkStatement }
 	    /**
-	     * An id referencing that fork statement out of multiple ones.
+	     * An id or list of id's referencing that fork statement out of multiple ones.
 	     */
-		forkID  : Expression
+		forkID  : Expression[]
 		/**
 		 * The name of the procedure.
 		 */
@@ -472,14 +472,14 @@ Statement ::=
 		arguments : Expression[]
 	| { /**
 	     * A join statement waits for a procedure (which was called
-	     * with fork before) to termiate.
+	     * with fork before) to terminate.
 	     */
 	    JoinStatement }
 	    /**
-	     * The id of the fork expression, to which the join statement
+	     * The id or list of id's of the fork expression, to which the join statement
 	     * is referring to.
 	     */
-		forkID  : Expression
+		forkID  : Expression[]
 		/**
 		 * The variables where the return values are written to.
 		 */

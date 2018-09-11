@@ -89,6 +89,8 @@ BvType = "bv" {DecIntegerLiteral}
   "break"         { return symbol(LexerSymbols.BREAK); }
   "return"        { return symbol(LexerSymbols.RETURN); }
   "goto"          { return symbol(LexerSymbols.GOTO); }
+  
+  "assign"		  { return symbol(LexerSymbols.ASSIGN); }
 
   "old"           { return symbol(LexerSymbols.OLD); }
 

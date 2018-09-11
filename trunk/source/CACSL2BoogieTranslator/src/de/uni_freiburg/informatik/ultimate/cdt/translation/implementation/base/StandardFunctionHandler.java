@@ -639,7 +639,7 @@ public class StandardFunctionHandler {
 		}
 		final String methodName = idExpr.getIdentifier().substring(9);
 		final Expression[] forkArguments = {startRoutineArguments.getLrValue().getValue()};
-		final ForkStatement fs = new ForkStatement(loc, argThreadId.getLrValue().getValue(), methodName, forkArguments);
+		final ForkStatement fs = new ForkStatement(loc, new Expression[] {argThreadId.getLrValue().getValue() } , methodName, forkArguments);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 

@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOld
 public class ConcurrencyInformation {
 
 	private final Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap;
-	private final Map<String, BoogieNonOldVar> mProcedureNameThreadIdMap;
+	private final Map<String, BoogieNonOldVar[]> mProcedureNameThreadIdMap;
 
 
 
 	public ConcurrencyInformation(final Map<String, BoogieNonOldVar> procedureNameToThreadInUseMap,
-			final Map<String, BoogieNonOldVar> procedureNameThreadIdMap) {
+			final Map<String, BoogieNonOldVar[]> procedureNameThreadIdMap) {
 		super();
 		mProcedureNameToThreadInUseMap = procedureNameToThreadInUseMap;
 		mProcedureNameThreadIdMap = procedureNameThreadIdMap;
@@ -59,7 +59,7 @@ public class ConcurrencyInformation {
 
 
 
-	public Map<String, BoogieNonOldVar> getProcedureNameThreadIdMap() {
+	public Map<String, BoogieNonOldVar[]> getProcedureNameThreadIdMap() {
 		return mProcedureNameThreadIdMap;
 	}
 

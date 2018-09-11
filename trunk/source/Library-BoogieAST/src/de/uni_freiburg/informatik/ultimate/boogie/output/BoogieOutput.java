@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
@@ -858,7 +859,10 @@ public class BoogieOutput {
 			final ForkStatement fork = (ForkStatement) s;
 			String comma;
 			sb.append("fork ");
-			sb.append(BoogiePrettyPrinter.print(fork.getForkID()));
+			for (final Expression id : fork.getForkID()) {
+				sb.append(BoogiePrettyPrinter.print(id));
+				sb.append(", ");
+			}			
 			sb.append(" ").append(fork.getMethodName());
 			sb.append("(");
 			comma = "";
@@ -870,17 +874,20 @@ public class BoogieOutput {
 			sb.append(");");
 		} else if (s instanceof JoinStatement) {
 			final JoinStatement join = (JoinStatement)s;
-			String comma;
+			String comma = "";
 			sb.append("join ");
+			for (final Expression id : join.getForkID()) {
+				sb.append(comma).append(BoogiePrettyPrinter.print(id));
+				comma = ", ";
+			}
 			if (join.getLhs().length > 0) {
+				sb.append(" assign ");
 				comma = "";
 				for (final VariableLHS lhs : join.getLhs()) {
 					sb.append(comma).append(lhs.getIdentifier());
 					comma = ", ";
 				}
-				sb.append(" := ");
 			}
-			sb.append(BoogiePrettyPrinter.print(join.getForkID()));
 		} else if (s instanceof BreakStatement) {
 			final String label = ((BreakStatement) s).getLabel();
 			sb.append("break");

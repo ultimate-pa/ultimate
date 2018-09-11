@@ -160,7 +160,7 @@ public class CfgBuilder {
 
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
 
-	Map<String, BoogieNonOldVar> mProcedureNameThreadIdMap = new HashMap<String, BoogieNonOldVar>();
+	Map<String, BoogieNonOldVar[]> mProcedureNameThreadIdMap = new HashMap<String, BoogieNonOldVar[]>();
 	Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = new HashMap<String, BoogieNonOldVar>();
 
 	private final RCFGBacktranslator mBacktranslator;
@@ -441,7 +441,7 @@ public class CfgBuilder {
 		final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
 		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
 
-		final BoogieNonOldVar threadIdVar = mProcedureNameThreadIdMap.get(st.getMethodName());
+		final BoogieNonOldVar[] threadIdVar = mProcedureNameThreadIdMap.get(st.getMethodName());
 		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
 				nameOfForkingProcedure, simplificationTechnique);
 		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getMethodName());
@@ -483,10 +483,18 @@ public class CfgBuilder {
 
 
 		final BoogieNonOldVar threadInUse = mProcedureNameToThreadInUseMap.get(procName);
-		final BoogieNonOldVar threadId = mProcedureNameThreadIdMap.get(procName);
-
-		if (st.getForkID().getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator().getType(threadId.getSort())) {
+		final BoogieNonOldVar[] threadIds = mProcedureNameThreadIdMap.get(procName);
+		
+		if (threadIds.length != st.getForkID().length) {
 			return;
+		} else {
+			int offset = 0;
+			for (BoogieNonOldVar forkId : threadIds) {
+				if (st.getForkID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator().getType(forkId.getSort())) {
+					return;
+				}
+				offset++;
+			}
 		}
 
 		final String caller = callerNode.getProcedure();
@@ -502,7 +510,7 @@ public class CfgBuilder {
 		// Create JoinOtherThread object and add TransFormulas.
 		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st, joinCurrentEdge);
 
-		final UnmodifiableTransFormula threadIdAssumption = constructJoinMatchingThreadIdAssumption(threadId,
+		final UnmodifiableTransFormula threadIdAssumption = constructJoinMatchingThreadIdAssumption(threadIds,
 				st.getForkID(), caller, simplificationTechnique);
 		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUse,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
@@ -536,12 +544,12 @@ public class CfgBuilder {
 	 * TODO Concurrent Boogie:
 	 * @param simplificationTechnique
 	 */
-	private UnmodifiableTransFormula constructForkIdAssignment(final BoogieNonOldVar threadIdVar,
-			final Expression forkIdExpression, final String forkingProcedureId,
+	private UnmodifiableTransFormula constructForkIdAssignment(final BoogieNonOldVar[] threadIdVars,
+			final Expression[] forkIdExpressions, final String forkingProcedureId,
 			final SimplificationTechnique simplificationTechnique) {
 		// FIXME Matthias 2018-08-17: take care of overapproximations
 		final TranslationResult test = mIcfg.getBoogie2SMT().getStatements2TransFormula()
-				.forkThreadIdAssignment(threadIdVar, forkingProcedureId, forkIdExpression, simplificationTechnique);
+				.forkThreadIdAssignment(threadIdVars, forkingProcedureId, forkIdExpressions, simplificationTechnique);
 		return test.getTransFormula();
 	}
 
@@ -567,8 +575,8 @@ public class CfgBuilder {
 	 * @param joiningThreadProcedureId
 	 * @param simplificationTechnique
 	 */
-	private UnmodifiableTransFormula constructJoinMatchingThreadIdAssumption(final BoogieNonOldVar threadIdVar,
-			final Expression joinedThreadIdExpression, final String joiningThreadProcedureId,
+	private UnmodifiableTransFormula constructJoinMatchingThreadIdAssumption(final BoogieNonOldVar[] threadIdVar,
+			final Expression[] joinedThreadIdExpression, final String joiningThreadProcedureId,
 			final SimplificationTechnique simplificationTechnique) {
 		// FIXME Matthias 2018-08-17: take care of overapproximations
 		final TranslationResult test = mIcfg.getBoogie2SMT().getStatements2TransFormula().joinThreadIdAssumption(

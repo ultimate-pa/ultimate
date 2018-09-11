@@ -782,46 +782,60 @@ public class Statements2TransFormula {
 	}
 	
 	
-	public TranslationResult forkThreadIdAssignment(final IProgramVar threadTemplateIdVar,
-			final String forkingProcedureId, final Expression forkThreadIdExpression,
+	public TranslationResult forkThreadIdAssignment(final IProgramVar[] threadTemplateIdVar,
+			final String forkingProcedureId, final Expression[] forkThreadIdExpressions,
 			final SimplificationTechnique simplificationTechnique) {
 
 		initialize(forkingProcedureId);
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, forkThreadIdExpression);
+		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, forkThreadIdExpressions);
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term argTerm = tlres.getTerm();
+		final Term[] argTerms = tlres.getTerms();
 
 		// FIXME Matthias 2018-08-17 test and probably remove the following line
 		mTransFormulaBuilder.clearOutVars();
 
 		final String suffix = "ThreadTemplateId";
-		final TermVariable tv = constructTermVariableWithSuffix(threadTemplateIdVar, suffix);
-		mTransFormulaBuilder.addOutVar(threadTemplateIdVar, tv);
-		final Term assignment = mScript.term("=", tv, argTerm);
-		mAssumes = assignment;
+		// TODO: Check if this is correct?
+		int offset = 0;
+		Term[] assignments = new Term[argTerms.length];
+		for (Term argTerm : argTerms) {
+			final TermVariable tv = constructTermVariableWithSuffix(threadTemplateIdVar[offset], suffix);
+			mTransFormulaBuilder.addOutVar(threadTemplateIdVar[offset], tv);
+			assignments[offset] = mScript.term("=", tv, argTerm);
+			offset++;
+		}
+		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 	
 
-	public TranslationResult joinThreadIdAssumption(final IProgramVar forkIdAuxVar,
-			final String joiningThreadProcedureId, final Expression joinedThreadIdExpression,
+	public TranslationResult joinThreadIdAssumption(final IProgramVar[] forkIdAuxVar,
+			final String joiningThreadProcedureId, final Expression[] joinedThreadIdExpressions,
 			final SimplificationTechnique simplificationTechnique) {
 
 		initialize(joiningThreadProcedureId);
+		
+		// TODO: multiterm result
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, joinedThreadIdExpression);
+		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, joinedThreadIdExpressions);
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term argTerm = tlres.getTerm();
+		final Term[] argTerms = tlres.getTerms();
 
-		final TermVariable tv = createInVar(forkIdAuxVar);
-		mTransFormulaBuilder.addOutVar(forkIdAuxVar, tv);
-		final Term assignment = mScript.term("=", tv, argTerm);
-		mAssumes = assignment;
+		// TODO: also check if this is correct;
+		int offset = 0;
+		final Term[] assignments = new Term[argTerms.length];
+		for (Term argTerm : argTerms) {
+			final TermVariable tv = createInVar(forkIdAuxVar[offset]);
+			mTransFormulaBuilder.addOutVar(forkIdAuxVar[offset], tv);
+			assignments[offset] = mScript.term("=", tv, argTerm);
+			offset++;
+		}
+		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 	

@@ -100,7 +100,7 @@ terminal BOOL, INT, REAL;
 terminal FALSE, TRUE;
 terminal ASSUME, ASSERT, HAVOC, FORK, JOIN, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO;
 /* Other Symbols */
-terminal COMMA, COLON, SEMI, COLONEQUALS, EQUALS;
+terminal COMMA, COLON, SEMI, COLONEQUALS, EQUALS, ASSIGN;
 terminal LPAR, RPAR, LBKT, RBKT, LBRC, RBRC, LANG, RANG;
 terminal LESS, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
@@ -740,15 +740,15 @@ callStmt ::=
 	;
 	/* Example: fork 5 someProcedure(firstArg, true); */ 
 forkStmt ::=
-      FORK:x expr:i ID:m LPAR:y exprCommaStar:e RPAR SEMI
-	  {: RESULT = new ForkStatement(getLocation(x$,e$), i, m, e.toArray(new Expression[e.size()])); :}
+      FORK:x exprCommaPlus:i ID:m LPAR:y exprCommaStar:e RPAR SEMI
+	  {: RESULT = new ForkStatement(getLocation(x$,e$), i.toArray(new Expression[i.size()]), m, e.toArray(new Expression[e.size()])); :}
 	;
 /* Example: join 5; or join x := 5; */
 joinStmt ::=
-      JOIN:x expr:i SEMI
-	  {: RESULT = new JoinStatement(getLocation(x$,i$), i, new VariableLHS[0]); :}
-	| JOIN:x varCommaPlus:ass COLONEQUALS expr:i SEMI
-	  {: RESULT = new JoinStatement(getLocation(x$,i$), i, ass.toArray(new VariableLHS[ass.size()])); :}
+      JOIN:x exprCommaPlus:i SEMI
+	  {: RESULT = new JoinStatement(getLocation(x$,i$), i.toArray(new Expression[i.size()]), new VariableLHS[0]); :}
+	| JOIN:x exprCommaPlus:i ASSIGN varCommaPlus:ass SEMI
+	  {: RESULT = new JoinStatement(getLocation(x$,i$), i.toArray(new Expression[i.size()]), ass.toArray(new VariableLHS[ass.size()])); :}
 	;
 ifStmt ::=
 	  IF:x LPAR wildcardExpr:c RPAR blockStmt:block elseOpt:e
