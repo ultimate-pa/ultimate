@@ -431,7 +431,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 
 		final int resultLength = mTypeSizes.getSize(resultPrimitive.getType()) * 8;
-		final int operandLength = mTypeSizes.getSize(((CPrimitive) operand.getLrValue().getCType()).getType()) * 8;
+
+		final int operandLength =
+				mTypeSizes.getSize(((CPrimitive) operand.getLrValue().getCType().getUnderlyingType()).getType()) * 8;
 
 		if (resultLength == operandLength) {
 			final RValue oldRValue = (RValue) operand.getLrValue();
