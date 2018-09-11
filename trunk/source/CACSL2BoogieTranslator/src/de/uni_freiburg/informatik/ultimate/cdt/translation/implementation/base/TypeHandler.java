@@ -711,7 +711,11 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CStruct) {
 			final CStruct cstruct = (CStruct) cType;
 			if (cstruct.isIncomplete()) {
-				return null;
+//				TODO 2018-09-10: before I added this UnsupportedOperation
+//				Exception we just returned null which is probably a bad
+//				solution. Maybe callers should check for this case in advance.
+//				return null;
+				throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
 			}
 			final VarList[] fields = new VarList[cstruct.getFieldCount()];
 			final String[] fieldNames = new String[cstruct.getFieldCount()];
