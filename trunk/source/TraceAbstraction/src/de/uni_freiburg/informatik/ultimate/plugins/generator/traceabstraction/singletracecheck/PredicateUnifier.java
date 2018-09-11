@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,13 +59,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
@@ -482,39 +477,13 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
+		final Term[] conjuncts = SmtUtils.cannibalize(mMgnScript, mServices, splitNumericEqualities, term);
 		final Set<IPredicate> result = new HashSet<>();
-		final Term cnf = new CnfTransformer(mMgnScript, mServices).transform(term);
-		Term[] conjuncts;
-		if (splitNumericEqualities) {
-			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));
-		} else {
-			conjuncts = SmtUtils.getConjuncts(cnf);
-		}
 		for (final Term conjunct : conjuncts) {
 			final IPredicate predicate = getOrConstructPredicate(conjunct);
 			result.add(predicate);
 		}
 		return result;
-	}
-
-	private Term[] splitNumericEqualities(final Term[] conjuncts) {
-		final ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
-		for (final Term conjunct : conjuncts) {
-			try {
-				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
-				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
-					final Term leq = mScript.term("<=", bnr.getLhs(), bnr.getRhs());
-					result.add(leq);
-					final Term geq = mScript.term(">=", bnr.getLhs(), bnr.getRhs());
-					result.add(geq);
-				} else {
-					result.add(conjunct);
-				}
-			} catch (final NoRelationOfThisKindException e) {
-				result.add(conjunct);
-			}
-		}
-		return result.toArray(new Term[result.size()]);
 	}
 
 	@Override
@@ -1180,7 +1149,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
 	 * Construct a new predicate for the given term.
-	 * 
+	 *
 	 * @param term
 	 *            Term for which new predicate is constructed. This term has to be simplified (resp. will not be further
 	 *            simplified) and has to be different (not semantically equivalent) from all predicates known by this

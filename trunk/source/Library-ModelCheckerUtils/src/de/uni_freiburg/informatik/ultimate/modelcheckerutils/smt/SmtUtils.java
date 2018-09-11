@@ -67,6 +67,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
@@ -214,6 +217,47 @@ public final class SmtUtils {
 		final Term[] result = new Term[1];
 		result[0] = term;
 		return result;
+	}
+
+	/**
+	 * Converts a term in CNF and produces an array of conjuncts.
+	 * 
+	 * @param mgnScript
+	 * @param services
+	 * @param splitNumericEqualities
+	 *            iff true, numeric equality relations (e.g., (= x 3)) are converted to inequalities (e.g., (and (>= x
+	 *            3) (<= x 3)).
+	 * @param term
+	 *            The term that should be cannibalized
+	 * @return
+	 */
+	public static Term[] cannibalize(final ManagedScript mgnScript, final IUltimateServiceProvider services,
+			final boolean splitNumericEqualities, final Term term) {
+		final Term cnf = new CnfTransformer(mgnScript, services).transform(term);
+		if (splitNumericEqualities) {
+			return splitNumericEqualities(mgnScript.getScript(), SmtUtils.getConjuncts(cnf));
+		}
+		return SmtUtils.getConjuncts(cnf);
+	}
+
+	private static Term[] splitNumericEqualities(final Script script, final Term[] conjuncts) {
+		final ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
+		for (final Term conjunct : conjuncts) {
+			try {
+				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
+				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
+					final Term leq = script.term("<=", bnr.getLhs(), bnr.getRhs());
+					result.add(leq);
+					final Term geq = script.term(">=", bnr.getLhs(), bnr.getRhs());
+					result.add(geq);
+				} else {
+					result.add(conjunct);
+				}
+			} catch (final NoRelationOfThisKindException e) {
+				result.add(conjunct);
+			}
+		}
+		return result.toArray(new Term[result.size()]);
 	}
 
 	/**
@@ -1308,9 +1352,9 @@ public final class SmtUtils {
 	 * Takes a Term with array sort and unwraps all select and store terms until it hits the TermVariable or
 	 * ConstantTerm that can no longer be unwrapped. Examples: let a be an array variable, i1, i2, v some terms
 	 * <ul>
-	 *  <li> a returns a
-	 *  <li> (store a i v) returns a
-	 *  <li> (store (select a i1) i2 v) returns a
+	 * <li>a returns a
+	 * <li>(store a i v) returns a
+	 * <li>(store (select a i1) i2 v) returns a
 	 * </ul>
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -1330,8 +1374,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Checks if the given {@link Term} is a basic array term (i.e. a constant or a variable with an array sort).
-	 * (In the same sense as in {@link #getBasicArrayTerm(Term)})
+	 * Checks if the given {@link Term} is a basic array term (i.e. a constant or a variable with an array sort). (In
+	 * the same sense as in {@link #getBasicArrayTerm(Term)})
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -1355,8 +1399,7 @@ public final class SmtUtils {
 	}
 
 	public static String sanitizeStringAsSmtIdentifier(final String name) {
-		return name.replaceAll("\\|", "BAR")
-				.replaceAll(" ", "_");
+		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
 	}
 
 	/**
