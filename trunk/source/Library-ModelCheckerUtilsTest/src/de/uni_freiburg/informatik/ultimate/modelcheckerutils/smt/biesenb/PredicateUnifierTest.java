@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -97,6 +98,36 @@ public class PredicateUnifierTest {
 
 		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable, SimplificationTechnique.NONE,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	}
+	
+	@Test
+	public void testGetCoverageRelation() {
+		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory);
+
+		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
+		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
+		final Term singleTerm3 = mScript.term("<", mA.getTermVariable(), mTwo);
+		final Term singleTerm4 = mScript.term("<", mB.getTermVariable(), mOne);
+
+		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
+		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
+		final IPredicate pred3 = unifier.getOrConstructPredicate(singleTerm3);
+		final IPredicate pred4 = unifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+
+		IPredicateCoverageChecker cr = unifier.getCoverageRelation();
+		mLogger.info("cr: " + cr.getCoveredPredicates(pred1));
+		
+		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(singleTerm1);
+		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
+		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
+		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+
+		IPredicateCoverageChecker ocr = oUnifier.getCoverageRelation();
+		mLogger.info("cr: " + ocr.getCoveredPredicates(oPred1));
+		
 	}
 
 	@Test

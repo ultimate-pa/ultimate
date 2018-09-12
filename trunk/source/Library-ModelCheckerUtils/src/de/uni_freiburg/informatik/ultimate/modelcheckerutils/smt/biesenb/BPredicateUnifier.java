@@ -60,6 +60,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
+	private final PredicateCoverageChecker mConverageChecker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
 			final BasicPredicateFactory factory) {
@@ -70,10 +71,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
-		mPredicates.add(mTruePredicate);
-		mPredicates.add(mFalsePredicate);
 		mPredicateTrie = new PredicateTrie<>(mMgdScript);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
+		mConverageChecker = new PredicateCoverageChecker(mImplicationGraph);
+		
+		mPredicates.add(mTruePredicate);
+		mPredicates.add(mFalsePredicate);	
 	}
 
 	@Override
@@ -119,8 +122,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IPredicateCoverageChecker getCoverageRelation() {
-		// TODO Auto-generated method stub
-		return null;
+		return mConverageChecker;
 	}
 
 	@Override
