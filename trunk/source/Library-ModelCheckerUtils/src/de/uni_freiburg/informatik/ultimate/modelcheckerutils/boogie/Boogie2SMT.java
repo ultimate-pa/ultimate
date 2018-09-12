@@ -270,11 +270,11 @@ public class Boogie2SMT {
 
 	public static BoogieNonOldVar[] constructThreadIdVariable(final ForkStatement st, final ManagedScript mgdScript,
 			final TypeSortTranslator typeSortTranslator) {
-		BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[st.getForkID().length];
+		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[st.getForkID().length];
 		int i = 0;
-		for (Expression forkId : st.getForkID()) {
+		for (final Expression forkId : st.getForkID()) {
 			final Sort expressionSort = typeSortTranslator.getSort(forkId.getType(), st);
-			threadIdVars[i] = constructThreadAuxiliaryVariable("th_id_" + st.getMethodName(), expressionSort, mgdScript);
+			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + st.getMethodName(), expressionSort, mgdScript);
 			i++;
 		}
 		return threadIdVars;
