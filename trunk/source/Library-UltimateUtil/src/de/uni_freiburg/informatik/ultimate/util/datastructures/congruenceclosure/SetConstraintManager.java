@@ -400,21 +400,58 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 		mCcManager.bmStart(CcBmNames.MEET_IS_INCONSISTENT);
 
-		/*
-		 * onlyLits1 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals())
-		 * assert onlyLits1.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
-		 * SetConstraint<ELEM> lits1;
-		 * try {
-		 *   lits1 = onlyLits1.findAny().get();
-		 * } catch (NoSuchElementException ex) {
-		 *   return false;
-		 * }
-		 *
-		 */
 
-		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
-				litConstraint2);
-		final boolean result = isInconsistent(meet);
+		SetConstraint<ELEM> lits1 = null;
+		for (final SetConstraint<ELEM> sc : litConstraint1) {
+			if (sc.hasOnlyLiterals()) {
+				lits1 = sc;
+				break;
+			}
+		}
+		if (lits1 == null) {
+			mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+			return false;
+		}
+		SetConstraint<ELEM> lits2 = null;
+		for (final SetConstraint<ELEM> sc : litConstraint2) {
+			if (sc.hasOnlyLiterals()) {
+				lits2 = sc;
+				break;
+			}
+		}
+		if (lits2 == null) {
+			mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+			return false;
+		}
+
+//		final SetConstraint<ELEM> lits1;
+//		{
+//			final Stream<SetConstraint<ELEM>> onlyLits1 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
+//			assert onlyLits1.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
+//			try {
+//				lits1 = onlyLits1.findAny().get();
+//			} catch (final NoSuchElementException ex) {
+//				mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+//				return false;
+//			}
+//		}
+//		final SetConstraint<ELEM> lits2;
+//		{
+//			final Stream<SetConstraint<ELEM>> onlyLits2 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
+//			assert onlyLits2.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
+//			try {
+//				lits2 = onlyLits2.findAny().get();
+//			} catch (final NoSuchElementException ex) {
+//				mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+//				return false;
+//			}
+//		}
+//		final boolean result = DataStructureUtils.intersection(lits1.getLiterals(), lits2.getLiterals()).isEmpty();
+		final boolean result = !DataStructureUtils.haveNonEmptyIntersection(lits1.getLiterals(), lits2.getLiterals());
+
+//		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
+//				litConstraint2);
+//		final boolean result = isInconsistent(meet);
 		mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
 		return result;
 	}
