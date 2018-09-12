@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -62,7 +60,6 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
-	private final PredicateCoverageChecker mConverageChecker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
 			final BasicPredicateFactory factory) {
@@ -73,12 +70,10 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
-		mPredicateTrie = new PredicateTrie<>(mMgdScript);
-		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
-		mConverageChecker = new PredicateCoverageChecker(mImplicationGraph);
-		
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
+		mPredicateTrie = new PredicateTrie<>(mMgdScript);
+		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
 	}
 
 	@Override
@@ -124,7 +119,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IPredicateCoverageChecker getCoverageRelation() {
-		return mConverageChecker;
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
