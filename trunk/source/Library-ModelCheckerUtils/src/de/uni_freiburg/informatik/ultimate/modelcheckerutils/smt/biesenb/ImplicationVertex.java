@@ -95,9 +95,7 @@ public class ImplicationVertex<T> {
 
 	@Override
 	public String toString() {
-		final Deque<T> c = new ArrayDeque<>();
-		mChildren.forEach(child -> c.add(child.mPredicate));
-		return String.valueOf(mPredicate.toString()) + "-> " + c.toString();
+		return mPredicate.toString();
 	}
 
 	protected Set<ImplicationVertex<T>> getChildren() {
@@ -129,7 +127,7 @@ public class ImplicationVertex<T> {
 	}
 
 	/**
-	 * @return every predicate that is implied by mPredicate
+	 * @return every predicate that is implied by mPredicate (mPredicate is not included)
 	 */
 	protected Set<ImplicationVertex<T>> getDescendants() {
 		final Set<ImplicationVertex<T>> decendants = new HashSet<>(mChildren);
@@ -140,5 +138,19 @@ public class ImplicationVertex<T> {
 			vertex.addAll(current.mChildren);
 		}
 		return decendants;
+	}
+	
+	/**
+	 * @return every predicate that implies mPredicate (mPredicate is not included)
+	 */
+	protected Set<ImplicationVertex<T>> getAncestors() {
+		final Set<ImplicationVertex<T>> ancestors = new HashSet<>(mParents);
+		final Deque<ImplicationVertex<T>> vertex = new ArrayDeque<>(mParents);
+		while (!vertex.isEmpty()) {
+			final ImplicationVertex<T> current = vertex.removeFirst();
+			ancestors.addAll(current.mParents);
+			vertex.addAll(current.mParents);
+		}
+		return ancestors;
 	}
 }

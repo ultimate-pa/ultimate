@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,20 +49,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class ImplicationGraph<T extends IPredicate> {
+	private static final int ImplicationVertex = 0;
+	private static final int T = 0;
 	private final ManagedScript mScript;
 	private final Set<ImplicationVertex<T>> mVertices;
+	private final Map<T, ImplicationVertex<T>> mPredicateMap;
 	private ImplicationVertex<T> mTrueVertex;
 	private ImplicationVertex<T> mFalseVertex;
 
 	protected ImplicationGraph(final ManagedScript script, final T predicateFalse, final T predicateTrue) {
 		mScript = script;
 		mVertices = new HashSet<>();
+		mPredicateMap = new HashMap<>();
 		mFalseVertex = new ImplicationVertex<>(predicateFalse, new HashSet<>(), new HashSet<>());
 		mTrueVertex = new ImplicationVertex<>(predicateTrue, new HashSet<>(), new HashSet<>());
 		mFalseVertex.addChild(mTrueVertex);
 		mTrueVertex.addParent(mFalseVertex);
 		mVertices.add(mTrueVertex);
 		mVertices.add(mFalseVertex);
+		mPredicateMap.put(predicateTrue, mTrueVertex);
+		mPredicateMap.put(predicateFalse, mFalseVertex);
 	}
 	
 	protected ImplicationVertex<T> getTrueVertex() {
@@ -70,6 +77,13 @@ public class ImplicationGraph<T extends IPredicate> {
 	
 	protected ImplicationVertex<T> getFalseVertex() {
 		return mFalseVertex;
+	}
+	
+	protected ImplicationVertex<T> getVertex(T pred){
+		if(mPredicateMap.containsKey(pred)) {
+			return mPredicateMap.get(pred);
+		}
+		throw new IllegalArgumentException("predicate " + pred + " is unknown");
 	}
 
 	@Override
@@ -104,7 +118,7 @@ public class ImplicationGraph<T extends IPredicate> {
 				max = count;
 				maxVertex = vertex;
 			}
-			if (implication(maxVertex.getPredicate(), predicate)) {
+			if (implication(maxVertex.getPredicate(), predicate, true)) {
 				marked.add(maxVertex);
 				copy.getFirst().removeAllVerticesImplying(maxVertex);
 				continue;
@@ -132,7 +146,7 @@ public class ImplicationGraph<T extends IPredicate> {
 				max = count;
 				maxVertex = vertex;
 			}
-			if (implication(predicate, maxVertex.getPredicate())) {
+			if (implication(predicate, maxVertex.getPredicate(), true)) {
 				marked.add(maxVertex);
 				subCopy.getFirst().removeAllImpliedVertices(maxVertex);
 				continue;
@@ -148,6 +162,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		final ImplicationVertex<T> newVertex = new ImplicationVertex<>(predicate, children, parents);
 		newVertex.updateEdges();
 		mVertices.add(newVertex);
+		mPredicateMap.put(predicate, newVertex);
 		return newVertex;
 	}
 
@@ -219,29 +234,35 @@ public class ImplicationGraph<T extends IPredicate> {
 	}
 
 	/**
+	 * checks for implication - if the predicates are known, the graph is used
 	 * @return true if a implies b
 	 */
-	protected boolean implication(final T a, final T b) {
-		final Term acf = a.getClosedFormula();
-		final Term bcf = b.getClosedFormula();
-		mScript.lock(this);
-		final Term imp = mScript.term(this, "and", acf, mScript.term(this, "not", bcf));
-		mScript.push(this, 1);
-		try {
-			mScript.assertTerm(this, imp);
-			final Script.LBool result = mScript.checkSat(this);
-			if (result == Script.LBool.UNSAT) {
-				return true;
+	protected boolean implication(final T a, final T b, final boolean useSolver) {
+		if(mPredicateMap.containsKey(a) && mPredicateMap.containsKey(b)) {
+			return getVertex(a).getDescendants().contains(getVertex(b));
+		} else if(useSolver) {
+			final Term acf = a.getClosedFormula();
+			final Term bcf = b.getClosedFormula();
+			mScript.lock(this);
+			final Term imp = mScript.term(this, "and", acf, mScript.term(this, "not", bcf));
+			mScript.push(this, 1);
+			try {
+				mScript.assertTerm(this, imp);
+				final Script.LBool result = mScript.checkSat(this);
+				if (result == Script.LBool.UNSAT) {
+					return true;
+				}
+				if (result == Script.LBool.SAT) {
+					return false;
+				}
+				throw new UnsupportedOperationException(
+						"Cannot handle case were solver cannot decide implication of predicates");
+			} finally {
+				mScript.pop(this, 1);
+				mScript.unlock(this);
 			}
-			if (result == Script.LBool.SAT) {
-				return false;
-			}
-			throw new UnsupportedOperationException(
-					"Cannot handle case were solver cannot decide implication of predicates");
-		} finally {
-			mScript.pop(this, 1);
-			mScript.unlock(this);
 		}
+		throw new IllegalArgumentException("predicate is not known, use the solver-option");
 	}
 
 	/**
@@ -288,6 +309,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		final ImplicationGraph<T> copy =
 				new ImplicationGraph<>(mScript, mTrueVertex.getPredicate(), mFalseVertex.getPredicate());
 		copy.mVertices.clear();
+		// get vertices that have all vertices from "parents" as an ancestor
 		final Set<ImplicationVertex<T>> subVertices = parents.iterator().next().getDescendants();
 		for (final ImplicationVertex<T> init : parents) {
 			final Set<ImplicationVertex<T>> toRemove = new HashSet<>();
