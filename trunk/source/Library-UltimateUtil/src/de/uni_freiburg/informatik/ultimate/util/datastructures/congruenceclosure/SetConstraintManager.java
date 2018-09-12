@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager.CcBmNames;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -19,13 +20,15 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	private final SetConstraint<ELEM> mInconsistentSetConstraint;
 //	private final SetConstraintComparator<ELEM> mSetConstraintComparator;
 	private final IPartialComparator<SetConstraint<ELEM>> mSetConstraintComparator;
+	private final CcManager<ELEM> mCcManager;
 
-	public SetConstraintManager() {
+	public SetConstraintManager(final CcManager<ELEM> ccMan) {
 		mLiteralsToNonLiteralsToSetConstraint = new NestedMap2<>();
 		mInconsistentSetConstraint = new SetConstraint<>(true);
 		mSetConstraintComparator = CcSettings.USE_CACHE_FOR_SETCONSTRAINTS ?
 				new CachingSetConstraintComparator<>(this) :
 				new SetConstraintComparator<>(this);
+		mCcManager = ccMan;
 	}
 
 	public SetConstraint<ELEM> buildSetConstraint(
@@ -390,14 +393,30 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @param litConstraint2
 	 * @return
 	 */
-	public  boolean meetIsInconsistent(
+	public boolean meetIsInconsistent(
 			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
 			final Set<SetConstraint<ELEM>> litConstraint1,
 			final Set<SetConstraint<ELEM>> litConstraint2) {
 
+		mCcManager.bmStart(CcBmNames.MEET_IS_INCONSISTENT);
+
+		/*
+		 * onlyLits1 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals())
+		 * assert onlyLits1.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
+		 * SetConstraint<ELEM> lits1;
+		 * try {
+		 *   lits1 = onlyLits1.findAny().get();
+		 * } catch (NoSuchElementException ex) {
+		 *   return false;
+		 * }
+		 *
+		 */
+
 		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
 				litConstraint2);
-		return isInconsistent(meet);
+		final boolean result = isInconsistent(meet);
+		mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+		return result;
 	}
 
 	/**

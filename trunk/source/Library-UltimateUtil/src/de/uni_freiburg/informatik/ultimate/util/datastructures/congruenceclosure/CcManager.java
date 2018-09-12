@@ -65,7 +65,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mLogger = logger;
 		mCcComparator = ccComparator;
 
-		mSetConstraintManager = new SetConstraintManager<>();
+		mSetConstraintManager = new SetConstraintManager<>(this);
 
 		mInconsistentCc = new CongruenceClosure<>(true);
 		mInconsistentCc.freezeAndClose();
@@ -1079,7 +1079,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mBenchmark.pauseWatch(CcBmNames.OVERALL.name());
 	}
 
-	private void bmStart(final CcBmNames watch) {
+	void bmStart(final CcBmNames watch) {
 		if (!mBenchmarkMode) {
 			return;
 		}
@@ -1088,7 +1088,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mBenchmark.unpauseWatch(watch.name());
 	}
 
-	private void bmEnd(final CcBmNames watch) {
+	void bmEnd(final CcBmNames watch) {
 		if (!mBenchmarkMode) {
 			return;
 		}
@@ -1096,11 +1096,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mBenchmark.pauseWatch(watch.name());
 	}
 
-	private static enum CcBmNames {
+	static enum CcBmNames {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
 		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
-		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION, NORMALIZE_SET_CONSTRAINT_CONJUNCTION;
+		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION, NORMALIZE_SET_CONSTRAINT_CONJUNCTION,
+		GET_EQUALITY_STATUS, MEET_IS_INCONSISTENT ;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];

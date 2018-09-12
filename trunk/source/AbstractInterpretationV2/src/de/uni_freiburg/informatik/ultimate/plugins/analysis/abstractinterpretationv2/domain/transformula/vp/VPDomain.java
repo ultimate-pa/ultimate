@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
 /**
  * Domain of variable partition.
@@ -222,16 +223,27 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		/*
 		 * report WeqCcManager's Benchmark
 		 */
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "WeqCcManagerStatistics",
-						mEqConstraintFactory.getWeqCcManager().getBenchmark()));
+		{
+			final BenchmarkWithCounters bm = mEqConstraintFactory.getWeqCcManager().getBenchmark();
+			if (bm != null) {
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_ID, "WeqCcManagerStatistics",
+								mEqConstraintFactory.getWeqCcManager().getBenchmark()));
+			}
+		}
 
 		/*
 		 * report CcManager's Benchmark
 		 */
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics",
-						mEqConstraintFactory.getWeqCcManager().getCcManager().getBenchmark()));
+		{
+			final BenchmarkWithCounters bm = mEqConstraintFactory.getWeqCcManager().getCcManager().getBenchmark();
+			if (bm != null) {
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics", bm));
+			}
+		}
+
+
 		if (mEqConstraintFactory.getWeqCcManager().getCcManager().hasPartialOrderCacheBenchmark()) {
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics",

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager.CcBmNames;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -1111,7 +1112,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		assert hasElement(elem1) && hasElement(elem2);
 		assert !isInconsistent() : "catch this outside!";
 
+		mManager.bmStart(CcBmNames.GET_EQUALITY_STATUS);
+
 		if (!elem1.hasSameTypeAs(elem2)) {
+			mManager.bmEnd(CcBmNames.GET_EQUALITY_STATUS);
 			return EqualityStatus.NOT_EQUAL;
 		}
 
@@ -1119,10 +1123,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ELEM rep2 = getRepresentativeElement(elem2);
 
 		if (rep1.equals(rep2)) {
+			mManager.bmEnd(CcBmNames.GET_EQUALITY_STATUS);
 			return EqualityStatus.EQUAL;
 		}
 
 		if (rep1.isLiteral() && rep2.isLiteral()) {
+			mManager.bmEnd(CcBmNames.GET_EQUALITY_STATUS);
 			return EqualityStatus.NOT_EQUAL;
 		}
 
@@ -1150,10 +1156,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (mManager.getSetConstraintManager().meetIsInconsistent(getLiteralSetConstraints(),
 						litConstraint1,
 						litConstraint2)) {
+			mManager.bmEnd(CcBmNames.GET_EQUALITY_STATUS);
 			return EqualityStatus.NOT_EQUAL;
 		}
 
-		return mElementTVER.getEqualityStatus(elem1, elem2);
+		final EqualityStatus result = mElementTVER.getEqualityStatus(elem1, elem2);
+		mManager.bmEnd(CcBmNames.GET_EQUALITY_STATUS);
+		return result;
 	}
 
 	@Override
