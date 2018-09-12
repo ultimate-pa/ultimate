@@ -19,7 +19,7 @@ implementation ULTIMATE.start()
     
     x := 3;
     
-    join y := 1;
+    join 1 assign y;
     
     assert y == x;
 }

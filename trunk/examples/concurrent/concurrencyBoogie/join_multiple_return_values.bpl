@@ -18,7 +18,7 @@ implementation ULTIMATE.start()
     
     x := 3;
     
-    join x, y := 1;
+    join 1 assign x, y;
 }
 
 procedure foo(num : int) returns(ret : int, ret_bool : bool);

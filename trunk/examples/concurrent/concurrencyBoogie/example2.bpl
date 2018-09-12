@@ -14,7 +14,7 @@ implementation ULTIMATE.start()
     x := 4;
     fork 1 foo();
     
-    join x := 1;
+    join 1 assign x;
 }
 
 

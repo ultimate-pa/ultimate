@@ -19,7 +19,7 @@ implementation ULTIMATE.start()
     fork 1 bar();
     fork 1 sam();
     
-    join x := 1;
+    join 1 assign x;
 }
 
 procedure foo() returns (ret : int);

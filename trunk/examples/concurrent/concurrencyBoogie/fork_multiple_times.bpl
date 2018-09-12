@@ -19,7 +19,7 @@ implementation ULTIMATE.start()
     fork 2 foo(4);
     fork x foo(1);
     
-    join x := 1;
+    join 1 assign x;
     join 2;
     join 3;
 }

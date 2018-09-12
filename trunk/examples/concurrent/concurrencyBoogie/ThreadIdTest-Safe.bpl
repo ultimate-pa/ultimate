@@ -18,7 +18,7 @@ implementation ULTIMATE.start()
 
     fork 1 increment(x);
 	fork 2 decrement(x);
-    join y := 1;
+    join 1 assign y;
 	assert y == 1;
 }
 
