@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Represents a conjunction over single set constraints that all constrain the
@@ -54,8 +54,15 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		mSurroundingCCSetConstraints = surroundingSetConstraints;
 		mSetConstraintManager = surroundingSetConstraints.getCongruenceClosure().getManager().getSetConstraintManager();
 
-		final List<SetConstraint<ELEM>> onlyLits =
-				setConstraintsRaw.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList());
+//		final List<SetConstraint<ELEM>> onlyLits =
+//				setConstraintsRaw.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList());
+		final List<SetConstraint<ELEM>> onlyLits = new ArrayList<>();
+		for (final SetConstraint<ELEM> sc : setConstraintsRaw) {
+			if (sc.hasOnlyLiterals()) {
+				onlyLits.add(sc);
+			}
+		}
+
 		assert onlyLits.size() < 2;
 		if (onlyLits.size() == 1) {
 			mScWithOnlyLiterals = onlyLits.iterator().next();
@@ -127,7 +134,16 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 	public boolean isInconsistent() {
 		assert !mIsInconsistent || mSetConstraints == null;
-		return mIsInconsistent || mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent());
+//		return mIsInconsistent || mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent());
+		if (mIsInconsistent) {
+			return true;
+		}
+		for (final SetConstraint<ELEM> sc : mSetConstraints) {
+			if (sc.isInconsistent()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosure() {
@@ -180,7 +196,13 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasOnlyLiterals(
 			final Collection<SetConstraint<ELEM>> setConstraints) {
-		return setConstraints.stream().anyMatch(sc -> sc.hasOnlyLiterals());
+//		return setConstraints.stream().anyMatch(sc -> sc.hasOnlyLiterals());
+		for (final SetConstraint<ELEM> sc : setConstraints) {
+			if (sc.hasOnlyLiterals()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public Set<ELEM> getLiterals() {
@@ -188,16 +210,16 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return mScWithOnlyLiterals.getLiterals();
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getLiterals(
-			final Collection<SetConstraint<ELEM>> setConstraints) {
-		assert setConstraints.stream().filter(sc -> sc.hasOnlyLiterals()).collect(Collectors.toSet()).size() == 1;
-		for (final SetConstraint<ELEM> sc : setConstraints) {
-			if (sc.hasOnlyLiterals()) {
-				return sc.getLiterals();
-			}
-		}
-		throw new IllegalStateException("check for hasOnlyLiterals before calling this");
-	}
+//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getLiterals(
+//			final Collection<SetConstraint<ELEM>> setConstraints) {
+//		assert setConstraints.stream().filter(sc -> sc.hasOnlyLiterals()).collect(Collectors.toSet()).size() == 1;
+//		for (final SetConstraint<ELEM> sc : setConstraints) {
+//			if (sc.hasOnlyLiterals()) {
+//				return sc.getLiterals();
+//			}
+//		}
+//		throw new IllegalStateException("check for hasOnlyLiterals before calling this");
+//	}
 
 	public void expandVariableToLiterals(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints, final ELEM elem,
 			final Set<ELEM> literals) {

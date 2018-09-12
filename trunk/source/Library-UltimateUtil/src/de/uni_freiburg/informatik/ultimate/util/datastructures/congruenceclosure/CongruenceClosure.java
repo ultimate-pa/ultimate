@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -923,11 +922,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (eqc.size() == 1) {
 			return null;
 		}
-		final Optional<ELEM> opt = eqc.stream().filter(e -> !e.equals(eqmember) &&
-				(forbiddenSet == null || !forbiddenSet.contains(e))).findFirst();
-		if (opt.isPresent()) {
-			return opt.get();
+		for (final ELEM e : eqc) {
+			if (!e.equals(eqmember) && (forbiddenSet == null || !forbiddenSet.contains(e))) {
+				return e;
+			}
 		}
+//		final Optional<ELEM> opt = eqc.stream().filter(e -> !e.equals(eqmember) &&
+//				(forbiddenSet == null || !forbiddenSet.contains(e))).findFirst();
+//		if (opt.isPresent()) {
+//			return opt.get();
+//		}
 		return null;
 	}
 
@@ -1170,13 +1174,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return Collections.unmodifiableSet(mElementTVER.getAllElements());
 	}
 
-	protected Set<Entry<ELEM, ELEM>> getPairsWithMatchingType(final Set<ELEM> baseSet,
-			final boolean getReflexive, final boolean getSymmetric) {
-		return CrossProducts.binarySelectiveCrossProduct(baseSet, getReflexive, getSymmetric)
-				.entrySet().stream()
-				.filter(en -> en.getKey().hasSameTypeAs(en.getValue()))
-				.collect(Collectors.toSet());
-	}
+//	protected Set<Entry<ELEM, ELEM>> getPairsWithMatchingType(final Set<ELEM> baseSet,
+//			final boolean getReflexive, final boolean getSymmetric) {
+//		final BiPredicate<ELEM, ELEM> pred = (e1, e2) ->
+//			getReflexive ?
+//					e1.hasSameTypeAs(e2) : // dont care for refl
+//					 (e1.equals(e2) ? // dont get refl
+//							false :
+//						e1.hasSameTypeAs(e2));
+//
+////				e1.equals(e2) ?
+////						(getReflexive ?
+////								e1.hasSameTypeAs(e2)
+////								: false
+////								: true;
+//		return CrossProducts.binarySelectiveCrossProduct(baseSet, getSymmetric, pred).entrySet();
+////		return CrossProducts.binarySelectiveCrossProduct(baseSet, getReflexive, getSymmetric)
+////				.entrySet().stream()
+////				.filter(en -> en.getKey().hasSameTypeAs(en.getValue()))
+////				.collect(Collectors.toSet());
+//	}
 
 	public CCLiteralSetConstraints<ELEM> getLiteralSetConstraints() {
 		return mLiteralSetConstraints;
