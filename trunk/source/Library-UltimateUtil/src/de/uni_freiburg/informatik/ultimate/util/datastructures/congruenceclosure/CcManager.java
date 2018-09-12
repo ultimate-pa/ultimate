@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -79,7 +78,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 		mPartialOrderCache = null;
 	 	}
 
-		mBenchmarkMode = true;
+		mBenchmarkMode = !true;
 		if (mBenchmarkMode) {
 			mBenchmark = new BenchmarkWithCounters();
 			mBenchmark.registerCountersAndWatches(CcBmNames.getNames());
@@ -903,10 +902,20 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// throw away all singletons, as they were (must have been!) reported as equalities
 		// throw away all tautological constraints
-		final Set<SetConstraint<ELEM>> filtered2 = filtered1.stream()
-				.filter(sc -> !sc.isSingleton())
-				.filter(sc -> !SetConstraint.isTautological(constrainedElement, sc))
-				.collect(Collectors.toSet());
+//		final Set<SetConstraint<ELEM>> filtered2 = filtered1.stream()
+//				.filter(sc -> !sc.isSingleton())
+//				.filter(sc -> !SetConstraint.isTautological(constrainedElement, sc))
+//				.collect(Collectors.toSet());
+		final Set<SetConstraint<ELEM>> filtered2 = new HashSet<>();
+		for (final SetConstraint<ELEM> sc : filtered1) {
+			if (sc.isSingleton()) {
+				continue;
+			}
+			if (SetConstraint.isTautological(constrainedElement, sc)) {
+				continue;
+			}
+			filtered2.add(sc);
+		}
 
 
 		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2.size() == 1

@@ -55,9 +55,19 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	public SetConstraint<ELEM> buildSetConstraint(
 			final Collection<ELEM> unsortedElements) {
+		final Set<ELEM> literals = new HashSet<>();
+		final Set<ELEM> nonLiterals = new HashSet<>();
+		for (final ELEM el : unsortedElements) {
+			if (el.isLiteral()) {
+				literals.add(el);
+			} else {
+				nonLiterals.add(el);
+			}
+		}
 		return buildSetConstraint(
-				unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
-				unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
+				literals, nonLiterals);
+//				unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
+//				unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
 	}
 
 
@@ -567,19 +577,30 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return false;
 	}
 
-	public  boolean isInconsistent(
-			final Collection<SetConstraint<ELEM>> constraints) {
+	public boolean isInconsistent(final Collection<SetConstraint<ELEM>> constraints) {
 		if (constraints == null) {
 			return false;
 		}
-		return constraints.stream().anyMatch(sc -> sc.isInconsistent());
+		for (final SetConstraint<ELEM> sc : constraints) {
+			if (sc.isInconsistent()) {
+				return true;
+			}
+		}
+		return false;
+//		return constraints.stream().anyMatch(sc -> sc.isInconsistent());
 	}
 
-	public  Set<ELEM> getSingletonValues(
-			final Set<SetConstraint<ELEM>> constraints) {
-		return constraints.stream().filter(sc -> sc.isSingleton())
-				.map(sc -> sc.getSingletonValue())
-				.collect(Collectors.toSet());
+	public  Set<ELEM> getSingletonValues(final Set<SetConstraint<ELEM>> constraints) {
+		final Set<ELEM> result = new HashSet<>();
+		for (final SetConstraint<ELEM> sc : constraints) {
+			if (sc.isSingleton()) {
+				result.add(sc.getSingletonValue());
+			}
+		}
+		return result;
+//		return constraints.stream().filter(sc -> sc.isSingleton())
+//				.map(sc -> sc.getSingletonValue())
+//				.collect(Collectors.toSet());
 	}
 
 	public  Set<SetConstraint<ELEM>> filterWithDisequalities(
@@ -650,12 +671,12 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return mSetConstraintComparator;
 	}
 
-	public boolean hasOnlyLiterals(final Set<SetConstraint<ELEM>> litConstraint2) {
-		if (litConstraint2 == null || litConstraint2.isEmpty()) {
-			return false;
-		}
-		return litConstraint2.stream().allMatch(sc -> sc.hasOnlyLiterals());
-	}
+//	public boolean hasOnlyLiterals(final Set<SetConstraint<ELEM>> litConstraint2) {
+//		if (litConstraint2 == null || litConstraint2.isEmpty()) {
+//			return false;
+//		}
+//		return litConstraint2.stream().allMatch(sc -> sc.hasOnlyLiterals());
+//	}
 
 
 	/**
