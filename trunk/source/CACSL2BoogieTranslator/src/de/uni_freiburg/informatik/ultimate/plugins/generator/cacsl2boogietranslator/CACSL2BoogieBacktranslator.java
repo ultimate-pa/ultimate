@@ -331,7 +331,7 @@ public class CACSL2BoogieBacktranslator
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates);
 	}
 
-	private boolean checkProcedureNames(final AtomicTraceElement<BoogieASTNode> ate,
+	private static boolean checkProcedureNames(final AtomicTraceElement<BoogieASTNode> ate,
 			final AtomicTraceElement<CACSLLocation> newAte) {
 		return ate.getSucceedingProcedure() == newAte.getSucceedingProcedure()
 				&& ate.getPrecedingProcedure() == newAte.getPrecedingProcedure();
@@ -343,6 +343,7 @@ public class CACSL2BoogieBacktranslator
 		return checkCallStack(rtr);
 	}
 
+	@SuppressWarnings("unchecked")
 	private boolean checkCallStack(final List<? extends AtomicTraceElement<?>> trace) {
 		final Deque<String> callStack = new ArrayDeque<>();
 		int i = 0;
@@ -531,7 +532,7 @@ public class CACSL2BoogieBacktranslator
 		return index;
 	}
 
-	private int getNextValidIndex(final IProgramExecution<BoogieASTNode, Expression> programExecution,
+	private static int getNextValidIndex(final IProgramExecution<BoogieASTNode, Expression> programExecution,
 			final int index) {
 		for (int i = index; i < programExecution.getLength(); ++i) {
 			final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
