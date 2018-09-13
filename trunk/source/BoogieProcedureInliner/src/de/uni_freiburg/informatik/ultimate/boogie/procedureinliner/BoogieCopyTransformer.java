@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -67,14 +68,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 /**
  * Modification of the BoogieTransformer,
  * which guarantees to return new instances for statements and expressions.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class BoogieCopyTransformer extends BoogieTransformer {
-	
-	
+
+
 	@Override
-	protected Statement processStatement(Statement stat) {
+	protected Statement processStatement(final Statement stat) {
 		Statement newStat;
 		if (stat instanceof AssertStatement) {
 			final Expression expr = ((AssertStatement) stat).getFormula();
@@ -133,6 +134,9 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gs = (GotoStatement) stat;
 			newStat = new GotoStatement(gs.getLocation(), gs.getLabels());
+		} else if (stat instanceof ForkStatement) {
+			final ForkStatement fs = (ForkStatement) stat;
+			newStat = new ForkStatement(fs.getLoc(), fs.getForkID(), fs.getMethodName(), fs.getArguments());
 		} else {
 			throw new UnsupportedOperationException("Cannot process unknown expression: " + stat.getClass().getName());
 		}
@@ -141,7 +145,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 	}
 
 	@Override
-	protected Expression processExpression(Expression expr) {
+	protected Expression processExpression(final Expression expr) {
 		Expression newExpr;
 		if (expr instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) expr;
