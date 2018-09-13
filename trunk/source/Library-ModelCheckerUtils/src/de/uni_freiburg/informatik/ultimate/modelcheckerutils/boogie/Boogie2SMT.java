@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,21 +124,19 @@ public class Boogie2SMT {
 			mTypeSortTranslator =
 					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
 			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript, mTypeSortTranslator);
-			final Set<IProgramNonOldVar> concurInUseVars;
+			final Set<IProgramNonOldVar> concurrencyAuxVars;
 			final Set<IProgramNonOldVar[]> concurIdVars;
 			if (mConcurrencyInformation == null) {
-				concurInUseVars = Collections.emptySet();
+				concurrencyAuxVars = Collections.emptySet();
 				concurIdVars = Collections.emptySet();
 			} else {
-				concurInUseVars = new HashSet<>();
-				concurIdVars = new HashSet<>();
-				concurInUseVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
-						.collect(Collectors.toSet()));
-				concurIdVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream().map(Entry::getValue)
-						.collect(Collectors.toSet()));
+				concurrencyAuxVars = new HashSet<>();
+				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream()
+						.map(Entry::getValue).collect(Collectors.toSet()));
+				concurrencyAuxVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream()
+						.flatMap(x -> Arrays.stream(x.getValue())).collect(Collectors.toSet()));
 			}
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurInUseVars);
-			// TODO: add concurIdVars to mBoogie2SmtSymbolTable  ? Why duplicated code here?
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurrencyAuxVars);
 
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,
