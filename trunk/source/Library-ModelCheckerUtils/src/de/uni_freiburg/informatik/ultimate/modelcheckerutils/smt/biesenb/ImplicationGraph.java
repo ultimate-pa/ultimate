@@ -236,9 +236,11 @@ public class ImplicationGraph<T extends IPredicate> {
 	 * @return true if a implies b
 	 */
 	protected boolean implication(final T a, final T b, final boolean useSolver) {
+		if(a.equals(b)) return true;
 		if(mPredicateMap.containsKey(a) && mPredicateMap.containsKey(b)) {
 			return getVertex(a).getDescendants().contains(getVertex(b));
-		} else if(useSolver) {
+		}
+		if(useSolver) {
 			final Term acf = a.getClosedFormula();
 			final Term bcf = b.getClosedFormula();
 			mScript.lock(this);

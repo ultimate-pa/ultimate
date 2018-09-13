@@ -101,7 +101,7 @@ public class PredicateUnifierTest {
 	}
 	
 	@Test
-	public void testGetCoverageRelation() {
+	public void PredicateCoverageChecker() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -115,7 +115,7 @@ public class PredicateUnifierTest {
 		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate pred3 = unifier.getOrConstructPredicate(singleTerm3);
-		final IPredicate pred4 = unifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+		final IPredicate pred4 = unifier.getOrConstructPredicate(mScript.term("true"));
 
 		IPredicateCoverageChecker cr = unifier.getCoverageRelation();
 		mLogger.info("cr: " + cr.getCoveredPredicates(pred1));
@@ -123,11 +123,16 @@ public class PredicateUnifierTest {
 		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
-		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(mScript.term("true"));
 
 		IPredicateCoverageChecker ocr = oUnifier.getCoverageRelation();
 		mLogger.info("cr: " + ocr.getCoveredPredicates(oPred1));
 		
+		mLogger.info("co: " + cr.isCovered(pred1, pred4));
+		mLogger.info("co: " + ocr.isCovered(oPred1, oPred4));
+		
+		mLogger.info("p: " + unifier.collectPredicateUnifierStatistics());
+		mLogger.info("p: " + oUnifier.collectPredicateUnifierStatistics());
 	}
 
 	@Test

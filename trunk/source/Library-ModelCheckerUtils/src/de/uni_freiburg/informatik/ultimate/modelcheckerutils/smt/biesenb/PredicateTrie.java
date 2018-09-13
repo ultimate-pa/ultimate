@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb.BPredicateUnifier.PredicateUnifierStatisticsTracker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -48,30 +49,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class PredicateTrie<T extends IPredicate> {
-	private final Term mTrue;
-	private final Term mFalse;
+	private final T mTruePredicate;
+	private final T mFalsePredicate;
 	private final ManagedScript mMgnScript;
+	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
+	
 	private IVertex mRoot;
 
-	protected PredicateTrie(final ManagedScript script) {
+	protected PredicateTrie(final ManagedScript script, final T truePredicate, final T falsePredicate, PredicateUnifierStatisticsTracker statisticsTracker) {
 		mMgnScript = script;
-		mTrue = script.getScript().term("true");
-		mFalse = script.getScript().term("false");
+		mTruePredicate = truePredicate;
+		mFalsePredicate = falsePredicate;
 		mRoot = null;
-	}
-
-	@Override
-	public String toString() {
-		if (mRoot == null) {
-			return "";
-		}
-		final StringBuilder sb = new StringBuilder();
-		mRoot.toString(sb);
-		sb.append("\n");
-		return sb.toString();
+		mStatisticsTracker = statisticsTracker;
 	}
 	
+	/*
 	protected boolean isRepresentative(final T predicate) {
+		// check for true/false
+		if (mTruePredicate.equals(predicate) || mFalsePredicate.equals(predicate)) return true;
 		// empty tree
 		if (mRoot == null) return false;
 		IVertex current = mRoot;
@@ -84,6 +80,7 @@ public class PredicateTrie<T extends IPredicate> {
 		final T currentPredicate = ((PredicateVertex<T>) current).mPredicate;
 		return currentPredicate.equals(predicate);
 	}
+	*/
 	
 	protected Collection<T> unifyPredicateCollection(final Collection<T> predicates){
 		Collection<T> unifiedSet = new HashSet<>();
@@ -165,7 +162,7 @@ public class PredicateTrie<T extends IPredicate> {
 	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
 		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgnScript, witness);
 		final Term result = subst.transform(predicate.getClosedFormula());
-		return mTrue.equals(result);
+		return mTruePredicate.getFormula().equals(result);
 	}
 
 	/**

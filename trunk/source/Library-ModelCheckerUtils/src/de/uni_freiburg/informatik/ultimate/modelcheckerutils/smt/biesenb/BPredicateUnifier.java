@@ -61,6 +61,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
 	private final PredicateCoverageChecker mConverageChecker;
+	
+	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
 			final BasicPredicateFactory factory) {
@@ -71,7 +73,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
-		mPredicateTrie = new PredicateTrie<>(mMgdScript);
+		mStatisticsTracker = new PredicateUnifierStatisticsTracker();
+		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mStatisticsTracker);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
 		mConverageChecker = new PredicateCoverageChecker(mImplicationGraph);
 		
@@ -117,7 +120,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public String collectPredicateUnifierStatistics() {
-		return mPredicateTrie.toString() + mImplicationGraph.toString();
+		return mStatisticsTracker.toString();
 	}
 
 	@Override
@@ -177,17 +180,34 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	 * and returned.
 	 */
 	public IPredicate getOrConstructPredicate(final Term term) {
+		mStatisticsTracker.incrementGetRequests();
+		// catch terms equal to true of false
 		final IPredicate predicate = mBasicPredicateFactory.newPredicate(term);
-		if (isDistinct(predicate, mTruePredicate) == LBool.UNSAT) {
+		if (mTruePredicate.getFormula().equals(term)) {
+			mStatisticsTracker.incrementSyntacticMatches();
+			return mTruePredicate;
+		} else if (mFalsePredicate.getFormula().equals(term)) {
+			mStatisticsTracker.incrementSyntacticMatches();
+			return mFalsePredicate;
+		} else if (isDistinct(predicate, mTruePredicate) == LBool.UNSAT) {
+			mStatisticsTracker.incrementSemanticMatches();
 			return mTruePredicate;
 		} else if (isDistinct(predicate, mFalsePredicate) == LBool.UNSAT) {
+			mStatisticsTracker.incrementSemanticMatches();
 			return mFalsePredicate;
 		}
+		
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);
 		// Check if predicate is new to the unifier
 		if (unifiedPredicate == predicate) {
-			mImplicationGraph.unifyPredicate(predicate);
-			mPredicates.add(predicate);
+			if(mPredicates.add(predicate)) {
+				mImplicationGraph.unifyPredicate(predicate);
+				mStatisticsTracker.incrementConstructedPredicates();
+			} else {
+				mStatisticsTracker.incrementSyntacticMatches();
+			}
+		} else {
+			mStatisticsTracker.incrementSemanticMatches();
 		}
 		return unifiedPredicate;
 	}
@@ -221,4 +241,49 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return mFalsePredicate;
 	}
 
+	public class PredicateUnifierStatisticsTracker {
+
+		private int mDeclaredPredicates = 0;
+		private int mGetRequests = 0;
+		private int mSyntacticMatches = 0;
+		private int mSemanticMatches = 0;
+		private int mConstructedPredicates = 0;
+		private int mIntricatePredicates = 0;
+		private int mDeprecatedPredicatesCount = 0;
+		private int mImplicationChecksByTransitivity = 0;
+		
+		public PredicateUnifierStatisticsTracker() {
+		}
+		
+		@Override
+		public String toString() {
+			return mDeclaredPredicates + " DeclaredPredicates, " + mGetRequests + " GetRequests, " 
+		+ mSyntacticMatches + " SyntacticMatches, " + mSemanticMatches + " SemanticMatches, "
+		+ mConstructedPredicates + " ConstructedPredicates";
+		}
+		
+		public void incrementDeclaredPredicates() {
+			mDeclaredPredicates++;
+		}
+		
+		public void incrementGetRequests() {
+			mGetRequests++;
+		}
+		
+		public void incrementSyntacticMatches() {
+			mSyntacticMatches++;
+		}
+		
+		public void incrementSemanticMatches() {
+			mSemanticMatches++;
+		}
+		
+		public void incrementConstructedPredicates() {
+			mConstructedPredicates++;
+		}
+		
+		public void incrementIntricatePredicates() {
+			mIntricatePredicates++;
+		}
+	}
 }
