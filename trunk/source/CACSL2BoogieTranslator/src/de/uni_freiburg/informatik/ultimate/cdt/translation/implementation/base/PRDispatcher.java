@@ -141,8 +141,8 @@ public class PRDispatcher extends Dispatcher {
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
 			final Set<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
-			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst) {
-		super(backtranslator, services, logger, locFac, functionTable, mst);
+			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst, final boolean useSvcompMode) {
+		super(backtranslator, services, logger, locFac, functionTable, mst, useSvcompMode);
 		mFunctionToIndex = functionToIndex;
 		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -176,7 +176,6 @@ public class PRDispatcher extends Dispatcher {
 
 		mCHandler = new CHandler(mServices, mLogger, this, mHandlerHandler, mBacktranslator, false,
 				bitvectorTranslation, overapproximateFloatingPointOperations, mFlatTable);
-		mLogger.info("Starting pre-run dispatcher" + (isSvcomp() ? " in SV-COMP mode " : " in normal mode"));
 	}
 
 	@Override

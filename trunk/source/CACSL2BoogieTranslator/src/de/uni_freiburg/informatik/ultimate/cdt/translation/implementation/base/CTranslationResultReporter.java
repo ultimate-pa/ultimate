@@ -27,6 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
@@ -72,6 +75,40 @@ public class CTranslationResultReporter {
 		final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc, shortDescription,
 				longDescription, Severity.WARNING);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+	}
+
+	/**
+	 * Report a syntax error to Ultimate. This will cancel the toolchain.
+	 *
+	 * @param loc
+	 *            where did it happen?
+	 * @param type
+	 *            why did it happen?
+	 * @param msg
+	 *            description.
+	 */
+	public void syntaxError(final ILocation loc, final String msg) {
+		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
+		mLogger.warn(msg);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mServices.getProgressMonitorService().cancelToolchain();
+	}
+
+	/**
+	 * Report a unsupported syntax to Ultimate. This will cancel the toolchain.
+	 *
+	 * @param loc
+	 *            where did it happen?
+	 * @param type
+	 *            why did it happen?
+	 * @param msg
+	 *            description.
+	 */
+	public void unsupportedSyntax(final ILocation loc, final String msg) {
+		final UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, loc, msg);
+		mLogger.warn(msg);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
 }

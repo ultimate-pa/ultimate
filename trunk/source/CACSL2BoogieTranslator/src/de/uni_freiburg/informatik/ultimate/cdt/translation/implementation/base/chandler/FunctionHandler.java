@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
@@ -133,9 +134,10 @@ public class FunctionHandler {
 
 	private final ExpressionTranslation mExpressionTranslation;
 
-	ProcedureManager mProcedureManager;
+	private final ProcedureManager mProcedureManager;
 
 	private final CTranslationState mState;
+	private final ILogger mLogger;
 
 	/**
 	 * Constructor.
@@ -145,7 +147,8 @@ public class FunctionHandler {
 	 * @param procedureManager
 	 * @param checkMemoryLeakAtEndOfMain
 	 */
-	public FunctionHandler(final CTranslationState state) {
+	public FunctionHandler(final ILogger logger, final CTranslationState state) {
+		mLogger = logger;
 		mState = state;
 		state.setFunctionHandler(this);
 
@@ -539,7 +542,7 @@ public class FunctionHandler {
 				// void method which is returning something! We remove the
 				// return value!
 				final String msg = "This method is declared to be void, but returning a value!";
-				main.syntaxError(loc, msg);
+				mState.getReporter().syntaxError(loc, msg);
 			} else if (outParams.length != 1) {
 				final String msg = "We do not support several output parameters for functions";
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -594,7 +597,7 @@ public class FunctionHandler {
 			 * "implicit function declaration", assume it was declared as int foo(); (thus the signature can be
 			 * completed by the first call, which we are dispatching here)
 			 */
-			main.getLogger().warn("implicit declaration of function " + calleeName);
+			mLogger.warn("implicit declaration of function " + calleeName);
 			mProcedureManager.registerProcedure(calleeName);
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 			calleeProcInfo.setDefaultDeclarationAndCType(loc,

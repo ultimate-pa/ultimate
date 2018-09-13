@@ -419,8 +419,8 @@ public class CHandler implements ICHandler {
 				new PostProcessor(services, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer = new TypeSizeAndOffsetComputer(state, main.getTypeSizes());
 
-		mProcedureManager = new ProcedureManager(state);
-		mFunctionHandler = new FunctionHandler(state);
+		mProcedureManager = new ProcedureManager(mLogger, state);
+		mFunctionHandler = new FunctionHandler(mLogger, state);
 
 		final boolean smtBoolArraysWorkaround =
 				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
@@ -2402,7 +2402,7 @@ public class CHandler implements ICHandler {
 			mAcsl = main.nextACSLStatement();
 		} catch (final ParseException e1) {
 			final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-			main.unsupportedSyntax(loc, msg);
+			mState.getReporter().unsupportedSyntax(loc, msg);
 		}
 
 		{
@@ -3273,7 +3273,7 @@ public class CHandler implements ICHandler {
 						} catch (final ParseException e1) {
 							final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 							final ILocation loc = main.getLocationFactory().createCLocation(parent);
-							main.unsupportedSyntax(loc, msg);
+							mState.getReporter().unsupportedSyntax(loc, msg);
 						}
 					}
 				} // TODO: deal with other global ACSL stuff
@@ -3307,7 +3307,7 @@ public class CHandler implements ICHandler {
 								} catch (final ParseException e1) {
 									final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 									final ILocation loc = main.getLocationFactory().createCLocation(parent);
-									main.unsupportedSyntax(loc, msg);
+									mState.getReporter().unsupportedSyntax(loc, msg);
 								}
 							} else {
 								final String msg = "Unexpected ACSL comment: " + acslResult.node.getClass();
@@ -3359,7 +3359,7 @@ public class CHandler implements ICHandler {
 				} catch (final ParseException e1) {
 					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 					final ILocation loc = main.getLocationFactory().createCLocation(parent);
-					main.unsupportedSyntax(loc, msg);
+					mState.getReporter().unsupportedSyntax(loc, msg);
 				}
 
 			}

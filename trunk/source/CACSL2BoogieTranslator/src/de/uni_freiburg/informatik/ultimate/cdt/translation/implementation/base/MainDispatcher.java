@@ -268,8 +268,8 @@ public class MainDispatcher extends Dispatcher {
 
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
-			final ILogger logger, final MultiparseSymbolTable mst) {
-		super(backtranslator, services, logger, null, new LinkedHashMap<>(), mst);
+			final ILogger logger, final MultiparseSymbolTable mst, final boolean useSvcompMode) {
+		super(backtranslator, services, logger, null, new LinkedHashMap<>(), mst, useSvcompMode);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -342,7 +342,7 @@ public class MainDispatcher extends Dispatcher {
 		mReachableDeclarations = initReachableDeclarations(nodes);
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
+				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable, isSvcomp());
 		prd.preRun(nodes);
 		prd.init();
 		prd.dispatch(nodes);
@@ -418,7 +418,8 @@ public class MainDispatcher extends Dispatcher {
 		mCHandler = new CHandler(mServices, mLogger, this, mHandlerHandler, mBacktranslator, true,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mFlatTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
-		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
+		mPreprocessorHandler = new PreprocessorHandler(new CTranslationResultReporter(mServices, mLogger),
+				getLocationFactory(), isSvcomp());
 		mReportWarnings = true;
 		mLogger.info("Starting main dispatcher" + (isSvcomp() ? " in SV-COMP mode " : " in normal mode"));
 	}

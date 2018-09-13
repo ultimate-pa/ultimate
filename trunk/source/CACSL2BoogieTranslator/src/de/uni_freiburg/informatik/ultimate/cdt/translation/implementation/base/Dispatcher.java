@@ -56,19 +56,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
@@ -111,7 +105,7 @@ public abstract class Dispatcher {
 	/**
 	 * The Preprocessor statement handler.
 	 */
-	public IPreprocessorHandler mPreprocessorHandler;
+	public PreprocessorHandler mPreprocessorHandler;
 	/**
 	 * This plugin creates results for warnings if set to true.
 	 */
@@ -141,7 +135,7 @@ public abstract class Dispatcher {
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
-			final MultiparseSymbolTable mst) {
+			final MultiparseSymbolTable mst, final boolean useSvcompSettings) {
 		mLogger = logger;
 		mServices = services;
 		mHandlerHandler = new CTranslationState(services, logger);
@@ -154,26 +148,7 @@ public abstract class Dispatcher {
 		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
 		mFlatTable = new FlatSymbolTable(mst, this, mNameHandler);
 		mFunctionTable = functionTable;
-
-		mUseSvcompSettings = getSvcompMode();
-	}
-
-	private boolean getSvcompMode() {
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		TranslationMode mode = TranslationMode.BASE;
-		try {
-			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (final Exception e) {
-			throw new IllegalArgumentException("Unable to determine preferred mode.");
-		}
-		switch (mode) {
-		case BASE:
-			return false;
-		case SV_COMP14:
-			return true;
-		default:
-			throw new IllegalArgumentException("Unknown mode.");
-		}
+		mUseSvcompSettings = useSvcompSettings;
 	}
 
 	public boolean isSvcomp() {
@@ -211,15 +186,6 @@ public abstract class Dispatcher {
 	 * @return the resulting translation.
 	 */
 	public abstract Result dispatch(IASTPreprocessorStatement node);
-
-	// /**
-	// * Dispatch a given IType to a specific handler.
-	// *
-	// * @param type
-	// * the type to dispatch
-	// * @return the result for the given type.
-	// */
-	// public abstract InferredType dispatch(IType type);
 
 	/**
 	 * Dispatch a given ACSL node to the specific handler.
@@ -276,7 +242,7 @@ public abstract class Dispatcher {
 		mBacktranslator.setLocationFactory(mLocationFactory);
 	}
 
-	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
+	protected static <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
 			final Consumer<T> callback) {
 		for (final DecoratedUnit unit : units) {
 			unit.getRootNode().getCNode().accept(preRun);
@@ -284,7 +250,7 @@ public abstract class Dispatcher {
 		callback.accept(preRun);
 	}
 
-	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units) {
+	protected static <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units) {
 		for (final DecoratedUnit unit : units) {
 			unit.getRootNode().getCNode().accept(preRun);
 		}
@@ -300,40 +266,6 @@ public abstract class Dispatcher {
 	 *             location and should be ignored!
 	 */
 	public abstract NextACSL nextACSLStatement() throws ParseException;
-
-	/**
-	 * Report a syntax error to Ultimate. This will cancel the toolchain.
-	 *
-	 * @param loc
-	 *            where did it happen?
-	 * @param type
-	 *            why did it happen?
-	 * @param msg
-	 *            description.
-	 */
-	public void syntaxError(final ILocation loc, final String msg) {
-		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
-		mLogger.warn(msg);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mServices.getProgressMonitorService().cancelToolchain();
-	}
-
-	/**
-	 * Report a unsupported syntax to Ultimate. This will cancel the toolchain.
-	 *
-	 * @param loc
-	 *            where did it happen?
-	 * @param type
-	 *            why did it happen?
-	 * @param msg
-	 *            description.
-	 */
-	public void unsupportedSyntax(final ILocation loc, final String msg) {
-		final UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, loc, msg);
-		mLogger.warn(msg);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mServices.getProgressMonitorService().cancelToolchain();
-	}
 
 	/**
 	 * Getter for the setting: checked method.
@@ -416,9 +348,5 @@ public abstract class Dispatcher {
 
 	public IASTNode getAcslHook() {
 		return mAcslHook;
-	}
-
-	public ILogger getLogger() {
-		return mLogger;
 	}
 }

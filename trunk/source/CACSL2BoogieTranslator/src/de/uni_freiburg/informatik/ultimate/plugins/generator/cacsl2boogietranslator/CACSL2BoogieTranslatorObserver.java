@@ -53,12 +53,14 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxRes
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -81,7 +83,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private WrapperNode mRootNode;
 	private final IToolchainStorage mStorage;
 
-	private final IUltimateServiceProvider mService;
+	private final IUltimateServiceProvider mServices;
 
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private ASTDecorator mInputDecorator;
@@ -94,9 +96,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
-		mService = services;
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWitnessExtractor = new CorrectnessWitnessExtractor(mService);
+		mWitnessExtractor = new CorrectnessWitnessExtractor(mServices);
 		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
 
@@ -153,9 +155,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private void doTranslation() {
 		// translate to Boogie
-		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
-		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
-				mInputDecorator.getSymbolTable());
+		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mServices);
+		final boolean isSvcomp = getSvcompMode();
+		mLogger.info("Starting translation in " + (isSvcomp ? " SV-COMP mode " : " normal mode"));
+		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mServices, mLogger,
+				mInputDecorator.getSymbolTable(), isSvcomp);
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
 
 		// if an additional Annotation was parsed put it into the root node
@@ -181,7 +185,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
-			mService.getBacktranslationService().addTranslator(backtranslator);
+			mServices.getBacktranslationService().addTranslator(backtranslator);
 		} catch (final IncorrectSyntaxException e) {
 			final IResult result =
 					new SyntaxErrorResult(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
@@ -196,10 +200,28 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 	}
 
+	private boolean getSvcompMode() {
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		TranslationMode mode = TranslationMode.BASE;
+		try {
+			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
+		} catch (final Exception e) {
+			throw new IllegalArgumentException("Unable to determine preferred mode.");
+		}
+		switch (mode) {
+		case BASE:
+			return false;
+		case SV_COMP14:
+			return true;
+		default:
+			throw new IllegalArgumentException("Unknown mode.");
+		}
+	}
+
 	private void commonDoTranslationExceptionHandling(final IResult result) {
-		mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mLogger.warn(result.getShortDescription() + ": " + result.getLongDescription());
-		mService.getProgressMonitorService().cancelToolchain();
+		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
 	@Override

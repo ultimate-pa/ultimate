@@ -68,8 +68,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -112,7 +112,10 @@ public class ProcedureManager {
 
 	private BoogieProcedureInfo mCurrentProcedureInfo;
 
-	public ProcedureManager(final CTranslationState handlerHandler) {
+	private final ILogger mLogger;
+
+	public ProcedureManager(final ILogger logger, final CTranslationState handlerHandler) {
+		mLogger = logger;
 		handlerHandler.setProcedureManager(this);
 
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
@@ -203,17 +206,16 @@ public class ProcedureManager {
 		 */
 		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
 				new ISuccessorProvider<BoogieProcedureInfo>() {
-			@Override
-			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-				return mInverseCallGraph.getImage(node).iterator();
-			}
-		};
+					@Override
+					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
+						return mInverseCallGraph.getImage(node).iterator();
+					}
+				};
 
 		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
-		final ILogger logger = main.getLogger();
 		final Function<BoogieProcedureInfo, Set<VariableLHS>> initialProcToModGlobals = p -> p.getModifiedGlobals();
 		final Map<BoogieProcedureInfo, Set<VariableLHS>> closedProcToModGlobals =
-				TransitiveClosure.computeClosure(logger, allProcedures, initialProcToModGlobals, successorProvider);
+				TransitiveClosure.computeClosure(mLogger, allProcedures, initialProcToModGlobals, successorProvider);
 
 		// update the modifies clauses!
 		final ArrayList<Declaration> updatedDeclarations = new ArrayList<>();
@@ -272,8 +274,8 @@ public class ProcedureManager {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
 					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
 					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName))
-					&& main.getPreferences()
-					.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
+							&& main.getPreferences()
+									.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
 
 				final Expression vIe = main.mCHandler.getMemoryHandler().getValidArray(loc);
@@ -289,7 +291,7 @@ public class ProcedureManager {
 				if (main.getPreferences()
 						.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
 					new Overapprox(Collections.singletonMap("memtrack", ensLoc))
-					.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
+							.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				}
 			} else {
 				newSpecWithExtraEnsuresClauses = newSpec;
