@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.reqtotest;
+package de.uni_freiburg.informatik.ultimate.reqtotest.req;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,15 +27,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolExpressionTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.FakeBoogieVar;
 
 public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2ExpressionSymbolTable{
 	
@@ -85,6 +85,14 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		decls.addAll(constructVariableDeclarations(mAuxVars));
 
 		return decls;
+	}
+	
+	public boolean containsInput(String e) {
+		return mInputVars.contains(e);
+	}
+	
+	public boolean containsOutput(String e) {
+		return mOutputVars.contains(e);
 	}
 	
 	public Set<String> getHiddenVars(){

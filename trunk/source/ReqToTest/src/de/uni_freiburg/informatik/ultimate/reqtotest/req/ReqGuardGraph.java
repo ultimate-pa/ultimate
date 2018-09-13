@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.reqtotest;
+package de.uni_freiburg.informatik.ultimate.reqtotest.req;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

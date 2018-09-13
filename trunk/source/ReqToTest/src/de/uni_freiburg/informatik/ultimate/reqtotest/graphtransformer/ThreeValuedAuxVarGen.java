@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.reqtotest;
+package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class ThreeValuedAuxVarGen {
 	
@@ -151,12 +153,16 @@ public class ThreeValuedAuxVarGen {
 	public List<Term> getOracleGuards(){
 		final List<Term> guards = new ArrayList<>();
 		for(Term effect: mEffects) {
+			Term use =  effect;
 			for(TermVariable var: effect.getFreeVars()) {
 				if (!mReqSymbolTable.isOutputVar(var.toString())) {
 					continue;
 				} 
-				Term use = getUseGuard(effect);
-				guards.add(SmtUtils.not( mScript,SmtUtils.and(mScript, use, effect)));	
+				use = SmtUtils.and(mScript, use, getUseGuard(var));
+				
+			}
+			if (use != effect) {
+				guards.add(SmtUtils.not( mScript,use));	
 			}
 		}
 		return guards;

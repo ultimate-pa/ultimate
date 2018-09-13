@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.reqtotest;
+package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 
 import java.util.Collections;
 

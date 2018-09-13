@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.reqtotest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
