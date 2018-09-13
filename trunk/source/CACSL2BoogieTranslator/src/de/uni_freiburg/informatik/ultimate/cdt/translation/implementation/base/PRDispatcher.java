@@ -174,19 +174,14 @@ public class PRDispatcher extends Dispatcher {
 
 		mTypeHandler = new TypeHandler(bitvectorTranslation, mHandlerHandler);
 
-		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, false, mLogger, bitvectorTranslation,
-				overapproximateFloatingPointOperations, mFlatTable);
+		mCHandler = new CHandler(mServices, mLogger, this, mHandlerHandler, mBacktranslator, false,
+				bitvectorTranslation, overapproximateFloatingPointOperations, mFlatTable);
 		mLogger.info("Starting pre-run dispatcher" + (isSvcomp() ? " in SV-COMP mode " : " in normal mode"));
 	}
 
 	@Override
 	public Result dispatch(final List<DecoratedUnit> nodes) {
-		// this.decoratorTree = node;
-		// this.decoratorTreeIterator = node.iterator();
 		return mCHandler.visit(this, nodes);
-		// ACSL dispatch just returns null..
-		// return dispatch(node.getAcslNode());
-		// return null;
 	}
 
 	@Override

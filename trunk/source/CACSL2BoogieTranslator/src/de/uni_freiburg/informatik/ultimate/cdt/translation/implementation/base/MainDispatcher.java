@@ -339,55 +339,7 @@ public class MainDispatcher extends Dispatcher {
 			mThereAreDereferencedPointerVariables = pr.isMMRequired();
 		});
 
-		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
-			// executePreRun can't be used here, as it visits all translation units after each other while the DND
-			// visitor expects exactly one TU.
-			mReachableDeclarations = new HashSet<>();
-			final Map<String, Map<String, IASTDeclaration>> reverseSourceMap = new HashMap<>();
-			for (final DecoratedUnit du : nodes) {
-				final String key = du.getRootNode().getCNode().getContainingFilename();
-				reverseSourceMap.put(key, new HashMap<>());
-				for (final IASTDeclaration decl : ((IASTTranslationUnit) du.getRootNode().getCNode())
-						.getDeclarations()) {
-					if (decl instanceof IASTSimpleDeclaration) {
-						final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) decl;
-						for (final IASTDeclarator d : cd.getDeclarators()) {
-							reverseSourceMap.get(key).put(d.getName().toString(), cd);
-						}
-					} else if (decl instanceof IASTFunctionDefinition) {
-						final IASTFunctionDefinition cd = (IASTFunctionDefinition) decl;
-						reverseSourceMap.get(key).put(cd.getDeclarator().getName().toString(), cd);
-					} else {
-						// DND is only used for the two above so this is ok.
-					}
-				}
-			}
-			for (final DecoratedUnit du : nodes) {
-				final DetermineNecessaryDeclarations dnd =
-						new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex);
-				du.getRootNode().getCNode().accept(dnd);
-				final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
-				for (final IASTDeclaration d : decl) {
-					if (!d.isPartOfTranslationUnitFile()) {
-						// This is not the correct declaration to store. Find the correct one!
-						if (d instanceof IASTSimpleDeclaration) {
-							final String name = ((IASTSimpleDeclaration) d).getDeclarators()[0].getName().toString();
-							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
-						} else if (d instanceof IASTFunctionDefinition) {
-							final String name = ((IASTFunctionDefinition) d).getDeclarator().getName().toString();
-							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
-						} else {
-							// Those are not regarded by DND.
-						}
-
-					} else {
-						mReachableDeclarations.add(d);
-					}
-				}
-			}
-		} else {
-			mReachableDeclarations = null;
-		}
+		mReachableDeclarations = initReachableDeclarations(nodes);
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
 				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
@@ -404,6 +356,58 @@ public class MainDispatcher extends Dispatcher {
 
 	}
 
+	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes) {
+		if (!DETERMINIZE_NECESSARY_DECLARATIONS) {
+			return new HashSet<>();
+		}
+
+		// executePreRun can't be used here, as it visits all translation units after each other while the DND
+		// visitor expects exactly one TU.
+		final Set<IASTDeclaration> reachableDecls = new HashSet<>();
+		final Map<String, Map<String, IASTDeclaration>> reverseSourceMap = new HashMap<>();
+		for (final DecoratedUnit du : nodes) {
+			final String key = du.getRootNode().getCNode().getContainingFilename();
+			reverseSourceMap.put(key, new HashMap<>());
+			for (final IASTDeclaration decl : ((IASTTranslationUnit) du.getRootNode().getCNode()).getDeclarations()) {
+				if (decl instanceof IASTSimpleDeclaration) {
+					final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) decl;
+					for (final IASTDeclarator d : cd.getDeclarators()) {
+						reverseSourceMap.get(key).put(d.getName().toString(), cd);
+					}
+				} else if (decl instanceof IASTFunctionDefinition) {
+					final IASTFunctionDefinition cd = (IASTFunctionDefinition) decl;
+					reverseSourceMap.get(key).put(cd.getDeclarator().getName().toString(), cd);
+				} else {
+					// DND is only used for the two above so this is ok.
+				}
+			}
+		}
+		for (final DecoratedUnit du : nodes) {
+			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(),
+					new CTranslationResultReporter(mServices, mLogger), mFunctionTable, mFunctionToIndex);
+			du.getRootNode().getCNode().accept(dnd);
+			final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
+			for (final IASTDeclaration d : decl) {
+				if (!d.isPartOfTranslationUnitFile()) {
+					// This is not the correct declaration to store. Find the correct one!
+					if (d instanceof IASTSimpleDeclaration) {
+						final String name = ((IASTSimpleDeclaration) d).getDeclarators()[0].getName().toString();
+						reachableDecls.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+					} else if (d instanceof IASTFunctionDefinition) {
+						final String name = ((IASTFunctionDefinition) d).getDeclarator().getName().toString();
+						reachableDecls.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+					} else {
+						// Those are not regarded by DND.
+					}
+
+				} else {
+					reachableDecls.add(d);
+				}
+			}
+		}
+		return reachableDecls;
+	}
+
 	@Override
 	protected void init() {
 
@@ -411,8 +415,8 @@ public class MainDispatcher extends Dispatcher {
 
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 
-		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, true, mLogger, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations, mFlatTable);
+		mCHandler = new CHandler(mServices, mLogger, this, mHandlerHandler, mBacktranslator, true,
+				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mFlatTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;
@@ -914,11 +918,8 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(final List<DecoratedUnit> nodes) {
-		// Fix these two
 		assert !nodes.isEmpty();
 		return mCHandler.visit(this, nodes);
-		// TODO Make this usable again
-		// return dispatch(node.getAcslNode());
 	}
 
 	public void updateDecoratorTreeAndIterator(final DecoratorNode node) {

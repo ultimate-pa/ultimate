@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -104,7 +104,7 @@ public class TypeSizeAndOffsetComputer {
 
 	    private SizeTValue mTypeSizePointer = null;
 
-	    public TypeSizeAndOffsetComputer(final HandlerHandler handlerHandler, final TypeSizes typeSizes) {
+	    public TypeSizeAndOffsetComputer(final CTranslationState handlerHandler, final TypeSizes typeSizes) {
 	    	handlerHandler.setTypeSizeAndOffsetComputer(this);
 			mExpressionTranslation = handlerHandler.getExpressionTranslation();
 	    	mTypeHandler = (TypeHandler) handlerHandler.getTypeHandler();

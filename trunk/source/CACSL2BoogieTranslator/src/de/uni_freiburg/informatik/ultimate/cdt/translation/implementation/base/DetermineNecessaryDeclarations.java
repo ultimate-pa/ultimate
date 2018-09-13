@@ -90,12 +90,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	private final String mCheckedMethod;
 	private IASTTranslationUnit mTranslationUnit;
-	private final Dispatcher mDispatcher;
 	private final Map<String, Integer> mFunctionToIndex;
+	private final CTranslationResultReporter mReporter;
 
-	public DetermineNecessaryDeclarations(final String checkedMethod, final Dispatcher dispatcher,
+	public DetermineNecessaryDeclarations(final String checkedMethod, final CTranslationResultReporter reporter,
 			final Map<String, IASTNode> fT, final Map<String, Integer> functionToIndex) {
-		mDispatcher = dispatcher;
+		mReporter = reporter;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitTranslationUnit = true;
 		shouldVisitDeclarations = true;
@@ -144,8 +144,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (!mCurrentDeclarationStack.isEmpty()) {
 			funcDec = mCurrentDeclarationStack.peek();
 		} else {
-			/* we are not inside a function definition, but may still be inside a function declaration
-			 * one getParent to reach the declarator, the other one to get to the declaration
+			/*
+			 * we are not inside a function definition, but may still be inside a function declaration one getParent to
+			 * reach the declarator, the other one to get to the declaration
 			 */
 			IASTNode node = declaration;
 			while (!(node instanceof IASTSimpleDeclaration)) {
@@ -219,8 +220,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (symbolDec != null) {
 			addDependency(mCurrentDeclarationStack.peek(), symbolDec);
 		} else if (funDec != null) {
-			addDependency(mCurrentDeclarationStack.peek(),
-					getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
+			addDependency(mCurrentDeclarationStack.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
 		} else {
 			mDependencyGraphPreliminaryInverse.put(symbolName, mCurrentDeclarationStack.peek());
 		}
@@ -243,8 +243,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				addDependency(mCurrentDeclarationStack.peek(), sTEntry);
 			}
 			if (sTEntry == null || decFromFuncTableEntry == null) {
-				mDependencyGraphPreliminaryInverse.put(idEx.getName().toString(),
-						mCurrentDeclarationStack.peek());
+				mDependencyGraphPreliminaryInverse.put(idEx.getName().toString(), mCurrentDeclarationStack.peek());
 			}
 		} else {
 			// We add a dependency from the method/whatever the function pointer is used in to
@@ -359,15 +358,14 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 						addDependency(mCurrentDeclarationStack.peek(), decOfName);
 					} else {
 						/*
-						 *  .. or it may reference a global declaration that we haven't seen yet (this may
-						 * overapproximate, as we declare shadowed decls reachable, right??
-						 * TODO: not entirely clear..
+						 * .. or it may reference a global declaration that we haven't seen yet (this may
+						 * overapproximate, as we declare shadowed decls reachable, right?? TODO: not entirely clear..
 						 */
 						mDependencyGraphPreliminaryInverse.put(name, mCurrentDeclarationStack.peek());
 					}
-//				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
-//					// declaration is no global declaration but it may contain declarations that are global..
-//					addDependency(mCurrentFunOrStructOrEnumDefOrInitializer.peek(), declaration);
+					// } else if (declSpec instanceof IASTCompositeTypeSpecifier) {
+					// // declaration is no global declaration but it may contain declarations that are global..
+					// addDependency(mCurrentFunOrStructOrEnumDefOrInitializer.peek(), declaration);
 				} else {
 					addDependency(mCurrentDeclarationStack.peek(), declaration);
 				}
@@ -377,15 +375,15 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			 */
 
 			// (alex, Dec 17:) not sure what the following code block was supposed to do, removing it for now
-//			for (final IASTDeclarator declarator : cSimpleDecl.getDeclarators()) {
-//				/*
-//				 * "typedef declSpec declarators" introduces a dependency from each declarator to
-//				 * - the declspec itself if it is a compositeType
-//				 * - the declspec's sT entry otherwise
-//				 * if (declSpec.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
-//				 * case: the declSpecifier references a declaration we have to add to the dependencyGraph
-//				 *
-//				 */
+			// for (final IASTDeclarator declarator : cSimpleDecl.getDeclarators()) {
+			// /*
+			// * "typedef declSpec declarators" introduces a dependency from each declarator to
+			// * - the declspec itself if it is a compositeType
+			// * - the declspec's sT entry otherwise
+			// * if (declSpec.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
+			// * case: the declSpecifier references a declaration we have to add to the dependencyGraph
+			// *
+			// */
 
 			String declSpecName = "";
 			if (declSpec instanceof IASTSimpleDeclSpecifier) {
@@ -538,10 +536,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			mCurrentDeclarationStack.pop();
 			mLocalSymbolTable.endScope();
 		} else if (declaration instanceof IASTSimpleDeclaration) {
-//			if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() instanceof IASTCompositeTypeSpecifier
-//					|| ((IASTSimpleDeclaration) declaration).getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-				mCurrentDeclarationStack.pop();
-//			}
+			// if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() instanceof IASTCompositeTypeSpecifier
+			// || ((IASTSimpleDeclaration) declaration).getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
+			mCurrentDeclarationStack.pop();
+			// }
 		}
 		return super.leave(declaration);
 	}
@@ -684,7 +682,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 						+ "\n The program does not have this method. ULTIMATE will continue in "
 						+ "library mode (i.e., each procedure can be starting procedure and global "
 						+ "variables are not initialized).";
-				mDispatcher.warn(LocationFactory.createIgnoreCLocation(mTranslationUnit), msg);
+				mReporter.warn(LocationFactory.createIgnoreCLocation(mTranslationUnit), msg);
 			}
 			entryPoints.addAll(mFunctionTable.keySet());
 		}

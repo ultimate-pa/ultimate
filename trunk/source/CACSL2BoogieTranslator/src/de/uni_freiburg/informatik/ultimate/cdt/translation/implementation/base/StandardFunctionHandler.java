@@ -60,12 +60,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
@@ -88,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
@@ -122,16 +119,15 @@ public class StandardFunctionHandler {
 
 	private final CHandler mCHandler;
 
-	public StandardFunctionHandler(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
-			final MemoryHandler memoryHandler, final StructHandler structHandler,
-			final TypeSizeAndOffsetComputer typeSizeComputer, final FunctionHandler functionHandler,
-			final ProcedureManager procedureManager, final CHandler cHandler) {
-		mExpressionTranslation = expressionTranslation;
-		mMemoryHandler = memoryHandler;
-		mTypeSizeComputer = typeSizeComputer;
-		mProcedureManager = procedureManager;
-		mCHandler = cHandler;
+	private final CTranslationResultReporter mReporter;
 
+	public StandardFunctionHandler(final CTranslationState state) {
+		mExpressionTranslation = state.getExpressionTranslation();
+		mMemoryHandler = state.getMemoryHandler();
+		mTypeSizeComputer = state.getTypeSizeAndOffsetComputer();
+		mProcedureManager = state.getProcedureManager();
+		mCHandler = state.getCHandler();
+		mReporter = state.getReporter();
 		mFunctionModels = getFunctionModels();
 	}
 
@@ -149,7 +145,7 @@ public class StandardFunctionHandler {
 	public Result translateStandardFunction(final Dispatcher main, final IASTFunctionCallExpression node,
 			final IASTIdExpression astIdExpression) {
 		assert node
-		.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
+				.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
 		final String name = astIdExpression.getName().toString();
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {
@@ -171,8 +167,8 @@ public class StandardFunctionHandler {
 
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
-		final IFunctionModelHandler dieFloat = (main, node, loc, name) -> handleByUnsupportedSyntaxExceptionKnown(loc,
-				"math.h", name);
+		final IFunctionModelHandler dieFloat =
+				(main, node, loc, name) -> handleByUnsupportedSyntaxExceptionKnown(loc, "math.h", name);
 
 		for (final String unsupportedFloatFunction : FloatSupportInUltimate.getUnsupportedFloatOperations()) {
 			fill(map, unsupportedFloatFunction, dieFloat);
@@ -209,28 +205,22 @@ public class StandardFunctionHandler {
 		fill(map, "free", this::handleFree);
 
 		/*
-		 * The GNU C online documentation at
-		 * https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
-		 * "— Built-in Function: void * __builtin_return_address (unsigned int level)
-		 * This function returns the return address of the current function, or of one
-		 * of its callers. The level argument is number of frames to scan up the call
-		 * stack. A value of 0 yields the return address of the current function, a
-		 * value of 1 yields the return address of the caller of the current function,
-		 * and so forth. When inlining the expected behavior is that the function
-		 * returns the address of the function that is returned to. To work around this
-		 * behavior use the noinline function attribute.
+		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
+		 * "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns the return
+		 * address of the current function, or of one of its callers. The level argument is number of frames to scan up
+		 * the call stack. A value of 0 yields the return address of the current function, a value of 1 yields the
+		 * return address of the caller of the current function, and so forth. When inlining the expected behavior is
+		 * that the function returns the address of the function that is returned to. To work around this behavior use
+		 * the noinline function attribute.
 		 *
-		 * The level argument must be a constant integer. On some machines it may be
-		 * impossible to determine the return address of any function other than the
-		 * current one; in such cases, or when the top of the stack has been reached,
-		 * this function returns 0 or a random value. In addition,
-		 * __builtin_frame_address may be used to determine if the top of the stack has
-		 * been reached. Additional post-processing of the returned value may be needed,
-		 * see __builtin_extract_return_addr. Calling this function with a nonzero
-		 * argument can have unpredictable effects, including crashing the calling
-		 * program. As a result, calls that are considered unsafe are diagnosed when the
-		 * -Wframe-address option is in effect. Such calls should only be made in
-		 * debugging situations."
+		 * The level argument must be a constant integer. On some machines it may be impossible to determine the return
+		 * address of any function other than the current one; in such cases, or when the top of the stack has been
+		 * reached, this function returns 0 or a random value. In addition, __builtin_frame_address may be used to
+		 * determine if the top of the stack has been reached. Additional post-processing of the returned value may be
+		 * needed, see __builtin_extract_return_addr. Calling this function with a nonzero argument can have
+		 * unpredictable effects, including crashing the calling program. As a result, calls that are considered unsafe
+		 * are diagnosed when the -Wframe-address option is in effect. Such calls should only be made in debugging
+		 * situations."
 		 *
 		 * Current solution: replace call by a havocced aux variable.
 		 */
@@ -243,10 +233,9 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.ULONG)));
 
 		/*
-		 * builtin_prefetch according to
-		 * https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
-		 * 5.6.2015) triggers the processor to load something into cache, does nothing
-		 * else is void thus has no return value
+		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
+		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
+		 * value
 		 */
 		fill(map, "__builtin_prefetch", skip);
 		fill(map, "__builtin_va_start", skip);
@@ -518,12 +507,12 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult argS = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
 		builder.addDeclarations(argS.mDecl).addStatements(argS.mStmt).addOverapprox(argS.mOverappr)
-		.addAuxVars(argS.getAuxVars()).addNeighbourUnionFields(argS.mOtherUnionFields);
+				.addAuxVars(argS.getAuxVars()).addNeighbourUnionFields(argS.mOtherUnionFields);
 
 		// dispatch second argument -- only for its sideeffects
 		final ExpressionResult argC = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
 		builder.addDeclarations(argC.mDecl).addStatements(argC.mStmt).addOverapprox(argC.mOverappr)
-		.addAuxVars(argC.getAuxVars()).addNeighbourUnionFields(argC.mOtherUnionFields);
+				.addAuxVars(argC.getAuxVars()).addNeighbourUnionFields(argC.mOtherUnionFields);
 
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
@@ -607,7 +596,6 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-
 	/**
 	 * TOOD pthread support
 	 */
@@ -624,8 +612,8 @@ public class StandardFunctionHandler {
 		final CASTIdExpression castIdExpr = ((CASTIdExpression) arguments[2]);
 		final String rawProcName = castIdExpr.getName().toString();
 
-		final String multiParseProcedureName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(),
-				rawProcName);
+		final String multiParseProcedureName =
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
 		if (!mCHandler.getProcedureManager().hasProcedure(multiParseProcedureName)) {
 			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
 					+ " Ultimate does not support pthread_create in combination with function pointers");
@@ -637,8 +625,9 @@ public class StandardFunctionHandler {
 			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
 		}
 		final String methodName = idExpr.getIdentifier().substring(9);
-		final Expression[] forkArguments = {startRoutineArguments.getLrValue().getValue()};
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] {argThreadId.getLrValue().getValue() } , methodName, forkArguments);
+		final Expression[] forkArguments = { startRoutineArguments.getLrValue().getValue() };
+		final ForkStatement fs = new ForkStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
+				methodName, forkArguments);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -659,14 +648,13 @@ public class StandardFunctionHandler {
 	private Result handleJoin(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-
 		final ExpressionResultBuilder build = new ExpressionResultBuilder();
 		return build.build();
 	}
 
 	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we
-	 * lock a mutex that that is already locked, then the thread blocks.
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
+	 * locked, then the thread blocks.
 	 */
 	private Result handlePthread_mutex_lock(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -696,13 +684,11 @@ public class StandardFunctionHandler {
 		return erb.build();
 	}
 
-
 	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we
-	 * unlock a mutex that has never been locked, the behavior is undefined. We use
-	 * a semantics where unlocking a non-locked mutex is a no-op. For the return
-	 * value we follow what GCC did in my experiments. It produced code that
-	 * returned 0 even if we unlocked a non-locked mutex.
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
+	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op. For the
+	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
+	 * non-locked mutex.
 	 */
 	private Result handlePthread_mutex_unlock(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -754,8 +740,6 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT)));
 		return erb.build();
 	}
-
-
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
 		/*
@@ -1231,8 +1215,8 @@ public class StandardFunctionHandler {
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}
 
-	private static Result handleByIgnore(final Dispatcher main, final ILocation loc, final String methodName) {
-		main.warn(loc, "ignored call to " + methodName);
+	private Result handleByIgnore(final Dispatcher main, final ILocation loc, final String methodName) {
+		mReporter.warn(loc, "ignored call to " + methodName);
 		return new SkipResult();
 	}
 

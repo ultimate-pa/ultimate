@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -181,7 +181,7 @@ public class MemoryHandler {
 	private final FunctionHandler mFunctionHandler;
 	public Map<MemoryModelDeclarations, MemoryModelDeclarationInfo> mMemoryModelDeclarationInfos;
 
-	HandlerHandler mHandlerHandler;
+	CTranslationState mHandlerHandler;
 
 	/**
 	 * Constructor.
@@ -193,7 +193,7 @@ public class MemoryHandler {
 	 * @param nameHandler
 	 * @param boogieTypeHelper
 	 */
-	public MemoryHandler(final HandlerHandler handlerHandler, final boolean checkPointerValidity,
+	public MemoryHandler(final CTranslationState handlerHandler, final boolean checkPointerValidity,
 			final TypeSizes typeSizes,
 			final boolean bitvectorTranslation, final INameHandler nameHandler, final boolean smtBoolArrayWorkaround,
 			final IPreferenceProvider prefs) {
@@ -2731,7 +2731,7 @@ public class MemoryHandler {
 			return mBoogieType;
 		}
 
-		static MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final HandlerHandler handlerHandler,
+		static MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final CTranslationState handlerHandler,
 				final MemoryModelDeclarations mmd) {
 
 			switch (mmd) {

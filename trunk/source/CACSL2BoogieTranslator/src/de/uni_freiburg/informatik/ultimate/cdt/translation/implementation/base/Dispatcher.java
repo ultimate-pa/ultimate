@@ -28,9 +28,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a dispatcher.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
@@ -61,13 +58,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IC
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -142,15 +137,15 @@ public abstract class Dispatcher {
 
 	protected IASTNode mAcslHook;
 
-	protected final HandlerHandler mHandlerHandler;
+	protected final CTranslationState mHandlerHandler;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
 			final MultiparseSymbolTable mst) {
-		mHandlerHandler = new HandlerHandler();
-		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
+		mHandlerHandler = new CTranslationState(services, logger);
+		mBacktranslator = backtranslator;
 		mPreferences = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mTypeSizes = new TypeSizes(mPreferences, mHandlerHandler);
 		mTranslationSettings = new TranslationSettings(mPreferences);
@@ -338,27 +333,6 @@ public abstract class Dispatcher {
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
-	}
-
-	/**
-	 * Report possible source of unsoundness to Ultimate.
-	 *
-	 * @param loc
-	 *            where did it happen?
-	 * @param longDesc
-	 *            description.
-	 */
-	public void warn(final ILocation loc, final String longDescription) {
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final boolean reportUnsoundnessWarning =
-				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
-		if (reportUnsoundnessWarning) {
-			final String shortDescription = "Unsoundness Warning";
-			mLogger.warn(shortDescription + " " + longDescription);
-			final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc,
-					shortDescription, longDescription, Severity.WARNING);
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		}
 	}
 
 	/**

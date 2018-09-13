@@ -217,6 +217,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
@@ -245,6 +246,194 @@ public class CHandler implements ICHandler {
 	 * casts of pointers soundly. However these soundness errors occur seldom.
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
+
+	private final MemoryHandler mMemoryHandler;
+
+	private final ArrayHandler mArrayHandler;
+
+	private final StaticObjectsHandler mStaticObjectsHandler;
+
+	private final FunctionHandler mFunctionHandler;
+
+	private final PostProcessor mPostProcessor;
+
+	private final INameHandler mNameHandler;
+
+	private final InitializationHandler mInitHandler;
+	private final LinkedHashSet<String> mBoogieIdsOfHeapVars;
+
+	/**
+	 * Stores the labels of the loops we are currently inside. (For translation of a possible continue statement)
+	 */
+	private final Deque<String> mInnerMostLoopLabel;
+
+	private final ILogger mLogger;
+
+	private final CACSLPreferenceInitializer.UnsignedTreatment mUnsignedTreatment;
+
+	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
+	private final StandardFunctionHandler mStandardFunctionHandler;
+
+	protected final ITypeHandler mTypeHandler;
+
+	protected final StructHandler mStructHandler;
+
+	/**
+	 * Contract for next procedure
+	 */
+	protected final List<ACSLNode> mContract;
+
+	/**
+	 * The symbol table for the translation.
+	 */
+	protected final FlatSymbolTable mSymbolTable;
+
+	/**
+	 * A set holding declarations of global variables required for variables, declared locally in C but required to be
+	 * global in Boogie. e.g. constants for enums (in boogie constants may only be defined globally) or local static
+	 * variables. Each declaration can have a set of initialization statements. So the procedure is: typeDeclarations:
+	 * added to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit static variables: added
+	 * to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit, initialized using this map in
+	 * PostProcessor.createInit..() global variables: added to this map in IASTTranslationUnit, declared using this map
+	 * in ITranslationUnit, initialized using this map in PostProcessor.createInit..()
+	 */
+	// protected final LinkedHashMap<Declaration, CDeclaration>
+	// mDeclarationsGlobalInBoogie;
+
+	/**
+	 * A collection of axioms generated during translation process.
+	 */
+	protected final LinkedHashSet<Axiom> mAxioms;
+
+	/**
+	 * Translation from Boogie to C for traces and expressions.
+	 */
+	protected final CACSL2BoogieBacktranslator mBacktranslator;
+
+	/**
+	 * If set to true and the program contains an error label ULTIMATE shows a warning that suggests a different
+	 * translation mode.
+	 */
+	protected final boolean mErrorLabelWarning;
+
+	protected final ExpressionTranslation mExpressionTranslation;
+
+	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
+
+	/**
+	 * Holds the next ACSL node in the decorator tree.
+	 */
+	private NextACSL mAcsl;
+
+	/**
+	 * This is a stack containing the types of the things declared IASTDeclarator nodes. The last element on the stack
+	 * corresponds to the type of the current (inner) declarator node. There may be several types on this stack if the
+	 * declarators are nested, as in
+	 *
+	 * <pre>
+	 * int *(*a(int))[3]
+	 * </pre>
+	 *
+	 * which declares a function returning a pointer to an array of length three containing int pointers. There are
+	 * three nested declarators: A PointerDeclarator contains an ArrayDeclarator contains a Pointer contains a function.
+	 */
+	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
+
+	private final BoogieTypeHelper mBoogieTypeHelper;
+
+	private final Dispatcher mMainDispatcher;
+
+	private final ProcedureManager mProcedureManager;
+
+	private final CTranslationState mState;
+
+	/**
+	 * The boogie declarations that are the result of the translation process.
+	 */
+	private final ArrayList<Declaration> mDeclarations;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param services
+	 *            TODO
+	 * @param main
+	 *            a reference to the main dispatcher.
+	 * @param backtranslator
+	 *            a reference to the Backtranslator object.
+	 * @param overapproximateFloatingPointOperations
+	 * @param nameHandler
+	 * @param mst
+	 *            the symbol table which contains the information about which file uses which declaration
+	 */
+	public CHandler(final IUltimateServiceProvider services, final ILogger logger, final Dispatcher main,
+			final CTranslationState state, final CACSL2BoogieBacktranslator backtranslator,
+			final boolean errorLabelWarning, final boolean bitvectorTranslation,
+			final boolean overapproximateFloatingPointOperations, final FlatSymbolTable ftab) {
+		final IPreferenceProvider prefs = main.getPreferences();
+
+		mState = state;
+		mState.setCHandler(this);
+
+		mMainDispatcher = main;
+
+		mLogger = logger;
+		mTypeHandler = state.getTypeHandler();
+		mTypeHandler.setCHandler(this);
+		mNameHandler = state.getNameHandler();
+		mBacktranslator = backtranslator;
+		mErrorLabelWarning = errorLabelWarning;
+
+		mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT,
+				CACSLPreferenceInitializer.UnsignedTreatment.class);
+
+		mArrayHandler = new ArrayHandler(prefs);
+		mStaticObjectsHandler = new StaticObjectsHandler();
+
+		mSymbolTable = ftab;
+
+		// mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
+		mAxioms = new LinkedHashSet<>();
+		mContract = new ArrayList<>();
+		mInnerMostLoopLabel = new ArrayDeque<>();
+		mBoogieIdsOfHeapVars = new LinkedHashSet<>();
+		mCurrentDeclaredTypes = new ArrayDeque<>();
+		mGlobAcslExtractors = new ArrayList<>();
+
+		final PointerIntegerConversion pointerIntegerConversion =
+				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
+						CACSLPreferenceInitializer.PointerIntegerConversion.class);
+		if (bitvectorTranslation) {
+			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), state, pointerIntegerConversion,
+					overapproximateFloatingPointOperations);
+		} else {
+			final boolean inRange = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
+			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), state, mUnsignedTreatment, inRange,
+					pointerIntegerConversion, overapproximateFloatingPointOperations);
+		}
+
+		mTypeHandler.setExpressionTranslation(mExpressionTranslation);
+		mBoogieTypeHelper = new BoogieTypeHelper(state);
+
+		mPostProcessor =
+				new PostProcessor(services, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
+		mTypeSizeComputer = new TypeSizeAndOffsetComputer(state, main.getTypeSizes());
+
+		mProcedureManager = new ProcedureManager(state);
+		mFunctionHandler = new FunctionHandler(state);
+
+		final boolean smtBoolArraysWorkaround =
+				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
+		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
+		mMemoryHandler = new MemoryHandler(mState, checkPointerValidity, main.getTypeSizes(), bitvectorTranslation,
+				state.getNameHandler(), smtBoolArraysWorkaround, prefs);
+		mStructHandler = new StructHandler(state);
+		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
+
+		mStandardFunctionHandler = new StandardFunctionHandler(state);
+
+		mDeclarations = new ArrayList<>();
+	}
 
 	private static int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
 		final int intSizeFactor;
@@ -384,195 +573,6 @@ public class CHandler implements ICHandler {
 	 */
 	private static boolean isNewScopeRequired(final IASTNode env) {
 		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
-	}
-
-	private final MemoryHandler mMemoryHandler;
-
-	private final ArrayHandler mArrayHandler;
-
-	private final StaticObjectsHandler mStaticObjectsHandler;
-
-	private final FunctionHandler mFunctionHandler;
-
-	private final PostProcessor mPostProcessor;
-
-	private final INameHandler mNameHandler;
-
-	private final InitializationHandler mInitHandler;
-	private final LinkedHashSet<String> mBoogieIdsOfHeapVars;
-
-	/**
-	 * Stores the labels of the loops we are currently inside. (For translation of a possible continue statement)
-	 */
-	private final Deque<String> mInnerMostLoopLabel;
-
-	private final ILogger mLogger;
-
-	private final CACSLPreferenceInitializer.UnsignedTreatment mUnsignedTreatment;
-
-	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
-	private final StandardFunctionHandler mStandardFunctionHandler;
-
-	protected final ITypeHandler mTypeHandler;
-
-	protected final StructHandler mStructHandler;
-
-	/**
-	 * Contract for next procedure
-	 */
-	protected final List<ACSLNode> mContract;
-
-	/**
-	 * The symbol table for the translation.
-	 */
-	protected final FlatSymbolTable mSymbolTable;
-
-	/**
-	 * A set holding declarations of global variables required for variables, declared locally in C but required to be
-	 * global in Boogie. e.g. constants for enums (in boogie constants may only be defined globally) or local static
-	 * variables. Each declaration can have a set of initialization statements. So the procedure is: typeDeclarations:
-	 * added to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit static variables: added
-	 * to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit, initialized using this map in
-	 * PostProcessor.createInit..() global variables: added to this map in IASTTranslationUnit, declared using this map
-	 * in ITranslationUnit, initialized using this map in PostProcessor.createInit..()
-	 */
-	// protected final LinkedHashMap<Declaration, CDeclaration>
-	// mDeclarationsGlobalInBoogie;
-
-	/**
-	 * A collection of axioms generated during translation process.
-	 */
-	protected final LinkedHashSet<Axiom> mAxioms;
-
-	/**
-	 * Translation from Boogie to C for traces and expressions.
-	 */
-	protected final CACSL2BoogieBacktranslator mBacktranslator;
-
-	/**
-	 * If set to true and the program contains an error label ULTIMATE shows a warning that suggests a different
-	 * translation mode.
-	 */
-	protected final boolean mErrorLabelWarning;
-
-	protected final ExpressionTranslation mExpressionTranslation;
-
-	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
-
-	/**
-	 * Holds the next ACSL node in the decorator tree.
-	 */
-	private NextACSL mAcsl;
-
-	/**
-	 * This is a stack containing the types of the things declared IASTDeclarator nodes. The last element on the stack
-	 * corresponds to the type of the current (inner) declarator node. There may be several types on this stack if the
-	 * declarators are nested, as in
-	 *
-	 * <pre>
-	 * int *(*a(int))[3]
-	 * </pre>
-	 *
-	 * which declares a function returning a pointer to an array of length three containing int pointers. There are
-	 * three nested declarators: A PointerDeclarator contains an ArrayDeclarator contains a Pointer contains a function.
-	 */
-	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
-
-	private final BoogieTypeHelper mBoogieTypeHelper;
-
-	private final Dispatcher mMainDispatcher;
-
-	private final ProcedureManager mProcedureManager;
-
-	private final HandlerHandler mHandlerHandler;
-
-	/**
-	 * The boogie declarations that are the result of the translation process.
-	 */
-	private final ArrayList<Declaration> mDeclarations;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param backtranslator
-	 *            a reference to the Backtranslator object.
-	 * @param overapproximateFloatingPointOperations
-	 * @param nameHandler
-	 * @param mst
-	 *            the symbol table which contains the information about which file uses which declaration
-	 */
-	public CHandler(final Dispatcher main, final HandlerHandler handlerHandler,
-			final CACSL2BoogieBacktranslator backtranslator, final boolean errorLabelWarning, final ILogger logger, // final
-																													// ITypeHandler
-																													// typeHandler,
-			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations,
-			final FlatSymbolTable ftab) {
-		final IPreferenceProvider prefs = main.getPreferences();
-
-		mHandlerHandler = handlerHandler;
-		mHandlerHandler.setCHandler(this);
-
-		mMainDispatcher = main;
-
-		mLogger = logger;
-		mTypeHandler = handlerHandler.getTypeHandler();
-		mTypeHandler.setCHandler(this);
-		mNameHandler = handlerHandler.getNameHandler();
-		mBacktranslator = backtranslator;
-		mErrorLabelWarning = errorLabelWarning;
-
-		mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT,
-				CACSLPreferenceInitializer.UnsignedTreatment.class);
-
-		mArrayHandler = new ArrayHandler(prefs);
-		mStaticObjectsHandler = new StaticObjectsHandler();
-
-		mSymbolTable = ftab;
-
-		// mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
-		mAxioms = new LinkedHashSet<>();
-		mContract = new ArrayList<>();
-		mInnerMostLoopLabel = new ArrayDeque<>();
-		mBoogieIdsOfHeapVars = new LinkedHashSet<>();
-		mCurrentDeclaredTypes = new ArrayDeque<>();
-		mGlobAcslExtractors = new ArrayList<>();
-
-		final PointerIntegerConversion pointerIntegerConversion =
-				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-						CACSLPreferenceInitializer.PointerIntegerConversion.class);
-		if (bitvectorTranslation) {
-			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), handlerHandler,
-					pointerIntegerConversion, overapproximateFloatingPointOperations);
-		} else {
-			final boolean inRange = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
-			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), handlerHandler, mUnsignedTreatment,
-					inRange, pointerIntegerConversion, overapproximateFloatingPointOperations);
-		}
-
-		mTypeHandler.setExpressionTranslation(mExpressionTranslation);
-		mBoogieTypeHelper = new BoogieTypeHelper(handlerHandler);
-
-		mPostProcessor =
-				new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
-		mTypeSizeComputer = new TypeSizeAndOffsetComputer(handlerHandler, main.getTypeSizes());
-
-		mProcedureManager = new ProcedureManager(handlerHandler);
-		mFunctionHandler = new FunctionHandler(handlerHandler);
-
-		final boolean smtBoolArraysWorkaround =
-				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
-		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		mMemoryHandler = new MemoryHandler(mHandlerHandler, checkPointerValidity, main.getTypeSizes(),
-				bitvectorTranslation, handlerHandler.getNameHandler(), smtBoolArraysWorkaround, prefs);
-		mStructHandler = new StructHandler(handlerHandler);
-		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
-
-		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
-				mStructHandler, mTypeSizeComputer, mFunctionHandler, mProcedureManager, this);
-
-		mDeclarations = new ArrayList<>();
 	}
 
 	/**
@@ -1821,7 +1821,7 @@ public class CHandler implements ICHandler {
 		if (mErrorLabelWarning && "ERROR".equals(label)) {
 			final String longDescription =
 					"The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
-			main.warn(loc, longDescription);
+			mState.getReporter().warn(loc, longDescription);
 		}
 		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
@@ -1958,27 +1958,27 @@ public class CHandler implements ICHandler {
 		 */
 		if (node.getDeclSpecifier() == null) {
 			final String msg = "This statement can be removed!";
-			main.warn(loc, msg);
+			mState.getReporter().warn(loc, msg);
 			return new SkipResult();
 		}
 
-//		/*
-//		 * we have an enum declaration
-//		 */
-//		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-//			TODO 2018-09-02 Matthias: In the past we called here a void method
-//		    handleEnumDeclaration(main, node) which itself dispatched the
-//		    IASTEnumerationSpecifier and then added the enumeration constants
-//		    to the symbol table and the declarations of the enumeration
-//			constants to our StaticObjectsHandler. As consequence was that
-//			we could not process files in which a just defined enumeration
-//			constant is used as a value in the very same declaration.
-//			I moved the adding to symbol table and StaticObjectsHandler
-//			to the code that handles the IASTEnumerationSpecifier and now
-//			the handleEnumDeclaration seems obsolete.
-//			I did not carefully check if the new code works with incomplete
-//			enum declarations.
-//		}
+		// /*
+		// * we have an enum declaration
+		// */
+		// if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
+		// TODO 2018-09-02 Matthias: In the past we called here a void method
+		// handleEnumDeclaration(main, node) which itself dispatched the
+		// IASTEnumerationSpecifier and then added the enumeration constants
+		// to the symbol table and the declarations of the enumeration
+		// constants to our StaticObjectsHandler. As consequence was that
+		// we could not process files in which a just defined enumeration
+		// constant is used as a value in the very same declaration.
+		// I moved the adding to symbol table and StaticObjectsHandler
+		// to the code that handles the IASTEnumerationSpecifier and now
+		// the handleEnumDeclaration seems obsolete.
+		// I did not carefully check if the new code works with incomplete
+		// enum declarations.
+		// }
 
 		/*
 		 * obtain type information from the DeclSpecifier
@@ -4013,8 +4013,6 @@ public class CHandler implements ICHandler {
 			decl.add((Declaration) childRes.node);
 		}
 	}
-
-
 
 	public static CStorageClass scConstant2StorageClass(final int storageClass) {
 		switch (storageClass) {

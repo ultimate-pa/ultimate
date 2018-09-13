@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -88,9 +88,9 @@ public abstract class ExpressionTranslation {
 	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final boolean mOverapproximateFloatingPointOperations;
 
-	protected HandlerHandler mHandlerHandler;
+	protected CTranslationState mHandlerHandler;
 
-	public ExpressionTranslation(final TypeSizes typeSizes, final HandlerHandler handlerHandler,
+	public ExpressionTranslation(final TypeSizes typeSizes, final CTranslationState handlerHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();

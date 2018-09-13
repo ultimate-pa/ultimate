@@ -80,9 +80,9 @@ public class NameHandler implements INameHandler {
 	private int mGlobalCounter;
 
 	private final CACSL2BoogieBacktranslator mBacktranslator;
-	private final HandlerHandler mHandlerHandler;
+	private final CTranslationState mHandlerHandler;
 
-	public NameHandler(final CACSL2BoogieBacktranslator backtranslator, final HandlerHandler handlerHandler) {
+	public NameHandler(final CACSL2BoogieBacktranslator backtranslator, final CTranslationState handlerHandler) {
 		handlerHandler.setNameHandler(this);
 		mHandlerHandler = handlerHandler;
 		mBacktranslator = backtranslator;

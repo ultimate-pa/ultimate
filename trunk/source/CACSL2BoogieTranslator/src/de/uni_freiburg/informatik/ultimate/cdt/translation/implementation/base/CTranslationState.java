@@ -36,13 +36,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HandlerHandler {
+public class CTranslationState {
 
 	private ITypeHandler mTypeHandler;
 	private MemoryHandler mMemoryHandler;
@@ -55,7 +57,15 @@ public class HandlerHandler {
 	private INameHandler mNameHandler;
 	private TypeSizes mTypeSizes;
 	private CHandler mCHandler;
+	private final CTranslationResultReporter mReporter;
 
+	public CTranslationState(final IUltimateServiceProvider services, final ILogger logger) {
+		mReporter = new CTranslationResultReporter(services, logger);
+	}
+
+	public CTranslationResultReporter getReporter() {
+		return mReporter;
+	}
 
 	public INameHandler getNameHandler() {
 		return mNameHandler;

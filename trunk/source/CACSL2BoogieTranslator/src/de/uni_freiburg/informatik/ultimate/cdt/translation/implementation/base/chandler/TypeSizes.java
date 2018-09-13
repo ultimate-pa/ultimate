@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -74,7 +74,7 @@ public class TypeSizes {
 			new LinkedHashMap<>();
 
 
-	public TypeSizes(final IPreferenceProvider ups, final HandlerHandler handlerHandler) {
+	public TypeSizes(final IPreferenceProvider ups, final CTranslationState handlerHandler) {
 		handlerHandler.setTypeSizes(this);
 
 		mUseFixedTypeSizes =

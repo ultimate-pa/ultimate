@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -21,9 +21,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class BoogieTypeHelper {
 
 	private final ITypeHandler mTypeHandler;
-	private final HandlerHandler mHandlerHandler;
+	private final CTranslationState mHandlerHandler;
 
-	public BoogieTypeHelper(final HandlerHandler handlerHandler) {
+	public BoogieTypeHelper(final CTranslationState handlerHandler) {
 		handlerHandler.setBoogieTypeHelper(this);
 		mHandlerHandler = handlerHandler;
 		mTypeHandler = handlerHandler.getTypeHandler();

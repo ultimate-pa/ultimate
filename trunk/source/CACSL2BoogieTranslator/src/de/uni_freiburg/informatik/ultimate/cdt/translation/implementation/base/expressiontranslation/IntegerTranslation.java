@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -90,7 +90,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private final boolean mAssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(final TypeSizes typeSizeConstants, final HandlerHandler handlerHandler,
+	public IntegerTranslation(final TypeSizes typeSizeConstants, final CTranslationState handlerHandler,
 			final UnsignedTreatment unsignedTreatment, final boolean assumeSignedInRange,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {

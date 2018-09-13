@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
@@ -85,7 +85,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	public BitvectorTranslation(final TypeSizes mTypeSizeConstants, final HandlerHandler handlerHandler,
+	public BitvectorTranslation(final TypeSizes mTypeSizeConstants, final CTranslationState handlerHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, handlerHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);

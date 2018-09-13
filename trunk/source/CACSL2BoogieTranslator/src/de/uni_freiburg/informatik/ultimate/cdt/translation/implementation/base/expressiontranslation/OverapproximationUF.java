@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -50,7 +50,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
 
-	private final HandlerHandler mHandlerHandler;
+	private final CTranslationState mHandlerHandler;
 
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n
@@ -63,7 +63,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 
 	public OverapproximationUF(final ExpressionTranslation expressionTranslation,
 			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
-			final HandlerHandler handlerHandler) {
+			final CTranslationState handlerHandler) {
 		super();
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;

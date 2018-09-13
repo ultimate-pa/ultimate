@@ -77,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
@@ -135,7 +135,7 @@ public class FunctionHandler {
 
 	ProcedureManager mProcedureManager;
 
-	private final HandlerHandler mHandlerHandler;
+	private final CTranslationState mState;
 
 	/**
 	 * Constructor.
@@ -145,15 +145,15 @@ public class FunctionHandler {
 	 * @param procedureManager
 	 * @param checkMemoryLeakAtEndOfMain
 	 */
-	public FunctionHandler(final HandlerHandler handlerHandler) {
-		mHandlerHandler = handlerHandler;
-		handlerHandler.setFunctionHandler(this);
+	public FunctionHandler(final CTranslationState state) {
+		mState = state;
+		state.setFunctionHandler(this);
 
-		mExpressionTranslation = handlerHandler.getExpressionTranslation();
+		mExpressionTranslation = state.getExpressionTranslation();
 
 		mFunctionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 
-		mProcedureManager = handlerHandler.getProcedureManager();
+		mProcedureManager = state.getProcedureManager();
 	}
 
 	/**
@@ -598,7 +598,7 @@ public class FunctionHandler {
 			mProcedureManager.registerProcedure(calleeName);
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 			calleeProcInfo.setDefaultDeclarationAndCType(loc,
-					mHandlerHandler.getTypeHandler().cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
+					mState.getTypeHandler().cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
 		} else {
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 		}
@@ -1036,7 +1036,7 @@ public class FunctionHandler {
 
 			final String longDescription = "Method was called before it was declared: '" + methodName
 					+ "' unknown! Return value is assumed to be int ...";
-			main.warn(loc, longDescription);
+			mState.getReporter().warn(loc, longDescription);
 
 			// we don't know the CType of the returned value we assume INT for now
 			final CPrimitive cIntType = new CPrimitive(CPrimitives.INT);
