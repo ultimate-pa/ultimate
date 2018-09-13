@@ -358,7 +358,7 @@ public class MainDispatcher extends Dispatcher {
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes) {
 		if (!DETERMINIZE_NECESSARY_DECLARATIONS) {
-			return new HashSet<>();
+			return null;
 		}
 
 		// executePreRun can't be used here, as it visits all translation units after each other while the DND
