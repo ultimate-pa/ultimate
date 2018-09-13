@@ -141,7 +141,7 @@ public class GeneratedWitnessEdge<TE, E> {
 			return null;
 		}
 		if (mATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-			return mATE.getSucceedingProcedure();
+			return mATE.getPrecedingProcedure();
 		}
 		return null;
 	}

@@ -34,8 +34,6 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -50,21 +48,26 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	private final ProgramState<IASTExpression> mInitialState;
 	private final List<ProgramState<IASTExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
-	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 
 	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
-			final Collection<ProgramState<IASTExpression>> programStates, final ILogger logger,
-			final IUltimateServiceProvider services) {
+			final Collection<ProgramState<IASTExpression>> programStates) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size() : "Need a program state after each atomic trace element";
 		mProgramStates = new ArrayList<>(programStates);
 		mTrace = new ArrayList<>(trace);
 		mInitialState = initialState;
-		mLogger = logger;
-		mServices = services;
+	}
+
+	public CACSLProgramExecution(final Collection<AtomicTraceElement<CACSLLocation>> trace) {
+		assert trace != null;
+		mTrace = new ArrayList<>(trace);
+		mProgramStates = new ArrayList<>();
+		for (int i = 0; i < mTrace.size(); ++i) {
+			mProgramStates.add(null);
+		}
+		mInitialState = null;
 	}
 
 	@Override

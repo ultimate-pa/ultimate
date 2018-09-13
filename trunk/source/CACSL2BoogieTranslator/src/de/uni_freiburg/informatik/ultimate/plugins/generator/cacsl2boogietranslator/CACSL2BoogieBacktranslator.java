@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
@@ -191,6 +192,8 @@ public class CACSL2BoogieBacktranslator
 	public IProgramExecution<CACSLLocation, IASTExpression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
+		assert checkCallStack(oldPE) : "callstack of argument already broken";
+
 		// initial state
 		ProgramState<IASTExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
 
@@ -277,14 +280,17 @@ public class CACSL2BoogieBacktranslator
 							ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 				}
 				if (newAte != null) {
+					assert checkProcedureNames(ate, newAte) : "callstack is broken";
 					translatedATEs.add(newAte);
 					translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 				}
 
 			} else if (loc instanceof ACSLLocation) {
 				// for now, just use ACSL as-it
-				translatedATEs
-						.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc, ate.getRelevanceInformation()));
+				final AtomicTraceElement<CACSLLocation> newAte =
+						new AtomicTraceElement<>((ACSLLocation) loc, ate.getRelevanceInformation());
+				assert checkProcedureNames(ate, newAte) : "callstack is broken";
+				translatedATEs.add(newAte);
 				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else {
@@ -294,6 +300,8 @@ public class CACSL2BoogieBacktranslator
 			}
 			assert translatedATEs.size() == translatedProgramStates.size();
 		}
+
+		assert checkCallStack(translatedATEs) : "callstack broken after initial translation";
 
 		// TODO: This is hacky because we get imprecise counterexamples for empty loops like BugForLoop01 -- the real
 		// reason must be the null node itself
@@ -313,13 +321,58 @@ public class CACSL2BoogieBacktranslator
 						"Removing null node from list of ATEs: ATE " + step + " program state " + programStateAfter);
 				iter.remove();
 				iterPs.remove();
+				assert checkCallStack(translatedATEs) : "callstack broken after removal of " + node;
 			}
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements and return the result
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
-		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates, mLogger,
-				mServices);
+		assert checkCallStack(checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
+		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates);
+	}
+
+	private boolean checkProcedureNames(final AtomicTraceElement<BoogieASTNode> ate,
+			final AtomicTraceElement<CACSLLocation> newAte) {
+		return ate.getSucceedingProcedure() == newAte.getSucceedingProcedure()
+				&& ate.getPrecedingProcedure() == newAte.getPrecedingProcedure();
+	}
+
+	private boolean checkCallStack(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
+		final List<AtomicTraceElement<BoogieASTNode>> rtr = new ArrayList<>();
+		oldPE.iterator().forEachRemaining(rtr::add);
+		return checkCallStack(rtr);
+	}
+
+	private boolean checkCallStack(final List<? extends AtomicTraceElement<?>> trace) {
+		final Deque<String> callStack = new ArrayDeque<>();
+		int i = 0;
+		boolean rtr = true;
+		for (final AtomicTraceElement<?> elem : trace) {
+			i++;
+			if (elem.hasStepInfo(StepInfo.PROC_CALL)) {
+				callStack.push(elem.getSucceedingProcedure());
+			}
+			if (elem.hasStepInfo(StepInfo.PROC_RETURN)) {
+				if (callStack.isEmpty()) {
+					mLogger.fatal("Callstack is empty and returning with " + elem);
+					rtr = false;
+					break;
+				}
+				final String lastCall = callStack.pop();
+				if (!lastCall.equals(elem.getPrecedingProcedure())) {
+					mLogger.fatal("Callstack is " + lastCall + " but returning with " + elem);
+					rtr = false;
+					break;
+				}
+			}
+		}
+
+		if (!rtr) {
+			mLogger.fatal(
+					new ProgramExecutionFormatter<>(new CACSLBacktranslationValueProvider()).formatProgramExecution(
+							new CACSLProgramExecution((List<AtomicTraceElement<CACSLLocation>>) trace.subList(0, i))));
+		}
+		return rtr;
 	}
 
 	/**
@@ -411,12 +464,16 @@ public class CACSL2BoogieBacktranslator
 				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
 						currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+				assert checkCallStack(
+						translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 				return index;
 			} else if (currentTraceElement instanceof HavocStatement) {
 				if (!checkTempHavoc(currentATE)) {
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
 							currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+					assert checkCallStack(
+							translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 					return index;
 				}
 			}
@@ -429,58 +486,69 @@ public class CACSL2BoogieBacktranslator
 			return index;
 		}
 
-		if (index + 1 < programExecution.getLength()) {
-			// if the next ATE is a return, the called method does not have a body and we should compress it to an
-			// FCALL
-			int i = index + 1;
-			for (; i < programExecution.getLength(); ++i) {
-				final ILocation loc = programExecution.getTraceElement(i).getTraceElement().getLocation();
-				if (!(loc instanceof CLocation)) {
-					break;
-				}
-				final CLocation nextcloc = (CLocation) loc;
-				if (nextcloc.ignoreDuringBacktranslation()) {
-					continue;
-				}
-				if (nextcloc.getNode() instanceof CASTTranslationUnit) {
-					continue;
-				}
-				break;
-			}
-			if (i < programExecution.getLength()) {
-				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
+		if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
+			// if this ATE is a call and the next valid ATE is a return,
+			// the called method does not have a body and we should compress it to an FCALL
+			final int nextIndex = getNextValidIndex(programExecution, index + 1);
+			if (nextIndex != -1) {
+				// there is a valid next ATE
+				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(nextIndex);
 				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
 					final IRelevanceInformation relevanceInfo = getCombinedRelevanceInfo(currentATE, nextATE);
 					translatedAtomicTraceElements
-							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL, relevanceInfo,
-									currentATE.getPrecedingProcedure(), currentATE.getPrecedingProcedure()));
-					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-					return i;
+							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL, relevanceInfo));
+					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(nextIndex)));
+					assert checkCallStack(
+							translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
+					return nextIndex;
 				}
 			}
 		}
 
-		final EnumSet<StepInfo> stepInfo = currentATE.getStepInfo();
+		final EnumSet<StepInfo> currentStepInfo = currentATE.getStepInfo();
 		if (currentATE.hasStepInfo(StepInfo.PROC_RETURN) && !translatedAtomicTraceElements.isEmpty()) {
 			// we have to modify the previous statement in the translated list s.t it is the actual return and remove
 			// the return stepinfo from this statement, but only if there is already a statement present
-			stepInfo.remove(StepInfo.PROC_RETURN);
+			currentStepInfo.remove(StepInfo.PROC_RETURN);
 			final AtomicTraceElement<CACSLLocation> last =
 					translatedAtomicTraceElements.remove(translatedAtomicTraceElements.size() - 1);
-			final EnumSet<StepInfo> newStepInfo = EnumSet.copyOf(last.getStepInfo());
-			newStepInfo.remove(StepInfo.NONE);
-			newStepInfo.add(StepInfo.PROC_RETURN);
+			final EnumSet<StepInfo> newLastStepInfo = EnumSet.copyOf(last.getStepInfo());
+			newLastStepInfo.remove(StepInfo.NONE);
+			newLastStepInfo.add(StepInfo.PROC_RETURN);
 			final AtomicTraceElement<CACSLLocation> newLast = new AtomicTraceElement<>(last.getTraceElement(),
-					last.getStep(), newStepInfo, last.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
+					last.getStep(), newLastStepInfo, last.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
 					currentATE.getSucceedingProcedure());
 			translatedAtomicTraceElements.add(newLast);
+			assert checkCallStack(translatedAtomicTraceElements) : "callstack broken after adding " + newLast;
 		}
 
-		translatedAtomicTraceElements
-				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, stepInfo, currentATE.getRelevanceInformation(),
+		translatedAtomicTraceElements.add(
+				new AtomicTraceElement<CACSLLocation>(cloc, cloc, currentStepInfo, currentATE.getRelevanceInformation(),
 						currentATE.getPrecedingProcedure(), currentATE.getSucceedingProcedure()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+		assert checkCallStack(
+				translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 		return index;
+	}
+
+	private int getNextValidIndex(final IProgramExecution<BoogieASTNode, Expression> programExecution,
+			final int index) {
+		for (int i = index; i < programExecution.getLength(); ++i) {
+			final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
+			final ILocation loc = nextATE.getTraceElement().getLocation();
+			if (!(loc instanceof CLocation)) {
+				return i;
+			}
+			final CLocation nextcloc = (CLocation) loc;
+			if (nextcloc.ignoreDuringBacktranslation()) {
+				continue;
+			}
+			if (nextcloc.getNode() instanceof CASTTranslationUnit) {
+				continue;
+			}
+			return i;
+		}
+		return -1;
 	}
 
 	/**

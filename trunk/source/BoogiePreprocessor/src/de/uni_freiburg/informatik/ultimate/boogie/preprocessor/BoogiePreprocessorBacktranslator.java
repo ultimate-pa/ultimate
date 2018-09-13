@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -55,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
@@ -191,8 +192,8 @@ public class BoogiePreprocessorBacktranslator
 			}
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
-
 			if (elem instanceof WhileStatement) {
+				assert checkCallStack(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
@@ -200,6 +201,7 @@ public class BoogiePreprocessorBacktranslator
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
+				assert checkCallStack(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
@@ -207,19 +209,29 @@ public class BoogiePreprocessorBacktranslator
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
-				// for call statements, we simply rely on the stepinfo of our
+				// for call statements, we rely on the stepinfo of our
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
+					assert checkCallStack(elem, ate);
 					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
 							ate.getRelevanceInformation()));
 				} else {
-					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-							ate.getRelevanceInformation(), null, ((CallStatement) elem).getMethodName()));
+					assert checkCallStack((CallStatement) elem, ate) : "Call stack broken";
+					if (Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
+						atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+								ate.getRelevanceInformation()));
+					} else {
+						atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+								ate.getRelevanceInformation(), ate.getPrecedingProcedure(),
+								ate.getSucceedingProcedure()));
+					}
+
 				}
 
 			} else {
+				assert checkCallStack(elem, ate);
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
 				atomicTrace.add(new AtomicTraceElement<>(elem, stringProvider, ate.getRelevanceInformation()));
@@ -242,6 +254,25 @@ public class BoogiePreprocessorBacktranslator
 			i++;
 		}
 		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
+	}
+
+	private static boolean checkCallStack(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
+		if (elem instanceof CallStatement) {
+			return checkCallStack((CallStatement) elem, ate);
+		}
+		return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
+	}
+
+	private static boolean checkCallStack(final CallStatement elem, final AtomicTraceElement<BoogieASTNode> ate) {
+		if (ate.hasStepInfo(StepInfo.PROC_CALL)) {
+			return elem.getMethodName().equals(ate.getSucceedingProcedure());
+		} else if (ate.hasStepInfo(StepInfo.PROC_RETURN)) {
+			return elem.getMethodName().equals(ate.getPrecedingProcedure());
+		} else if (ate.hasStepInfo(StepInfo.NONE)) {
+			return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
+		} else {
+			return false;
+		}
 	}
 
 	private StepInfo getStepInfoFromCondition(final Expression input, final Expression output) {
