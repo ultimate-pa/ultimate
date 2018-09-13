@@ -78,11 +78,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager.BoogieProcedureInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -108,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
@@ -686,10 +685,9 @@ public class FunctionHandler {
 			 */
 			final VarList[] procParams = new VarList[calleeProcInfo.getCType().getParameterTypes().length];
 			for (int i = 0; i < procParams.length; i++) {
-				procParams[i] =
-						new VarList(loc, new String[] { calleeProcInfo.getCType().getParameterTypes()[i].getName() },
-								((TypeHandler) main.mTypeHandler).cType2AstType(loc,
-										calleeProcInfo.getCType().getParameterTypes()[i].getType()));
+				procParams[i] = new VarList(loc,
+						new String[] { calleeProcInfo.getCType().getParameterTypes()[i].getName() }, main.mTypeHandler
+								.cType2AstType(loc, calleeProcInfo.getCType().getParameterTypes()[i].getType()));
 			}
 			final Procedure newProc = new Procedure(calleeProcDecl.getLocation(), calleeProcDecl.getAttributes(),
 					calleeProcDecl.getIdentifier(), calleeProcDecl.getTypeParams(), procParams,

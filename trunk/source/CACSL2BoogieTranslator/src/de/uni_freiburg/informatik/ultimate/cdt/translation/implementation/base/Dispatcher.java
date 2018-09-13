@@ -31,7 +31,7 @@
 /**
  * Describes a dispatcher.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -53,9 +53,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -84,7 +81,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
- * @date 01.02.2012
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public abstract class Dispatcher {
 
@@ -379,15 +378,6 @@ public abstract class Dispatcher {
 	}
 
 	/**
-	 * Whether the memory model is required or not.
-	 *
-	 * @return whether the memory model is required or not.
-	 * @deprecated use check of MemoryHanlder instead
-	 */
-	@Deprecated
-	public abstract boolean isMMRequired();
-
-	/**
 	 * Getter for the identifier mapping.
 	 *
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
@@ -410,7 +400,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Checks whether a declaration is reachable.
-	 * 
+	 *
 	 * @param decl
 	 *            The declaration
 	 * @return Whether it is reachable

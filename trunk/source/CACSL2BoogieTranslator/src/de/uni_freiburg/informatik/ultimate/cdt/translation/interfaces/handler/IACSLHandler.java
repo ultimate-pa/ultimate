@@ -32,9 +32,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;

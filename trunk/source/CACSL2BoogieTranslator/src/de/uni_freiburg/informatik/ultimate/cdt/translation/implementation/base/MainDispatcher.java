@@ -147,7 +147,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -298,17 +297,6 @@ public class MainDispatcher extends Dispatcher {
 			return false;
 		}
 		return mBoogieDeclarationsOfVariablesOnHeap.contains(vd);
-	}
-
-	/**
-	 * Answers the question if we need the basic infrastructure for our memory model. That basic infrastructure is: the
-	 * arrays "valid" and "length" and definitions of our malloc and deallocate functions, the type "$Pointer" and the
-	 * NULL pointer. The basic infrastructure does not include the memory arrays themselves (like memory_int,...), those
-	 * are triggered differently.
-	 */
-	@Override
-	public boolean isMMRequired() {
-		return !mVariablesOnHeap.isEmpty() || !mFunctionToIndex.isEmpty() || mThereAreDereferencedPointerVariables;
 	}
 
 	@Override
@@ -656,7 +644,7 @@ public class MainDispatcher extends Dispatcher {
 	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
 			final ExtractedWitnessInvariant invariant,
 			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition, final IASTNode hook)
-					throws AssertionError {
+			throws AssertionError {
 		if (invariant != null) {
 			if (!funHasCorrectPosition.test(invariant)) {
 				return Collections.emptyList();

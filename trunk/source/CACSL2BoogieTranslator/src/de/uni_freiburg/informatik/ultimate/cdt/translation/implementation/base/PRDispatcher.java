@@ -126,7 +126,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -468,12 +467,6 @@ public class PRDispatcher extends Dispatcher {
 	public NextACSL nextACSLStatement() throws ParseException {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public boolean isMMRequired() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	@Override

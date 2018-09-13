@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 public class LRValueFactory {
 

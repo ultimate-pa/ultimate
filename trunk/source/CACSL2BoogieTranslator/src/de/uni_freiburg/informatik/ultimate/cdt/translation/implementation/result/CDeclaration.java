@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 /**
  * Represents a declaration in a C program.
