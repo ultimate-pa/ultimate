@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -314,13 +315,19 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 			@Override
 			public IPredicate constructPrecondition(final PredicateUnifier predicateUnifier) {
-				final Set<BoogieNonOldVar> threadInUseVars = mIcfg.getCfgSmtToolkit().getConcurrencyInformation()
-						.getThreadInUseVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
-				final List<Term> negated = threadInUseVars.stream().map(
-						x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
-						.collect(Collectors.toList());
-				final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
-				return predicateUnifier.getOrConstructPredicate(conjunction);
+				final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
+				if (ci == null) {
+					return predicateUnifier.getTruePredicate();
+				} else {
+					final Set<BoogieNonOldVar> threadInUseVars = ci.getThreadInUseVars().entrySet().stream()
+							.map(Entry::getValue).collect(Collectors.toSet());
+					final List<Term> negated = threadInUseVars.stream().map(x -> SmtUtils
+							.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
+							.collect(Collectors.toList());
+					final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(),
+							negated);
+					return predicateUnifier.getOrConstructPredicate(conjunction);
+				}
 			}
 		};
 		return result;
