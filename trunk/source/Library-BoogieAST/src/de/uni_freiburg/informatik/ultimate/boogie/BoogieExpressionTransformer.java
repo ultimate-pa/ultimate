@@ -109,8 +109,6 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			}
 			right = new BinaryExpression(left.getLocation(), BoogieType.TYPE_BOOL, op, left, right);
 			if (!unifiedOperandsIterator.hasNext()) {
-				// System.out.println("New Binop: " +
-				// BoogiePrettyPrinter.print(right));
 				return right;
 			}
 		}
@@ -121,7 +119,6 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		if (left == null && right == null) {
 			throw new IllegalArgumentException("You must supply operands to this method");
 		}
-		// System.out.println("New Binop: " + BoogiePrettyPrinter.print(left));
 		return left;
 	}
 
