@@ -1,16 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class TestGeneratorResult implements IResult  {
 	
-	private final List<ProgramState<Expression>> mTestStates;
+	private final List<SystemState> mTestStates;
 	
-	public TestGeneratorResult (List<ProgramState<Expression>> testStates) {
+	public TestGeneratorResult (List<SystemState> testStates) {
 		mTestStates = testStates;
 	}
 
@@ -34,9 +37,9 @@ public class TestGeneratorResult implements IResult  {
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("---------------------------------------------------------------------\n");
+		sb.append("Test Vector:"+System.getProperty("line.separator"));
 		for(ProgramState<Expression> s : mTestStates) {
-			sb.append(s.toString() + "\n");
+			sb.append(s.toString() + System.getProperty("line.separator"));
 		}
 		return sb.toString();
 	}

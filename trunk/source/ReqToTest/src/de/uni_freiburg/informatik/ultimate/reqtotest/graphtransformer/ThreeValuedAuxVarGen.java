@@ -155,7 +155,7 @@ public class ThreeValuedAuxVarGen {
 		for(Term effect: mEffects) {
 			Term use =  effect;
 			for(TermVariable var: effect.getFreeVars()) {
-				if (!mReqSymbolTable.isOutputVar(var.toString())) {
+				if (!mReqSymbolTable.isOutput(var.toString())) {
 					continue;
 				} 
 				use = SmtUtils.and(mScript, use, getUseGuard(var));

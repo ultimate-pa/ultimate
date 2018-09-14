@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,11 +52,11 @@ public class CounterExampleToTest {
 		IProgramExecution<IElement, Term> execution =  (IProgramExecution<IElement, Term>) result.getProgramExecution(); 
 		IProgramExecution<?, ?> translatedPe = mServices.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		
-		List<ProgramState<Expression>> systemStates = new ArrayList<>();
+		List<SystemState> systemStates = new ArrayList<>();
 		for(int i = 0; i < translatedPe.getLength(); i++) {
 			if( isTestPurposeAssertion((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i))) {
 				if (translatedPe.getProgramState(i) == null) continue;
-				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i)));
+				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i), i));
 			}
 		}
 		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates);
@@ -75,18 +76,22 @@ public class CounterExampleToTest {
 		return false;
 	}
 	
-	private ProgramState<Expression> generateObservableProgramState(final ProgramState<Expression> programState) {
+	private SystemState generateObservableProgramState(final ProgramState<Expression> programState, int i) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
+		LinkedHashSet<Expression> inputs = new LinkedHashSet<Expression>();
 		for(Expression e: programState.getVariables()) {
-			mLogger.warn(e.toString() + "=" + programState.getValues(e).toString());
-			if(e instanceof IdentifierExpression &&
-					( mReqSymbolTable.containsInput(((IdentifierExpression) e).getIdentifier())
-					|| (mReqSymbolTable.containsOutput(((IdentifierExpression) e).getIdentifier())
-						&& isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)))) {	
+			if (e instanceof IdentifierExpression && 
+					mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
+				observableState.put(e, programState.getValues(e));
+				inputs.add(e);
+			}
+			if (e instanceof IdentifierExpression && 
+					mReqSymbolTable.isOutput(((IdentifierExpression) e).getIdentifier()) &&
+					isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)) {	
 				observableState.put(e, programState.getValues(e));
 			}
 		}
-		return new ProgramState<Expression>(observableState);
+		return new SystemState(observableState, inputs, i);
 	}
 	
 	private boolean isDefinedFlagSet(String ident, ProgramState<Expression> state) {

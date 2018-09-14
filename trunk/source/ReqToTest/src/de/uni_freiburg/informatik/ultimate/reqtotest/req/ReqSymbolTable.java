@@ -87,12 +87,12 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return decls;
 	}
 	
-	public boolean containsInput(String e) {
+	public boolean isInput(String e) {
 		return mInputVars.contains(e);
 	}
 	
-	public boolean containsOutput(String e) {
-		return mOutputVars.contains(e);
+	public boolean isObservable(String e) {
+		return isInput(e) || isOutput(e);
 	}
 	
 	public Set<String> getHiddenVars(){
@@ -119,7 +119,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return (!mConstVars.contains(ident) && !mInputVars.contains(ident));
 	}
 	
-	public boolean isOutputVar(String ident) {
+	public boolean isOutput(String ident) {
 		return mOutputVars.contains(ident);
 	}
 	
