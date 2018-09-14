@@ -43,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -267,6 +269,11 @@ public class BoogiePreprocessorBacktranslator
 	private static boolean checkProcedureNames(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
 		if (elem instanceof CallStatement) {
 			return checkProcedureNames((CallStatement) elem, ate);
+		} else if (elem instanceof ForkStatement) {
+			return ate.getSucceedingProcedure().equals(((ForkStatement) elem).getMethodName());
+		} else if (elem instanceof JoinStatement) {
+			// we cannot say anything about proceeding and succeeding procedures
+			return true;
 		}
 		return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
 	}
