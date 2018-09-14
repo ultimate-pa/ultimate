@@ -191,15 +191,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		if (rtrExpr != null) {
 			return rtrExpr;
 		}
-		Expression oldExpr = inputExpr;
-		Expression newExpr = normalizeExpression(oldExpr);
-		while (newExpr != oldExpr) {
-			assert newExpr != null;
-			assert newExpr.getType() != null : "Normalization did set a null type";
-			oldExpr = newExpr;
-			newExpr = normalizeExpression(oldExpr);
-		}
-
+		final Expression newExpr = normalizeExpression(inputExpr);
 		if (mLogger.isDebugEnabled() && newExpr != inputExpr) {
 			mLogger.debug(String.format("%sRewrote expression %s to %s", AbsIntPrefInitializer.INDENT,
 					BoogiePrettyPrinter.print(inputExpr), BoogiePrettyPrinter.print(newExpr)));
@@ -234,7 +226,6 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @return The normalized expression or the old expression, if nothing had to be changed.
 	 */
 	protected Expression normalizeExpression(final Expression expr) {
-
 		return expr;
 	}
 

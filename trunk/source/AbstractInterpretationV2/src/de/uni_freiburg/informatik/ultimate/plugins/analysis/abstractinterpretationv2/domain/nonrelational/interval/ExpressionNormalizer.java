@@ -59,7 +59,15 @@ public class ExpressionNormalizer extends BoogieTransformer {
 
 	public Expression transform(final Expression expr) {
 		final Expression simplified = mNormalFormTransformer.simplify(expr);
-		return processExpression(simplified);
+		Expression oldExpr = simplified;
+		Expression newExpr = processExpression(simplified);
+		while (newExpr != oldExpr) {
+			assert newExpr != null;
+			assert newExpr.getType() != null : "Normalization did set a null type";
+			oldExpr = newExpr;
+			newExpr = processExpression(oldExpr);
+		}
+		return newExpr;
 	}
 
 	@Override
