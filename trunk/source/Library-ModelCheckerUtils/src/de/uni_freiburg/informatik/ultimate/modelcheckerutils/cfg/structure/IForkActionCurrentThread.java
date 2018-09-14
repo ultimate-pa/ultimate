@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 
 /**
  * Classes that implement this interface represent an {@link IAction} that
@@ -39,12 +39,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * of the forking procedure are havoced.
  *
  * @author Lars Nitzke (lars.nitzke@outlook.com)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface IForkActionCurrentThread extends IAction {
 	/*@Override
 	default UnmodifiableTransFormula getTransformula() {
 		// TODO: return transormula with true or transformular without an action.
-		return 
+		return
 	}*/
+
+
+
+	public static class ForkSmtArguments {
+
+		private final MultiTermResult mThreadIdArguments;
+		private final MultiTermResult mProcedureArguments;
+		public ForkSmtArguments(final MultiTermResult threadIdArguments, final MultiTermResult procedureArguments) {
+			super();
+			mThreadIdArguments = threadIdArguments;
+			mProcedureArguments = procedureArguments;
+		}
+
+
+	}
 }
