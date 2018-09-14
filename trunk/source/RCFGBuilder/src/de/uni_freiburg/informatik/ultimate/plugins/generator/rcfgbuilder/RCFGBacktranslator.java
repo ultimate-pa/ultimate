@@ -78,6 +78,13 @@ public class RCFGBacktranslator
 	private final ILogger mLogger;
 	private Term2Expression mTerm2Expression;
 
+	/**
+	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
+	 * procedure, and ensures the result is a singleton. For the assert requires before the call the result contains two
+	 * elements: First, the call, afterwards the requires.
+	 */
+	private final Map<Statement, BoogieASTNode[]> mCodeBlock2Statement = new HashMap<>();
+
 	public RCFGBacktranslator(final ILogger logger) {
 		super(IcfgEdge.class, BoogieASTNode.class, Term.class, Expression.class);
 		mLogger = logger;
@@ -90,13 +97,6 @@ public class RCFGBacktranslator
 	public void setTerm2Expression(final Term2Expression term2Expression) {
 		mTerm2Expression = term2Expression;
 	}
-
-	/**
-	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
-	 * procedure, and ensures the result is a singleton. For the assert requires before the call the result contains two
-	 * elements: First, the call, afterwards the requires.
-	 */
-	private final Map<Statement, BoogieASTNode[]> mCodeBlock2Statement = new HashMap<>();
 
 	public BoogieASTNode[] putAux(final Statement aux, final BoogieASTNode[] source) {
 		return mCodeBlock2Statement.put(aux, source);
@@ -214,6 +214,8 @@ public class RCFGBacktranslator
 			throw new IllegalArgumentException();
 		}
 		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
+		assert checkCallStackSourceProgramExecution(mLogger,
+				programExecution) : "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
@@ -234,6 +236,7 @@ public class RCFGBacktranslator
 			final ProgramState<Term> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, translateProgramState(programState));
 		}
+		assert checkCallStackTarget(mLogger, trace);
 		return new BoogieProgramExecution(programStateMapping, trace);
 	}
 

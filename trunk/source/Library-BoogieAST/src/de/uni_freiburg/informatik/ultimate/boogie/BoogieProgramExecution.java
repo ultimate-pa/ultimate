@@ -60,6 +60,10 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	private final List<AtomicTraceElement<BoogieASTNode>> mTrace;
 	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
 
+	public BoogieProgramExecution(final List<AtomicTraceElement<BoogieASTNode>> trace) {
+		this(Collections.emptyMap(), trace);
+	}
+
 	public BoogieProgramExecution(final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			final List<AtomicTraceElement<BoogieASTNode>> trace) {
 		mTrace = trace;

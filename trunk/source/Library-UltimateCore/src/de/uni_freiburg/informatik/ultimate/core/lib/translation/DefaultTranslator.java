@@ -45,6 +45,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -410,9 +413,106 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		return hondas.stream().map(a -> a.getLabel()).collect(Collectors.toSet());
 	}
 
-	@FunctionalInterface
-	public interface IFunction<P1, P2, P3, R> {
-		R create(P1 p1, P2 p2, P3 p3);
+	/**
+	 * Check if source trace element and target trace element of a translation have the same procedure labels.
+	 */
+	protected boolean checkProcedureNames(final AtomicTraceElement<STE> ate, final AtomicTraceElement<TTE> newAte) {
+		return ate.getSucceedingProcedure() == newAte.getSucceedingProcedure()
+				&& ate.getPrecedingProcedure() == newAte.getPrecedingProcedure();
+	}
+
+	/**
+	 * Check if the call stack of the source program execution is correct (according to procedure labels and step
+	 * infos).
+	 */
+	protected boolean checkCallStackSourceProgramExecution(final ILogger logger,
+			final IProgramExecution<STE, SE> sourceProgramExecution) {
+		final List<AtomicTraceElement<STE>> rtr = new ArrayList<>();
+		sourceProgramExecution.iterator().forEachRemaining(rtr::add);
+		return checkCallStackSource(logger, rtr);
+	}
+
+	/**
+	 * Check if the call stack of the source program execution is correct (according to procedure labels and step
+	 * infos).
+	 */
+	protected boolean checkCallStackTargetProgramExecution(final ILogger logger,
+			final IProgramExecution<TTE, TE> sourceProgramExecution) {
+		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
+		sourceProgramExecution.iterator().forEachRemaining(rtr::add);
+		return checkCallStackTarget(logger, rtr);
+	}
+
+	/**
+	 * Check if the call stack of a sequence of source atomic trace elements is consistent (according to procedure
+	 * labels and step infos). If it is not consistent, print a fatal message.
+	 */
+	protected boolean checkCallStackSource(final ILogger logger, final List<AtomicTraceElement<STE>> trace) {
+		final int index = getBrokenCallStackIndexForTrace(logger, trace);
+		if (index == -1) {
+			return true;
+		}
+		printBrokenCallStackSource(trace, index);
+		return false;
+	}
+
+	/**
+	 * Check if the call stack of a sequence of target atomic trace elements is consistent (according to procedure
+	 * labels and step infos). If it is not consistent, print a fatal message.
+	 */
+	protected boolean checkCallStackTarget(final ILogger logger, final List<AtomicTraceElement<TTE>> trace) {
+		final int index = getBrokenCallStackIndexForTrace(logger, trace);
+		if (index == -1) {
+			return true;
+		}
+		printBrokenCallStackTarget(trace, index);
+		return false;
+	}
+
+	/**
+	 * Check if the call stack of a sequence of atomic trace elements is broken and return the index of the element that
+	 * indicates the breakage or -1 if the callstack is not broken.
+	 *
+	 * Also print a fatal log message if breakage is detected.
+	 */
+	private static int getBrokenCallStackIndexForTrace(final ILogger logger,
+			final List<? extends AtomicTraceElement<?>> trace) {
+		final Deque<String> callStack = new ArrayDeque<>();
+		int i = 0;
+		for (final AtomicTraceElement<?> elem : trace) {
+			i++;
+			if (elem.hasStepInfo(StepInfo.PROC_CALL)) {
+				callStack.push(elem.getSucceedingProcedure());
+			}
+			if (elem.hasStepInfo(StepInfo.PROC_RETURN)) {
+				if (callStack.isEmpty()) {
+					logger.fatal("Callstack is empty and returning with " + elem);
+					return i;
+				}
+				final String lastCall = callStack.pop();
+				if (!lastCall.equals(elem.getPrecedingProcedure())) {
+					logger.fatal("Callstack is " + lastCall + " but returning with " + elem);
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Print a sequence of source atomic trace elements with an inconsistent call stack. Can be overridden by clients to
+	 * implement printing.
+	 */
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<STE>> trace, final int breakpointIndex) {
+		// do nothing by default
+	}
+
+	/**
+	 * Print a sequence of target atomic trace elements with an inconsistent call stack. Can be overridden by clients to
+	 * implement printing.
+	 */
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<TTE>> trace, final int breakpointIndex) {
+		// do nothing by default
 	}
 
 	@Override
@@ -432,4 +532,8 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		return new ProgramState<>(variable2Values);
 	}
 
+	@FunctionalInterface
+	public interface IFunction<P1, P2, P3, R> {
+		R create(P1 p1, P2 p2, P3 p3);
+	}
 }

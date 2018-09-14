@@ -68,6 +68,9 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	public IProgramExecution<IcfgEdge, Term>
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
 
+		assert checkCallStackSourceProgramExecution(mLogger,
+				programExecution) : "callstack of initial program execution already broken";
+
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof IcfgProgramExecution) {
 			oldBranchEncoders = ((IcfgProgramExecution) programExecution).getBranchEncoders();
@@ -94,9 +97,10 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
-
-		return new IcfgProgramExecution(newTrace, newValues,
+		final IcfgProgramExecution newPe = new IcfgProgramExecution(newTrace, newValues,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+		assert checkCallStackTargetProgramExecution(mLogger, newPe) : "callstack broke during translation";
+		return newPe;
 	}
 
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,

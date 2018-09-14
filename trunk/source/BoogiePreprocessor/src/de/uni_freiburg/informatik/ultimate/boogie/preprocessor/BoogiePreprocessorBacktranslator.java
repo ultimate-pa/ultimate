@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -126,6 +128,9 @@ public class BoogiePreprocessorBacktranslator
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> programExecution) {
+
+		assert checkCallStackSourceProgramExecution(mLogger,
+				programExecution) : "callstack of initial program execution already broken";
 
 		final List<BoogieASTNode> newTrace = new ArrayList<>();
 		final List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
@@ -193,7 +198,7 @@ public class BoogiePreprocessorBacktranslator
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 			if (elem instanceof WhileStatement) {
-				assert checkCallStack(elem, ate);
+				assert checkProcedureNames(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
@@ -201,7 +206,7 @@ public class BoogiePreprocessorBacktranslator
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
-				assert checkCallStack(elem, ate);
+				assert checkProcedureNames(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
@@ -214,11 +219,11 @@ public class BoogiePreprocessorBacktranslator
 				// return), else its a procedure call with corresponding return
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					assert checkCallStack(elem, ate);
+					assert checkProcedureNames(elem, ate);
 					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
 							ate.getRelevanceInformation()));
 				} else {
-					assert checkCallStack((CallStatement) elem, ate) : "Call stack broken";
+					assert checkProcedureNames((CallStatement) elem, ate) : "Call stack broken";
 					if (Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
 						atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
 								ate.getRelevanceInformation()));
@@ -231,7 +236,7 @@ public class BoogiePreprocessorBacktranslator
 				}
 
 			} else {
-				assert checkCallStack(elem, ate);
+				assert checkProcedureNames(elem, ate);
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
 				atomicTrace.add(new AtomicTraceElement<>(elem, stringProvider, ate.getRelevanceInformation()));
@@ -253,17 +258,20 @@ public class BoogiePreprocessorBacktranslator
 			}
 			i++;
 		}
-		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
+
+		final BoogieProgramExecution newPe = new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
+		assert checkCallStackSourceProgramExecution(mLogger, newPe) : "callstack broke during translation";
+		return newPe;
 	}
 
-	private static boolean checkCallStack(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
+	private static boolean checkProcedureNames(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
 		if (elem instanceof CallStatement) {
-			return checkCallStack((CallStatement) elem, ate);
+			return checkProcedureNames((CallStatement) elem, ate);
 		}
 		return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
 	}
 
-	private static boolean checkCallStack(final CallStatement elem, final AtomicTraceElement<BoogieASTNode> ate) {
+	private static boolean checkProcedureNames(final CallStatement elem, final AtomicTraceElement<BoogieASTNode> ate) {
 		if (ate.hasStepInfo(StepInfo.PROC_CALL)) {
 			return elem.getMethodName().equals(ate.getSucceedingProcedure());
 		} else if (ate.hasStepInfo(StepInfo.PROC_RETURN)) {
@@ -374,6 +382,18 @@ public class BoogiePreprocessorBacktranslator
 		mLogger.warn(message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
+	}
+
+	@Override
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<BoogieASTNode>> trace, final int i) {
+		mLogger.fatal(new ProgramExecutionFormatter<>(new BoogieBacktranslationValueProvider())
+				.formatProgramExecution(new BoogieProgramExecution(trace.subList(0, i))));
+	}
+
+	@Override
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<BoogieASTNode>> trace,
+			final int breakpointIndex) {
+		printBrokenCallStackSource(trace, breakpointIndex);
 	}
 
 	private static String printDebug(final BoogieASTNode node) {

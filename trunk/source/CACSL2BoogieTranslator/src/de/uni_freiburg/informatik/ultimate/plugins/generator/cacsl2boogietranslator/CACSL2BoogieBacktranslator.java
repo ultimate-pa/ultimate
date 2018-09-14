@@ -57,6 +57,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -192,7 +193,8 @@ public class CACSL2BoogieBacktranslator
 	public IProgramExecution<CACSLLocation, IASTExpression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
-		assert checkCallStack(oldPE) : "callstack of argument already broken";
+		assert checkCallStackSourceProgramExecution(mLogger,
+				oldPE) : "callstack of initial program execution already broken";
 
 		// initial state
 		ProgramState<IASTExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
@@ -301,7 +303,7 @@ public class CACSL2BoogieBacktranslator
 			assert translatedATEs.size() == translatedProgramStates.size();
 		}
 
-		assert checkCallStack(translatedATEs) : "callstack broken after initial translation";
+		assert checkCallStackTarget(mLogger, translatedATEs) : "callstack broken after initial translation";
 
 		// TODO: This is hacky because we get imprecise counterexamples for empty loops like BugForLoop01 -- the real
 		// reason must be the null node itself
@@ -321,59 +323,15 @@ public class CACSL2BoogieBacktranslator
 						"Removing null node from list of ATEs: ATE " + step + " program state " + programStateAfter);
 				iter.remove();
 				iterPs.remove();
-				assert checkCallStack(translatedATEs) : "callstack broken after removal of " + node;
+				assert checkCallStackTarget(mLogger, translatedATEs) : "callstack broken after removal of " + node;
 			}
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements and return the result
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
-		assert checkCallStack(checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
+		assert checkCallStackTarget(mLogger,
+				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates);
-	}
-
-	private static boolean checkProcedureNames(final AtomicTraceElement<BoogieASTNode> ate,
-			final AtomicTraceElement<CACSLLocation> newAte) {
-		return ate.getSucceedingProcedure() == newAte.getSucceedingProcedure()
-				&& ate.getPrecedingProcedure() == newAte.getPrecedingProcedure();
-	}
-
-	private boolean checkCallStack(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
-		final List<AtomicTraceElement<BoogieASTNode>> rtr = new ArrayList<>();
-		oldPE.iterator().forEachRemaining(rtr::add);
-		return checkCallStack(rtr);
-	}
-
-	@SuppressWarnings("unchecked")
-	private boolean checkCallStack(final List<? extends AtomicTraceElement<?>> trace) {
-		final Deque<String> callStack = new ArrayDeque<>();
-		int i = 0;
-		boolean rtr = true;
-		for (final AtomicTraceElement<?> elem : trace) {
-			i++;
-			if (elem.hasStepInfo(StepInfo.PROC_CALL)) {
-				callStack.push(elem.getSucceedingProcedure());
-			}
-			if (elem.hasStepInfo(StepInfo.PROC_RETURN)) {
-				if (callStack.isEmpty()) {
-					mLogger.fatal("Callstack is empty and returning with " + elem);
-					rtr = false;
-					break;
-				}
-				final String lastCall = callStack.pop();
-				if (!lastCall.equals(elem.getPrecedingProcedure())) {
-					mLogger.fatal("Callstack is " + lastCall + " but returning with " + elem);
-					rtr = false;
-					break;
-				}
-			}
-		}
-
-		if (!rtr) {
-			mLogger.fatal(
-					new ProgramExecutionFormatter<>(new CACSLBacktranslationValueProvider()).formatProgramExecution(
-							new CACSLProgramExecution((List<AtomicTraceElement<CACSLLocation>>) trace.subList(0, i))));
-		}
-		return rtr;
 	}
 
 	/**
@@ -465,7 +423,7 @@ public class CACSL2BoogieBacktranslator
 				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
 						currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-				assert checkCallStack(
+				assert checkCallStackTarget(mLogger,
 						translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 				return index;
 			} else if (currentTraceElement instanceof HavocStatement) {
@@ -473,7 +431,7 @@ public class CACSL2BoogieBacktranslator
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
 							currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-					assert checkCallStack(
+					assert checkCallStackTarget(mLogger,
 							translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 					return index;
 				}
@@ -499,7 +457,7 @@ public class CACSL2BoogieBacktranslator
 					translatedAtomicTraceElements
 							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL, relevanceInfo));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(nextIndex)));
-					assert checkCallStack(
+					assert checkCallStackTarget(mLogger,
 							translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 					return nextIndex;
 				}
@@ -520,14 +478,15 @@ public class CACSL2BoogieBacktranslator
 					last.getStep(), newLastStepInfo, last.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
 					currentATE.getSucceedingProcedure());
 			translatedAtomicTraceElements.add(newLast);
-			assert checkCallStack(translatedAtomicTraceElements) : "callstack broken after adding " + newLast;
+			assert checkCallStackTarget(mLogger, translatedAtomicTraceElements) : "callstack broken after adding "
+					+ newLast;
 		}
 
 		translatedAtomicTraceElements.add(
 				new AtomicTraceElement<CACSLLocation>(cloc, cloc, currentStepInfo, currentATE.getRelevanceInformation(),
 						currentATE.getPrecedingProcedure(), currentATE.getSucceedingProcedure()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStack(
+		assert checkCallStackTarget(mLogger,
 				translatedAtomicTraceElements) : "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
@@ -1437,6 +1396,18 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 		return ate;
+	}
+
+	@Override
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<BoogieASTNode>> trace, final int i) {
+		mLogger.fatal(new ProgramExecutionFormatter<>(new BoogieBacktranslationValueProvider())
+				.formatProgramExecution(new BoogieProgramExecution(trace.subList(0, i))));
+	}
+
+	@Override
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<CACSLLocation>> trace, final int i) {
+		mLogger.fatal(new ProgramExecutionFormatter<>(new CACSLBacktranslationValueProvider())
+				.formatProgramExecution(new CACSLProgramExecution(trace.subList(0, i))));
 	}
 
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
