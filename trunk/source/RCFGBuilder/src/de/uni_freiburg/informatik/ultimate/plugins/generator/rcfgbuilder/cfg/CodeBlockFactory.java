@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
 /**
  * Factory for the construction of CodeBlocks. Every CodeBlock has to be constructed via this factory, because every
@@ -58,12 +59,12 @@ public class CodeBlockFactory implements IStorable {
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final CfgSmtToolkit mMgvManager;
-	private int mSerialNumberCounter;
+	private final SerialProvider mSerialProvider;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable) {
+			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable, final SerialProvider serialProvider) {
 		super();
-		mSerialNumberCounter = 0;
+		mSerialProvider = serialProvider;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMgdScript = mgdScript;
@@ -74,22 +75,23 @@ public class CodeBlockFactory implements IStorable {
 			final CallStatement call) {
 		return new Call(makeFreshSerial(), source, target, call, mLogger);
 	}
-	
-	public ForkCurrentThread constructForkCurrentThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement fork, final boolean forkedProcedureHasImplementation) {
-		return new ForkCurrentThread(makeFreshSerial(), source, target, fork, forkedProcedureHasImplementation, mLogger);
+
+	public ForkCurrentThread constructForkCurrentThread(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final ForkStatement fork, final boolean forkedProcedureHasImplementation) {
+		return new ForkCurrentThread(makeFreshSerial(), source, target, fork, forkedProcedureHasImplementation,
+				mLogger);
 	}
-	
-	public JoinCurrentThread constructJoinCurrentThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement join) {
+
+	public JoinCurrentThread constructJoinCurrentThread(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final JoinStatement join) {
 		return new JoinCurrentThread(makeFreshSerial(), source, target, join, mLogger);
 	}
-	
+
 	public ForkOtherThread constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ForkStatement fork, final ForkCurrentThread forkCurrentThread) {
-		return new ForkOtherThread(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);		
+		return new ForkOtherThread(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);
 	}
-	
+
 	public JoinOtherThread constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final JoinStatement join, final JoinCurrentThread joinCurrentThread) {
 		return new JoinOtherThread(makeFreshSerial(), source, target, join, joinCurrentThread, mLogger);
@@ -141,7 +143,7 @@ public class CodeBlockFactory implements IStorable {
 	}
 
 	private int makeFreshSerial() {
-		return mSerialNumberCounter++;
+		return mSerialProvider.getFreshSerial();
 	}
 
 	public CodeBlock copyCodeBlock(final CodeBlock codeBlock, final BoogieIcfgLocation source,

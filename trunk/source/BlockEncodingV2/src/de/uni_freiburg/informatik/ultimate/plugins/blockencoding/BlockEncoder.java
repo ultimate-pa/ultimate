@@ -87,7 +87,7 @@ public final class BlockEncoder {
 	private final boolean mRunAsPlugin;
 
 	/**
-	 * Create a {@link BlockEncoder} for the BlockEncoding plugin.
+	 * Create a {@link BlockEncoder} for the BlockEncoding plugin. This constructor modifies the supplied Icfg.
 	 *
 	 * @param logger
 	 *            The logger to use.
@@ -114,7 +114,7 @@ public final class BlockEncoder {
 
 	/**
 	 * Create a {@link BlockEncoder} instance for usage from anywhere. Does not register its backtranslation and does
-	 * create the necessary data structures for itself.
+	 * create the necessary data structures for itself. In particular, does not modify the supplied Icfg.
 	 *
 	 * @param logger
 	 *            The logger we should use.

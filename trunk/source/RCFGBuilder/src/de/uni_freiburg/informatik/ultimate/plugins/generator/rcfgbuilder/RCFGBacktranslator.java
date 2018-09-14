@@ -203,7 +203,7 @@ public class RCFGBacktranslator
 		} else if (cb instanceof GotoEdge) {
 			return;
 		} else {
-			throw new UnsupportedOperationException("Unsupported CodeBlock" + cb.getClass().getCanonicalName());
+			throw new UnsupportedOperationException("Unsupported CodeBlock: " + cb.getClass().getCanonicalName());
 		}
 	}
 

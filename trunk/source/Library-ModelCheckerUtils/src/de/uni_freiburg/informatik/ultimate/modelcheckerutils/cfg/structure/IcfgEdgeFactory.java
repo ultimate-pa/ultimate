@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
 /**
  *
@@ -36,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  */
 public final class IcfgEdgeFactory {
 
-	private int mNextFreeId;
+	private final SerialProvider mSerial;
 
-	public IcfgEdgeFactory() {
-		mNextFreeId = 0;
+	public IcfgEdgeFactory(final SerialProvider serialProvider) {
+		mSerial = serialProvider;
 	}
 
 	public IcfgCallTransition createCallTransition(final IcfgLocation source, final IcfgLocation target,
@@ -61,7 +62,7 @@ public final class IcfgEdgeFactory {
 	}
 
 	private int getNextFreeId() {
-		return mNextFreeId++;
+		return mSerial.getFreshSerial();
 	}
 
 }

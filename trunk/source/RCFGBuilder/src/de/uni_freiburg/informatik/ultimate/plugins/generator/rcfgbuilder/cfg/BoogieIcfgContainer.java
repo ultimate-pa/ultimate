@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
 /**
  * Stores references to all objects that represent an interprocedural control-flow graph (ICFG) that was directly
@@ -114,13 +115,14 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		final Set<String> procs = new HashSet<>();
 		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
+		final SerialProvider serialprovider = new SerialProvider();
 		mCfgSmtToolkit = new CfgSmtToolkit(
 				new ModifiableGlobalsTable(
 						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
 				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs,
-				new IcfgEdgeFactory(), concurInfo);
-		mCodeBlockFactory =
-				new CodeBlockFactory(services, mgScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
+				new IcfgEdgeFactory(serialprovider), concurInfo);
+		mCodeBlockFactory = new CodeBlockFactory(services, mgScript, mCfgSmtToolkit,
+				mBoogie2SMT.getBoogie2SmtSymbolTable(), serialprovider);
 		mPayload = new Payload();
 		mPayload.getAnnotations().put(KEY, this);
 	}

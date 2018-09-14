@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -44,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  *
@@ -132,53 +132,11 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		return mPartialProgramStateMapping.get(-1);
 	}
 
-	private static String ppsToString(final ProgramState<Term> pps) {
-		String result;
-		if (pps == null) {
-			result = null;
-		} else {
-			final StringBuilder sb = new StringBuilder();
-			for (final Term variable : pps.getVariables()) {
-				final Term value = pps.getValues(variable).iterator().next();
-				sb.append("  ");
-				final String var = variable.toStringDirect();
-				final String val = value.toStringDirect();
-				sb.append(var).append("=").append(val);
-			}
-			result = sb.toString();
-		}
-		return result;
-	}
-
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		String valuation = ppsToString(getInitialProgramState());
-		final String lineSeparator = CoreUtil.getPlatformLineSeparator();
-
-		sb.append("=== Start of program execution ===").append(lineSeparator);
-		if (valuation != null) {
-			sb.append("initial values:");
-			sb.append(valuation);
-			sb.append(lineSeparator);
-		}
-		for (int i = 0; i < mTrace.size(); i++) {
-			sb.append("statement");
-			sb.append(i);
-			sb.append(": ");
-			sb.append(mTrace.get(i).toString());
-			sb.append(lineSeparator);
-			valuation = ppsToString(getProgramState(i));
-			if (valuation != null) {
-				sb.append("values");
-				sb.append(i);
-				sb.append(":");
-				sb.append(valuation);
-				sb.append(lineSeparator);
-			}
-		}
-		sb.append("=== End of program execution");
-		return sb.toString();
+		final ProgramExecutionFormatter<IcfgEdge, Term> pef =
+				new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider());
+		return pef.formatProgramExecution(this);
 	}
 
 	@Override

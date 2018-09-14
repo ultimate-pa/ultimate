@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspa
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -180,7 +181,7 @@ public class SpaceExModelBuilder {
 			}
 		};
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures,
-				new IcfgEdgeFactory(), null);
+				new IcfgEdgeFactory(new SerialProvider()), null);
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

@@ -76,6 +76,7 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 	public BasicIcfg<LOC> getResult(final BasicIcfg<LOC> icfg) {
 		if (mResult == null) {
 			mResult = createResult(icfg);
+			mBacktranslator.removeIntermediateMappings();
 			assert mResult != null;
 		}
 		return mResult;

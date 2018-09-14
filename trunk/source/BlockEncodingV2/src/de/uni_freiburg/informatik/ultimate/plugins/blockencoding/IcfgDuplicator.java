@@ -126,7 +126,7 @@ public class IcfgDuplicator {
 
 		// third, add all previously ignored return edges
 		openReturns.stream().forEach(a -> createEdgeCopy(old2new, a.getFirst(), a.getSecond(), edgeFactory));
-
+		mBacktranslator.removeIntermediateMappings();
 		return newIcfg;
 	}
 
