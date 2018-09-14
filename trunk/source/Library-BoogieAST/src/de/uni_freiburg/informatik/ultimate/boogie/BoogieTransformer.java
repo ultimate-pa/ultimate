@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
@@ -411,6 +413,25 @@ public abstract class BoogieTransformer {
 			final Statement[] newBody = processStatements(body);
 			if (newCond != cond || newInvs != invs || newBody != body) {
 				newStatement = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+			}
+		} else if (statement instanceof ForkStatement) {
+			final ForkStatement forkstmt = (ForkStatement) statement;
+			final Expression[] threadId = forkstmt.getForkID();
+			final String procName = forkstmt.getMethodName();
+			final Expression[] arguments = forkstmt.getArguments();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final Expression[] newArguments = processExpressions(arguments);
+			if (newThreadId != threadId || newArguments != arguments) {
+				newStatement = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
+			}
+		} else if (statement instanceof JoinStatement) {
+			final JoinStatement joinstmt = (JoinStatement) statement;
+			final Expression[] threadId = joinstmt.getForkID();
+			final VariableLHS[] lhs = joinstmt.getLhs();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final VariableLHS[] newLhs = processVariableLHSs(lhs);
+			if (newThreadId != threadId || newLhs != lhs) {
+				newStatement = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
 			}
 		}
 		if (newStatement == null) {
