@@ -56,10 +56,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -805,6 +807,21 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(whileStat.getInvariants());
 			final Statement[] newBody = flattenStatementsArray(whileStat.getBody());
 			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
+		}  else if (stat instanceof ForkStatement) {
+			final ForkStatement forkstmt = (ForkStatement) stat;
+			final Expression[] threadId = forkstmt.getForkID();
+			final String procName = forkstmt.getMethodName();
+			final Expression[] arguments = forkstmt.getArguments();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final Expression[] newArguments = processExpressions(arguments);
+			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
+		}  else if (stat instanceof JoinStatement) {
+			final JoinStatement joinstmt = (JoinStatement) stat;
+			final Expression[] threadId = joinstmt.getForkID();
+			final VariableLHS[] lhs = joinstmt.getLhs();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final VariableLHS[] newLhs = processVariableLHSs(lhs);
+			newStat = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
 		}
 		if (newStat == null) {
 			newStat = processStatement(stat); // also adds backtranslation
