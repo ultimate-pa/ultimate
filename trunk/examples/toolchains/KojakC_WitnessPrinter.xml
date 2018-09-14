@@ -6,7 +6,6 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
-	<!--<plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding"/>-->
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
 	
