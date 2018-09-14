@@ -28,38 +28,41 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 public class HeapLValue extends LRValue {
 
 	private final BitfieldInformation mBitfieldInformation;
 
 	/**
-	 * LRValue that stores a memory address.
-	 * Two use cases:
-	 *  <li> HeapLValue is read: then we will call "switchToRValue" on the ExpressionResult containing this HeapLValue
-	 *    first. This will generate  code that reads the memory at the address of this HeapLValue and store it inside a
-	 *    temporary variable, which will be the new LRValue of that ExpressionResult.
-	 *  <li> HeapLValue is written: then we use the address of this HeapLValue to generate the code that writes to the
-	 *    according memory location.
+	 * LRValue that stores a memory address. Two use cases:
+	 * <li>HeapLValue is read: then we will call "switchToRValue" on the ExpressionResult containing this HeapLValue
+	 * first. This will generate code that reads the memory at the address of this HeapLValue and store it inside a
+	 * temporary variable, which will be the new LRValue of that ExpressionResult.
+	 * <li>HeapLValue is written: then we use the address of this HeapLValue to generate the code that writes to the
+	 * according memory location.
 	 *
-	 * @param address the memory address
-	 * @param cType the type (in terms of C, as opposed to boogie) of the information that is stored at address
-	 * @param bi In case this HeapLValue represents a bit-field this object
-	 * contains additional information. In case this HeapLValue does not
-	 * represent a bit-field we use null.
+	 * @param address
+	 *            the memory address
+	 * @param cType
+	 *            the type (in terms of C, as opposed to boogie) of the information that is stored at address
+	 * @param bi
+	 *            In case this HeapLValue represents a bit-field this object contains additional information. In case
+	 *            this HeapLValue does not represent a bit-field we use null.
 	 */
 	public HeapLValue(final Expression address, final CType cType, final BitfieldInformation bi) {
 		this(address, cType, false, bi);
 	}
 
-	public HeapLValue(final Expression address, final CType cType, final boolean isIntFromPtr, final BitfieldInformation bi) {
+	public HeapLValue(final Expression address, final CType cType, final boolean isIntFromPtr,
+			final BitfieldInformation bi) {
 		super(cType, false, isIntFromPtr);
 		this.address = address;
 		mBitfieldInformation = bi;
 	}
+
 	Expression address;
 
 	public Expression getAddress() {
@@ -79,9 +82,8 @@ public class HeapLValue extends LRValue {
 		return new RValue(address, new CPointer(getCType()));
 	}
 
-	public LRValue getAddressAsPointerRValue(final Dispatcher main) {
-		return getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
+	public LRValue getAddressAsPointerRValue(final ITypeHandler typeHandler) {
+		return getAddressAsPointerRValue(typeHandler.getBoogiePointerType());
 	}
-
 
 }

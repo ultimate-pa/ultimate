@@ -60,11 +60,11 @@ public class ExpressionResultBuilder {
 	 * @param builderIn
 	 */
 	public ExpressionResultBuilder(final ExpressionResultBuilder original) {
-		mStatements.addAll(original.mStatements);
-		mDeclarations.addAll(original.mDeclarations);
-		mOverappr.addAll(original.mOverappr);
-		mAuxVars.addAll(original.mAuxVars);
-		mNeighbourUnionFields.addAll(original.mNeighbourUnionFields);
+		mStatements.addAll(original.getStatements());
+		mDeclarations.addAll(original.getDeclarations());
+		mOverappr.addAll(original.getOverappr());
+		mAuxVars.addAll(original.getAuxVars());
+		mNeighbourUnionFields.addAll(original.getNeighbourUnionFields());
 		mLrVal = original.getLrValue();
 	}
 
@@ -161,7 +161,7 @@ public class ExpressionResultBuilder {
 		addDeclarations(exprResult.getDeclarations());
 		addOverapprox(exprResult.getOverapprs());
 		addAuxVars(exprResult.getAuxVars());
-		if (exprResult.mOtherUnionFields != null && !exprResult.mOtherUnionFields.isEmpty()) {
+		if (exprResult.getNeighbourUnionFields() != null && !exprResult.getNeighbourUnionFields().isEmpty()) {
 			addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
 		}
 		return this;
@@ -187,7 +187,6 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mOverappr);
 	}
 
-	// public Map<VariableDeclaration, ILocation> getAuxVars() {
 	public Set<AuxVarInfo> getAuxVars() {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
@@ -196,19 +195,21 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mNeighbourUnionFields);
 	}
 
-	public void resetLrValue(final LRValue rVal) {
+	public ExpressionResultBuilder resetLrValue(final LRValue rVal) {
 		if (mLrVal == null) {
 			throw new IllegalStateException("use setLrVal instead");
 		}
 		mLrVal = rVal;
+		return this;
 	}
 
-	public void setOrResetLrValue(final LRValue lrVal) {
+	public ExpressionResultBuilder setOrResetLrValue(final LRValue lrVal) {
 		if (mLrVal == null) {
 			setLrValue(lrVal);
 		} else {
 			resetLrValue(lrVal);
 		}
+		return this;
 
 	}
 
@@ -217,9 +218,10 @@ public class ExpressionResultBuilder {
 	 *
 	 * @param newStatements
 	 */
-	public void resetStatements(final List<Statement> newStatements) {
+	public ExpressionResultBuilder resetStatements(final List<Statement> newStatements) {
 		mStatements.clear();
 		mStatements.addAll(newStatements);
+		return this;
 	}
 
 }

@@ -26,28 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * We often need to deal with auxiliary variables during translation.
- * Several objects may be related to an auxvar: A declaration, a LeftHandSide, an Expression, ...
- * This class stores all of these for one auxvar.
+ * We often need to deal with auxiliary variables during translation. Several objects may be related to an auxvar: A
+ * declaration, a LeftHandSide, an Expression, ... This class stores all of these for one auxvar.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -83,72 +68,4 @@ public class AuxVarInfo {
 	public String toString() {
 		return "AuxVarInfo [mVarDec=" + mVarDec + ", mLhs=" + mLhs + ", mExp=" + mExp + "]";
 	}
-
-	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType) {
-		final AUXVAR auxVarType;
-		if (cType instanceof CArray) {
-			auxVarType = SFO.AUXVAR.ARRAYINIT;
-		} else if (cType instanceof CStruct) {
-			auxVarType = SFO.AUXVAR.STRUCTINIT;
-		} else {
-			throw new UnsupportedOperationException();
-		}
-		return constructAuxVarInfo(loc, main, cType, auxVarType);
-	}
-
-	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType,
-					final AUXVAR auxVarType) {
-		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
-		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
-
-		return constructAuxVarHelper(loc, main, id, astType, false);
-	}
-
-	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType,
-				final ASTType astType, final AUXVAR auxVarType) {
-
-			final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
-	//		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
-			return constructAuxVarHelper(loc, main, id, astType, false);
-		}
-
-	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final ASTType astType,
-					final AUXVAR auxVarType) {
-		final String id = main.mNameHandler.getTempVarUID(auxVarType, null);
-
-		return constructAuxVarHelper(loc, main, id, astType, false);
-	}
-
-	public static AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final Dispatcher main,
-			final CType cType, final AUXVAR auxVarType) {
-		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
-		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
-
-		return constructAuxVarHelper(loc, main, id, astType, true);
-	}
-
-	private static AuxVarInfo constructAuxVarHelper(final ILocation loc, final Dispatcher main, final String id,
-			final ASTType astType, final boolean isGlobal) {
-		final VariableDeclaration decl = new VariableDeclaration(loc,
-				new Attribute[0],
-				new VarList[] { new VarList(loc, new String[] { id }, astType ) });
-
-		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
-
-		final DeclarationInformation declInfo = isGlobal ?
-					DeclarationInformation.DECLARATIONINFO_GLOBAL :
-				new DeclarationInformation(StorageClass.LOCAL,
-						main.mCHandler.getProcedureManager().getCurrentProcedureID());
-
-
-		final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
-						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType), id, declInfo);
-
-		final IdentifierExpression exp = ExpressionFactory.constructIdentifierExpression(loc,
-						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType), id, declInfo);
-
-		return new AuxVarInfo(decl, lhs, exp);
-	}
-
-
 }

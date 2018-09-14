@@ -33,7 +33,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 public final class IdentifierMapping<K, V> implements IStorable {
 
 	private static final String IDENTIFIER_MAPPING_KEY = "CACSL2BoogieTranslatorIdentifierMapping";
-	private Map<K, V> mMap;
+	private final Map<K, V> mMap;
+
+	public IdentifierMapping(final Map<K, V> map) {
+		mMap = map;
+	}
 
 	@Override
 	public void destroy() {
@@ -42,10 +46,6 @@ public final class IdentifierMapping<K, V> implements IStorable {
 
 	public Map<K, V> getMap() {
 		return mMap;
-	}
-
-	public void setMap(final Map<K, V> map) {
-		mMap = map;
 	}
 
 	public static String getStorageKey() {

@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -49,39 +49,26 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
-
-	private final CTranslationState mHandlerHandler;
+	private final TypeSizes mTypeSizes;
 
 	/**
-	 * Defines the following conversion between pointers and integers. An integer n
-	 * is converted to the pointer with base address 0 and offset n. If a pointer is
-	 * converted to an integer type, we use an uninterpreted function and we add the
-	 * overapproximation flag to the resulting expression.
+	 * Defines the following conversion between pointers and integers. An integer n is converted to the pointer with
+	 * base address 0 and offset n. If a pointer is converted to an integer type, we use an uninterpreted function and
+	 * we add the overapproximation flag to the resulting expression.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @param typeSizes
 	 */
 
 	public OverapproximationUF(final ExpressionTranslation expressionTranslation,
 			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
-			final CTranslationState handlerHandler) {
-		super();
+			final TypeSizes typeSizes) {
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;
-		mHandlerHandler = handlerHandler;
+		mTypeSizes = typeSizes;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
-	 * ExpressionTranslation.IPointerIntConversion#convertPointerToInt(de.
-	 * uni_freiburg.informatik.ultimate.model.location.ILocation,
-	 * de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.
-	 * ExpressionResult,
-	 * de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.
-	 * c.CPrimitive)
-	 */
 	@Override
 	public void convertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
 		if (newType.getType() == CPrimitives.BOOL) {
@@ -90,43 +77,31 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final String prefixedFunctionName = declareConvertPointerToIntFunction(loc, newType);
 			final Expression pointerExpression = rexp.getLrValue().getValue();
 			final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { pointerExpression },
-					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
+					new Expression[] { pointerExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(intExpression, newType, false, false);
 			rexp.setLrValue(rValue);
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
-	 * ExpressionTranslation.IPointerIntConversion#convertIntToPointer(de.
-	 * uni_freiburg.informatik.ultimate.model.location.ILocation,
-	 * de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.
-	 * ExpressionResult,
-	 * de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.
-	 * c.CPointer)
-	 */
 	@Override
 	public void convertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
 		final boolean overapproximate = false;
 		if (overapproximate) {
-			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc,
-					(CPrimitive) rexp.getLrValue().getCType());
+			final String prefixedFunctionName =
+					declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.getLrValue().getCType());
 			final Expression intExpression = rexp.getLrValue().getValue();
-			final Expression pointerExpression = ExpressionFactory.constructFunctionApplication(loc,
-					prefixedFunctionName, new Expression[] { intExpression },
-					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
+			final Expression pointerExpression =
+					ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+							new Expression[] { intExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.setLrValue(rValue);
 		} else {
 			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final RValue rValue = new RValue(
-					MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc), newType, false,
-					false);
+			final RValue rValue =
+					new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc),
+							newType, false, false);
 			rexp.setLrValue(rValue);
 		}
 	}

@@ -68,9 +68,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -82,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
@@ -114,24 +113,25 @@ public class ProcedureManager {
 
 	private final ILogger mLogger;
 
-	public ProcedureManager(final ILogger logger, final CTranslationState handlerHandler) {
-		mLogger = logger;
-		handlerHandler.setProcedureManager(this);
+	private final TranslationSettings mSettings;
 
+	public ProcedureManager(final ILogger logger, final TranslationSettings settings) {
+		mLogger = logger;
+		mSettings = settings;
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
 		mProcedureNameToProcedureInfo = new LinkedHashMap<>();
 		mInverseCallGraph = new LinkedHashRelation<>();
 	}
 
-	void beginProcedureScope(final Dispatcher main, final BoogieProcedureInfo currentProcInfo) {
+	void beginProcedureScope(final CHandler main, final BoogieProcedureInfo currentProcInfo) {
 		assert currentProcInfo != null;
 		mCurrentProcedureInfo = currentProcInfo;
-		main.mCHandler.beginScope();
+		main.beginScope();
 	}
 
-	void endProcedureScope(final Dispatcher main) {
+	void endProcedureScope(final CHandler main) {
 		mCurrentProcedureInfo = null;
-		main.mCHandler.endScope();
+		main.endScope();
 	}
 
 	/**
@@ -189,10 +189,10 @@ public class ProcedureManager {
 	 * the modifies clause of procedure
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher.
+	 *            a reference to the main IDispatcher.
 	 * @return procedure declarations
 	 */
-	public List<Declaration> computeFinalProcedureDeclarations(final Dispatcher main,
+	public List<Declaration> computeFinalProcedureDeclarations(final IDispatcher main,
 			final MemoryHandler memoryHandler) {
 		final BoogieProcedureInfo notDeclaredProcedure = isEveryCalledProcedureDeclared();
 		if (notDeclaredProcedure != null) {
@@ -267,18 +267,14 @@ public class ProcedureManager {
 				newSpec[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
 			}
 
-			/*
-			 *
-			 */
 			final Specification[] newSpecWithExtraEnsuresClauses;
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
-					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
-					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName))
-							&& main.getPreferences()
-									.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
+					&& (mSettings.checkAllocationPurity() || (mSettings.getCheckedMethod().equals(SFO.EMPTY)
+							|| mSettings.getCheckedMethod().equals(procedureName))
+							&& mSettings.checkMemoryLeakInMain())) {
 				// add a specification to check for memory leaks
 
-				final Expression vIe = main.mCHandler.getMemoryHandler().getValidArray(loc);
+				final Expression vIe = memoryHandler.getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Check.Spec.MEMORY_LEAK);
@@ -288,8 +284,7 @@ public class ProcedureManager {
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,
 								ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 				check.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
-				if (main.getPreferences()
-						.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
+				if (mSettings.isSvcompMemtrackCompatibilityMode()) {
 					new Overapprox(Collections.singletonMap("memtrack", ensLoc))
 							.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				}
@@ -366,27 +361,11 @@ public class ProcedureManager {
 	 *            initial declaration for the procedure, should contain the signature, may be reset later for adding
 	 *            specifications; modifies specification will be generated by FunctionHandler like for all procedures.
 	 */
-	void beginCustomProcedure(final Dispatcher main, final ILocation loc, final String procedureName,
+	void beginCustomProcedure(final CHandler main, final ILocation loc, final String procedureName,
 			final Procedure procedureDecl) {
-		// main.mCHandler.beginScope();
-
 		final BoogieProcedureInfo procInfo = getOrConstructProcedureInfo(procedureName);
 		procInfo.setDeclaration(procedureDecl);
-
 		beginProcedureScope(main, procInfo);
-		// mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new
-		// String[0], new VarList[0],
-		// new VarList[0], new Specification[0], null);
-		//
-		// final ProcedureInfo procInfo = getOrConstructProcedureInfo(startOrInit);
-		// procInfo.setDeclaration(mCurrentProcedure);
-
-		// mModifiedGlobals.put(mCurrentProcedure.getIdentifier(), new
-		// LinkedHashSet<String>());
-		// registerProcedureDeclaration(main, loc, null, name,
-		// new CFunction(new CPrimitive(CPrimitives.VOID), new CDeclaration[0], false));
-		// registerProcedureDeclaration(main, loc, null, procedureName, procedureDecl);
-
 	}
 
 	/**
@@ -397,29 +376,8 @@ public class ProcedureManager {
 	 * @param procName
 	 * @param calledProcedures
 	 */
-	void endCustomProcedure(final Dispatcher main, final String procName) {
+	void endCustomProcedure(final CHandler main, final String procName) {
 		assert mCurrentProcedureInfo.getProcedureName().equals(procName);
-		// void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl,
-		// final String startOrInit) {
-		// void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl,
-		// final String startOrInit,
-		// final Collection<String> calledProcedures) {
-		// for (final String calledProcedure : calledProcedures) {
-		// addCallGraphEdge(startOrInit, calledProcedure);
-		// }
-
-		// mProcedures.put(startOrInit, initDecl);
-		// TODO: rethink this -- is this resetting only about modifies clause? if yes:
-		// shouldn't this be handled
-		// elsewhere?
-		// EDIT: indeed, updates to modifies clauses should be registered with the
-		// function handler
-		// final ProcedureInfo procInfo = getProcedureInfo(startOrInit);
-		// procInfo.resetDeclaration(initDecl);
-
-		// mCurrentProcedureInfo = null;
-		//
-		// main.mCHandler.endScope();
 		endProcedureScope(main);
 	}
 
@@ -496,6 +454,118 @@ public class ProcedureManager {
 	 */
 	public boolean hasProcedure(final String tentativeProcedureName) {
 		return mProcedureNameToProcedureInfo.containsKey(tentativeProcedureName);
+	}
+
+	private static Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
+			final VariableLHS[] modifyList) {
+		final Set<VariableLHS> modifiedGlobals = new LinkedHashSet<>(Arrays.asList(modifyList));
+		final Set<VariableLHS> mgFiltered = filterDuplicateVariableLHSs(modifiedGlobals);
+		return new ModifiesSpecification(loc, isFree, mgFiltered.toArray(new VariableLHS[mgFiltered.size()]));
+	}
+
+	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
+			final Statement[] statements, final String procName) {
+		// assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
+
+		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
+
+		final Collection<Statement> callsAndAssignments =
+				new CallAndAssignmentStatementFinder().getCallsAndAssignments(statements);
+		for (final Statement statement : callsAndAssignments) {
+			if (statement instanceof CallStatement) {
+				registerCallStatement((CallStatement) statement, procInfo);
+			}
+			if (statement instanceof AssignmentStatement) {
+				registerAssignmentStatement((AssignmentStatement) statement, procInfo);
+			}
+		}
+		return new Body(loc, localDeclarations, statements);
+	}
+
+	private static void registerAssignmentStatement(final AssignmentStatement statement,
+			final BoogieProcedureInfo procInfo) {
+		for (final LeftHandSide lhs : statement.getLhs()) {
+			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+			if (modifiedGlobal != null) {
+				procInfo.addModifiedGlobal(modifiedGlobal);
+			}
+		}
+	}
+
+	private void registerCallStatement(final CallStatement statement, final BoogieProcedureInfo caller) {
+		for (final LeftHandSide lhs : statement.getLhs()) {
+			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+			if (modifiedGlobal != null) {
+				caller.addModifiedGlobal(modifiedGlobal);
+			}
+		}
+		final BoogieProcedureInfo callee = getOrConstructProcedureInfo(statement.getMethodName());
+		registerCall(caller, callee);
+	}
+
+	/**
+	 * Essentially this method is to remind the programmer that he or she has to give modified globals for an ensures
+	 * specification manually.
+	 *
+	 * @param loc
+	 * @param isFree
+	 * @param formula
+	 * @param modifiedGlobals
+	 * @return
+	 */
+	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
+			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
+		// // TODO: what is the criterion for when an ensures clause constitutes a
+		// modification??
+		// // --> probably we have to set this manually!...
+		// if (!isFree) {
+		// final Set<IdentifierExpression> modifiedGlobals =
+		// new
+		// BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
+		// for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
+		// addModifiedGlobal((VariableLHS)
+		// CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
+		// }
+		// }
+		// modifiedGlobals.forEach(this::addModifiedGlobal);
+		// final BoogieProcedureInfo procInfo = getOrConstructProcedureInfo(procName);
+		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
+		procInfo.addModifiedGlobals(modifiedGlobals);
+
+		return new EnsuresSpecification(loc, isFree, formula);
+	}
+
+	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
+		assert !isGlobalScope();
+		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
+		final Procedure oldDecl = procInfo.getDeclaration();
+
+		final List<Specification> newSpecs = new ArrayList<>();
+		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
+		newSpecs.addAll(specs);
+
+		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),
+				oldDecl.getTypeParams(), oldDecl.getInParams(), oldDecl.getOutParams(),
+				newSpecs.toArray(new Specification[newSpecs.size()]), null);
+
+		procInfo.resetDeclaration(newDecl);
+	}
+
+	BoogieProcedureInfo getCurrentProcedureInfo() {
+		return mCurrentProcedureInfo;
+	}
+
+	public boolean isCalledBeforeDeclared(final BoogieProcedureInfo definedProcInfo) {
+		return mMethodsCalledBeforeDeclared.contains(definedProcInfo);
+	}
+
+	public void registerCalledBeforeDeclaredFunction(final BoogieProcedureInfo procInfo) {
+		mMethodsCalledBeforeDeclared.add(procInfo);
+	}
+
+	public Set<CFunction> getAllFunctionSignatures() {
+		return mProcedureNameToProcedureInfo.entrySet().stream().map(Entry::getValue).filter(x -> x.hasCType())
+				.map(x -> x.getCType()).collect(Collectors.toSet());
 	}
 
 	/**
@@ -680,113 +750,6 @@ public class ProcedureManager {
 		}
 	}
 
-	private static Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
-			final VariableLHS[] modifyList) {
-		final Set<VariableLHS> modifiedGlobals = new LinkedHashSet<>(Arrays.asList(modifyList));
-		final Set<VariableLHS> mgFiltered = filterDuplicateVariableLHSs(modifiedGlobals);
-		return new ModifiesSpecification(loc, isFree, mgFiltered.toArray(new VariableLHS[mgFiltered.size()]));
-	}
-
-	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
-			final Statement[] statements, final String procName) {
-		// assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
-
-		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
-
-		final Collection<Statement> callsAndAssignments =
-				new CallAndAssignmentStatementFinder().getCallsAndAssignments(statements);
-		for (final Statement statement : callsAndAssignments) {
-			if (statement instanceof CallStatement) {
-				registerCallStatement((CallStatement) statement, procInfo);
-			}
-			if (statement instanceof AssignmentStatement) {
-				registerAssignmentStatement((AssignmentStatement) statement, procInfo);
-			}
-		}
-		return new Body(loc, localDeclarations, statements);
-	}
-
-	private static void registerAssignmentStatement(final AssignmentStatement statement,
-			final BoogieProcedureInfo procInfo) {
-		for (final LeftHandSide lhs : statement.getLhs()) {
-			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
-			if (modifiedGlobal != null) {
-				procInfo.addModifiedGlobal(modifiedGlobal);
-			}
-		}
-	}
-
-	private void registerCallStatement(final CallStatement statement, final BoogieProcedureInfo caller) {
-		for (final LeftHandSide lhs : statement.getLhs()) {
-			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
-			if (modifiedGlobal != null) {
-				caller.addModifiedGlobal(modifiedGlobal);
-			}
-		}
-		final BoogieProcedureInfo callee = getOrConstructProcedureInfo(statement.getMethodName());
-		registerCall(caller, callee);
-	}
-
-	/**
-	 * Essentially this method is to remind the programmer that he or she has to give modified globals for an ensures
-	 * specification manually.
-	 *
-	 * @param loc
-	 * @param isFree
-	 * @param formula
-	 * @param modifiedGlobals
-	 * @return
-	 */
-	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
-			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
-		// // TODO: what is the criterion for when an ensures clause constitutes a
-		// modification??
-		// // --> probably we have to set this manually!...
-		// if (!isFree) {
-		// final Set<IdentifierExpression> modifiedGlobals =
-		// new
-		// BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
-		// for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
-		// addModifiedGlobal((VariableLHS)
-		// CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
-		// }
-		// }
-		// modifiedGlobals.forEach(this::addModifiedGlobal);
-		// final BoogieProcedureInfo procInfo = getOrConstructProcedureInfo(procName);
-		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
-		procInfo.addModifiedGlobals(modifiedGlobals);
-
-		return new EnsuresSpecification(loc, isFree, formula);
-	}
-
-	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
-		assert !isGlobalScope();
-		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
-		final Procedure oldDecl = procInfo.getDeclaration();
-
-		final List<Specification> newSpecs = new ArrayList<>();
-		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
-		newSpecs.addAll(specs);
-
-		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),
-				oldDecl.getTypeParams(), oldDecl.getInParams(), oldDecl.getOutParams(),
-				newSpecs.toArray(new Specification[newSpecs.size()]), null);
-
-		procInfo.resetDeclaration(newDecl);
-	}
-
-	BoogieProcedureInfo getCurrentProcedureInfo() {
-		return mCurrentProcedureInfo;
-	}
-
-	public boolean isCalledBeforeDeclared(final BoogieProcedureInfo definedProcInfo) {
-		return mMethodsCalledBeforeDeclared.contains(definedProcInfo);
-	}
-
-	public void registerCalledBeforeDeclaredFunction(final BoogieProcedureInfo procInfo) {
-		mMethodsCalledBeforeDeclared.add(procInfo);
-	}
-
 	class CallAndAssignmentStatementFinder extends BoogieVisitor {
 
 		Collection<Statement> mResult = new ArrayList<>();
@@ -809,11 +772,6 @@ public class ProcedureManager {
 			return mResult;
 		}
 
-	}
-
-	public Set<CFunction> getAllFunctionSignatures() {
-		return mProcedureNameToProcedureInfo.entrySet().stream().map(Entry::getValue).filter(x -> x.hasCType())
-				.map(x -> x.getCType()).collect(Collectors.toSet());
 	}
 
 }

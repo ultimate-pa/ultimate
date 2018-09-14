@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -44,14 +43,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -61,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -82,7 +79,7 @@ public class CTranslationUtil {
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
-			final List<Integer> arrayIndex, final ExpressionTranslation expressionTranslation) {
+			final List<Integer> arrayIndex, final TypeSizes typeSizes) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
 		final Expression[] index = new Expression[arrayIndex.size()];
@@ -91,7 +88,7 @@ public class CTranslationUtil {
 
 		for (int i = 0; i < arrayIndex.size(); i++) {
 			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType().getUnderlyingType();
-			index[i] = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
+			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
@@ -108,12 +105,12 @@ public class CTranslationUtil {
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
-			final Integer arrayIndex, final ExpressionTranslation expressionTranslation) {
+			final Integer arrayIndex, final TypeSizes typeSizes) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
 		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType();
-		final Expression index = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
-				new BigInteger(arrayIndex.toString()));
+		final Expression index =
+				typeSizes.constructLiteralForIntegerType(loc, currentIndexType, new BigInteger(arrayIndex.toString()));
 
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLhs(),
 				new Expression[] { index });
@@ -123,99 +120,10 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cellType, null);
 	}
 
-	// public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs,
-	// final int i) {
-	// final CStruct cStructType = (CStruct) structBaseLhs.getCType().getUnderlyingType();
-	// final String fieldName = cStructType.getFieldIds()[i];
-	// final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhs.getLHS(), fieldName);
-	// return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
-	// }
-
-	// public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
-	// final CStruct cStructType = (CStruct) structBaseLhs.getCType();
-	// // TODO
-	// return null;
-	// }
-
-	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
-			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex, final IASTNode hook) {
-		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
-
-		final List<Integer> arrayBounds =
-				getConstantDimensionsOfArray(cArrayType, main.mCHandler.getExpressionTranslation(), hook);
-
-		Integer product = 0;
-		for (int i = 0; i < arrayIndex.size(); i++) {
-			final int factor = i == arrayIndex.size() - 1 ? 1 : arrayBounds.get(i + 1);
-			product = product + factor * arrayIndex.get(i);
-		}
-		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
-
-		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
-				sizeT, new BigInteger(product.toString()));
-
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
-		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
-				cArrayType.getValueType(), flatCellNumber, sizeT, hook);
-		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, pointerOffset, sizeT, cellOffset, sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-
-		return LRValueFactory.constructHeapLValue(main, newPointer, cArrayType.getValueType(), null);
-	}
-
-	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
-			final HeapLValue arrayBaseAddress, final Integer arrayIndex, final IASTNode hook) {
-		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
-
-		final CPrimitive pointerComponentType = main.mCHandler.getExpressionTranslation().getCTypeOfPointerComponents();
-
-		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
-				pointerComponentType, new BigInteger(arrayIndex.toString()));
-
-		/* do a conversion so the expression has boogie pointer type */
-		final RValue addressRVal = arrayBaseAddress.getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
-		// final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
-
-		final CType cellType = cArrayType.getValueType();
-
-		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc, cellType,
-				flatCellNumber, pointerComponentType, hook);
-
-		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, pointerOffset, pointerComponentType, cellOffset, pointerComponentType);
-
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-
-		return LRValueFactory.constructHeapLValue(main, newPointer, cellType, null);
-	}
-
-	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
-			final HeapLValue baseAddress, final int fieldIndex, final IASTNode hook) {
-		final CStruct cStructType = (CStruct) baseAddress.getCType().getUnderlyingType();
-
-		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
-
-		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc,
-				cStructType, fieldIndex, hook);
-
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
-		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, pointerOffset, sizeT, fieldOffset, sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-
-		return LRValueFactory.constructHeapLValue(main, newPointer, cStructType.getFieldTypes()[fieldIndex], null);
-	}
-
-	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation,
-			final IASTNode hook) {
+	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes, final IASTNode hook) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
-			if (expressionTranslation.extractIntegerValue(currentArrayType.getBound(), hook) == null) {
+			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), hook) == null) {
 				// found a variable length bound
 				return true;
 			}
@@ -229,22 +137,22 @@ public class CTranslationUtil {
 		}
 	}
 
-	public static boolean isToplevelVarlengthArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
-		return expressionTranslation.extractIntegerValue(cArrayType.getBound(), hook) == null;
+	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes,
+			final IASTNode hook) {
+		return typeSizes.extractIntegerValue(cArrayType.getBound(), hook) == null;
 	}
 
-	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation, hook)) {
+	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes,
+			final IASTNode hook) {
+		if (CTranslationUtil.isVarlengthArray(cArrayType, typeSizes, hook)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
 		CArray currentArrayType = cArrayType;
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer.parseUnsignedInt(
-					expressionTranslation.extractIntegerValue(currentArrayType.getBound(), hook).toString()));
+			result.add(Integer
+					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound(), hook).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -259,11 +167,11 @@ public class CTranslationUtil {
 		return (valueType instanceof CStruct && !(valueType instanceof CUnion)) || valueType instanceof CArray;
 	}
 
-	public static int getConstantFirstDimensionOfArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
+	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes,
+			final IASTNode hook) {
 		final RValue dimRVal = cArrayType.getBound();
 
-		final BigInteger extracted = expressionTranslation.extractIntegerValue(dimRVal, hook);
+		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal, hook);
 		if (extracted == null) {
 			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
 		}
@@ -277,13 +185,16 @@ public class CTranslationUtil {
 	 * ExpressionResult is returned unchanged case ExpressionListResult: we evaluate all expressions, also switching to
 	 * rvalue in every case, and we accumulate the corresponding statements in an ExpressionResult
 	 *
+	 * @param transformer
+	 *            TODO
 	 * @param loc
-	 * @param main
 	 * @param dispatch
+	 *
 	 * @return
 	 */
-	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(final ILocation loc,
-			final Dispatcher main, final Result dispatch, final IASTNode hook) {
+	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(
+			final ExpressionResultTransformer transformer, final ILocation loc, final Result dispatch,
+			final IASTNode hook) {
 		assert dispatch instanceof ExpressionListResult || dispatch instanceof ExpressionResult;
 		if (dispatch instanceof ExpressionResult) {
 			return (ExpressionResult) dispatch;
@@ -292,15 +203,16 @@ public class CTranslationUtil {
 
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 
-		for (int i = 0; i < listResult.list.size(); i++) {
+		for (final ExpressionResult elem : listResult.getList()) {
 			/*
 			 * Note: C11 6.5.17.2, footnote: A comma operator does not yield an lvalue. --> thus we can immediately
 			 * switch to rvalue here
 			 */
-			result.addAllExceptLrValue(listResult.list.get(i).switchToRValueIfNecessary(main, loc, hook));
+			result.addAllExceptLrValue(transformer.switchToRValueIfNecessary(elem, loc, hook));
 		}
-		result.setLrValue(listResult.list.get(listResult.list.size() - 1).getLrValue());
 
+		final LRValue lastLrValue = listResult.getList().get(listResult.getList().size() - 1).getLrValue();
+		result.setLrValue(lastLrValue);
 		return result.build();
 	}
 
@@ -394,9 +306,6 @@ public class CTranslationUtil {
 
 			if (nameHandler.isTempVar(id)) {
 				// malloc auxvars do not need to be havocced in some cases (alloca)
-				// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
-				// result &= auxVars.containsKey(varDecl);
-
 				boolean auxVarExists = false;
 				for (final AuxVarInfo auxVar : auxVars) {
 					if (auxVar.getVarDec().equals(varDecl)) {

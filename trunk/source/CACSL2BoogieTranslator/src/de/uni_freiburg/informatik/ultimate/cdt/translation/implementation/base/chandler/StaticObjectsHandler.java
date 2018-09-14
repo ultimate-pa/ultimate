@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -44,17 +45,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 /**
- * This class manages objects (in the meaning that the word has in the
- * C-standard) with static storage duration.
+ * This class manages objects (in the meaning that the word has in the C-standard) with static storage duration.
  * <p>
- * Those objects typically require declaration of a global variable in the
- * Boogie code and sometimes initialization code in the procedure
- * ULTIMATE.Init.
+ * Those objects typically require declaration of a global variable in the Boogie code and sometimes initialization code
+ * in the procedure ULTIMATE.Init.
  * <p>
  * Examples of such objects are:
- * <li> variables declared as 'static' in the C program
- * <li> global variables in the C program
- * <li> string literals in the C program that are on-heap in our Boogie program
+ * <li>variables declared as 'static' in the C program
+ * <li>global variables in the C program
+ * <li>string literals in the C program that are on-heap in our Boogie program
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -101,10 +100,21 @@ public class StaticObjectsHandler {
 		mVariableDeclarationToAssociatedCDeclaration.put(boogieDec, cDec);
 	}
 
-	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration) {
+	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
+			final Axiom axiom) {
 		mGlobalDeclarations.add(cd);
+		if (axiom != null) {
+			mGlobalDeclarations.add(axiom);
+		}
 	}
 
+	/**
+	 * mdeclarationsGlobalInBoogie may contain type declarations that stem from typedefs using an incomplete struct
+	 * type. This method is called when the struct type is completed.
+	 *
+	 * @param cvar
+	 * @param incompleteStruct
+	 */
 	public void completeTypeDeclaration(final CType incompleteType, final CType completedType,
 			final ITypeHandler typeHandler) {
 
@@ -145,9 +155,9 @@ public class StaticObjectsHandler {
 	}
 
 	/**
-	 * Add a VariableDeclaration for the global Boogie scope without an associated CDeclaration.
-	 * Normally, the CDeclaration would be used for initializing the variable; in this case, initialization code
-	 * can be added manually via addStatementsForUltimateInit(..).
+	 * Add a VariableDeclaration for the global Boogie scope without an associated CDeclaration. Normally, the
+	 * CDeclaration would be used for initializing the variable; in this case, initialization code can be added manually
+	 * via addStatementsForUltimateInit(..).
 	 *
 	 * @param varDec
 	 */

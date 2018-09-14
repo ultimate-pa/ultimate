@@ -30,16 +30,29 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 
 /**
- * Provides the information if we want to use fixed sizes for types.
- * If yes an object of this class also provides the bytesize for each type.
+ * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
+ * bytesize for each type.
  *
  *
  * @author Matthias Heizmann
@@ -47,108 +60,86 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class TypeSizes {
 	private final boolean mUseFixedTypeSizes;
 
-	private final int sizeOfBoolType;
-	private final int sizeOfCharType;
-	private final int sizeOfShortType;
-	private final int sizeOfIntType;
-	private final int sizeOfLongType;
-	private final int sizeOfLongLongType;
-	private final int sizeOfFloatType;
-	private final int sizeOfDoubleType;
-	private final int sizeOfLongDoubleType;
-	private final int sizeOfPointerType;
+	private final int mSizeOfBoolType;
+	private final int mSizeOfCharType;
+	private final int mSizeOfShortType;
+	private final int mSizeOfIntType;
+	private final int mSizeOfLongType;
+	private final int mSizeOfLongLongType;
+	private final int mSizeOfFloatType;
+	private final int mSizeOfDoubleType;
+	private final int mSizeOfLongDoubleType;
+	private final int mSizeOfPointerType;
 
-//	private final int sizeOfWCharType;
-//	private final int sizeOfChar16Type;
-//	private final int sizeOfChar32Type;
-
-//	for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
-	private final int sizeOfVoidType;
+	// for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
+	private final int mSizeOfVoidType;
 
 	/**
 	 * is char (without modifier) schar or uchar?
 	 */
 	private final Signedness mSignednessOfChar;
 
-	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> CPrimitiveToTypeSizeConstant =
-			new LinkedHashMap<>();
+	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> CPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
 
+	private final FlatSymbolTable mSymboltable;
 
-	public TypeSizes(final IPreferenceProvider ups, final CTranslationState handlerHandler) {
-		handlerHandler.setTypeSizes(this);
+	private final TranslationSettings mSettings;
 
-		mUseFixedTypeSizes =
-				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
-		sizeOfVoidType = 1;
-		sizeOfBoolType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		sizeOfCharType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
-		sizeOfShortType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
-		sizeOfIntType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
-		sizeOfLongType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
-		sizeOfLongLongType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
-		sizeOfFloatType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
-		sizeOfDoubleType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
-		sizeOfLongDoubleType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
-		sizeOfPointerType =
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
+	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings,
+			final FlatSymbolTable symbolTable) {
+		mSymboltable = symbolTable;
+		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
+		mSettings = settings;
+
+		mSizeOfVoidType = 1;
+		mSizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		mSizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
+		mSizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
+		mSizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
+		mSizeOfLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+		mSizeOfLongLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
+		mSizeOfFloatType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
+		mSizeOfDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
+		mSizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
+		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
-//		this.sizeOfChar16Type =
-//				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
-//		this.sizeOfChar32Type =
-//				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
 
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, sizeOfVoidType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, sizeOfBoolType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, sizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, sizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.INT, sizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, sizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, sizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, sizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, sizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, sizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, sizeOfDoubleType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, sizeOfFloatType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, sizeOfLongDoubleType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, mSizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, mSizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, mSizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, mSizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, mSizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.INT, mSizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, mSizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, mSizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
 
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, sizeOfFloatType * 2);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
-
-//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR16, this.sizeOfChar16Type);
-//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR32, this.sizeOfChar32Type);
-//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.WCHAR, this.sizeOfWCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
 	}
-
 
 	public boolean useFixedTypeSizes() {
 		return mUseFixedTypeSizes;
 	}
 
-
 	public Integer getSize(final CPrimitives cPrimitive) {
 		final Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
 		if (result == null) {
 			throw new IllegalArgumentException("unknown type " + cPrimitive);
-		} else {
-			return result;
 		}
+		return result;
 	}
 
 	public int getSizeOfPointer() {
-		return sizeOfPointerType;
+		return mSizeOfPointerType;
 	}
 
 	public boolean isUnsigned(final CPrimitive type) {
@@ -188,7 +179,7 @@ public class TypeSizes {
 		}
 	}
 
-	private boolean isComplex(final CPrimitives type) {
+	private static boolean isComplex(final CPrimitives type) {
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -223,7 +214,7 @@ public class TypeSizes {
 	}
 
 	public BigInteger getMaxValueOfPointer() {
-		final int byteSize = sizeOfPointerType;
+		final int byteSize = mSizeOfPointerType;
 		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
 		maxValue = maxValue.subtract(BigInteger.ONE);
 		return maxValue;
@@ -243,7 +234,7 @@ public class TypeSizes {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
 		}
-		break;
+			break;
 		case DOUBLE: {
 			final int sizeof = getSize(cPrimitive);
 			if (sizeof == 8) {
@@ -252,7 +243,7 @@ public class TypeSizes {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
 		}
-		break;
+			break;
 		case LONGDOUBLE: {
 			final int sizeof = getSize(cPrimitive);
 			if (sizeof == 12 || sizeof == 16) {
@@ -261,31 +252,11 @@ public class TypeSizes {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
 		}
-		break;
+			break;
 		default:
 			throw new IllegalArgumentException("not real floating type " + cPrimitive);
 		}
 		return result;
-	}
-
-	/**
-	 * The size of a real floating point type is defined by a significant
-	 * and an exponent.
-	 */
-	public class FloatingPointSize {
-		final int mSignificant;
-		final int mExponent;
-		public FloatingPointSize(final int significant, final int exponent) {
-			super();
-			mSignificant = significant;
-			mExponent = exponent;
-		}
-		public int getSignificant() {
-			return mSignificant;
-		}
-		public int getExponent() {
-			return mExponent;
-		}
 	}
 
 	public CPrimitive getCorrespondingUnsignedType(final CPrimitive type) {
@@ -299,9 +270,8 @@ public class TypeSizes {
 		case CHAR:
 			if (mSignednessOfChar == Signedness.SIGNED) {
 				return new CPrimitive(CPrimitives.UCHAR);
-			} else {
-				throw new UnsupportedOperationException("according to your settings, char is already unsigned");
 			}
+			throw new UnsupportedOperationException("according to your settings, char is already unsigned");
 		case INT:
 			return new CPrimitive(CPrimitives.UINT);
 		case LONG:
@@ -320,6 +290,101 @@ public class TypeSizes {
 	public Signedness getSignednessOfChar() {
 		return mSignednessOfChar;
 	}
-	
-	
+
+	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
+			final BigInteger value) {
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, mSettings.isBitvectorTranslation(), this, type,
+				value);
+	}
+
+	/**
+	 * Try to get the value of RValue rval. Returns null if extraction is impossible. Extraction might succeed if rval
+	 * represents a constant value. Extraction fails, e.g., if rval represents a variable.
+	 *
+	 * @param expr
+	 * @return
+	 */
+	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
+		return extractIntegerValue(rval.getValue(), rval.getCType(), hook);
+	}
+
+	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
+		if (mSettings.isBitvectorTranslation()) {
+			return extractIntegerValueBitvector(expr, cType, hook);
+		}
+		return extractIntegerValueInteger(expr, cType, hook);
+	}
+
+	private BigInteger extractIntegerValueInteger(final Expression expr, final CType cType, final IASTNode hook) {
+		if (cType.isIntegerType()) {
+			if (expr instanceof IntegerLiteral) {
+				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
+				if (isUnsigned(((CPrimitive) cType))) {
+					final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+					return value.mod(maxValuePlusOne);
+				}
+				return value;
+			} else if (expr instanceof IdentifierExpression) {
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
+				final String bId = ((IdentifierExpression) expr).getIdentifier();
+				final String cId = mSymboltable.getCIdForBoogieId(bId);
+				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
+				if (stv.hasConstantValue()) {
+					return extractIntegerValue(stv.getConstantValue(), cType, hook);
+				}
+			}
+			return null;
+		}
+		return null;
+	}
+
+	private BigInteger extractIntegerValueBitvector(final Expression expr, CType cType, final IASTNode hook) {
+		if (cType.isIntegerType()) {
+			cType = CEnum.replaceEnumWithInt(cType);
+			if (expr instanceof BitvecLiteral) {
+				final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
+				if (isUnsigned(((CPrimitive) cType))) {
+					if (value.signum() < 0) {
+						throw new UnsupportedOperationException("negative value");
+					}
+					return value;
+				}
+				return value;
+			} else if (expr instanceof IdentifierExpression) {
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
+				final String bId = ((IdentifierExpression) expr).getIdentifier();
+				final String cId = mSymboltable.getCIdForBoogieId(bId);
+				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
+				if (stv.hasConstantValue()) {
+					return extractIntegerValue(stv.getConstantValue(), cType, hook);
+				}
+			}
+			return null;
+		}
+		return null;
+	}
+
+	/**
+	 * The size of a real floating point type is defined by a significant and an exponent.
+	 */
+	public class FloatingPointSize {
+		final int mSignificant;
+		final int mExponent;
+
+		public FloatingPointSize(final int significant, final int exponent) {
+			super();
+			mSignificant = significant;
+			mExponent = exponent;
+		}
+
+		public int getSignificant() {
+			return mSignificant;
+		}
+
+		public int getExponent() {
+			return mExponent;
+		}
+	}
+
 }

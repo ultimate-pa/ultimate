@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -146,26 +146,22 @@ public class CACSL2BoogieBacktranslator
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
 
-	private final Boogie2C mBoogie2C;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private ExpressionTranslation mExpressionTranslation;
-	private boolean mGenerateBacktranslationWarnings;
-	private LocationFactory mLocationFactory;
+	private final LocationFactory mLocationFactory;
+	private final TypeSizes mTypeSizes;
+	private final CACSL2BoogieBacktranslatorMapping mMapping;
 
-	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services) {
+	private boolean mGenerateBacktranslationWarnings;
+
+	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services, final TypeSizes typeSizes,
+			final CACSL2BoogieBacktranslatorMapping mapping, final LocationFactory locationFactory) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBoogie2C = new Boogie2C();
+		mMapping = mapping;
 		mGenerateBacktranslationWarnings = true;
-	}
-
-	public void setExpressionTranslation(final ExpressionTranslation expressionTranslation) {
-		mExpressionTranslation = expressionTranslation;
-	}
-
-	public void setLocationFactory(final LocationFactory locationFactory) {
+		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
 	}
 
@@ -1109,7 +1105,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (cType instanceof CNamed) {
 			return translateIntegerLiteral(cType.getUnderlyingType(), lit, hook);
 		} else {
-			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);
@@ -1132,7 +1128,7 @@ public class CACSL2BoogieBacktranslator
 			// translation, but it seems that AExpression is incomplete
 			final CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
 			if (primitive.isIntegerType()) {
-				value = String.valueOf(mExpressionTranslation.extractIntegerValue(lit, cType, hook));
+				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType, hook));
 			} else if (primitive.isFloatingType()) {
 				value = naiveBitvecLiteralValueExtraction(lit);
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
@@ -1144,7 +1140,7 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		} else {
-			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);
@@ -1255,15 +1251,15 @@ public class CACSL2BoogieBacktranslator
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
 			result = new TranslatedVariable(expr, "\\result", null, VariableType.RESULT);
-		} else if (mBoogie2C.getVar2CVar().containsKey(boogieId)) {
-			final Pair<String, CType> pair = mBoogie2C.getVar2CVar().get(boogieId);
+		} else if (mMapping.getVar2CVar().containsKey(boogieId)) {
+			final Pair<String, CType> pair = mMapping.getVar2CVar().get(boogieId);
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
-		} else if (mBoogie2C.getInVar2CVar().containsKey(boogieId)) {
+		} else if (mMapping.getInVar2CVar().containsKey(boogieId)) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
-			final Pair<String, CType> pair = mBoogie2C.getInVar2CVar().get(boogieId);
+			final Pair<String, CType> pair = mMapping.getInVar2CVar().get(boogieId);
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.INVAR);
-		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
-			final SFO.AUXVAR purpose = mBoogie2C.getTempVar2Obj().get(boogieId);
+		} else if (mMapping.getTempVar2Obj().containsKey(boogieId)) {
+			final SFO.AUXVAR purpose = mMapping.getTempVar2Obj().get(boogieId);
 			result = new TranslatedVariable(expr, boogieId, null, purpose);
 		} else if (boogieId.equals(SFO.VALID)) {
 			result = new TranslatedVariable(expr, "\\valid", null, VariableType.VALID);
@@ -1283,26 +1279,6 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 		return result;
-	}
-
-	void putFunction(final String boogieId, final String cId) {
-		mBoogie2C.putFunction(boogieId, cId);
-	}
-
-	public void putVar(final String boogieId, final String cId, final CType cType) {
-		mBoogie2C.putVar(boogieId, cId, cType);
-	}
-
-	public void putInVar(final String boogieId, final String cId, final CType cType) {
-		mBoogie2C.putInVar(boogieId, cId, cType);
-	}
-
-	public void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final CType cType) {
-		mBoogie2C.putTempVar(boogieId, purpose, cType);
-	}
-
-	public boolean isTempVar(final String boogieId) {
-		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
@@ -1449,61 +1425,16 @@ public class CACSL2BoogieBacktranslator
 			return super.processLeftHandSide(lhs);
 		}
 
+		private boolean isTempVar(final String identifier) {
+			return mMapping.isTempVar(identifier);
+		}
+
 		@Override
 		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof IdentifierExpression) {
 				mAllAreTemp = mAllAreTemp && isTempVar(((IdentifierExpression) expr).getIdentifier());
 			}
 			return super.processExpression(expr);
-		}
-	}
-
-	/**
-	 * Translates Boogie identifiers of variables and functions back to the identifiers of variables and operators in C.
-	 * This class is in an immature state and translates Strings to Strings.
-	 *
-	 * @author heizmann@informatik.uni-freiburg.de
-	 */
-	private static final class Boogie2C {
-
-		private final Map<String, Pair<String, CType>> mInVar2CVar;
-		private final Map<String, Pair<String, CType>> mVar2CVar;
-		private final Map<String, SFO.AUXVAR> mTempVar2Obj;
-		private final Map<String, String> mFunctionId2Operator;
-
-		private Boogie2C() {
-			mInVar2CVar = new HashMap<>();
-			mVar2CVar = new HashMap<>();
-			mTempVar2Obj = new HashMap<>();
-			mFunctionId2Operator = new HashMap<>();
-		}
-
-		private Map<String, Pair<String, CType>> getInVar2CVar() {
-			return mInVar2CVar;
-		}
-
-		private Map<String, Pair<String, CType>> getVar2CVar() {
-			return mVar2CVar;
-		}
-
-		private Map<String, SFO.AUXVAR> getTempVar2Obj() {
-			return mTempVar2Obj;
-		}
-
-		private void putFunction(final String boogieId, final String cId) {
-			mFunctionId2Operator.put(boogieId, cId);
-		}
-
-		private void putVar(final String boogieId, final String cId, final CType cType) {
-			mVar2CVar.put(boogieId, new Pair<>(cId, cType));
-		}
-
-		private void putInVar(final String boogieId, final String cId, final CType cType) {
-			mInVar2CVar.put(boogieId, new Pair<>(cId, cType));
-		}
-
-		private void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final CType cType) {
-			mTempVar2Obj.put(boogieId, purpose);
 		}
 	}
 

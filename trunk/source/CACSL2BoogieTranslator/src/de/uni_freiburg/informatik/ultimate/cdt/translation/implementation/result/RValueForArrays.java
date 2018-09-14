@@ -31,13 +31,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
 /**
- * This is a workaround that can be used until we know how to deal with the
- * Array and RValue problem.
+ * This is a workaround that can be used until we know how to deal with the Array and RValue problem.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class RValueForArrays extends RValue {
-
 
 	public RValueForArrays(final Expression value, final CType cType) {
 		super(value, cType);
@@ -48,9 +47,9 @@ public class RValueForArrays extends RValue {
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
-		if (!areBoogieAndCTypeCompatible(type, value.getType())) {
-			throw new IllegalArgumentException("The value of the constructed RValue has a BoogieType that is "
-					+ "incompatible with its CType.");
+		if (!areBoogieAndCTypeCompatible(type, getValue().getType())) {
+			throw new IllegalArgumentException(
+					"The value of the constructed RValue has a BoogieType that is " + "incompatible with its CType.");
 		}
 	}
 }

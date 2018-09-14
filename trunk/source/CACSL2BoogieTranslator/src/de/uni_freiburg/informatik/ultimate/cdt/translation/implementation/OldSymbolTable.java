@@ -37,11 +37,10 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
@@ -63,28 +62,25 @@ public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue
 
 	private final Stack<Integer> mCompoundNrStack = new Stack<>();
 
-	/**
-	 * A reference to the main dispatcher.
-	 */
-	private final Dispatcher mMain;
+	private final ITypeHandler mTypeHandler;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher.
+	 *            a reference to the main IDispatcher.
 	 */
-	public OldSymbolTable(final Dispatcher main) {
+	public OldSymbolTable(final ITypeHandler typeHandler) {
 		super();
 		mBoogieID2CID = new HashMap<>();
 		mCDecl2BoogieDecl = new HashMap<>();
+		mTypeHandler = typeHandler;
 		mCompoundCounter = 0;
-		mMain = main;
 	}
 
 	@Override
 	public SymbolTableValue put(final String cId, final SymbolTableValue value) {
-		if (!mMain.mTypeHandler.isStructDeclaration()) {
+		if (!mTypeHandler.haveSeenStructDeclaration()) {
 			final SymbolTableValue v = super.put(cId, value);
 			mBoogieID2CID.put(value.getBoogieName(), cId);
 			mCDecl2BoogieDecl.put(value.getCDecl(), value.getBoogieDecl());
@@ -214,7 +210,7 @@ public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue
 	 * @return the found ASTType.
 	 */
 	public ASTType getTypeOfVariable(final String cId, final ILocation loc) {
-		return mMain.mTypeHandler.cType2AstType(loc, this.get(cId, loc).getCVariable());
+		return mTypeHandler.cType2AstType(loc, this.get(cId, loc).getCVariable());
 	}
 
 	public Declaration getBoogieDeclOfCDecl(final CDeclaration cDec) {

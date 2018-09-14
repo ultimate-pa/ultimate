@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -56,18 +56,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class NameHandler implements INameHandler {
 
 	/**
-	 * Local variables with similar identifiers may occur in different scopes.
-	 * Since there are mainly two scopes in Boogie (global, local) we have to
-	 * make sure that every local C variables gets a unique name.
-	 * The simple solution is to append the "compound counter" as a suffix to
-	 * the Boogie variable.
-	 * This has however a negative impact on the reproducibility (important for,
-	 * e.g., the resue of automata). As soon as we add a new compound all
-	 * variables get different names.
-	 * As an alternative we have a different solution in which we only use
-	 * the compound counter to get a unique suffix for the variable.
-	 * (We count the occurrences of id/compound counter pairs and use this as
-	 * suffix.)
+	 * Local variables with similar identifiers may occur in different scopes. Since there are mainly two scopes in
+	 * Boogie (global, local) we have to make sure that every local C variables gets a unique name. The simple solution
+	 * is to append the "compound counter" as a suffix to the Boogie variable. This has however a negative impact on the
+	 * reproducibility (important for, e.g., the resue of automata). As soon as we add a new compound all variables get
+	 * different names. As an alternative we have a different solution in which we only use the compound counter to get
+	 * a unique suffix for the variable. (We count the occurrences of id/compound counter pairs and use this as suffix.)
 	 */
 	private static final boolean USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX = false;
 	private final NestedMap2<String, Integer, Integer> mLocalVarSuffix = new NestedMap2<>();
@@ -79,12 +73,9 @@ public class NameHandler implements INameHandler {
 
 	private int mGlobalCounter;
 
-	private final CACSL2BoogieBacktranslator mBacktranslator;
-	private final CTranslationState mHandlerHandler;
+	private final ICACSL2BoogieBacktranslatorMapping mBacktranslator;
 
-	public NameHandler(final CACSL2BoogieBacktranslator backtranslator, final CTranslationState handlerHandler) {
-		handlerHandler.setNameHandler(this);
-		mHandlerHandler = handlerHandler;
+	public NameHandler(final ICACSL2BoogieBacktranslatorMapping backtranslator) {
 		mBacktranslator = backtranslator;
 	}
 
@@ -93,7 +84,7 @@ public class NameHandler implements INameHandler {
 	 */
 	@Deprecated
 	@Override
-	public Result visit(final Dispatcher main, final IASTNode node) {
+	public Result visit(final IDispatcher main, final IASTNode node) {
 		throw new UnsupportedOperationException("Implementation Error: Use C handler for " + node.getClass());
 	}
 
@@ -102,12 +93,13 @@ public class NameHandler implements INameHandler {
 	 */
 	@Deprecated
 	@Override
-	public Result visit(final Dispatcher main, final ACSLNode node) {
+	public Result visit(final IDispatcher main, final ACSLNode node) {
 		throw new UnsupportedOperationException("Implementation error: Use ACSL handler for " + node.getClass());
 	}
 
 	@Override
-	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap, final CType cType) {
+	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap,
+			final CType cType) {
 		if (cId.isEmpty()) {
 			cId = getGloballyUniqueIdentifier("unnamed");
 		}
@@ -148,23 +140,21 @@ public class NameHandler implements INameHandler {
 		return boogieId;
 	}
 
-
 	private int generateUniqueLocalVarSuffix(final String cId, final int compCnt) {
 		if (USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX) {
 			return compCnt;
-		} else {
-			Integer result = mLocalVarSuffix.get(cId, compCnt);
-			if (result == null) {
-				final Map<Integer, Integer> map = mLocalVarSuffix.get(cId);
-				if (map == null) {
-					result = 0;
-				} else {
-					result = map.size();
-				}
-				mLocalVarSuffix.put(cId, compCnt, result);
-			}
-			return result;
 		}
+		Integer result = mLocalVarSuffix.get(cId, compCnt);
+		if (result == null) {
+			final Map<Integer, Integer> map = mLocalVarSuffix.get(cId);
+			if (map == null) {
+				result = 0;
+			} else {
+				result = map.size();
+			}
+			mLocalVarSuffix.put(cId, compCnt, result);
+		}
+		return result;
 	}
 
 	@Override

@@ -41,8 +41,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -50,15 +51,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
 /**
@@ -72,11 +73,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class ArrayHandler {
 
-	private final PointerCheckMode mCheckArrayAccessOffHeap;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final ITypeHandler mTypeHandler;
+	private final TypeSizes mTypeSizes;
+	private final TranslationSettings mSettings;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final MemoryHandler mMemoryHandler;
+	private final LocationFactory mLocationFactory;
 
-	public ArrayHandler(final IPreferenceProvider prefs) {
-		mCheckArrayAccessOffHeap =
-				prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.class);
+	public ArrayHandler(final TranslationSettings settings, final ExpressionTranslation expressionTranslation,
+			final ITypeHandler typeHandler, final TypeSizes typeSizes,
+			final ExpressionResultTransformer expressionResultTransformer, final MemoryHandler memoryHandler,
+			final LocationFactory locationFactory) {
+		mSettings = settings;
+		mExpressionTranslation = expressionTranslation;
+		mTypeHandler = typeHandler;
+		mTypeSizes = typeSizes;
+		mExprResultTransformer = expressionResultTransformer;
+		mMemoryHandler = memoryHandler;
+		mLocationFactory = locationFactory;
 	}
 
 	/**
@@ -93,13 +108,12 @@ public class ArrayHandler {
 	 * <li>a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
 	 * arithmetic, similar to the on-heap case
 	 */
-	public ExpressionResult handleArraySubscriptExpression(final Dispatcher main, final MemoryHandler memoryHandler,
+	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
-		subscript = subscript.switchToRValueIfNecessary(main, loc, node);
-		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation());
+		subscript = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(subscript, loc, node);
 		assert subscript.getLrValue().getCType().isIntegerType();
 
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
@@ -118,16 +132,17 @@ public class ArrayHandler {
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, loc, node);
+			leftExpRes = mExprResultTransformer.switchToRValueIfNecessary(leftExpRes, loc, node);
 			assert cTypeLeft.equals(leftExpRes.getLrValue().getCType());
 			final Expression oldAddress = leftExpRes.getLrValue().getValue();
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).mPointsToType;
-			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main,
+			final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(main,
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.getLrValue().getValue();
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress_ER);
-			final HeapLValue lValue = LRValueFactory.constructHeapLValue(main, newAddress, valueType, false, null);
+			final HeapLValue lValue =
+					LRValueFactory.constructHeapLValue(mTypeHandler, newAddress, valueType, false, null);
 			result.setLrValue(lValue);
 		} else {
 			assert cTypeLeft instanceof CArray : "cType not instanceof CArray";
@@ -153,17 +168,14 @@ public class ArrayHandler {
 				// the "remaining" array as pointsToType, i.e., we compute
 				// addressOf(a) + 2 * sizeof(resultCType)
 
-				// final RValue decayedArray = CHandler.decayArrayLrValToPointer(main.mCHandler.isPreRunMode(),
-				// leftExpRes.getLrValue(), main.mTypeHandler.getBoogiePointerType()) ;
-
 				final Expression oldAddress = ((HeapLValue) leftExpRes.getLrValue()).getAddress();
 				final RValue index = (RValue) subscript.getLrValue();
-				final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(
+				final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(
 						// main, IASTBinaryExpression.op_plus, loc, decayedArray.getValue(), index, resultCType);
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType, node);
 				final Expression newAddress = newAddress_ER.getLrValue().getValue();
 				final HeapLValue lValue =
-						LRValueFactory.constructHeapLValue(main, newAddress, resultCType, false, null);
+						LRValueFactory.constructHeapLValue(mTypeHandler, newAddress, resultCType, false, null);
 				result.addAllExceptLrValue(leftExpRes, subscript, newAddress_ER);
 				result.setLrValue(lValue);
 			} else if (leftExpRes.getLrValue() instanceof LocalLValue) {
@@ -177,9 +189,7 @@ public class ArrayHandler {
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
-				final ExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
-
-				et.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
+				mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
 
 				final RValue index = (RValue) subscript.getLrValue();
 				final ArrayLHS newInnerArrayLHS;
@@ -199,7 +209,7 @@ public class ArrayHandler {
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
 				result.addAllExceptLrValue(leftExpRes, subscript);
 				result.setLrValue(lValue);
-				addArrayBoundsCheckForCurrentIndex(main, loc, index, bound, result);
+				addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
 			} else {
 				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
 			}
@@ -224,13 +234,12 @@ public class ArrayHandler {
 	 * @param currentDimension
 	 *            {@link Expression} that represents the dimension that corresponds to the index
 	 */
-	private void addArrayBoundsCheckForCurrentIndex(final Dispatcher main, final ILocation loc,
-			final RValue currentIndex, final RValue currentDimension, final ExpressionResultBuilder exprResult) {
-		if (mCheckArrayAccessOffHeap == PointerCheckMode.IGNORE) {
+	private void addArrayBoundsCheckForCurrentIndex(final ILocation loc, final RValue currentIndex,
+			final RValue currentDimension, final ExpressionResultBuilder exprResult) {
+		if (mSettings.checkArrayAccessOffHeap() == PointerCheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}
-		final CHandler cHandler = (CHandler) main.mCHandler;
 		final Expression inRange;
 		// 2015-09-21 Matthias:
 		// This check will fail in the bitvector translation if the typesize
@@ -241,16 +250,15 @@ public class ArrayHandler {
 		// of the dimension.
 		{
 			final CPrimitive indexType = (CPrimitive) currentIndex.getCType().getUnderlyingType();
-			final Expression zero =
-					cHandler.getExpressionTranslation().constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
-			final Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(loc,
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
+			final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
-			final Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(loc,
+			final Expression notTooBig = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension.getValue(),
 					(CPrimitive) currentDimension.getCType().getUnderlyingType());
 			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
-		switch (mCheckArrayAccessOffHeap) {
+		switch (mSettings.checkArrayAccessOffHeap()) {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, inRange);
 			final Check chk = new Check(Spec.ARRAY_INDEX);

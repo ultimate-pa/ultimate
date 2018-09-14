@@ -27,12 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -110,76 +105,31 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
-import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
-public class PRDispatcher extends Dispatcher {
+public class PRDispatcher implements IDispatcher {
 
-	private final Set<IASTDeclaration> mReachableDeclarations;
-	private final LinkedHashSet<IASTNode> mVariablesOnHeap;
+	private final LocationFactory mLocationFactory;
+	private final ITypeHandler mTypeHandler;
+	private final CHandler mCHandler;
 
-	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
-			final Set<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
-			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst, final boolean useSvcompMode) {
-		super(backtranslator, services, logger, locFac, functionTable, mst, useSvcompMode);
-		mFunctionToIndex = functionToIndex;
-		mReachableDeclarations = reachableDeclarations;
-		mVariablesOnHeap = new LinkedHashSet<>();
-	}
-
-	/**
-	 * Set variables that should be "on-Heap" in our implementation. For each such variable the set contains the
-	 * IASTNode of the last variable declaration ("last" in case the variable has several declarations).
-	 */
-	public Set<IASTNode> getVariablesOnHeap() {
-		return Collections.unmodifiableSet(mVariablesOnHeap);
-	}
-
-	public void addToVariablesOnHeap(final IASTNode var) {
-		mVariablesOnHeap.add(var);
+	public PRDispatcher(final CHandler chandler, final LocationFactory locFac, final ITypeHandler typeHandler) {
+		mLocationFactory = locFac;
+		mTypeHandler = typeHandler;
+		mCHandler = chandler;
 	}
 
 	@Override
-	protected void preRun(final List<DecoratedUnit> nodes) {
-		super.preRun(nodes);
-	}
-
-	@Override
-	protected void init() {
-		final boolean bitvectorTranslation =
-				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		final boolean overapproximateFloatingPointOperations =
-				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
-
-		mTypeHandler = new TypeHandler(bitvectorTranslation, mHandlerHandler);
-
-		mCHandler = new CHandler(mServices, mLogger, this, mHandlerHandler, mBacktranslator, false,
-				bitvectorTranslation, overapproximateFloatingPointOperations, mFlatTable);
-	}
-
-	@Override
-	public Result dispatch(final List<DecoratedUnit> nodes) {
+	public CHandlerTranslationResult dispatch(final List<DecoratedUnit> nodes) {
+		assert !nodes.isEmpty();
 		return mCHandler.visit(this, nodes);
 	}
 
@@ -421,8 +371,8 @@ public class PRDispatcher extends Dispatcher {
 			// -> should be at the end of the parent if for performance
 			return mCHandler.visit(this, (IASTProblemTypeId) n);
 		}
-		final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-		final ILocation loc = getLocationFactory().createCLocation(n);
+		final String msg = "PRDispatcher: AST node type unknown: " + n.getClass();
+		final ILocation loc = mLocationFactory.createCLocation(n);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -432,94 +382,23 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final ACSLNode node) {
-		// TODO Auto-generated method stub
-		return null;
+	public Result dispatch(final ACSLNode node, final IASTNode cHook) {
+		throw new UnsupportedOperationException();
 	}
 
-	// @Override
-	// public InferredType dispatch(final IType type) {
-	// if (type instanceof IBasicType) {
-	// return mTypeHandler.visit(this, (IBasicType) type);
-	// }
-	// if (type instanceof ITypedef) {
-	// return mTypeHandler.visit(this, (ITypedef) type);
-	// }
-	// if (type instanceof IArrayType) {
-	// return mTypeHandler.visit(this, (IArrayType) type);
-	// }
-	// return mTypeHandler.visit(this, type);
-	// }
+	@Override
+	public Result dispatch(final ACSLNode node) {
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
-	public Result dispatch(final ACSLNode node, final IASTNode cHook) {
-		// TODO Auto-generated method stub
-		return null;
+	public IASTNode getAcslHook() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public NextACSL nextACSLStatement() throws ParseException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isReachable(final IASTDeclaration decl) {
-		// Just mimic the main dispatcher.
-		if (mReachableDeclarations == null) {
-			return true;
-		}
-		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
-		// return true;
-		return mReachableDeclarations.contains(decl);
-	}
-
-	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr, final Set<AuxVarInfo> auxVars,
-			final IASTNode hook) {
-		// final Set<String> auxVarIds = new HashSet<>();
-		//// for (final VariableDeclaration decl : auxVars.keySet()) {
-		// for (final AuxVarInfo auxvar : auxVars) {
-		//// final VariableDeclaration decl = auxvar.getVarDec();
-		//// for (final VarList varList : decl.getVariables()) {
-		//// for (final String id : varList.getIdentifiers()) {
-		//// auxVarIds.add(id);
-		//// }
-		//// }
-		// auxVarIds.add(auxvar.getExp().getIdentifier());
-		// }
-		final BoogieIdExtractor bie = new BoogieIdExtractor();
-		bie.processExpression(expr);
-		for (final String id : bie.getIds()) {
-			// auxVars do not have a corresponding C var, hence we move nothing
-			// onto the heap
-			// if (!auxVarIds.contains(id)) {
-			final FlatSymbolTable st = mCHandler.getSymbolTable();
-			final String cid = st.getCIdForBoogieId(id);
-			if (cid == null) {
-				// expression does not have a corresponding c identifier --> nothing to move on heap
-				continue;
-			}
-			final SymbolTableValue value = st.findCSymbol(hook, cid);
-			final CType type = value.getCVariable().getUnderlyingType();
-			if (type instanceof CArray || type instanceof CStruct) {
-				// getVariablesOnHeap().add(value.getDeclarationNode());
-				addToVariablesOnHeap(value.getDeclarationNode());
-			}
-			// }
-		}
-	}
-
-	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
-		final String id = idExpr.getIdentifier();
-		final FlatSymbolTable st = mCHandler.getSymbolTable();
-		final String cid = st.getCIdForBoogieId(id);
-		final SymbolTableValue value = st.findCSymbol(hook, cid);
-		// getVariablesOnHeap().add(value.getDeclarationNode());
-		addToVariablesOnHeap(value.getDeclarationNode());
-	}
-
-	public Set<CFunction> getFunctionSignatures() {
-		return mCHandler.getProcedureManager().getAllFunctionSignatures();
+		throw new UnsupportedOperationException();
 	}
 
 

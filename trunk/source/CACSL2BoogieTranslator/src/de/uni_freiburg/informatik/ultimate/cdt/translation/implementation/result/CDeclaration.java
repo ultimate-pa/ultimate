@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
@@ -120,7 +120,7 @@ public class CDeclaration {
 	 * early when we have something like struct list myList = { &myList}, because we need to have some symbolTable entry
 	 * for translating this initializer, see visit ISimpleDeclaraton for this, too.)
 	 */
-	public void translateInitializer(final Dispatcher main) {
+	public void translateInitializer(final IDispatcher main) {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
