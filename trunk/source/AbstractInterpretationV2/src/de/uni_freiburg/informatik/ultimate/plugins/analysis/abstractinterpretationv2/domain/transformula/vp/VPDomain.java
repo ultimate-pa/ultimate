@@ -207,18 +207,27 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		/*
 		 * report EqPostOperator's Benchmark
 		 */
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "EqPostOperator statistics",
-						mPost.getBenchmark()));
+		{
+			final BenchmarkWithCounters bm = mPost.getBenchmark();
+			if (bm != null) {
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_ID, "EqPostOperator statistics", bm));
+			}
+		}
 
 
 
 		/*
 		 * report EqConstraintFactory's Benchmark
 		 */
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "EqConstraintFactoryStatistics",
-						mEqConstraintFactory.getBenchmark()));
+		{
+			final BenchmarkWithCounters bm = mEqConstraintFactory.getBenchmark();
+			if (bm != null) {
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_ID, "EqConstraintFactoryStatistics",
+								mEqConstraintFactory.getBenchmark()));
+			}
+		}
 
 		/*
 		 * report WeqCcManager's Benchmark
