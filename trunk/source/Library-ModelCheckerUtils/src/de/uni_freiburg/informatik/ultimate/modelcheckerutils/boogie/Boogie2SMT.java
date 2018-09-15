@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -315,6 +316,28 @@ public class Boogie2SMT {
 
 		public Set<BoogieConst> getNonTheoryConsts() {
 			return mNonTheoryConsts;
+		}
+
+	}
+
+	/**
+	 * Simple translator for local variables and global variables that does not provide any side-effects
+	 * for getting inVars or outVars.
+	 * Use this in combination with {@link ConstOnlyIdentifierTranslator} to get a translator that has the capability
+	 * to translate expression to terms.
+	 *
+	 */
+	public class LocalVarAndGlobalVarTranslator implements IIdentifierTranslator {
+
+		@Override
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
+			final IProgramVar pv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			if (pv == null) {
+				return null;
+			} else {
+				return pv.getTermVariable();
+			}
 		}
 
 	}
