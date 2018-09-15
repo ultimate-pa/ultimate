@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -37,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -45,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 /**
  * An object of this class allows one to construct a {@link UnmodifiableTransFormula}. {@link UnmodifiableTransFormula}s
@@ -312,6 +316,57 @@ public class TransFormulaBuilder {
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
 		return tfb.finishConstruction(script);
+	}
+
+	/**
+	 * Given a list of variables lhs_1,...,lhs_n and a list of terms rhs_1,...,rhs_n, construct a {@link TransFormula}
+	 * that represents the assignment lhs_1,...,lhs_n := rhs_1,...,rhs_n
+	 */
+	public static UnmodifiableTransFormula constructAssignment(final List<IProgramVar> lhs,
+			final List<Term> rhs, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+		if (lhs.size() != rhs.size()) {
+			throw new IllegalArgumentException("different number of argument on LHS and RHS");
+		}
+		final Set<IProgramVar> rhsPvs = new HashSet<>();
+		for (int i = 0; i < rhs.size(); i++) {
+			final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(rhs.get(i), false);
+			if (!consts.isEmpty()) {
+				throw new UnsupportedOperationException("constants not yet supported");
+			}
+
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript.getScript(),
+					symbolTable);
+			rhsPvs.addAll(tvp.getVars());
+		}
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		for (final IProgramVar pv : rhsPvs) {
+			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
+					pv.getTermVariable().getSort());
+			substitutionMapping.put(pv.getTermVariable(), freshTv);
+			tfb.addInVar(pv, freshTv);
+			tfb.addOutVar(pv, freshTv);
+		}
+
+		final List<Term> conjuncts = new ArrayList<>();
+		final Substitution subst = new Substitution(mgdScript.getScript(), substitutionMapping);
+		for (int i = 0; i < lhs.size(); i++) {
+			final IProgramVar pv = lhs.get(i);
+			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
+					pv.getTermVariable().getSort());
+			substitutionMapping.put(pv.getTermVariable(), freshTv);
+			tfb.addOutVar(pv, freshTv);
+			final Term renamedRightHandSide = subst.transform(rhs.get(i));
+			conjuncts.add(mgdScript.getScript().term("=", freshTv, renamedRightHandSide));
+		}
+
+		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
+		tfb.setFormula(conjunction);
+		// an assignment is always feasible
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	/**
