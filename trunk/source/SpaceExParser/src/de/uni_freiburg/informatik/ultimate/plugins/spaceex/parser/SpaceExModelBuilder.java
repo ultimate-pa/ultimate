@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymb
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -180,8 +182,11 @@ public class SpaceExModelBuilder {
 				return script.term("true");
 			}
 		};
-		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures,
-				new IcfgEdgeFactory(new SerialProvider()), null);
+		final Map<String, List<ILocalProgramVar>> inParams = Collections.singletonMap(HybridTranslatorConstants.PROC_NAME,
+				Collections.emptyList());
+		final Map<String, List<ILocalProgramVar>> outParams = inParams;
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures, inParams,
+				outParams, new IcfgEdgeFactory(new SerialProvider()), null);
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

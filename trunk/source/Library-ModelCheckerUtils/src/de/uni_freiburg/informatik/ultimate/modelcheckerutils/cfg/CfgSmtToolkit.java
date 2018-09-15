@@ -28,9 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -48,11 +51,14 @@ public class CfgSmtToolkit {
 	private final IPredicate mAxioms;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
+	private final Map<String, List<ILocalProgramVar>> mInParams;
+	private final Map<String, List<ILocalProgramVar>> mOutParams;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private final ConcurrencyInformation mConcurrencyInformation;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures,
+			final Map<String, List<ILocalProgramVar>> inParams, final Map<String, List<ILocalProgramVar>> outParams,
 			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
@@ -60,8 +66,10 @@ public class CfgSmtToolkit {
 		mOldVarsAssignmentCache = new OldVarsAssignmentCache(mManagedScript, mModifiableGlobalsTable);
 		mAxioms = axioms;
 		mProcedures = procedures;
+		mInParams = inParams;
+		mOutParams = outParams;
 		mIcfgEdgeFactory = icfgEdgeFactory;
-		mConcurrencyInformation = concurInfo; 
+		mConcurrencyInformation = concurInfo;
 	}
 
 	public ManagedScript getManagedScript() {
@@ -88,10 +96,18 @@ public class CfgSmtToolkit {
 		return mProcedures;
 	}
 
+	public Map<String, List<ILocalProgramVar>> getInParams() {
+		return mInParams;
+	}
+
+	public Map<String, List<ILocalProgramVar>> getOutParams() {
+		return mOutParams;
+	}
+
 	public IcfgEdgeFactory getIcfgEdgeFactory() {
 		return mIcfgEdgeFactory;
 	}
-	
+
 	/**
 	 * Object that provides additional information about concurrency in the program.
 	 * Returns null if the program is not a concurrent program.

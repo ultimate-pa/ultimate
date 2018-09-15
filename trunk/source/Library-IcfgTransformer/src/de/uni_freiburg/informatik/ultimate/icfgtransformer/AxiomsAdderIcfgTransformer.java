@@ -45,6 +45,7 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 
 		final CfgSmtToolkit newToolkit = new CfgSmtToolkit(inputCfgCsToolkit.getModifiableGlobalsTable(), mgdScript,
 				inputCfgCsToolkit.getSymbolTable(), newAxiomsPred, inputCfgCsToolkit.getProcedures(),
+				inputCfgCsToolkit.getInParams(), inputCfgCsToolkit.getOutParams(),
 				inputCfgCsToolkit.getIcfgEdgeFactory(), inputCfgCsToolkit.getConcurrencyInformation());
 
 		// make a copy of the input Icfg

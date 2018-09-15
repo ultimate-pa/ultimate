@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -71,8 +73,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann
  *
  */
-public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTableVariableProvider,
-ITerm2ExpressionSymbolTable {
+public class Boogie2SmtSymbolTable
+		implements IIcfgSymbolTable, IBoogieSymbolTableVariableProvider, ITerm2ExpressionSymbolTable {
 	/**
 	 * Identifier of attribute that we use to state that
 	 * <ul>
@@ -94,6 +96,8 @@ ITerm2ExpressionSymbolTable {
 	private final Map<String, Map<String, IProgramVar>> mSpecificationOutParam = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mImplementationInParam = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mImplementationOutParam = new HashMap<>();
+	private final Map<String, List<ILocalProgramVar>> mProc2InParams = new HashMap<>();
+	private final Map<String, List<ILocalProgramVar>> mProc2OutParams = new HashMap<>();
 	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals = new HashMap<>();
 	private final Map<String, BoogieConst> mConstants = new HashMap<>();
 
@@ -502,9 +506,9 @@ ITerm2ExpressionSymbolTable {
 
 		}
 		declareParams(procId, spec.getInParams(), impl.getInParams(), mSpecificationInParam, mImplementationInParam,
-				declInfoInParam);
+				declInfoInParam, mProc2InParams);
 		declareParams(procId, spec.getOutParams(), impl.getOutParams(), mSpecificationOutParam, mImplementationOutParam,
-				declInfoOutParam);
+				declInfoOutParam, mProc2OutParams);
 		declareLocals(impl);
 	}
 
@@ -521,16 +525,21 @@ ITerm2ExpressionSymbolTable {
 		assert !isImplementation(spec) : "is implementation";
 		final String procId = spec.getIdentifier();
 		declareParams(procId, spec.getInParams(), mSpecificationInParam,
-				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procId));
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procId), mProc2InParams);
 		declareParams(procId, spec.getOutParams(), mSpecificationOutParam,
-				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId));
+				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId), mProc2OutParams);
 	}
 
 	private void declareParams(final String procId, final VarList[] specVl, final VarList[] implVl,
 			final Map<String, Map<String, IProgramVar>> specMap, final Map<String, Map<String, IProgramVar>> implMap,
-			final DeclarationInformation declarationInformation) {
+			final DeclarationInformation declarationInformation, final Map<String, List<ILocalProgramVar>> proc2params) {
 		if (specVl.length != implVl.length) {
 			throw new IllegalArgumentException("specification and implementation have different param length");
+		}
+		final List<ILocalProgramVar> params = new ArrayList<>();
+		final List<ILocalProgramVar> previous = proc2params.put(procId, Collections.unmodifiableList(params));
+		if (previous != null) {
+			throw new AssertionError("params for procedure " + procId + " already added");
 		}
 		for (int i = 0; i < specVl.length; i++) {
 			final IBoogieType specType = specVl[i].getType().getBoogieType();
@@ -544,10 +553,11 @@ ITerm2ExpressionSymbolTable {
 				throw new IllegalArgumentException("specification and implementation have different param length");
 			}
 			for (int j = 0; j < specIds.length; j++) {
-				final IProgramVar bv =
+				final LocalBoogieVar bv =
 						constructLocalBoogieVar(implIds[j], procId, implType, implVl[i], declarationInformation);
 				putNew(procId, implIds[j], bv, implMap);
 				putNew(procId, specIds[j], bv, specMap);
+				params.add(bv);
 			}
 		}
 	}
@@ -565,13 +575,20 @@ ITerm2ExpressionSymbolTable {
 	 *            StorageClass of the constructed IProgramVar
 	 */
 	private void declareParams(final String procId, final VarList[] vl,
-			final Map<String, Map<String, IProgramVar>> specMap, final DeclarationInformation declarationInformation) {
+			final Map<String, Map<String, IProgramVar>> specMap, final DeclarationInformation declarationInformation,
+			final Map<String, List<ILocalProgramVar>> proc2params) {
+		final ArrayList<ILocalProgramVar> params = new ArrayList<>();
+		final List<ILocalProgramVar> previous = proc2params.put(procId, Collections.unmodifiableList(params));
+		if (previous != null) {
+			throw new AssertionError("params for procedure " + procId + " already added");
+		}
 		for (int i = 0; i < vl.length; i++) {
 			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
-				final IProgramVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
+				final LocalBoogieVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
 				putNew(procId, ids[j], bv, specMap);
+				params.add(bv);
 			}
 		}
 	}
@@ -686,5 +703,15 @@ ITerm2ExpressionSymbolTable {
 		final ILocation loc = astNode.getLocation();
 		return loc;
 	}
+
+	public Map<String, List<ILocalProgramVar>> getProc2InParams() {
+		return Collections.unmodifiableMap(mProc2InParams);
+	}
+
+	public Map<String, List<ILocalProgramVar>> getProc2OutParams() {
+		return Collections.unmodifiableMap(mProc2OutParams);
+	}
+
+
 
 }
