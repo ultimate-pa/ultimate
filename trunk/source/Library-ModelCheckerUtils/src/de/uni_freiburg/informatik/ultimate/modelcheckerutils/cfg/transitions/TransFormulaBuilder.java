@@ -322,8 +322,24 @@ public class TransFormulaBuilder {
 	 * Given a list of variables lhs_1,...,lhs_n and a list of terms rhs_1,...,rhs_n, construct a {@link TransFormula}
 	 * that represents the assignment lhs_1,...,lhs_n := rhs_1,...,rhs_n
 	 */
-	public static UnmodifiableTransFormula constructAssignment(final List<IProgramVar> lhs,
+	public static UnmodifiableTransFormula constructAssignment(final List<? extends IProgramVar> lhs,
 			final List<Term> rhs, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+		return constructEquality(lhs, rhs, symbolTable, mgdScript, false);
+	}
+
+	/**
+	 * Given a list of variables lhs_1,...,lhs_n and a list of terms
+	 * rhs_1,...,rhs_n, construct a {@link TransFormula} that represents the
+	 * assumption lhs_1==rhs_1,...,lhs_n==rhs_n
+	 */
+	public static UnmodifiableTransFormula constructEqualityAssumption(final List<? extends IProgramVar> lhs,
+			final List<Term> rhs, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+		return constructEquality(lhs, rhs, symbolTable, mgdScript, true);
+	}
+
+	private static UnmodifiableTransFormula constructEquality(final List<? extends IProgramVar> lhs,
+			final List<Term> rhs, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
+			final boolean lhsAreAlsoInVars) {
 		if (lhs.size() != rhs.size()) {
 			throw new IllegalArgumentException("different number of argument on LHS and RHS");
 		}
@@ -334,8 +350,7 @@ public class TransFormulaBuilder {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
 
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript.getScript(),
-					symbolTable);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript.getScript(), symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
 
@@ -358,8 +373,47 @@ public class TransFormulaBuilder {
 					pv.getTermVariable().getSort());
 			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addOutVar(pv, freshTv);
+			if (lhsAreAlsoInVars) {
+				tfb.addInVar(pv, freshTv);
+			}
 			final Term renamedRightHandSide = subst.transform(rhs.get(i));
 			conjuncts.add(mgdScript.getScript().term("=", freshTv, renamedRightHandSide));
+		}
+
+		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
+		tfb.setFormula(conjunction);
+		// an assignment is always feasible
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mgdScript);
+	}
+
+
+	/**
+	 * Given two list of variables lhs_1,...,lhs_n and rhs_1,...,rhs_n, construct a {@link TransFormula}
+	 * that represents the assignment lhs_1,...,lhs_n := rhs_1,...,rhs_n
+	 */
+	public static UnmodifiableTransFormula constructAssignment(final List<? extends IProgramVar> lhs,
+			final List<? extends IProgramVar> rhs, final ManagedScript mgdScript) {
+		if (lhs.size() != rhs.size()) {
+			throw new IllegalArgumentException("different number of argument on LHS and RHS");
+		}
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		final List<Term> conjuncts = new ArrayList<>();
+		for (int i = 0; i < lhs.size(); i++) {
+			final IProgramVar l = lhs.get(i);
+			final IProgramVar r = rhs.get(i);
+			final TermVariable lFreshTv = mgdScript.constructFreshTermVariable(l.getGloballyUniqueId(),
+					l.getTermVariable().getSort());
+			final TermVariable rFreshTv = mgdScript.constructFreshTermVariable(r.getGloballyUniqueId(),
+					r.getTermVariable().getSort());
+			tfb.addInVar(r, rFreshTv);
+			if (tfb.getOutVar(r) == null) {
+				tfb.addOutVar(r, rFreshTv);
+			}
+			tfb.addOutVar(l, lFreshTv);
+			conjuncts.add(mgdScript.getScript().term("=", lFreshTv, rFreshTv));
 		}
 
 		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
