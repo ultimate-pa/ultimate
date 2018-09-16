@@ -67,8 +67,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
- * BoogieVars to these BoogieVars.
+ * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from
+ * TermVariables that are representatives of BoogieVars to these BoogieVars.
+ *
+ * TODO 2018-09-15 Matthias: This class was build before we had
+ * {@link DeclarationInformation} and might be unnecessarily complicated.
  *
  * @author Matthias Heizmann
  *
