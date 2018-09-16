@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -84,13 +85,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionCurrentThread.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionCurrentThread.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.LoopEntryDebugIdentifier;
@@ -411,61 +416,108 @@ public class CfgBuilder {
 
 
 	/**
-	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry location of the forked procedure.
+	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry
+	 * location of the forked procedure.
 	 *
-	 * @param edge that points to the next step in the current thread.
+	 * @param edge
+	 *            that points to the next step in the current thread.
 	 * @param simplificationTechnique
 	 */
-	private void addForkOtherThreadTransition(final ForkCurrentThread forkCurrentEdge, final SimplificationTechnique simplificationTechnique,
-			final BoogieIcfgLocation errorNode) {
-		// FIXME Matthias 2018-08-17: check method, especially for terminology and overapproximation flags
+	private void addForkOtherThreadTransition(final ForkCurrentThread forkCurrentEdge,
+			final SimplificationTechnique simplificationTechnique, final BoogieIcfgLocation errorNode) {
+		// FIXME Matthias 2018-08-17: check method, especially for terminology and
+		// overapproximation flags
 
 		final ForkStatement st = forkCurrentEdge.getForkStatement();
 		final String callee = st.getMethodName();
-		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee +  " but no such procedure.";
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee
+				+ " but no such procedure.";
 
 		// Add fork transition from callerNode to procedures entry node.
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkCurrentEdge.getSource();
 		final BoogieIcfgLocation calleeEntryLoc = mIcfg.getProcedureEntryNodes().get(callee);
 
-		final TranslationResult arguments2InParams = mIcfg.getBoogie2SMT().getStatements2TransFormula()
-				.inParamAssignment(st, simplificationTechnique);
-
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(arguments2InParams.getOverapproximations());
-		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(forkCurrentEdge);
-		}
+		final ForkSmtArguments fsa = constructForkSmtArguments(st, mIcfg.getBoogie2SMT());
 
 		final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkCurrentEdge);
-		final UnmodifiableTransFormula parameterAssignment = arguments2InParams.getTransFormula();
-		final String nameOfForkingProcedure = forkCurrentEdge.getPrecedingProcedure();
+		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(mIcfg.getSymboltable(),
+				mIcfg.getBoogie2SMT().getManagedScript(),
+				mIcfg.getCfgSmtToolkit().getInParams().get(st.getMethodName()));
 
 		final BoogieNonOldVar[] threadIdVar = mProcedureNameThreadIdMap.get(st.getMethodName());
-		final UnmodifiableTransFormula forkIdAssignment = constructForkIdAssignment(threadIdVar, st.getForkID(),
-				nameOfForkingProcedure, simplificationTechnique);
+		final UnmodifiableTransFormula forkIdAssignment = fsa.constructThreadIdAssignment(mIcfg.getSymboltable(),
+				mIcfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVar));
 		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getMethodName());
 		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
 		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.NONE,
-				Arrays.asList(new UnmodifiableTransFormula[] {parameterAssignment, forkIdAssignment, threadInUseAssignment}));
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
+				Arrays.asList(new UnmodifiableTransFormula[] { parameterAssignment, forkIdAssignment,
+						threadInUseAssignment }));
 		fork.setTransitionFormula(forkTransformula);
-
 
 		// Add the assume statement for the error location and construct the
 		final ILocation forkLocation = st.getLocation();
 		final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
-		final Expression formula = mIcfg.getBoogie2SMT().getTerm2Expression().translate(forkErrorTransFormula.getFormula());
+		final Expression formula = mIcfg.getBoogie2SMT().getTerm2Expression()
+				.translate(forkErrorTransFormula.getFormula());
 		final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
 		final StatementSequence errorStatement = mCbf.constructStatementSequence(callerNode, errorNode, assumeError);
 		errorStatement.setTransitionFormula(forkErrorTransFormula);
+
+		// TODO Matthias 2018-09-15: Set overapproximations for both edges
+		final Map<String, ILocation> overapproximations = new HashMap<>();
+		if (!overapproximations.isEmpty()) {
+			new Overapprox(overapproximations).annotate(forkCurrentEdge);
+		}
 	}
 
 
+
+	private ForkSmtArguments constructForkSmtArguments(final ForkStatement st, final Boogie2SMT boogie2smt) {
+		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getForkID());
+		if (!threadId.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!threadId.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		final MultiTermResult procedureArguments = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getArguments());
+		if (!procedureArguments.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!procedureArguments.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		return new ForkSmtArguments(threadId, procedureArguments);
+	}
+
+	private JoinSmtArguments constructJoinSmtArguments(final JoinStatement st, final Boogie2SMT boogie2smt) {
+		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getForkID());
+		if (!threadId.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!threadId.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		final List<IProgramVar> assignmentLhs = new ArrayList<>();
+		for (final VariableLHS lhs : st.getLhs()) {
+			final IProgramVar pv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(lhs.getIdentifier(),
+					lhs.getDeclarationInformation(), false);
+			assignmentLhs.add(pv);
+
+		}
+		return new JoinSmtArguments(threadId, assignmentLhs);
+	}
 
 	/**
 	 * Add JoinOtherThreadEdge from
@@ -475,22 +527,22 @@ public class CfgBuilder {
 	 */
 	private void addJoinOtherThreadTransition(final JoinCurrentThread joinCurrentEdge, final String procName,
 			final SimplificationTechnique simplificationTechnique) {
-		// FIXME Matthias 2018-08-17: check method, especially for terminology and overapproximation flags
+		// FIXME Matthias 2018-08-17: check method, especially for terminology and
+		// overapproximation flags
 		final JoinStatement st = joinCurrentEdge.getJoinStatement();
 		final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procName);
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) joinCurrentEdge.getTarget();
 
-
-
 		final BoogieNonOldVar threadInUse = mProcedureNameToThreadInUseMap.get(procName);
 		final BoogieNonOldVar[] threadIds = mProcedureNameThreadIdMap.get(procName);
-		
+
 		if (threadIds.length != st.getForkID().length) {
 			return;
 		} else {
 			int offset = 0;
-			for (BoogieNonOldVar forkId : threadIds) {
-				if (st.getForkID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator().getType(forkId.getSort())) {
+			for (final BoogieNonOldVar forkId : threadIds) {
+				if (st.getForkID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator()
+						.getType(forkId.getSort())) {
 					return;
 				}
 				offset++;
@@ -499,28 +551,31 @@ public class CfgBuilder {
 
 		final String caller = callerNode.getProcedure();
 
-		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
-				.resultAssignment(st, caller, procName, simplificationTechnique);
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
-		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(joinCurrentEdge);
-		}
-
 		// Create JoinOtherThread object and add TransFormulas.
-		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st, joinCurrentEdge);
+		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st,
+				joinCurrentEdge);
 
-		final UnmodifiableTransFormula threadIdAssumption = constructJoinMatchingThreadIdAssumption(threadIds,
-				st.getForkID(), caller, simplificationTechnique);
+		final JoinSmtArguments jsa = constructJoinSmtArguments(st, mIcfg.getBoogie2SMT());
+		final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(mIcfg.getSymboltable(),
+				mIcfg.getBoogie2SMT().getManagedScript(), Arrays.asList(mProcedureNameThreadIdMap.get(procName)));
+
+		final UnmodifiableTransFormula parameterAssignment = jsa.constructResultAssignment(
+				mIcfg.getBoogie2SMT().getManagedScript(), mIcfg.getCfgSmtToolkit().getOutParams().get(procName));
+
+		constructJoinMatchingThreadIdAssumption(threadIds, st.getForkID(), caller, simplificationTechnique);
 		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUse,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
-		final UnmodifiableTransFormula parameterAssignment = outParams2CallerVars.getTransFormula();
 		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
 				Arrays.asList(new UnmodifiableTransFormula[] { parameterAssignment, threadIdAssumption,
 						threadInUseAssignment }));
 		joinOtherThread.setTransitionFormula(joinTransformula);
+
+		final Map<String, ILocation> overapproximations = new HashMap<>();
+		if (!overapproximations.isEmpty()) {
+			new Overapprox(overapproximations).annotate(joinCurrentEdge);
+		}
 	}
 
 
@@ -529,7 +584,7 @@ public class CfgBuilder {
 	 * TODO Concurrent Boogie:
 	 * @param mgdScript
 	 */
-	private UnmodifiableTransFormula constructForkInUseAssignment(final BoogieNonOldVar threadInUseVar,
+	private static UnmodifiableTransFormula constructForkInUseAssignment(final BoogieNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> outVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
@@ -540,18 +595,6 @@ public class CfgBuilder {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	/**
-	 * TODO Concurrent Boogie:
-	 * @param simplificationTechnique
-	 */
-	private UnmodifiableTransFormula constructForkIdAssignment(final BoogieNonOldVar[] threadIdVars,
-			final Expression[] forkIdExpressions, final String forkingProcedureId,
-			final SimplificationTechnique simplificationTechnique) {
-		// FIXME Matthias 2018-08-17: take care of overapproximations
-		final TranslationResult test = mIcfg.getBoogie2SMT().getStatements2TransFormula()
-				.forkThreadIdAssignment(threadIdVars, forkingProcedureId, forkIdExpressions, simplificationTechnique);
-		return test.getTransFormula();
-	}
 
 	/**
 	 * TODO Concurrent Boogie:

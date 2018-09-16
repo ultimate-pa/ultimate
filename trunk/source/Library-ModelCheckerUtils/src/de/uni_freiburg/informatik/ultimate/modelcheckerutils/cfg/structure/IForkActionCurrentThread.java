@@ -27,7 +27,16 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Arrays;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Classes that implement this interface represent an {@link IAction} that
@@ -55,12 +64,31 @@ public interface IForkActionCurrentThread extends IAction {
 
 		private final MultiTermResult mThreadIdArguments;
 		private final MultiTermResult mProcedureArguments;
+
 		public ForkSmtArguments(final MultiTermResult threadIdArguments, final MultiTermResult procedureArguments) {
 			super();
 			mThreadIdArguments = threadIdArguments;
 			mProcedureArguments = procedureArguments;
 		}
 
+		public MultiTermResult getThreadIdArguments() {
+			return mThreadIdArguments;
+		}
 
+		public MultiTermResult getProcedureArguments() {
+			return mProcedureArguments;
+		}
+
+		public UnmodifiableTransFormula constructThreadIdAssignment(final IIcfgSymbolTable symbolTable,
+				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
+			final Term[] terms = getThreadIdArguments().getTerms();
+			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
+		}
+
+		public UnmodifiableTransFormula constructInVarsAssignment(final IIcfgSymbolTable symbolTable,
+				final ManagedScript mgdScript, final List<? extends IProgramVar> leftHandSides) {
+			final Term[] terms = getProcedureArguments().getTerms();
+			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
+		}
 	}
 }

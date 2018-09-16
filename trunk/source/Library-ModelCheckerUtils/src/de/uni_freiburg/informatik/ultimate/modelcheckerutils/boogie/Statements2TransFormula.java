@@ -470,11 +470,11 @@ public class Statements2TransFormula {
 	private void addForkCurrentThread(final ForkStatement fork) {
 		// TODO: Implement
 	}
-	
+
 	private void addJoinCurrentThread(final JoinStatement join) {
 		// TODO: Implement
 	}
-	
+
 	/**
 	 * Remove boogieVars from inVars mapping, if the inVar is not an outVar, add it to he auxilliary variables auxVar.
 	 */
@@ -709,7 +709,7 @@ public class Statements2TransFormula {
 			} else if (st instanceof ForkStatement) {
 				addForkCurrentThread((ForkStatement) st);
 			} else if (st instanceof JoinStatement) {
-				addJoinCurrentThread((JoinStatement) st);				
+				addJoinCurrentThread((JoinStatement) st);
 			} else {
 				throw new IllegalArgumentException(
 						"Intenal Edge only contains" + " Assume, Assignment or Havoc Statement");
@@ -726,23 +726,24 @@ public class Statements2TransFormula {
 	 */
 	public TranslationResult inParamAssignment(final CallStatement st,
 			final SimplificationTechnique simplicationTechnique) {
-		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);		
+		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);
 	}
-	
+
 	/**
 	 * Returns a TransFormula that describes the assignment of arguments to callees (local) input parameters. The
 	 * (local) input parameters of the callee are the only outVars. For each inParameter we construct a new BoogieVar
 	 * which is equivalent to the BoogieVars which were constructed while processing the callee.
 	 */
+	@Deprecated
 	public TranslationResult inParamAssignment(final ForkStatement st,
 			final SimplificationTechnique simplicationTechnique) {
-		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);		
+		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);
 	}
-	
+
 	/**
 	 * Outsourced method for getting the inParamAssignment.
 	 * For detailed documentation look at the fork and call specific function.
-	 * 
+	 *
 	 * @param callee Name of the method called/forked.
 	 * @param arguments arguments of the method.
 	 * @param simplificationTechnique
@@ -750,7 +751,7 @@ public class Statements2TransFormula {
 	 */
 	private TranslationResult inParamAssignment(final String callee, final Expression[] arguments,
 			final SimplificationTechnique simplificationTechnique) {
-		
+
 		initialize(callee);
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
 
@@ -780,8 +781,9 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
-	
-	
+
+
+	@Deprecated
 	public TranslationResult forkThreadIdAssignment(final IProgramVar[] threadTemplateIdVar,
 			final String forkingProcedureId, final Expression[] forkThreadIdExpressions,
 			final SimplificationTechnique simplificationTechnique) {
@@ -800,8 +802,8 @@ public class Statements2TransFormula {
 		final String suffix = "ThreadTemplateId";
 		// TODO: Check if this is correct?
 		int offset = 0;
-		Term[] assignments = new Term[argTerms.length];
-		for (Term argTerm : argTerms) {
+		final Term[] assignments = new Term[argTerms.length];
+		for (final Term argTerm : argTerms) {
 			final TermVariable tv = constructTermVariableWithSuffix(threadTemplateIdVar[offset], suffix);
 			mTransFormulaBuilder.addOutVar(threadTemplateIdVar[offset], tv);
 			assignments[offset] = mScript.term("=", tv, argTerm);
@@ -810,14 +812,15 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
-	
 
+
+	@Deprecated
 	public TranslationResult joinThreadIdAssumption(final IProgramVar[] forkIdAuxVar,
 			final String joiningThreadProcedureId, final Expression[] joinedThreadIdExpressions,
 			final SimplificationTechnique simplificationTechnique) {
 
 		initialize(joiningThreadProcedureId);
-		
+
 		// TODO: multiterm result
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
@@ -829,7 +832,7 @@ public class Statements2TransFormula {
 		// TODO: also check if this is correct;
 		int offset = 0;
 		final Term[] assignments = new Term[argTerms.length];
-		for (Term argTerm : argTerms) {
+		for (final Term argTerm : argTerms) {
 			final TermVariable tv = createInVar(forkIdAuxVar[offset]);
 			mTransFormulaBuilder.addOutVar(forkIdAuxVar[offset], tv);
 			assignments[offset] = mScript.term("=", tv, argTerm);
@@ -838,7 +841,7 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
-	
+
 
 	/**
 	 * Returns a TransFormula that describes the assignment of (local) out parameters to variables that take the result.
@@ -875,7 +878,8 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplicationTechnique);
 	}
-	
+
+	@Deprecated
 	public TranslationResult resultAssignment(final JoinStatement st, final String caller,
 			final String callee, final SimplificationTechnique simplificationTechnique) {
 		initialize(caller);

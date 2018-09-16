@@ -27,10 +27,21 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-/** 
+import java.util.Arrays;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+
+/**
  * Classes that implement this interface represent an {@link IAction} that
  * defines the effect that a join has to the (non-control-flow)
- * variables of the system. A join is the transition that brings the system 
+ * variables of the system. A join is the transition that brings the system
  * from a forked procedure back to the joining procedure. This means that the
  * effect of the join is that
  * <ul>
@@ -42,5 +53,38 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
  *
  */
 public interface IJoinActionCurrentThread {
+
+
+	public static class JoinSmtArguments {
+
+		private final MultiTermResult mThreadIdArguments;
+		private final List<IProgramVar> mAssignmentLhs;
+
+		public JoinSmtArguments(final MultiTermResult threadIdArguments, final List<IProgramVar> assignmentLhs) {
+			super();
+			mThreadIdArguments = threadIdArguments;
+			mAssignmentLhs = assignmentLhs;
+		}
+
+		public MultiTermResult getThreadIdArguments() {
+			return mThreadIdArguments;
+		}
+
+		public List<IProgramVar> getAssignmentLhs() {
+			return mAssignmentLhs;
+		}
+
+		public UnmodifiableTransFormula constructThreadIdAssumption(final IIcfgSymbolTable symbolTable,
+				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
+			final Term[] terms = getThreadIdArguments().getTerms();
+			return TransFormulaBuilder.constructEqualityAssumption(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
+		}
+
+		public UnmodifiableTransFormula constructResultAssignment(final ManagedScript mgdScript,
+				final List<? extends IProgramVar> rightHandSides) {
+			final List<IProgramVar> assignmentLhs = getAssignmentLhs();
+			return TransFormulaBuilder.constructAssignment(assignmentLhs, rightHandSides, mgdScript);
+		}
+	}
 
 }
