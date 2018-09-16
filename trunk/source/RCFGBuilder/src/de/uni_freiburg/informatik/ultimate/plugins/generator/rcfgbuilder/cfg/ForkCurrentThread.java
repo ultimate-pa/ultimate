@@ -41,23 +41,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author lars.nitzke@outlook.com
  */
 public class ForkCurrentThread extends CodeBlock implements IIcfgForkTransitionCurrentThread<IcfgLocation> {
-	
+
 	private static final long serialVersionUID = -2032583850030703623L;
 	protected ForkStatement mForkStatement;
 	protected String mPrettyPrintedStatements;
-	
+
 	@Visualizable
 	private final boolean mForkedProcedureHasImplementation;
-	
 
-	ForkCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, 
+	private ForkSmtArguments mForkSmtArguments;
+
+
+	ForkCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ForkStatement st, final boolean forkedProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mForkStatement = st;
 		mForkedProcedureHasImplementation = forkedProcedureHasImplementation;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
-	
+
 	@Visualizable
 	public ForkStatement getForkStatement() {
 		return mForkStatement;
@@ -72,4 +74,15 @@ public class ForkCurrentThread extends CodeBlock implements IIcfgForkTransitionC
 	public String toString() {
 		return mPrettyPrintedStatements;
 	}
+
+	@Override
+	public ForkSmtArguments getForkSmtArguments() {
+		return mForkSmtArguments;
+	}
+
+	public void setForkSmtArguments(final ForkSmtArguments forkSmtArguments) {
+		mForkSmtArguments = forkSmtArguments;
+	}
+
+
 }

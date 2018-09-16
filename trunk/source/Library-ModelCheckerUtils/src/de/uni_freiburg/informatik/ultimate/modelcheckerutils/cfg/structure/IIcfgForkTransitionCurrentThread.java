@@ -27,13 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-/** 
- * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect 
+/**
+ * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect
  * the location of the fork with the next location of the current thread.
- *  
+ *
  * @author Lars Nitzke
  *
  */
 public interface IIcfgForkTransitionCurrentThread<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionCurrentThread {
 	// just for grouping
+
+
 }

@@ -59,6 +59,8 @@ public interface IForkActionCurrentThread extends IAction {
 	}*/
 
 
+	public ForkSmtArguments getForkSmtArguments();
+
 
 	public static class ForkSmtArguments {
 

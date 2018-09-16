@@ -37,17 +37,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class JoinCurrentThread extends CodeBlock implements IIcfgJoinTransitionCurrentThread<IcfgLocation> {
 
 	private static final long serialVersionUID = 3124187699513230594L;
-	
+
 	protected JoinStatement mJoinStatement;
 	protected String mPrettyPrintedStatements;
 
-	JoinCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, 
+	private JoinSmtArguments mJoinSmtArguments;
+
+	JoinCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final JoinStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mJoinStatement = st;
-		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);		
+		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
-	
+
 	@Visualizable
 	public JoinStatement getJoinStatement() {
 		return mJoinStatement;
@@ -63,7 +65,16 @@ public class JoinCurrentThread extends CodeBlock implements IIcfgJoinTransitionC
 	public String toString() {
 		return mPrettyPrintedStatements;
 	}
-	
-	
+
+	@Override
+	public JoinSmtArguments getJoinSmtArguments() {
+		return mJoinSmtArguments;
+	}
+
+	public void setJoinSmtArguments(final JoinSmtArguments joinSmtArguments) {
+		mJoinSmtArguments = joinSmtArguments;
+	}
+
+
 
 }

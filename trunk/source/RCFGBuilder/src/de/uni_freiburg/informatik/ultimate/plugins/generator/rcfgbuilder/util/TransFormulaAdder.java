@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -27,17 +27,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionCurrentThread.ForkSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionCurrentThread.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -51,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 
 /**
  * Provides methods to add TransitionsFormulas to the edges of a recursive control flow graph.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class TransFormulaAdder {
 
@@ -76,7 +85,7 @@ public class TransFormulaAdder {
 	 * variable assignments. If the edge is an InternalEdge one TransitionFormula is added. This TransitionFormula
 	 * represents the effect of all Assignment, Assume and Havoc Statements of this edge. If the edge is a GotoEdge or a
 	 * SummaryEdge no TransitionFormula is added.
-	 * 
+	 *
 	 * @param cb
 	 *            An IEdge that has to be a CallEdge, InternalEdge, ReturnEdge, GotoEdge or SummaryEdge.
 	 */
@@ -89,9 +98,15 @@ public class TransFormulaAdder {
 		} else if (cb instanceof Summary) {
 			statements = Collections.singletonList(((Summary) cb).getCallStatement());
 		} else if (cb instanceof ForkCurrentThread) {
-			statements = Collections.singletonList(((ForkCurrentThread) cb).getForkStatement());
+			final ForkCurrentThread fork = (ForkCurrentThread) cb;
+			statements = Collections.singletonList(fork.getForkStatement());
+			final ForkSmtArguments fsa = constructForkSmtArguments(fork.getForkStatement(), mBoogie2smt);
+			fork.setForkSmtArguments(fsa);
 		} else if (cb instanceof JoinCurrentThread) {
-			statements = Collections.singletonList(((JoinCurrentThread) cb).getJoinStatement());
+			final JoinCurrentThread join = (JoinCurrentThread) cb;
+			statements = Collections.singletonList(join.getJoinStatement());
+			final JoinSmtArguments jsa = constructJoinSmtArguments(join.getJoinStatement(), mBoogie2smt);
+			join.setJoinSmtArguments(jsa);
 		} else if (cb instanceof GotoEdge) {
 			statements = Collections.emptyList();
 		} else {
@@ -113,6 +128,49 @@ public class TransFormulaAdder {
 			new Overapprox(tlres.getOverapproximations()).annotate(cb);
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
+	}
+
+	private static ForkSmtArguments constructForkSmtArguments(final ForkStatement st, final Boogie2SMT boogie2smt) {
+		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getForkID());
+		if (!threadId.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!threadId.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		final MultiTermResult procedureArguments = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getArguments());
+		if (!procedureArguments.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!procedureArguments.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		return new ForkSmtArguments(threadId, procedureArguments);
+	}
+
+	private static JoinSmtArguments constructJoinSmtArguments(final JoinStatement st, final Boogie2SMT boogie2smt) {
+		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
+				st.getForkID());
+		if (!threadId.getAuxiliaryVars().isEmpty()) {
+			throw new UnsupportedOperationException("auxvars not yet supported");
+		}
+		if (!threadId.getOverappoximations().isEmpty()) {
+			throw new UnsupportedOperationException("overapproximations not yet supported");
+		}
+		final List<IProgramVar> assignmentLhs = new ArrayList<>();
+		for (final VariableLHS lhs : st.getLhs()) {
+			final IProgramVar pv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(lhs.getIdentifier(),
+					lhs.getDeclarationInformation(), false);
+			assignmentLhs.add(pv);
+
+		}
+		return new JoinSmtArguments(threadId, assignmentLhs);
 	}
 
 	void reportUnsupportedSyntax(final CodeBlock cb, final String longDescription) {

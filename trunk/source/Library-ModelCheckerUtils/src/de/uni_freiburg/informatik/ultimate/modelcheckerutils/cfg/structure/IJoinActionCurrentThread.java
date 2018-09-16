@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public interface IJoinActionCurrentThread {
 
+	public JoinSmtArguments getJoinSmtArguments();
+
 
 	public static class JoinSmtArguments {
 
