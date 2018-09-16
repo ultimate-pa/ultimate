@@ -148,12 +148,12 @@ public class RCFGBacktranslator
 		} else if (cb instanceof ForkOtherThread) {
 			final Statement st = ((ForkOtherThread) cb).getForkStatement();
 			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for fork.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation,
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
 					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof JoinOtherThread) {
 			final Statement st = ((JoinOtherThread) cb).getJoinStatement();
 			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for join.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation,
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
 					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof Summary) {
 			final Statement st = ((Summary) cb).getCallStatement();
