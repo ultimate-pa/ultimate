@@ -76,25 +76,25 @@ public class CodeBlockFactory implements IStorable {
 		return new Call(makeFreshSerial(), source, target, call, mLogger);
 	}
 
-	public ForkCurrentThread constructForkCurrentThread(final BoogieIcfgLocation source,
+	public ForkThreadCurrent constructForkCurrentThread(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final ForkStatement fork, final boolean forkedProcedureHasImplementation) {
-		return new ForkCurrentThread(makeFreshSerial(), source, target, fork, forkedProcedureHasImplementation,
+		return new ForkThreadCurrent(makeFreshSerial(), source, target, fork, forkedProcedureHasImplementation,
 				mLogger);
 	}
 
-	public JoinCurrentThread constructJoinCurrentThread(final BoogieIcfgLocation source,
+	public JoinThreadCurrent constructJoinCurrentThread(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final JoinStatement join) {
-		return new JoinCurrentThread(makeFreshSerial(), source, target, join, mLogger);
+		return new JoinThreadCurrent(makeFreshSerial(), source, target, join, mLogger);
 	}
 
-	public ForkOtherThread constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement fork, final ForkCurrentThread forkCurrentThread) {
-		return new ForkOtherThread(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);
+	public ForkThreadOther constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ForkStatement fork, final ForkThreadCurrent forkCurrentThread) {
+		return new ForkThreadOther(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);
 	}
 
-	public JoinOtherThread constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement join, final JoinCurrentThread joinCurrentThread) {
-		return new JoinOtherThread(makeFreshSerial(), source, target, join, joinCurrentThread, mLogger);
+	public JoinThreadOther constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final JoinStatement join, final JoinThreadCurrent joinCurrentThread) {
+		return new JoinThreadOther(makeFreshSerial(), source, target, join, joinCurrentThread, mLogger);
 	}
 
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {

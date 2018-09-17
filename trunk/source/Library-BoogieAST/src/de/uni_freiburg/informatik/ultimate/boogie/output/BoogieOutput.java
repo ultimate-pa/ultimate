@@ -859,8 +859,8 @@ public class BoogieOutput {
 			final ForkStatement fork = (ForkStatement) s;
 			String comma;
 			sb.append("fork ");
-			for (final Expression id : fork.getThreadID()) {
-				sb.append(BoogiePrettyPrinter.print(id));
+			for (final Expression threadId : fork.getThreadID()) {
+				sb.append(BoogiePrettyPrinter.print(threadId));
 				sb.append(", ");
 			}			
 			sb.append(" ").append(fork.getProcedureName());
@@ -876,8 +876,8 @@ public class BoogieOutput {
 			final JoinStatement join = (JoinStatement)s;
 			String comma = "";
 			sb.append("join ");
-			for (final Expression id : join.getThreadID()) {
-				sb.append(comma).append(BoogiePrettyPrinter.print(id));
+			for (final Expression threadId : join.getThreadID()) {
+				sb.append(comma).append(BoogiePrettyPrinter.print(threadId));
 				comma = ", ";
 			}
 			if (join.getLhs().length > 0) {

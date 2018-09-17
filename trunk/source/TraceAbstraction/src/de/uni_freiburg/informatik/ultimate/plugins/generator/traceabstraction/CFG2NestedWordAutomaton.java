@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -270,20 +270,20 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					if (edge instanceof IIcfgInternalTransition<?>) {
 						net.addTransition((LETTER) edge, Collections.singleton(state),
 								Collections.singleton(succState));
-					} else if (edge instanceof IIcfgForkTransitionCurrentThread) {
+					} else if (edge instanceof IIcfgForkTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
-					} else if (edge instanceof IIcfgForkTransitionOtherThread) {
-						final IIcfgForkTransitionCurrentThread<?> current = ((IIcfgForkTransitionOtherThread<?>) edge)
+					} else if (edge instanceof IIcfgForkTransitionThreadOther) {
+						final IIcfgForkTransitionThreadCurrent<?> current = ((IIcfgForkTransitionThreadOther<?>) edge)
 								.getCorrespondingIIcfgForkTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getTarget();
 						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
 						net.addTransition((LETTER) edge, Collections.singleton(state),
 								new HashSet<>(Arrays.asList(new IPredicate[] { succCurrentThread, succState })));
-					} else if (edge instanceof IIcfgJoinTransitionCurrentThread) {
+					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
-					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
-						final IIcfgJoinTransitionCurrentThread<?> current =
-								((IIcfgJoinTransitionOtherThread<?>) edge)
+					} else if (edge instanceof IIcfgJoinTransitionThreadOther) {
+						final IIcfgJoinTransitionThreadCurrent<?> current =
+								((IIcfgJoinTransitionThreadOther<?>) edge)
 										.getCorrespondingIIcfgJoinTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getSource();
 						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
@@ -354,13 +354,13 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						} else {
 							internalAlphabet.add((LETTER) summary);
 						}
-					} else if (edge instanceof IIcfgForkTransitionCurrentThread) {
+					} else if (edge instanceof IIcfgForkTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
-					} else if (edge instanceof IIcfgForkTransitionOtherThread) {
+					} else if (edge instanceof IIcfgForkTransitionThreadOther) {
 						internalAlphabet.add((LETTER) edge);
-					} else if (edge instanceof IIcfgJoinTransitionCurrentThread) {
+					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
-					} else if (edge instanceof IIcfgJoinTransitionOtherThread) {
+					} else if (edge instanceof IIcfgJoinTransitionThreadOther) {
 						internalAlphabet.add((LETTER) edge);
 					} else {
 						throw new UnsupportedOperationException(

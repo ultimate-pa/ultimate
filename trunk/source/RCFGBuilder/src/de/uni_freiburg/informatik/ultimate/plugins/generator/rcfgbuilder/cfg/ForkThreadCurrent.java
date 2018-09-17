@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
- * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
  *
@@ -26,35 +25,45 @@
  */
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
-
-import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class JoinCurrentThread extends CodeBlock implements IIcfgJoinTransitionCurrentThread<IcfgLocation> {
+/**
+ * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only
+ * the execution from the position directly before the fork statement to the next position of the current thread. A
+ * ForkCurrentThread object provides one auxiliary TransitionFormula which shows fork th_id_X, where X is the number
+ * of the created thread.
+ *
+ * @author lars.nitzke@outlook.com
+ */
+public class ForkThreadCurrent extends CodeBlock implements IIcfgForkTransitionThreadCurrent<IcfgLocation> {
 
-	private static final long serialVersionUID = 3124187699513230594L;
-
-	protected JoinStatement mJoinStatement;
+	private static final long serialVersionUID = -2032583850030703623L;
+	protected ForkStatement mForkStatement;
 	protected String mPrettyPrintedStatements;
 
-	private JoinSmtArguments mJoinSmtArguments;
+	@Visualizable
+	private final boolean mForkedProcedureHasImplementation;
 
-	JoinCurrentThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement st, final ILogger logger) {
+	private ForkSmtArguments mForkSmtArguments;
+
+
+	ForkThreadCurrent(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ForkStatement st, final boolean forkedProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);
-		mJoinStatement = st;
+		mForkStatement = st;
+		mForkedProcedureHasImplementation = forkedProcedureHasImplementation;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 
 	@Visualizable
-	public JoinStatement getJoinStatement() {
-		return mJoinStatement;
+	public ForkStatement getForkStatement() {
+		return mForkStatement;
 	}
-
 
 	@Override
 	public String getPrettyPrintedStatements() {
@@ -67,14 +76,13 @@ public class JoinCurrentThread extends CodeBlock implements IIcfgJoinTransitionC
 	}
 
 	@Override
-	public JoinSmtArguments getJoinSmtArguments() {
-		return mJoinSmtArguments;
+	public ForkSmtArguments getForkSmtArguments() {
+		return mForkSmtArguments;
 	}
 
-	public void setJoinSmtArguments(final JoinSmtArguments joinSmtArguments) {
-		mJoinSmtArguments = joinSmtArguments;
+	public void setForkSmtArguments(final ForkSmtArguments forkSmtArguments) {
+		mForkSmtArguments = forkSmtArguments;
 	}
-
 
 
 }

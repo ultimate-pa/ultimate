@@ -44,16 +44,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionCurrentThread.ForkSmtArguments;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionCurrentThread.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkCurrentThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinCurrentThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -97,13 +97,13 @@ public class TransFormulaAdder {
 			statements = ((StatementSequence) cb).getStatements();
 		} else if (cb instanceof Summary) {
 			statements = Collections.singletonList(((Summary) cb).getCallStatement());
-		} else if (cb instanceof ForkCurrentThread) {
-			final ForkCurrentThread fork = (ForkCurrentThread) cb;
+		} else if (cb instanceof ForkThreadCurrent) {
+			final ForkThreadCurrent fork = (ForkThreadCurrent) cb;
 			statements = Collections.singletonList(fork.getForkStatement());
 			final ForkSmtArguments fsa = constructForkSmtArguments(fork.getForkStatement(), mBoogie2smt);
 			fork.setForkSmtArguments(fsa);
-		} else if (cb instanceof JoinCurrentThread) {
-			final JoinCurrentThread join = (JoinCurrentThread) cb;
+		} else if (cb instanceof JoinThreadCurrent) {
+			final JoinThreadCurrent join = (JoinThreadCurrent) cb;
 			statements = Collections.singletonList(join.getJoinStatement());
 			final JoinSmtArguments jsa = constructJoinSmtArguments(join.getJoinStatement(), mBoogie2smt);
 			join.setJoinSmtArguments(jsa);

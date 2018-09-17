@@ -801,16 +801,16 @@ public class TypeChecker extends BaseObserver {
 					typeError(statement, "Wrong parameter type at index " + i + ": " + fork);
 				}
 			}
-			for (final Expression id : fork.getThreadID()) {
-				typecheckExpression(id);
+			for (final Expression threadId : fork.getThreadID()) {
+				typecheckExpression(threadId);
 			}
 		} else if (statement instanceof JoinStatement) {
 			final JoinStatement join = (JoinStatement) statement;			
-			for (final Expression id : join.getThreadID()) {
-				if (id == null) {
-					typeError(statement, "Expression " + id + " does not exist.");
+			for (final Expression threadId : join.getThreadID()) {
+				if (threadId == null) {
+					typeError(statement, "Expression " + threadId + " does not exist.");
 				}
-				typecheckExpression(id);
+				typecheckExpression(threadId);
 			}
 			for (int i = 0; i < join.getLhs().length; i++) {
 				typecheckLeftHandSide(join.getLhs()[i]);

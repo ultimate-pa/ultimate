@@ -27,33 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-
-/**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a join has to the (non-control-flow)
- * variables of the system. A join is the transition that brings the system
- * from a forked procedure back to the joining procedure. This means that the
- * effect of the join is that
- * <ul>
- * <li> variables that are assigned by the fork get the values that are returned by the procedure
- * <li> all local variables that occure only in the context of the forked procedure are havoced.
- * <ul/>
- *
- * @author Lars Nitzke (lars.nitzke@outlook.com)
+/** 
+ * An {@link IIcfgTransition} that represents a Join. Edges of this type connect 
+ * the location of the join with the next location of the current thread.
+ * 
+ * @author Lars Nitzke
  *
  */
-public interface IJoinActionOtherThread extends IInternalAction {
-	/**
-	 * @return {@link TransFormula} which defines how the variables that are explicitly mentioned in the fork are
-	 *         updated on the join (this does not include information about modifiable global variables that are
-	 *         implicitly modified).
-	 */
-	UnmodifiableTransFormula getAssignmentOfJoin();
-
-	@Override
-	default UnmodifiableTransFormula getTransformula() {
-		return getAssignmentOfJoin();
-	}
+public interface IIcfgJoinTransitionThreadCurrent<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IJoinActionThreadCurrent {
+	// Just for grouping
 }

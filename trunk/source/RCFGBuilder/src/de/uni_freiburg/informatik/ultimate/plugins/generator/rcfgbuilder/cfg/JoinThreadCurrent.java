@@ -31,23 +31,22 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
-public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOtherThread<IcfgLocation> {
+public class JoinThreadCurrent extends CodeBlock implements IIcfgJoinTransitionThreadCurrent<IcfgLocation> {
 
-	private static final long serialVersionUID = 6045590312545516354L;
+	private static final long serialVersionUID = 3124187699513230594L;
 
 	protected JoinStatement mJoinStatement;
-	protected JoinCurrentThread mJoinCurrentThread;
 	protected String mPrettyPrintedStatements;
 
-	JoinOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement st, final JoinCurrentThread corresponsingCurrentJoin, final ILogger logger) {
+	private JoinSmtArguments mJoinSmtArguments;
+
+	JoinThreadCurrent(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final JoinStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mJoinStatement = st;
-		mJoinCurrentThread = corresponsingCurrentJoin;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 
@@ -55,6 +54,7 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	public JoinStatement getJoinStatement() {
 		return mJoinStatement;
 	}
+
 
 	@Override
 	public String getPrettyPrintedStatements() {
@@ -67,12 +67,14 @@ public class JoinOtherThread extends CodeBlock implements IIcfgJoinTransitionOth
 	}
 
 	@Override
-	public UnmodifiableTransFormula getAssignmentOfJoin() {
-		return getTransformula();
+	public JoinSmtArguments getJoinSmtArguments() {
+		return mJoinSmtArguments;
 	}
 
-	@Override
-	public JoinCurrentThread getCorrespondingIIcfgJoinTransitionCurrentThread() {
-		return mJoinCurrentThread;
+	public void setJoinSmtArguments(final JoinSmtArguments joinSmtArguments) {
+		mJoinSmtArguments = joinSmtArguments;
 	}
+
+
+
 }

@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
- * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -30,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 /**
  * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect
- * the location of the fork with the entry location of the forked procedure.
+ * the location of the fork with the next location of the current thread.
  *
  * @author Lars Nitzke
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfgForkTransitionOtherThread<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionOtherThread {
+public interface IIcfgForkTransitionThreadCurrent<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionThreadCurrent {
+	// just for grouping
 
-	IIcfgForkTransitionCurrentThread<LOC> getCorrespondingIIcfgForkTransitionCurrentThread();
 
 }

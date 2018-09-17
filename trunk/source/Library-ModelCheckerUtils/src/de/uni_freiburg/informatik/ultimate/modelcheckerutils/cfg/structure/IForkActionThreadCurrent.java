@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IForkActionCurrentThread extends IAction {
+public interface IForkActionThreadCurrent extends IAction {
 	/*@Override
 	default UnmodifiableTransFormula getTransformula() {
 		// TODO: return transormula with true or transformular without an action.

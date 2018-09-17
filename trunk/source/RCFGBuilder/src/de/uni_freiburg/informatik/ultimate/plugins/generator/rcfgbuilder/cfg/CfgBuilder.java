@@ -86,13 +86,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionCurrentThread.ForkSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionOtherThread;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionCurrentThread.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.LoopEntryDebugIdentifier;
@@ -157,9 +157,9 @@ public class CfgBuilder {
 
 	Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
-	Collection<ForkCurrentThread> mForkCurrentThreads = new ArrayList<>();
+	Collection<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
 
-	Collection<JoinCurrentThread> mJoinCurrentThreads = new ArrayList<>();
+	Collection<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
 
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
 
@@ -324,7 +324,7 @@ public class CfgBuilder {
 		}
 
 		// Add all transitions to the forked procedure entry locations.
-		for (final ForkCurrentThread fct : mForkCurrentThreads ) {
+		for (final ForkThreadCurrent fct : mForkCurrentThreads ) {
 			final BoogieIcfgLocation errorNode = procCfgBuilder.addErrorNode(fct.getPrecedingProcedure(), fct.getForkStatement());
 			addForkOtherThreadTransition(fct, mSimplificationTechnique, errorNode);
 		}
@@ -333,7 +333,7 @@ public class CfgBuilder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final String procName : mForkedProcedureNames) {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-				for (final JoinCurrentThread jot : mJoinCurrentThreads) {
+				for (final JoinThreadCurrent jot : mJoinCurrentThreads) {
 					addJoinOtherThreadTransition(jot, procName, mSimplificationTechnique);
 				}
 			}
@@ -421,7 +421,7 @@ public class CfgBuilder {
 	 *            that points to the next step in the current thread.
 	 * @param simplificationTechnique
 	 */
-	private void addForkOtherThreadTransition(final ForkCurrentThread forkEdgeCurrent,
+	private void addForkOtherThreadTransition(final ForkThreadCurrent forkEdgeCurrent,
 			final SimplificationTechnique simplificationTechnique, final BoogieIcfgLocation errorNode) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
@@ -437,13 +437,13 @@ public class CfgBuilder {
 
 		final ForkSmtArguments fsa = forkEdgeCurrent.getForkSmtArguments();
 
-		final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkEdgeCurrent);
+		final ForkThreadOther fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkEdgeCurrent);
 		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(mIcfg.getSymboltable(),
 				mIcfg.getBoogie2SMT().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getInParams().get(st.getProcedureName()));
 
 		final BoogieNonOldVar[] threadIdVar = mProcedureNameThreadIdMap.get(st.getProcedureName());
-		final UnmodifiableTransFormula forkIdAssignment = fsa.constructThreadIdAssignment(mIcfg.getSymboltable(),
+		final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(mIcfg.getSymboltable(),
 				mIcfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVar));
 		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getProcedureName());
 		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
@@ -451,7 +451,7 @@ public class CfgBuilder {
 		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				mIcfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-				Arrays.asList(new UnmodifiableTransFormula[] { parameterAssignment, forkIdAssignment,
+				Arrays.asList(new UnmodifiableTransFormula[] { parameterAssignment, threadIdAssignment,
 						threadInUseAssignment }));
 		fork.setTransitionFormula(forkTransformula);
 
@@ -482,7 +482,7 @@ public class CfgBuilder {
 	 * @param edge
 	 * @param simplificationTechnique
 	 */
-	private void addJoinOtherThreadTransition(final JoinCurrentThread joinEdgeCurrent, final String procName,
+	private void addJoinOtherThreadTransition(final JoinThreadCurrent joinEdgeCurrent, final String procName,
 			final SimplificationTechnique simplificationTechnique) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
@@ -508,9 +508,9 @@ public class CfgBuilder {
 			return;
 		} else {
 			int offset = 0;
-			for (final BoogieNonOldVar forkId : threadIds) {
+			for (final BoogieNonOldVar threadId : threadIds) {
 				if (st.getThreadID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator()
-						.getType(forkId.getSort())) {
+						.getType(threadId.getSort())) {
 					return;
 				}
 				offset++;
@@ -520,7 +520,7 @@ public class CfgBuilder {
 		final String caller = callerNode.getProcedure();
 
 		// Create JoinOtherThread object and add TransFormulas.
-		final JoinOtherThread joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st,
+		final JoinThreadOther joinOtherThread = mCbf.constructJoinOtherThread(exitNode, callerNode, st,
 				joinEdgeCurrent);
 
 		final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(mIcfg.getSymboltable(),
@@ -614,12 +614,12 @@ public class CfgBuilder {
 
 
 
-	public Collection<ForkCurrentThread> getForkCurrentThreads() {
+	public Collection<ForkThreadCurrent> getForkCurrentThreads() {
 		return mForkCurrentThreads;
 	}
 
 
-	public Collection<JoinCurrentThread> getJoinCurrentThreads() {
+	public Collection<JoinThreadCurrent> getJoinCurrentThreads() {
 		return mJoinCurrentThreads;
 	}
 
@@ -1436,7 +1436,7 @@ public class CfgBuilder {
 			mProcLocNodes.put(locName, forkCurrentNode);
 
 			final String callee = st.getProcedureName();
-			ForkCurrentThread forkCurrentThreadEdge;
+			ForkThreadCurrent forkCurrentThreadEdge;
 			if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, true);
 				final IIcfgElement cb = forkCurrentThreadEdge;
@@ -1476,7 +1476,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation joinCurrentNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, joinCurrentNode);
 
-			final JoinCurrentThread joinCurrentThreadEdge = mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
+			final JoinThreadCurrent joinCurrentThreadEdge = mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
 			final IIcfgElement cb = joinCurrentThreadEdge;
 			ModelUtils.copyAnnotations(st, cb);
 			mJoinCurrentThreads.add(joinCurrentThreadEdge);
@@ -1629,10 +1629,10 @@ public class CfgBuilder {
 			|| incoming instanceof ParallelComposition || incoming instanceof Summary
 			|| incoming instanceof GotoEdge;
 			final IcfgEdge outgoing = pp.getOutgoingEdges().get(0);
-			if (outgoing instanceof IIcfgForkTransitionCurrentThread
-					|| outgoing instanceof IIcfgForkTransitionOtherThread
-					|| outgoing instanceof IIcfgJoinTransitionCurrentThread
-					|| outgoing instanceof IIcfgJoinTransitionOtherThread) {
+			if (outgoing instanceof IIcfgForkTransitionThreadCurrent
+					|| outgoing instanceof IIcfgForkTransitionThreadOther
+					|| outgoing instanceof IIcfgJoinTransitionThreadCurrent
+					|| outgoing instanceof IIcfgJoinTransitionThreadOther) {
 				throw new IllegalStateException(
 						"fork and join should never be part of a composition. Are you accidentally using a block encoding that is not suitable for concurrent programs?");
 			}

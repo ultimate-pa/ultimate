@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Lars Nitzke (lars.nitzke@outlook.com)
  *
  */
-public interface IJoinActionCurrentThread {
+public interface IJoinActionThreadCurrent {
 
 	public JoinSmtArguments getJoinSmtArguments();
 

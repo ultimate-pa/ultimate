@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionOtherThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -42,15 +42,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  *
  * @author lars.nitzke@outlook.com
  */
-public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOtherThread<IcfgLocation> {
+public class ForkThreadOther extends CodeBlock implements IIcfgForkTransitionThreadOther<IcfgLocation> {
 
 	private static final long serialVersionUID = 5866537291870187570L;
 	protected ForkStatement mForkStatement;
-	protected ForkCurrentThread mForkCurrentThread;
+	protected ForkThreadCurrent mForkCurrentThread;
 	protected String mPrettyPrintedStatements;
 
-	ForkOtherThread(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement st, final ForkCurrentThread forkCurrentThread, final ILogger logger) {
+	ForkThreadOther(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ForkStatement st, final ForkThreadCurrent forkCurrentThread, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mForkStatement = st;
 		mForkCurrentThread = forkCurrentThread;
@@ -78,7 +78,7 @@ public class ForkOtherThread extends CodeBlock implements IIcfgForkTransitionOth
 	}
 
 	@Override
-	public ForkCurrentThread getCorrespondingIIcfgForkTransitionCurrentThread() {
+	public ForkThreadCurrent getCorrespondingIIcfgForkTransitionCurrentThread() {
 		return mForkCurrentThread;
 	}
 }
