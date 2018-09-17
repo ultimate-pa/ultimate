@@ -427,7 +427,7 @@ public class CfgBuilder {
 		// overapproximation flags
 
 		final ForkStatement st = forkEdgeCurrent.getForkStatement();
-		final String callee = st.getMethodName();
+		final String callee = st.getProcedureName();
 		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee
 				+ " but no such procedure.";
 
@@ -440,12 +440,12 @@ public class CfgBuilder {
 		final ForkOtherThread fork = mCbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkEdgeCurrent);
 		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(mIcfg.getSymboltable(),
 				mIcfg.getBoogie2SMT().getManagedScript(),
-				mIcfg.getCfgSmtToolkit().getInParams().get(st.getMethodName()));
+				mIcfg.getCfgSmtToolkit().getInParams().get(st.getProcedureName()));
 
-		final BoogieNonOldVar[] threadIdVar = mProcedureNameThreadIdMap.get(st.getMethodName());
+		final BoogieNonOldVar[] threadIdVar = mProcedureNameThreadIdMap.get(st.getProcedureName());
 		final UnmodifiableTransFormula forkIdAssignment = fsa.constructThreadIdAssignment(mIcfg.getSymboltable(),
 				mIcfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVar));
-		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getMethodName());
+		final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap.get(st.getProcedureName());
 		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
 		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
@@ -504,12 +504,12 @@ public class CfgBuilder {
 		//
 		//
 
-		if (threadIds.length != st.getForkID().length) {
+		if (threadIds.length != st.getThreadID().length) {
 			return;
 		} else {
 			int offset = 0;
 			for (final BoogieNonOldVar forkId : threadIds) {
-				if (st.getForkID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator()
+				if (st.getThreadID()[offset].getType() != mIcfg.getBoogie2SMT().getTypeSortTranslator()
 						.getType(forkId.getSort())) {
 					return;
 				}
@@ -529,7 +529,7 @@ public class CfgBuilder {
 		final UnmodifiableTransFormula parameterAssignment = jsa.constructResultAssignment(
 				mIcfg.getBoogie2SMT().getManagedScript(), mIcfg.getCfgSmtToolkit().getOutParams().get(procName));
 
-		constructJoinMatchingThreadIdAssumption(threadIds, st.getForkID(), caller, simplificationTechnique);
+		constructJoinMatchingThreadIdAssumption(threadIds, st.getThreadID(), caller, simplificationTechnique);
 		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUse,
 				mIcfg.getCfgSmtToolkit().getManagedScript());
 		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
@@ -1435,14 +1435,14 @@ public class CfgBuilder {
 			final BoogieIcfgLocation forkCurrentNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, forkCurrentNode);
 
-			final String callee = st.getMethodName();
+			final String callee = st.getProcedureName();
 			ForkCurrentThread forkCurrentThreadEdge;
 			if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, true);
 				final IIcfgElement cb = forkCurrentThreadEdge;
 				ModelUtils.copyAnnotations(st, cb);
 				mForkCurrentThreads.add(forkCurrentThreadEdge);
-				mForkedProcedureNames.add(st.getMethodName());
+				mForkedProcedureNames.add(st.getProcedureName());
 			} else {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, false);
 				final IIcfgElement cb = forkCurrentThreadEdge;

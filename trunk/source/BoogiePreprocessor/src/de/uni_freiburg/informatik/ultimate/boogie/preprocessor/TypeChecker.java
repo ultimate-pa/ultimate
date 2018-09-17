@@ -782,12 +782,12 @@ public class TypeChecker extends BaseObserver {
 			}
 		} else if (statement instanceof ForkStatement) {
 			final ForkStatement fork = (ForkStatement) statement;
-			final ProcedureInfo procInfo = mDeclaredProcedures.get(fork.getMethodName());
+			final ProcedureInfo procInfo = mDeclaredProcedures.get(fork.getProcedureName());
 			if (procInfo == null) {
 				typeError(statement, "Forking undeclared procedure " + fork);
 				return;
 			}
-			checkModifiesTransitive(fork, fork.getMethodName());
+			checkModifiesTransitive(fork, fork.getProcedureName());
 			final BoogieType[] typeParams = new BoogieType[procInfo.getTypeParameters().getCount()];
 			final VariableInfo[] inParams = procInfo.getInParams();
 			final Expression[] arguments = fork.getArguments();
@@ -801,12 +801,12 @@ public class TypeChecker extends BaseObserver {
 					typeError(statement, "Wrong parameter type at index " + i + ": " + fork);
 				}
 			}
-			for (final Expression id : fork.getForkID()) {
+			for (final Expression id : fork.getThreadID()) {
 				typecheckExpression(id);
 			}
 		} else if (statement instanceof JoinStatement) {
 			final JoinStatement join = (JoinStatement) statement;			
-			for (final Expression id : join.getForkID()) {
+			for (final Expression id : join.getThreadID()) {
 				if (id == null) {
 					typeError(statement, "Expression " + id + " does not exist.");
 				}

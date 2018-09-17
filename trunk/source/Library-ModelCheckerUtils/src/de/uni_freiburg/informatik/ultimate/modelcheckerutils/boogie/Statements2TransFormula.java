@@ -737,7 +737,7 @@ public class Statements2TransFormula {
 	@Deprecated
 	public TranslationResult inParamAssignment(final ForkStatement st,
 			final SimplificationTechnique simplicationTechnique) {
-		return inParamAssignment(st.getMethodName(), st.getArguments(), simplicationTechnique);
+		return inParamAssignment(st.getProcedureName(), st.getArguments(), simplicationTechnique);
 	}
 
 	/**

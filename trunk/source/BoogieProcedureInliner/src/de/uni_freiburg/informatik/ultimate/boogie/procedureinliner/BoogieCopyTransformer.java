@@ -136,7 +136,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			newStat = new GotoStatement(gs.getLocation(), gs.getLabels());
 		} else if (stat instanceof ForkStatement) {
 			final ForkStatement fs = (ForkStatement) stat;
-			newStat = new ForkStatement(fs.getLoc(), fs.getForkID(), fs.getMethodName(), fs.getArguments());
+			newStat = new ForkStatement(fs.getLoc(), fs.getThreadID(), fs.getProcedureName(), fs.getArguments());
 		} else {
 			throw new UnsupportedOperationException("Cannot process unknown expression: " + stat.getClass().getName());
 		}

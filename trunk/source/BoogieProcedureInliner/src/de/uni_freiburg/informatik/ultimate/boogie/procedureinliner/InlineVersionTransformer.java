@@ -809,15 +809,15 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
 		}  else if (stat instanceof ForkStatement) {
 			final ForkStatement forkstmt = (ForkStatement) stat;
-			final Expression[] threadId = forkstmt.getForkID();
-			final String procName = forkstmt.getMethodName();
+			final Expression[] threadId = forkstmt.getThreadID();
+			final String procName = forkstmt.getProcedureName();
 			final Expression[] arguments = forkstmt.getArguments();
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
 			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
 		}  else if (stat instanceof JoinStatement) {
 			final JoinStatement joinstmt = (JoinStatement) stat;
-			final Expression[] threadId = joinstmt.getForkID();
+			final Expression[] threadId = joinstmt.getThreadID();
 			final VariableLHS[] lhs = joinstmt.getLhs();
 			final Expression[] newThreadId = processExpressions(threadId);
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);

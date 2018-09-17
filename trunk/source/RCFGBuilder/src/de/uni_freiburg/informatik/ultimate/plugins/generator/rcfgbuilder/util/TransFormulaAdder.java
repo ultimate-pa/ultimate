@@ -134,7 +134,7 @@ public class TransFormulaAdder {
 		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
 				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
-				st.getForkID());
+				st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
@@ -156,7 +156,7 @@ public class TransFormulaAdder {
 		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
 				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
-				st.getForkID());
+				st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}

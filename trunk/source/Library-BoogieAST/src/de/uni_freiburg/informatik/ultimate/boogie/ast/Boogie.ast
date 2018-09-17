@@ -456,11 +456,11 @@ Statement ::=
 	    /**
 	     * An id or list of id's referencing that fork statement out of multiple ones.
 	     */
-		forkID  : Expression[]
+		threadID  : Expression[]
 		/**
 		 * The name of the procedure.
 		 */
-		methodName: String
+		procedureName: String
 		/**
 		 * The arguments.  This must contain the same number of expressions
 		 * as there are input parameters to the procedure.
@@ -479,7 +479,7 @@ Statement ::=
 	     * The id or list of id's of the fork expression, to which the join statement
 	     * is referring to.
 	     */
-		forkID  : Expression[]
+		threadID  : Expression[]
 		/**
 		 * The variables where the return values are written to.
 		 */

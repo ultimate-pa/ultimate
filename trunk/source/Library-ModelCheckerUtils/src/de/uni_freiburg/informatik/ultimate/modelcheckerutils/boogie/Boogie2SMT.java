@@ -245,7 +245,7 @@ public class Boogie2SMT {
 		final Map<String, BoogieNonOldVar> result = new HashMap<>();
 		for (final ForkStatement st : forkStatements) {
 			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
-			result.put(st.getMethodName(), threadInUseVar);
+			result.put(st.getProcedureName(), threadInUseVar);
 		}
 		return result;
 	}
@@ -256,25 +256,25 @@ public class Boogie2SMT {
 		final Map<String, BoogieNonOldVar[]> result = new HashMap<>();
 		for (final ForkStatement st : forkStatements) {
 			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
-			result.put(st.getMethodName(), threadIdVars);
+			result.put(st.getProcedureName(), threadIdVars);
 		}
 		return result;
 	}
 
 	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getMethodName() + "_inUse",
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getProcedureName() + "_inUse",
 				booleanSort, mgdScript);
 		return threadInUseVar;
 	}
 
 	public static BoogieNonOldVar[] constructThreadIdVariable(final ForkStatement st, final ManagedScript mgdScript,
 			final TypeSortTranslator typeSortTranslator) {
-		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[st.getForkID().length];
+		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[st.getThreadID().length];
 		int i = 0;
-		for (final Expression forkId : st.getForkID()) {
+		for (final Expression forkId : st.getThreadID()) {
 			final Sort expressionSort = typeSortTranslator.getSort(forkId.getType(), st);
-			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + st.getMethodName(), expressionSort, mgdScript);
+			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + st.getProcedureName(), expressionSort, mgdScript);
 			i++;
 		}
 		return threadIdVars;

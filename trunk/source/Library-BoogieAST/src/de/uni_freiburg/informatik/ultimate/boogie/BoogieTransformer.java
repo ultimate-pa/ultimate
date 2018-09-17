@@ -416,8 +416,8 @@ public abstract class BoogieTransformer {
 			}
 		} else if (statement instanceof ForkStatement) {
 			final ForkStatement forkstmt = (ForkStatement) statement;
-			final Expression[] threadId = forkstmt.getForkID();
-			final String procName = forkstmt.getMethodName();
+			final Expression[] threadId = forkstmt.getThreadID();
+			final String procName = forkstmt.getProcedureName();
 			final Expression[] arguments = forkstmt.getArguments();
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
@@ -426,7 +426,7 @@ public abstract class BoogieTransformer {
 			}
 		} else if (statement instanceof JoinStatement) {
 			final JoinStatement joinstmt = (JoinStatement) statement;
-			final Expression[] threadId = joinstmt.getForkID();
+			final Expression[] threadId = joinstmt.getThreadID();
 			final VariableLHS[] lhs = joinstmt.getLhs();
 			final Expression[] newThreadId = processExpressions(threadId);
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);
