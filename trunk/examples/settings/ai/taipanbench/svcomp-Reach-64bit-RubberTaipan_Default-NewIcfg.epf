@@ -71,3 +71,4 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/calls\ to\ implemented\ procedures=false
 
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Parallel\ states\ before\ merging=1
