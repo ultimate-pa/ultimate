@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Data structure that stores predicates and there implication-relation.
- * A predicate implies its descendants and is implied by its ancestors.
- * 
+ * Data structure that stores predicates and there implication-relation. A predicate implies its descendants and is
+ * implied by its ancestors.
+ *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class ImplicationGraph<T extends IPredicate> {
@@ -62,39 +62,39 @@ public class ImplicationGraph<T extends IPredicate> {
 		mTrueVertex = new ImplicationVertex<>(predicateTrue, new HashSet<>(), new HashSet<>());
 		mFalseVertex.addChild(mTrueVertex);
 		mTrueVertex.addParent(mFalseVertex);
-		
+
 		mVertices.add(mTrueVertex);
 		mVertices.add(mFalseVertex);
 		mPredicateMap.put(predicateTrue, mTrueVertex);
 		mPredicateMap.put(predicateFalse, mFalseVertex);
 	}
-	
+
 	protected ImplicationVertex<T> getTrueVertex() {
 		return mTrueVertex;
 	}
-	
+
 	protected ImplicationVertex<T> getFalseVertex() {
 		return mFalseVertex;
 	}
-	
-	protected ImplicationVertex<T> getVertex(T pred){
-		if(mPredicateMap.containsKey(pred)) {
+
+	protected ImplicationVertex<T> getVertex(final T pred) {
+		if (mPredicateMap.containsKey(pred)) {
 			return mPredicateMap.get(pred);
 		}
 		throw new IllegalArgumentException("predicate " + pred + " is unknown");
 	}
-	
-	protected Set<ImplicationVertex<T>> getVertices(){
+
+	protected Set<ImplicationVertex<T>> getVertices() {
 		return mVertices;
 	}
-	
-	protected boolean removeVertex(ImplicationVertex<T> vertex) {
-		if(mVertices.remove(vertex)) {
-			Set<ImplicationVertex<T>> parents = vertex.getParents();
-			Set<ImplicationVertex<T>> children = vertex.getChildren();
-			for(ImplicationVertex<T> p : parents) {
+
+	protected boolean removeVertex(final ImplicationVertex<T> vertex) {
+		if (mVertices.remove(vertex)) {
+			final Set<ImplicationVertex<T>> parents = vertex.getParents();
+			final Set<ImplicationVertex<T>> children = vertex.getChildren();
+			for (final ImplicationVertex<T> p : parents) {
 				p.removeChild(vertex);
-				for(ImplicationVertex<T> c : children) {
+				for (final ImplicationVertex<T> c : children) {
 					c.removeParent(vertex);
 					c.addParent(p);
 					p.addChild(c);
@@ -102,7 +102,7 @@ public class ImplicationGraph<T extends IPredicate> {
 			}
 			return true;
 		}
-		return false;	
+		return false;
 	}
 
 	@Override
@@ -116,6 +116,7 @@ public class ImplicationGraph<T extends IPredicate> {
 
 	/**
 	 * Insert a predicate into the implication graph
+	 *
 	 * @param predicate
 	 * @return the implication-vertex it is stored in
 	 */
@@ -151,8 +152,8 @@ public class ImplicationGraph<T extends IPredicate> {
 		final Set<ImplicationVertex<T>> parents = new HashSet<>();
 		copy.getFirst().mVertices.forEach(v -> parents.add(copy.getSecond().get(v)));
 		implying = false;
-		final Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>> subCopy 
-			= createSubCopy(parents, false);
+		final Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>> subCopy =
+				createSubCopy(parents, false);
 		marked.clear();
 		// find the predicates that are implied by the given predicate
 		while (!marked.containsAll(subCopy.getFirst().mVertices)) {
@@ -188,33 +189,34 @@ public class ImplicationGraph<T extends IPredicate> {
 
 	/**
 	 * removes all implied predicates from the implication graph
+	 *
 	 * @return false if the predicate is not in the implication graph, else true
 	 */
-	protected boolean removeAllImpliedVertices(final ImplicationVertex<T> vertex, boolean keepTrueVertex) {
+	protected boolean removeAllImpliedVertices(final ImplicationVertex<T> vertex, final boolean keepTrueVertex) {
 		if (!mVertices.contains(vertex)) {
 			return false;
 		}
 		final Deque<ImplicationVertex<T>> children = new ArrayDeque<>(vertex.getChildren());
 		while (!children.isEmpty()) {
 			final ImplicationVertex<T> current = children.pop();
-			if(keepTrueVertex && current.equals(mTrueVertex)) {
+			if (keepTrueVertex && current.equals(mTrueVertex)) {
 				continue;
 			}
 			if (!mVertices.remove(current)) {
 				continue;
 			}
-			Set<ImplicationVertex<T>> pCopy = new HashSet<>(current.getParents());
-			for(ImplicationVertex<T> p : pCopy) {
+			final Set<ImplicationVertex<T>> pCopy = new HashSet<>(current.getParents());
+			for (final ImplicationVertex<T> p : pCopy) {
 				p.removeChild(current);
 				current.removeParent(p);
 			}
 			children.addAll(current.getChildren());
 		}
-		if(keepTrueVertex) {
-			Set<ImplicationVertex<T>> pCopy = new HashSet<>(mTrueVertex.getParents());
-			for(ImplicationVertex<T> p : pCopy) {
-				if(!mVertices.contains(p)) {
-					p.removeChild(mTrueVertex); 
+		if (keepTrueVertex) {
+			final Set<ImplicationVertex<T>> pCopy = new HashSet<>(mTrueVertex.getParents());
+			for (final ImplicationVertex<T> p : pCopy) {
+				if (!mVertices.contains(p)) {
+					p.removeChild(mTrueVertex);
 					mTrueVertex.removeParent(p);
 				}
 			}
@@ -224,6 +226,7 @@ public class ImplicationGraph<T extends IPredicate> {
 
 	/**
 	 * removes all predicates implying the vertex.mPredicate from the implication graph
+	 *
 	 * @return false if the predicate is not in the implication graph, else true
 	 */
 	protected boolean removeAllVerticesImplying(final ImplicationVertex<T> vertex) {
@@ -241,26 +244,26 @@ public class ImplicationGraph<T extends IPredicate> {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * removes all predicates form the collection, that are implied within the collection
 	 */
-	protected Collection<T> removeImplyedVerticesFromCollection(final Collection<T> collection){	
-		Collection<T> result = new HashSet<>();
-		ImplicationGraph<T> copyGraph = createFullCopy().getFirst();
-		Deque<ImplicationVertex<T>> parentless = new HashDeque<>();
+	protected Collection<T> removeImplyedVerticesFromCollection(final Collection<T> collection) {
+		final Collection<T> result = new HashSet<>();
+		final ImplicationGraph<T> copyGraph = createFullCopy().getFirst();
+		final Deque<ImplicationVertex<T>> parentless = new HashDeque<>();
 		parentless.add(copyGraph.getFalseVertex());
-		
+
 		// remove predicates that are implied by other predicates of the collection
-		while(!parentless.isEmpty()) {
-			ImplicationVertex<T> next = parentless.pop();
-			if(collection.contains(next.getPredicate())) {	
+		while (!parentless.isEmpty()) {
+			final ImplicationVertex<T> next = parentless.pop();
+			if (collection.contains(next.getPredicate())) {
 				result.add(next.getPredicate());
 				copyGraph.removeAllImpliedVertices(next, false);
 			} else {
-				for(ImplicationVertex<T> child : next.getChildren()) {
+				for (final ImplicationVertex<T> child : next.getChildren()) {
 					child.removeParent(next);
-					if(child.getParents().isEmpty()) {
+					if (child.getParents().isEmpty()) {
 						parentless.add(child);
 					}
 				}
@@ -271,14 +274,17 @@ public class ImplicationGraph<T extends IPredicate> {
 
 	/**
 	 * checks for implication - if the predicates are known, the graph is used
+	 *
 	 * @return true if a implies b
 	 */
 	protected boolean implication(final T a, final T b, final boolean useSolver) {
-		if(a.equals(b)) return true;
-		if(mPredicateMap.containsKey(a) && mPredicateMap.containsKey(b)) {
+		if (a.equals(b)) {
+			return true;
+		}
+		if (mPredicateMap.containsKey(a) && mPredicateMap.containsKey(b)) {
 			return getVertex(a).getDescendants().contains(getVertex(b));
 		}
-		if(useSolver) {
+		if (useSolver) {
 			final Term acf = a.getClosedFormula();
 			final Term bcf = b.getClosedFormula();
 			mScript.lock(this);
@@ -330,7 +336,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		// replace vertex for true and false
 		copy.mFalseVertex = vertexCopyMap.get(mFalseVertex);
 		copy.mTrueVertex = vertexCopyMap.get(mTrueVertex);
-		
+
 		final Map<ImplicationVertex<T>, ImplicationVertex<T>> invertedMap = new HashMap<>();
 		for (final Map.Entry<ImplicationVertex<T>, ImplicationVertex<T>> entry : vertexCopyMap.entrySet()) {
 			invertedMap.put(entry.getValue(), entry.getKey());
@@ -339,11 +345,11 @@ public class ImplicationGraph<T extends IPredicate> {
 	}
 
 	/**
-	 * creates a copy of the subgraph with the given set
-	 * and the predicates that are implied by every predicate in the set
+	 * creates a copy of the subgraph with the given set and the predicates that are implied by every predicate in the
+	 * set
 	 */
-	protected Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>> createSubCopy(
-			final Set<ImplicationVertex<T>> parents, boolean keep) {
+	protected Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>>
+			createSubCopy(final Set<ImplicationVertex<T>> parents, final boolean keep) {
 		final ImplicationGraph<T> copy =
 				new ImplicationGraph<>(mScript, mFalseVertex.getPredicate(), mTrueVertex.getPredicate());
 		copy.mVertices.clear();
@@ -359,16 +365,16 @@ public class ImplicationGraph<T extends IPredicate> {
 			}
 			subVertices.removeAll(toRemove);
 		}
-		//create new vertices
+		// create new vertices
 		final HashMap<ImplicationVertex<T>, ImplicationVertex<T>> vertexCopyMap = new HashMap<>();
-		if(keep) {
-			//keep parents in graph
+		if (keep) {
+			// keep parents in graph
 			subVertices.addAll(parents);
 		}
 		for (final ImplicationVertex<T> vertex : subVertices) {
 			vertexCopyMap.put(vertex, new ImplicationVertex<>(vertex.getPredicate(), new HashSet<>(), new HashSet<>()));
 		}
-		//create new edges
+		// create new edges
 		for (final ImplicationVertex<T> vertex : subVertices) {
 			final ImplicationVertex<T> vertexCopy = vertexCopyMap.get(vertex);
 			for (final ImplicationVertex<T> child : vertex.getChildren()) {
@@ -385,11 +391,14 @@ public class ImplicationGraph<T extends IPredicate> {
 			}
 			copy.mVertices.add(vertexCopy);
 		}
-		if(keep) {
+		if (keep) {
 			copy.mFalseVertex.removeChild(copy.mTrueVertex);
 			copy.mTrueVertex.removeParent(copy.mFalseVertex);
 			copy.mVertices.add(copy.mFalseVertex);
-			parents.forEach(p -> {copy.mFalseVertex.addChild(p); p.addParent(copy.mFalseVertex); });
+			parents.forEach(p -> {
+				copy.mFalseVertex.addChild(p);
+				p.addParent(copy.mFalseVertex);
+			});
 		}
 		final Map<ImplicationVertex<T>, ImplicationVertex<T>> invertedMap = new HashMap<>();
 		for (final Map.Entry<ImplicationVertex<T>, ImplicationVertex<T>> entry : vertexCopyMap.entrySet()) {

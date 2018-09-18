@@ -89,6 +89,10 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mPredicates.add(mFalsePredicate);
 	}
 
+	/**
+	 * @deprecated Does not work at the moment
+	 */
+	@Deprecated
 	public Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> restructurePredicateTrie() {
 		final int oldDepth = mPredicateTrie.getDepth();
 		// Empty trie
@@ -283,6 +287,10 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	 */
 	public IPredicate getOrConstructPredicate(final Term term) {
 		mStatisticsTracker.incrementGetRequests();
+		return getOrConstructPredicateInternal(term);
+	}
+
+	private IPredicate getOrConstructPredicateInternal(final Term term) {
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
 		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
 		// catch terms equal to true of false
@@ -348,7 +356,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return mFalsePredicate;
 	}
 
-	public class PredicateUnifierStatisticsTracker {
+	public static final class PredicateUnifierStatisticsTracker {
 
 		private int mDeclaredPredicates = 0;
 		private int mGetRequests = 0;
@@ -359,7 +367,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		private final int mDeprecatedPredicatesCount = 0;
 		private final int mImplicationChecksByTransitivity = 0;
 
-		public PredicateUnifierStatisticsTracker() {
+		private PredicateUnifierStatisticsTracker() {
 		}
 
 		@Override
