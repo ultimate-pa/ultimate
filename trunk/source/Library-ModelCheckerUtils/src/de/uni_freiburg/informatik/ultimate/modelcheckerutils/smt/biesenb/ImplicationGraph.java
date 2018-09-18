@@ -78,10 +78,11 @@ public class ImplicationGraph<T extends IPredicate> {
 	}
 
 	protected ImplicationVertex<T> getVertex(final T pred) {
-		if (mPredicateMap.containsKey(pred)) {
-			return mPredicateMap.get(pred);
+		final ImplicationVertex<T> rtr = mPredicateMap.get(pred);
+		if (rtr == null) {
+			throw new IllegalArgumentException("predicate " + pred + " is unknown");
 		}
-		throw new IllegalArgumentException("predicate " + pred + " is unknown");
+		return rtr;
 	}
 
 	protected Set<ImplicationVertex<T>> getVertices() {

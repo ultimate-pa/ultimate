@@ -65,7 +65,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
-	private final PredicateCoverageChecker mConverageChecker;
+	private final PredicateCoverageChecker mCoverageChecker;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
@@ -83,7 +83,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mStatisticsTracker = new PredicateUnifierStatisticsTracker();
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
-		mConverageChecker = new PredicateCoverageChecker(mImplicationGraph);
+		mCoverageChecker = new PredicateCoverageChecker(mImplicationGraph, this);
 
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
@@ -231,7 +231,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IPredicateCoverageChecker getCoverageRelation() {
-		return mConverageChecker;
+		return mCoverageChecker;
 	}
 
 	@Override
