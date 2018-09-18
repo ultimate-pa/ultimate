@@ -88,9 +88,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -1222,7 +1222,7 @@ public class MemoryHandler {
 			} else {
 				returnValue = ExpressionFactory.constructIdentifierExpression(loc,
 						mBoogieTypeHelper.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
-						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procName));
+						new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			}
 		} else {
 			cprimitive = null;
@@ -1260,16 +1260,15 @@ public class MemoryHandler {
 			}
 		}
 		if (floating2bitvectorTransformationNeeded && !mFpToIeeeBvExtension) {
-			// TODO: not sure about the storage class here
 			final Expression returnValueAsBitvector = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
-					new DeclarationInformation(StorageClass.LOCAL, procName));
+					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 
 			final Expression transformedToFloat =
 					mExpressionTranslation.transformBitvectorToFloat(loc, returnValueAsBitvector, cprimitive);
-			final Expression inputValue = // new IdentifierExpression(loc, "#value");
+			final Expression inputValue =
 					ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) transformedToFloat.getType(),
-							"#value", new DeclarationInformation(StorageClass.LOCAL, procName));
+							"#value", new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 
 			final Expression eq =
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
