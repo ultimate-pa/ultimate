@@ -51,8 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -100,7 +99,7 @@ public class PredicateUnifierTest {
 		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable, SimplificationTechnique.NONE,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
-	
+
 	@Test
 	public void getWitness() {
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -119,7 +118,7 @@ public class PredicateUnifierTest {
 		unifier.getOrConstructPredicate(term2);
 		unifier.getOrConstructPredicate(term3);
 		unifier.getOrConstructPredicate(term4);
-		
+
 		unifier.getOrConstructPredicate(term5);
 		unifier.getOrConstructPredicate(term6);
 		unifier.getOrConstructPredicate(term7);
@@ -132,11 +131,11 @@ public class PredicateUnifierTest {
 		unifier.getOrConstructPredicate(mScript.term("or", term8, term2));
 		unifier.getOrConstructPredicate(mScript.term("or", term9, term6));
 
-		//unifier.mPredicateTrie.print();
+		// unifier.mPredicateTrie.print();
 		mLogger.info(unifier.mImplicationGraph.toString());
 		mLogger.info(unifier.restructurePredicateTrie());
 	}
-	
+
 	@Test
 	public void PredicateCoverageChecker() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
@@ -152,7 +151,7 @@ public class PredicateUnifierTest {
 		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate pred3 = unifier.getOrConstructPredicate(singleTerm3);
-		
+
 		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
@@ -186,12 +185,12 @@ public class PredicateUnifierTest {
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 
 		final Term singleTerm5 = mScript.term("=", mOne, mA.getTermVariable());
-		
+
 		unifier.getOrConstructPredicate(singleTerm5);
 		oUnifier.getOrConstructPredicate(singleTerm5);
 		Assert.assertThat("6", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
-		
+
 		mLogger.info(oUnifier.collectPredicateUnifierStatistics());
 	}
 
@@ -228,9 +227,8 @@ public class PredicateUnifierTest {
 		oCollection1.add(oPred4);
 
 		Assert.assertThat("1", unifier.getOrConstructPredicateForConjunction(collection1).getFormula().toString(),
-		Is.is(oUnifier.getOrConstructPredicateForConjunction(oCollection1).getFormula().toString()));
-		
-		
+				Is.is(oUnifier.getOrConstructPredicateForConjunction(oCollection1).getFormula().toString()));
+
 		Assert.assertThat("2", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -254,23 +252,23 @@ public class PredicateUnifierTest {
 		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
-		
+
 		final Collection<IPredicate> collection1 = new HashSet<>();
 		collection1.add(pred1);
 		collection1.add(pred2);
 		collection1.add(pred3);
-		
+
 		final Collection<IPredicate> oCollection1 = new HashSet<>();
 		oCollection1.add(oPred1);
 		oCollection1.add(oPred2);
 		oCollection1.add(oPred3);
-		
+
 		Assert.assertThat("1", unifier.getOrConstructPredicateForDisjunction(collection1).getFormula().toString(),
 				Is.is(oUnifier.getOrConstructPredicateForDisjunction(oCollection1).getFormula().toString()));
-		
+
 		Assert.assertThat("2", unifier.getOrConstructPredicate(singleTerm4).getFormula().toString(),
 				Is.is(oUnifier.getOrConstructPredicate(singleTerm4).getFormula().toString()));
-		
+
 		Assert.assertThat("3", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -289,16 +287,16 @@ public class PredicateUnifierTest {
 		final Term term3 = mScript.term("or", singleTerm2, singleTerm3);
 
 		assertEqualSet("1", unifier.cannibalize(false, term2), oUnifier.cannibalize(false, term2));
-		
+
 		unifier.getOrConstructPredicate(singleTerm1);
 		oUnifier.getOrConstructPredicate(singleTerm1);
-		
+
 		assertEqualSet("2", unifier.cannibalize(false, term2), oUnifier.cannibalize(false, term2));
 		assertEqualSet("3", unifier.cannibalize(true, term2), oUnifier.cannibalize(true, term2));
 		assertEqualSet("4", unifier.cannibalize(false, term1), oUnifier.cannibalize(false, term1));
 		assertEqualSet("5", unifier.cannibalize(false, term3), oUnifier.cannibalize(false, term3));
 		assertEqualSet("6", unifier.cannibalize(true, term3), oUnifier.cannibalize(true, term3));
-		
+
 		Assert.assertThat("7", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -307,7 +305,7 @@ public class PredicateUnifierTest {
 	public void testGetOrConstructPredicate() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		
+
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
@@ -321,7 +319,7 @@ public class PredicateUnifierTest {
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(term2);
 		final IPredicate pred3 = unifier.getOrConstructPredicate(mScript.term("and", term2, term3));
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(mScript.term("and", term2, term3));
-		
+
 		final IPredicate truePred = unifier.getOrConstructPredicate(mScript.term("or", term2, term3));
 		final IPredicate oTruePred = oUnifier.getOrConstructPredicate(mScript.term("or", term2, term3));
 		final IPredicate falsePred = unifier.getOrConstructPredicate(mScript.term("and", term1, term4));
@@ -335,12 +333,12 @@ public class PredicateUnifierTest {
 		Assert.assertThat("1", pred1.getFormula().toString(), Is.is(oPred1.getFormula().toString()));
 		Assert.assertThat("2", pred2.getFormula().toString(), Is.is(oPred2.getFormula().toString()));
 		Assert.assertThat("3", pred3.getFormula().toString(), Is.is(oPred3.getFormula().toString()));
-		
+
 		Assert.assertThat("4", truePred.getFormula().toString(), Is.is(oTruePred.getFormula().toString()));
 		Assert.assertThat("5", falsePred.getFormula().toString(), Is.is(oFalsePred.getFormula().toString()));
 		Assert.assertThat("6", truePred2.getFormula().toString(), Is.is(oTruePred2.getFormula().toString()));
 		Assert.assertThat("7", pred4.getFormula().toString(), Is.is(oPred4.getFormula().toString()));
-		
+
 		Assert.assertThat("8", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -355,13 +353,13 @@ public class PredicateUnifierTest {
 
 		final TestPredicate pred1 = pred("=", mA, 1);
 		final TestPredicate pred2 = pred("=", mA, 1);
-		
+
 		final IPredicate pred3 = unifier.getOrConstructPredicate(pred1);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(pred1);
-		
+
 		final IPredicate pred4 = unifier.getOrConstructPredicate(and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2))));
 		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2))));
-		
+
 		final TestPredicate pred5 = and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2)));
 		final TestPredicate pred6 = and(neg(pred(">", mA, 2)), (pred("<", mA, 2)));
 		final IPredicate pred7 = new TestPredicate(mScript.term("true"), new HashSet<>(), mScript);
@@ -375,7 +373,7 @@ public class PredicateUnifierTest {
 		Assert.assertThat("7", unifier.isRepresentative(pred5), Is.is(oUnifier.isRepresentative(pred5)));
 		Assert.assertThat("8", unifier.isRepresentative(pred6), Is.is(oUnifier.isRepresentative(pred6)));
 		Assert.assertThat("9", unifier.isRepresentative(pred7), Is.is(oUnifier.isRepresentative(pred7)));
-		
+
 		Assert.assertThat("10", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -392,12 +390,12 @@ public class PredicateUnifierTest {
 		Assert.assertThat("2", unifier.getFalsePredicate().getFormula(),
 				Is.is(oUnifier.getFalsePredicate().getFormula()));
 		Assert.assertThat("3", unifier.getPredicateFactory(), Is.is(oUnifier.getPredicateFactory()));
-		
+
 		Assert.assertThat("4", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
-	
-	private String assertEqualSet(String s, Set<IPredicate> a, Set<IPredicate> b) {
+
+	private String assertEqualSet(final String s, final Set<IPredicate> a, final Set<IPredicate> b) {
 		final Set<String> sa = new HashSet<>();
 		final Set<String> sb = new HashSet<>();
 		a.forEach(p -> sa.add(p.getFormula().toString()));
