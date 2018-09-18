@@ -8,8 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
+ de.uni_freiburg.informatik.ultimate.lib.smtlib
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,
