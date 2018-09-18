@@ -132,13 +132,13 @@ public class PredicateUnifierTest {
 		unifier.getOrConstructPredicate(mScript.term("or", term9, term6));
 
 		// unifier.mPredicateTrie.print();
-		mLogger.info(unifier.mImplicationGraph.toString());
+		mLogger.info(unifier.toString());
 		mLogger.info(unifier.restructurePredicateTrie());
 	}
 
 	@Test
 	public void PredicateCoverageChecker() {
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -196,7 +196,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testGetOrConstructPredicateForConjunction() {
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -235,7 +235,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testGetOrConstructPredicateForDisjunction() {
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -276,7 +276,7 @@ public class PredicateUnifierTest {
 	@Test
 	public void testCannibalize() {
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
@@ -303,7 +303,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testGetOrConstructPredicate() {
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -346,7 +346,7 @@ public class PredicateUnifierTest {
 	@Test
 	public void testIsRepresentative() {
 
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
@@ -380,7 +380,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testSipleGetFunctions() {
-		final PredicateUnifier oUnifier = new PredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable,
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
