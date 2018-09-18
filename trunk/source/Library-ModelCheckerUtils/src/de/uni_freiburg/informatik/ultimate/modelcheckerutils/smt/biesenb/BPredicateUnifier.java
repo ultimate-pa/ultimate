@@ -59,8 +59,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
-	public PredicateTrie<IPredicate> mPredicateTrie;
-	public final ImplicationGraph<IPredicate> mImplicationGraph;
+	private final PredicateTrie<IPredicate> mPredicateTrie;
+	private final ImplicationGraph<IPredicate> mImplicationGraph;
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
@@ -354,6 +354,11 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	@Override
 	public IPredicate getFalsePredicate() {
 		return mFalsePredicate;
+	}
+
+	@Override
+	public String toString() {
+		return mPredicateTrie.toString() + " " + mImplicationGraph.toString();
 	}
 
 	public static final class PredicateUnifierStatisticsTracker {
