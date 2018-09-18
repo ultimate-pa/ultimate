@@ -75,12 +75,9 @@ public class ModelVertex implements IVertex {
 	}
 
 	@Override
-	public void toString(final StringBuilder sb) {
-		sb.append("inner: " + hashCode()%100 + mWitness.toString() + " -> " + mTrueChild.hashCode()%100 + mTrueChild.toString()
-				+ " ^ " + mFalseChild.hashCode()%100 + mFalseChild.toString());
-		sb.append("\n");
-		mTrueChild.toString(sb);
-		mFalseChild.toString(sb);
+	public void print() {
+	System.out.println(("inner: " + hashCode()%100 + mWitness.toString() + " -> " + mTrueChild.hashCode()%100 + mTrueChild.toString()
+				+ " ^ " + mFalseChild.hashCode()%100 + mFalseChild.toString()));
 	}
 
 	@Override

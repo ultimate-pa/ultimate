@@ -26,21 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb.BPredicateUnifier.PredicateUnifierStatisticsTracker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 /**
  * Data structure that stores predicates in a tree, to check for equivalent predicates in a efficient way
@@ -51,17 +58,43 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class PredicateTrie<T extends IPredicate> {
 	private final T mTruePredicate;
 	private final T mFalsePredicate;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgnScript;
-	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
 	
 	private IVertex mRoot;
 
-	protected PredicateTrie(final ManagedScript script, final T truePredicate, final T falsePredicate, PredicateUnifierStatisticsTracker statisticsTracker) {
+	protected PredicateTrie(final ManagedScript script, final T truePredicate, final T falsePredicate,  final IIcfgSymbolTable symbolTable) {
 		mMgnScript = script;
+		mSymbolTable = symbolTable;
 		mTruePredicate = truePredicate;
 		mFalsePredicate = falsePredicate;
 		mRoot = null;
-		mStatisticsTracker = statisticsTracker;
+	}
+	
+	protected int getDepth() {
+		if(mRoot == null) return 0;
+		return getDepthHelper(mRoot, 0);
+	}
+	
+	private int getDepthHelper(IVertex vertex, int depth) {
+		if(vertex instanceof PredicateVertex) {
+			return depth + 1;
+		}
+		int trueMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(false), depth + 1);
+		int falseMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(true), depth + 1);
+		return Math.max(trueMaxDepth,falseMaxDepth);
+	}
+	
+	public void print() {
+		stringHelper(mRoot);
+	}
+	
+	private void stringHelper(IVertex vertex) {
+		vertex.print();
+		if(vertex instanceof ModelVertex) {
+			stringHelper(((ModelVertex) vertex).getChild(true));
+			stringHelper(((ModelVertex) vertex).getChild(false));
+		}
 	}
 	
 	/*
@@ -86,6 +119,19 @@ public class PredicateTrie<T extends IPredicate> {
 		Collection<T> unifiedSet = new HashSet<>();
 		predicates.forEach(p -> unifiedSet.add(unifyPredicate(p)));
 		return unifiedSet;
+	}
+	
+	protected Map<Term, Term> getWitness(T fulfill, Set<T> unfulfill) {
+		Script script = mMgnScript.getScript();
+		Collection<Term> unfulfillTerms = new HashSet<>();
+		unfulfill.forEach(p -> unfulfillTerms.add(p.getFormula()));
+		Term joined = script.term("true");
+		if(!unfulfillTerms.isEmpty()) {
+			unfulfillTerms.add(mFalsePredicate.getFormula());
+			joined = script.term("not",  script.term("or" , unfulfillTerms.toArray(new Term[unfulfillTerms.size()])));
+		}
+		Term all = script.term("and" , fulfill.getFormula(), joined);
+		return getWitness(all);
 	}
 
 	/**
@@ -172,6 +218,7 @@ public class PredicateTrie<T extends IPredicate> {
 		final T localPred = leafPredicate;
 		final Term local = localPred.getClosedFormula();
 		final Term other = predicate.getClosedFormula();
+		// TODO replace with getWitness()
 		mMgnScript.lock(this);
 		final Term isEqual = mMgnScript.term(this, "distinct", local, other);
 		mMgnScript.push(this, 1);
@@ -193,6 +240,28 @@ public class PredicateTrie<T extends IPredicate> {
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot handle case were solver cannot decide equality of predicates");
+			}
+		} finally {
+			mMgnScript.pop(this, 1);
+			mMgnScript.unlock(this);
+		}
+	}
+	
+	private Map<Term, Term> getWitness(Term term){
+		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgnScript.getScript(), mSymbolTable);
+		mMgnScript.lock(this);
+		mMgnScript.push(this, 1);
+		try {
+			mMgnScript.assertTerm(this, termVarsProc.getClosedFormula());
+			final LBool result = mMgnScript.checkSat(this);
+			if (result == LBool.SAT) {
+				final Set<IProgramVar> vars = termVarsProc.getVars();
+				final Set<ApplicationTerm> terms =
+						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
+				return mMgnScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
+			} else {
+				throw new UnsupportedOperationException(
+						"Solver cannot find a model for the term " + term);
 			}
 		} finally {
 			mMgnScript.pop(this, 1);

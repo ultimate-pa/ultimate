@@ -31,6 +31,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
  */
 public interface IVertex {
 
-	void toString(StringBuilder sb);
+	void print();
 
 }

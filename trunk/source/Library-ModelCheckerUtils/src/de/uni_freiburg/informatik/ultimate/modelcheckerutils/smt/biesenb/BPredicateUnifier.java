@@ -26,15 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -42,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -54,38 +61,118 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
-	private final PredicateTrie<IPredicate> mPredicateTrie;
-	private final ImplicationGraph<IPredicate> mImplicationGraph;
+	public PredicateTrie<IPredicate> mPredicateTrie;
+	public final ImplicationGraph<IPredicate> mImplicationGraph;
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
 	private final PredicateCoverageChecker mConverageChecker;
+	private final IIcfgSymbolTable mSymbolTable;
 	
 	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
-			final BasicPredicateFactory factory) {
+			final BasicPredicateFactory factory,  final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mMgdScript = script;
 		mScript = mMgdScript.getScript();
 		mBasicPredicateFactory = factory;
+		mSymbolTable = symbolTable;
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsTracker();
-		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mStatisticsTracker);
+		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
 		mConverageChecker = new PredicateCoverageChecker(mImplicationGraph);
 		
 		mPredicates.add(mTruePredicate);
-		mPredicates.add(mFalsePredicate);	
+		mPredicates.add(mFalsePredicate);
+	}
+	
+	public Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> restructurePredicateTrie() {
+		int oldDepth = mPredicateTrie.getDepth();
+		//Empty trie
+		if(oldDepth <= 0) return new HashMap<>();
+		//trie already has minimal depth (true and false are not in depth included)
+		//if(oldDepth <= minDepth(mPredicates.size() - 2)) return new HashMap<>();
+		
+		Pair<ImplicationGraph<IPredicate>, Map<ImplicationVertex<IPredicate>, ImplicationVertex<IPredicate>>> copyPair 
+			= mImplicationGraph.createFullCopy();
+		ImplicationGraph<IPredicate> copy = copyPair.getFirst();
+		
+		//while(!every ModelVertex is determend)
+		Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> witnesses = new HashMap<>();
+		getWitnessInductive(copy, witnesses);
+		//Add all predicates to the trie
+		
+		PredicateTrie restructuredTrie = new PredicateTrie(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		if(oldDepth - mPredicateTrie.getDepth() > 0) {
+			//mPredicateTrie = restructuredTrie;
+		}
+		return witnesses;
+		//return oldDepth - mPredicateTrie.getDepth();
+	}
+	
+	private Map<Term, Term> getWitnessInductive(ImplicationGraph<IPredicate> graph, 
+			Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> witnesses){
+		//Find best vertex
+		int optimum = graph.getVertices().size()/2;
+		int minDif = optimum;
+		ImplicationVertex<IPredicate> vertex = graph.getFalseVertex();
+		for(ImplicationVertex<IPredicate> v : graph.getVertices()) {
+			int vCount =  v.getDescendants().size() + 1;
+			if(vCount == optimum) {
+				vertex = v;
+				break;
+			}else if(Math.abs(optimum - vCount) < minDif) {
+				minDif = Math.abs(optimum - vCount);
+				vertex = v;
+			}
+		}
+		//Find model
+		Map<Term, Term> witness = mPredicateTrie.getWitness(vertex.getPredicate(), getBranches(vertex));
+		
+		Map<Term, Term> trueWitness = null;
+		Map<Term, Term> falseWitness = null;
+		
+		Set<ImplicationVertex<IPredicate>> trueSide = new HashSet<>();
+		trueSide.add(vertex);
+		ImplicationGraph<IPredicate> trueGraph = graph.createSubCopy(trueSide, true).getFirst();
+		if(trueGraph.getVertices().size() > 3) {
+			trueWitness = getWitnessInductive(trueGraph, witnesses);
+		}
+		graph.removeAllImpliedVertices(vertex, true);
+		graph.removeVertex(vertex);
+		if(graph.getVertices().size() > 3) {
+			falseWitness = getWitnessInductive(graph, witnesses);
+		}
+		witnesses.put(witness, new Pair<>(trueWitness,falseWitness));
+		return witness;
+	}
+	
+	private Set<IPredicate> getBranches(ImplicationVertex vertex) {
+		Set<ImplicationVertex<IPredicate>> decendents = vertex.getDescendants();
+		Set<IPredicate> branches = new HashSet<>();
+		for(ImplicationVertex<IPredicate> d : decendents) {
+			d.getParents().forEach(p -> {if(!decendents.contains(p)) { branches.add(p.getPredicate()); }});
+		}
+		branches.remove(vertex.getPredicate());
+		return branches;
+	}
+	
+	private int minDepth(int x) {
+		return (int) Math.ceil((Math.log(x)/Math.log(2)) + 1);
 	}
 
 	@Override
 	public IPredicate getOrConstructPredicateForDisjunction(final Collection<IPredicate> disjunction) {
-		final Collection<IPredicate> unifiedDisjunction = mPredicateTrie.unifyPredicateCollection(disjunction);
-
+		for(IPredicate d : disjunction) {
+			if(!mPredicates.contains(d)) {
+				throw new AssertionError("PredicateUnifier does not know the predicate " + d);
+			}
+		}
 		final ImplicationGraph<IPredicate> copyGraph = mImplicationGraph.createFullCopy().getFirst();
 
 		final Collection<IPredicate> checked = new HashSet<>();
@@ -95,7 +182,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		// remove predicates that imply other predicates of the collection
 		while (!childless.isEmpty()) {
 			final ImplicationVertex<IPredicate> next = childless.pop();
-			if (unifiedDisjunction.contains(next.getPredicate())) {
+			if (disjunction.contains(next.getPredicate())) {
 				checked.add(next.getPredicate());
 				copyGraph.removeAllVerticesImplying(next);
 			} else {
@@ -112,10 +199,20 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IPredicate getOrConstructPredicateForConjunction(final Collection<IPredicate> conjunction) {
-		final Collection<IPredicate> unifiedConjunction = mPredicateTrie.unifyPredicateCollection(conjunction);
+		for(IPredicate c : conjunction) {
+			if(!mPredicates.contains(c)) {
+				throw new AssertionError("PredicateUnifier does not know the predicate " + c);
+			}
+		}
 		final Collection<IPredicate> minimalConjunction =
-				mImplicationGraph.removeImplyedVerticesFromCollection(unifiedConjunction);
-		return getOrConstructPredicate(mBasicPredicateFactory.and(minimalConjunction));
+				mImplicationGraph.removeImplyedVerticesFromCollection(conjunction);
+		IPredicate pred = mBasicPredicateFactory.and(minimalConjunction);
+		for(IPredicate p : mPredicates) {
+			if(p.getFormula().equals(pred.getFormula())) {
+				return p;
+			}
+		}
+		return getOrConstructPredicate(pred);
 	}
 
 	@Override
@@ -181,12 +278,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	 */
 	public IPredicate getOrConstructPredicate(final Term term) {
 		mStatisticsTracker.incrementGetRequests();
+		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
+		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
 		// catch terms equal to true of false
-		final IPredicate predicate = mBasicPredicateFactory.newPredicate(term);
-		if (mTruePredicate.getFormula().equals(term)) {
+		if (mTruePredicate.getFormula().equals(commuNF)) {
 			mStatisticsTracker.incrementSyntacticMatches();
 			return mTruePredicate;
-		} else if (mFalsePredicate.getFormula().equals(term)) {
+		} else if (mFalsePredicate.getFormula().equals(commuNF)) {
 			mStatisticsTracker.incrementSyntacticMatches();
 			return mFalsePredicate;
 		} else if (isDistinct(predicate, mTruePredicate) == LBool.UNSAT) {
@@ -199,15 +297,16 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);
 		// Check if predicate is new to the unifier
-		if (unifiedPredicate == predicate) {
-			if(mPredicates.add(predicate)) {
-				mImplicationGraph.unifyPredicate(predicate);
-				mStatisticsTracker.incrementConstructedPredicates();
-			} else {
-				mStatisticsTracker.incrementSyntacticMatches();
-			}
+		if(mPredicates.add(unifiedPredicate)) {
+			mImplicationGraph.unifyPredicate(unifiedPredicate);
+			mStatisticsTracker.incrementConstructedPredicates();
 		} else {
-			mStatisticsTracker.incrementSemanticMatches();
+			// Check syntactic or semantic match
+			if (unifiedPredicate.getFormula().toString().equals(predicate.getFormula().toString())) {
+				mStatisticsTracker.incrementSyntacticMatches();
+			} else {
+				mStatisticsTracker.incrementSemanticMatches();
+			}
 		}
 		return unifiedPredicate;
 	}
@@ -218,6 +317,9 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	 * returned.
 	 */
 	public IPredicate getOrConstructPredicate(final IPredicate predicate) {
+		if(mPredicates.contains(predicate)) {
+			return predicate;
+		}
 		return getOrConstructPredicate(predicate.getFormula());
 	}
 
