@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
@@ -86,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateConstructionVisitor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.CegarLoopConcurrentAutomata;
 
 public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLoopConcurrentAutomata<LETTER> {
@@ -104,10 +104,10 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services,
 				storage);
-		mPredicateUnifier = new PredicateUnifier(services, csToolkit.getManagedScript(), predicateFactory,
-				rootNode.getSymboltable(), mSimplificationTechnique, mXnfConversionTechnique,
-				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
-				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
+		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(),
+				predicateFactory, rootNode.getSymboltable(), mSimplificationTechnique,
+				mXnfConversionTechnique,
+				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")), predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
 
 	@Override

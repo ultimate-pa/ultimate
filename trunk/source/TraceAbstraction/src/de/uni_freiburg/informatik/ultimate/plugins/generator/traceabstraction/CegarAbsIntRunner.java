@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsI
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -97,7 +98,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener.AbsIntPredicateInterpolantSequenceWeakener;
 
 /**
@@ -259,8 +259,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
 			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> currentCex,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IRun<LETTER, IPredicate, ?> currentCex, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		if (mCurrentIteration == null) {
 			throw createNoFixpointsException();
 		}
@@ -353,7 +352,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mResult.getUsedDomain().createBottomState());
 			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getTruePredicate(),
 					mResult.getUsedDomain().createTopState());
-			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mServices, mCsToolkit.getManagedScript(),
+			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					mFalsePredicate, mTruePredicate);
@@ -645,11 +644,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private static final class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends PredicateUnifier {
 
-		public AbsIntPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-				final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
-				final SimplificationTechnique simplificationTechnique,
+		public AbsIntPredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
+				final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
+				final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 				final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
-			super(services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
+			super(logger, services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
 					xnfConversionTechnique, initialPredicates);
 		}
 

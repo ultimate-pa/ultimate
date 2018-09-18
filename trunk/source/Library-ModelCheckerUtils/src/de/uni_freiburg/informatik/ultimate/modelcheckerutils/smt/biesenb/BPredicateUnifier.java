@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -68,7 +69,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final PredicateCoverageChecker mCoverageChecker;
 	private final IIcfgSymbolTable mSymbolTable;
 
-	private final PredicateUnifierStatisticsTracker mStatisticsTracker;
+	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
 			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
@@ -80,7 +81,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
-		mStatisticsTracker = new PredicateUnifierStatisticsTracker();
+		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
 		mCoverageChecker = new PredicateCoverageChecker(mImplicationGraph, this);
@@ -236,8 +237,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IStatisticsDataProvider getPredicateUnifierBenchmark() {
-		// TODO Auto-generated method stub
-		return null;
+		return mStatisticsTracker;
 	}
 
 	@Override
@@ -359,51 +359,5 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	@Override
 	public String toString() {
 		return mPredicateTrie.toString() + " " + mImplicationGraph.toString();
-	}
-
-	public static final class PredicateUnifierStatisticsTracker {
-
-		private int mDeclaredPredicates = 0;
-		private int mGetRequests = 0;
-		private int mSyntacticMatches = 0;
-		private int mSemanticMatches = 0;
-		private int mConstructedPredicates = 0;
-		private int mIntricatePredicates = 0;
-		private final int mDeprecatedPredicatesCount = 0;
-		private final int mImplicationChecksByTransitivity = 0;
-
-		private PredicateUnifierStatisticsTracker() {
-		}
-
-		@Override
-		public String toString() {
-			return mDeclaredPredicates + " DeclaredPredicates, " + mGetRequests + " GetRequests, " + mSyntacticMatches
-					+ " SyntacticMatches, " + mSemanticMatches + " SemanticMatches, " + mConstructedPredicates
-					+ " ConstructedPredicates";
-		}
-
-		public void incrementDeclaredPredicates() {
-			mDeclaredPredicates++;
-		}
-
-		public void incrementGetRequests() {
-			mGetRequests++;
-		}
-
-		public void incrementSyntacticMatches() {
-			mSyntacticMatches++;
-		}
-
-		public void incrementSemanticMatches() {
-			mSemanticMatches++;
-		}
-
-		public void incrementConstructedPredicates() {
-			mConstructedPredicates++;
-		}
-
-		public void incrementIntricatePredicates() {
-			mIntricatePredicates++;
-		}
 	}
 }

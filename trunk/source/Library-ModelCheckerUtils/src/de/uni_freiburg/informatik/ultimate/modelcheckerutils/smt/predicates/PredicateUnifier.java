@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,8 +34,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -62,13 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -76,11 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Data structure that stores for each term a unique predicate. Initially a predicate unifier constructs a "true"
@@ -110,10 +98,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	private final PredicateUnifierStatisticsGenerator mPredicateUnifierBenchmarkGenerator;
 
-	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IPredicate... initialPredicates) {
+	public PredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
+			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -122,7 +110,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		mScript = mgdScript.getScript();
 		mSymbolTable = symbolTable;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = logger;
 		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgnScript);
 		mTerm2Predicates = new HashMap<>();
 		final Term trueTerm = mScript.term("true");
@@ -697,176 +685,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 							+ mUnknownCoverageRelations + mNotCheckedCoverageRelations);
 		}
 
-	}
-
-	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
-
-		DeclaredPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		GetRequests(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SyntacticMatches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SemanticMatches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		ConstructedPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		IntricatePredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		DeprecatedPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		ImplicationChecksByTransitivity(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),;
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		PredicateUniferStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
-	}
-
-	public static class PredicateUnifierStatisticsType extends StatisticsType<PredicateUniferStatisticsDefinitions> {
-
-		private static final PredicateUnifierStatisticsType INSTANCE = new PredicateUnifierStatisticsType();
-
-		public PredicateUnifierStatisticsType() {
-			super(PredicateUniferStatisticsDefinitions.class);
-		}
-
-		public static PredicateUnifierStatisticsType getInstance() {
-			return INSTANCE;
-		}
-	}
-
-	public class PredicateUnifierStatisticsGenerator implements IStatisticsDataProvider {
-
-		private int mDeclaredPredicates = 0;
-		private int mGetRequests = 0;
-		private int mSyntacticMatches = 0;
-		private int mSemanticMatches = 0;
-		private int mConstructedPredicates = 0;
-		private int mIntricatePredicates = 0;
-		private int mDeprecatedPredicatesCount = 0;
-		private int mImplicationChecksByTransitivity = 0;
-		protected final Benchmark mBenchmark;
-
-		protected boolean mRunning = false;
-
-		public PredicateUnifierStatisticsGenerator() {
-			mBenchmark = new Benchmark();
-			mBenchmark.register(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		public void incrementDeclaredPredicates() {
-			mDeclaredPredicates++;
-		}
-
-		public void incrementGetRequests() {
-			mGetRequests++;
-		}
-
-		public void incrementSyntacticMatches() {
-			mSyntacticMatches++;
-		}
-
-		public void incrementSemanticMatches() {
-			mSemanticMatches++;
-		}
-
-		public void incrementConstructedPredicates() {
-			mConstructedPredicates++;
-		}
-
-		public void incrementIntricatePredicates() {
-			mIntricatePredicates++;
-		}
-
-		public void incrementDeprecatedPredicates() {
-			mDeprecatedPredicatesCount++;
-			assert mDeprecatedPredicatesCount == mDeprecatedPredicates
-					.size() : "number of deprecated predicates inconsistent";
-		}
-
-		public void incrementImplicationChecksByTransitivity() {
-			mImplicationChecksByTransitivity++;
-		}
-
-		public long getTime() {
-			return (long) mBenchmark.getElapsedTime(String.valueOf(PredicateUniferStatisticsDefinitions.Time),
-					TimeUnit.NANOSECONDS);
-		}
-
-		public void continueTime() {
-			assert !mRunning : "Timing already running";
-			mRunning = true;
-			mBenchmark.unpause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		public void stopTime() {
-			assert mRunning : "Timing not running";
-			mRunning = false;
-			mBenchmark.pause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return PredicateUnifierStatisticsType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			final PredicateUniferStatisticsDefinitions keyEnum =
-					Enum.valueOf(PredicateUniferStatisticsDefinitions.class, key);
-			switch (keyEnum) {
-			case DeclaredPredicates:
-				return mDeclaredPredicates;
-			case GetRequests:
-				return mGetRequests;
-			case SyntacticMatches:
-				return mSyntacticMatches;
-			case SemanticMatches:
-				return mSemanticMatches;
-			case ConstructedPredicates:
-				return mConstructedPredicates;
-			case IntricatePredicates:
-				return mIntricatePredicates;
-			case DeprecatedPredicates:
-				return mDeprecatedPredicatesCount;
-			case ImplicationChecksByTransitivity:
-				return mImplicationChecksByTransitivity;
-			case Time:
-				return getTime();
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return PredicateUnifierStatisticsType.getInstance();
-		}
 	}
 
 	/**

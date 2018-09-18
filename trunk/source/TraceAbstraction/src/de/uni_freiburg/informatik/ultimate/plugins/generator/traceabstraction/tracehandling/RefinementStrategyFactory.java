@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Factory for obtaining an {@link IRefinementStrategy}.
@@ -133,9 +133,9 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	protected PredicateUnifier getNewPredicateUnifier() {
-		return new PredicateUnifier(mServices, mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory,
-				mInitialIcfg.getCfgSmtToolkit().getSymbolTable(), mPrefsConsolidation.getSimplificationTechnique(),
-				mPrefsConsolidation.getXnfConversionTechnique());
+		return new PredicateUnifier(mLogger, mServices, mPrefs.getCfgSmtToolkit().getManagedScript(),
+				mPredicateFactory, mInitialIcfg.getCfgSmtToolkit().getSymbolTable(),
+				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
 	}
 
 	/**

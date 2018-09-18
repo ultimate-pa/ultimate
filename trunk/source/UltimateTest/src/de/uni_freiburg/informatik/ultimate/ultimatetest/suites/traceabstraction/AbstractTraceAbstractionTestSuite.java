@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUniferStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.PredicateUniferStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogC
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvSummary;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.KingOfTheHillSumm
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuite;
@@ -119,7 +119,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
 //								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_" 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_"
 								+ AutomataMinimizationStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time",
@@ -144,10 +144,10 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class),
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
-//				new CsvConcatenator(this.getClass(), StatisticsData.class),
+				// new CsvConcatenator(this.getClass(), StatisticsData.class),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				// new LatexDetailedSummary(getClass(), benchmarks, columnDef),
-				 new CsvSummary(getClass(), benchmarks, columnDef),
+				new CsvSummary(getClass(), benchmarks, columnDef),
 				// new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()), new StandingsSummary(this.getClass()), };
 	}
@@ -156,7 +156,6 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
 				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
-				new IncrementalLogCsv(this.getClass(), StatisticsData.class),
-				};
+				new IncrementalLogCsv(this.getClass(), StatisticsData.class), };
 	}
 }
