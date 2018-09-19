@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -56,7 +57,7 @@ public class CounterExampleToTest {
 		for(int i = 0; i < translatedPe.getLength(); i++) {
 			if( isTestPurposeAssertion((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i))) {
 				if (translatedPe.getProgramState(i) == null) continue;
-				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i), i));
+				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i)));
 			}
 		}
 		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates);
@@ -76,9 +77,10 @@ public class CounterExampleToTest {
 		return false;
 	}
 	
-	private SystemState generateObservableProgramState(final ProgramState<Expression> programState, int i) {
+	private SystemState generateObservableProgramState(final ProgramState<Expression> programState) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
 		LinkedHashSet<Expression> inputs = new LinkedHashSet<Expression>();
+		int i = 0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
 					mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
@@ -90,6 +92,11 @@ public class CounterExampleToTest {
 					isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)) {	
 				observableState.put(e, programState.getValues(e));
 			}
+			if (e instanceof IdentifierExpression && 
+					((IdentifierExpression) e).getIdentifier().equals("delta")){
+						IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+						i =  Integer.parseInt(ilit.getValue());
+					}
 		}
 		return new SystemState(observableState, inputs, i);
 	}

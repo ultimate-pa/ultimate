@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -65,9 +66,9 @@ public class ReqToGraph {
 
 	public ReqGuardGraph patternToBuechi(PatternType pattern){
 		if(pattern instanceof InvariantPattern){
-			return getInvariantPatternToBuechi(pattern);
+			return getInvariantPatternToAut(pattern);
 		} else if(pattern instanceof BndResponsePatternUT){
-			return getBndResponsePatternUTPatternToAutomaton(pattern);
+			return getBndResponsePatternUTPatternToAut(pattern);
 		} else {
 			throw new RuntimeException("Pattern type not implemented");
 		}
@@ -76,7 +77,76 @@ public class ReqToGraph {
 	/*
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units.
 	 */
-	private ReqGuardGraph getBndResponsePatternUTPatternToAutomaton(PatternType pattern){
+	private ReqGuardGraph getBndResponsePatternUTPatternToAut(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			//create states to identify automaton
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1);
+			final ReqGuardGraph qw = new ReqGuardGraph(2);
+			//create effect guards
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			final String duration = pattern.getDuration().get(0);
+			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
+			Term clockGuard = SmtUtils.leq(mScript, clockIdent, mScript.numeral(duration));		
+					//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR); 
+			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
+			final Term nuS = SmtUtils.not(mScript, uS);
+			final Term nS = SmtUtils.not(mScript, S);
+			final Term nuSornSuS = SmtUtils.or(mScript, nuS, SmtUtils.and(mScript, uS, nS)); // (not Us) or (Us and not S)
+			final Term nR = SmtUtils.not(mScript, R);
+			
+			q0.connectOutgoing(q0, new TimedLabel(
+					SmtUtils.and(mScript, ndS,
+						//SmtUtils.or(mScript,
+								 SmtUtils.and(mScript, uR, nR)
+								//, SmtUtils.or(mScript, SmtUtils.and(mScript, uS, S)))
+									)));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS
+					//, nuSornSuS
+					), clockIdent));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, ndS, clockGuard, nS)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS, clockGuard)));
+			
+			q0.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript, 
+					SmtUtils.and(mScript, uR, nR, ndS),
+					SmtUtils.and(mScript, uS, S, ndS))));
+			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, nuSornSuS, ndS), clockIdent));
+			
+			return q0;		
+		} else {
+			throw new RuntimeException("Scope not implemented");
+		}
+	}
+	
+	/*
+	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
+	 */
+	private ReqGuardGraph getInvariantPatternToAut(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			q0.connectOutgoing(q0, new TimedLabel(R));
+			return q0;
+		} else {
+			throw new RuntimeException("Scope not implemented");
+		}
+	}
+	
+	/*
+	 *  * {scope}, it is always the case that if "R" holds, then "S" holds in the next Step.
+	 */
+	private ReqGuardGraph getImmediateResponsePatternToAutomaton(PatternType pattern){
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -97,33 +167,18 @@ public class ReqToGraph {
 			final Term notR = SmtUtils.not(mScript, R);
 			final Term notRandS = SmtUtils.and(mScript, notR, S);
 			
-			q0.connectOutgoing(q0, SmtUtils.and(mScript, uR, notR, notE));
-			q0.connectOutgoing(q1, SmtUtils.and(mScript, uR, R, notE));
-			q1.connectOutgoing(q1, SmtUtils.and(mScript, uR, RandS , E));
-			q1.connectOutgoing(q0, SmtUtils.and(mScript, uR, notRandS , E));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, notE)));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, notE)));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, RandS , E)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notRandS , E)));
 			
-			q0.connectOutgoing(qw, SmtUtils.and(mScript, nuR, notE));
-			q1.connectOutgoing(qw, SmtUtils.and(mScript, nuR, E, S));
-			qw.connectOutgoing(qw, SmtUtils.and(mScript, nuR, notE));
-			qw.connectOutgoing(q0, SmtUtils.and(mScript, uR, notR, notE));
-			qw.connectOutgoing(q1, SmtUtils.and(mScript, uR, R, notE));
+			q0.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, notE)));
+			q1.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, E, S)));
+			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, notE)));
+			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, notE)));
+			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, notE)));
 			
 			return q0;		
-		} else {
-			throw new RuntimeException("Scope not implemented");
-		}
-	}
-	
-	/*
-	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
-	 */
-	private ReqGuardGraph getInvariantPatternToBuechi(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
-			final List<CDD> args = pattern.getCdds();
-			final Term R = mCddToSmt.toSmt(args.get(1));
-			final ReqGuardGraph q0 = new ReqGuardGraph(0);
-			q0.connectOutgoing(q0, R);
-			return q0;
 		} else {
 			throw new RuntimeException("Scope not implemented");
 		}

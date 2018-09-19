@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 public class ThreeValuedAuxVarGen {
 	
 	private final Sort mSortBool;
+	private final Sort mSortInt;
 	
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
@@ -32,7 +33,7 @@ public class ThreeValuedAuxVarGen {
 	private final Set<Term> mEffects;
 	
 	private final Map<ReqGuardGraph,Term> mReqToDefineAnnotation;
-	private final Map<ReqGuardGraph,Term> mReqToNonDefineAnnotation;  
+	private final Map<ReqGuardGraph,Term> mReqToNonDefineAnnotation;   
 	
 	public ThreeValuedAuxVarGen(ILogger logger, Script script, ReqSymbolTable reqSymbolTable) {
 		mReqSymbolTable = reqSymbolTable;
@@ -45,14 +46,15 @@ public class ThreeValuedAuxVarGen {
 		mReqToNonDefineAnnotation = new LinkedHashMap<>();
 		mReqToId = new LinkedHashMap<>();
 		mSortBool = mScript.sort("Bool");
+		mSortInt = mScript.sort("Int");
 	}
 	
 	
 	public void setEffectLabel(ReqGuardGraph req, Term effectTerm) {
 		mEffects.add(effectTerm);
 		final TermVariable[] idents = effectTerm.getFreeVars();
-		final int reqId = getReqToId(req);
 		final List<TermVariable> effectVars = getNonInputNonConstantVars(idents);
+		final int reqId = getReqToId(req);
 		final Term effectGuard = SmtUtils.and(mScript, varsToDefineAnnotations(effectVars, reqId));
 		mReqToDefineAnnotation.put(req, effectGuard);
 		final Term notEffectGuard = SmtUtils.or(mScript, varsToDefineAnnotations(effectVars, reqId));
@@ -101,6 +103,12 @@ public class ThreeValuedAuxVarGen {
 		}
 	}
 	
+	public TermVariable generateClockIdent(ReqGuardGraph req) {
+		final String auxIdent = "t_" + Integer.toString(getReqToId(req));
+		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_INT);
+		return mScript.variable(auxIdent,  mSortInt);
+	}
+	
 	private Term createUseTerm(TermVariable ident) {
 		final String auxIdent = "u_" + ident.toString();
 		mReqSymbolTable.addAuxVar(auxIdent,  BoogieType.TYPE_BOOL);
@@ -111,7 +119,7 @@ public class ThreeValuedAuxVarGen {
 		final List<Term> effectVars = new ArrayList<>();
 		for(TermVariable var: vars) {
 			effectVars.add(createDefineAnnotation(var, reqId));
-			//TODO: hack: to guarantee that there is always a use guard for which we can test.
+			//TODO: to guarantee that there is always a use guard for which we can test.
 			getUseGuard(var);
 		}
 		return effectVars;

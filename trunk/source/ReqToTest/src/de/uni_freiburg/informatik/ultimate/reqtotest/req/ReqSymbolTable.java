@@ -55,6 +55,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 	private final Set<String> mHiddenVars;
 	private final Set<String> mOutputVars;
 	private final Set<String> mAuxVars;
+	private final Set<String> mClockVars;
 	
 	private final ILocation mDummyLocation;
 	
@@ -73,6 +74,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		mHiddenVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
 		mAuxVars = new LinkedHashSet<>();
+		mClockVars = new LinkedHashSet<>();
 
 		mDummyLocation = new BoogieLocation("", -1, -1, -1, -1);
 	}
@@ -83,6 +85,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		decls.addAll(constructVariableDeclarations(mConstVars));
 		decls.addAll(constructVariableDeclarations(mStateVars));
 		decls.addAll(constructVariableDeclarations(mAuxVars));
+		decls.addAll(constructVariableDeclarations(mClockVars));
 
 		return decls;
 	}
@@ -115,6 +118,10 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return mAuxVars;
 	}
 	
+	public Set<String> getClockVars(){
+		return mClockVars;
+	}
+	
 	public boolean isNonInputNonConstVar(String ident) {
 		return (!mConstVars.contains(ident) && !mInputVars.contains(ident));
 	}
@@ -143,7 +150,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		} else if (init.getCategory() == VariableCategory.HIDDEN){
 			addVar(name, type, init, mStateVars);
 			mHiddenVars.add(name);
-		}
+		} 
 	}
 	
 	public List<Statement> constructConstantAssignments() {
@@ -196,6 +203,11 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 	
 	public void addAuxVar(final String name, final BoogieType type) {
 		mAuxVars.add(name);
+		addVar(name,type);
+	}
+	
+	public void addClockVar(final String name, final BoogieType type) {
+		mClockVars.add(name);
 		addVar(name,type);
 	}
 	
