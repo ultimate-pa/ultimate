@@ -29,6 +29,7 @@ known_exceptions = {
     "TypeErrorResult": False,
     "SyntaxErrorResult": False,
     "TypeCheckException": True,
+	"SMTLIBException: Cannot handle literal (exists" : True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
