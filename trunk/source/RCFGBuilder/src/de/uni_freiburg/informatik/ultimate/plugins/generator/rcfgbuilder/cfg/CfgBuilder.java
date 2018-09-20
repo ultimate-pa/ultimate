@@ -83,9 +83,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -110,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -157,14 +158,12 @@ public class CfgBuilder {
 
 	Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
+
 	Collection<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
-
 	Collection<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
-
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
+	private Map<String, ThreadInstance> mThreadInstanceMap;
 
-	Map<String, BoogieNonOldVar[]> mProcedureNameThreadIdMap = new HashMap<String, BoogieNonOldVar[]>();
-	Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = new HashMap<String, BoogieNonOldVar>();
 
 	private final RCFGBacktranslator mBacktranslator;
 
@@ -179,6 +178,7 @@ public class CfgBuilder {
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
 
 	public CfgBuilder(final Unit unit, final RCFGBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
@@ -204,8 +204,7 @@ public class CfgBuilder {
 				simplePartialSkolemization, forkStatements);
 		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
 		if (concurInfo != null) {
-			mProcedureNameToThreadInUseMap = concurInfo.getThreadInUseVars();
-			mProcedureNameThreadIdMap = concurInfo.getProcedureNameThreadIdMap();
+			mThreadInstanceMap = concurInfo.getThreadInstanceMap();
 		}
 
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
@@ -289,6 +288,7 @@ public class CfgBuilder {
 
 		// Build entry, final and exit node for all procedures that have an
 		// implementation
+		final BoogieIcfgContainer icfg = mIcfg;
 		for (final String procName : mBoogieDeclarations.getProcImplementation().keySet()) {
 			final Body body = mBoogieDeclarations.getProcImplementation().get(procName).getBody();
 			final Statement firstStatement = body.getBlock()[0];
@@ -297,13 +297,13 @@ public class CfgBuilder {
 			// We have to use some ASTNode for final and exit node. Let's take
 			// the procedure implementation.
 			final Procedure impl = mBoogieDeclarations.getProcImplementation().get(procName);
-			mIcfg.getProcedureEntryNodes().put(procName, entryNode);
+			icfg.getProcedureEntryNodes().put(procName, entryNode);
 			final BoogieIcfgLocation finalNode =
 					new BoogieIcfgLocation(new ProcedureFinalDebugIdentifier(procName), procName, false, impl);
-			mIcfg.mFinalNode.put(procName, finalNode);
+			icfg.mFinalNode.put(procName, finalNode);
 			final BoogieIcfgLocation exitNode =
 					new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName), procName, false, impl);
-			mIcfg.getProcedureExitNodes().put(procName, exitNode);
+			icfg.getProcedureExitNodes().put(procName, exitNode);
 
 			// new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
 		}
@@ -323,29 +323,37 @@ public class CfgBuilder {
 			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
 		}
 
-		// Add all transitions to the forked procedure entry locations.
 		for (final ForkThreadCurrent fct : mForkCurrentThreads) {
-			final BoogieIcfgLocation errorNode = procCfgBuilder.addErrorNode(fct.getPrecedingProcedure(),
-					fct.getForkStatement());
-			final BoogieNonOldVar[] threadIdVars = mProcedureNameThreadIdMap
-					.get(fct.getForkStatement().getProcedureName());
-			final BoogieNonOldVar threadInUseVar = mProcedureNameToThreadInUseMap
-					.get(fct.getForkStatement().getProcedureName());
-			addForkOtherThreadTransition(fct, errorNode, threadIdVars, threadInUseVar, mIcfg, mCbf);
+			final Map<DebugIdentifier, BoogieIcfgLocation> id2loc = mIcfg.getProgramPoints()
+					.get(fct.getPrecedingProcedure());
+			final BoogieIcfgLocation errorNode = addErrorNode(fct.getPrecedingProcedure(), fct.getForkStatement(),
+					id2loc);
+			mThreadInstanceMap.get(fct.getForkStatement().getProcedureName()).setErrorLocation(errorNode);
+		}
+
+		// Add all transitions to the forked procedure entry locations.
+		final Collection<ForkThreadCurrent> forkCurrentThreads = mForkCurrentThreads;
+		final Collection<JoinThreadCurrent> joinCurrentThreads = mJoinCurrentThreads;
+		final Collection<String> forkedProcedureNames = mForkedProcedureNames;
+		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
+
+
+		for (final ForkThreadCurrent fct : forkCurrentThreads) {
+			final ThreadInstance ti = threadInstanceMap.get(fct.getForkStatement().getProcedureName());
+
+			addForkOtherThreadTransition(fct, (BoogieIcfgLocation) ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, mCbf);
 		}
 
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
-		for (final String procName : mForkedProcedureNames) {
-			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-				for (final JoinThreadCurrent jot : mJoinCurrentThreads) {
-					final BoogieNonOldVar[] threadIdsVars = mProcedureNameThreadIdMap.get(procName);
-					final BoogieNonOldVar threadInUse = mProcedureNameToThreadInUseMap.get(procName);
-					addJoinOtherThreadTransition(jot, procName, mSimplificationTechnique, threadIdsVars, threadInUse,
-							mIcfg, mCbf);
-				}
+		for (final JoinThreadCurrent jot : joinCurrentThreads) {
+			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
+			for (final String procName : forkedProcedureNames) {
+				final ThreadInstance ti = threadInstanceMap.get(procName);
+				addJoinOtherThreadTransition(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, mCbf);
 			}
+			// }
 		}
 
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
@@ -356,18 +364,18 @@ public class CfgBuilder {
 			new LargeBlockEncoding();
 		}
 
-		final Set<BoogieIcfgLocation> initialNodes = mIcfg.getProcedureEntryNodes().entrySet().stream()
+		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
 				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
 		if (initialNodes.isEmpty()) {
 			mLogger.info("Using library mode");
-			mIcfg.getInitialNodes().addAll(mIcfg.getProcedureEntryNodes().values());
+			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
 		} else {
 			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
 					+ ULTIMATE_START + ")");
-			mIcfg.getInitialNodes().addAll(initialNodes);
+			icfg.getInitialNodes().addAll(initialNodes);
 		}
 
-		return mIcfg;
+		return icfg;
 	}
 
 	private static Expression getNegation(final Expression expr) {
@@ -429,8 +437,8 @@ public class CfgBuilder {
 	 *            that points to the next step in the current thread.
 	 */
 	private void addForkOtherThreadTransition(final ForkThreadCurrent forkEdgeCurrent,
-			final BoogieIcfgLocation errorNode, final BoogieNonOldVar[] threadIdVars,
-			final BoogieNonOldVar threadInUseVar, final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
+			final BoogieIcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
+			final IProgramNonOldVar threadInUseVar, final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
@@ -483,13 +491,11 @@ public class CfgBuilder {
 
 	/**
 	 * Add JoinOtherThreadEdge from
-	 *
 	 * @param edge
-	 * @param simplificationTechnique
 	 */
 	private void addJoinOtherThreadTransition(final JoinThreadCurrent joinEdgeCurrent, final String procName,
-			final SimplificationTechnique simplificationTechnique, final BoogieNonOldVar[] threadIdsVars,
-			final BoogieNonOldVar threadInUse, final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
+			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
+			final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 		final JoinStatement st = joinEdgeCurrent.getJoinStatement();
@@ -507,11 +513,11 @@ public class CfgBuilder {
 		//
 		//
 
-		if (threadIdsVars.length != st.getThreadID().length) {
+		if (threadIdVars.length != st.getThreadID().length) {
 			return;
 		} else {
 			int offset = 0;
-			for (final BoogieNonOldVar threadId : threadIdsVars) {
+			for (final IProgramNonOldVar threadId : threadIdVars) {
 				if (st.getThreadID()[offset].getType() != icfg.getBoogie2SMT().getTypeSortTranslator()
 						.getType(threadId.getSort())) {
 					return;
@@ -527,13 +533,12 @@ public class CfgBuilder {
 				joinEdgeCurrent);
 
 		final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(icfg.getSymboltable(),
-				icfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdsVars));
+				icfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVars));
 
 		final UnmodifiableTransFormula parameterAssignment = jsa.constructResultAssignment(
 				icfg.getBoogie2SMT().getManagedScript(), icfg.getCfgSmtToolkit().getOutParams().get(procName));
 
-		constructJoinMatchingThreadIdAssumption(threadIdsVars, st.getThreadID(), caller, simplificationTechnique);
-		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUse,
+		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUseVar,
 				icfg.getCfgSmtToolkit().getManagedScript());
 		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
@@ -553,7 +558,7 @@ public class CfgBuilder {
 	 * TODO Concurrent Boogie:
 	 * @param mgdScript
 	 */
-	private static UnmodifiableTransFormula constructForkInUseAssignment(final BoogieNonOldVar threadInUseVar,
+	private static UnmodifiableTransFormula constructForkInUseAssignment(final IProgramNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> outVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
@@ -570,7 +575,7 @@ public class CfgBuilder {
 	 * @param mgdScript
 	 * @return A {@link TransFormula} that represents the assume statement {@code var == true}.
 	 */
-	private UnmodifiableTransFormula constructThreadInUseViolationAssumption(final BoogieNonOldVar threadInUseVar,
+	private UnmodifiableTransFormula constructThreadInUseViolationAssumption(final IProgramNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> inVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
@@ -582,19 +587,6 @@ public class CfgBuilder {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	/**
-	 * TODO Concurrent Boogie:
-	 * @param joiningThreadProcedureId
-	 * @param simplificationTechnique
-	 */
-	private UnmodifiableTransFormula constructJoinMatchingThreadIdAssumption(final BoogieNonOldVar[] threadIdVar,
-			final Expression[] joinedThreadIdExpression, final String joiningThreadProcedureId,
-			final SimplificationTechnique simplificationTechnique) {
-		// FIXME Matthias 2018-08-17: take care of overapproximations
-		final TranslationResult test = mIcfg.getBoogie2SMT().getStatements2TransFormula().joinThreadIdAssumption(
-				threadIdVar, joiningThreadProcedureId, joinedThreadIdExpression, simplificationTechnique);
-		return test.getTransFormula();
-	}
 
 	/**
 	 * TODO Concurrent Boogie:
@@ -602,7 +594,7 @@ public class CfgBuilder {
 	 * @return A {@link TransFormula} that represents the assignment statement
 	 *         {@code var := false}.
 	 */
-	private UnmodifiableTransFormula constructThreadNotInUseAssingment(final BoogieNonOldVar threadInUseVar,
+	private static UnmodifiableTransFormula constructThreadNotInUseAssingment(final IProgramNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> outVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
@@ -623,6 +615,54 @@ public class CfgBuilder {
 
 	public Collection<JoinThreadCurrent> getJoinCurrentThreads() {
 		return mJoinCurrentThreads;
+	}
+
+	/**
+	 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
+	 * mErrorNodes.
+	 *
+	 * @return
+	 */
+	private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode boogieASTNode,
+			final Map<DebugIdentifier, BoogieIcfgLocation> procLocNodes) {
+		Set<BoogieIcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procName);
+		final int locNodeNumber;
+		if (errorNodes == null) {
+			errorNodes = new HashSet<>();
+			mIcfg.getProcedureErrorNodes().put(procName, errorNodes);
+			locNodeNumber = 0;
+		} else {
+			locNodeNumber = errorNodes.size();
+		}
+
+		final ProcedureErrorType type;
+		if (boogieASTNode instanceof AssertStatement) {
+			type = ProcedureErrorType.ASSERT_VIOLATION;
+		} else if (boogieASTNode instanceof EnsuresSpecification) {
+			type = ProcedureErrorType.ENSURES_VIOLATION;
+		} else if (boogieASTNode instanceof CallStatement) {
+			type = ProcedureErrorType.REQUIRES_VIOLATION;
+		} else if (boogieASTNode instanceof ForkStatement) {
+			type = ProcedureErrorType.INUSE_VIOLATION;
+		} else {
+			throw new IllegalArgumentException();
+		}
+
+		final ProcedureErrorDebugIdentifier errorLocLabel;
+		final Check check = Check.getAnnotation(boogieASTNode);
+		if (check != null) {
+			errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
+		} else {
+			errorLocLabel = new ProcedureErrorDebugIdentifier(procName, locNodeNumber, type);
+		}
+		final BoogieIcfgLocation errorLocNode =
+				new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
+		if (check != null) {
+			check.annotate(errorLocNode);
+		}
+		procLocNodes.put(errorLocLabel, errorLocNode);
+		errorNodes.add(errorLocNode);
+		return errorLocNode;
 	}
 
 
@@ -867,52 +907,7 @@ public class CfgBuilder {
 			// mBoogie2smt.removeLocals(proc);
 		}
 
-		/**
-		 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
-		 * mErrorNodes.
-		 *
-		 * @return
-		 */
-		private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode boogieASTNode) {
-			Set<BoogieIcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procName);
-			final int locNodeNumber;
-			if (errorNodes == null) {
-				errorNodes = new HashSet<>();
-				mIcfg.getProcedureErrorNodes().put(procName, errorNodes);
-				locNodeNumber = 0;
-			} else {
-				locNodeNumber = errorNodes.size();
-			}
 
-			final ProcedureErrorType type;
-			if (boogieASTNode instanceof AssertStatement) {
-				type = ProcedureErrorType.ASSERT_VIOLATION;
-			} else if (boogieASTNode instanceof EnsuresSpecification) {
-				type = ProcedureErrorType.ENSURES_VIOLATION;
-			} else if (boogieASTNode instanceof CallStatement) {
-				type = ProcedureErrorType.REQUIRES_VIOLATION;
-			} else if (boogieASTNode instanceof ForkStatement) {
-				type = ProcedureErrorType.INUSE_VIOLATION;
-			} else {
-				throw new IllegalArgumentException();
-			}
-
-			final ProcedureErrorDebugIdentifier errorLocLabel;
-			final Check check = Check.getAnnotation(boogieASTNode);
-			if (check != null) {
-				errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
-			} else {
-				errorLocLabel = new ProcedureErrorDebugIdentifier(procName, locNodeNumber, type);
-			}
-			final BoogieIcfgLocation errorLocNode =
-					new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
-			if (check != null) {
-				check.annotate(errorLocNode);
-			}
-			mProcLocNodes.put(errorLocLabel, errorLocNode);
-			errorNodes.add(errorLocNode);
-			return errorLocNode;
-		}
 
 		/**
 		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
@@ -1065,7 +1060,7 @@ public class CfgBuilder {
 					final Statement st = assumeSt;
 					ModelUtils.copyAnnotations(spec, st);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec);
+					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
 					final CodeBlock assumeEdge =
 							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
 					ModelUtils.copyAnnotations(spec, assumeEdge);
@@ -1095,6 +1090,8 @@ public class CfgBuilder {
 				}
 			}
 		}
+
+
 
 		private DebugIdentifier constructLocDebugIdentifier(final Statement stmt) {
 			final ILocation location = stmt.getLocation();
@@ -1242,7 +1239,7 @@ public class CfgBuilder {
 			final AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			ModelUtils.copyAnnotations(st, assumeError);
 			mBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
-			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st);
+			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 			final StatementSequence assumeErrorCB =
 					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
 			ModelUtils.copyAnnotations(st, errorLocNode);
@@ -1370,7 +1367,7 @@ public class CfgBuilder {
 					final Statement st1 = assumeSt;
 					ModelUtils.copyAnnotations(st, st1);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st);
+					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 					final StatementSequence errorCB =
 							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
 					ModelUtils.copyAnnotations(spec, errorCB);

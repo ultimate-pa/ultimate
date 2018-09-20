@@ -60,12 +60,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2P
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -311,16 +312,15 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	@Override
 	public IPreconditionProvider getPreconditionProvider() {
 
-		final IPreconditionProvider result = new IPreconditionProvider() {
-
+		return new IPreconditionProvider() {
 			@Override
 			public IPredicate constructPrecondition(final PredicateUnifier predicateUnifier) {
 				final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
 				if (ci == null) {
 					return predicateUnifier.getTruePredicate();
 				} else {
-					final Set<BoogieNonOldVar> threadInUseVars = ci.getThreadInUseVars().entrySet().stream()
-							.map(Entry::getValue).collect(Collectors.toSet());
+					final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
+							.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
 					final List<Term> negated = threadInUseVars.stream().map(x -> SmtUtils
 							.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
 							.collect(Collectors.toList());
@@ -330,7 +330,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				}
 			}
 		};
-		return result;
 	}
 
 

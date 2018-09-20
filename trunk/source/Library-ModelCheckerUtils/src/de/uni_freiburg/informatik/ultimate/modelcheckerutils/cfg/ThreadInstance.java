@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -25,32 +25,60 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import java.util.Map;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
 /**
+ * Adds thread instances to an ICFG
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
+ * @author heizmann@informatik.uni-freiburg.de
  */
-public class ConcurrencyInformation {
 
-	private final Map<String, ThreadInstance> mThreadInstanceMap;
+public class ThreadInstance {
 
+	private final String mThreadInstanceName;
+	private final String mThreadTemplateName;
 
+	private final IProgramNonOldVar[] mIdVars;
+	private final IProgramNonOldVar mInUseVar;
 
-	public ConcurrencyInformation(final Map<String, ThreadInstance> threadInstanceMap) {
-		mThreadInstanceMap = threadInstanceMap;
+	private IcfgLocation mErrorLocation;
+
+	public ThreadInstance(final String threadInstanceName, final String threadTemplateName, final IProgramNonOldVar[] idVars,
+			final IProgramNonOldVar inUseVar, final IcfgLocation errorLocation) {
+		super();
+		mThreadInstanceName = threadInstanceName;
+		mThreadTemplateName = threadTemplateName;
+		mIdVars = idVars;
+		mInUseVar = inUseVar;
+		mErrorLocation = errorLocation;
 	}
 
-
-
-	public Map<String, ThreadInstance> getThreadInstanceMap() {
-		return mThreadInstanceMap;
+	public String getThreadInstanceName() {
+		return mThreadInstanceName;
 	}
 
+	public String getThreadTemplateName() {
+		return mThreadTemplateName;
+	}
+
+	public IProgramNonOldVar[] getIdVars() {
+		return mIdVars;
+	}
+
+	public IProgramNonOldVar getInUseVar() {
+		return mInUseVar;
+	}
+
+	public IcfgLocation getErrorLocation() {
+		return mErrorLocation;
+	}
+
+	public void setErrorLocation(final IcfgLocation errorLocation) {
+		mErrorLocation = errorLocation;
+	}
 
 
 

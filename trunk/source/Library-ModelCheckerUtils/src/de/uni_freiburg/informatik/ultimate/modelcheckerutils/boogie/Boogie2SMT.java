@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
@@ -110,9 +111,9 @@ public class Boogie2SMT {
 			} else {
 				concurInUseVars = new HashSet<>();
 				concurIdVars = new HashSet<>();
-				concurInUseVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream().map(Entry::getValue)
+				concurInUseVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream().map(Entry::getValue).map(ThreadInstance::getInUseVar)
 						.collect(Collectors.toSet()));
-				concurIdVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream().map(Entry::getValue)
+				concurIdVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream().map(Entry::getValue).map(ThreadInstance::getIdVars)
 						.collect(Collectors.toSet()));
 			}
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurInUseVars);
@@ -132,10 +133,10 @@ public class Boogie2SMT {
 				concurIdVars = Collections.emptySet();
 			} else {
 				concurrencyAuxVars = new HashSet<>();
-				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInUseVars().entrySet().stream()
-						.map(Entry::getValue).collect(Collectors.toSet()));
-				concurrencyAuxVars.addAll(mConcurrencyInformation.getProcedureNameThreadIdMap().entrySet().stream()
-						.flatMap(x -> Arrays.stream(x.getValue())).collect(Collectors.toSet()));
+				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream()
+						.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet()));
+				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream()
+						.flatMap(x -> Arrays.stream(x.getValue().getIdVars())).collect(Collectors.toSet()));
 			}
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurrencyAuxVars);
 
@@ -231,11 +232,14 @@ public class Boogie2SMT {
 		if (forkStatements.isEmpty()) {
 			concurInfo = null;
 		} else {
-			final Map<String, BoogieNonOldVar> mProcedureNameToThreadInUseMap = constructProcedureNameToThreadInUseMap(
-					forkStatements, mgdScript);
-			final Map<String, BoogieNonOldVar[]> procedureNameToThreadIdMap = constructProcedureNameToThreadIdMap(
-					forkStatements, mgdScript, typeSortTranslator);
-			concurInfo = new ConcurrencyInformation(mProcedureNameToThreadInUseMap, procedureNameToThreadIdMap);
+			final Map<String, ThreadInstance> result = new HashMap<>();
+			for (final ForkStatement st : forkStatements) {
+				final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
+				final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
+				final ThreadInstance ti = new ThreadInstance(st.getProcedureName(),st.getProcedureName(), threadIdVars, threadInUseVar, null);
+				result.put(st.getProcedureName(), ti);
+			}
+			concurInfo = new ConcurrencyInformation(result);
 		}
 		return concurInfo;
 	}
