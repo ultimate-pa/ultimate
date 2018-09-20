@@ -212,7 +212,7 @@ def process_log_file(file):
     with open(file) as f:
         lines = [line.rstrip('\n') for line in f]
         for line in lines:
-            if './Ultimate.py' in line:
+            if 'Ultimate.py' in line:
                 return process_wrapper_script_log(file)
             elif 'This is Ultimate' in line:
                 return process_direct_call_log(file)
