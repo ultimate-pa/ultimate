@@ -181,7 +181,8 @@ def get_binary():
 
     ultimate_bin = ultimate_bin + [
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
-        '-data', datadir
+        '-data', '@noDefault', 
+        '-ultimatedata', datadir
     ]
 
     return ultimate_bin
