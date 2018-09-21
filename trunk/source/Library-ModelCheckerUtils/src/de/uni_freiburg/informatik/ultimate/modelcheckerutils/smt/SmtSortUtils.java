@@ -47,6 +47,7 @@ public final class SmtSortUtils {
 	public static final String REAL_SORT = "Real";
 	public static final String BITVECTOR_SORT = "BitVec";
 	public static final String FLOATINGPOINT_SORT = "FloatingPoint";
+	public static final String ROUNDINGMODE_SORT = "RoundingMode";
 
 	private SmtSortUtils() {
 		// Prevent instantiation of this utility class
@@ -94,6 +95,10 @@ public final class SmtSortUtils {
 
 	public static boolean isFloatingpointSort(final Sort sort) {
 		return FLOATINGPOINT_SORT.equals(sort.getRealSort().getName());
+	}
+
+	public static boolean isRoundingmodeSort(final Sort sort) {
+		return ROUNDINGMODE_SORT.equals(sort.getRealSort().getName());
 	}
 
 	public static Sort getRealSort(final Script script) {
