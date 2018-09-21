@@ -338,23 +338,9 @@ public class CfgBuilder {
 		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
 
 
-		for (final ForkThreadCurrent fct : forkCurrentThreads) {
-			final ThreadInstance ti = threadInstanceMap.get(fct.getForkStatement().getProcedureName());
-
-			addForkOtherThreadTransition(fct, (BoogieIcfgLocation) ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, mCbf);
-		}
-
-		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
-		// location of the procedure
-		// to all target locations of each JoinCurrentThreadEdge
-		for (final JoinThreadCurrent jot : joinCurrentThreads) {
-			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-			for (final String procName : forkedProcedureNames) {
-				final ThreadInstance ti = threadInstanceMap.get(procName);
-				addJoinOtherThreadTransition(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, mCbf);
-			}
-			// }
-		}
+		CodeBlockFactory cbf = mCbf;
+		connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames, threadInstanceMap,
+				cbf);
 
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
@@ -376,6 +362,30 @@ public class CfgBuilder {
 		}
 
 		return icfg;
+	}
+
+
+	private void connectThreadInstances(final BoogieIcfgContainer icfg,
+			final Collection<ForkThreadCurrent> forkCurrentThreads,
+			final Collection<JoinThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
+			final Map<String, ThreadInstance> threadInstanceMap, CodeBlockFactory cbf) {
+		for (final ForkThreadCurrent fct : forkCurrentThreads) {
+			final ThreadInstance ti = threadInstanceMap.get(fct.getForkStatement().getProcedureName());
+
+			addForkOtherThreadTransition(fct, (BoogieIcfgLocation) ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+		}
+
+		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
+		// location of the procedure
+		// to all target locations of each JoinCurrentThreadEdge
+		for (final JoinThreadCurrent jot : joinCurrentThreads) {
+			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
+			for (final String procName : forkedProcedureNames) {
+				final ThreadInstance ti = threadInstanceMap.get(procName);
+				addJoinOtherThreadTransition(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+			}
+			// }
+		}
 	}
 
 	private static Expression getNegation(final Expression expr) {
