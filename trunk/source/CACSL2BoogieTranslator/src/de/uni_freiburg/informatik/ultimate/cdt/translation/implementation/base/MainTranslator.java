@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -123,7 +121,7 @@ public class MainTranslator {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final TranslationSettings translationSettings = new TranslationSettings(ups);
 		mLogger.info(
-				"Starting translation in " + (translationSettings.isSvcompMode() ? " SV-COMP mode " : " normal mode"));
+				"Starting translation in" + (translationSettings.isSvcompMode() ? " SV-COMP mode " : " normal mode"));
 
 		// TODO: Line Directive mapping doesn't work with multiple TUs right now
 		final DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
@@ -134,7 +132,6 @@ public class MainTranslator {
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping);
 		final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
-		final Set<CFunction> functionSignatures = new LinkedHashSet<>();
 
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mst, nameHandler);
@@ -150,7 +147,8 @@ public class MainTranslator {
 		final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
 				preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
 
-		// #refac DD: was main init
+		mLogger.info("Built tables and reachable declarations");
+
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, staticObjectsHandler);
@@ -166,6 +164,8 @@ public class MainTranslator {
 		final PRDispatcher prdispatcher = new PRDispatcher(prerunCHandler, locationFactory, typeHandler);
 		prdispatcher.dispatch(nodes);
 
+		mLogger.info("Completed pre-run");
+
 		final CHandler mainCHandler = new CHandler(prerunCHandler);
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
@@ -177,6 +177,8 @@ public class MainTranslator {
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);
 
+		mLogger.info("Completed translation");
+
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<>(result.getIdentifierMapping()));
 		final CACSL2BoogieBacktranslator backtranslator =
 				new CACSL2BoogieBacktranslator(mServices, typeSizes, backtranslatorMapping, locationFactory);
@@ -184,7 +186,7 @@ public class MainTranslator {
 		return result.getNode();
 	}
 
-	private ExpressionTranslation createExpressionTranslation(final TranslationSettings translationSettings,
+	private static ExpressionTranslation createExpressionTranslation(final TranslationSettings translationSettings,
 			final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes, final TypeHandler typeHandler) {
 		if (translationSettings.isBitvectorTranslation()) {
 			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler);

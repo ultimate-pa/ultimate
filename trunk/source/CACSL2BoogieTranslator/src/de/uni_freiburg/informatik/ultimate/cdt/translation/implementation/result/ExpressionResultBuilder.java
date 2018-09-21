@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
@@ -75,6 +76,11 @@ public class ExpressionResultBuilder {
 		mAuxVars.addAll(er.getAuxVars());
 		mNeighbourUnionFields.addAll(er.getNeighbourUnionFields());
 		mLrVal = er.getLrValue();
+	}
+
+	public boolean isEmpty() {
+		return mStatements.isEmpty() && mDeclarations.isEmpty() && mOverappr.isEmpty() && mAuxVars.isEmpty()
+				&& mNeighbourUnionFields.isEmpty() && mLrVal == null;
 	}
 
 	public ExpressionResultBuilder setLrValue(final LRValue val) {
@@ -135,11 +141,12 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	/**
-	 *
-	 * @param exprResult
-	 * @return "this", i.e., the object it is called upon
-	 */
+	public ExpressionResultBuilder addAllExceptLrValueAndHavocAux(final ExpressionResult exprResult) {
+		addAllExceptLrValue(exprResult);
+		addStatements(CTranslationUtil.createHavocsForAuxVars(exprResult.getAuxVars()));
+		return this;
+	}
+
 	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult exprResult) {
 		addStatements(exprResult.getStatements());
 		addAllExceptLrValueAndStatements(exprResult);

@@ -199,7 +199,7 @@ public class PostProcessor {
 		final String checkedMethod = mSettings.getCheckedMethod();
 
 		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
-			mLogger.info("Settings: Checked method=" + checkedMethod);
+			mLogger.info("Analyzing one entry point: " + checkedMethod);
 
 			final UltimateInitProcedure initProcedure = createUltimateInitProcedure(loc, hook);
 			decl.add(initProcedure.getUltimateInitImplementation());
@@ -211,7 +211,7 @@ public class PostProcessor {
 			// this would be done during createInit otherwise
 			mStaticObjectsHandler.freeze();
 
-			mLogger.info("Settings: Library mode!");
+			mLogger.info("Analyzing all entry points");
 			if (mProcedureManager.hasProcedure(SFO.MAIN)) {
 				final String msg =
 						"You selected the library mode (i.e., each procedure can be starting procedure and global "
@@ -642,8 +642,7 @@ public class PostProcessor {
 
 			// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
 			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-					mTypeHandler.getBoogiePointerType(), SFO.NULL,
-					DeclarationInformation.DECLARATIONINFO_GLOBAL);
+					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			initStatements.add(0,
 					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
 							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
