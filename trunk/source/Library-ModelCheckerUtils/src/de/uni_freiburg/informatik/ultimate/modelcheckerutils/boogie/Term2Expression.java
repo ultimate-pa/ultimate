@@ -189,8 +189,10 @@ public final class Term2Expression implements Serializable {
 			final boolean someParamIsBitvec = Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isBitvecSort);
 			final boolean someParamIsFloatingPoint = Arrays.stream(symb.getParameterSorts())
 					.anyMatch(SmtSortUtils::isFloatingpointSort);
-			if ((someParamIsBitvec || someParamIsFloatingPoint) && !"=".equals(symb.getName())
-					&& !"distinct".equals(symb.getName())) {
+			final boolean someParamIsRoundingMode = Arrays.stream(symb.getParameterSorts())
+					.anyMatch(SmtSortUtils::isRoundingmodeSort);
+			if ((someParamIsBitvec || someParamIsFloatingPoint || someParamIsRoundingMode)
+					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
