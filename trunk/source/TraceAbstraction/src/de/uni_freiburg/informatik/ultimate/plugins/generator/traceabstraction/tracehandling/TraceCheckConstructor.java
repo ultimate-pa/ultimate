@@ -243,8 +243,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 		final boolean useWeakestPrecondition = mPrefs.getUseWeakestPreconditionForPathInvariants();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript =
-				"InVarSynth_" + icfgContainer.getIdentifier() + "_Iteration" + mTaskIdentifier;
+		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
 		final String solverCommand;
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";

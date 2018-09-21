@@ -175,7 +175,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	 *            temporary argument, should be removed
 	 * @param assertionOrderModulation
 	 *            assertion order modulation
-	 * @param precondition 
+	 * @param precondition
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
@@ -357,8 +357,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final Track mode, final boolean useTimeout) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + mTaskIdentifier;
+		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
 		final SolverSettings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;

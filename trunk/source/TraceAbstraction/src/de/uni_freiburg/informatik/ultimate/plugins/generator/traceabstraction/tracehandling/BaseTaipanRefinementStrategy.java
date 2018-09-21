@@ -333,8 +333,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final TaskIdentifier taskIdentifier) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + taskIdentifier;
+		final String baseNameOfDumpedScript = taskIdentifier.toString();
 		final SolverSettings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
