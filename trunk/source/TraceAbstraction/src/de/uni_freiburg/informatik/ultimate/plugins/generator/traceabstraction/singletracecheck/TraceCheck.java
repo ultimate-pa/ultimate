@@ -223,6 +223,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				}
 			} else {
 				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
+					managedScriptTc.echo(mTraceCheckLock, new QuotedObject("Trace is feasible, we will do another trace check, this time with branch encoders."));
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
 					if (icfgProgramExecution != null) {
 						providesIcfgProgramExecution = true;
