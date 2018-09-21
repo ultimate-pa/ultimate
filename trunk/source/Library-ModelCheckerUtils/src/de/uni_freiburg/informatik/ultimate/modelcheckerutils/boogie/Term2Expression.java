@@ -186,13 +186,21 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			final boolean someParamIsBitvec = Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isBitvecSort);
+			// 2018-09-21 Matthias: This is a workaround for detecting if we have an
+			// SMT function that has to be translated to an Boogie function and not
+			// to a built-in Boogie operator.
+			final boolean someParamIsBitvec = Arrays.stream(symb.getParameterSorts())
+					.anyMatch(SmtSortUtils::isBitvecSort);
 			final boolean someParamIsFloatingPoint = Arrays.stream(symb.getParameterSorts())
 					.anyMatch(SmtSortUtils::isFloatingpointSort);
 			final boolean someParamIsRoundingMode = Arrays.stream(symb.getParameterSorts())
 					.anyMatch(SmtSortUtils::isRoundingmodeSort);
-			if ((someParamIsBitvec || someParamIsFloatingPoint || someParamIsRoundingMode)
-					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
+			final boolean resultIsBitvec = SmtSortUtils.isBitvecSort(symb.getReturnSort());
+			final boolean resultIsFloatingPoint = SmtSortUtils.isFloatingpointSort(symb.getReturnSort());
+			final boolean resultIsRoundingmodeSort = SmtSortUtils.isRoundingmodeSort(symb.getReturnSort());
+			if ((someParamIsBitvec || someParamIsFloatingPoint || someParamIsRoundingMode || resultIsBitvec
+					|| resultIsFloatingPoint || resultIsRoundingmodeSort) && !"=".equals(symb.getName())
+					&& !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
