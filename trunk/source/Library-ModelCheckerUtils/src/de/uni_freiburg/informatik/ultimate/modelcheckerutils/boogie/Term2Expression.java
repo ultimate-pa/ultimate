@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -185,10 +186,11 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length > 0
-					&& (SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0])
-							|| SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
-					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
+			final boolean someParamIsBitvec = Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isBitvecSort);
+			final boolean someParamIsFloatingPoint = Arrays.stream(symb.getParameterSorts())
+					.anyMatch(SmtSortUtils::isFloatingpointSort);
+			if ((someParamIsBitvec || someParamIsFloatingPoint) && !"=".equals(symb.getName())
+					&& !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
