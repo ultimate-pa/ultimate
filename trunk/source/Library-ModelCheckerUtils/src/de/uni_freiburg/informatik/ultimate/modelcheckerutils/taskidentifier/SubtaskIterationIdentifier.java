@@ -42,7 +42,7 @@ public class SubtaskIterationIdentifier extends TaskIdentifier {
 
 	@Override
 	protected String getSubtaskIdentifier() {
-		return String.valueOf(mIteration);
+		return "Iteration" + String.valueOf(mIteration);
 	}
 
 }
