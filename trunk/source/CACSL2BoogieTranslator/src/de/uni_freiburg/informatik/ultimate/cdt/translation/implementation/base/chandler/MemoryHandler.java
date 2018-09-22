@@ -997,8 +997,10 @@ public class MemoryHandler {
 
 		// converted value to unsigned char
 		final IdentifierExpression inParamValueExpr = // new IdentifierExpression(ignoreLoc, inParamValue);
-				ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamValue,
-						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+						(BoogieType) mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT))
+								.getBoogieType(),
+						inParamValue, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
