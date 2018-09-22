@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -573,7 +573,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	public void oldConvertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
 		assert newType.isIntegerType();
-		assert rexp.getLrValue().getCType() instanceof CPointer;
+		assert rexp.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
 			super.convertPointerToInt(loc, rexp, newType);
 		} else {
@@ -920,7 +920,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType(), newType);
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression },

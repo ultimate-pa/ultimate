@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -336,8 +336,10 @@ public abstract class ExpressionTranslation {
 	 */
 	public void usualArithmeticConversions(final ILocation loc, final ExpressionResult leftRex,
 			final ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType());
-		final CPrimitive rightPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType());
+		final CPrimitive leftPrimitive = (CPrimitive) CEnum
+				.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
+		final CPrimitive rightPrimitive = (CPrimitive) CEnum
+				.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
 		if (leftPrimitive.isIntegerType()) {
 			doIntegerPromotion(loc, leftRex);
 		}
@@ -346,15 +348,16 @@ public abstract class ExpressionTranslation {
 		}
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.getLrValue().getCType(), (CPrimitive) rightRex.getLrValue().getCType());
+				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
+				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
 
 		convertIfNecessary(loc, leftRex, resultType);
 		convertIfNecessary(loc, rightRex, resultType);
 
-		if (!leftRex.getLrValue().getCType().equals(resultType)) {
+		if (!leftRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
-		if (!rightRex.getLrValue().getCType().equals(resultType)) {
+		if (!rightRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
 	}
@@ -363,30 +366,30 @@ public abstract class ExpressionTranslation {
 	 * Convert ResultExpression to resultType if its type is not already resultType.
 	 */
 	public void convertIfNecessary(final ILocation loc, final ExpressionResult operand, final CPrimitive resultType) {
-		if (operand.getLrValue().getCType().equals(resultType)) {
+		if (operand.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			// do nothing
 		} else {
-			if (operand.getLrValue().getCType().isIntegerType()) {
+			if (operand.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 				if (resultType.isIntegerType()) {
 					convertIntToInt(loc, operand, resultType);
 				} else if (resultType.isRealFloatingType()) {
 					convertIntToFloat(loc, operand, resultType);
 				} else {
 					throw new UnsupportedSyntaxException(loc,
-							"conversion from " + operand.getLrValue().getCType() + " to " + resultType);
+							"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 				}
-			} else if (operand.getLrValue().getCType().isRealFloatingType()) {
+			} else if (operand.getLrValue().getCType().getUnderlyingType().isRealFloatingType()) {
 				if (resultType.isIntegerType()) {
 					convertFloatToInt(loc, operand, resultType);
 				} else if (resultType.isRealFloatingType()) {
 					convertFloatToFloat(loc, operand, resultType);
 				} else {
 					throw new UnsupportedSyntaxException(loc,
-							"conversion from " + operand.getLrValue().getCType() + " to " + resultType);
+							"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 				}
 			} else {
 				throw new UnsupportedSyntaxException(loc,
-						"conversion from " + operand.getLrValue().getCType() + " to " + resultType);
+						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 			}
 		}
 	}
@@ -471,7 +474,7 @@ public abstract class ExpressionTranslation {
 	 * @return
 	 */
 	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
-		return extractIntegerValue(rval.getValue(), rval.getCType(), hook);
+		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType(), hook);
 	}
 
 	public abstract BigInteger extractIntegerValue(Expression expr, CType cType, IASTNode hook);
@@ -578,7 +581,7 @@ public abstract class ExpressionTranslation {
 	 * result is 0 if the value compares equal to 0; otherwise, the result is 1.
 	 */
 	void convertToBool(final ILocation loc, final ExpressionResult rexp) {
-		CType underlyingType = rexp.getLrValue().getCType();
+		CType underlyingType = rexp.getLrValue().getCType().getUnderlyingType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
 		final Expression zeroInputType = constructZero(loc, underlyingType);
 		final Expression isZero;
