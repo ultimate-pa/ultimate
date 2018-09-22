@@ -1371,7 +1371,7 @@ public class StandardFunctionHandler {
 	public static ExpressionResult dispatchAndConvertFunctionArgument(final Dispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
 		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
-		final ExpressionResult converted1 = dispatched.decayArrayToPointerIfNecessary(main, loc, initClause);
+		final ExpressionResult converted1 = dispatched.decayArrayToPointer(main, loc, initClause);
 		final ExpressionResult switched = converted1.switchToRValueIfNecessary(main, loc, initClause);
 		return switched;
 	}

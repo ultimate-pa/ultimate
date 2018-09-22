@@ -633,17 +633,17 @@ public class ExpressionResult extends Result {
 	}
 
 	/**
-	 * Converts an array to a pointer, if applicable. Triggers that the array is moved on heap, if necessary. Returns an
-	 * ExpressionResult with the same side effects and the same value except the value has pointer type.
+	 * If the {@link CType} of is a {@link CArray}, we will return a new
+	 * {@link ExpressionResult} in which the representation was switched from array
+	 * to pointer. Otherwise this object is returned (without any modifications).
 	 *
-	 * (this can be used for example for function parameters, when an array is passed by reference (which is the
-	 * standard case).)
+	 * Triggers that the array is moved on heap, if necessary.
 	 *
-	 * @param main
-	 * @param loc
-	 * @return
+	 * (this can be used for example for function parameters, when an array is
+	 * passed by reference (which is the standard case).)
+	 *
 	 */
-	public ExpressionResult decayArrayToPointerIfNecessary(final Dispatcher main, final ILocation loc,
+	public ExpressionResult decayArrayToPointer(final Dispatcher main, final ILocation loc,
 			final IASTNode hook) {
 		if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -655,7 +655,7 @@ public class ExpressionResult extends Result {
 	}
 
 	/**
-	 * Use {@link ExpressionResultBuilder} instead.
+	 * @deprecated use instead {@link ExpressionResultBuilder} and construct a new {@link ExpressionResult}.
 	 */
 	@Deprecated
 	public void setLrValue(final LRValue val) {

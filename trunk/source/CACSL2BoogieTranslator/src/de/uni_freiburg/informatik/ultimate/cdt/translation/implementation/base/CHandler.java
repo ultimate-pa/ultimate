@@ -981,8 +981,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
 			// if we are "adding" arrays, they must be treated as pointers
-			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
-			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			final ExpressionResult lDecayed = leftOperand.decayArrayToPointer(main, loc, node);
+			final ExpressionResult rDecayed = rightOperand.decayArrayToPointer(main, loc, node);
 			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
 					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
@@ -998,8 +998,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
 			// if we are "adding" arrays, they must be treated as pointers
-			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
-			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			final ExpressionResult lDecayed = leftOperand.decayArrayToPointer(main, loc, node);
+			final ExpressionResult rDecayed = rightOperand.decayArrayToPointer(main, loc, node);
 			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
 					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
@@ -1798,7 +1798,7 @@ public class CHandler implements ICHandler {
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
 				// TODO: (alex, feb 2018) quite unsure about always doing this array to pointer conversion..
-				rex = rex.decayArrayToPointerIfNecessary(main, loc, node);
+				rex = rex.decayArrayToPointer(main, loc, node);
 				rex = rex.switchToRValueIfNecessary(main, loc, node);
 				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
@@ -4405,7 +4405,7 @@ public class CHandler implements ICHandler {
 				resultCType = opNegative.getLrValue().getCType();
 			} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-				opNegative = opNegative.decayArrayToPointerIfNecessary(main, loc, hook);
+				opNegative = opNegative.decayArrayToPointer(main, loc, hook);
 				mExpressionTranslation.convertIntToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
@@ -4423,7 +4423,7 @@ public class CHandler implements ICHandler {
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-				opPositive = opPositive.decayArrayToPointerIfNecessary(main, loc, hook);
+				opPositive = opPositive.decayArrayToPointer(main, loc, hook);
 				mExpressionTranslation.convertIntToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
