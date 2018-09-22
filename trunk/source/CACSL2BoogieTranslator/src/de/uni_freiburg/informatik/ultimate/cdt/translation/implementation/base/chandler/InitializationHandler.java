@@ -1075,7 +1075,7 @@ public class InitializationHandler {
 					&& (first.getRootExpressionResult().getLrValue().getCType().getUnderlyingType() instanceof CArray)) {
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 				erb.addAllExceptLrValue(first.getRootExpressionResult());
-				final RValue decayed = ((CHandler) main.mCHandler).decayArrayLrValToPointer(loc,
+				final RValue decayed = ((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc,
 						first.getRootExpressionResult().getLrValue(), hook);
 				erb.setLrValue(decayed);
 				expressionResultSwitched = erb.build();

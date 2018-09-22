@@ -518,7 +518,7 @@ public class FunctionHandler {
 				// Target value is a pointer. Decay RValue type to CPointer
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 				final RValue decayed =
-						((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, returnValue.getLrValue(), node);
+						((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc, returnValue.getLrValue(), node);
 				erb.setLrValue(decayed);
 				returnValueSwitched = erb.build();
 			} else {

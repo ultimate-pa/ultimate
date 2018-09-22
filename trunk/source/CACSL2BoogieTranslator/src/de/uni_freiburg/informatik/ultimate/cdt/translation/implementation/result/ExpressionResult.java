@@ -196,7 +196,7 @@ public class ExpressionResult extends Result {
 			result = this;
 		} else if (mLrVal instanceof LocalLValue) {
 
-			if (main.mCHandler.isPreRunMode()) {
+			if (main.isPrerunPass()) {
 				if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 					// move it on-heap
 					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, mLrVal.getValue(), mAuxVars, hook);
@@ -648,7 +648,7 @@ public class ExpressionResult extends Result {
 		if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(this);
-			resultBuilder.setLrValue(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal, hook));
+			resultBuilder.setLrValue(((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc, mLrVal, hook));
 			return resultBuilder.build();
 		}
 		return this;

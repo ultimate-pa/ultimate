@@ -653,7 +653,5 @@ public interface ICHandler extends IHandler {
 
 	BoogieTypeHelper getBoogieTypeHelper();
 
-	boolean isPreRunMode();
-
 	ProcedureManager getProcedureManager();
 }

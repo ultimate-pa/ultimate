@@ -521,4 +521,10 @@ public class PRDispatcher extends Dispatcher {
 	public Set<CFunction> getFunctionSignatures() {
 		return mCHandler.getProcedureManager().getAllFunctionSignatures();
 	}
+
+
+	@Override
+	public boolean isPrerunPass() {
+		return true;
+	}
 }

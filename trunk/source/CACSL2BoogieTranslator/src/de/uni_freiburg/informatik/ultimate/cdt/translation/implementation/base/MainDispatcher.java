@@ -1138,4 +1138,9 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
+	@Override
+	public boolean isPrerunPass() {
+		return false;
+	}
+
 }

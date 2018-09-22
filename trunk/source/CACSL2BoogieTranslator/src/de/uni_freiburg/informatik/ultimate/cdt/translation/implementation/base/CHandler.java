@@ -554,7 +554,7 @@ public class CHandler implements ICHandler {
 
 	private static RValue convertToPointerRValue(final Dispatcher main, final LRValue lrValue,
 			final BoogieType pointerType) {
-		assert main.mCHandler.isPreRunMode();
+		assert main.isPrerunPass();
 		if (lrValue instanceof HeapLValue) {
 			throw new AssertionError("does this occur??");
 		}
@@ -755,7 +755,7 @@ public class CHandler implements ICHandler {
 
 				final LRValue rightLrVal = rightOperand.getLrValue();
 
-				final RValue address = decayArrayLrValToPointer(loc, rightLrVal, node);
+				final RValue address = decayArrayLrValToPointer(main, loc, rightLrVal, node);
 				builder.setLrValue(address);
 				// return makeAssignment(main, loc, stmt, leftOperand.getLrValue(), address, decl,
 				// auxVars, overappr);
@@ -1059,17 +1059,18 @@ public class CHandler implements ICHandler {
 	 * <p>
 	 * Background: Array expressions can be used in place of pointer expressions in C. (An array may "decay" to a
 	 * pointer in C standard terminology.) E.g. when an array is assigned to a pointer variable.
+	 * @param main
 	 *
 	 *
 	 *
 	 * @param rightLrVal
 	 * @return
 	 */
-	public RValue decayArrayLrValToPointer(final ILocation loc, final LRValue rightLrVal, final IASTNode hook) {
+	public RValue decayArrayLrValToPointer(final Dispatcher main, final ILocation loc, final LRValue rightLrVal, final IASTNode hook) {
 		assert rightLrVal.getCType().getUnderlyingType() instanceof CArray;
 
 		final Expression newValue;
-		if (isPreRunMode()) {
+		if (main.isPrerunPass()) {
 			final Expression oldValue;
 			if (rightLrVal instanceof HeapLValue) {
 				/*
@@ -1084,7 +1085,7 @@ public class CHandler implements ICHandler {
 			 * circumvents Boogie type checking during preprocessing
 			 */
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, oldValue, Collections.emptySet(), hook);
+			((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, oldValue, Collections.emptySet(), hook);
 		} else {
 			if (rightLrVal instanceof RValueForArrays) {
 				newValue = rightLrVal.getValue();
@@ -1134,7 +1135,7 @@ public class CHandler implements ICHandler {
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
 		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
 				&& newCType.getUnderlyingType() instanceof CPointer) {
-			final RValue newRval = decayArrayLrValToPointer(loc, expr.getLrValue(), node);
+			final RValue newRval = decayArrayLrValToPointer(main, loc, expr.getLrValue(), node);
 			expr.setLrValue(newRval);
 		} else {
 			expr = expr.switchToRValueIfNecessary(main, loc, node);
@@ -2016,7 +2017,7 @@ public class CHandler implements ICHandler {
 
 				// are we in prerun mode?
 				// if (main instanceof PRDispatcher) {
-				if (isPreRunMode()) {
+				if (main.isPrerunPass()) {
 					// all unions should be on heap
 					if (cDec.getType().getUnderlyingType() instanceof CUnion && storageClass != CStorageClass.TYPEDEF) {
 						((PRDispatcher) main).addToVariablesOnHeap(d);
@@ -4801,11 +4802,6 @@ public class CHandler implements ICHandler {
 	@Override
 	public BoogieTypeHelper getBoogieTypeHelper() {
 		return mBoogieTypeHelper;
-	}
-
-	@Override
-	public boolean isPreRunMode() {
-		return mMainDispatcher instanceof PRDispatcher;
 	}
 
 	@Override

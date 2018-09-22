@@ -223,6 +223,17 @@ public abstract class Dispatcher {
 	}
 
 	/**
+	 * Our translation is done in two passes. In the first pass (the prerun pass) we
+	 * construct only a mock Boogie AST but determine e.g., which values we store in
+	 * local variables of the Boogie program and which variables we store in the
+	 * "memory array" of the Boogie program. Only the main pass we construct the AST
+	 * of the Boogie program that is the result of this plugin.
+	 *
+	 *
+	 */
+	public abstract boolean isPrerunPass();
+
+	/**
 	 * The method implementing a pre-run, if required.
 	 *
 	 * @param node
