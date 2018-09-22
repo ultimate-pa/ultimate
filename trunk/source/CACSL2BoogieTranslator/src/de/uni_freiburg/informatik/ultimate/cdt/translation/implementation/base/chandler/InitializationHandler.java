@@ -1069,20 +1069,9 @@ public class InitializationHandler {
 		protected static ExpressionResult convertInitResultWithExpressionResult(final ILocation loc,
 				final Dispatcher main, final CType targetCType, final InitializerResult first, final IASTNode hook) {
 			final ExpressionResult expressionResultSwitched;
-			// TODO: 2018-09-05 Matthias: The following scheme seems to occur in several places
-			// maybe move to separate method?
-			if ((targetCType.getUnderlyingType() instanceof CPointer)
-					&& (first.getRootExpressionResult().getLrValue().getCType().getUnderlyingType() instanceof CArray)) {
-				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-				erb.addAllExceptLrValue(first.getRootExpressionResult());
-				final RValue decayed = ((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc,
-						first.getRootExpressionResult().getLrValue(), hook);
-				erb.setLrValue(decayed);
-				expressionResultSwitched = erb.build();
-			} else {
-				expressionResultSwitched = first.getRootExpressionResult().switchToRValueIfNecessary(main, loc, hook);
-				expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
-			}
+			final ExpressionResult er = first.getRootExpressionResult();
+			expressionResultSwitched = er.makeRepresentationReadyForConversion(main, loc, targetCType, hook);
+			expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 			// TODO: 2018-09-05 Matthias: The following workaround may now be not required any more.
 			// 2017-11-19 Matthias: introduced workaround to omit conversion
 			if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
@@ -1092,6 +1081,8 @@ public class InitializationHandler {
 			}
 			return expressionResultSwitched;
 		}
+
+
 
 		private static InitializerInfo constructIndexToInitInfo(final ILocation loc, final Dispatcher main,
 				final List<InitializerResult> initializerResults, final CType targetCType, final IASTNode hook) {

@@ -660,7 +660,29 @@ public class ExpressionResult extends Result {
 	@Deprecated
 	public void setLrValue(final LRValue val) {
 		mLrVal = val;
+	}
 
+	/**
+	 * Switch our representation of the {@link ExpressionResult}'s value such that
+	 * it can be converted to the targetCType. If the targetCType is a pointer or a
+	 * primitive type and the type of this expression result is an {@link CArray}
+	 * the array is decayed to a pointer, otherwise we just switch to an RValue.
+	 */
+	public ExpressionResult makeRepresentationReadyForConversion(final Dispatcher main, final ILocation loc,
+			final CType targetCType, final IASTNode hook) {
+		final ExpressionResult expressionResultSwitched;
+		if ((getLrValue().getCType().getUnderlyingType() instanceof CArray)
+				&& ((targetCType.getUnderlyingType() instanceof CPointer)
+						|| (targetCType.getUnderlyingType() instanceof CPrimitive))) {
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+			erb.addAllExceptLrValue(this);
+			final RValue decayed = ((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc, getLrValue(), hook);
+			erb.setLrValue(decayed);
+			expressionResultSwitched = erb.build();
+		} else {
+			expressionResultSwitched = switchToRValueIfNecessary(main, loc, hook);
+		}
+		return expressionResultSwitched;
 	}
 
 }
