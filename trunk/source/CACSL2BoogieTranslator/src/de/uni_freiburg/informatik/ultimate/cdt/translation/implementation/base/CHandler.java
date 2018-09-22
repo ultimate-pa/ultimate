@@ -1133,13 +1133,14 @@ public class CHandler implements ICHandler {
 		mCurrentDeclaredTypes.pop();
 
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
-		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
-				&& newCType.getUnderlyingType() instanceof CPointer) {
-			final RValue newRval = decayArrayLrValToPointer(main, loc, expr.getLrValue(), node);
-			expr.setLrValue(newRval);
-		} else {
-			expr = expr.switchToRValueIfNecessary(main, loc, node);
-		}
+		expr = expr.makeRepresentationReadyForConversion(main, loc, newCType, node);
+//		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
+//				&& newCType.getUnderlyingType() instanceof CPointer) {
+//			final RValue newRval = decayArrayLrValToPointer(main, loc, expr.getLrValue(), node);
+//			expr.setLrValue(newRval);
+//		} else {
+//			expr = expr.switchToRValueIfNecessary(main, loc, node);
+//		}
 
 		if (POINTER_CAST_IS_UNSUPPORTED_SYNTAX && newCType instanceof CPointer
 				&& expr.getLrValue().getCType() instanceof CPointer) {
