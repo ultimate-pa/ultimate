@@ -1093,7 +1093,7 @@ public class CHandler implements ICHandler {
 				newValue = ((HeapLValue) rightLrVal).getAddress();
 			}
 		}
-		final CType newType = new CPointer(((CArray) rightLrVal.getCType()).getValueType());
+		final CType newType = new CPointer(((CArray) rightLrVal.getCType().getUnderlyingType()).getValueType());
 		return new RValue(newValue, newType);
 	}
 
