@@ -540,8 +540,8 @@ public class MemoryHandler {
 
 		final IdentifierExpression sizeIdExprBody = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-						SFO.MEMCPY_SIZE,
-						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
+						SFO.MEMCPY_SIZE, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM,
+								memCopyOrMemMove.getName()));
 
 		final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
@@ -590,12 +590,11 @@ public class MemoryHandler {
 		}
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(
-				ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
+		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
+				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 						// new IdentifierExpression(ignoreLoc, SFO.RES),
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-								mTypeHandler.getBoogiePointerType(), SFO.RES,
-								new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
+						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
+								SFO.RES, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
 										memCopyOrMemMove.getName())),
 						// new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST)));
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
@@ -781,8 +780,8 @@ public class MemoryHandler {
 		// loopCtr, new DeclarationInformation(StorageClass.LOCAL, surroundingProcedureName));
 
 		final IdentifierExpression ptrExpr =
-				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
-						ptr, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedureName));
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(), ptr,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedureName));
 
 		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
 				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
@@ -894,16 +893,11 @@ public class MemoryHandler {
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
-		// final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
-		// final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
-		// final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
-		// final VariableDeclaration loopCtrDec =
-		// new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 		decl.add(loopCtrAux.getVarDec());
 
 		// converted value to unsigned char
-		final IdentifierExpression inParamValueExpr = // new IdentifierExpression(ignoreLoc, inParamValue);
+		final IdentifierExpression inParamValueExpr =
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 						(BoogieType) mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT))
 								.getBoogieType(),
@@ -949,16 +943,14 @@ public class MemoryHandler {
 		specs.addAll(constructPointerTargetFullyAllocatedCheck(ignoreLoc, inParamAmountExprDecl, inParamPtr, procName));
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(
-				ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
+		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
+				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 						// new IdentifierExpression(ignoreLoc, outParamResult),
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-								mTypeHandler.getBoogiePointerType(), outParamResult,
-								new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procName)),
+						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
+								outParamResult, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procName)),
 						// new IdentifierExpression(ignoreLoc, inParamPtr)));
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-								mTypeHandler.getBoogiePointerType(), inParamPtr,
-								new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName))),
+						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
+								inParamPtr, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName))),
 				Collections.emptySet());
 
 		specs.add(returnValue);
@@ -1404,8 +1396,8 @@ public class MemoryHandler {
 		Expression leq;
 		{
 			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-							ptrName, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 
 			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
 			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
@@ -1418,8 +1410,8 @@ public class MemoryHandler {
 		final Expression offsetGeqZero;
 		{
 			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-							ptrName, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(loc,
@@ -1435,8 +1427,8 @@ public class MemoryHandler {
 			 * (This works because #size.. is positive.)
 			 */
 			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-							ptrName, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression sum =
 					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
@@ -1482,8 +1474,8 @@ public class MemoryHandler {
 			return Collections.emptyList();
 		}
 		final Expression ptrExpr =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-						ptrName, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
 		if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
@@ -1642,20 +1634,20 @@ public class MemoryHandler {
 	 */
 	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc, final IASTNode hook) {
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-		final Expression addr =
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), ADDR,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
-								MemoryModelDeclarations.Ultimate_Dealloc.getName()));
+		final Expression addr = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				mTypeHandler.getBoogiePointerType(), ADDR, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+						MemoryModelDeclarations.Ultimate_Dealloc.getName()));
 		final Expression valid = getValidArray(tuLoc);
 		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
 		final Expression[] idcFree = new Expression[] { addrBase };
 
 		{
-			final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
-					MemoryModelDeclarations.Ultimate_Dealloc.getName(), new String[0],
-					new VarList[] {
-							new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-					new VarList[0], new Specification[0], null);
+			final Procedure deallocDeclaration =
+					new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Dealloc.getName(),
+							new String[0],
+							new VarList[] { new VarList(tuLoc, new String[] { ADDR },
+									mTypeHandler.constructPointerType(tuLoc)) },
+							new VarList[0], new Specification[0], null);
 			mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.Ultimate_Dealloc.getName(),
 					deallocDeclaration);
 		}
@@ -1701,8 +1693,8 @@ public class MemoryHandler {
 		// ensures #length = old(#length)[#res!base := ~size];
 		// modifies #length, #valid;
 		final Expression res = // new IdentifierExpression(tuLoc, SFO.RES);
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(),
-						SFO.RES, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
+						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
 								MemoryModelDeclarations.Ultimate_Alloc.getName()));
 
 		final Expression length = getLengthArray(tuLoc);
@@ -2492,9 +2484,8 @@ public class MemoryHandler {
 			break;
 		case Ultimate_Pthreads_Mutex:
 			return new MemoryModelDeclarationInfo(mmd,
-					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
-							mTypeHandler.getBoogieTypeForBoogieASTType(
-									getBooleanArrayHelper().constructBoolReplacementType())));
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler
+							.getBoogieTypeForBoogieASTType(getBooleanArrayHelper().constructBoolReplacementType())));
 		case Ultimate_Valid:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },

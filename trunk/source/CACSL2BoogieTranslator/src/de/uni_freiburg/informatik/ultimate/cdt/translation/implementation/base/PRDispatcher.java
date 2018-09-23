@@ -136,7 +136,7 @@ public class PRDispatcher implements IDispatcher {
 	@Override
 	public Result dispatch(final IASTNode n) {
 		if (n instanceof IASTTranslationUnit) {
-			return mCHandler.visit(this, ((IASTTranslationUnit) n));
+			return mCHandler.visit(this, (IASTTranslationUnit) n);
 		}
 		if (n instanceof IASTSimpleDeclaration) {
 			return mCHandler.visit(this, (IASTSimpleDeclaration) n);
@@ -399,11 +399,5 @@ public class PRDispatcher implements IDispatcher {
 	@Override
 	public NextACSL nextACSLStatement() throws ParseException {
 		throw new UnsupportedOperationException();
-	}
-
-
-	@Override
-	public boolean isPrerunPass() {
-		return true;
 	}
 }

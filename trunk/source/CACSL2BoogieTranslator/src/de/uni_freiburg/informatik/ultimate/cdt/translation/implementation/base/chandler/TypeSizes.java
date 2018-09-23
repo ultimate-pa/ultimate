@@ -156,7 +156,7 @@ public class TypeSizes {
 		case USHORT:
 			return true;
 		case CHAR:
-			return (mSignednessOfChar == Signedness.UNSIGNED);
+			return mSignednessOfChar == Signedness.UNSIGNED;
 		case INT:
 		case LONG:
 		case LONGLONG:
@@ -208,7 +208,7 @@ public class TypeSizes {
 		if (isUnsigned(cPrimitive)) {
 			minValue = BigInteger.ZERO;
 		} else {
-			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
+			minValue = new BigInteger("2").pow(byteSize * 8 - 1).negate();
 		}
 		return minValue;
 	}
@@ -305,7 +305,7 @@ public class TypeSizes {
 	 * @return
 	 */
 	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
-		return extractIntegerValue(rval.getValue(), rval.getCType(), hook);
+		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType(), hook);
 	}
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
@@ -319,7 +319,7 @@ public class TypeSizes {
 		if (cType.isIntegerType()) {
 			if (expr instanceof IntegerLiteral) {
 				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-				if (isUnsigned(((CPrimitive) cType))) {
+				if (isUnsigned((CPrimitive) cType)) {
 					final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
 					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 					return value.mod(maxValuePlusOne);
@@ -344,7 +344,7 @@ public class TypeSizes {
 			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
 				final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
-				if (isUnsigned(((CPrimitive) cType))) {
+				if (isUnsigned((CPrimitive) cType)) {
 					if (value.signum() < 0) {
 						throw new UnsupportedOperationException("negative value");
 					}

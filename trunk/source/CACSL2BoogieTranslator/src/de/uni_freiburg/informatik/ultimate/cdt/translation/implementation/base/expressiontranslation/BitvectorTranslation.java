@@ -375,6 +375,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
+	@Override
 	public void declareFloatingPointConstructors(final ILocation loc, final CPrimitive type) {
 		declareFloatingPointConstructorFromBitvec(loc, type);
 		declareFloatingPointConstructorFromReal(loc, type);
@@ -453,10 +454,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final IdentifierExpression roundingMode =
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT,
 						BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		// new IdentifierExpression(null,
-		// BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
-		// roundingMode.setDeclarationInformation(new
-		// DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { roundingMode, oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
@@ -494,7 +491,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
 		final int[] indices = new int[] { resultLength - operandLength };
 		final String smtFunctionName;
-		if (mTypeSizes.isUnsigned(((CPrimitive) operand.getLrValue().getCType().getUnderlyingType()))) {
+		if (mTypeSizes.isUnsigned((CPrimitive) operand.getLrValue().getCType().getUnderlyingType())) {
 			smtFunctionName = "zero_extend";
 		} else {
 			smtFunctionName = "sign_extend";
@@ -778,6 +775,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return new ExpressionResult(new RValue(func, type));
 	}
 
+	@Override
 	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes = generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(),
@@ -886,10 +884,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					ExpressionFactory.constructIfThenElseExpression(loc, isNan,
 							handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
 							ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
-									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
-									ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
-											handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
-											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
+									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(), ExpressionFactory
+											.constructIfThenElseExpression(loc,
+													isSubnormal,
+													handleNumberClassificationMacro(loc, "FP_SUBNORMAL")
+															.getValue(),
+													handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		} else if ("signbit".equals(floatFunction.getFunctionName())) {
 			final Expression isNegative;
@@ -1013,6 +1013,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 * backtranslation crashes. 2017-05-03 Matthias: Currently it seems that it is sufficient to add only bvadd for all
 	 * integer datatypes.
 	 */
+	@Override
 	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
 			final String[] bitvectorFunctions) {
 		for (final String funcname : bitvectorFunctions) {

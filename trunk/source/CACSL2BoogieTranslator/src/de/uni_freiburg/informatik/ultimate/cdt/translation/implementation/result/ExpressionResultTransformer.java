@@ -96,7 +96,7 @@ public class ExpressionResultTransformer {
 	public ExpressionResult dispatchAndConvertFunctionArgument(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
 		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
-		final ExpressionResult converted = mCHandler.decayArrayToPointerIfNecessary(dispatched, loc, initClause);
+		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
 		return switchToRValueIfNecessary(converted, loc, initClause);
 	}
 
@@ -454,6 +454,29 @@ public class ExpressionResultTransformer {
 					.setOrResetLrValue(RValue.boolToInt(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
 		}
 		return old;
+	}
+
+	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToIntIfNecessary(final ExpressionResult expr,
+			final CHandler main, final ILocation loc, final CType targetCType, final IASTNode hook) {
+		final ExpressionResult readyExpr = makeRepresentationReadyForConversion(expr, main, loc, targetCType, hook);
+		return rexBoolToIntIfNecessary(readyExpr, loc);
+	}
+
+	/**
+	 * Switch our representation of the {@link ExpressionResult}'s value such that it can be converted to the
+	 * targetCType. If the targetCType is a pointer or a primitive type and the type of this expression result is an
+	 * {@link CArray} the array is decayed to a pointer, otherwise we just switch to an RValue.
+	 */
+	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final CHandler main,
+			final ILocation loc, final CType targetCType, final IASTNode hook) {
+		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
+				&& (targetCType.getUnderlyingType() instanceof CPointer
+						|| targetCType.getUnderlyingType() instanceof CPrimitive)) {
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
+			final RValue decayed = main.decayArrayLrValToPointer(loc, expr.getLrValue(), hook);
+			return erb.setLrValue(decayed).build();
+		}
+		return switchToRValueIfNecessary(expr, loc, hook);
 	}
 
 	/**

@@ -199,8 +199,8 @@ public class InitializationHandler {
 		return initRec(loc, targetCTypeRaw, initializerInfo, onHeap, lhs, hook);
 	}
 
-	private ExpressionResult initRec(final ILocation loc, final CType targetCTypeRaw, final InitializerInfo initInfoIfAny,
-			final boolean onHeap, final LRValue lhsIfAny, final IASTNode hook) {
+	private ExpressionResult initRec(final ILocation loc, final CType targetCTypeRaw,
+			final InitializerInfo initInfoIfAny, final boolean onHeap, final LRValue lhsIfAny, final IASTNode hook) {
 		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
@@ -224,15 +224,16 @@ public class InitializationHandler {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStruct) targetCType, initInfoIfAny, onHeap, hook);
 		} else if (targetCType instanceof CArray) {
-			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap, determineIfSophisticatedArrayInit(initInfoIfAny),
-					hook);
+			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
+					determineIfSophisticatedArrayInit(initInfoIfAny), hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
 	}
 
-	protected ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc, final InitializerInfo initInfo,
-			final boolean onHeap, final LRValue lhsIfAny, final CType targetCType, final IASTNode hook) {
+	protected ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc,
+			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny, final CType targetCType,
+			final IASTNode hook) {
 		assert initInfo != null;
 		assert initInfo.isMakeNondeterministicInitialization();
 
@@ -319,12 +320,12 @@ public class InitializationHandler {
 
 				if (cStructType instanceof CUnion && !initInfo.hasInitInfoForIndex(i)) {
 					assert !onHeap;
-					currentFieldInitialization = makeDefaultOrNondetInitialization(loc, currentFieldLhs, currentFieldUnderlyingType,
-							onHeap, true, hook);
+					currentFieldInitialization = makeDefaultOrNondetInitialization(loc, currentFieldLhs,
+							currentFieldUnderlyingType, onHeap, true, hook);
 				} else {
 					// normal case intitalize recursively with or without intitializer..
-					currentFieldInitialization = initRec(loc, currentFieldUnderlyingType, currentFieldInitializerRawIfAny,
-							onHeap, currentFieldLhs, hook);
+					currentFieldInitialization = initRec(loc, currentFieldUnderlyingType,
+							currentFieldInitializerRawIfAny, onHeap, currentFieldLhs, hook);
 				}
 			}
 			// add the initialization code
@@ -475,8 +476,8 @@ public class InitializationHandler {
 		final LRValue lhsToInit = obtainLhsToInitialize(loc, lhsIfAny, cType, onHeap, initialization);
 
 		if (onHeap) {
-			final ExpressionResult defaultInit = makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhsToInit,
-					cType, sophisticated, hook);
+			final ExpressionResult defaultInit =
+					makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhsToInit, cType, sophisticated, hook);
 			initialization.addAllExceptLrValue(defaultInit);
 			assert defaultInit.getLrValue() == null : "on-heap intialization does not need a return value";
 		} else {
@@ -635,8 +636,8 @@ public class InitializationHandler {
 				.build();
 	}
 
-	private ExpressionResult makeNaiveOnHeapDefaultInitializationForArray(final ILocation loc, final HeapLValue baseAddress,
-			final CArray cArrayType, final IASTNode hook) {
+	private ExpressionResult makeNaiveOnHeapDefaultInitializationForArray(final ILocation loc,
+			final HeapLValue baseAddress, final CArray cArrayType, final IASTNode hook) {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
@@ -644,8 +645,8 @@ public class InitializationHandler {
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 			final HeapLValue arrayAccessLhs = constructAddressForArrayAtIndex(loc, baseAddress, arrayIndex, hook);
 
-			final ExpressionResult arrayIndexInitialization = makeOnHeapDefaultInitializationForType(loc, arrayAccessLhs,
-					cArrayType.getValueType(), false, hook);
+			final ExpressionResult arrayIndexInitialization =
+					makeOnHeapDefaultInitializationForType(loc, arrayAccessLhs, cArrayType.getValueType(), false, hook);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 		}
 		return initialization.build();
@@ -1043,21 +1044,11 @@ public class InitializationHandler {
 
 	protected ExpressionResult convertInitResultWithExpressionResult(final ILocation loc, final CType targetCType,
 			final InitializerResult first, final IASTNode hook) {
-		final ExpressionResult expressionResultSwitched;
-		// TODO: 2018-09-05 Matthias: The following scheme seems to occur in several places
-		// maybe move to separate method?
-		if ((targetCType.getUnderlyingType() instanceof CPointer)
-				&& (first.getRootExpressionResult().getLrValue().getCType().getUnderlyingType() instanceof CArray)) {
-			final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-			erb.addAllExceptLrValue(first.getRootExpressionResult());
-			final RValue decayed =
-					mCHandler.decayArrayLrValToPointer(loc, first.getRootExpressionResult().getLrValue(), hook);
-			erb.setLrValue(decayed);
-			expressionResultSwitched = erb.build();
-		} else {
-			expressionResultSwitched = mExprResultTransformer
-					.switchToRValueAndRexBoolToIntIfNecessary(first.getRootExpressionResult(), loc, hook);
-		}
+
+		final ExpressionResult er = first.getRootExpressionResult();
+		final ExpressionResult expressionResultSwitched = mExprResultTransformer
+				.makeRepresentationReadyForConversionAndRexBoolToIntIfNecessary(er, mCHandler, loc, targetCType, hook);
+
 		// TODO: 2018-09-05 Matthias: The following workaround may now be not required any more.
 		// 2017-11-19 Matthias: introduced workaround to omit conversion
 		if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {

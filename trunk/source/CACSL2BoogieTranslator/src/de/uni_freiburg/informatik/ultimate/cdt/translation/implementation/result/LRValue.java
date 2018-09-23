@@ -69,6 +69,10 @@ public abstract class LRValue {
 		return mCType;
 	}
 
+	public CType getUnderlyingType() {
+		return mCType.getUnderlyingType();
+	}
+
 	public boolean isBoogieBool() {
 		return mIsBoogieBool;
 	}

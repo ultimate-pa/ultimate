@@ -523,7 +523,7 @@ public class FunctionHandler {
 	 * @return the translation result.
 	 */
 	public Result handleReturnStatement(final IDispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final IASTReturnStatement node) {
+			final IASTReturnStatement node) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		// The ReturnValue could be empty!
 		final ILocation loc = mLocationFactory.createCLocation(node);
@@ -540,32 +540,26 @@ public class FunctionHandler {
 
 			resultBuilder.addStatement(havoc);
 		} else if (node.getReturnValue() != null) {
-			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
+			ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node);
-			final ExpressionResult returnValueSwitched;
 
-			if (returnValue.getLrValue() instanceof LocalLValue
-					&& returnValue.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-				// Target value is a pointer. Decay RValue type to CPointer
-				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-				final RValue decayed = mCHandler.decayArrayLrValToPointer(loc, returnValue.getLrValue(), node);
-				erb.setLrValue(decayed);
-				returnValueSwitched = erb.build();
-			} else {
-				returnValueSwitched =
-						mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(returnValue, loc, node);
-			}
+			returnValue = mExprResultTransformer.switchToRValueIfNecessary(returnValue, loc, node);
+
+			// functions cannot return arrays but only pointers
+			returnValue = mCHandler.decayArrayToPointer(returnValue, loc, node);
+			returnValue = mExprResultTransformer.rexBoolToIntIfNecessary(returnValue, loc);
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
-			if (!returnValueSwitched.getLrValue().getCType().equals(functionResultType)
+			// TODO 2018-09-22 Matthias: I have some doubts that the following lines are usefull.
+			// Does C11 really mention a special treatment for zero literals in return statements?
+			if (!returnValue.getLrValue().getCType().equals(functionResultType)
 					&& functionResultType instanceof CPointer
-					&& returnValueSwitched.getLrValue().getCType() instanceof CPrimitive
-					&& returnValueSwitched.getLrValue().getValue() instanceof IntegerLiteral
-					&& "0".equals(((IntegerLiteral) returnValueSwitched.getLrValue().getValue()).getValue())) {
-				returnValueSwitched
+					&& returnValue.getLrValue().getCType() instanceof CPrimitive
+					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
+					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
+				returnValue
 						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType));
-
 			}
 
 			if (outParams.length == 0) {
@@ -585,13 +579,11 @@ public class FunctionHandler {
 
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
-				mCHandler.convert(loc, returnValueSwitched, functionResultType);
+				mCHandler.convert(loc, returnValue, functionResultType);
 
-				resultBuilder.setLrValue(returnValueSwitched.getLrValue());
+				resultBuilder.addAllAndSetLrValue(returnValue);
 
-				resultBuilder.addAllExceptLrValue(returnValueSwitched);
-
-				final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
+				final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
 				resultBuilder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhss,
 						new Expression[] { castExprResultRVal.getValue() }));
 				// assuming that we need no auxvars or overappr, here

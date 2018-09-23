@@ -400,9 +400,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 				}
 			} else if (leftValue.signum() == -1) {
 				if (rightValue.signum() == 1) {
-					constantResult = (leftValue.negate().mod(rightValue)).negate().toString();
+					constantResult = leftValue.negate().mod(rightValue).negate().toString();
 				} else if (rightValue.signum() == -1) {
-					constantResult = (leftValue.negate().mod(rightValue.negate())).negate().toString();
+					constantResult = leftValue.negate().mod(rightValue.negate()).negate().toString();
 				} else {
 					constantResult = "0";
 				}
@@ -519,8 +519,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 					oldWrappedIfUnsigned = operand.getLrValue().getValue();
 				}
 				if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
-						|| (mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
-								&& !mTypeSizes.isUnsigned(oldType))) {
+						|| mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
+								&& !mTypeSizes.isUnsigned(oldType)) {
 					newExpression = oldWrappedIfUnsigned;
 				} else {
 					// According to C11 6.3.1.3.3 the result is implementation-defined
@@ -554,7 +554,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	public void oldConvertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
 		assert newType.isIntegerType();
-		assert rexp.getLrValue().getCType() instanceof CPointer;
+		assert rexp.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
 			super.convertPointerToInt(loc, rexp, newType);
 		} else {
@@ -800,7 +800,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if ((type1 instanceof CPrimitive) && (type2 instanceof CPrimitive)) {
+		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
 			final CPrimitive primitive1 = (CPrimitive) type1;
 			final CPrimitive primitive2 = (CPrimitive) type2;
 			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
@@ -876,7 +876,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType(), newType);
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));

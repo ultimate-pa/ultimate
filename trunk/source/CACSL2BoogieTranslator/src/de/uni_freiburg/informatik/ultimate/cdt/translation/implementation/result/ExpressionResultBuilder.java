@@ -231,4 +231,8 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	public ExpressionResultBuilder addAllAndSetLrValue(final ExpressionResult expr) {
+		return addAllExceptLrValue(expr).setLrValue(expr.getLrValue());
+	}
+
 }

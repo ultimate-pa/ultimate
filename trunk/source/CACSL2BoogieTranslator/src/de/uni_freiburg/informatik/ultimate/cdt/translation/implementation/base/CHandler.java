@@ -338,6 +338,12 @@ public class CHandler {
 
 	private final Set<IASTDeclaration> mReachableDeclarations;
 
+	/**
+	 * Our translation is done in two passes. In the first pass (the prerun pass) we construct only a mock Boogie AST
+	 * but determine e.g., which values we store in local variables of the Boogie program and which variables we store
+	 * in the "memory array" of the Boogie program. Only the main pass we construct the AST of the Boogie program that
+	 * is the result of this plugin.
+	 */
 	private final boolean mIsPrerun;
 
 	/**
@@ -610,30 +616,13 @@ public class CHandler {
 		case IASTBinaryExpression.op_assign: {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
-
 			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
-			final CType rType = rightOperand.getLrValue().getCType().getUnderlyingType();
-
-			if (lType instanceof CPointer && rType instanceof CArray) {
-				/*
-				 * assigning an array to a pointer the array must be on heap --> just take the address
-				 */
-				builder.addAllExceptLrValue(rightOperand);
-
-				final LRValue rightLrVal = rightOperand.getLrValue();
-
-				final RValue address = decayArrayLrValToPointer(loc, rightLrVal, node);
-				builder.setLrValue(address);
-				return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), builder.build(), node);
-			}
-
 			final ExpressionResult rightOperandSwitched =
-					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			builder.addAllExceptLrValue(rightOperandSwitched);
-			builder.setLrValue(rightOperandSwitched.getLrValue());
+					mExprResultTransformer.makeRepresentationReadyForConversionAndRexBoolToIntIfNecessary(rightOperand,
+							this, loc, lType, node);
+			builder.addAllAndSetLrValue(rightOperandSwitched);
 			return makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
 					node);
-
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
@@ -786,8 +775,8 @@ public class CHandler {
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
 			// if we are "adding" arrays, they must be treated as pointers
-			final ExpressionResult lDecayed = decayArrayToPointerIfNecessary(leftOperand, loc, node);
-			final ExpressionResult rDecayed = decayArrayToPointerIfNecessary(rightOperand, loc, node);
+			final ExpressionResult lDecayed = decayArrayToPointer(leftOperand, loc, node);
+			final ExpressionResult rDecayed = decayArrayToPointer(rightOperand, loc, node);
 			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
 					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
@@ -803,8 +792,8 @@ public class CHandler {
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
 			// if we are "adding" arrays, they must be treated as pointers
-			final ExpressionResult lDecayed = decayArrayToPointerIfNecessary(leftOperand, loc, node);
-			final ExpressionResult rDecayed = decayArrayToPointerIfNecessary(rightOperand, loc, node);
+			final ExpressionResult lDecayed = decayArrayToPointer(leftOperand, loc, node);
+			final ExpressionResult rDecayed = decayArrayToPointer(rightOperand, loc, node);
 			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
 					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
@@ -892,13 +881,7 @@ public class CHandler {
 		mCurrentDeclaredTypes.pop();
 
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
-		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
-				&& newCType.getUnderlyingType() instanceof CPointer) {
-			final RValue newRval = decayArrayLrValToPointer(loc, expr.getLrValue(), node);
-			expr.setLrValue(newRval);
-		} else {
-			expr = mExprResultTransformer.switchToRValueIfNecessary(expr, loc, node);
-		}
+		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, this, loc, newCType, node);
 
 		if (POINTER_CAST_IS_UNSUPPORTED_SYNTAX && newCType instanceof CPointer
 				&& expr.getLrValue().getCType() instanceof CPointer) {
@@ -1471,7 +1454,7 @@ public class CHandler {
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
 				// TODO: (alex, feb 2018) quite unsure about always doing this array to pointer conversion..
-				rex = decayArrayToPointerIfNecessary(rex, loc, node);
+				rex = decayArrayToPointer(rex, loc, node);
 				rex = mExprResultTransformer.switchToRValueIfNecessary(rex, loc, node);
 				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
@@ -1655,7 +1638,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTReturnStatement node) {
-		return mFunctionHandler.handleReturnStatement(main, mMemoryHandler, mStructHandler, node);
+		return mFunctionHandler.handleReturnStatement(main, mMemoryHandler, node);
 	}
 
 	/**
@@ -2358,7 +2341,7 @@ public class CHandler {
 				newValue = ((HeapLValue) rightLrVal).getAddress();
 			}
 		}
-		final CType newType = new CPointer(((CArray) rightLrVal.getCType()).getValueType());
+		final CType newType = new CPointer(((CArray) rightLrVal.getCType().getUnderlyingType()).getValueType());
 		return new RValue(newValue, newType);
 	}
 
@@ -2659,13 +2642,16 @@ public class CHandler {
 	}
 
 	/**
-	 * Converts an array to a pointer, if applicable. Triggers that the array is moved on heap, if necessary. Returns an
-	 * ExpressionResult with the same side effects and the same value except the value has pointer type.
+	 * If the {@link CType} of is a {@link CArray}, we will return a new {@link ExpressionResult} in which the
+	 * representation was switched from array to pointer. Otherwise this object is returned (without any modifications).
+	 *
+	 * Triggers that the array is moved on heap, if necessary.
 	 *
 	 * (this can be used for example for function parameters, when an array is passed by reference (which is the
 	 * standard case).)
+	 *
 	 */
-	public ExpressionResult decayArrayToPointerIfNecessary(final ExpressionResult result, final ILocation loc,
+	public ExpressionResult decayArrayToPointer(final ExpressionResult result, final ILocation loc,
 			final IASTNode hook) {
 		if (result.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -3518,9 +3504,10 @@ public class CHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final IDispatcher main, final ExpressionResult er, final ILocation loc,
+	private Result handleIndirectionOperator(final IDispatcher main, final ExpressionResult expr, final ILocation loc,
 			final IASTNode hook) {
-		final ExpressionResult rop = mExprResultTransformer.switchToRValueIfNecessary(er, loc, hook);
+		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, this, loc,
+				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
 		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
@@ -4223,7 +4210,7 @@ public class CHandler {
 				resultCType = opNegative.getLrValue().getCType();
 			} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-				opNegative = decayArrayToPointerIfNecessary(opNegative, loc, hook);
+				opNegative = decayArrayToPointer(opNegative, loc, hook);
 				mExpressionTranslation.convertIntToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
@@ -4241,7 +4228,7 @@ public class CHandler {
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-				opPositive = decayArrayToPointerIfNecessary(opPositive, loc, hook);
+				opPositive = decayArrayToPointer(opPositive, loc, hook);
 				mExpressionTranslation.convertIntToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
