@@ -231,8 +231,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
 	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
 			"Use predicate trie based predicate unification";
-	private static final boolean DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = false;
-	private static final String DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
+	public static final boolean DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = false;
+	public static final String DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
 			"Use the newer predicate-trie based predicate unification algorithm.";
 
 	/**

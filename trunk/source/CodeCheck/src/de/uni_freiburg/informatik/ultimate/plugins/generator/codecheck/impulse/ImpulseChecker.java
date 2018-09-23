@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -63,7 +63,7 @@ public class ImpulseChecker extends CodeChecker {
 
 	public ImpulseChecker(final CfgSmtToolkit cfgSmtToolkit, final IIcfg<IcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globSettings) {
+			final IPredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globSettings) {
 		super(cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger, globSettings);
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;

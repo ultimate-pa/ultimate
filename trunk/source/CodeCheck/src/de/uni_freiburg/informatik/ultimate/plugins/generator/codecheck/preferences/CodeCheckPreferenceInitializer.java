@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitializer {
@@ -93,16 +94,14 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use predicates from abstract interpretation";
 
-	/*
-	 * default values for the different preferences
-	 */
+	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
+			TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER;
+
 	public static final Checker DEF_CHECKER = Checker.ULTIMATE;
 
-	// public static final boolean DEF_ONLYMAINPROCEDURE = false;
 	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
 	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
 
-	// public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.Z3SPWP;
 	public static final InterpolationTechnique DEF_INTERPOLATIONMODE = InterpolationTechnique.Craig_TreeInterpolation;
 	public static final boolean DEF_INTERPOLANTCONSOLIDATION = false;
 	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
@@ -156,6 +155,16 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 						PredicateUnification.values()),
 				new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
 						PreferenceType.Combo, EdgeCheckOptimization.values()),
+				new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
+						PreferenceType.Combo, EdgeCheckOptimization.values()),
+				new UltimatePreferenceItem<>(
+						TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						DEF_EDGECHECKOPTIMIZATION, PreferenceType.Combo, EdgeCheckOptimization.values()),
+				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						TraceAbstractionPreferenceInitializer.DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						TraceAbstractionPreferenceInitializer.DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						PreferenceType.Boolean),
+
 				/*
 				 * settings concerning a separate solver for trace checks and interpolation
 				 */

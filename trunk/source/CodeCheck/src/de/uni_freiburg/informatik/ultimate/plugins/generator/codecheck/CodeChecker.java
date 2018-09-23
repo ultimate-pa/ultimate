@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 
@@ -52,7 +52,7 @@ public abstract class CodeChecker {
 	protected final ImpRootNode mGraphRoot;
 
 	protected IHoareTripleChecker mEdgeChecker;
-	protected PredicateUnifier mPredicateUnifier;
+	protected IPredicateUnifier mPredicateUnifier;
 
 	protected GraphWriter mGraphWriter;
 
@@ -60,7 +60,7 @@ public abstract class CodeChecker {
 
 	public CodeChecker(final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
+			final IPredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
 		mLogger = logger;
 		mCfgToolkit = csToolkit;
 		mOriginalRoot = originalRoot;

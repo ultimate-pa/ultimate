@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
@@ -141,7 +142,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 
-	private PredicateUnifier mPredicateUnifier;
+	private IPredicateUnifier mPredicateUnifier;
 
 	private IIcfg<IcfgLocation> mOriginalRoot;
 	private ImpRootNode mGraphRoot;
@@ -176,8 +177,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable(),
 				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 
-		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+				mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = mOriginalRoot.getProcedureErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<>();
