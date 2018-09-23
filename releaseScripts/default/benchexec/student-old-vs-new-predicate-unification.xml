@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">csv</option>
+    <rundefinition name="Automizer Old">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/pu-bench/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    </rundefinition>
+
+    <rundefinition name="Automizer New">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/pu-bench/svcomp-Reach-32bit-Automizer_Default_PUPT.epf</option>
+    </rundefinition>
+
+    <rundefinition name="CodeCheck Old">
+        <option name="-tc">../../../trunk/examples/toolchains/KojakBplInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/pu-bench/svcomp-Reach-32bit-Kojak_Default.epf</option>
+    </rundefinition>
+
+    <rundefinition name="CodeCheck New">
+        <option name="-tc">../../../trunk/examples/toolchains/KojakBplInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/pu-bench/svcomp-Reach-32bit-Kojak_Default_PUPT.epf</option>
+    </rundefinition>
+
+    <tasks name="Pdr">
+        <includesfile>../../../trunk/examples/bench-pdr-boogie.set</includesfile>
+    </tasks>
+</benchmark>
