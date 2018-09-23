@@ -154,7 +154,7 @@ public class CfgBuilder {
 
 	private final RCFGBacktranslator mBacktranslator;
 
-	private CodeBlockSize mCodeBlockSize;
+	private final CodeBlockSize mCodeBlockSize;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -175,7 +175,6 @@ public class CfgBuilder {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
-		mCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
@@ -187,6 +186,18 @@ public class CfgBuilder {
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
+
+		final CodeBlockSize userDefineCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
+				CodeBlockSize.class);
+		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && !forkStatements.isEmpty()) {
+			mCodeBlockSize = CodeBlockSize.SingleStatement;
+			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
+					+ " but program contains fork statements. Overwriting the user preferences and setting CodeBlockSize to "
+					+ mCodeBlockSize);
+		} else {
+			mCodeBlockSize = userDefineCodeBlockSize;
+		}
+
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization, forkStatements);
 		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
@@ -310,6 +321,10 @@ public class CfgBuilder {
 			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
 		}
 
+		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
+			new LargeBlockEncoding();
+		}
+
 		for (final ForkThreadCurrent fct : mForkCurrentThreads) {
 			final Map<DebugIdentifier, BoogieIcfgLocation> id2loc = mIcfg.getProgramPoints()
 					.get(fct.getPrecedingProcedure());
@@ -327,16 +342,8 @@ public class CfgBuilder {
 
 		final CodeBlockFactory cbf = mCbf;
 		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-		adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames, threadInstanceMap,
-				cbf);
-
-		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
-		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
-		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
-			new LargeBlockEncoding();
-		}
+		adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+				threadInstanceMap, cbf);
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
 				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
