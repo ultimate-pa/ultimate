@@ -509,31 +509,24 @@ public class FunctionHandler {
 
 			resultBuilder.addStatement(havoc);
 		} else if (node.getReturnValue() != null) {
-			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
+			ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()), node);
-			final ExpressionResult returnValueSwitched;
 
-			if (returnValue.getLrValue() instanceof LocalLValue
-					&& returnValue.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-				// Target value is a pointer. Decay RValue type to CPointer
-				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-				final RValue decayed =
-						((CHandler) main.mCHandler).decayArrayLrValToPointer(main, loc, returnValue.getLrValue(), node);
-				erb.setLrValue(decayed);
-				returnValueSwitched = erb.build();
-			} else {
-				returnValueSwitched = returnValue.switchToRValueIfNecessary(main, loc, node);
-				returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-			}
+			returnValue = returnValue.switchToRValueIfNecessary(main, loc, node);
+			// functions cannot return arrays but only pointers
+			returnValue = returnValue.decayArrayToPointer(main, loc, node);
+			returnValue.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
-			if (!returnValueSwitched.getLrValue().getCType().equals(functionResultType)
+			// TODO 2018-09-22 Matthias: I have some doubts that the following lines are usefull.
+			// Does C11 really mention a special treatment for zero literals in return statements?
+			if (!returnValue.getLrValue().getCType().equals(functionResultType)
 					&& functionResultType instanceof CPointer
-					&& returnValueSwitched.getLrValue().getCType() instanceof CPrimitive
-					&& returnValueSwitched.getLrValue().getValue() instanceof IntegerLiteral
-					&& "0".equals(((IntegerLiteral) returnValueSwitched.getLrValue().getValue()).getValue())) {
-				returnValueSwitched
+					&& returnValue.getLrValue().getCType() instanceof CPrimitive
+					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
+					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
+				returnValue
 						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType));
 
 			}
@@ -558,13 +551,13 @@ public class FunctionHandler {
 
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
-				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
+				main.mCHandler.convert(loc, returnValue, functionResultType);
 
-				resultBuilder.setLrValue(returnValueSwitched.getLrValue());
+				resultBuilder.setLrValue(returnValue.getLrValue());
 
-				resultBuilder.addAllExceptLrValue(returnValueSwitched);
+				resultBuilder.addAllExceptLrValue(returnValue);
 
-				final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
+				final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
 				resultBuilder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhss,
 						new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here

@@ -732,56 +732,16 @@ public class CHandler implements ICHandler {
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
-			// stmt.addAll(leftOperand.mStmt);
-			// decl.addAll(leftOperand.mDecl);
-			// auxVars.putAll(leftOperand.mAuxVars);
-			// overappr.addAll(leftOperand.mOverappr);
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
-
 			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
-			final CType rType = rightOperand.getLrValue().getCType().getUnderlyingType();
-
-			if (lType instanceof CPointer && rType instanceof CArray) {
-				/*
-				 * assigning an array to a pointer the array must be on heap --> just take the address
-				 */
-
-				// stmt.addAll(rightOperand.mStmt);
-				// decl.addAll(rightOperand.mDecl);
-				// auxVars.putAll(rightOperand.mAuxVars);
-				// overappr.addAll(rightOperand.mOverappr);
-				builder.addAllExceptLrValue(rightOperand);
-
-				final LRValue rightLrVal = rightOperand.getLrValue();
-
-				final RValue address = decayArrayLrValToPointer(main, loc, rightLrVal, node);
-				builder.setLrValue(address);
-				// return makeAssignment(main, loc, stmt, leftOperand.getLrValue(), address, decl,
-				// auxVars, overappr);
-				return makeAssignment(main, loc, leftOperand.getLrValue(), Collections.emptyList(), builder.build(),
-						node);
-			}
-
-			final ExpressionResult rightOperandSwitched = rightOperand.switchToRValueIfNecessary(main, loc, node);
-			// rr.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+			final ExpressionResult rightOperandSwitched = rightOperand.makeRepresentationReadyForConversion(main, loc,
+					lType, node);
 			rightOperandSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-
-			// stmt.addAll(rr.mStmt);
-			// decl.addAll(rr.mDecl);
-			// auxVars.putAll(rr.mAuxVars);
-			// overappr.addAll(rr.mOverappr);
 			builder.addAllExceptLrValue(rightOperandSwitched);
-
 			builder.setLrValue(rightOperandSwitched.getLrValue());
-
-			return makeAssignment(main, loc, leftOperand.getLrValue(), // (RValue) rr.getLrValue(), decl, auxVars,
-																		// overappr,
-					leftOperand.mOtherUnionFields, builder.build(), node);
-			// return makeAssignment(main, loc, stmt, leftOperand.getLrValue(), (RValue)
-			// rr.getLrValue(), decl, auxVars, overappr,
-			// leftOperand.mOtherUnionFields);
-
+			return makeAssignment(main, loc, leftOperand.getLrValue(), leftOperand.mOtherUnionFields, builder.build(),
+					node);
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
