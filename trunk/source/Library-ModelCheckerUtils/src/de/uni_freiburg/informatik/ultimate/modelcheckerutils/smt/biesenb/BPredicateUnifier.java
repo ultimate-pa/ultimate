@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -87,9 +88,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
 		mCoverageChecker = new PredicateCoverageChecker(mImplicationGraph, this);
-
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
+	}
+
+	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
+			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
+		this(services, script, factory, symbolTable);
+		logger.info("Initialized predicate-trie based predicate unifier");
 	}
 
 	/**

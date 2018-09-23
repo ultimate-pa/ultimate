@@ -138,6 +138,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		for (final IPredicate pred : initialPredicates) {
 			declarePredicate(pred);
 		}
+		logger.info("Initialized classic predicate unifier");
 	}
 
 	@Override
@@ -515,6 +516,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 *            Result of the implication (p ==> term) for each known predicate p.
 	 * @return The predicate that was constructed for the term p.
 	 */
+	@Override
 	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
 			final Map<IPredicate, Validity> expliedPredicates) {
 		if (mTerm2Predicates.get(term) != null) {
@@ -669,6 +671,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			throw new AssertionError("PredicateUnifier is in inconsistent state");
 		}
 
+		@Override
 		public HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation() {
 			return new HashRelation<>(mImpliedPredicates);
 		}
