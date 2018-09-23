@@ -125,8 +125,8 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 			} catch (final UnsupportedOperationException | SMTLIBException e) {
 				final String message = e.getMessage();
 				if (message == null) {
-					throw new IllegalArgumentException(
-							"solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+					mLogger.fatal("solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+					throw e;
 				}
 				if (e instanceof UnsupportedOperationException && checkIfMessageMeansSolverCannotInterpolate(message)) {
 					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays

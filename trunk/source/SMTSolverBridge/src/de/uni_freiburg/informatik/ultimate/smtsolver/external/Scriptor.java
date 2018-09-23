@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SMTSolverBridge grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SMTSolverBridge grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
@@ -69,8 +69,8 @@ public class Scriptor extends NoopScript {
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String solverName) throws IOException {
+	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final String solverName) throws IOException {
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		super.setOption(":print-success", true);
 	}
@@ -119,7 +119,8 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+			throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
 		mExecutor.input(SmtCommandUtils.DefineFunCommand.buildString(fun, params, resultSort, definition));
 		mExecutor.parseSuccess();
@@ -179,7 +180,8 @@ public class Scriptor extends NoopScript {
 			if (!t.getSort().isNumericSort() && t.getSort() != getTheory().getBooleanSort()
 					&& !t.getSort().getRealSort().getName().equals("BitVec")
 					&& !t.getSort().getRealSort().getName().equals("FloatingPoint")) {
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("Cannot provide value for term " + t.toStringDirect()
+						+ " of sort " + t.getSort().getRealSort());
 			}
 		}
 		mExecutor.input(SmtCommandUtils.GetValueCommand.buildString(terms));
