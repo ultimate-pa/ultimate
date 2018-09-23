@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
@@ -46,7 +46,7 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider) {
-		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
 		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack = s -> super.createStrategy(
 				counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider);

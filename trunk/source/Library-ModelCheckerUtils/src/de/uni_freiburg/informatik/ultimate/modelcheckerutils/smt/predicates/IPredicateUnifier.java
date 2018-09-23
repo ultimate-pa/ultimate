@@ -28,9 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -97,5 +99,22 @@ public interface IPredicateUnifier {
 	 * Return true iff pred is the representative IPredicate for the Term pred.getFormula().
 	 */
 	boolean isRepresentative(final IPredicate pred);
+
+	/**
+	 * Construct a new predicate for the given term. The term may not be unified by this {@link IPredicateUnifier}, but
+	 * is assumed to be unknown.
+	 *
+	 * @param term
+	 *            Term for which new predicate is constructed. This term has to be simplified (resp. will not be further
+	 *            simplified) and has to be different (not semantically equivalent) from all predicates known by this
+	 *            predicate unifier.
+	 * @param impliedPredicates
+	 *            Result of the implication (term ==> p) for each known predicate p.
+	 * @param expliedPredicates
+	 *            Result of the implication (p ==> term) for each known predicate p.
+	 * @return The predicate that was constructed for the term p.
+	 */
+	IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
+			final Map<IPredicate, Validity> expliedPredicates);
 
 }

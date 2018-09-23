@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -63,8 +63,8 @@ public class RefinementStrategyUtils {
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
 			final ITraceCheck traceCheck, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
-			final RefinementEngineStatisticsGenerator statistics) {
+			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IPredicate precondition, final RefinementEngineStatisticsGenerator statistics) {
 		final ITraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceCheck instanceof IInterpolantGenerator<?>) {
@@ -74,12 +74,11 @@ public class RefinementStrategyUtils {
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {
 					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-					final InterpolantConsolidation<LETTER> interpConsoli =
-							new InterpolantConsolidation<>(precondition,
-									predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
-									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
-									predicateUnifier, interpolatingTraceCheck, taPrefsForInterpolantConsolidation);
+					final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(precondition,
+							predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+							NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
+							cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
+							predicateUnifier, interpolatingTraceCheck, taPrefsForInterpolantConsolidation);
 					statistics.addInterpolantConsolidationStatistics(
 							interpConsoli.getInterpolantConsolidationBenchmarks());
 					return interpConsoli;

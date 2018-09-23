@@ -229,6 +229,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
 					+ ", every unusable solver result aborts the verification, if set to "
 					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
+	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
+			"Use predicate trie based predicate unification";
+	private static final boolean DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = false;
+	private static final String DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
+			"Use the newer predicate-trie based predicate unification algorithm.";
 
 	/**
 	 * Constructor.
@@ -275,6 +280,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
 
+				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo,
 						SolverMode.values()),

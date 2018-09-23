@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -174,7 +175,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	}
 
 	private int minDepth(final int x) {
-		return (int) Math.ceil((Math.log(x) / Math.log(2)) + 1);
+		return (int) Math.ceil(Math.log(x) / Math.log(2) + 1);
 	}
 
 	@Override
@@ -245,8 +246,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public boolean isIntricatePredicate(final IPredicate pred) {
-		return (isDistinct(pred, mTruePredicate) == LBool.UNKNOWN
-				|| isDistinct(pred, mFalsePredicate) == LBool.UNKNOWN);
+		return isDistinct(pred, mTruePredicate) == LBool.UNKNOWN || isDistinct(pred, mFalsePredicate) == LBool.UNKNOWN;
 	}
 
 	private LBool isDistinct(final IPredicate pred1, final IPredicate pred2) {
@@ -362,5 +362,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	@Override
 	public String toString() {
 		return mPredicateTrie.toString() + " " + mImplicationGraph.toString();
+	}
+
+	@Override
+	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
+			final Map<IPredicate, Validity> expliedPredicates) {
+		// TODO Find a way to exploit that we already know this term is unique.
+		return getOrConstructPredicate(term);
 	}
 }

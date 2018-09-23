@@ -84,6 +84,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mComputeCounterexample;
 	private final boolean mCollectInterpolantStatistics;
 	private final IUltimateServiceProvider mServices;
+	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -154,6 +155,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS);
 		mComputeCounterexample =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
+		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
 	}
 
 	public RefinementStrategy getRefinementStrategy() {
@@ -284,5 +287,9 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public IUltimateServiceProvider getUltimateServices() {
 		return mServices;
+	}
+
+	public boolean usePredicateTrieBasedPredicateUnifier() {
+		return mUsePredicateTrieBasedPredicateUnifier;
 	}
 }

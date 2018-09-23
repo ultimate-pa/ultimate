@@ -340,7 +340,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private CachingHoareTripleChecker mHtc;
 		private final AbsIntPredicate<STATE> mFalsePredicate;
 		private final AbsIntPredicate<STATE> mTruePredicate;
-		private final PredicateUnifier mPredicateUnifierAbsInt;
+		private final IPredicateUnifier mPredicateUnifierAbsInt;
 		private final PathProgram mPathProgram;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,

@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -93,9 +92,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 	/**
-	 * Do not enhance the interpolant automaton into a total automaton but construct
-	 * the enhancement only on-demand and add only transitions that will be needed
-	 * for the difference.
+	 * Do not enhance the interpolant automaton into a total automaton but construct the enhancement only on-demand and
+	 * add only transitions that will be needed for the difference.
 	 */
 	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
 	/**
@@ -118,10 +116,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
 		final boolean useTildeInitWorkaround = mIcfg.getProcedureEntryNodes().containsKey("~init");
 		if (useTildeInitWorkaround) {
-		mLogger.warn("Program has a \"~init\" procedure. Ultimate will use the old wokaround for concurrent programs");
-		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking,
-				mCsToolkit, mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
-		mAbstraction = cFG2Automaton.getResult();
+			mLogger.warn(
+					"Program has a \"~init\" procedure. Ultimate will use the old wokaround for concurrent programs");
+			final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking,
+					mCsToolkit, mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+			mAbstraction = cFG2Automaton.getResult();
 		} else {
 			final IcfgLocation initialNode = mIcfg.getProcedureEntryNodes().get(TraceAbstractionStarter.ULTIMATE_START);
 			if (initialNode == null) {
@@ -186,7 +185,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomaton<LETTER, IPredicate> dia = enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton);
+		final INestedWordAutomaton<LETTER, IPredicate> dia =
+				enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
@@ -196,8 +196,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		// Furthermore there is a problem because we would have to concatenate operand
 		// with some ∑^* automaton first and we do not yet have an implementation for
 		// that.
-//		assert !accepts(mServices, nia, mCounterexample.getWord(), false) : "Complementation broken!";
-//		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
+		// assert !accepts(mServices, nia, mCounterexample.getWord(), false) : "Complementation broken!";
+		// mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
@@ -212,7 +212,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 		if (mPref.dumpAutomata()) {
 			// TODO Matthias: Iteration should probably added to TaskIdentifier
-			final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_AbstractionAfterDifference");
+			final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_AbstractionAfterDifference";
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 
@@ -252,8 +252,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		case NONE:
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
 					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<LETTER, IPredicate> dabps =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
+			final DeterminizeDD<LETTER, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(mServices),
+					mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
 		case PREDICATE_ABSTRACTION:
@@ -262,15 +262,17 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
 							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
-				new DifferencePairwiseOnDemand(new AutomataLibraryServices(mServices) , mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
+				new DifferencePairwiseOnDemand(new AutomataLibraryServices(mServices),
+						mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
 				raw.switchToReadonlyMode();
 			}
 			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
-			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false).getTransitionDensity(SymbolType.INTERNAL);
+			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false)
+					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
 				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_EagerFloydHoareAutomaton");
+				final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_EagerFloydHoareAutomaton";
 				super.writeAutomatonToFile(dia, filename);
 			}
 			break;
@@ -286,8 +288,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
 			writeAutomatonToFile(dia, filename);
 		}
-		assert accepts(mServices, dia,
-				mCounterexample.getWord(), true) : "Counterexample not accepted by determinized interpolant automaton: "
+		assert accepts(mServices, dia, mCounterexample.getWord(),
+				true) : "Counterexample not accepted by determinized interpolant automaton: "
 						+ mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
 		return dia;
@@ -312,26 +314,19 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	@Override
 	public IPreconditionProvider getPreconditionProvider() {
 
-		return new IPreconditionProvider() {
-			@Override
-			public IPredicate constructPrecondition(final PredicateUnifier predicateUnifier) {
-				final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-				if (ci == null) {
-					return predicateUnifier.getTruePredicate();
-				} else {
-					final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
-							.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
-					final List<Term> negated = threadInUseVars.stream().map(x -> SmtUtils
-							.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
-							.collect(Collectors.toList());
-					final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(),
-							negated);
-					return predicateUnifier.getOrConstructPredicate(conjunction);
-				}
+		return predicateUnifier -> {
+			final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
+			if (ci == null) {
+				return predicateUnifier.getTruePredicate();
 			}
+			final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
+					.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
+			final List<Term> negated = threadInUseVars.stream().map(
+					x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
+					.collect(Collectors.toList());
+			final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
+			return predicateUnifier.getOrConstructPredicate(conjunction);
 		};
 	}
-
-
 
 }

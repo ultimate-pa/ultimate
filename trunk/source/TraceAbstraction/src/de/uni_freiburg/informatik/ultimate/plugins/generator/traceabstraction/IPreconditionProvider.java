@@ -27,39 +27,27 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 /**
- * Sometimes we might want to verify a property under the assumption that a
- * certain precondition holds. In the trace abstraction CEGAR loop we do not
- * reuse {@link IPredicate}s from one iteration to another. Hence we cannot use
- * the same {@link IPredicate} in each iteration but need a mechanism hat
- * provides a new {@link IPredicate} in each iteration.
+ * Sometimes we might want to verify a property under the assumption that a certain precondition holds. In the trace
+ * abstraction CEGAR loop we do not reuse {@link IPredicate}s from one iteration to another. Hence we cannot use the
+ * same {@link IPredicate} in each iteration but need a mechanism hat provides a new {@link IPredicate} in each
+ * iteration.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 @FunctionalInterface
 public interface IPreconditionProvider {
-	
-	IPredicate constructPrecondition(PredicateUnifier predicateUnifier);
 
-	
+	IPredicate constructPrecondition(IPredicateUnifier predicateUnifier);
+
 	/**
-	 * Construct {@link IPreconditionProvider} that always return a the
-	 * {@link IPredicate} true. Use this {@link IPreconditionProvider} if you do not
-	 * have any assumptions about the initial state of the verified system.
+	 * Construct {@link IPreconditionProvider} that always return a the {@link IPredicate} true. Use this
+	 * {@link IPreconditionProvider} if you do not have any assumptions about the initial state of the verified system.
 	 */
-	public static IPreconditionProvider constructDefaultPreconditionProvider() {
-		return new IPreconditionProvider() {
-			
-			@Override
-			public IPredicate constructPrecondition(final PredicateUnifier predicateUnifier) {
-				return predicateUnifier.getTruePredicate();
-			}
-		};
+	static IPreconditionProvider constructDefaultPreconditionProvider() {
+		return IPredicateUnifier::getTruePredicate;
 	}
 
-
 }
-
-

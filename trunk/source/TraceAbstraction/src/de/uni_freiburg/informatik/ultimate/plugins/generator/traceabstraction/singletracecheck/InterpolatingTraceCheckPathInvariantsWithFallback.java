@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
@@ -72,7 +72,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final NestedRun<LETTER, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
-			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final InvariantSynthesisSettings invariantSynthesisSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {

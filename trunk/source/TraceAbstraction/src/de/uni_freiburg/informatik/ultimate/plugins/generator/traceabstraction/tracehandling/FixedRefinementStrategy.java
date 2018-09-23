@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IIn
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -66,7 +66,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	private final IPredicate mPrecondition;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
@@ -99,10 +99,10 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	 */
 	public FixedRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
-			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
 		mServices = services;
 		mLogger = logger;
@@ -187,7 +187,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	@Override
-	public PredicateUnifier getPredicateUnifier() {
+	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 

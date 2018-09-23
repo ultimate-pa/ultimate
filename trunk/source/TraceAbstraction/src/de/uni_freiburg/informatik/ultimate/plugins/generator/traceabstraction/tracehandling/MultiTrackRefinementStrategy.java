@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
@@ -136,7 +136,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
@@ -182,7 +182,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	@SuppressWarnings("squid:S1699")
 	protected MultiTrackRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,

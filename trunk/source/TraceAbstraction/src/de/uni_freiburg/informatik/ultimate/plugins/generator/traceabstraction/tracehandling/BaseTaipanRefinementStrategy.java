@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
@@ -87,7 +87,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final PredicateFactory mPredicateFactory;
-	protected final PredicateUnifier mPredicateUnifierSmt;
+	protected final IPredicateUnifier mPredicateUnifierSmt;
 	protected final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
@@ -133,7 +133,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	 */
 	public BaseTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,

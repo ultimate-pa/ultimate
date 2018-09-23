@@ -64,7 +64,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -104,7 +105,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	private final NestedWord<LETTER> mTrace;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
@@ -117,7 +118,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IInterpolantGenerator<LETTER> tc,
+			final IPredicateUnifier predicateUnifier, final IInterpolantGenerator<LETTER> tc,
 			final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -210,7 +211,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 					if (mInterpolatingTraceCheck instanceof TraceCheckSpWp) {
 						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use
 						// the sequence of backwards predicates
-						final TraceCheckSpWp<LETTER> tc = ((TraceCheckSpWp<LETTER>) mInterpolatingTraceCheck);
+						final TraceCheckSpWp<LETTER> tc = (TraceCheckSpWp<LETTER>) mInterpolatingTraceCheck;
 						final boolean forwardsPredicatesPerfect = tc.isForwardSequencePerfect();
 						if (forwardsPredicatesPerfect) {
 							mConsolidatedInterpolants = tc.getForwardPredicates().toArray(new IPredicate[0]);
@@ -632,7 +633,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	@Override
-	public PredicateUnifier getPredicateUnifier() {
+	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 

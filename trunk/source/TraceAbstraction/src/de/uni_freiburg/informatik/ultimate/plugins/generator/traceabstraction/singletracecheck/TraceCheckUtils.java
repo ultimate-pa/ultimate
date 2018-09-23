@@ -104,7 +104,7 @@ public final class TraceCheckUtils {
 
 	/**
 	 * Variant of
-	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, PredicateUnifier)}
+	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, IPredicateUnifier)}
 	 * where the sequence of ProgramPoints is not a parameter but computed from the trace.
 	 *
 	 * @param services

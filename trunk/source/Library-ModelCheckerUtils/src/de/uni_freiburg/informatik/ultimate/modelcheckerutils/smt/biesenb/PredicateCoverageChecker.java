@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class PredicateCoverageChecker implements IPredicateCoverageChecker {
 
@@ -72,6 +73,11 @@ public class PredicateCoverageChecker implements IPredicateCoverageChecker {
 			}
 			return ComparisonResult.INCOMPARABLE;
 		};
+	}
+
+	@Override
+	public HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation() {
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 }

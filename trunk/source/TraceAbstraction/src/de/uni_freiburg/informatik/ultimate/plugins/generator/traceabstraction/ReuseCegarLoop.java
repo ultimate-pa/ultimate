@@ -152,11 +152,11 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final PredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
 				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final boolean implicationInformationProvided = (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
+		final boolean implicationInformationProvided = rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton;
 		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
 		if (implicationInformationProvided) {
 			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon =
@@ -465,7 +465,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	public final class ReuseAutomaton {
 		private final boolean mUseEnhancement;
 
-		private final PredicateUnifier mPredicateUnifier;
+		private final IPredicateUnifier mPredicateUnifier;
 		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 		private final VpAlphabet<LETTER> mAbstractionAlphabet;
 
@@ -473,7 +473,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private IHoareTripleChecker mHtc;
 
 		private ReuseAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-				final VpAlphabet<LETTER> abstractionAlphabet, final PredicateUnifier predicateUnifier) {
+				final VpAlphabet<LETTER> abstractionAlphabet, final IPredicateUnifier predicateUnifier) {
 
 			mPredicateUnifier = predicateUnifier;
 			mAutomaton = automaton;
@@ -543,7 +543,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			return mHtc.getEdgeCheckerBenchmark();
 		}
 
-		public PredicateUnifier getPredicateUnifier() {
+		public IPredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier;
 		}
 

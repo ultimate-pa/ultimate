@@ -30,6 +30,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public interface IPredicateCoverageChecker {
 
@@ -56,4 +57,9 @@ public interface IPredicateCoverageChecker {
 	 */
 	IPartialComparator<IPredicate> getPartialComperator();
 
+	/**
+	 * @return A relation between predicates where an element (A,B) of the relation means that A implies B and which can
+	 *         be freely modified by the caller.
+	 */
+	HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation();
 }

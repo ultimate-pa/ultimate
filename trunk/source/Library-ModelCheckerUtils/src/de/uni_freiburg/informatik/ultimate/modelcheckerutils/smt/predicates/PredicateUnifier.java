@@ -502,6 +502,38 @@ public class PredicateUnifier implements IPredicateUnifier {
 		return mPredicateFactory;
 	}
 
+	/**
+	 * Construct a new predicate for the given term.
+	 *
+	 * @param term
+	 *            Term for which new predicate is constructed. This term has to be simplified (resp. will not be further
+	 *            simplified) and has to be different (not semantically equivalent) from all predicates known by this
+	 *            predicate unifier.
+	 * @param impliedPredicates
+	 *            Result of the implication (term ==> p) for each known predicate p.
+	 * @param expliedPredicates
+	 *            Result of the implication (p ==> term) for each known predicate p.
+	 * @return The predicate that was constructed for the term p.
+	 */
+	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
+			final Map<IPredicate, Validity> expliedPredicates) {
+		if (mTerm2Predicates.get(term) != null) {
+			throw new AssertionError("PredicateUnifier already knows a predicate for " + term);
+		}
+		if (impliedPredicates.size() != mKnownPredicates.size()) {
+			throw new AssertionError(
+					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided implications");
+		}
+		if (expliedPredicates.size() != mKnownPredicates.size()) {
+			throw new AssertionError(
+					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided explications");
+		}
+		final IPredicate predicate = constructNewPredicate(term, null);
+		addNewPredicate(predicate, term, term, impliedPredicates, expliedPredicates);
+		mPredicateUnifierBenchmarkGenerator.incrementDeclaredPredicates();
+		return predicate;
+	}
+
 	public class CoverageRelation implements IPredicateCoverageChecker {
 
 		private final NestedMap2<IPredicate, IPredicate, Validity> mLhs2RhsValidity = new NestedMap2<>();
@@ -963,38 +995,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			return result;
 		}
-	}
-
-	/**
-	 * Construct a new predicate for the given term.
-	 *
-	 * @param term
-	 *            Term for which new predicate is constructed. This term has to be simplified (resp. will not be further
-	 *            simplified) and has to be different (not semantically equivalent) from all predicates known by this
-	 *            predicate unifier.
-	 * @param impliedPredicates
-	 *            Result of the implication (term ==> p) for each known predicate p.
-	 * @param expliedPredicates
-	 *            Result of the implication (p ==> term) for each known predicate p.
-	 * @return The predicate that was constructed for the term p.
-	 */
-	public IPredicate constructNewPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
-		if (mTerm2Predicates.get(term) != null) {
-			throw new AssertionError("PredicateUnifier already knows a predicate for " + term);
-		}
-		if (impliedPredicates.size() != mKnownPredicates.size()) {
-			throw new AssertionError(
-					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided implications");
-		}
-		if (expliedPredicates.size() != mKnownPredicates.size()) {
-			throw new AssertionError(
-					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided explications");
-		}
-		final IPredicate predicate = constructNewPredicate(term, null);
-		addNewPredicate(predicate, term, term, impliedPredicates, expliedPredicates);
-		mPredicateUnifierBenchmarkGenerator.incrementDeclaredPredicates();
-		return predicate;
 	}
 
 }

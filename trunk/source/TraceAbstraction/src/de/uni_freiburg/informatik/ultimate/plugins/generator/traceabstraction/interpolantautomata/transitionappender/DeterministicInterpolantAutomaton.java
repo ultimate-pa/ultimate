@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class DeterministicInterpolantAutomaton<LETTER extends IAction>
-extends BasicAbstractInterpolantAutomaton<LETTER> {
+		extends BasicAbstractInterpolantAutomaton<LETTER> {
 
 	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = new HashRelation<>();
@@ -124,13 +124,8 @@ extends BasicAbstractInterpolantAutomaton<LETTER> {
 
 		if (initialState != mIaTrueState) {
 			assert SmtUtils.isTrue(mIaTrueState.getFormula());
-			//			assert allPredicates.contains(mIaTrueState);
 			mAlreadyConstructedAutomaton.addState(false, false, mIaTrueState);
 		}
-//		if (!allPredicates.contains(mIaTrueState)) {
-//			//			allPredicates.add(mIaTrueState);
-//			mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
-//		}
 		assert mIaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(mIaFalseState);
 		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
@@ -145,7 +140,13 @@ extends BasicAbstractInterpolantAutomaton<LETTER> {
 		}
 
 		mLogger.info(startMessage());
-		mLogger.info(((CoverageRelation) mPredicateUnifier.getCoverageRelation()).getCoverageRelationStatistics());
+		if (mPredicateUnifier.getCoverageRelation() instanceof CoverageRelation) {
+			mLogger.info(((CoverageRelation) mPredicateUnifier.getCoverageRelation()).getCoverageRelationStatistics());
+		} else {
+			mLogger.info("No coverage relation statistics for "
+					+ mPredicateUnifier.getCoverageRelation().getClass().getSimpleName());
+		}
+
 	}
 
 	/**
@@ -281,7 +282,7 @@ extends BasicAbstractInterpolantAutomaton<LETTER> {
 				mInputPreds2ResultPreds.put(succs, resSucc);
 				for (final IPredicate succ : succs) {
 					assert mAlreadyConstructedAutomaton.contains(succ)
-					|| mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
+							|| mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
 					if (mNonTrivialPredicates.contains(succ)) {
 						mResPred2InputPreds.addPair(resSucc, succ);
 					}

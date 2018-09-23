@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -69,7 +69,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final IPredicate mPrecondition;
 	private final InterpolationTechnique mInterpolationTechnique;
@@ -94,7 +94,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 */
 	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final IPredicate precondition, final InterpolationTechnique interpolationTechnique,
 			final TaskIdentifier taskIdentifier) {
 		this(prefs, managedScript, services, predicateFactory, predicateUnifier, counterexample, precondition,
@@ -145,7 +145,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 */
 	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
+			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
 			final TaskIdentifier taskIdentifier) {
 		mPrefs = prefs;

@@ -90,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier.CoverageRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
@@ -494,7 +493,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		if (mPref.dumpAutomata()) {
 			// TODO Matthias: Iteration should probably added to TaskIdentifier
-			final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_RawFloydHoareAutomaton");
+			final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_RawFloydHoareAutomaton";
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
@@ -705,13 +704,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 			if (mPref.dumpAutomata()) {
 				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + ("Iteration" + mIteration)
-						+ ("Enhanced" + automatonType.getShortString() + "Automaton");
+				final String filename = mTaskIdentifier + "Iteration" + mIteration + "Enhanced"
+						+ automatonType.getShortString() + "Automaton";
 				super.writeAutomatonToFile(subtrahend, filename);
 			}
 			if (mPref.dumpAutomata()) {
 				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + ("Iteration" + mIteration) + ("AbstractionAfterDifference");
+				final String filename = mTaskIdentifier + "Iteration" + mIteration + "AbstractionAfterDifference";
 				super.writeAutomatonToFile(subtrahend, filename);
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
@@ -777,7 +776,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final boolean addPredicateImplicationInformation = true;
 			if (addPredicateImplicationInformation) {
 				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions =
-						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
+						predicateUnifier.getCoverageRelation().getCopyOfImplicationRelation();
 				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
 				try {
 					backingNestedWordAutomaton = new RemoveDeadEnds<>(services, automaton).getResult();
