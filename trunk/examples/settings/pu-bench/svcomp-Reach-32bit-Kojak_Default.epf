@@ -69,5 +69,5 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Interpolating\ solver=SMTINTERPOL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Timeout\ in\ seconds=1000000
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ predicate\ trie\ based\ predicate\ unification=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ predicate\ trie\ based\ predicate\ unification=false
 
