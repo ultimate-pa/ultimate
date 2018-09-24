@@ -53,11 +53,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -95,9 +95,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final BoogieIcfgContainer rootAnnot = (BoogieIcfgContainer) root;
+		final IIcfg<? extends IcfgLocation> rootAnnot = (IIcfg) root;
 
-		final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
+		final IIcfg<? extends IcfgLocation> rootNode = (IIcfg) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		mLogger.warn(taPrefs.dumpPath());
@@ -107,9 +107,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
 
-		final Map<String, Set<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
-		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
+		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
+		for (final Collection<? extends IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
@@ -217,9 +217,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
+	private void reportPositiveResults(final Collection<? extends IcfgLocation> errorLocs) {
 		if (!errorLocs.isEmpty()) {
-			for (final BoogieIcfgLocation errorLoc : errorLocs) {
+			for (final IcfgLocation errorLoc : errorLocs) {
 				final PositiveResult<IIcfgElement> pResult =
 						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
@@ -241,12 +241,13 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
-		for (final BoogieIcfgLocation errorIpp : errorLocs) {
-			final BoogieIcfgLocation errorLoc = errorIpp;
+	private void reportTimeoutResult(final Collection<IcfgLocation> errNodesOfAllProc) {
+		for (final IcfgLocation errorIpp : errNodesOfAllProc) {
+			final BoogieIcfgLocation errorLoc = (BoogieIcfgLocation) errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
 			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
+			// 2018-09-24 Matthias: maybe do not infer timeout by yourself
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
