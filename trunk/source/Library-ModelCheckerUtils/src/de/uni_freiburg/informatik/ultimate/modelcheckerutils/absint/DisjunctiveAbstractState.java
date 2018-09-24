@@ -473,22 +473,11 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	}
 
 	private Set<STATE> reduceByOrderedMerge(final Set<STATE> states) {
-		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
-		int numberOfMerges = states.size() - mMaxSize;
-		while (numberOfMerges > 0) {
-			final Iterator<STATE> iter = reducibleSet.iterator();
-			final STATE first = iter.next();
-			iter.remove();
-			final STATE second = iter.next();
-			iter.remove();
-			if (reducibleSet.add(first.union(second))) {
-				--numberOfMerges;
-			} else {
-				numberOfMerges -= 2;
-			}
-		}
-		assert reducibleSet.size() <= mMaxSize;
-		return reducibleSet;
+		final Iterator<STATE> iter = states.iterator();
+		final STATE first = iter.next();
+		final Set<STATE> remaining = new LinkedHashSet<>(states.size());
+		iter.forEachRemaining(remaining::add);
+		return first.union(remaining, mMaxSize);
 	}
 
 	/**

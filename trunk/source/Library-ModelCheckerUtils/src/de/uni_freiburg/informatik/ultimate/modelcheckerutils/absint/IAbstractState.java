@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -167,6 +169,40 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	 * @return A new abstract state which is the result of the union of <tt>this</tt> and the other state.
 	 */
 	STATE union(final STATE other);
+
+	/**
+	 * Computes the union between <tt>this</tt> state and a set of abstract states s.t. the resulting union consists of
+	 * less or equal than <tt>maxSize</tt> states and preserved as much information as possible.
+	 *
+	 * In particular, this is useful to separate the entry of a loop (i.e., the case were we do not enter a loop) from
+	 * the cases were we enter a loop.
+	 *
+	 * @param states
+	 *            The other abstract states.
+	 * @param The
+	 *            maximal number of resulting states.
+	 * @return A set of abstract states containing less or equal to maxSize abstract states that represent a union of
+	 *         this state with the other states.
+	 */
+	default Set<STATE> union(final Set<STATE> states, final int maxSize) {
+		assert states.size() > maxSize;
+		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
+		int numberOfMerges = states.size() - maxSize;
+		while (numberOfMerges > 0) {
+			final Iterator<STATE> iter = reducibleSet.iterator();
+			final STATE first = iter.next();
+			iter.remove();
+			final STATE second = iter.next();
+			iter.remove();
+			if (reducibleSet.add(first.union(second))) {
+				--numberOfMerges;
+			} else {
+				numberOfMerges -= 2;
+			}
+		}
+		assert reducibleSet.size() <= maxSize;
+		return reducibleSet;
+	}
 
 	/**
 	 * An abstract state is empty when it does not contain any variable.
