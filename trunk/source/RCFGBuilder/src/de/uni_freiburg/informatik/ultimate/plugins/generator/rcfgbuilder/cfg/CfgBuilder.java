@@ -84,12 +84,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.LoopEntryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.OrdinaryDebugIdentifier;
@@ -211,6 +213,13 @@ public class CfgBuilder {
 	}
 
 
+	public Boogie2SMT getBoogie2smt() {
+		return mBoogie2smt;
+	}
+
+
+
+
 	/**
 	 * Returns list of all {@link ForkStatement}s from all declarations. Expects
 	 * that the input has been "unstructured", i.e., all {@link WhileStatement}s and
@@ -280,7 +289,7 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public BoogieIcfgContainer createIcfg(final Unit unit) {
+	public IIcfg createIcfg(final Unit unit) {
 
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2smt, mServices);
 
@@ -325,6 +334,17 @@ public class CfgBuilder {
 			new LargeBlockEncoding();
 		}
 
+		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
+				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
+		if (initialNodes.isEmpty()) {
+			mLogger.info("Using library mode");
+			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
+		} else {
+			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
+					+ ULTIMATE_START + ")");
+			icfg.getInitialNodes().addAll(initialNodes);
+		}
+
 		for (final ForkThreadCurrent fct : mForkCurrentThreads) {
 			final Map<DebugIdentifier, BoogieIcfgLocation> id2loc = mIcfg.getProgramPoints()
 					.get(fct.getPrecedingProcedure());
@@ -339,22 +359,11 @@ public class CfgBuilder {
 		final Collection<String> forkedProcedureNames = mForkedProcedureNames;
 		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
 
-
+		IIcfg<? extends IcfgLocation> result = icfg;
 		final CodeBlockFactory cbf = mCbf;
 		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-		adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+		result = adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 				threadInstanceMap, cbf);
-
-		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
-		if (initialNodes.isEmpty()) {
-			mLogger.info("Using library mode");
-			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
-		} else {
-			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
-					+ ULTIMATE_START + ")");
-			icfg.getInitialNodes().addAll(initialNodes);
-		}
 
 		return icfg;
 	}
