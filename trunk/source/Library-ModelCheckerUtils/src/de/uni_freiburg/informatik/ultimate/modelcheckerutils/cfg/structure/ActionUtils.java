@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * {@link ActionUtils} provide utilities that target {@link IAction} instances.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -49,14 +49,14 @@ public final class ActionUtils {
 	/**
 	 * This method creates a fresh deep copy (i.e., including the {@link TransFormula}) of the provided {@link IAction}
 	 * instance.
-	 * 
+	 *
 	 * @param script
 	 *            {@link ManagedScript} that was used to construct the {@link Term}s of the original {@link IAction}
 	 *            instance.
 	 * @param action
 	 *            input {@link IAction}.
 	 * @return a copy if the input {@link IAction} .
-	 * 
+	 *
 	 * @see {@link TransFormulaBuilder#constructCopy(ManagedScript, de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula, java.util.Collection, java.util.Collection, java.util.Map)
 	 */
 	public static IAction constructCopy(final ManagedScript script, final IAction action) {
@@ -84,6 +84,15 @@ public final class ActionUtils {
 					Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 			rtr = new BasicReturnAction(action.getPrecedingProcedure(), action.getSucceedingProcedure(), newAORTf,
 					newLVACTf);
+		} else if (action instanceof IForkActionThreadCurrent) {
+			final IForkActionThreadCurrent fAction = (IForkActionThreadCurrent) action;
+			fAction.getTransformula();
+			rtr = new BasicForkActionCurrent(action.getPrecedingProcedure(), action.getSucceedingProcedure(),
+					fAction.getTransformula(), fAction.getForkSmtArguments());
+		} else if (action instanceof IJoinActionThreadCurrent) {
+			final IJoinActionThreadCurrent fAction = (IJoinActionThreadCurrent) action;
+			rtr = new BasicJoinActionCurrent(action.getPrecedingProcedure(), action.getSucceedingProcedure(),
+					fAction.getTransformula(), fAction.getJoinSmtArguments());
 		} else {
 			throw new UnsupportedOperationException("(Yet) unknown IAction subtype: " + action.getClass());
 		}

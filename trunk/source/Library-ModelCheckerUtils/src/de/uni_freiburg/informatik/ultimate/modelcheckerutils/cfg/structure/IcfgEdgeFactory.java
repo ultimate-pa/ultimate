@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
@@ -59,6 +61,16 @@ public final class IcfgEdgeFactory {
 	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula) {
 		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
+	}
+
+	public IcfgForkThreadCurrentTransition createForkThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments) {
+		return new IcfgForkThreadCurrentTransition(source, target, payload, transFormula, forkSmtArguments, getNextFreeId());
+	}
+
+	public IcfgJoinThreadCurrentTransition createJoinThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula, final JoinSmtArguments joinSmtArguments) {
+		return new IcfgJoinThreadCurrentTransition(source, target, payload, transFormula, joinSmtArguments, getNextFreeId());
 	}
 
 	private int getNextFreeId() {
