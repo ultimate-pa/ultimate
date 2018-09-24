@@ -146,7 +146,9 @@ public class SegmentationMap {
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {
-		remove(variable);
+		if (mEqualArrays.find(variable) != null) {
+			remove(variable);
+		}
 		mEqualArrays.makeEquivalenceClass(variable);
 		mEqualArrays.union(variable, target);
 	}

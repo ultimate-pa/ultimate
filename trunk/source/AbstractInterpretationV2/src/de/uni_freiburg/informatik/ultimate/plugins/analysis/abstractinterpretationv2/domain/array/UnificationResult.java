@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -10,17 +11,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class UnificationResult<STATE extends IAbstractState<STATE>> {
 	private final ArrayDomainState<STATE> mFirstState;
 	private final ArrayDomainState<STATE> mSecondState;
-	private final List<Set<Term>> mBounds;
-	private final List<IProgramVar> mFirstValues;
-	private final List<IProgramVar> mSecondValues;
+	private final EqClassSegmentation mSegmentation;
+	private Map<IProgramVar, EqClassSegmentation> mAuxVarSegmentations;
 
 	public UnificationResult(final ArrayDomainState<STATE> firstState, final ArrayDomainState<STATE> secondState,
-			final List<Set<Term>> bounds, final List<IProgramVar> firstValues, final List<IProgramVar> secondValues) {
+			final EqClassSegmentation segmentation, final Map<IProgramVar, EqClassSegmentation> auxVarSegmentations) {
 		mFirstState = firstState;
 		mSecondState = secondState;
-		mBounds = bounds;
-		mFirstValues = firstValues;
-		mSecondValues = secondValues;
+		mSegmentation = segmentation;
+		mAuxVarSegmentations = auxVarSegmentations;
+	}
+
+	public Map<IProgramVar, EqClassSegmentation> getAuxVarSegmentations() {
+		return mAuxVarSegmentations;
+	}
+
+	public void setAuxVarSegmentations(final Map<IProgramVar, EqClassSegmentation> auxVarSegmentations) {
+		mAuxVarSegmentations = auxVarSegmentations;
 	}
 
 	public ArrayDomainState<STATE> getFirstState() {
@@ -31,15 +38,30 @@ public class UnificationResult<STATE extends IAbstractState<STATE>> {
 		return mSecondState;
 	}
 
+	public EqClassSegmentation getSegmentation() {
+		return mSegmentation;
+	}
+
 	public List<Set<Term>> getBounds() {
-		return mBounds;
+		return mSegmentation.getBounds();
 	}
 
 	public List<IProgramVar> getFirstValues() {
-		return mFirstValues;
+		return mSegmentation.getFirstValues();
 	}
 
 	public List<IProgramVar> getSecondValues() {
-		return mSecondValues;
+		return mSegmentation.getSecondValues();
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("States:\n");
+		stringBuilder.append(mFirstState).append('\n');
+		stringBuilder.append(mSecondState).append("\n\n");
+		stringBuilder.append("Segmentation: ").append(mSegmentation).append('\n');
+		stringBuilder.append("AuxVarSegmentations: ").append(mAuxVarSegmentations).append('\n');
+		return stringBuilder.toString();
 	}
 }
