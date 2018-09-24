@@ -32,7 +32,6 @@ import java.io.IOException;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -90,7 +89,6 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 		try {
 			mGraphroot = recCFGBuilder.createIcfg(unit);
 			translator.setTerm2Expression(recCFGBuilder.getBoogie2smt().getTerm2Expression());
-			ModelUtils.copyAnnotations(unit, mGraphroot);
 			mServices.getBacktranslationService().addTranslator(translator);
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();

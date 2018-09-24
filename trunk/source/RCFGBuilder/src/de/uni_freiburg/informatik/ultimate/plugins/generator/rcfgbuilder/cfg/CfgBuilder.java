@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
@@ -102,6 +103,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -360,12 +363,19 @@ public class CfgBuilder {
 		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
 
 		IIcfg<? extends IcfgLocation> result = icfg;
+		ModelUtils.copyAnnotations(unit, result);
 		final CodeBlockFactory cbf = mCbf;
-		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-		result = adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
-				threadInstanceMap, cbf);
+		if (mForkCurrentThreads.isEmpty()) {
+			final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
+					Term.class, mLogger);
+			result = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator)
+					.copy(result);
+			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
+			result = adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+					threadInstanceMap, cbf);
+		}
 
-		return icfg;
+		return result;
 	}
 
 
