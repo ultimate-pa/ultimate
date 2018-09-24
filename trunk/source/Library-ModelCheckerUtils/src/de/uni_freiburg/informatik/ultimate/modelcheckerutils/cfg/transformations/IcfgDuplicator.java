@@ -41,12 +41,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ActionUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
@@ -191,6 +195,14 @@ public class IcfgDuplicator {
 			final IReturnAction rAction = (IReturnAction) newAction;
 			rtr = edgeFactory.createReturnTransition(newSource, newTarget, correspondingCall, null,
 					rAction.getAssignmentOfReturn(), rAction.getLocalVarsAssignmentOfCall());
+		} else if (oldEdge instanceof IIcfgForkTransitionThreadCurrent) {
+			final IForkActionThreadCurrent fAction = (IForkActionThreadCurrent) newAction;
+			rtr = edgeFactory.createForkThreadCurrentTransition(newSource, newTarget, null, fAction.getTransformula(),
+					fAction.getForkSmtArguments());
+		} else if (oldEdge instanceof IIcfgJoinTransitionThreadCurrent) {
+			final IJoinActionThreadCurrent jAction = (IJoinActionThreadCurrent) newAction;
+			rtr = edgeFactory.createJoinThreadCurrentTransition(newSource, newTarget, null, jAction.getTransformula(),
+					jAction.getJoinSmtArguments());
 		} else {
 			throw new UnsupportedOperationException("Unknown IcfgEdge subtype: " + oldEdge.getClass());
 		}
