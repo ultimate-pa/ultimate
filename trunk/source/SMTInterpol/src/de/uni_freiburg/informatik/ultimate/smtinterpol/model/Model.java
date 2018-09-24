@@ -105,10 +105,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			la.fillInModel(this, t, ste);
 		}
 		if (cc != null) {
-			cc.fillInModel(this, t, ste);
-		}
-		if (array != null) {
-			array.fillInModel(this, t, ste);
+			cc.fillInModel(this, t, ste, array);
 		}
 		if (!partial) {
 			for (final FunctionSymbol fs : t.getDeclaredFunctions().values()) {

@@ -18,9 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,12 +27,11 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 
 public class ModelBuilder {
-	
+
 	private static class ArgHelper {
 		private int[] mArgs;
 		private int mNextPos;
@@ -60,50 +56,22 @@ public class ModelBuilder {
 			return res;
 		}
 	}
-	
-	private static class Delay {
-		private final CCTerm mTerm;
-		private int mValue;
-		private boolean mInitialized;
-		public Delay(CCTerm term) {
-			mTerm = term;
-			mInitialized = false;
-		}
-		public Delay(CCTerm term, int value) {
-			mTerm = term;
-			mValue = value;
-			mInitialized = true;
-		}
-		public boolean isInitialized() {
-			return mInitialized;
-		}
-		public void initialize(int value) {
-			assert !mInitialized;
-			mValue = value;
-			mInitialized = true;
-		}
-		public CCTerm getTerm() {
-			return mTerm;
-		}
-		public int getValue() {
-			return mValue;
-		}
-	}
-	
-	private final HashMap<CCTerm, Integer> mProduced =
-			new HashMap<CCTerm, Integer>();
-	
-	private final HashMap<CCTerm, Delay> mDelayed =
-			new HashMap<CCTerm, Delay>();
-	
-	private final Deque<Delay> mTodo = new ArrayDeque<Delay>();
-	
+
 	private final CClosure mCClosure;
-	
+
 	public ModelBuilder(CClosure closure, List<CCTerm> terms, Model model,
 			Theory t, SharedTermEvaluator ste,
-			CCTerm trueNode, CCTerm falseNode) {
+			ArrayTheory array, CCTerm trueNode, CCTerm falseNode) {
 		mCClosure = closure;
+		fillInTermValues(terms, model, t, ste, trueNode, falseNode);
+		if (array != null) {
+			array.fillInModel(model, t, ste);
+		}
+		fillInFunctions(terms, model, t);
+	}
+
+	public void fillInTermValues(List<CCTerm> terms, Model model, Theory t, SharedTermEvaluator ste, CCTerm trueNode,
+			CCTerm falseNode) {
 		Rational biggest = Rational.MONE;
 		final Set<CCTerm> delayed = new HashSet<CCTerm>();
 		for (final CCTerm term : terms) {
@@ -125,24 +93,18 @@ public class ModelBuilder {
 					value = model.putNumeric(v);
 				} else if (term == trueNode.mRepStar) {
 					value = model.getTrueIdx();
-				} else if (term == falseNode.mRepStar 
-						|| smtterm.getSort() == t.getBooleanSort()) {
+				} else if (smtterm.getSort() == t.getBooleanSort()) {
 					// By convention, we convert to == TRUE.  Hence, if a value
 					// is not equal to TRUE but Boolean, we have to adjust the
 					// model and set it to false.
 					value = model.getFalseIdx();
 				} else if (smtterm.getSort().isArraySort()) {
-					//Array sort
-					final ArraySortInterpretation arrSort = (ArraySortInterpretation)
-							model.provideSortInterpretation(smtterm.getSort());
-					value = arrSort.createEmptyArrayValue();
+					// filled in later by ArrayTheory
+					continue;
 				} else {
 					value = model.extendFresh(smtterm.getSort());
 				}
 				term.mModelVal = value;
-				for (final CCTerm mem : term.mMembers) {
-					add(model, mem, value, t);
-				}
 			}
 		}
 		// Handle all delayed elements
@@ -151,27 +113,24 @@ public class ModelBuilder {
 		for (final CCTerm term : delayed) {
 			final int idx = model.putNumeric(biggest);
 			term.mModelVal = idx;
-			for (final CCTerm mem : term.mMembers) {
-				add(model, mem, idx, t);
-			}
 			biggest = biggest.add(Rational.ONE);
 		}
-		finishModel(model, t);
-		// no cleanup here since this whole object gets garbage collected anyway
 	}
-	
+
+	public void fillInFunctions(List<CCTerm> terms, Model model, Theory t) {
+		for (final CCTerm term : terms) {
+			add(model, term, term.getRepresentative().mModelVal, t);
+		}
+	}
+
 	private void add(Model model, CCTerm term, int value, Theory t) {
 		if (term instanceof CCBaseTerm) {
 			final CCBaseTerm bt = (CCBaseTerm) term;
-			if (!bt.isFunctionSymbol()) {
-				// We have to remember the value of the term for applications
-				mProduced.put(term, value);
-				return;
-			}
-			final FunctionSymbol symb = bt.getFunctionSymbol();
-			if (!symb.isIntern()) {
-				model.map(symb, value);
-				mProduced.put(term, value);
+			if (bt.isFunctionSymbol()) {
+				final FunctionSymbol symb = bt.getFunctionSymbol();
+				if (!symb.isIntern()) {
+					model.map(symb, value);
+				}
 			}
 		} else {
 			// It is a CCAppTerm
@@ -184,56 +143,19 @@ public class ModelBuilder {
 	private void addApp(Model model, CCAppTerm app, int value, Theory t) {
 		final ArgHelper args = new ArgHelper();
 		CCTerm walk = app;
-		boolean enqueued = false;
 		while (walk instanceof CCAppTerm) {
 			final CCAppTerm appwalk = (CCAppTerm) walk;
-			final Integer val = mProduced.get(appwalk.getArg());
-			if (val == null) {
-				if (!enqueued) {
-					Delay delay = mDelayed.get(app);
-					if (delay == null) {
-						delay = new Delay(app, value);
-						mDelayed.put(app, delay);
-					} else if (!delay.isInitialized()) {
-						delay.initialize(value);
-					}
-					mTodo.push(delay);
-					enqueued = true;
-				}
-				Delay delay = mDelayed.get(appwalk.getArg());
-				if (delay == null) {
-					delay = new Delay(appwalk.getArg());
-					mDelayed.put(appwalk.getArg(), delay);
-				}
-				mTodo.push(delay);
-			} else {
-				args.add(val);
-			}
+			args.add(appwalk.getArg().getRepresentative().mModelVal);
 			walk = appwalk.getFunc();
 		}
 		// Now, walk is the CCBaseTerm corresponding the the function
 		// If we did not enqueue an argument, we can extend the model.
-		if (!enqueued) {
-			final CCBaseTerm base = (CCBaseTerm) walk;
-			if (base.isFunctionSymbol()
-					&& (!mCClosure.isArrayTheory()
-					|| (base.mParentPosition != mCClosure.getSelectNum()
-					&& base.mParentPosition != mCClosure.getStoreNum()
-					&& base.mParentPosition != mCClosure.getDiffNum()))) {
-				final FunctionSymbol fs = base.getFunctionSymbol();
-				model.map(fs, args.toArray(), value);
-			}
-			mProduced.put(app, value);
-		}
-	}
-	
-	private void finishModel(Model model, Theory t) {
-		while (!mTodo.isEmpty()) {
-			final Delay d = mTodo.pop();
-			if (!mProduced.containsKey(d.getTerm())) {
-				assert d.isInitialized();
-				add(model, d.getTerm(), d.getValue(), t);
-			}
+		final CCBaseTerm base = (CCBaseTerm) walk;
+		if (base.isFunctionSymbol() && (!mCClosure.isArrayTheory()
+				|| (base.mParentPosition != mCClosure.getSelectNum() && base.mParentPosition != mCClosure.getStoreNum()
+						&& base.mParentPosition != mCClosure.getDiffNum()))) {
+			final FunctionSymbol fs = base.getFunctionSymbol();
+			model.map(fs, args.toArray(), value);
 		}
 	}
 }

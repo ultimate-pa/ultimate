@@ -373,7 +373,7 @@ public class ModelEvaluator extends NonRecursive {
 					final int idx = mModel.getNumericSortInterpretation().extend(val);
 					final int divval = evalFunction(div0, idx);
 					if (divval == -1)
-					 {
+					{
 						return -1; // Propagate undefined
 					}
 					val = rationalValue(divval);
@@ -495,31 +495,37 @@ public class ModelEvaluator extends NonRecursive {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
 			ArrayValue storeVal = array.getValue(args[0]);
-			if (storeVal.select(args[1], false) == args[2]) {
+			if (storeVal.select(args[1]) == args[2]) {
 				return args[0];
 			}
 			storeVal = storeVal.copy();
 			storeVal.store(args[1], args[2]);
 			return array.value2index(storeVal);
 		}
+		if (name.equals("const")) {
+			final ArraySortInterpretation array = (ArraySortInterpretation)
+					mModel.provideSortInterpretation(fun.getReturnSort());
+			ArrayValue constVal = new ArrayValue();
+			constVal.setDefaultValue(args[0]);
+			return array.value2index(constVal);
+		}
 		if (name.equals("select")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
 			final ArrayValue val = array.getValue(args[0]);
-			return val.select(args[1], false);
+			return val.select(args[1]);
 		}
 		if (name.equals("@diff")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
 			final ArrayValue left = array.getValue(args[0]);
 			final ArrayValue right = array.getValue(args[1]);
-			return left.computeDiff(args[1], right);
+			return left.computeDiff(args[1], right, array);
 		}
-		throw new AssertionError("Unknown internal function!");
+		throw new AssertionError("Unknown internal function " + name);
 	}
 
 	private Rational rationalValue(int idx) {
 		return mModel.getNumericSortInterpretation().get(idx);
 	}
-	
 }

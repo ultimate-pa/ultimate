@@ -193,11 +193,20 @@ public class CCProofGenerator {
 			}
 		}
 
+		private void collectSelectIndexEquality(final CCTerm select, CCTerm pathIndex) {
+			if (isSelectTerm(select)) {
+				final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
+				if (index != pathIndex) {
+					collectEquality(new SymmetricPair<>(pathIndex, index));
+				}
+			}
+		}
+
 		/**
 		 * Collect the proof info for one path.
 		 */
 		private void collectWeakPath(final IndexedPath indexedPath) {
-			assert (indexedPath.getIndex() != null || mRule == RuleKind.WEAKEQ_EXT);
+			assert (indexedPath.getIndex() != null || mRule == RuleKind.WEAKEQ_EXT || mRule == RuleKind.CONST_WEAKEQ);
 			mProofPaths.add(indexedPath);
 			final CCTerm pathIndex = indexedPath.getIndex();
 			final CCTerm[] path = indexedPath.getPath();
@@ -241,14 +250,8 @@ public class CCProofGenerator {
 						final IndexedPath selectPath =
 								new IndexedPath(null, new CCTerm[] { selectEq.getFirst(), selectEq.getSecond() });
 						collectStrongPath(selectPath);
-						final CCTerm firstIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEq.getFirst());
-						final CCTerm secondIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEq.getSecond());
-						if (firstIndex != pathIndex) {
-							collectEquality(new SymmetricPair<>(pathIndex, firstIndex));
-						}
-						if (secondIndex != pathIndex) {
-							collectEquality(new SymmetricPair<>(pathIndex, secondIndex));
-						}
+						collectSelectIndexEquality(selectEq.getFirst(), pathIndex);
+						collectSelectIndexEquality(selectEq.getSecond(), pathIndex);
 						continue;
 					}
 				}
@@ -347,9 +350,10 @@ public class CCProofGenerator {
 		/* collect them backwards, so that the dependent proof infos are already created */
 		for (int i = mIndexedPaths.length - 1; i >= 0; i--) {
 			final IndexedPath indexedPath = mIndexedPaths[i];
-			// check if this is a strong equality. Note that the first sub path of WEAKEQ_EXT is never a strong
-			// equality, even though its weak index is null.
-			if (indexedPath.getIndex() == null && (mRule != RuleKind.WEAKEQ_EXT || i > 0)) {
+			// check if this is a strong equality. Note that the first sub path of WEAKEQ_EXT and CONST_WEAKEQ is
+			// never a strong equality, even though its weak index is null.
+			if (indexedPath.getIndex() == null
+					&& ((mRule != RuleKind.WEAKEQ_EXT && mRule != RuleKind.CONST_WEAKEQ) || i > 0)) {
 				final CCTerm[] path = indexedPath.getPath();
 				final SymmetricPair<CCTerm> pathEnds = new SymmetricPair<>(path[0], path[path.length - 1]);
 				if (!isEqualityLiteral(pathEnds) || mPathProofMap.containsKey(pathEnds)) {
@@ -369,10 +373,12 @@ public class CCProofGenerator {
 	 */
 	private ProofInfo findMainPaths() {
 		final ProofInfo mainProof = new ProofInfo();
-		if (mRule == RuleKind.WEAKEQ_EXT) {
+		switch (mRule) {
+		case WEAKEQ_EXT:
 			assert mIndexedPaths[0].getIndex() == null;
 			mainProof.collectWeakPath(mIndexedPaths[0]);
-		} else {
+			break;
+		case READ_OVER_WEAKEQ: {
 			IndexedPath firstPath = mIndexedPaths[0];
 			if (firstPath.getIndex() == null) {
 				// for read-over-weakeq, create a short first path
@@ -384,6 +390,14 @@ public class CCProofGenerator {
 				}
 				mainProof.collectStrongPath(firstPath);
 			}
+			break;
+		}
+		case READ_CONST_WEAKEQ:
+			break;
+		case CONST_WEAKEQ:
+			assert mIndexedPaths[0].getIndex() == null;
+			mainProof.collectWeakPath(mIndexedPaths[0]);
+			break;
 		}
 		for (int i = 0; i < mIndexedPaths.length; i++) {
 			if (mIndexedPaths[i].getIndex() != null) {
@@ -609,6 +623,18 @@ public class CCProofGenerator {
 		return false;
 	}
 
+	private boolean isConstTerm(CCTerm term) {
+		// term == const v
+		if (term instanceof CCAppTerm) {
+			term = ((CCAppTerm) term).getFunc();
+			// term == const
+			if (term instanceof CCBaseTerm) {
+				return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("const");
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Find argument paths for a congruence. These may also be literals from the original clause. Note that a function
 	 * can have several arguments, and a path is needed for each of them!
@@ -659,36 +685,36 @@ public class CCProofGenerator {
 			// Find some select path.
 			final CCTerm start = equality.getFirst();
 			final CCTerm end = equality.getSecond();
-			if (!(isSelectTerm(start) && isSelectTerm(end))) {
-				continue;
+			if (isGoodSelectStep(start, end, termPair, weakpathindex)
+					|| isGoodSelectStep(end, start, termPair, weakpathindex)) {
+				return equality;
 			}
-			// Check if the arrays of the select terms match the term pair.
-			final CCTerm startArray = ArrayTheory.getArrayFromSelect((CCAppTerm) start);
-			final CCTerm endArray = ArrayTheory.getArrayFromSelect((CCAppTerm) end);
-			final SymmetricPair<CCTerm> arrayPair = new SymmetricPair<>(startArray, endArray);
-			if (!(termPair.equals(arrayPair))) {
-				continue;
-			}
-			// Check if the select indices equal the weakpath index.
-			final CCTerm startIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) start);
-			final CCTerm endIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) end);
-			if (startIndex != weakpathindex) {
-				if (!mAllEqualities.contains(new SymmetricPair<>(weakpathindex, startIndex))) {
-					// this select is not the right one.
-					continue;
-				}
-			}
-			if (endIndex != weakpathindex) {
-				if (!mAllEqualities.contains(new SymmetricPair<>(weakpathindex, endIndex))) {
-					// this select is not the right one.
-					continue;
-				}
-			}
-			// Select path and corresponding index paths (if needed) were
-			// found, return the select.
-			return equality;
 		}
-		// If no select paths could be found, return null.
 		return null;
+	}
+
+	/**
+	 * Check if the equality sel1 == sel2 explains the weak step on weakpathindex for termPair.
+	 */
+	private boolean isGoodSelectStep(CCTerm sel1, CCTerm sel2, SymmetricPair<CCTerm> termPair, final CCTerm weakpathindex) {
+		return (isSelect(sel1, termPair.getFirst(), weakpathindex) || isConst(termPair.getFirst(), sel1))
+			&& (isSelect(sel2, termPair.getSecond(), weakpathindex) || isConst(termPair.getSecond(), sel2));
+	}
+
+	/**
+	 * Check if select is a select on array on weakpathindex or something equal to weakpathindex.
+	 */
+	private boolean isSelect(CCTerm select, CCTerm array, final CCTerm weakpathindex) {
+		if (!isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array)
+			return false;
+		CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
+		return (index == weakpathindex || mAllEqualities.contains(new SymmetricPair<>(weakpathindex, index)));
+	}
+
+	/**
+	 * Check if array is an application of const on value
+	 */
+	private boolean isConst(CCTerm array, CCTerm value) {
+		return (isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
 	}
 }

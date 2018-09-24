@@ -81,9 +81,6 @@ public class ArraySortInterpretation implements SortInterpretation {
 		if (idx < 0 || idx >= mValues.size()) {
 			throw new IndexOutOfBoundsException();
 		}
-		if (idx == 0) {
-			return t.term(t.getFunctionWithResult("@0", null, s));
-		}
 		return mValues.get(idx).toSMTLIB(s, t, mIndexSort, mValueSort);
 	}
 

@@ -70,7 +70,8 @@ public class ArrayAnnotation extends CCAnnotation {
 	 * The kind of the array axiom. We support two kinds, read-over-weakeq and weakeq-ext.
 	 */
 	enum RuleKind {
-		READ_OVER_WEAKEQ(":read-over-weakeq"), WEAKEQ_EXT(":weakeq-ext");
+		READ_OVER_WEAKEQ(":read-over-weakeq"), WEAKEQ_EXT(":weakeq-ext"), 
+		READ_CONST_WEAKEQ(":read-const-weakeq"), CONST_WEAKEQ(":const-weakeq");
 
 		/**
 		 * The annotation key used in the array lemma.

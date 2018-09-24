@@ -97,7 +97,7 @@ public class Clausifier {
 						shared.setCCTerm(res);
 						mConverted.push(res);
 						if (mTerm.getSort().isArraySort()) {
-							mArrayTheory.notifyArray(res, false);
+							mArrayTheory.notifyArray(res, false, false);
 						}
 					} else {
 						mOps.push(new SaveCCTerm(shared));
@@ -142,7 +142,8 @@ public class Clausifier {
 				final Term t = mShared.getTerm();
 				if (t.getSort().isArraySort()) {
 					final ApplicationTerm at = (ApplicationTerm) t;
-					mArrayTheory.notifyArray(mShared.mCCterm, at.getFunction().getName().equals("store"));
+					String funcName = at.getFunction().getName();
+					mArrayTheory.notifyArray(mShared.mCCterm, funcName.equals("store"), funcName.equals("const"));
 				}
 				if (t instanceof ApplicationTerm && ((ApplicationTerm) t).getFunction().getName().equals("@diff")) {
 					mArrayTheory.notifyDiff((CCAppTerm) mShared.mCCterm);
@@ -1077,7 +1078,8 @@ public class Clausifier {
 	}
 
 	private static boolean needCCTerm(final FunctionSymbol fs) {
-		return !fs.isInterpreted() || fs.getName() == "select" || fs.getName() == "store" || fs.getName() == "@diff";
+		return !fs.isInterpreted() || fs.getName() == "select" || fs.getName() == "store" || fs.getName() == "@diff"
+				|| fs.getName() == "const";
 	}
 
 	/// Internalization stuff

@@ -149,7 +149,24 @@ public class FormulaLet extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
 			if (!isNamed(term)) {
-				visitChild((FormulaLet) walker, term.getSubterm());
+				FormulaLet let = (FormulaLet) walker;
+				visitChild(let, term.getSubterm());
+				final ArrayDeque<Object> todo = new ArrayDeque<>();
+				for (Annotation annot : term.getAnnotations()) {
+					if (annot.getValue() != null) {
+						todo.add(annot.getValue());
+					}
+				}
+				while (!todo.isEmpty()) {
+					Object value = todo.removeLast();
+					if (value instanceof Term) {
+						visitChild(let, (Term) value);
+					} else if (value instanceof Object[]) {
+						for (Object elem : (Object[]) value) {
+							todo.add(elem);
+						}
+					}
+				}
 			}
 		}
 
@@ -227,8 +244,23 @@ public class FormulaLet extends NonRecursive {
 				if (isNamed(at)) {
 					let.enqueueWalker(new Letter(at.getSubterm()));
 				} else {
-					let.enqueueWalker(
-						new Converter(mTermInfo, at.getSubterm(), mIsCounted));
+					let.enqueueWalker(new Converter(mTermInfo, at.getSubterm(), mIsCounted));
+					final ArrayDeque<Object> todo = new ArrayDeque<>();
+					for (Annotation annot : at.getAnnotations()) {
+						if (annot.getValue() != null) {
+							todo.add(annot.getValue());
+						}
+					}
+					while (!todo.isEmpty()) {
+						Object value = todo.removeLast();
+						if (value instanceof Term) {
+							let.enqueueWalker(new Converter(mTermInfo, (Term) value, mIsCounted));
+						} else if (value instanceof Object[]) {
+							for (Object elem : (Object[]) value) {
+								todo.add(elem);
+							}
+						}
+					}
 				}
 			} else if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
@@ -242,7 +274,8 @@ public class FormulaLet extends NonRecursive {
 				let.mResultStack.addLast(term);
 			}
 		}
-	}		
+	}
+
 	static class Converter implements Walker {
 		TermInfo mParent;
 		Term mTerm;
@@ -384,15 +417,48 @@ public class FormulaLet extends NonRecursive {
 		public BuildAnnotatedTerm(AnnotatedTerm term) {
 			mOldTerm = term;
 		}
+
+		private Object retrieveValue(FormulaLet let, Object old) {
+			if (old instanceof Term) {
+				return let.mResultStack.removeLast();
+			} else if (old instanceof Object[]) {
+				Object[] newArray = (Object[]) old;
+				for (int i = newArray.length - 1; i >= 0; i--) {
+					Object oldValue = newArray[i];
+					Object newValue = retrieveValue(let, oldValue);
+					if (oldValue != newValue) {
+						if (newArray == old) {
+							newArray = newArray.clone();
+						}
+						newArray[i] = newValue;
+					}
+				}
+				return newArray;
+			} else {
+				return old;
+			}
+		}
+
 		@Override
 		public void walk(NonRecursive engine) {
 			final FormulaLet let = (FormulaLet)engine;
-			final Term newBody = let.mResultStack.removeLast();
 			Term result = mOldTerm;
-			if (newBody != mOldTerm.getSubterm()) {
+			final Term newBody = let.mResultStack.removeLast();
+			Annotation[] oldAnnot = mOldTerm.getAnnotations();
+			Annotation[] newAnnot = oldAnnot;
+			for (int i = oldAnnot.length - 1; i >= 0; i--) {
+				Object oldValue = oldAnnot[i].getValue();
+				Object newValue = retrieveValue(let, oldValue);
+				if (newValue != oldValue) {
+					if (newAnnot == oldAnnot) {
+						newAnnot = oldAnnot.clone();
+					}
+					newAnnot[i] = new Annotation(oldAnnot[i].getKey(), newValue);
+				}
+			}
+			if (newBody != mOldTerm.getSubterm() || newAnnot != oldAnnot) {
 				final Theory theory = mOldTerm.getTheory();
-				result = theory.annotatedTerm(
-						mOldTerm.getAnnotations(), newBody);
+				result = theory.annotatedTerm(newAnnot, newBody);
 			}
 			let.mResultStack.addLast(result);
 		}

@@ -102,6 +102,43 @@ public class WeakCongruencePath extends CongruencePath {
 		return generateClause(eq, produceProofs, RuleKind.READ_OVER_WEAKEQ);
 	}
 	
+	public Clause computeSelectConstOverWeakEQ(CCAppTerm select1, CCAppTerm const2, boolean produceProofs) {
+		final CCTerm value2 = const2.getArg();
+		final CCEquality eq = ArrayTheory.createEquality(select1, value2);
+
+		final CCTerm i1 = select1.getArg();
+		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
+		final WeakSubPath weakPath = computeWeakPath(a, const2, i1, produceProofs);
+		mAllPaths.addFirst(weakPath);
+		return generateClause(eq, produceProofs, RuleKind.READ_CONST_WEAKEQ);
+	}
+
+	public Clause computeConstOverWeakEQ(CCAppTerm const1, CCAppTerm const2, boolean produceProofs) {
+		final CCTerm value1 = const1.getArg();
+		final CCTerm value2 = const2.getArg();
+		final CCEquality eq = ArrayTheory.createEquality(value1, value2);
+
+		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
+		final Cursor start = new Cursor(const1, mArrayTheory.mCongRoots.get(const1.getRepresentative()));
+		final Cursor dest = new Cursor(const2, mArrayTheory.mCongRoots.get(const2.getRepresentative()));
+		final SubPath path = collectPathNoSelect(start, dest, storeIndices, produceProofs);
+		mAllPaths.addFirst(path);
+		return generateClause(eq, produceProofs, RuleKind.CONST_WEAKEQ);
+	}
+
+	/**
+	 * Compute the clause and proof for a weakeq-ext lemma.
+	 *
+	 * The caller must ensure that the array node for the const term is already the weak representative.
+	 * 
+	 * @param a
+	 *            The first array
+	 * @param b
+	 *            The second array.
+	 * @param produceProofs
+	 *            true, if proof should be produced.
+	 * @return the clause, optionally annotated with a proof.
+	 */
 	public Clause computeWeakeqExt(CCTerm a, CCTerm b, boolean produceProofs) {
 		assert a != b;
 		final CCEquality eq = ArrayTheory.createEquality(a, b);
@@ -192,6 +229,18 @@ public class WeakCongruencePath extends CongruencePath {
 		}
 		final CCAppTerm select1 = rep1.mSelects.get(indexRep);
 		final CCAppTerm select2 = rep2.mSelects.get(indexRep);
+		if (select1 == null) {
+			assert select2 != null;
+			return computeSelectConstPath(array2, select2, array1, rep1, index, produceProofs);
+		} else if (select2 == null) {
+			return computeSelectConstPath(array1, select1, array2, rep2, index, produceProofs);
+		} else {
+			return computeSelectSelectPath(array1, select1, array2, select2, index, produceProofs);
+		}
+	}
+
+	private WeakSubPath computeSelectSelectPath(CCTerm array1, CCAppTerm select1, CCTerm array2, CCAppTerm select2,
+			CCTerm index, boolean produceProofs) {
 		assert select1.getRepresentative() == select2.getRepresentative();
 		// match select indices with index. 
 		SubPath indexPath;
@@ -217,6 +266,28 @@ public class WeakCongruencePath extends CongruencePath {
 		return weakpath;
 	}
 
+	private WeakSubPath computeSelectConstPath(CCTerm array1, CCAppTerm select1, CCTerm array2, ArrayNode rep2,
+			CCTerm index, boolean produceProofs) {
+		assert rep2.getWeakRepresentative() == rep2;
+		assert rep2.mConstTerm != null;
+		final CCAppTerm const2 = rep2.mConstTerm;
+
+		// match select indices with index.
+		SubPath indexPath;
+		indexPath = computePath(index, ArrayTheory.getIndexFromSelect(select1));
+		if (indexPath != null) {
+			mAllPaths.addFirst(indexPath);
+		}
+		// compute the path between the select and constant.
+		mAllPaths.addFirst(computePath(select1, ArrayTheory.getValueFromConst(const2)));
+
+		// go from ccArrays to select arrays
+		final CCTerm selArray1 = ArrayTheory.getArrayFromSelect(select1);
+		final WeakSubPath weakpath = computeWeakPath(array1, selArray1, index, produceProofs);
+		weakpath.addEntry(const2, null);
+		weakpath.addSubPath(computeWeakPath(array2, const2, index, produceProofs));
+		return weakpath;
+	}
 	
 	public void collectPathOneStore(Cursor cursor, SubPath path, 
 			HashSet<CCTerm> storeIndices) {

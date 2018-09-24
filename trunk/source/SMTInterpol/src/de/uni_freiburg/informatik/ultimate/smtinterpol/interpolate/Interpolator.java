@@ -456,7 +456,7 @@ public class Interpolator extends NonRecursive {
 
 		public boolean contains(final int partition) {
 			if (partition == -1) {
-				for (int i = 0; i < mNumInterpolants; i++) {
+				for (int i = 0; i <= mNumInterpolants; i++) {
 					if (!mInA.get(i) || !mInB.get(i)) {
 						return false;
 					}

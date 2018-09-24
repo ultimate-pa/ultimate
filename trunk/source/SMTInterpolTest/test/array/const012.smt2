@@ -1,0 +1,22 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+
+(set-logic QF_AX)
+(declare-sort U 0)
+(declare-fun v1 () U)
+(declare-fun v2 () U)
+(declare-fun a () (Array U U))
+(declare-fun b () (Array U U))
+(declare-fun c () (Array U U))
+(declare-fun d () (Array U U))
+(define-fun constU ((v U)) (Array U U) ((as const (Array U U)) v))
+
+(assert (= a (store (constU v1) v2 v2)))
+(assert (= b (store (constU v2) v2 v2)))
+(assert (not (= b a)))
+(assert (not (= c (constU v2))))
+(assert (not (= c d)))
+(check-sat)
+(get-model)
+(exit)
+

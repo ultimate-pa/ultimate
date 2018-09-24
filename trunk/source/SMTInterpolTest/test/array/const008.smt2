@@ -1,0 +1,18 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_AX)
+(declare-sort U 0)
+(declare-fun v () U)
+(declare-fun w () U)
+(declare-fun i () U)
+(declare-fun k () U)
+(declare-fun a () (Array U U))
+
+(assert (= a (store ((as const (Array U U)) v) k w)))
+(assert (not (= i k)))
+(assert (not (= v (select a i))))
+(check-sat)
+(get-proof)
+(exit)

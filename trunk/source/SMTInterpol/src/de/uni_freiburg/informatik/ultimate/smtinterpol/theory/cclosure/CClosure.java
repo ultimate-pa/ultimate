@@ -714,8 +714,7 @@ public class CClosure implements ITheory {
 			}};
 	}
 
-	@Override
-	public void fillInModel(Model model, Theory t, SharedTermEvaluator ste) {
+	public void fillInModel(Model model, Theory t, SharedTermEvaluator ste, ArrayTheory array) {
 		CCTerm trueNode = null, falseNode = null;
 		if (!mAllTerms.isEmpty()) {
 			final CCTerm t0 = mAllTerms.get(0);
@@ -730,7 +729,7 @@ public class CClosure implements ITheory {
 		}
 		trueNode.mModelVal = model.getBoolSortInterpretation().getTrueIdx();
 		falseNode.mModelVal = model.getBoolSortInterpretation().getFalseIdx();
-		new ModelBuilder(this, mAllTerms, model, t, ste, trueNode, falseNode);
+		new ModelBuilder(this, mAllTerms, model, t, ste, array, trueNode, falseNode);
 	}
 	
 	void addInvertEdgeTime(long time) {

@@ -21,12 +21,11 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * This class checks if two terms are syntactically equivalent modulo
- * renaming of variables.  E. g.,
- * <code>(let ((x 0)) x)</code> is equivalent to <code>(let ((y 0)) y)</code>,
- * but not to <code>0</code> or <code>(let ((y 0)) 0)</code>.
+ * This class checks if two terms are syntactically equivalent modulo renaming of variables. E. g.,
+ * <code>(let ((x 0)) x)</code> is equivalent to <code>(let ((y 0)) y)</code>, but not to <code>0</code> or
+ * <code>(let ((y 0)) 0)</code>.
  * 
- * @author Juergen Christ
+ * @author Juergen Christ, Jochen Hoenicke
  */
 public class TermEquivalence extends NonRecursive {
 	
@@ -75,8 +74,7 @@ public class TermEquivalence extends NonRecursive {
 			te.addRenaming(mLvar, mRvar);
 		}
 	}
-		
-	
+
 	private final static class TermEq implements Walker {
 
 		private final Term mLhs, mRhs;
@@ -129,18 +127,11 @@ public class TermEquivalence extends NonRecursive {
 							te.enqueueWalker(new TermEq(
 									(Term) lannot[i].getValue(),
 									(Term) rannot[i].getValue()));
-						} else if (lannot[i].getValue() instanceof Term[]
-								&& rannot[i].getValue() instanceof Term[]) {
-							final Term[] lv = (Term[]) lannot[i].getValue();
-							final Term[] rv = (Term[]) lannot[i].getValue();
-							if (lv.length != rv.length) {
-								notEqual();
-							}
-							for (int j = 0; j < lv.length; ++j) {
-								te.enqueueWalker(new TermEq(lv[j], rv[j]));
-							}
-						} else if (!lannot[i].getValue().equals(
-								rannot[i].getValue())) {
+						} else if (lannot[i].getValue() instanceof Object[]
+								&& rannot[i].getValue() instanceof Object[]) {
+							te.enqueueWalker(
+									new ArrayEq((Object[]) lannot[i].getValue(), (Object[]) rannot[i].getValue()));
+						} else if (!lannot[i].getValue().equals(rannot[i].getValue())) {
 							notEqual();
 						}
 					}
@@ -153,15 +144,14 @@ public class TermEquivalence extends NonRecursive {
 						notEqual();
 					}
 					te.enqueueWalker(EndScope.INSTANCE);
-					te.enqueueWalker(
-							new TermEq(llet.getSubTerm(), rlet.getSubTerm()));
+					te.enqueueWalker(new TermEq(llet.getSubTerm(), rlet.getSubTerm()));
 					final Term[] lvals = llet.getValues();
 					final Term[] rvals = rlet.getValues();
 					for (int i = 0; i < lvars.length; ++i) {
 						te.enqueueWalker(new AddRenaming(lvars[i], rvars[i]));
 						te.enqueueWalker(new TermEq(lvals[i], rvals[i]));
 					}
-//					te.enqueueWalker(BeginScope.INSTANCE);
+					// te.enqueueWalker(BeginScope.INSTANCE);
 					te.beginScope();
 				} else if (mLhs instanceof QuantifiedFormula) {
 					final QuantifiedFormula lq = (QuantifiedFormula) mLhs;
@@ -184,8 +174,7 @@ public class TermEquivalence extends NonRecursive {
 							te.addRenaming(lv[i], rv[i]);
 						}
 					}
-					te.enqueueWalker(
-							new TermEq(lq.getSubformula(), rq.getSubformula()));
+					te.enqueueWalker(new TermEq(lq.getSubformula(), rq.getSubformula()));
 				} else if (mLhs instanceof TermVariable) {
 					final TermVariable lv = (TermVariable) mLhs;
 					final TermVariable rv = (TermVariable) mRhs;
@@ -193,6 +182,48 @@ public class TermEquivalence extends NonRecursive {
 						notEqual();
 					}
 				} // Term case switch
+			}
+		}
+	}
+
+	private final static class ArrayEq implements Walker {
+
+		private final Object[] mLhs, mRhs;
+
+		public ArrayEq(Object[] lhs, Object[] rhs) {
+			mLhs = lhs;
+			mRhs = rhs;
+		}
+
+		private final void notEqual() {
+			throw new NotEq();
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			final TermEquivalence te = (TermEquivalence) engine;
+			if (mLhs != mRhs) {
+				if (mLhs.getClass() != mRhs.getClass()) {
+					// Cannot be equal
+					notEqual();
+				}
+				if (mLhs.length != mRhs.length) {
+					notEqual();
+				}
+				for (int i = 0; i < mLhs.length; ++i) {
+					if (mLhs[i] == mRhs[i]) {
+						continue;
+					}
+					if (mLhs[i] instanceof Term && mRhs[i] instanceof Term) {
+						te.enqueueWalker(new TermEq((Term) mLhs[i], (Term) mRhs[i]));
+					} else if (mLhs[i] instanceof Object[] && mRhs[i] instanceof Object[]) {
+						te.enqueueWalker(new ArrayEq((Object[]) mLhs[i], (Object[]) mRhs[i]));
+					} else {
+						if (!mLhs[i].equals(mRhs[i])) {
+							notEqual();
+						}
+					}
+				}
 			}
 		}
 	}

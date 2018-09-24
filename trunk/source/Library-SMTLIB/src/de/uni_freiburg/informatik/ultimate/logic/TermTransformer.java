@@ -54,8 +54,14 @@ public class TermTransformer extends NonRecursive {
 	private final ArrayDeque<Term> mConverted = new ArrayDeque<Term>();
 
 	/**
-	 * This class represents one item of work.  It consists of a term and
-	 * some task that still needs to be performed on the term.
+	 * The converted object arrays. This is used to store the arguments of an array valued annotation, before the
+	 * annotation's subterm is processed.
+	 */
+	private final ArrayDeque<Object[]> mConvertedArrays = new ArrayDeque<Object[]>();
+
+	/**
+	 * This class represents one item of work. It consists of a term and some task that still needs to be performed on
+	 * the term.
 	 */
 	private static class Convert implements Walker {
 		private final Term mTerm;
@@ -165,13 +171,21 @@ public class TermTransformer extends NonRecursive {
 		} else if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annterm = (AnnotatedTerm) term;
 			enqueueWalker(new BuildAnnotation(annterm));
-			final Annotation[] annots = annterm.getAnnotations();
-			for (int i = annots.length - 1; i >= 0; i--) {
-				final Object value = annots[i].getValue();
+			final ArrayDeque<Object> todo = new ArrayDeque<>();
+			for (Annotation annot : annterm.getAnnotations()) {
+				if (annot.getValue() != null) {
+					todo.add(annot.getValue());
+				}
+			}
+			while (!todo.isEmpty()) {
+				Object value = todo.removeLast();
 				if (value instanceof Term) {
 					pushTerm((Term) value);
-				} else if (value instanceof Term[]) {
-					pushTerms((Term[]) value);
+				} else if (value instanceof Object[]) {
+					enqueueWalker(new BuildObjectArray((Object[]) value));
+					for (Object elem : (Object[]) value) {
+						todo.add(elem);
+					}
 				}
 			}
 			pushTerm(annterm.getSubterm());
@@ -252,13 +266,22 @@ public class TermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Get the converted terms from the converted stack.  This is the
-	 * dual of pushTerms() that is called after the term were removed
-	 * from the todo stack and pushed to the converted stack.  It takes
-	 * the old terms as argument and checks for changes.
-	 * @param oldArgs the original arguments.
-	 * @return the new converted arguments.  It will return the same array
-	 * oldArgs if there were no changes.
+	 * Get a single converted object array from the converted stack.
+	 * 
+	 * @return the new converted object array.
+	 */
+	protected final Object[] getConvertedObjectArray() {
+		return mConvertedArrays.removeLast();
+	}
+
+	/**
+	 * Get the converted terms from the converted stack. This is the dual of pushTerms() that is called after the term
+	 * were removed from the todo stack and pushed to the converted stack. It takes the old terms as argument and checks
+	 * for changes.
+	 * 
+	 * @param oldArgs
+	 *            the original arguments.
+	 * @return the new converted arguments. It will return the same array oldArgs if there were no changes.
 	 */
 	protected final Term[] getConverted(final Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
@@ -412,8 +435,8 @@ public class TermTransformer extends NonRecursive {
 				Object newValue;
 				if (value instanceof Term) {
 					newValue = transformer.getConverted();
-				} else if (value instanceof Term[]) {
-					newValue = transformer.getConverted((Term[]) value);
+				} else if (value instanceof Object[]) {
+					newValue = transformer.getConvertedObjectArray();
 				} else {
 					newValue = value;
 				}
@@ -426,6 +449,46 @@ public class TermTransformer extends NonRecursive {
 			}
 			final Term sub = transformer.getConverted();
 			transformer.postConvertAnnotation(mAnnotatedTerm, newAnnots, sub);
+		}
+
+		@Override
+		public String toString() {
+			return "annotate";
+		}
+	}
+
+	/**
+	 * Collect the sub terms and sub arrays of an array (part of an annotated formula).
+	 */
+	protected static class BuildObjectArray implements Walker {
+		private final Object[] mArray;
+
+		public BuildObjectArray(final Object[] array) {
+			mArray = array;
+		}
+
+		@Override
+		public void walk(final NonRecursive engine) {
+			final TermTransformer transformer = (TermTransformer) engine;
+			Object[] newArray = mArray;
+			for (int i = newArray.length - 1; i >= 0; i--) {
+				final Object value = newArray[i];
+				Object newValue;
+				if (value instanceof Term) {
+					newValue = transformer.getConverted();
+				} else if (value instanceof Object[]) {
+					newValue = transformer.getConvertedObjectArray();
+				} else {
+					newValue = value;
+				}
+				if (newValue != value) {
+					if (mArray == newArray) {
+						newArray = mArray.clone();
+					}
+					newArray[i] = newValue;
+				}
+			}
+			transformer.mConvertedArrays.addLast(newArray);
 		}
 
 		@Override

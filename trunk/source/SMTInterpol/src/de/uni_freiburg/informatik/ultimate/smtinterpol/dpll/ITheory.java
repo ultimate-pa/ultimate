@@ -19,10 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 
 public interface ITheory {
 	/**
@@ -161,11 +158,4 @@ public interface ITheory {
 	 * @return Solver statistics
 	 */
 	public Object[] getStatistics();
-	/**
-	 * Commit internal partial model to the main model.
-	 * @param model Main model.
-	 * @param t   Theory to use for conversion.
-	 * @param ste Evaluator for shared terms.
-	 */
-	void fillInModel(Model model, Theory t, SharedTermEvaluator ste);
 }
