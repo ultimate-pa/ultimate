@@ -511,10 +511,10 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()), node);
-
-			returnValue = returnValue.switchToRValueIfNecessary(main, loc, node);
 			// functions cannot return arrays but only pointers
 			returnValue = returnValue.decayArrayToPointer(main, loc, node);
+
+			returnValue = returnValue.switchToRValueIfNecessary(main, loc, node);
 			returnValue.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
