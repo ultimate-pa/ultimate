@@ -31,12 +31,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -97,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * The {@link StandardFunctionHandler} creates the translation for various functions where we have our own specification
@@ -881,21 +880,16 @@ public class StandardFunctionHandler {
 		final Expression product = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_multiply, nmemb.getLrValue().getValue(), mTypeSizeComputer.getSizeT(),
 				size.getLrValue().getValue(), mTypeSizeComputer.getSizeT());
-		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
+		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(nmemb, size);
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
-		result.getDeclarations().add(auxvar.getVarDec());
-
-		result.getStatements().add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
-		result.setLrValue(new RValue(auxvar.getExp(), resultType));
-
-		result.getStatements().add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.getLrValue().getValue(),
+		result.addDeclaration(auxvar.getVarDec());
+		result.addStatement(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
+		result.addStatement(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.getLrValue().getValue(),
 				size.getLrValue().getValue(), product, auxvar.getExp()));
-
-		// mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
-		// MemoryModelDeclarations.Ultimate_Alloc.getName());
-		return result;
+		result.setLrValue(new RValue(auxvar.getExp(), resultType));
+		return result.build();
 	}
 
 	/**
@@ -934,15 +928,14 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult exprRes =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		mExprResultTransformer.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
-
+		final ExpressionResult exprResConverted =
+				mExprResultTransformer.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(exprResConverted);
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
-		exprRes.getDeclarations().add(auxvar.getVarDec());
-
-		exprRes.getStatements()
-				.add(mMemoryHandler.getMallocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc));
-		exprRes.setLrValue(new RValue(auxvar.getExp(), resultType));
+		erb.addDeclaration(auxvar.getVarDec());
+		erb.addStatement(mMemoryHandler.getMallocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc));
+		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
 		// stackframe is closed, i.e. at a return
@@ -952,9 +945,9 @@ public class StandardFunctionHandler {
 					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after
 			// this, and free (triggered by the statement before) would fail.
-			exprRes.getAuxVars().clear();
+			erb.clearAuxVars();
 		}
-		return exprRes;
+		return erb.build();
 	}
 
 	private Result handleBuiltinExpect(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -985,7 +978,7 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
-		return combineExpressionResults(arg1.getLrValue(), arg1, arg2);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arg1, arg2).setLrValue(arg1.getLrValue()).build();
 	}
 
 	private static ExpressionResult handleAbort(final ILocation loc) {
@@ -1028,13 +1021,13 @@ public class StandardFunctionHandler {
 			results.add(in);
 		}
 
-		final ExpressionResult rtr = combineExpressionResults(null, results);
+		final ExpressionResultBuilder rtr = new ExpressionResultBuilder().addAllExceptLrValue(results);
 		for (final Expression a : args) {
 			// could just take the first as there is only one, but it's so easy to make it more general..
 			rtr.addStatement(new AssumeStatement(loc, a));
 		}
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
-		return rtr;
+		return rtr.build();
 	}
 
 	private Result handleNaNOrInfinity(final ILocation loc, final String methodName) {
@@ -1047,7 +1040,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
 		final RValue rvalue =
 				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return combineExpressionResults(rvalue, arg);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(rvalue).build();
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1056,7 +1049,7 @@ public class StandardFunctionHandler {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		return combineExpressionResults(rvalue, args);
+		return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1124,14 +1117,18 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult leftRvaluedResult =
+		ExpressionResult leftRvaluedResult =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		final ExpressionResult rightRvaluedResult =
+		ExpressionResult rightRvaluedResult =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
 		final ExpressionResult nanLResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
-		mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
+		final Pair<ExpressionResult, ExpressionResult> newOps =
+				mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
+		leftRvaluedResult = newOps.getFirst();
+		rightRvaluedResult = newOps.getSecond();
+
 		final Expression leftExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
 
@@ -1140,8 +1137,9 @@ public class StandardFunctionHandler {
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
-		final ExpressionResult rtr =
-				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);
+		final ExpressionResult rtr = new ExpressionResultBuilder()
+				.addAllExceptLrValue(leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult).setLrValue(lrVal)
+				.build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
@@ -1167,21 +1165,23 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult leftRvaluedResult =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		final ExpressionResult rightRvaluedResult =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
-		mExpressionTranslation.usualArithmeticConversions(loc, leftRvaluedResult, rightRvaluedResult);
+		ExpressionResult leftOp = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		ExpressionResult rightOp = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		final Pair<ExpressionResult, ExpressionResult> newOps =
+				mExpressionTranslation.usualArithmeticConversions(loc, leftOp, rightOp);
+		leftOp = newOps.getFirst();
+		rightOp = newOps.getSecond();
 
-		final ExpressionResult lessThan = mCHandler.handleRelationalOperators(main, loc,
-				IASTBinaryExpression.op_lessThan, leftRvaluedResult, rightRvaluedResult);
-		final ExpressionResult greaterThan = mCHandler.handleRelationalOperators(main, loc,
-				IASTBinaryExpression.op_greaterThan, leftRvaluedResult, rightRvaluedResult);
+		final ExpressionResult lessThan =
+				mCHandler.handleRelationalOperators(main, loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
+		final ExpressionResult greaterThan =
+				mCHandler.handleRelationalOperators(main, loc, IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
 
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 				lessThan.getLrValue().getValue(), greaterThan.getLrValue().getValue());
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
-		final ExpressionResult rtr = combineExpressionResults(lrVal, lessThan, greaterThan);
+		final ExpressionResult rtr =
+				new ExpressionResultBuilder().addAllExceptLrValue(lessThan, greaterThan).setLrValue(lrVal).build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
@@ -1318,7 +1318,8 @@ public class StandardFunctionHandler {
 		final ExpressionResult overapproxCall =
 				constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 		results.add(overapproxCall);
-		return combineExpressionResults(overapproxCall.getLrValue(), results);
+		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
+				.build();
 	}
 
 	private Result handleByOverapproximationWithoutDispatch(final IDispatcher main,
@@ -1349,21 +1350,6 @@ public class StandardFunctionHandler {
 		builder.addOverapprox(new Overapprox(functionName, loc));
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return builder.build();
-	}
-
-	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
-			final List<ExpressionResult> results) {
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		for (final ExpressionResult result : results) {
-			resultBuilder.addAllExceptLrValue(result);
-		}
-		resultBuilder.setLrValue(finalLRValue);
-		return resultBuilder.build();
-	}
-
-	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
-			final ExpressionResult... results) {
-		return combineExpressionResults(finalLRValue, Arrays.stream(results).collect(Collectors.toList()));
 	}
 
 	/**

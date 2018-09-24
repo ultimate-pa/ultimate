@@ -33,40 +33,33 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 
 /**
- *
- *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class CStringLiteral {
-	
+
 	/**
-	 * Input string from the source character set (characters that
-	 * can occur in strings of source file, e.g., no line feed).
+	 * Input string from the source character set (characters that can occur in strings of source file, e.g., no line
+	 * feed).
 	 */
 	private final String mSourceCharacterString;
-	
-	
+
 	/**
-	 * Sequence of numerical values of the corresponding characters
-	 * of the execution character set. Multibyte characters occupy only one
-	 * cell in the resulting list.
+	 * Sequence of numerical values of the corresponding characters of the execution character set. Multibyte characters
+	 * occupy only one cell in the resulting list.
 	 */
 	private final List<BigInteger> mNumericalValues;
-	
-	
+
 	/**
-	 * Sequence of bytes that represent the string.  This step of
-	 * the translation is largely implementation defined and we try to mimic the
-	 * behavior of GCC.
+	 * Sequence of bytes that represent the string. This step of the translation is largely implementation defined and
+	 * we try to mimic the behavior of GCC.
 	 */
 	private final List<BigInteger> mByteValues;
-	
+
 	/**
-	 * The Signedness of 'char' determines the representation of the string's
-	 * characters when stored as a sequence of bytes.
+	 * The Signedness of 'char' determines the representation of the string's characters when stored as a sequence of
+	 * bytes.
 	 */
 	private final Signedness mSignednessOfChar;
-	
 
 	public CStringLiteral(final char[] quotedSourceCodeStringLiteral, final Signedness signednessOfChar) {
 		mSourceCharacterString = stripQuotes(new String(quotedSourceCodeStringLiteral));
@@ -76,7 +69,6 @@ public class CStringLiteral {
 		mNumericalValues.add(BigInteger.ZERO);
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
 	}
-
 
 	private String stripQuotes(final String quotedSourceCodeStringLiteral) {
 		String result;
@@ -90,11 +82,8 @@ public class CStringLiteral {
 		return result;
 	}
 
-
 	public List<BigInteger> getByteValues() {
 		return mByteValues;
 	}
-	
-	
-	
+
 }

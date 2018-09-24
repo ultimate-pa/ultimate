@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -56,7 +57,8 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 	}
 
 	@Override
-	public void convertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		final RValue pointer = (RValue) rexp.getLrValue();
 		final Expression baseAddress = MemoryHandler.getPointerBaseAddress(pointer.getValue(), loc);
 		final Expression offset = MemoryHandler.getPointerOffset(pointer.getValue(), loc);
@@ -64,19 +66,21 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 				IASTBinaryExpression.op_plus, baseAddress, mExpressionTranslation.getCTypeOfPointerComponents(), offset,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final RValue sum = new RValue(sumExpr, mExpressionTranslation.getCTypeOfPointerComponents());
-		rexp.setLrValue(sum);
-		mExpressionTranslation.convertIntToInt(loc, rexp, newType);
+		final ExpressionResult newRExpr =
+				new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(sum).build();
+		return mExpressionTranslation.convertIntToInt(loc, newRExpr, newType);
 	}
 
 	@Override
-	public void convertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
+	public ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
 		mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final RValue rValue =
+		final RValue rVal =
 				new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc),
 						newType, false, false);
-		rexp.setLrValue(rValue);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 }

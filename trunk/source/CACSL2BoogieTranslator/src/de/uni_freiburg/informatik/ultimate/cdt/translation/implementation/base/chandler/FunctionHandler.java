@@ -558,8 +558,9 @@ public class FunctionHandler {
 					&& returnValue.getLrValue().getCType() instanceof CPrimitive
 					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
-				returnValue
-						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType));
+				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
+						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType))
+						.build();
 			}
 
 			if (outParams.length == 0) {
@@ -578,10 +579,10 @@ public class FunctionHandler {
 				final VariableLHS[] lhss = new VariableLHS[] { lhs };
 
 				// Ugly workaround: Apply the conversion to the result of the
-				// dispatched argument. On should first construt a copy of returnValueSwitched
-				mExprResultTransformer.convert(loc, returnValue, functionResultType);
+				// dispatched argument. On should first construct a copy of returnValueSwitched
+				returnValue = mExprResultTransformer.convert(loc, returnValue, functionResultType);
 
-				resultBuilder.addAllAndSetLrValue(returnValue);
+				resultBuilder.addAllIncludingLrValue(returnValue);
 
 				final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
 				resultBuilder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhss,
@@ -680,7 +681,7 @@ public class FunctionHandler {
 					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				mExprResultTransformer.convert(loc, in, expectedParamType);
+				in = mExprResultTransformer.convert(loc, in, expectedParamType);
 			}
 			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
@@ -743,9 +744,8 @@ public class FunctionHandler {
 					procInfo.addModifiedGlobals(modifiedSet);
 				}
 			}
-
-			mCHandler.clearContract(); // take care for behavior and
-										// completeness
+			// take care for behavior and completeness
+			mCHandler.clearContract();
 		}
 		return spec;
 	}
@@ -875,10 +875,7 @@ public class FunctionHandler {
 				/*
 				 * note: because the writable aux var version of the inparam is added to the symbol table, which will
 				 * trigger adding its declaration at endScope(), we do not add its declaration here!
-				 */
-				// resultBuilder.addDeclaration(inVarDecl);
-
-				/*
+				 *
 				 * note: because the auxvars for the inparams do not need to be havocced, we do not need to add them
 				 * here
 				 */

@@ -164,6 +164,17 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	/**
+	 * Add all statements, declarations, auxVars and overapproximations of the supplied {@link ExpressionResult}s to
+	 * this builder.
+	 */
+	public ExpressionResultBuilder addAllExceptLrValue(final Collection<ExpressionResult> resExprs) {
+		for (final ExpressionResult resExpr : resExprs) {
+			addAllExceptLrValue(resExpr);
+		}
+		return this;
+	}
+
 	public ExpressionResultBuilder addAllExceptLrValueAndStatements(final ExpressionResult exprResult) {
 		addDeclarations(exprResult.getDeclarations());
 		addOverapprox(exprResult.getOverapprs());
@@ -231,13 +242,20 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	public ExpressionResultBuilder addAllAndSetLrValue(final ExpressionResult expr) {
+	public ExpressionResultBuilder addAllIncludingLrValue(final ExpressionResult expr) {
 		return addAllExceptLrValue(expr).setLrValue(expr.getLrValue());
 	}
 
 	@Override
 	public String toString() {
 		return build().toString();
+	}
+
+	/**
+	 * Remove all aux vars from this builder.
+	 */
+	public void clearAuxVars() {
+		mAuxVars.clear();
 	}
 
 }

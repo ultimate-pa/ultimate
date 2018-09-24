@@ -412,7 +412,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
+	public ExpressionResult convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType == null) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
@@ -431,18 +431,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue oldRValue = (RValue) operand.getLrValue();
 			final RValue rVal = new RValue(oldRValue.getValue(), resultType, oldRValue.isBoogieBool(),
 					oldRValue.isIntFromPointer());
-			operand.setLrValue(rVal);
-		} else if (resultLength > operandLength) {
-			extend(loc, operand, resultType, resultPrimitive, resultLength, operandLength);
-		} else {
-			final Expression bv = extractBits(loc, operand.getLrValue().getValue(), resultLength, 0);
-			final RValue rVal = new RValue(bv, resultType);
-			operand.setLrValue(rVal);
+			return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 		}
+		if (resultLength > operandLength) {
+			return extend(loc, operand, resultType, resultPrimitive, resultLength, operandLength);
+		}
+		final Expression bv = extractBits(loc, operand.getLrValue().getValue(), resultLength, 0);
+		final RValue rVal = new RValue(bv, resultType);
+		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}
 
 	@Override
-	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
@@ -456,30 +457,32 @@ public class BitvectorTranslation extends ExpressionTranslation {
 						BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { roundingMode, oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.setLrValue(rValue);
+		final RValue rVal = new RValue(resultExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
-	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.setLrValue(rValue);
+		final RValue rVal = new RValue(resultExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
-	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.setLrValue(rValue);
+		final RValue rVal = new RValue(resultExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
@@ -487,7 +490,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 	}
 
-	private void extend(final ILocation loc, final ExpressionResult operand, final CType resultType,
+	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand, final CType resultType,
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
 		final int[] indices = new int[] { resultLength - operandLength };
 		final String smtFunctionName;
@@ -506,7 +509,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { operand.getLrValue().getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
 		final RValue rVal = new RValue(func, resultType);
-		operand.setLrValue(rVal);
+		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}
 
 	@Override
@@ -884,12 +887,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					ExpressionFactory.constructIfThenElseExpression(loc, isNan,
 							handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
 							ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
-									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(), ExpressionFactory
-											.constructIfThenElseExpression(loc,
-													isSubnormal,
-													handleNumberClassificationMacro(loc, "FP_SUBNORMAL")
-															.getValue(),
-													handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
+									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
+									ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
+											handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
+											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		} else if ("signbit".equals(floatFunction.getFunctionName())) {
 			final Expression isNegative;

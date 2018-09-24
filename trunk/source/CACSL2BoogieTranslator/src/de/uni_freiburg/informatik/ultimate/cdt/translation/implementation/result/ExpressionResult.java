@@ -59,7 +59,7 @@ public class ExpressionResult extends Result {
 	/**
 	 * the LRValue may contain the contents of a memory cell or its address or both
 	 */
-	private LRValue mLrVal;
+	private final LRValue mLrVal;
 	/**
 	 * Declaration list. Some translations need to declare some temporary variables, which we do here.
 	 */
@@ -135,42 +135,6 @@ public class ExpressionResult extends Result {
 		this(lrVal, new LinkedHashSet<AuxVarInfo>());
 	}
 
-	/**
-	 * Construct a new {@link ExpressionResult} without an {@link LRValue} whose statements, declarations, auxVars and
-	 * overapproximations contain all respective elements of resExprs. TODO: This could remove the old copy constructor
-	 * one it is not used any more.
-	 */
-	public static ExpressionResult copyStmtDeclAuxvarOverapprox(final ExpressionResult... resExprs) {
-		return new ExpressionResultBuilder().addAllExceptLrValue(resExprs).build();
-	}
-
-	/**
-	 * Add all declaration, statements, auxvars, etc. from another ResultExpression.
-	 *
-	 * @deprecated Use {@link ExpressionResultBuilder} instead.
-	 */
-	@Deprecated
-	public void addAll(final ExpressionResult re) {
-		mDecl.addAll(re.getDeclarations());
-		mStmt.addAll(re.getStatements());
-		mAuxVars.addAll(re.getAuxVars());
-		mOverappr.addAll(re.getOverapprs());
-	}
-
-	public void addStatement(final Statement stmt) {
-		mStmt.add(stmt);
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("ExpressionResult");
-
-		sb.append("LrVal: " + mLrVal);
-
-		return sb.toString();
-	}
-
 	public LRValue getLrValue() {
 		return mLrVal;
 	}
@@ -199,13 +163,12 @@ public class ExpressionResult extends Result {
 		return mLrVal != null;
 	}
 
-	/**
-	 * Use {@link ExpressionResultBuilder} instead.
-	 */
-	@Deprecated
-	public void setLrValue(final LRValue val) {
-		mLrVal = val;
-
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("ExpressionResult");
+		sb.append("LrVal: " + mLrVal);
+		return sb.toString();
 	}
 
 }

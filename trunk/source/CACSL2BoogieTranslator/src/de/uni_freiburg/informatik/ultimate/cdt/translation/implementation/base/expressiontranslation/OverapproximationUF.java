@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -70,21 +71,22 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	}
 
 	@Override
-	public void convertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		if (newType.getType() == CPrimitives.BOOL) {
-			mExpressionTranslation.convertToBool(loc, rexp);
-		} else {
-			final String prefixedFunctionName = declareConvertPointerToIntFunction(loc, newType);
-			final Expression pointerExpression = rexp.getLrValue().getValue();
-			final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { pointerExpression }, mTypeHandler.getBoogieTypeForCType(newType));
-			final RValue rValue = new RValue(intExpression, newType, false, false);
-			rexp.setLrValue(rValue);
+			return mExpressionTranslation.convertToBool(loc, rexp);
 		}
+		final String prefixedFunctionName = declareConvertPointerToIntFunction(loc, newType);
+		final Expression pointerExpression = rexp.getLrValue().getValue();
+		final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				new Expression[] { pointerExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+		final RValue rVal = new RValue(intExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
-	public void convertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
+	public ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
 		final boolean overapproximate = false;
 		if (overapproximate) {
 			final String prefixedFunctionName =
@@ -93,17 +95,17 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final Expression pointerExpression =
 					ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 							new Expression[] { intExpression }, mTypeHandler.getBoogieTypeForCType(newType));
-			final RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.setLrValue(rValue);
-		} else {
-			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final RValue rValue =
-					new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc),
-							newType, false, false);
-			rexp.setLrValue(rValue);
+			final RValue rVal = new RValue(pointerExpression, newType, false, false);
+			return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 		}
+		final ExpressionResult convertedExpr =
+				mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final RValue rVal = new RValue(
+				MemoryHandler.constructPointerFromBaseAndOffset(zero, convertedExpr.getLrValue().getValue(), loc),
+				newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(convertedExpr).setLrValue(rVal).build();
 	}
 
 	private String declareConvertIntToPointerFunction(final ILocation loc, final CPrimitive newType) {
