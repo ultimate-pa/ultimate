@@ -235,4 +235,9 @@ public class ExpressionResultBuilder {
 		return addAllExceptLrValue(expr).setLrValue(expr.getLrValue());
 	}
 
+	@Override
+	public String toString() {
+		return build().toString();
+	}
+
 }
