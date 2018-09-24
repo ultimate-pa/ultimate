@@ -2,29 +2,29 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE BlockEncodingV2 plug-in.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
- * The ULTIMATE BlockEncodingV2 plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE BlockEncodingV2 plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE BlockEncodingV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE BlockEncodingV2 plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE BlockEncodingV2 plug-in grant you additional permission
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,11 +46,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
  *
@@ -182,10 +181,13 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	}
 
 	private static String markCodeblock(final IcfgEdge newEdge) {
-		if (newEdge instanceof CodeBlock) {
-			return "";
-		}
-		return "!";
+		return "";
+//		2018-09-14 Matthias: I commented the following lines to get rid
+//		of the dependency to CodeBlock
+//		if (newEdge instanceof CodeBlock) {
+//			return "";
+//		}
+//		return "!";
 	}
 
 	public void mapLocations(final IcfgLocation newLoc, final IcfgLocation oldLoc) {
