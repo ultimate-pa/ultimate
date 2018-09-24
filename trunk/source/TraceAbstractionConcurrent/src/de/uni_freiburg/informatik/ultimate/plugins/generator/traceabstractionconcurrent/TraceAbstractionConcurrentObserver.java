@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -109,8 +110,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<? extends IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
-			errNodesOfAllProc.addAll(errNodeOfProc);
+		for (final Entry<String, Set<? extends IcfgLocation>> proc2errorLocs : proc2errNodes.entrySet()) {
+			for (final IcfgLocation errorLoc : proc2errorLocs.getValue()) {
+				errNodesOfAllProc.add(errorLoc);
+			}
 		}
 
 		BasicCegarLoop<?> abstractCegarLoop;
