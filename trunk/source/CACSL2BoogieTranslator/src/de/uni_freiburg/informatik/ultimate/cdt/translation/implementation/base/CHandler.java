@@ -3541,7 +3541,8 @@ public class CHandler implements ICHandler {
 	 */
 	private static Result handleIndirectionOperator(final Dispatcher main, final ExpressionResult er,
 			final ILocation loc, final IASTNode hook) {
-		final ExpressionResult rop = er.switchToRValueIfNecessary(main, loc, hook);
+		final ExpressionResult rop = er.makeRepresentationReadyForConversion(main, loc,
+				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
 		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
