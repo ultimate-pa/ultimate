@@ -873,10 +873,10 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult nmemb =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		mCHandler.convert(loc, nmemb, mTypeSizeComputer.getSizeT());
+		mExprResultTransformer.convert(loc, nmemb, mTypeSizeComputer.getSizeT());
 		final ExpressionResult size =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
-		mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
+		mExprResultTransformer.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 		final Expression product = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_multiply, nmemb.getLrValue().getValue(), mTypeSizeComputer.getSizeT(),
@@ -934,7 +934,7 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult exprRes =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		mCHandler.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
+		mExprResultTransformer.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
@@ -1240,9 +1240,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult size =
 				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
 
-		mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
+		mExprResultTransformer.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		mExprResultTransformer.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		mExprResultTransformer.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(dest);

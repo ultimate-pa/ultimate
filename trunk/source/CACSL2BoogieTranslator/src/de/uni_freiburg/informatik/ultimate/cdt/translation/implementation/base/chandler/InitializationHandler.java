@@ -1054,7 +1054,7 @@ public class InitializationHandler {
 		if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 			// omit conversion
 		} else {
-			mCHandler.convert(loc, expressionResultSwitched, targetCType);
+			mExprResultTransformer.convert(loc, expressionResultSwitched, targetCType);
 		}
 		return expressionResultSwitched;
 	}

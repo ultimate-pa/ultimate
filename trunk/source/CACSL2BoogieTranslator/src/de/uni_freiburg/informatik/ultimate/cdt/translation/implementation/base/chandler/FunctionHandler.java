@@ -579,7 +579,7 @@ public class FunctionHandler {
 
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
-				mCHandler.convert(loc, returnValue, functionResultType);
+				mExprResultTransformer.convert(loc, returnValue, functionResultType);
 
 				resultBuilder.addAllAndSetLrValue(returnValue);
 
@@ -680,7 +680,7 @@ public class FunctionHandler {
 					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				mCHandler.convert(loc, in, expectedParamType);
+				mExprResultTransformer.convert(loc, in, expectedParamType);
 			}
 			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);

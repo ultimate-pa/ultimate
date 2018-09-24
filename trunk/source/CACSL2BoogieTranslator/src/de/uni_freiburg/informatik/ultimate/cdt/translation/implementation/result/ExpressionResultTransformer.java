@@ -44,8 +44,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -61,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -78,16 +82,18 @@ public class ExpressionResultTransformer {
 	private final ExpressionTranslation mExprTrans;
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ITypeHandler mTypeHandler;
 
 	public ExpressionResultTransformer(final CHandler chandler, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ExpressionTranslation exprTrans, final TypeSizes typeSizes,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler) {
 		mCHandler = chandler;
 		mMemoryHandler = memoryHandler;
 		mStructHandler = structHandler;
 		mExprTrans = exprTrans;
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mTypeHandler = typeHandler;
 	}
 
 	/**
@@ -517,6 +523,191 @@ public class ExpressionResultTransformer {
 			return old;
 		}
 		throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
+	}
+
+	/**
+	 * Handle conversions according to Section 6.3 of C11.
+	 *
+	 * Modifies a given {@link ExpressionResult} such that the effect of a cast from the current {@link CType} of the
+	 * {@link ExpressionResult} to resultType is captured. Method may exchange the {@link RValue} of the
+	 * {@link ExpressionResult} and add additional objects (statements, auxVars, etc.).
+	 *
+	 */
+	public void convert(final ILocation loc, final ExpressionResult rexp, final CType newTypeRaw) {
+		final RValue rValIn = (RValue) rexp.getLrValue();
+		final CType newType = newTypeRaw.getUnderlyingType();
+
+		final CType oldType = rValIn.getCType().getUnderlyingType();
+
+		final BoogieType oldBoogieType = (BoogieType) rexp.getLrValue().getValue().getType();
+		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(newTypeRaw);
+
+		if (TypeHandler.areMatchingTypes(newType, oldType) && oldBoogieType.equals(newBoogieType)) {
+			// types are already identical -- nothing to do
+			return;
+		}
+
+		if (newType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) newType;
+			if (cPrimitive.isIntegerType()) {
+				convertToIntegerType(loc, rexp, (CPrimitive) newType);
+			} else if (cPrimitive.isRealFloatingType()) {
+				convertToFloatingType(loc, rexp, (CPrimitive) newType);
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+				convertToVoid(loc, rexp, (CPrimitive) newType);
+			} else {
+				throw new AssertionError("unknown type " + newType);
+			}
+		} else if (newType instanceof CPointer) {
+			convertToPointer(loc, rexp, (CPointer) newType);
+		} else if (newType instanceof CEnum) {
+			// C standard 6.4.4.3.2
+			// An identifier declared as an enumeration constant has type int.
+			convertToIntegerType(loc, rexp, new CPrimitive(CPrimitives.INT));
+		} else if (newType instanceof CArray) {
+			throw new AssertionError("cannot convert to CArray");
+		} else if (newType instanceof CFunction) {
+			throw new AssertionError("cannot convert to CFunction");
+		} else if (newType instanceof CStruct) {
+			throw new UnsupportedSyntaxException(loc, "conversion to CStruct not implemented.");
+		} else {
+			throw new AssertionError("unknown type " + newType);
+		}
+	}
+
+	private void convertToIntegerType(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
+		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		if (oldType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) oldType;
+			if (cPrimitive.isIntegerType()) {
+				mExprTrans.convertIntToInt(loc, rexp, newType);
+			} else if (cPrimitive.isRealFloatingType()) {
+				mExprTrans.convertFloatToInt(loc, rexp, newType);
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+				throw new IncorrectSyntaxException(loc, "cannot convert from void");
+			} else {
+				throw new AssertionError("unknown type " + newType);
+			}
+		} else if (oldType instanceof CPointer) {
+			mExprTrans.convertPointerToInt(loc, rexp, newType);
+		} else if (oldType instanceof CEnum) {
+			mExprTrans.convertIntToInt(loc, rexp, newType);
+		} else if (oldType instanceof CArray) {
+			throw new AssertionError("cannot convert from CArray");
+		} else if (oldType instanceof CFunction) {
+			throw new AssertionError("cannot convert from CFunction");
+		} else if (oldType instanceof CStruct) {
+			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+		} else {
+			throw new AssertionError("unknown type " + newType);
+		}
+	}
+
+	private void convertToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
+		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
+		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		if (oldType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) oldType;
+			if (cPrimitive.isIntegerType()) {
+				mExprTrans.convertIntToPointer(loc, rexp, newType);
+			} else if (cPrimitive.isRealFloatingType()) {
+				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+				throw new IncorrectSyntaxException(loc, "cannot convert from void");
+			} else {
+				throw new AssertionError("unknown type " + newType);
+			}
+		} else if (oldType instanceof CPointer) {
+			convertPointerToPointer(loc, rexp, newType);
+		} else if (oldType instanceof CEnum) {
+			mExprTrans.convertIntToPointer(loc, rexp, newType);
+		} else if (oldType instanceof CArray) {
+			if (rexp instanceof StringLiteralResult) {
+				/*
+				 * a string literal's char-array decays to a pointer the stringLiteralResult already has the correct
+				 * RValue, we just need to change the type
+				 */
+				rexp.setLrValue(
+						new RValue(rexp.getLrValue().getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR))));
+			} else {
+				throw new AssertionError("cannot convert from CArray");
+			}
+		} else if (oldType instanceof CFunction) {
+			throw new AssertionError("cannot convert from CFunction");
+		} else if (oldType instanceof CStruct) {
+			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+		} else {
+			throw new AssertionError("unknown type " + newType);
+		}
+	}
+
+	private static void convertPointerToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
+		// TODO: check if types are compatible
+		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
+		final RValue oldRvalue = (RValue) rexp.getLrValue();
+		assert oldRvalue.getCType() instanceof CPointer : "has to be pointer";
+		final RValue newRvalue = new RValue(oldRvalue.getValue(), newType);
+		rexp.setLrValue(newRvalue);
+	}
+
+	private static void convertToVoid(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
+		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		if (oldType instanceof CPrimitive) {
+			// ok
+		} else if (oldType instanceof CPointer) {
+			// ok
+		} else if (oldType instanceof CEnum) {
+			// ok
+		} else if (oldType instanceof CArray) {
+			throw new AssertionError("cannot convert from CArray");
+		} else if (oldType instanceof CFunction) {
+			throw new AssertionError("cannot convert from CFunction");
+		} else if (oldType instanceof CStruct) {
+			if (newType.getType() == CPrimitives.VOID) {
+				// ok: we just keep the old value but change the type
+				// alternative might be to set the value to null because it should never be used
+			} else {
+				throw new UnsupportedSyntaxException(loc, "cannot convert from CStruct to " + newType);
+			}
+		} else {
+			throw new AssertionError("unknown type " + newType);
+		}
+		final RValue oldRValue = (RValue) rexp.getLrValue();
+		final RValue resultRvalue =
+				new RValue(oldRValue.getValue(), newType, oldRValue.isBoogieBool(), oldRValue.isIntFromPointer());
+		rexp.setLrValue(resultRvalue);
+	}
+
+	private void convertToFloatingType(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
+		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		if (oldType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) oldType;
+			if (cPrimitive.isIntegerType()) {
+				mExprTrans.convertIntToFloat(loc, rexp, newType);
+			} else if (cPrimitive.isRealFloatingType()) {
+				mExprTrans.convertFloatToFloat(loc, rexp, newType);
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+				throw new IncorrectSyntaxException(loc, "cannot convert from void");
+			} else {
+				throw new AssertionError("unknown type " + newType);
+			}
+		} else if (oldType instanceof CPointer) {
+			throw new IncorrectSyntaxException(loc, "cannot convert pointer to float");
+		} else if (oldType instanceof CEnum) {
+			mExprTrans.convertIntToFloat(loc, rexp, newType);
+		} else if (oldType instanceof CArray) {
+			throw new AssertionError("cannot convert from CArray");
+		} else if (oldType instanceof CFunction) {
+			throw new AssertionError("cannot convert from CFunction");
+		} else if (oldType instanceof CStruct) {
+			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+		} else {
+			throw new AssertionError("unknown type " + newType);
+		}
 	}
 
 }
