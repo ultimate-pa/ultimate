@@ -543,11 +543,9 @@ public class FunctionHandler {
 			ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node);
 
-			returnValue = mExprResultTransformer.switchToRValueIfNecessary(returnValue, loc, node);
-
 			// functions cannot return arrays but only pointers
 			returnValue = mCHandler.decayArrayToPointer(returnValue, loc, node);
-			returnValue = mExprResultTransformer.rexBoolToIntIfNecessary(returnValue, loc);
+			returnValue = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(returnValue, loc, node);
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
