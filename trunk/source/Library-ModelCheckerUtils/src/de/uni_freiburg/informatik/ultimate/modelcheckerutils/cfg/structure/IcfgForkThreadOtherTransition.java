@@ -26,31 +26,52 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Objects;
+
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Default implementation of {@link IForkActionThreadCurrent}.
+ * Generic implementation of a {@link IForkActionThreadCurrent} in an ICFG.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BasicForkActionCurrent extends AbstractBasicAction implements IForkActionThreadCurrent {
+public final class IcfgForkThreadOtherTransition extends AbstractIcfgTransition
+		implements IIcfgForkTransitionThreadOther<IcfgLocation> {
+	private static final long serialVersionUID = -4893486021673688404L;
 	private final UnmodifiableTransFormula mTransFormula;
-	private final ForkSmtArguments mForkSmtArguments;
+	private final IcfgForkThreadCurrentTransition mIcfgForkThreadCurrentTransition;
 
-	public BasicForkActionCurrent(final String preceedingProcedure, final String succeedingProcedure,
-			final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments) {
-		super(preceedingProcedure, succeedingProcedure);
-		mTransFormula = transFormula;
-		mForkSmtArguments = forkSmtArguments;
+	protected IcfgForkThreadOtherTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final IcfgForkThreadCurrentTransition icfgForkThreadCurrentTransition, final int id) {
+		super(source, target, payload, id);
+		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
+		mIcfgForkThreadCurrentTransition = Objects.requireNonNull(icfgForkThreadCurrentTransition,
+				"A forkSmtArguments is missing");
 	}
 
 	@Override
+	@Visualizable
 	public UnmodifiableTransFormula getTransformula() {
 		return mTransFormula;
 	}
 
 	@Override
-	public ForkSmtArguments getForkSmtArguments() {
-		return mForkSmtArguments;
+	public String toString() {
+		return toDebugString(mTransFormula.toString());
 	}
+
+	@Override
+	public UnmodifiableTransFormula getLocalVarsAssignment() {
+		return getTransformula();
+	}
+
+	@Override
+	public IIcfgForkTransitionThreadCurrent<IcfgLocation> getCorrespondingIIcfgForkTransitionCurrentThread() {
+		return mIcfgForkThreadCurrentTransition;
+	}
+
 }
