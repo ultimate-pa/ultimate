@@ -54,13 +54,13 @@ public class PredicateTrie<T extends IPredicate> {
 	private final T mTruePredicate;
 	private final T mFalsePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final ManagedScript mMgnScript;
+	private final ManagedScript mMgdScript;
 
 	private IVertex mRoot;
 
 	protected PredicateTrie(final ManagedScript script, final T truePredicate, final T falsePredicate,
 			final IIcfgSymbolTable symbolTable) {
-		mMgnScript = script;
+		mMgdScript = script;
 		mSymbolTable = symbolTable;
 		mTruePredicate = truePredicate;
 		mFalsePredicate = falsePredicate;
@@ -113,7 +113,7 @@ public class PredicateTrie<T extends IPredicate> {
 	}
 
 	protected Map<Term, Term> getWitness(final T fulfill, final Set<T> unfulfill) {
-		final Script script = mMgnScript.getScript();
+		final Script script = mMgdScript.getScript();
 		final Collection<Term> unfulfillTerms = new HashSet<>();
 		unfulfill.forEach(p -> unfulfillTerms.add(p.getFormula()));
 		Term joined = script.term("true");
@@ -197,7 +197,7 @@ public class PredicateTrie<T extends IPredicate> {
 	 * check if model fulfills predicate
 	 */
 	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
-		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgnScript, witness);
+		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgdScript, witness);
 		final Term result = subst.transform(predicate.getClosedFormula());
 		return mTruePredicate.getFormula().equals(result);
 	}
@@ -210,12 +210,15 @@ public class PredicateTrie<T extends IPredicate> {
 		final Term local = localPred.getClosedFormula();
 		final Term other = predicate.getClosedFormula();
 		// TODO replace with getWitness()
-		mMgnScript.lock(this);
-		final Term isEqual = mMgnScript.term(this, "distinct", local, other);
-		mMgnScript.push(this, 1);
+		if (mMgdScript.isLocked()) {
+			mMgdScript.requestLockRelease();
+		}
+		mMgdScript.lock(this);
+		final Term isEqual = mMgdScript.term(this, "distinct", local, other);
+		mMgdScript.push(this, 1);
 		try {
-			mMgnScript.assertTerm(this, isEqual);
-			final LBool result = mMgnScript.checkSat(this);
+			mMgdScript.assertTerm(this, isEqual);
+			final LBool result = mMgdScript.checkSat(this);
 			if (result == LBool.UNSAT) {
 				// they are equal
 				return Collections.emptyMap();
@@ -227,35 +230,38 @@ public class PredicateTrie<T extends IPredicate> {
 				final Set<ApplicationTerm> terms =
 						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
 				// this is a witness that should be accepted by one and rejected by the other
-				return mMgnScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
+				return mMgdScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot handle case were solver cannot decide equality of predicates");
 			}
 		} finally {
-			mMgnScript.pop(this, 1);
-			mMgnScript.unlock(this);
+			mMgdScript.pop(this, 1);
+			mMgdScript.unlock(this);
 		}
 	}
 
 	private Map<Term, Term> getWitness(final Term term) {
-		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgnScript.getScript(), mSymbolTable);
-		mMgnScript.lock(this);
-		mMgnScript.push(this, 1);
+		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript.getScript(), mSymbolTable);
+		if (mMgdScript.isLocked()) {
+			mMgdScript.requestLockRelease();
+		}
+		mMgdScript.lock(this);
+		mMgdScript.push(this, 1);
 		try {
-			mMgnScript.assertTerm(this, termVarsProc.getClosedFormula());
-			final LBool result = mMgnScript.checkSat(this);
+			mMgdScript.assertTerm(this, termVarsProc.getClosedFormula());
+			final LBool result = mMgdScript.checkSat(this);
 			if (result == LBool.SAT) {
 				final Set<IProgramVar> vars = termVarsProc.getVars();
 				final Set<ApplicationTerm> terms =
 						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
-				return mMgnScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
+				return mMgdScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
 			} else {
 				throw new UnsupportedOperationException("Solver cannot find a model for the term " + term);
 			}
 		} finally {
-			mMgnScript.pop(this, 1);
-			mMgnScript.unlock(this);
+			mMgdScript.pop(this, 1);
+			mMgdScript.unlock(this);
 		}
 	}
 }

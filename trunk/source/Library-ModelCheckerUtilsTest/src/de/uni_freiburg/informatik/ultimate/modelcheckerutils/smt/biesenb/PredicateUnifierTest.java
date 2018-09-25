@@ -342,6 +342,32 @@ public class PredicateUnifierTest {
 		Assert.assertThat("8", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
+	
+	@Test
+	public void TestisIntricatePredicate() {
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		
+		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
+		
+		final Term termTrue = mScript.term("true");
+		final Term termFalse = mScript.term("false");
+		
+		final TestPredicate predT = pred("=", mA, 1);
+		
+		final IPredicate pred1 = unifier.getOrConstructPredicate(term1);
+		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(term1);
+		final IPredicate predTrue = unifier.getOrConstructPredicate(termTrue);
+		final IPredicate oPredTrue = oUnifier.getOrConstructPredicate(termTrue);
+		final IPredicate predFlase = unifier.getOrConstructPredicate(termFalse);
+		final IPredicate oPredFalse = oUnifier.getOrConstructPredicate(termFalse);
+		
+		Assert.assertThat("1", unifier.isIntricatePredicate(pred1), Is.is(oUnifier.isIntricatePredicate(oPred1)));
+		Assert.assertThat("4", unifier.isIntricatePredicate(predTrue), Is.is(oUnifier.isIntricatePredicate(oPredTrue)));
+		Assert.assertThat("5", unifier.isIntricatePredicate(predFlase), Is.is(oUnifier.isIntricatePredicate(oPredFalse)));
+	}
 
 	@Test
 	public void testIsRepresentative() {

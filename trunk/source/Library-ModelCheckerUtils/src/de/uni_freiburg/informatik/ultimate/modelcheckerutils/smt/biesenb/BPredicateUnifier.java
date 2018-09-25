@@ -256,9 +256,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	}
 
 	private LBool isDistinct(final IPredicate pred1, final IPredicate pred2) {
+		if (mMgdScript.isLocked()) {
+			mMgdScript.requestLockRelease();
+		}
+		final Term isDistinct = mScript.term("distinct", pred1.getClosedFormula(), pred2.getClosedFormula());
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		final Term isDistinct = mMgdScript.term(this, "distinct", pred1.getClosedFormula(), pred2.getClosedFormula());
 		try {
 			mMgdScript.assertTerm(this, isDistinct);
 			return mMgdScript.checkSat(this);

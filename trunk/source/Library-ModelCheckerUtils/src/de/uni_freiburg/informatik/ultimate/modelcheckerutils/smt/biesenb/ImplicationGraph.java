@@ -48,14 +48,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class ImplicationGraph<T extends IPredicate> {
-	private final ManagedScript mScript;
+	private final ManagedScript mMgdScript;
 	private final Set<ImplicationVertex<T>> mVertices;
 	private final Map<T, ImplicationVertex<T>> mPredicateMap;
 	private ImplicationVertex<T> mTrueVertex;
 	private ImplicationVertex<T> mFalseVertex;
 
 	protected ImplicationGraph(final ManagedScript script, final T predicateFalse, final T predicateTrue) {
-		mScript = script;
+		mMgdScript = script;
 		mVertices = new HashSet<>();
 		mPredicateMap = new HashMap<>();
 		mFalseVertex = new ImplicationVertex<>(predicateFalse, new HashSet<>(), new HashSet<>());
@@ -288,12 +288,15 @@ public class ImplicationGraph<T extends IPredicate> {
 		if (useSolver) {
 			final Term acf = a.getClosedFormula();
 			final Term bcf = b.getClosedFormula();
-			mScript.lock(this);
-			final Term imp = mScript.term(this, "and", acf, mScript.term(this, "not", bcf));
-			mScript.push(this, 1);
+			if (mMgdScript.isLocked()) {
+				mMgdScript.requestLockRelease();
+			}
+			mMgdScript.lock(this);
+			final Term imp = mMgdScript.term(this, "and", acf, mMgdScript.term(this, "not", bcf));
+			mMgdScript.push(this, 1);
 			try {
-				mScript.assertTerm(this, imp);
-				final Script.LBool result = mScript.checkSat(this);
+				mMgdScript.assertTerm(this, imp);
+				final Script.LBool result = mMgdScript.checkSat(this);
 				if (result == Script.LBool.UNSAT) {
 					return true;
 				}
@@ -303,8 +306,8 @@ public class ImplicationGraph<T extends IPredicate> {
 				throw new UnsupportedOperationException(
 						"Cannot handle case were solver cannot decide implication of predicates");
 			} finally {
-				mScript.pop(this, 1);
-				mScript.unlock(this);
+				mMgdScript.pop(this, 1);
+				mMgdScript.unlock(this);
 			}
 		}
 		throw new IllegalArgumentException("predicate is not known, use the solver-option");
@@ -316,7 +319,7 @@ public class ImplicationGraph<T extends IPredicate> {
 	protected Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>> createFullCopy() {
 		// create new ImplicationGraph and empty it completely
 		final ImplicationGraph<T> copy =
-				new ImplicationGraph<>(mScript, mFalseVertex.getPredicate(), mTrueVertex.getPredicate());
+				new ImplicationGraph<>(mMgdScript, mFalseVertex.getPredicate(), mTrueVertex.getPredicate());
 		copy.mVertices.clear();
 		final Map<ImplicationVertex<T>, ImplicationVertex<T>> vertexCopyMap = new HashMap<>();
 		// copy vertices without implications
@@ -352,7 +355,7 @@ public class ImplicationGraph<T extends IPredicate> {
 	protected Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>>
 			createSubCopy(final Set<ImplicationVertex<T>> parents, final boolean keep) {
 		final ImplicationGraph<T> copy =
-				new ImplicationGraph<>(mScript, mFalseVertex.getPredicate(), mTrueVertex.getPredicate());
+				new ImplicationGraph<>(mMgdScript, mFalseVertex.getPredicate(), mTrueVertex.getPredicate());
 		copy.mVertices.clear();
 		// get vertices that have all vertices from "parents" as an ancestor
 		final Set<ImplicationVertex<T>> subVertices = parents.iterator().next().getDescendants();
