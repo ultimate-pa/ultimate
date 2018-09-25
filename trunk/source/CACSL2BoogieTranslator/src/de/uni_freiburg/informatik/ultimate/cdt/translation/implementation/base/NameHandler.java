@@ -40,10 +40,8 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -79,24 +77,6 @@ public class NameHandler implements INameHandler {
 		mBacktranslator = backtranslator;
 	}
 
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final IASTNode node) {
-		throw new UnsupportedOperationException("Implementation Error: Use C handler for " + node.getClass());
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException("Implementation error: Use ACSL handler for " + node.getClass());
-	}
-
 	@Override
 	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap,
 			final CType cType) {
@@ -106,11 +86,10 @@ public class NameHandler implements INameHandler {
 		final String boogieId;
 		{
 			// special case struct field identifier
-			// if some parent is IASTCompositeTypeSpecifier we need indentifier
-			// for
-			// field of struct, field of union, or constant of enum
-			// we return the original name.
-			IASTNode curr = scope; // TODO : is there a better way to do that?
+			// if some parent is IASTCompositeTypeSpecifier we need indentifier for
+			// field of struct, field of union, or constant of enum we return the original name.
+			IASTNode curr = scope;
+			// TODO : is there a better way to do that?
 			while (curr != null && !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
@@ -122,8 +101,7 @@ public class NameHandler implements INameHandler {
 		}
 		assert cId.length() > 0 : "Empty C identifier";
 		assert (compCnt >= 0);
-		// mark variables that we put on the heap manually (bc they are
-		// addressoffed)
+		// mark variables that we put on the heap manually (bc they are addressoffed)
 		// with a "#"
 		String onHeapStr = "";
 		if (isOnHeap) {
@@ -161,8 +139,7 @@ public class NameHandler implements INameHandler {
 	public String getInParamIdentifier(final String cId, final CType cType) {
 		// (alex:) in case of several unnamed parameters we need uniqueness
 		// (still a little bit overkill, to make it precise we would need to
-		// check whether
-		// the current method has more than one unnamed parameter)
+		// check whether the current method has more than one unnamed parameter)
 		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? mTmpUID++ : "");
 		mBacktranslator.putInVar(boogieId, cId, cType);
 		return boogieId;

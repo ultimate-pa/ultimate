@@ -428,10 +428,15 @@ public class CHandler {
 	 * @param expressionTranslation
 	 * @param typeHandler
 	 * @param staticObjectsHandler
+	 * @param typeSizeAndOffsetComputer
+	 * @param symbolTable
+	 * @param typeSizes
 	 */
 	public CHandler(final CHandler prerunCHandler, final ProcedureManager procedureManager,
 			final StaticObjectsHandler staticObjectsHandler, final TypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final INameHandler nameHandler,
+			final FlatSymbolTable symbolTable, final TypeSizes typeSizes) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
 		mIsPrerun = false;
 
@@ -442,28 +447,30 @@ public class CHandler {
 		mGlobAcslExtractors = new ArrayList<>();
 		mDeclarations = new ArrayList<>();
 
-		// reuse these parts of the old CHandler that have their own state relevant to the C translation
+		// reuse these parts of the old CHandler that have state that was created during the prerun
 		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
 		mFunctionToIndex = prerunCHandler.mFunctionToIndex;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
-		mNameHandler = prerunCHandler.mNameHandler;
 
-		// reuse these parts of the old CHandler that do not have their own state relevant to the C translation
+		// reuse these parts of the old CHandler that do not have state that was created during the prerun
 		mLogger = prerunCHandler.mLogger;
-		mSymbolTable = prerunCHandler.mSymbolTable;
-		mTypeSizes = prerunCHandler.mTypeSizes;
 		mSettings = prerunCHandler.mSettings;
 		mReachableDeclarations = prerunCHandler.mReachableDeclarations;
 		mReporter = prerunCHandler.mReporter;
-		mTypeSizeComputer = prerunCHandler.mTypeSizeComputer;
 
-		// we need to replace the static objects handler and all classes that depend on it
+		// we need to replace the name handler and all instances that depend on it
+		mNameHandler = nameHandler;
+		mSymbolTable = symbolTable;
+		mTypeSizes = typeSizes;
+
+		// we need to replace the static objects handler and all instances that depend on it
 		mStaticObjectsHandler = staticObjectsHandler;
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = expressionTranslation;
+		mTypeSizeComputer = typeSizeAndOffsetComputer;
 
-		// we need to replace the procedure manager and all classes that depend on it
+		// we need to replace the procedure manager and all instances that depend on it
 		mProcedureManager = procedureManager;
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, procedureManager);

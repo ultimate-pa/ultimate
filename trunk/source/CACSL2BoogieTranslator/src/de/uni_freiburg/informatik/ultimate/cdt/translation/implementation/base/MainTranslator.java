@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreRunner.PreRunnerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -33,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocatio
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslatorMapping;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 
@@ -150,54 +149,49 @@ public class MainTranslator {
 				preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
 
 		mLogger.info("Built tables and reachable declarations");
-		final CHandler prerunCHandler =
-				performPreRun(reporter, nameHandler, typeSizes, flatSymbolTable, translationSettings, locationFactory,
-						functionTable, backtranslatorMapping, reachableDeclarations, nodes);
+		final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler();
+		final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
+				translationSettings, locationFactory, prerunStaticObjectsHandler);
+
+		final ExpressionTranslation prerunExpressionTranslation =
+				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
+
+		final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
+				flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
+				reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler);
+
+		final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
+		prerunDispatcher.dispatch(nodes);
 		mLogger.info("Completed pre-run");
 
-		final CHandlerTranslationResult result =
-				performMainRun(translationSettings, prerunCHandler, reporter, locationFactory, witnessInvariants,
-						flatSymbolTable, nameHandler, typeSizes, backtranslatorMapping, nodes);
+		final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
+				locationFactory, witnessInvariants, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
 		mLogger.info("Completed translation");
 
 		return result.getNode();
 	}
 
-	private CHandler performPreRun(final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final TypeSizes typeSizes, final FlatSymbolTable flatSymbolTable,
-			final TranslationSettings translationSettings, final LocationFactory locationFactory,
-			final Map<String, IASTNode> functionTable, final ICACSL2BoogieBacktranslatorMapping backtranslatorMapping,
-			final Set<IASTDeclaration> reachableDeclarations, final List<DecoratedUnit> nodes) {
-		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
-		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
-				translationSettings, locationFactory, staticObjectsHandler);
-
-		final ExpressionTranslation expressionTranslation =
-				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
-
-		final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
-				flatSymbolTable, functionTable, expressionTranslation, locationFactory, typeSizes,
-				reachableDeclarations, typeHandler, reporter, nameHandler, staticObjectsHandler);
-
-		final PRDispatcher prdispatcher = new PRDispatcher(prerunCHandler, locationFactory, typeHandler);
-		prdispatcher.dispatch(nodes);
-		return prerunCHandler;
-	}
-
 	private CHandlerTranslationResult performMainRun(final TranslationSettings translationSettings,
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
 			final LocationFactory locationFactory, final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
-			final FlatSymbolTable flatSymbolTable, final INameHandler nameHandler, final TypeSizes typeSizes,
-			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes) {
+			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
+			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes prerunTypeSizes) {
+		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
+
+		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mst, nameHandler);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
+		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
-				translationSettings, locationFactory, staticObjectsHandler);
+				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
 		final ExpressionTranslation expressionTranslation =
 				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
 
+		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer =
+				new TypeSizeAndOffsetComputer(typeSizes, expressionTranslation, typeHandler);
+
 		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
-				expressionTranslation);
+				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
 
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());

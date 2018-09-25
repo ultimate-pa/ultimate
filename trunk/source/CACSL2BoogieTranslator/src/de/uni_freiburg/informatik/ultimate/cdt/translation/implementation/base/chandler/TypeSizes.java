@@ -79,7 +79,7 @@ public class TypeSizes {
 	 */
 	private final Signedness mSignednessOfChar;
 
-	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> CPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
+	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> mCPrimitiveToTypeSizeConstant;
 
 	private final FlatSymbolTable mSymboltable;
 
@@ -90,6 +90,7 @@ public class TypeSizes {
 		mSymboltable = symbolTable;
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
+		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
 
 		mSizeOfVoidType = 1;
 		mSizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
@@ -104,26 +105,47 @@ public class TypeSizes {
 		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
 
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, mSizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, mSizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, mSizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, mSizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, mSizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.INT, mSizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, mSizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, mSizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, mSizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, mSizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, mSizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, mSizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, mSizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT, mSizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, mSizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, mSizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
 
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
-		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
+	}
+
+	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
+		mSymboltable = symbolTable;
+
+		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
+		mSettings = prerunTypeSizes.mSettings;
+		mCPrimitiveToTypeSizeConstant = prerunTypeSizes.mCPrimitiveToTypeSizeConstant;
+
+		mSizeOfVoidType = prerunTypeSizes.mSizeOfVoidType;
+		mSizeOfBoolType = prerunTypeSizes.mSizeOfBoolType;
+		mSizeOfCharType = prerunTypeSizes.mSizeOfCharType;
+		mSizeOfShortType = prerunTypeSizes.mSizeOfShortType;
+		mSizeOfIntType = prerunTypeSizes.mSizeOfIntType;
+		mSizeOfLongType = prerunTypeSizes.mSizeOfLongType;
+		mSizeOfLongLongType = prerunTypeSizes.mSizeOfLongLongType;
+		mSizeOfFloatType = prerunTypeSizes.mSizeOfFloatType;
+		mSizeOfDoubleType = prerunTypeSizes.mSizeOfDoubleType;
+		mSizeOfLongDoubleType = prerunTypeSizes.mSizeOfLongDoubleType;
+		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
+		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
 	}
 
 	public boolean useFixedTypeSizes() {
@@ -131,7 +153,7 @@ public class TypeSizes {
 	}
 
 	public Integer getSize(final CPrimitives cPrimitive) {
-		final Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
+		final Integer result = mCPrimitiveToTypeSizeConstant.get(cPrimitive);
 		if (result == null) {
 			throw new IllegalArgumentException("unknown type " + cPrimitive);
 		}
