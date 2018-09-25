@@ -99,12 +99,12 @@ public class TypeCheckHelper {
 				final String fieldName = str.getFieldIds()[i];
 				if (fieldName.equals(accessedField)) {
 					resultType = str.getFieldType(i);
-				}
-				if (resultType == null) {
-					typeErrorReporter
-							.report(exp -> "Type check failed (field " + fieldName + " not in struct): " + exp);
-					resultType = BoogieType.TYPE_ERROR;
-					break;
+					if (resultType == null) {
+						typeErrorReporter
+								.report(exp -> "Type check failed (field " + fieldName + " not in struct): " + exp);
+						resultType = BoogieType.TYPE_ERROR;
+						break;
+					}
 				}
 			}
 

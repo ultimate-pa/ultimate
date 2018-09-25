@@ -113,9 +113,9 @@ public class StructHandler {
 				fieldOwner.getNeighbourUnionFields() == null ? new ArrayList<>()
 						: new ArrayList<>(fieldOwner.getNeighbourUnionFields());
 
-		CType foType = fieldOwner.getLrValue().getCType().getUnderlyingType();
-
-		foType = (node.isPointerDereference() ? ((CPointer) foType).getPointsToType() : foType);
+		final CType foType = (node.isPointerDereference()
+				? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
+				: fieldOwner.getLrValue().getUnderlyingType());
 
 		final CStruct cStructType = (CStruct) foType.getUnderlyingType();
 		final CType cFieldType = cStructType.getFieldType(field);

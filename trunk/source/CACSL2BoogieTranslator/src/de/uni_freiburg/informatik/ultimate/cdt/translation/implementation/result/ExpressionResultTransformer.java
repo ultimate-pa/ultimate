@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -83,10 +84,12 @@ public class ExpressionResultTransformer {
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ITypeHandler mTypeHandler;
+	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 
 	public ExpressionResultTransformer(final CHandler chandler, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ExpressionTranslation exprTrans, final TypeSizes typeSizes,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler) {
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler,
+			final TypeSizeAndOffsetComputer typeAndOffsetComputer) {
 		mCHandler = chandler;
 		mMemoryHandler = memoryHandler;
 		mStructHandler = structHandler;
@@ -94,6 +97,7 @@ public class ExpressionResultTransformer {
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mTypeHandler = typeHandler;
+		mTypeSizeAndOffsetComputer = typeAndOffsetComputer;
 	}
 
 	/**
@@ -269,7 +273,7 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CStruct) {
 
 				final Expression innerStructOffset =
-						mMemoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i, hook);
+						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i, hook);
 				final Expression offsetSum = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						currentStructOffset, mExprTrans.getCTypeOfPointerComponents(), innerStructOffset,
 						mExprTrans.getCTypeOfPointerComponents());

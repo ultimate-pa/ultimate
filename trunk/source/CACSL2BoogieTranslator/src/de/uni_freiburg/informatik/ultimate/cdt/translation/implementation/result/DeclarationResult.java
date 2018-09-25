@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,20 +41,17 @@ public class DeclarationResult extends Result {
 
 	public DeclarationResult() {
 		super(null);
-		mDecls = new ArrayList<>();
+		mDecls = Collections.emptyList();
 	}
 
 	public DeclarationResult(final CDeclaration decl) {
-		this();
-		mDecls.add(decl);
+		super(null);
+		mDecls = Collections.singletonList(decl);
 	}
 
-	public void addDeclaration(final CDeclaration decl) {
-		mDecls.add(decl);
-	}
-
-	public void addDeclarations(final List<CDeclaration> decls) {
-		mDecls.addAll(decls);
+	public DeclarationResult(final List<CDeclaration> decls) {
+		super(null);
+		mDecls = Collections.unmodifiableList(decls);
 	}
 
 	public List<CDeclaration> getDeclarations() {

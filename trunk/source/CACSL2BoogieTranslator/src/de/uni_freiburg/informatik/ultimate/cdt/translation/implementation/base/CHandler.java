@@ -401,7 +401,7 @@ public class CHandler {
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
 		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler);
+				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -474,13 +474,14 @@ public class CHandler {
 		mProcedureManager = procedureManager;
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, procedureManager);
-		mMemoryHandler =
-				new MemoryHandler(mTypeSizes, mNameHandler, mSettings.useSmtBoolArrayWorkaround(), mTypeHandler,
-						mExpressionTranslation, procedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
+
+		// the memory handler also retains information from the prerun
+		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
+				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
 		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler);
+				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -993,7 +994,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTDeclarator node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final TypesResult pendingResType = mCurrentDeclaredTypes.pop();
+		final TypesResult pendingResType = mCurrentDeclaredTypes.peek();
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
@@ -1006,7 +1007,6 @@ public class CHandler {
 		} else {
 			resType = TypesResult.create(pendingResType, new CPointer(pendingResType.getCType()));
 		}
-		mCurrentDeclaredTypes.push(resType);
 
 		// Adapt the name for multiparse input
 		final String declName;
@@ -1765,25 +1765,29 @@ public class CHandler {
 		}
 		mCurrentDeclaredTypes.pop();
 
-		if (intermediateResults.size() == 1) {
-			return intermediateResults.get(0);
-		}
-
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		for (final Result result : intermediateResults) {
-			if (result instanceof SkipResult) {
-				continue;
-			}
-			if (result instanceof ExpressionResult) {
-				erb.addAllExceptLrValue((ExpressionResult) result);
-				continue;
-			}
-			throw new AssertionError("Unexpected result type: " + result);
-		}
-		if (erb.isEmpty()) {
+		final List<Result> noSkipIntermediateResult =
+				intermediateResults.stream().filter(a -> !(a instanceof SkipResult)).collect(Collectors.toList());
+		if (noSkipIntermediateResult.isEmpty()) {
 			return new SkipResult();
 		}
-		return erb.build();
+		final Result first = noSkipIntermediateResult.get(0);
+		if (noSkipIntermediateResult.size() == 1) {
+			return first;
+		}
+		if (first instanceof ExpressionResult) {
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+			for (final Result result : noSkipIntermediateResult) {
+				final ExpressionResult exprResult = (ExpressionResult) result;
+				erb.addAllExceptLrValue(exprResult);
+				assert exprResult.getLrValue() == null;
+			}
+			return erb.build();
+		}
+		if (first instanceof DeclarationResult) {
+			return new DeclarationResult(noSkipIntermediateResult.stream()
+					.flatMap(a -> ((DeclarationResult) a).getDeclarations().stream()).collect(Collectors.toList()));
+		}
+		throw new AssertionError("Unexpected result type: " + first.getClass().getSimpleName());
 	}
 
 	/**
@@ -3122,7 +3126,8 @@ public class CHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
+			valueIncremented =
+					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;

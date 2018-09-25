@@ -67,19 +67,8 @@ public class CPointer extends CType {
 	}
 
 	@Override
-	public CType getUnderlyingType() {
-		CType previous = mPointsToType;
-		CType current = mPointsToType;
-		do {
-			previous = current;
-			current = current.getUnderlyingType();
-		} while (previous != current);
-		return current;
-	}
-
-	@Override
 	public boolean equals(final Object o) {
-		if (super.equals(o)) {
+		if (this == o) {
 			return true;
 		}
 		if (!(o instanceof CType)) {

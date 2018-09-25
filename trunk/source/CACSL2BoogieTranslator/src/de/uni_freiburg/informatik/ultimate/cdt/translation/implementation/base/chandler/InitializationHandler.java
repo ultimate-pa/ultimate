@@ -1169,14 +1169,14 @@ public class InitializationHandler {
 					|| expressionResult.getLrValue() instanceof RValue : "switch to RValue first!";
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
-			mElementInitInfos = null;
+			mElementInitInfos = Collections.emptyMap();
 			mUnusedListEntries = rest;
 			mMakeNondeterministicInitialization = false;
 		}
 
 		public InitializerInfo(final Map<Integer, InitializerInfo> indexInitInfos, final List<InitializerResult> rest) {
 			mExpressionResult = null;
-			mOverApprs = null;
+			mOverApprs = Collections.emptyList();
 			mElementInitInfos = indexInitInfos;
 			mUnusedListEntries = rest;
 			mMakeNondeterministicInitialization = false;
@@ -1190,7 +1190,7 @@ public class InitializationHandler {
 		public InitializerInfo(final Overapprox overapprox) {
 			mExpressionResult = null;
 			mOverApprs = Collections.singletonList(overapprox);
-			mElementInitInfos = null;
+			mElementInitInfos = Collections.emptyMap();
 			mUnusedListEntries = Collections.emptyList();
 			mMakeNondeterministicInitialization = true;
 		}

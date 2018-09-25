@@ -90,6 +90,7 @@ public class CNamed extends CType {
 		CType previous = mMappedType;
 		CType current = mMappedType;
 		do {
+			assert current instanceof CNamed;
 			previous = current;
 			current = current.getUnderlyingType();
 		} while (previous != current);

@@ -60,19 +60,25 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
  */
 public class StaticObjectsHandler {
 
-	private final Collection<Declaration> mGlobalDeclarations = new ArrayList<>();
-	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
+	private final Collection<Declaration> mGlobalDeclarations;
+	private final Collection<Statement> mStatementsForUltimateInit;
 
-	private boolean mIsFrozen = false;
-	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration =
-			new LinkedHashMap<>();
+	private boolean mIsFrozen;
+	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
 
-	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
+	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
+
+	public StaticObjectsHandler() {
+		mGlobalDeclarations = new ArrayList<>();
+		mStatementsForUltimateInit = new ArrayList<>();
+		mVariableDeclarationToAssociatedCDeclaration = new LinkedHashMap<>();
+		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
+		mIsFrozen = false;
+	}
 
 	/**
 	 * Returns all Boogie declarations that need to be added to the translated program in global scope
 	 *
-	 * @return
 	 */
 	public Collection<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
