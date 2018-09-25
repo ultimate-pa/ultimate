@@ -365,7 +365,7 @@ public class CfgBuilder {
 		IIcfg<? extends IcfgLocation> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
 		final CodeBlockFactory cbf = mCbf;
-		if (mForkCurrentThreads.isEmpty()) {
+		if (!mForkCurrentThreads.isEmpty()) {
 			final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
 					Term.class, mLogger);
 			result = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator)
