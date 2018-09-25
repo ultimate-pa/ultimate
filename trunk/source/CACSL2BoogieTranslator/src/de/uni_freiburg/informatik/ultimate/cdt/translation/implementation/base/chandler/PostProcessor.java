@@ -239,62 +239,6 @@ public class PostProcessor {
 		return decl;
 	}
 
-	private ArrayList<Declaration> declareConversionFunctions() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-		final ArrayList<Declaration> decls = new ArrayList<>();
-
-		final String outInt = "outInt";
-		final VarList realParam =
-				new VarList(ignoreLoc, new String[] {}, new PrimitiveType(ignoreLoc, BoogieType.TYPE_REAL, SFO.REAL));
-		final VarList[] oneRealParam = new VarList[] { realParam };
-		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt },
-				new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, SFO.INT));
-
-		if (mDeclareToIntFunction) {
-			decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam,
-					intParam));
-		}
-
-		return decls;
-	}
-
-	private ArrayList<Declaration> declareFunctionPointerProcedures() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final ArrayList<Declaration> result = new ArrayList<>();
-		for (final ProcedureSignature cFunc : mFunctionhandler.getFunctionsSignaturesWithFunctionPointers()) {
-			final String procName = cFunc.toString();
-
-			final VarList[] inParams = mProcedureManager.getProcedureDeclaration(procName).getInParams();
-			final VarList[] outParams = mProcedureManager.getProcedureDeclaration(procName).getOutParams();
-			assert outParams.length <= 1;
-
-			final Body body = getFunctionPointerFunctionBody(ignoreLoc, procName, cFunc, inParams, outParams);
-			final Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
-					inParams, outParams, null, body);
-			result.add(functionPointerMuxProc);
-		}
-		return result;
-	}
-
-	/**
-	 * Declares a type for each identifier in the set.
-	 *
-	 * @param loc
-	 *            the location to be used for the declarations.
-	 * @param undefinedTypes
-	 *            a list of undefined, but used types.
-	 * @return a list of type declarations.
-	 */
-	private static Collection<? extends Declaration> declareUndefinedTypes(final ILocation loc,
-			final Set<String> undefinedTypes) {
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		for (final String s : undefinedTypes) {
-			decl.add(new TypeDeclaration(loc, new Attribute[0], false, s, new String[0]));
-		}
-		return decl;
-	}
-
 	/**
 	 * Generate type declarations like, e.g., the following. type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
 	 * This allow us to use type synonyms like C_USHORT during the translation. This is yet not consequently
@@ -316,7 +260,7 @@ public class PostProcessor {
 						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(bitsize)) });
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
-				final ASTType astType = mTypeHandler.bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bytesize);
+				final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams, astType));
 			}
 		}
@@ -428,6 +372,62 @@ public class PostProcessor {
 			}
 		}
 		return decls;
+	}
+
+	private ArrayList<Declaration> declareConversionFunctions() {
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+
+		final ArrayList<Declaration> decls = new ArrayList<>();
+
+		final String outInt = "outInt";
+		final VarList realParam =
+				new VarList(ignoreLoc, new String[] {}, new PrimitiveType(ignoreLoc, BoogieType.TYPE_REAL, SFO.REAL));
+		final VarList[] oneRealParam = new VarList[] { realParam };
+		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt },
+				new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, SFO.INT));
+
+		if (mDeclareToIntFunction) {
+			decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam,
+					intParam));
+		}
+
+		return decls;
+	}
+
+	private ArrayList<Declaration> declareFunctionPointerProcedures() {
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ArrayList<Declaration> result = new ArrayList<>();
+		for (final ProcedureSignature cFunc : mFunctionhandler.getFunctionsSignaturesWithFunctionPointers()) {
+			final String procName = cFunc.toString();
+
+			final VarList[] inParams = mProcedureManager.getProcedureDeclaration(procName).getInParams();
+			final VarList[] outParams = mProcedureManager.getProcedureDeclaration(procName).getOutParams();
+			assert outParams.length <= 1;
+
+			final Body body = getFunctionPointerFunctionBody(ignoreLoc, procName, cFunc, inParams, outParams);
+			final Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
+					inParams, outParams, null, body);
+			result.add(functionPointerMuxProc);
+		}
+		return result;
+	}
+
+	/**
+	 * Declares a type for each identifier in the set.
+	 *
+	 * @param loc
+	 *            the location to be used for the declarations.
+	 * @param undefinedTypes
+	 *            a list of undefined, but used types.
+	 * @return a list of type declarations.
+	 */
+	private static Collection<? extends Declaration> declareUndefinedTypes(final ILocation loc,
+			final Set<String> undefinedTypes) {
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		for (final String s : undefinedTypes) {
+			decl.add(new TypeDeclaration(loc, new Attribute[0], false, s, new String[0]));
+		}
+		return decl;
 	}
 
 	/**
@@ -579,11 +579,11 @@ public class PostProcessor {
 					newStmts.add(assignment);
 				}
 
-				final IdentifierExpression functionPointerIdex = mTypeHandler.constructIdentifierExpression(loc,
+				final IdentifierExpression functionPointerIdex = constructIdentifierExpression(loc,
 						inParams[inParams.length - 1].getType(), inParams[inParams.length - 1].getIdentifiers()[0],
 						StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
 				final IdentifierExpression functionPointerValueOfCurrentFittingFunctionIdex =
-						mTypeHandler.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
+						constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
 								SFO.FUNCTION_ADDRESS + fittingFunctions.get(i), StorageClass.GLOBAL, null);
 				final Expression condition =
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
@@ -759,8 +759,8 @@ public class PostProcessor {
 			for (final VarList arg : checkedMethodInParams) {
 				assert arg.getIdentifiers().length == 1;
 				final String id = arg.getIdentifiers()[0];
-				final IdentifierExpression idEx = mTypeHandler.constructIdentifierExpression(loc, arg.getType(), id,
-						StorageClass.LOCAL, SFO.START);
+				final IdentifierExpression idEx =
+						constructIdentifierExpression(loc, arg.getType(), id, StorageClass.LOCAL, SFO.START);
 				args.add(idEx);
 			}
 		}
@@ -793,6 +793,19 @@ public class PostProcessor {
 		 */
 		mProcedureManager.endCustomProcedure(mCHandler, SFO.START);
 		return new UltimateStartProcedure(startProcedure);
+	}
+
+	private IdentifierExpression constructIdentifierExpression(final ILocation loc, final ASTType astType,
+			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
+		return ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForBoogieASTType(astType),
+				id, new DeclarationInformation(storageClass, surroundingProcedureName));
+	}
+
+	private static IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType boogieType,
+			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
+		assert storageClass != StorageClass.GLOBAL || surroundingProcedureName == null;
+		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, id,
+				new DeclarationInformation(storageClass, surroundingProcedureName));
 	}
 
 	private static final class UltimateInitProcedure {

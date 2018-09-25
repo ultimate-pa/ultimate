@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class AMemoryModel {
+public abstract class BaseMemoryModel {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
@@ -60,7 +60,7 @@ public abstract class AMemoryModel {
 
 	private final HeapDataArray mPointerArray;
 
-	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	public BaseMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
@@ -69,10 +69,6 @@ public abstract class AMemoryModel {
 				typeHandler.getBoogiePointerType(), typeHandler.getBoogiePointerType(),
 				bytesizeOfStoredPointerComponents());
 	}
-
-	protected abstract int bytesizeOfStoredPointerComponents();
-
-	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	public final String getReadProcedureName(final CPrimitives primitive) {
 		return READ_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
@@ -126,6 +122,10 @@ public abstract class AMemoryModel {
 		}
 		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
 	}
+
+	protected abstract int bytesizeOfStoredPointerComponents();
+
+	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures);

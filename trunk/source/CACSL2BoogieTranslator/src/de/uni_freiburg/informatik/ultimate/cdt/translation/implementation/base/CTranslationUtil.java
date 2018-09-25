@@ -54,6 +54,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -384,6 +387,19 @@ public class CTranslationUtil {
 			}
 		} else {
 			throw new UnsupportedOperationException("could not compute constant value");
+		}
+	}
+
+	public static boolean isAggregateCType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer
+				|| cType instanceof CUnion || cType instanceof CFunction) {
+			return false;
+		} else if (cType instanceof CArray || cType instanceof CStruct) {
+			return true;
+		} else {
+			throw new UnsupportedOperationException("missed a type??");
 		}
 	}
 }

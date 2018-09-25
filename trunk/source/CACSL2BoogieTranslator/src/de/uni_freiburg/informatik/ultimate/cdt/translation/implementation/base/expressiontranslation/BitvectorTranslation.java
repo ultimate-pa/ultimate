@@ -550,9 +550,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final int bitsAfter) {
 		final String smtFunctionName = "sign_extend";
 		final ASTType resultType =
-				((TypeHandler) mTypeHandler).bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
+				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
 		final ASTType inputType =
-				((TypeHandler) mTypeHandler).bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
+				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
 		final String boogieFunctionName = smtFunctionName + "From" + bitsBefore + "To" + bitsAfter;
 		if (!mFunctionDeclarations.getDeclaredFunctions()
 				.containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
@@ -995,7 +995,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			final int bytesize = mTypeSizes.getSize(cprimitive);
 			final ASTType bvType =
-					((TypeHandler) mTypeHandler).bytesize2asttype(loc, cprimitive.getPrimitiveCategory(), bytesize);
+					((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(), bytesize);
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, new CPrimitive(cprimitive));
 			final ASTType[] params = new ASTType[] { paramASTType };
 			final Attribute[] attributes =

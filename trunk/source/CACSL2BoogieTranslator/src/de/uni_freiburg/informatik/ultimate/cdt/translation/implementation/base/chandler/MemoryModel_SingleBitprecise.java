@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_SingleBitprecise extends AMemoryModel {
+public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
@@ -62,7 +62,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
 		final ASTType intArrayType =
-				typeHandler.bytesize2asttype(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
+				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
 		final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(intArrayType);
 
 		mResolution = memoryModelResolution;
