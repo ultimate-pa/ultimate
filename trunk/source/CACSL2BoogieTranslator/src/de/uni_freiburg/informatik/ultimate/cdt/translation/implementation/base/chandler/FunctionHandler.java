@@ -649,7 +649,7 @@ public class FunctionHandler {
 		final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 		for (int i = 0; i < arguments.length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
-			ExpressionResult in = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, inParam);
+			ExpressionResult in = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, inParam);
 
 			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();

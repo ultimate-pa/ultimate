@@ -101,13 +101,37 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * Dispatch a function argument and do conversions that are applied to all function arguments.
+	 * Dispatch a function argument and do conversions that are applied to all function arguments:
+	 * <ul>
+	 * <li>dispatch
+	 * <li>decayArrayToPointer
+	 * <li>switchToRValueIfNecessary
+	 * </ul>
 	 */
-	public ExpressionResult dispatchAndConvertFunctionArgument(final IDispatcher main, final ILocation loc,
+	public ExpressionResult dispatchDecaySwitchToRValueFunctionArgument(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
 		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
 		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
 		return switchToRValueIfNecessary(converted, loc, initClause);
+	}
+
+	/**
+	 * Dispatch a function argument and do conversions that are applied to all function arguments:
+	 * <ul>
+	 * <li>dispatch
+	 * <li>decayArrayToPointer
+	 * <li>switchToRValueIfNecessary
+	 * <li>convert
+	 * </ul>
+	 * 
+	 * @param newTypeRaw
+	 */
+	public ExpressionResult dispatchDecaySwitchToRValueConvertFunctionArgument(final IDispatcher main,
+			final ILocation loc, final IASTInitializerClause initClause, final CType newTypeRaw) {
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
+		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
+		final ExpressionResult switched = switchToRValueIfNecessary(converted, loc, initClause);
+		return convert(loc, switched, newTypeRaw);
 	}
 
 	public ExpressionResult switchToRValueAndRexBoolToIntIfNecessary(final ExpressionResult old, final ILocation loc,

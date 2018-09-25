@@ -450,7 +450,7 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult arg0 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		builder.addDeclarations(arg0.getDeclarations());
 		builder.addStatements(arg0.getStatements());
 		builder.addOverapprox(arg0.getOverapprs());
@@ -461,7 +461,7 @@ public class StandardFunctionHandler {
 				mMemoryHandler, mExpressionTranslation));
 
 		final ExpressionResult arg1 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		builder.addDeclarations(arg1.getDeclarations());
 		builder.addStatements(arg1.getStatements());
 		builder.addOverapprox(arg1.getOverapprs());
@@ -493,7 +493,8 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 1, methodName, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-		final ExpressionResult arg = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult arg =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		builder.addDeclarations(arg.getDeclarations());
 		builder.addStatements(arg.getStatements());
 		builder.addOverapprox(arg.getOverapprs());
@@ -540,14 +541,14 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult argS =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		builder.addDeclarations(argS.getDeclarations()).addStatements(argS.getStatements())
 				.addOverapprox(argS.getOverapprs()).addAuxVars(argS.getAuxVars())
 				.addNeighbourUnionFields(argS.getNeighbourUnionFields());
 
 		// dispatch second argument -- only for its sideeffects
 		final ExpressionResult argC =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		builder.addDeclarations(argC.getDeclarations()).addStatements(argC.getStatements())
 				.addOverapprox(argC.getOverapprs()).addAuxVars(argC.getAuxVars())
 				.addNeighbourUnionFields(argC.getNeighbourUnionFields());
@@ -643,13 +644,13 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
 		final ExpressionResult argThreadId =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult argThreadAttributes =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		final ExpressionResult argStartRoutine =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[2]);
 		final ExpressionResult startRoutineArguments =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[3]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[3]);
 
 		final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
 		final String rawProcName = castIdExpr.getName().toString();
@@ -722,7 +723,8 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
-		final ExpressionResult arg = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult arg =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// we assume that function is always successful and returns 0
@@ -757,7 +759,8 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
-		final ExpressionResult arg = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult arg =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// we assume that function is always successful and returns 0
@@ -780,9 +783,9 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResult arg1 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		final boolean isNullPointerLiteral = mMemoryHandler.isNullPointerLiteral(arg2.getLrValue().getValue());
 		if (!isNullPointerLiteral) {
 			final String msg = "The second argument of the pthread_mutex_init is not a null pointer. This means that "
@@ -834,12 +837,12 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 3, name, arguments);
 
 		final ExpressionResult argS =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult argC =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		mExpressionTranslation.convertIntToInt(loc, argC, new CPrimitive(CPrimitives.INT));
 		final ExpressionResult argN =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[2]);
 		mExpressionTranslation.convertIntToInt(loc, argN, mTypeSizeComputer.getSizeT());
 
 		final ExpressionResultBuilder result = new ExpressionResultBuilder().setLrValue(argS.getLrValue());
@@ -870,12 +873,10 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult nmemb =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		mExprResultTransformer.convert(loc, nmemb, mTypeSizeComputer.getSizeT());
-		final ExpressionResult size =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
-		mExprResultTransformer.convert(loc, size, mTypeSizeComputer.getSizeT());
+		final ExpressionResult nmemb = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[0], mTypeSizeComputer.getSizeT());
+		final ExpressionResult size = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[1], mTypeSizeComputer.getSizeT());
 
 		final Expression product = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_multiply, nmemb.getLrValue().getValue(), mTypeSizeComputer.getSizeT(),
@@ -902,7 +903,7 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult pRex =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
@@ -927,7 +928,7 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 1, methodName, arguments);
 
 		final ExpressionResult exprRes =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult exprResConverted =
 				mExprResultTransformer.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(exprResConverted);
@@ -975,9 +976,9 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResult arg1 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(arg1, arg2).setLrValue(arg1.getLrValue()).build();
 	}
 
@@ -1011,7 +1012,8 @@ public class StandardFunctionHandler {
 		final List<Expression> args = new ArrayList<>();
 		final List<ExpressionResult> results = new ArrayList<>();
 		for (final IASTInitializerClause inParam : node.getArguments()) {
-			ExpressionResult in = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, inParam);
+			ExpressionResult in =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, inParam);
 			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
@@ -1062,7 +1064,8 @@ public class StandardFunctionHandler {
 		}
 		final List<ExpressionResult> rtr = new ArrayList<>();
 		for (final IASTInitializerClause argument : arguments) {
-			final ExpressionResult arg = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, argument);
+			final ExpressionResult arg =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, argument);
 			mExpressionTranslation.convertIfNecessary(loc, arg, floatFunction.getType());
 			rtr.add(arg);
 		}
@@ -1094,8 +1097,10 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult rl = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		final ExpressionResult rr = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		final ExpressionResult rl =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult rr =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
@@ -1118,9 +1123,9 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 
 		ExpressionResult leftRvaluedResult =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		ExpressionResult rightRvaluedResult =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		final ExpressionResult nanLResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
@@ -1165,8 +1170,10 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		ExpressionResult leftOp = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		ExpressionResult rightOp = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		ExpressionResult leftOp =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		ExpressionResult rightOp =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		final Pair<ExpressionResult, ExpressionResult> newOps =
 				mExpressionTranslation.usualArithmeticConversions(loc, leftOp, rightOp);
 		leftOp = newOps.getFirst();
@@ -1213,7 +1220,8 @@ public class StandardFunctionHandler {
 
 		// dispatch all arguments
 		for (final IASTInitializerClause arg : node.getArguments()) {
-			final ExpressionResult argRes = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arg);
+			final ExpressionResult argRes =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arg);
 			resultBuilder.addAllExceptLrValue(argRes);
 		}
 
@@ -1234,15 +1242,13 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		final ExpressionResult dest =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		final ExpressionResult src = mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
-		final ExpressionResult size =
-				mExprResultTransformer.dispatchAndConvertFunctionArgument(main, loc, arguments[2]);
-
-		mExprResultTransformer.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		mExprResultTransformer.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		mExprResultTransformer.convert(loc, size, mTypeSizeComputer.getSizeT());
+		final CPointer voidType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ExpressionResult dest = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[0], voidType);
+		final ExpressionResult src = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[1], voidType);
+		final ExpressionResult size = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[2], mTypeSizeComputer.getSizeT());
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(dest);

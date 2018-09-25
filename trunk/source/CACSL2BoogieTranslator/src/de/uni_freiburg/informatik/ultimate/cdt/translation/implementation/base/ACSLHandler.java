@@ -223,9 +223,7 @@ public class ACSLHandler implements IACSLHandler {
 			ExpressionResult formula = (ExpressionResult) main
 					.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula(), main.getAcslHook());
 
-			formula = mExprResultTransformer.switchToRValueIfNecessary(formula, loc, main.getAcslHook());
-
-			mExprResultTransformer.rexIntToBoolIfNecessary(formula, loc);
+			formula = mExprResultTransformer.switchToRValueAndRexIntToBoolIfNecessary(formula, loc, main.getAcslHook());
 
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(formula);
@@ -385,22 +383,22 @@ public class ACSLHandler implements IACSLHandler {
 		case ARITHDIV:
 		case ARITHMOD:
 		case ARITHMUL: {
-			mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
-			mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
+			left = mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
+			right = mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
 			return mCHandler.handleMultiplicativeOperation(loc, null, op, left, right, main.getAcslHook());
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
-			mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
-			mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
+			left = mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
+			right = mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
 			return mCHandler.handleAdditiveOperation(loc, null, op, left, right, main.getAcslHook());
 		}
 		case COMPEQ:
 		case COMPNEQ: {
-			mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
-			mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
+			left = mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
+			right = mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
 			return mCHandler.handleEqualityOperators(loc, op, left, right);
 		}
@@ -408,8 +406,8 @@ public class ACSLHandler implements IACSLHandler {
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT: {
-			mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
-			mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
+			left = mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
+			right = mExprResultTransformer.rexBoolToIntIfNecessary(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
 			return mCHandler.handleRelationalOperators(loc, op, left, right);
 		}
@@ -419,8 +417,8 @@ public class ACSLHandler implements IACSLHandler {
 		case LOGICOR: {
 			final Operator op = getBoogieBinaryExprOperator(node.getOperator());
 			if (op != null) {
-				mExprResultTransformer.rexIntToBoolIfNecessary(left, loc);
-				mExprResultTransformer.rexIntToBoolIfNecessary(right, loc);
+				left = mExprResultTransformer.rexIntToBoolIfNecessary(left, loc);
+				right = mExprResultTransformer.rexIntToBoolIfNecessary(right, loc);
 				final Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.getLrValue().getValue(),
 						right.getLrValue().getValue());
 				// TODO: Handle Ctype

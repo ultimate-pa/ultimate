@@ -1053,10 +1053,10 @@ public class InitializationHandler {
 		// 2017-11-19 Matthias: introduced workaround to omit conversion
 		if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 			// omit conversion
-		} else {
-			mExprResultTransformer.convert(loc, expressionResultSwitched, targetCType);
+			return expressionResultSwitched;
 		}
-		return expressionResultSwitched;
+		return mExprResultTransformer.convert(loc, expressionResultSwitched, targetCType);
+
 	}
 
 	private InitializerInfo constructIndexToInitInfo(final ILocation loc,

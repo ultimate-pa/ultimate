@@ -736,10 +736,10 @@ public class CHandler {
 			// return new ExpressionResult(stmt, resRval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			final ExpressionResult rl = mExprResultTransformer.switchToRValueIfNecessary(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.switchToRValueIfNecessary(rightOperand, loc, node);
-			mExprResultTransformer.rexIntToBoolIfNecessary(rl, loc);
-			mExprResultTransformer.rexIntToBoolIfNecessary(rr, loc);
+			final ExpressionResult rl =
+					mExprResultTransformer.switchToRValueAndRexIntToBoolIfNecessary(leftOperand, loc, node);
+			final ExpressionResult rr =
+					mExprResultTransformer.switchToRValueAndRexIntToBoolIfNecessary(rightOperand, loc, node);
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
