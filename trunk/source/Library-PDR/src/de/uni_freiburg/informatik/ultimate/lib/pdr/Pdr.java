@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -371,7 +373,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							return false;
 						}
 
-						final Term pre = mPredTrans.pre(query.getThird(), query.getSecond().getTransformula());
+						Term pre = mPredTrans.pre(query.getThird(), query.getSecond().getTransformula());
+						if (pre instanceof QuantifiedFormula) {
+							pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
+									SimplificationTechnique.SIMPLIFY_DDA,
+									XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						}
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 						addProofObligation(proofObligations, proofObligation, level, predecessor, prePred);
 
