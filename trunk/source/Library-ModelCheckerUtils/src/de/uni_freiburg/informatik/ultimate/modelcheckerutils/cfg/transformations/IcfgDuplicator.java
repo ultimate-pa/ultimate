@@ -87,7 +87,9 @@ public class IcfgDuplicator {
 		ModelUtils.copyAnnotations(originalIcfg, newIcfg);
 
 		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
-		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(originalIcfg);
+
+		// iterator over all locations, begin at all procedure entries
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(originalIcfg.getProcedureEntryNodes().values());
 		final Set<Pair<IcfgLocation, IcfgEdge>> openReturns = new HashSet<>();
 
 		// first, copy all locations
