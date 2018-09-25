@@ -63,14 +63,32 @@ public final class IcfgEdgeFactory {
 		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
 	}
 
-	public IcfgForkThreadCurrentTransition createForkThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
-			final IPayload payload, final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments) {
-		return new IcfgForkThreadCurrentTransition(source, target, payload, transFormula, forkSmtArguments, getNextFreeId());
+	public IcfgForkThreadCurrentTransition createForkThreadCurrentTransition(final IcfgLocation source,
+			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final ForkSmtArguments forkSmtArguments) {
+		return new IcfgForkThreadCurrentTransition(source, target, payload, transFormula, forkSmtArguments,
+				getNextFreeId());
 	}
 
-	public IcfgJoinThreadCurrentTransition createJoinThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
-			final IPayload payload, final UnmodifiableTransFormula transFormula, final JoinSmtArguments joinSmtArguments) {
-		return new IcfgJoinThreadCurrentTransition(source, target, payload, transFormula, joinSmtArguments, getNextFreeId());
+	public IcfgJoinThreadCurrentTransition createJoinThreadCurrentTransition(final IcfgLocation source,
+			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final JoinSmtArguments joinSmtArguments) {
+		return new IcfgJoinThreadCurrentTransition(source, target, payload, transFormula, joinSmtArguments,
+				getNextFreeId());
+	}
+
+	public IcfgForkThreadOtherTransition createForkThreadOtherTransition(final IcfgLocation source,
+			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final IIcfgForkTransitionThreadCurrent icfgForkThreadCurrentTransition) {
+		return new IcfgForkThreadOtherTransition(source, target, payload, transFormula, icfgForkThreadCurrentTransition,
+				getNextFreeId());
+	}
+
+	public IcfgJoinThreadOtherTransition createJoinThreadOtherTransition(final IcfgLocation source,
+			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final IIcfgJoinTransitionThreadCurrent icfgJoinThreadCurrentTransition) {
+		return new IcfgJoinThreadOtherTransition(source, target, payload, transFormula, icfgJoinThreadCurrentTransition,
+				getNextFreeId());
 	}
 
 	private int getNextFreeId() {

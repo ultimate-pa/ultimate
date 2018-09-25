@@ -33,24 +33,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link IForkActionThreadCurrent} in an ICFG.
+ * Generic implementation of a {@link IJoinActionThreadCurrent} in an ICFG.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public final class IcfgForkThreadOtherTransition extends AbstractIcfgTransition
-		implements IIcfgForkTransitionThreadOther<IcfgLocation> {
+public final class IcfgJoinThreadOtherTransition extends AbstractIcfgTransition
+		implements IIcfgJoinTransitionThreadOther<IcfgLocation> {
 	private static final long serialVersionUID = -4893486021673688404L;
 	private final UnmodifiableTransFormula mTransFormula;
-	private final IIcfgForkTransitionThreadCurrent mIcfgForkThreadCurrentTransition;
+	private final IIcfgJoinTransitionThreadCurrent mIcfgJoinThreadCurrentTransition;
 
-	protected IcfgForkThreadOtherTransition(final IcfgLocation source, final IcfgLocation target,
+	protected IcfgJoinThreadOtherTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula,
-			final IIcfgForkTransitionThreadCurrent icfgForkThreadCurrentTransition, final int id) {
+			final IIcfgJoinTransitionThreadCurrent icfgJoinThreadCurrentTransition, final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
-		mIcfgForkThreadCurrentTransition = Objects.requireNonNull(icfgForkThreadCurrentTransition,
-				"A forkSmtArguments is missing");
+		mIcfgJoinThreadCurrentTransition = Objects.requireNonNull(icfgJoinThreadCurrentTransition,
+				"A JoinSmtArguments is missing");
 	}
 
 	@Override
@@ -65,13 +65,13 @@ public final class IcfgForkThreadOtherTransition extends AbstractIcfgTransition
 	}
 
 	@Override
-	public UnmodifiableTransFormula getLocalVarsAssignment() {
-		return getTransformula();
+	public IIcfgJoinTransitionThreadCurrent<IcfgLocation> getCorrespondingIIcfgJoinTransitionCurrentThread() {
+		return mIcfgJoinThreadCurrentTransition;
 	}
 
 	@Override
-	public IIcfgForkTransitionThreadCurrent<IcfgLocation> getCorrespondingIIcfgForkTransitionCurrentThread() {
-		return mIcfgForkThreadCurrentTransition;
+	public UnmodifiableTransFormula getAssignmentOfJoin() {
+		return getTransformula();
 	}
 
 }
