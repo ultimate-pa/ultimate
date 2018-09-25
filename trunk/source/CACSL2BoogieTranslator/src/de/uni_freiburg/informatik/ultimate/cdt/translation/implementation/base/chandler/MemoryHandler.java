@@ -1825,22 +1825,12 @@ public class MemoryHandler {
 	 * Note that Ultimate.dealloc does not make check if the deallocated memory is #valid, this must be done outside of
 	 * this procedure if we are translating a call to C's <code>free(p)</code> function for example.
 	 */
-	public CallStatement getDeallocCall(final IDispatcher main, final LRValue lrVal, final ILocation loc) {
+	public CallStatement getDeallocCall(final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
 		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Dealloc);
-		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
-		// or let it be??
-
 		// Further checks are done in the precondition of ~free()!
-		final CallStatement freeCall = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
+		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
 				MemoryModelDeclarations.Ultimate_Dealloc.getName(), new Expression[] { lrVal.getValue() });
-		// add required information to function handler.
-		if (mProcedureManager.isGlobalScope()) {
-			// mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Dealloc.getName(),
-			// getValidArrayLhs(loc));
-			// mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_Dealloc.getName());
-		}
-		return freeCall;
 	}
 
 	/**
@@ -1855,12 +1845,8 @@ public class MemoryHandler {
 
 	/**
 	 *
-	 * @param size
-	 * @param returnedValue
-	 * @param loc
 	 * @param surroundingProcedure
 	 *            name of the procedure that the generated statements will be added to.
-	 * @return
 	 */
 	public CallStatement getMallocCall(final Expression size, final VariableLHS returnedValue, final ILocation loc) {
 		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Alloc);
@@ -2177,7 +2163,7 @@ public class MemoryHandler {
 	 * Note that this returns a statement block that is like the given block but with added statement in front
 	 * <b>and</b>in the back!
 	 */
-	public List<Statement> insertMallocs(final IDispatcher main, final List<Statement> block, final IASTNode hook) {
+	public List<Statement> insertMallocs(final List<Statement> block, final IASTNode hook) {
 		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
 			mallocs.add(this.getMallocCall(llvp.llv, llvp.loc, hook));
@@ -2185,7 +2171,7 @@ public class MemoryHandler {
 		final List<Statement> frees = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
 			// handleReturnStm
-			frees.add(getDeallocCall(main, llvp.llv, llvp.loc));
+			frees.add(getDeallocCall(llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLhs() }));
 		}
 		final List<Statement> newBlockAL = new ArrayList<>();

@@ -619,12 +619,10 @@ public class PostProcessor {
 	}
 
 	private UltimateInitProcedure createUltimateInitProcedure(final ILocation translationUnitLoc, final IASTNode hook) {
-
-		{
-			final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
-					new String[0], new VarList[0], new VarList[0], new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(mCHandler, translationUnitLoc, SFO.INIT, initProcedureDecl);
-		}
+		mLogger.info("Creating Ultimate.init procedure");
+		final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
+				new VarList[0], new VarList[0], new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(mCHandler, translationUnitLoc, SFO.INIT, initProcedureDecl);
 		final ArrayList<Statement> initStatements = new ArrayList<>();
 		final Collection<String> proceduresCalledByUltimateInit = new HashSet<>();
 

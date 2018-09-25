@@ -376,7 +376,7 @@ public class FunctionHandler {
 			bodyResultBuilder.addAllExceptLrValue(bodyResult);
 
 			// 3) ,4)
-			mCHandler.updateStmtsAndDeclsAtScopeEnd(main, bodyResultBuilder, node);
+			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
 
 			assert bodyResultBuilder.getAuxVars().isEmpty();
 			assert bodyResultBuilder.getOverappr().isEmpty();
@@ -395,7 +395,7 @@ public class FunctionHandler {
 				proc.getOutParams(), null, body);
 
 		// not sure if this is needed..
-		definedProcInfo.setImplementation(impl);
+		// definedProcInfo.setImplementation(impl);
 
 		mProcedureManager.endProcedureScope(mCHandler);
 
@@ -594,7 +594,7 @@ public class FunctionHandler {
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				resultBuilder.addStatement(memoryHandler.getDeallocCall(main, entry.getKey().llv, entry.getKey().loc));
+				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().llv, entry.getKey().loc));
 
 				resultBuilder.addStatement(
 						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLhs() }));

@@ -347,6 +347,8 @@ public class CHandler {
 	 */
 	private final boolean mIsPrerun;
 
+	private Map<String, IASTNode> mFunctionTable;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -358,8 +360,8 @@ public class CHandler {
 			final FlatSymbolTable symbolTable, final Map<String, IASTNode> functionTable,
 			final ExpressionTranslation exprTrans, final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
-			final CTranslationResultReporter reporter, final NameHandler nameHandler,
-			final ProcedureManager procedureManager, final StaticObjectsHandler staticObjectsHandler) {
+			final CTranslationResultReporter reporter, final INameHandler nameHandler,
+			final StaticObjectsHandler staticObjectsHandler) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -374,6 +376,7 @@ public class CHandler {
 		mReporter = reporter;
 		mNameHandler = nameHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
+		mFunctionTable = functionTable;
 
 		mFunctionToIndex = new LinkedHashMap<>();
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -385,10 +388,13 @@ public class CHandler {
 		mGlobAcslExtractors = new ArrayList<>();
 		mDeclarations = new ArrayList<>();
 
-		mProcedureManager = procedureManager;
-		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
-
 		mTypeSizeComputer = new TypeSizeAndOffsetComputer(mTypeSizes, mExpressionTranslation, mTypeHandler);
+
+		// the procedure manager has to be replaced between pre-run and main run
+		// the following fields form the transitive dependency hull on the procedure manager
+		mProcedureManager = new ProcedureManager(mLogger, settings);
+
+		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
 
@@ -416,9 +422,11 @@ public class CHandler {
 	 * Constructor for CHandler in main run mode. You need a CHandler that was in prerun mode.
 	 *
 	 * @param prerunCHandler
-	 * @param dispatcher
+	 * @param procedureManager
+	 *            the procedureManager is an argument because the {@link ACSLHandler} depends on having the same
+	 *            instance than the {@link CHandler}
 	 */
-	public CHandler(final CHandler prerunCHandler) {
+	public CHandler(final CHandler prerunCHandler, final ProcedureManager procedureManager) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
 		mIsPrerun = false;
 
@@ -438,26 +446,41 @@ public class CHandler {
 		mSymbolTable = prerunCHandler.mSymbolTable;
 		mTypeSizes = prerunCHandler.mTypeSizes;
 		mSettings = prerunCHandler.mSettings;
+
+		// reuse these parts of the old CHandler
 		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
 		mReachableDeclarations = prerunCHandler.mReachableDeclarations;
 
 		mReporter = prerunCHandler.mReporter;
 		mNameHandler = prerunCHandler.mNameHandler;
 		mTypeHandler = prerunCHandler.mTypeHandler;
-		mProcedureManager = new ProcedureManager(mLogger, mSettings);
-		mAuxVarInfoBuilder = prerunCHandler.mAuxVarInfoBuilder;
+		mTypeSizeComputer = prerunCHandler.mTypeSizeComputer;
 		mStaticObjectsHandler = prerunCHandler.mStaticObjectsHandler;
 
-		mTypeSizeComputer = prerunCHandler.mTypeSizeComputer;
-		mMemoryHandler = prerunCHandler.mMemoryHandler;
+		// we need to replace the procedure manager and all classes that depend on it
+		mProcedureManager = procedureManager;
 
-		mStructHandler = prerunCHandler.mStructHandler;
-		mExprResultTransformer = prerunCHandler.mExprResultTransformer;
-		mFunctionHandler = prerunCHandler.mFunctionHandler;
-		mArrayHandler = prerunCHandler.mArrayHandler;
-		mInitHandler = prerunCHandler.mInitHandler;
-		mStandardFunctionHandler = prerunCHandler.mStandardFunctionHandler;
-		mPostProcessor = prerunCHandler.mPostProcessor;
+		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, procedureManager);
+		mMemoryHandler =
+				new MemoryHandler(mTypeSizes, mNameHandler, mSettings.useSmtBoolArrayWorkaround(), mTypeHandler,
+						mExpressionTranslation, procedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
+		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
+				mLocationFactory);
+		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
+				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler);
+		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
+				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
+				mExprResultTransformer, mVariablesOnHeap);
+		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
+				mExprResultTransformer, mMemoryHandler, mLocationFactory);
+		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, procedureManager, mTypeHandler,
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mStandardFunctionHandler = new StandardFunctionHandler(prerunCHandler.mFunctionTable, mAuxVarInfoBuilder,
+				mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, procedureManager, this,
+				mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory);
+		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
+				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
+				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 	}
 
 	/**
@@ -954,7 +977,7 @@ public class CHandler {
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
 		if (isNewScopeRequired(parent)) {
-			updateStmtsAndDeclsAtScopeEnd(main, resultBuilder, node);
+			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
 
 			endScope();
 		}
@@ -2077,7 +2100,7 @@ public class CHandler {
 
 		// Use body as hook: This is the scope holder for switch statements! (as controller expression is child of the
 		// switch itself and may not have scope access.)
-		updateStmtsAndDeclsAtScopeEnd(main, resultBuilder, node.getBody());
+		updateStmtsAndDeclsAtScopeEnd(resultBuilder, node.getBody());
 		endScope();
 
 		assert resultBuilder.getLrValue() == null;
@@ -2221,10 +2244,10 @@ public class CHandler {
 					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), new CPrimitive(CPrimitives.INT)),
 					Collections.emptySet());
 		case IASTUnaryExpression.op_star: {
-			return handleIndirectionOperator(main, operand, loc, node);
+			return handleIndirectionOperator(operand, loc, node);
 		}
 		case IASTUnaryExpression.op_amper: {
-			return handleAddressOfOperator(main, operand, loc, node);
+			return handleAddressOfOperator(operand, loc, node);
 		}
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -2579,9 +2602,8 @@ public class CHandler {
 	 * Updates the given ExpressionResultBuilder in place. Adds some declarations and resets the statements. Based on
 	 * information in the symbol table concerning the scope that is to be closed.
 	 */
-	public void updateStmtsAndDeclsAtScopeEnd(final IDispatcher main, final ExpressionResultBuilder exprResultBuilder,
-			final IASTNode hook) {
-		exprResultBuilder.resetStatements(mMemoryHandler.insertMallocs(main, exprResultBuilder.getStatements(), hook));
+	public void updateStmtsAndDeclsAtScopeEnd(final ExpressionResultBuilder exprResultBuilder, final IASTNode hook) {
+		exprResultBuilder.resetStatements(mMemoryHandler.insertMallocs(exprResultBuilder.getStatements(), hook));
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			// there may be a null declaration in case of foo(void) -- therefore we need to
 			// check the second conjunct
@@ -2649,7 +2671,7 @@ public class CHandler {
 		return witnessInvariant;
 	}
 
-	private RValue convertToPointerRValue(final IDispatcher main, final LRValue lrValue, final BoogieType pointerType) {
+	private RValue convertToPointerRValue(final LRValue lrValue, final BoogieType pointerType) {
 		assert mIsPrerun;
 		if (lrValue instanceof HeapLValue) {
 			throw new AssertionError("does this occur??");
@@ -3274,8 +3296,8 @@ public class CHandler {
 	/**
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
-	private Result handleAddressOfOperator(final IDispatcher main, final ExpressionResult er, final ILocation loc,
-			final IASTNode hook) throws AssertionError {
+	private Result handleAddressOfOperator(final ExpressionResult er, final ILocation loc, final IASTNode hook)
+			throws AssertionError {
 		final RValue rVal;
 		if (er.getLrValue() instanceof HeapLValue) {
 			rVal = ((HeapLValue) er.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
@@ -3293,7 +3315,7 @@ public class CHandler {
 				} else {
 					moveArrayAndStructIdsOnHeap(loc, expr, er.getAuxVars(), hook);
 				}
-				rVal = convertToPointerRValue(main, er.getLrValue(), mTypeHandler.getBoogiePointerType());
+				rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
 			} else {
 				throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
 			}
@@ -3309,8 +3331,7 @@ public class CHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final IDispatcher main, final ExpressionResult expr, final ILocation loc,
-			final IASTNode hook) {
+	private Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, this, loc,
 				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
@@ -3350,11 +3371,6 @@ public class CHandler {
 
 		final ILocation loc = mLocationFactory.createCLocation(node);
 
-		// final ArrayList<Statement> stmt = new ArrayList<>();
-		// final ArrayList<Declaration> decl = new ArrayList<>();
-		// final List<Overapprox> overappr = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-		// LinkedHashMap<>(0);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		Result iterator = null;
@@ -3367,9 +3383,6 @@ public class CHandler {
 				final Result initializer = main.dispatch(cInitStmt);
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
-					// stmt.addAll(rExp.getStatements());
-					// decl.addAll(rExp.getDeclarations());
-					// overappr.addAll(rExp.getOverapprs());
 					resultBuilder.addAllExceptLrValue(rExp);
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
@@ -3404,8 +3417,6 @@ public class CHandler {
 		List<Statement> bodyBlock = new ArrayList<>();
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
-			// decl.addAll(re.getDeclarations());
-			// overappr.addAll(re.getOverapprs());
 			resultBuilder.addDeclarations(re.getDeclarations());
 			resultBuilder.addOverapprox(re.getOverapprs());
 			bodyBlock.addAll(re.getStatements());
@@ -3413,7 +3424,6 @@ public class CHandler {
 			if (bodyResult.getNode() instanceof Body) {
 				final Body body = (Body) bodyResult.getNode();
 				bodyBlock.addAll(Arrays.asList(body.getBlock()));
-				// decl.addAll(Arrays.asList(body.getLocalVars()));
 				resultBuilder.addDeclarations(Arrays.asList(body.getLocalVars()));
 			} else if (bodyResult instanceof SkipResult) {
 				// do nothing - this is the special case where the loop does
@@ -3502,7 +3512,8 @@ public class CHandler {
 				}
 			}
 			spec = specList.toArray(new LoopInvariantSpecification[specList.size()]);
-			clearContract(); // take care for behavior and completeness
+			// take care for behavior and completeness
+			clearContract();
 		}
 
 		// bit of a workaround using an extra builder here..
@@ -3511,8 +3522,7 @@ public class CHandler {
 
 		if (node instanceof IASTForStatement) {
 			if (((IASTForStatement) node).getInitializerStatement() != null) {
-				// bodyBlock = updateStmtsAndDeclsAtScopeEnd(main, decl, bodyBlock);
-				updateStmtsAndDeclsAtScopeEnd(main, bodyBlockResultBuilder, node);
+				updateStmtsAndDeclsAtScopeEnd(bodyBlockResultBuilder, node);
 				endScope();
 
 				resultBuilder.addDeclarations(bodyBlockResultBuilder.getDeclarations());
@@ -3524,13 +3534,9 @@ public class CHandler {
 		final WhileStatement whileStmt =
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
-		// overappr.stream().forEach(a -> a.annotate(whileStmt));
-		// stmt.add(whileStmt);
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
-		// return new ExpressionResult(stmt, null, decl, Collections.emptySet(),
-		// overappr);
 		assert resultBuilder.getLrValue() == null;
 		assert resultBuilder.getAuxVars().isEmpty();
 		return resultBuilder.build();

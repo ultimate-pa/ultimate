@@ -915,7 +915,7 @@ public class StandardFunctionHandler {
 		/*
 		 * Add a call to our internal deallocation procedure Ultimate.dealloc
 		 */
-		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(main, pRex.getLrValue(), loc);
+		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(pRex.getLrValue(), loc);
 		resultBuilder.addStatement(deallocCall);
 
 		return resultBuilder.build();

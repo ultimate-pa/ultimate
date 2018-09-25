@@ -156,17 +156,17 @@ public class MainTranslator {
 		final ExpressionTranslation expressionTranslation =
 				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
 
-		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
 				flatSymbolTable, functionTable, expressionTranslation, locationFactory, typeSizes,
-				reachableDeclarations, typeHandler, reporter, nameHandler, procedureManager, staticObjectsHandler);
+				reachableDeclarations, typeHandler, reporter, nameHandler, staticObjectsHandler);
 
 		final PRDispatcher prdispatcher = new PRDispatcher(prerunCHandler, locationFactory, typeHandler);
 		prdispatcher.dispatch(nodes);
 
 		mLogger.info("Completed pre-run");
 
-		final CHandler mainCHandler = new CHandler(prerunCHandler);
+		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
+		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager);
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
 		final ACSLHandler acslHandler = new ACSLHandler(witnessInvariants != null, flatSymbolTable,
