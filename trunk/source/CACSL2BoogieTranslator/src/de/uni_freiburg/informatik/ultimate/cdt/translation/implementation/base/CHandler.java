@@ -2042,15 +2042,9 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTUnaryExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ExpressionResult operand = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
-				mExprResultTransformer, loc, main.dispatch(node.getOperand()), node);
-
-		// for the cases we know that it's an RValue..
-
-		// final CType oType = operand.getLrValue().getCType().getUnderlyingType();
-		// if (oType instanceof CNamed) {
-		// oType = ((CNamed) oType).getUnderlyingType();
-		// }
+		final Result result = main.dispatch(node.getOperand());
+		final ExpressionResult operand = CTranslationUtil
+				.convertExpressionListToExpressionResultIfNecessary(mExprResultTransformer, loc, result, node);
 
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_minus:
@@ -2071,8 +2065,6 @@ public class CHandler {
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
 		case IASTUnaryExpression.op_sizeof:
-			// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-			// LinkedHashMap<>(0);
 			final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
 			return new ExpressionResult(
 					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), new CPrimitive(CPrimitives.INT)),
@@ -3481,8 +3473,8 @@ public class CHandler {
 	 * the two assignments <code>t~post := LV</code> and <code>LV := t~post + 1</code>. Hence the auxiliary variable
 	 * <code>t~post</code> stores the old value of the object to which the lvalue <code>LV</code> refers.
 	 */
-	private Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp, ExpressionResult exprRes,
-			final IASTNode hook) {
+	private Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp,
+			ExpressionResult exprRes, final IASTNode hook) {
 		assert !exprRes.getLrValue().isBoogieBool();
 		final LRValue modifiedLValue = exprRes.getLrValue();
 		exprRes = mExprResultTransformer.switchToRValueIfNecessary(exprRes, loc, hook);
@@ -3576,6 +3568,7 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
+	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
@@ -3629,11 +3622,12 @@ public class CHandler {
 	 * operands is an {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). requires that the Boogie
 	 * expressions in left (resp. right) are a non-boolean representation of these results (i.e.,
 	 * rexBoolToIntIfNecessary() has already been applied if needed).
+	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
-	private ExpressionResult handleBitwiseArithmeticOperation(final ILocation loc, final LRValue lhs,
-			final int op, ExpressionResult left, ExpressionResult right, final IASTNode hook) {
+	private ExpressionResult handleBitwiseArithmeticOperation(final ILocation loc, final LRValue lhs, final int op,
+			ExpressionResult left, ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -3675,6 +3669,7 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
+	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
@@ -3713,8 +3708,8 @@ public class CHandler {
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
-			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc, left.getLrValue().getValue(),
-					(RValue) right.getLrValue(), pointsToType, hook);
+			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
+					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -3725,8 +3720,8 @@ public class CHandler {
 			}
 			typeOfResult = right.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
-			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc, right.getLrValue().getValue(),
-					(RValue) left.getLrValue(), pointsToType, hook);
+			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
+					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -3806,8 +3801,7 @@ public class CHandler {
 	 *
 	 */
 	ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opConditionRaw,
-			final ExpressionResult opPositiveRaw, final ExpressionResult opNegativeRaw,
-			final IASTNode hook) {
+			final ExpressionResult opPositiveRaw, final ExpressionResult opNegativeRaw, final IASTNode hook) {
 
 		final ExpressionResult opCondition = mExprResultTransformer.rexIntToBoolIfNecessary(opConditionRaw, loc);
 		ExpressionResult opPositive = mExprResultTransformer.rexBoolToIntIfNecessary(opPositiveRaw, loc);
@@ -4057,6 +4051,7 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
+	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */

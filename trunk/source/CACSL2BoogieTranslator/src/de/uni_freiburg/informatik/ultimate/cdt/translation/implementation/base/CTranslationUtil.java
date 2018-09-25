@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -194,32 +193,30 @@ public class CTranslationUtil {
 	 * @param transformer
 	 *            TODO
 	 * @param loc
-	 * @param dispatch
+	 * @param result
 	 *
 	 * @return
 	 */
 	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(
-			final ExpressionResultTransformer transformer, final ILocation loc, final Result dispatch,
+			final ExpressionResultTransformer transformer, final ILocation loc, final Result result,
 			final IASTNode hook) {
-		assert dispatch instanceof ExpressionListResult || dispatch instanceof ExpressionResult;
-		if (dispatch instanceof ExpressionResult) {
-			return (ExpressionResult) dispatch;
+		assert result instanceof ExpressionListResult || result instanceof ExpressionResult;
+		if (result instanceof ExpressionResult) {
+			return (ExpressionResult) result;
 		}
-		final ExpressionListResult listResult = (ExpressionListResult) dispatch;
+		final ExpressionListResult listResult = (ExpressionListResult) result;
 
-		final ExpressionResultBuilder result = new ExpressionResultBuilder();
+		final ExpressionResultBuilder newResult = new ExpressionResultBuilder();
 
 		for (final ExpressionResult elem : listResult.getList()) {
 			/*
 			 * Note: C11 6.5.17.2, footnote: A comma operator does not yield an lvalue. --> thus we can immediately
 			 * switch to rvalue here
 			 */
-			result.addAllExceptLrValue(transformer.switchToRValueIfNecessary(elem, loc, hook));
+			newResult.addAllExceptLrValue(transformer.switchToRValueIfNecessary(elem, loc, hook));
 		}
-
-		final LRValue lastLrValue = listResult.getList().get(listResult.getList().size() - 1).getLrValue();
-		result.setLrValue(lastLrValue);
-		return result.build();
+		newResult.setLrValue(listResult.getLast().getLrValue());
+		return newResult.build();
 	}
 
 	public static int findIndexOfStructField(final CStruct targetCType, final String rootDesignator) {
