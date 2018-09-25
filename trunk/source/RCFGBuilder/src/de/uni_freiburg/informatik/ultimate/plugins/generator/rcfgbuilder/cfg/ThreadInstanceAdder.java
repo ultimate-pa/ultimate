@@ -45,7 +45,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -77,8 +80,8 @@ public class ThreadInstanceAdder {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
-
 	public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer icfg,
+//	public BoogieIcfgContainer connectThreadInstances(final IIcfg<? extends IcfgLocation> result,
 			final Collection<ForkThreadCurrent> forkCurrentThreads,
 			final Collection<JoinThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
 			final Map<String, ThreadInstance> threadInstanceMap, final CodeBlockFactory cbf) {
@@ -99,8 +102,64 @@ public class ThreadInstanceAdder {
 			}
 			// }
 		}
-
 		return icfg;
+	}
+
+	/**
+	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry
+	 * location of the forked procedure.
+	 * @param edge
+	 *            that points to the next step in the current thread.
+	 */
+	private void addForkOtherThreadTransition1(final ForkThreadCurrent forkEdgeCurrent,
+			final BoogieIcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
+			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg, final CodeBlockFactory cbf) {
+		// FIXME Matthias 2018-08-17: check method, especially for terminology and
+		// overapproximation flags
+
+		final ForkStatement st = forkEdgeCurrent.getForkStatement();
+		final String callee = st.getProcedureName();
+		assert icfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee
+				+ " but no such procedure.";
+
+		// Add fork transition from callerNode to procedures entry node.
+		final IcfgLocation callerNode = forkEdgeCurrent.getSource();
+		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(callee);
+
+		final ForkSmtArguments fsa = forkEdgeCurrent.getForkSmtArguments();
+
+		final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
+
+//		final ForkThreadOther fork = cbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkEdgeCurrent);
+//		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(icfg.getSymboltable(),
+//				icfg.getBoogie2SMT().getManagedScript(),
+//				icfg.getCfgSmtToolkit().getInParams().get(st.getProcedureName()));
+//
+//		final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(icfg.getSymboltable(),
+//				icfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVars));
+//		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
+//				icfg.getCfgSmtToolkit().getManagedScript());
+//		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+//				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
+//				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
+//				Arrays.asList(parameterAssignment, threadIdAssignment, threadInUseAssignment));
+//		fork.setTransitionFormula(forkTransformula);
+//
+//		// Add the assume statement for the error location and construct the
+//		final ILocation forkLocation = st.getLocation();
+//		final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar,
+//				icfg.getCfgSmtToolkit().getManagedScript());
+//		final Expression formula = icfg.getBoogie2SMT().getTerm2Expression()
+//				.translate(forkErrorTransFormula.getFormula());
+//		final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
+//		final StatementSequence errorStatement = cbf.constructStatementSequence(callerNode, errorNode, assumeError);
+//		errorStatement.setTransitionFormula(forkErrorTransFormula);
+//
+//		// TODO Matthias 2018-09-15: Set overapproximations for both edges
+//		final Map<String, ILocation> overapproximations = new HashMap<>();
+//		if (!overapproximations.isEmpty()) {
+//			new Overapprox(overapproximations).annotate(forkEdgeCurrent);
+//		}
 	}
 
 

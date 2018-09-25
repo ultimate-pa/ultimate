@@ -371,7 +371,7 @@ public class CfgBuilder {
 			result = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator)
 					.copy(result);
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			result = adder.connectThreadInstances(icfg, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+			result = adder.connectThreadInstances((BoogieIcfgContainer) result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap, cbf);
 		}
 
