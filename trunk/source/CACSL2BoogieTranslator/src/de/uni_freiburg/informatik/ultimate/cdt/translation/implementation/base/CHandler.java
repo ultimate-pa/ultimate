@@ -993,11 +993,20 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTDeclarator node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final TypesResult resType = mCurrentDeclaredTypes.peek();
+		final TypesResult pendingResType = mCurrentDeclaredTypes.pop();
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		final boolean isOnHeap = resType.isOnHeap() || mIsPrerun ? false : mVariablesOnHeap.contains(node);
+		final boolean isOnHeap = pendingResType.isOnHeap() || mIsPrerun ? false : mVariablesOnHeap.contains(node);
+
+		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
+		final TypesResult resType;
+		if (pointerOps.length == 0) {
+			resType = pendingResType;
+		} else {
+			resType = TypesResult.create(pendingResType, new CPointer(pendingResType.getCType()));
+		}
+		mCurrentDeclaredTypes.push(resType);
 
 		// Adapt the name for multiparse input
 		final String declName;

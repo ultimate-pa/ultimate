@@ -86,7 +86,7 @@ public class TypesResult extends Result {
 		this(node, isConst, isVoid, false, cvar, Collections.emptyList());
 	}
 
-	public TypesResult(final TypesResult copy) {
+	private TypesResult(final TypesResult copy) {
 		this(copy.getAstType(), copy.isConst(), copy.isVoid(), copy.isOnHeap(), copy.getCType(),
 				copy.getTypeDeclarations());
 	}
@@ -132,6 +132,11 @@ public class TypesResult extends Result {
 
 	public static TypesResult create(final TypesResult resType, final boolean isOnHeap, final CType cType) {
 		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), isOnHeap, cType,
+				resType.getTypeDeclarations());
+	}
+
+	public static TypesResult create(final TypesResult resType, final CType cType) {
+		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), resType.isOnHeap(), cType,
 				resType.getTypeDeclarations());
 	}
 }
