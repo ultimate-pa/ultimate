@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -97,15 +96,18 @@ public class TypeCheckHelper {
 			final BoogieStructType str = (BoogieStructType) structType;
 			resultType = null;
 			for (int i = 0; i < str.getFieldCount(); i++) {
-				if (str.getFieldIds()[i].equals(accessedField)) {
+				final String fieldName = str.getFieldIds()[i];
+				if (fieldName.equals(accessedField)) {
 					resultType = str.getFieldType(i);
 				}
+				if (resultType == null) {
+					typeErrorReporter
+							.report(exp -> "Type check failed (field " + fieldName + " not in struct): " + exp);
+					resultType = BoogieType.TYPE_ERROR;
+					break;
+				}
 			}
-			if (resultType == null) {
-				typeErrorReporter.report(exp -> "Type check failed (field " + ((StructAccessExpression) exp).getField()
-						+ " not in struct): " + exp);
-				resultType = BoogieType.TYPE_ERROR;
-			}
+
 		}
 		return resultType;
 	}
