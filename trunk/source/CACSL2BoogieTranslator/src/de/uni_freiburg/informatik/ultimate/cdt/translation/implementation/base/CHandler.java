@@ -83,6 +83,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
@@ -140,7 +141,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -918,36 +918,6 @@ public class CHandler {
 		expr = mExprResultTransformer.rexBoolToIntIfNecessary(expr, loc);
 		expr = mExprResultTransformer.convert(loc, expr, newCType);
 		return expr;
-	}
-
-	private void checkUnsupportedPointerCast(final ILocation loc, final CType newCType, final ExpressionResult expr) {
-		if (!POINTER_CAST_IS_UNSUPPORTED_SYNTAX) {
-			return;
-		}
-		if (!(newCType instanceof CPointer) || !(expr.getLrValue().getCType() instanceof CPointer)) {
-			return;
-		}
-		final CType newPointsToType = ((CPointer) newCType).mPointsToType;
-		final CType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).mPointsToType;
-		if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
-			if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
-					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
-				if (mTypeSizes.isUnsigned((CPrimitive) newPointsToType)
-						&& !mTypeSizes.isUnsigned((CPrimitive) exprPointsToType)
-						|| !(mTypeSizes.isUnsigned((CPrimitive) newPointsToType)
-								&& mTypeSizes.isUnsigned((CPrimitive) exprPointsToType))) {
-					throw new UnsupportedSyntaxException(loc,
-							"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
-				}
-
-			} else if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.VOID
-					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
-					|| ((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
-							&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.VOID) {
-				throw new UnsupportedSyntaxException(loc,
-						"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
-			}
-		}
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
@@ -1801,154 +1771,6 @@ public class CHandler {
 		return erb.build();
 	}
 
-	private Result handleIASTDeclarator(final IDispatcher main, final ILocation loc, final IASTSimpleDeclaration node,
-			final DeclaratorResult declResult, final IASTDeclarator d, final CDeclaration cDec,
-			final CStorageClass storageClass) {
-
-		// if the same variable is declared multiple times (within the same scope), we
-		// only keep one declaration if one of them has an initializer, we keep that one.
-		// if we are inside a struct declaration however, this does not apply, we
-		// proceed as normal, as the result is needed to build the struct type
-		if (!mTypeHandler.haveSeenStructDeclaration()) {
-			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(d, cDec.getName());
-			if (stv != null && (!stv.getCDecl().hasInitializer() || cDec.hasInitializer())
-					&& mProcedureManager.isGlobalScope() && !mTypeHandler.haveSeenStructDeclaration()) {
-				// Keep the last STV with an initializer
-				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
-			}
-		}
-
-		final boolean onHeap = cDec.isOnHeap();
-		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(d), onHeap,
-				cDec.getType());
-		if (onHeap) {
-			mBoogieIdsOfHeapVars.add(bId);
-		}
-
-		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-
-		// this .put() is only to have a minimal symbolTableEntry
-		// (containing boogieID) for
-		// translation of the initializer
-		mSymbolTable.storeCSymbol(d, cDec.getName(), new SymbolTableValue(bId, null, cDec, dummyDeclInfo, d, false));
-		cDec.translateInitializer(main);
-
-		final ASTType translatedType;
-		if (onHeap) {
-			translatedType = mTypeHandler.constructPointerType(loc);
-		} else {
-			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
-		}
-
-		final DeclarationInformation declarationInformation;
-		final Declaration boogieDec;
-		final Result result;
-		if (storageClass == CStorageClass.TYPEDEF) {
-			boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
-
-			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cDec.getType());
-
-			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
-					false, false, cDec.getType()));
-			// TODO: add a sizeof-constant for the type??
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
-			result = new SkipResult();
-		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
-			// we have a local static variable -> special treatment
-			// global static variables are treated like normal global variables..
-			boogieDec = new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
-			result = new SkipResult();
-		} else {
-			if (mProcedureManager.isGlobalScope()) {
-				declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			} else {
-				declarationInformation =
-						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
-			}
-			final BoogieType boogieType =
-					mTypeHandler.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
-
-			/**
-			 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var for the
-			 * array's size. We do not want to treat this like other initializers (call initVar and so).
-			 */
-			final boolean hasRealInitializer =
-					cDec.hasInitializer() && (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
-
-			if (!hasRealInitializer && !mProcedureManager.isGlobalScope()
-					&& !mTypeHandler.haveSeenStructDeclaration()) {
-				// in case of a local variable declaration without an
-				// initializer, we need to insert a
-				// havoc statement (because otherwise the variable is
-				// always the same within a loop which
-				// may lead to unsoundness)
-				// ..except if OnHeap. Then it is malloced instead.
-				// (--> this is done below this ite-branching by
-				// memoryHandler.addVariableToBeMallocedAndFreed(...))
-
-				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-
-				final VariableLHS lhs =
-						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
-
-				if (cDec.hasInitializer()) {
-					// must be a non-real initializer for variable length array size
-					// --> need to pass this on
-					// TODO: double check this
-					erb.addAllExceptLrValue(cDec.getInitializer().getRootExpressionResult());
-				}
-
-				// no initializer --> essentially needs to be havoced f.i. in each loop iteration
-				if (!onHeap) {
-					erb.addStatement(new HavocStatement(loc, new VariableLHS[] { lhs }));
-				} else {
-					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
-					// old solution: havoc via an auxvar, new solution (below):
-					// just malloc at the right place (much shorter for arrays and structs..)
-					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
-					mMemoryHandler.addVariableToBeFreed(main,
-							new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
-				}
-				result = erb.build();
-			} else if (hasRealInitializer && !mProcedureManager.isGlobalScope()
-					&& !mTypeHandler.haveSeenStructDeclaration()) {
-				// in case of a local variable declaration with an initializer, the statements
-				// and delcs necessary for the initialization are the result
-				final VariableLHS lhs =
-						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
-				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-				final ExpressionResult initRex =
-						mInitHandler.initialize(loc, lhs, cDec.getType(), cDec.getInitializer(), d);
-
-				if (onHeap) {
-					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
-					mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
-					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
-				}
-				erb.addAllExceptLrValueAndHavocAux(initRex);
-				result = erb.build();
-			} else {
-				// in case of global variables, the result is the declaration, initialization is
-				// done in the postProcessor in case this simpleDeclaration is part of a struct
-				// definition, we also need the Declarations as a result
-				result = new DeclarationResult(cDec);
-			}
-			boogieDec = new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-		}
-
-		// reset the symbol table value with its final contents
-		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to happen?
-		mSymbolTable.storeCSymbol(d, cDec.getName(),
-				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, d, false));
-		return result;
-
-	}
-
 	/**
 	 * Translate a switch statement as described in C99: 6.8.4.2
 	 */
@@ -2361,11 +2183,9 @@ public class CHandler {
 			} else {
 				oldValue = rightLrVal.getValue();
 			}
-			/*
-			 * circumvents Boogie type checking during preprocessing
-			 */
+			// circumvents Boogie type checking during preprocessing
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			moveArrayAndStructIdsOnHeap(loc, oldValue, Collections.emptySet(), hook);
+			moveArrayAndStructIdsOnHeap(loc, rightLrVal.getUnderlyingType(), oldValue, Collections.emptySet(), hook);
 		} else {
 			if (rightLrVal instanceof RValueForArrays) {
 				newValue = rightLrVal.getValue();
@@ -2395,88 +2215,6 @@ public class CHandler {
 			return CStorageClass.UNSPECIFIED;
 		default:
 			throw new AssertionError("should not happen");
-		}
-	}
-
-	/**
-	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that contains no
-	 * variables, and returns an IntegerLiteral containing the result.
-	 *
-	 * Matthias 2015-09-21: "premature optimization is the root of all evil" I think, by now we should not use this
-	 * method and better live with long expressions. However, I don't want to delete this method, we might want to use
-	 * it in the future.
-	 */
-
-	@Deprecated
-	public BigInteger computeConstantValue(final Expression value) {
-		if (value instanceof IntegerLiteral) {
-			return new BigInteger(((IntegerLiteral) value).getValue());
-		} else if (value instanceof UnaryExpression) {
-			switch (((UnaryExpression) value).getOperator()) {
-			case ARITHNEGATIVE:
-				return computeConstantValue(((UnaryExpression) value).getExpr()).negate();
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else if (value instanceof BinaryExpression) {
-			switch (((BinaryExpression) value).getOperator()) {
-			case ARITHDIV:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.divide(computeConstantValue(((BinaryExpression) value).getRight()));
-			case ARITHMINUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.subtract(computeConstantValue(((BinaryExpression) value).getRight()));
-			case ARITHMOD:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.mod(computeConstantValue(((BinaryExpression) value).getRight()));
-			case ARITHMUL:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.multiply(computeConstantValue(((BinaryExpression) value).getRight()));
-			case ARITHPLUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.add(computeConstantValue(((BinaryExpression) value).getRight()));
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else {
-			throw new UnsupportedOperationException("could not compute constant value");
-		}
-	}
-
-	public Result handleLabelCommonCode(final IDispatcher main, final IASTLabelStatement node, final ILocation loc) {
-
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		final List<Overapprox> overappr = new ArrayList<>();
-		final String label = node.getName().toString();
-		stmt.add(new Label(loc, label));
-		final Result r = main.dispatch(node.getNestedStatement());
-		if (r instanceof ExpressionResult) {
-			final ExpressionResult res = (ExpressionResult) r;
-			decl.addAll(res.getDeclarations());
-			stmt.addAll(res.getStatements());
-			overappr.addAll(res.getOverapprs());
-			return new ExpressionResult(stmt, res.getLrValue(), decl, Collections.emptySet(), overappr);
-		} else if (r instanceof SkipResult) {
-			return new ExpressionResult(stmt, null, decl, Collections.emptySet(), overappr);
-		} else { // r instanceof Result ...
-			RValue expr = null;
-			if (r.getNode() instanceof Statement) {
-				stmt.add((Statement) r.getNode());
-			} else if (r.getNode() instanceof Declaration) {
-				decl.add((Declaration) r.getNode());
-			} else if (r.getNode() instanceof Expression) {
-				expr = new RValue((Expression) r.getNode(), null); // FIXME ??
-			} else if (r.getNode() instanceof Body) {
-				// we already have a unique naming for variables! --> unfold
-				final Body b = (Body) r.getNode();
-				decl.addAll(Arrays.asList(b.getLocalVars()));
-				stmt.addAll(Arrays.asList(b.getBlock()));
-			} else {
-				final String msg = "Unexpected boogie AST node type: " + r.getNode().getClass();
-				throw new UnsupportedSyntaxException(loc, msg);
-			}
-			return new ExpressionResult(stmt, expr, decl, Collections.emptySet(), overappr);
 		}
 	}
 
@@ -2641,8 +2379,235 @@ public class CHandler {
 		return result;
 	}
 
+	/**
+	 * @return true iff this is called while in prerun mode, false otherwise
+	 */
+	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final CType underlyingType, final Expression expr,
+			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
+		if (!mIsPrerun) {
+			if (underlyingType instanceof CArray) {
+				throw new AssertionError("on-heap/off-heap bug: array has to be on-heap");
+			}
+			return;
+		}
+		final BoogieIdExtractor bie = new BoogieIdExtractor();
+		bie.processExpression(expr);
+		for (final String id : bie.getIds()) {
+			final String cid = mSymbolTable.getCIdForBoogieId(id);
+			if (cid == null) {
+				// expression does not have a corresponding c identifier --> nothing to move on heap
+				continue;
+			}
+			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
+			final CType type = value.getCVariable().getUnderlyingType();
+			if (type instanceof CArray || type instanceof CStruct) {
+				addToVariablesOnHeap(value.getDeclarationNode());
+			}
+		}
+	}
+
 	private boolean isReachable(final IASTDeclaration node) {
 		return mReachableDeclarations == null || mReachableDeclarations.contains(node);
+	}
+
+	private void checkUnsupportedPointerCast(final ILocation loc, final CType newCType, final ExpressionResult expr) {
+		if (!POINTER_CAST_IS_UNSUPPORTED_SYNTAX) {
+			return;
+		}
+		if (!(newCType instanceof CPointer) || !(expr.getLrValue().getCType() instanceof CPointer)) {
+			return;
+		}
+		final CType newPointsToType = ((CPointer) newCType).mPointsToType;
+		final CType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).mPointsToType;
+		if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
+			if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
+				if (mTypeSizes.isUnsigned((CPrimitive) newPointsToType)
+						&& !mTypeSizes.isUnsigned((CPrimitive) exprPointsToType)
+						|| !(mTypeSizes.isUnsigned((CPrimitive) newPointsToType)
+								&& mTypeSizes.isUnsigned((CPrimitive) exprPointsToType))) {
+					throw new UnsupportedSyntaxException(loc,
+							"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
+				}
+
+			} else if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.VOID
+					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+					|| ((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+							&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.VOID) {
+				throw new UnsupportedSyntaxException(loc,
+						"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
+			}
+		}
+	}
+
+	private Result handleIASTDeclarator(final IDispatcher main, final ILocation loc, final IASTSimpleDeclaration node,
+			final DeclaratorResult declResult, final IASTDeclarator d, final CDeclaration cDec,
+			final CStorageClass storageClass) {
+
+		// if the same variable is declared multiple times (within the same scope), we
+		// only keep one declaration if one of them has an initializer, we keep that one.
+		// if we are inside a struct declaration however, this does not apply, we
+		// proceed as normal, as the result is needed to build the struct type
+		if (!mTypeHandler.haveSeenStructDeclaration()) {
+			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(d, cDec.getName());
+			if (stv != null && (!stv.getCDecl().hasInitializer() || cDec.hasInitializer())
+					&& mProcedureManager.isGlobalScope() && !mTypeHandler.haveSeenStructDeclaration()) {
+				// Keep the last STV with an initializer
+				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
+			}
+		}
+
+		final boolean onHeap = cDec.isOnHeap();
+		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(d), onHeap,
+				cDec.getType());
+		if (onHeap) {
+			mBoogieIdsOfHeapVars.add(bId);
+		}
+
+		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+
+		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
+		mSymbolTable.storeCSymbol(d, cDec.getName(), new SymbolTableValue(bId, null, cDec, dummyDeclInfo, d, false));
+		final InitializerResult initializer = translateInitializer(main, cDec);
+		cDec.setInitializerResult(initializer);
+
+		final ASTType translatedType;
+		if (onHeap) {
+			translatedType = mTypeHandler.constructPointerType(loc);
+		} else {
+			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
+		}
+
+		final DeclarationInformation declarationInformation;
+		final Declaration boogieDec;
+		final Result result;
+		if (storageClass == CStorageClass.TYPEDEF) {
+			boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
+
+			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cDec.getType());
+
+			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
+					false, false, cDec.getType()));
+			// TODO: add a sizeof-constant for the type??
+			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
+			result = new SkipResult();
+		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
+			// we have a local static variable -> special treatment
+			// global static variables are treated like normal global variables..
+			boogieDec = new VariableDeclaration(loc, new Attribute[0],
+					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
+			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
+			result = new SkipResult();
+		} else {
+			if (mProcedureManager.isGlobalScope()) {
+				declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			} else {
+				declarationInformation =
+						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
+			}
+			final BoogieType boogieType =
+					mTypeHandler.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
+
+			/**
+			 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var for the
+			 * array's size. We do not want to treat this like other initializers (call initVar and so).
+			 */
+			final boolean hasRealInitializer =
+					cDec.hasInitializer() && (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
+
+			if (!hasRealInitializer && !mProcedureManager.isGlobalScope()
+					&& !mTypeHandler.haveSeenStructDeclaration()) {
+				// in case of a local variable declaration without an
+				// initializer, we need to insert a
+				// havoc statement (because otherwise the variable is
+				// always the same within a loop which
+				// may lead to unsoundness)
+				// ..except if OnHeap. Then it is malloced instead.
+				// (--> this is done below this ite-branching by
+				// memoryHandler.addVariableToBeMallocedAndFreed(...))
+
+				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+				final VariableLHS lhs =
+						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
+
+				if (cDec.hasInitializer()) {
+					// must be a non-real initializer for variable length array size
+					// --> need to pass this on
+					// TODO: double check this
+					erb.addAllExceptLrValue(cDec.getInitializer().getRootExpressionResult());
+				}
+
+				// no initializer --> essentially needs to be havoced f.i. in each loop iteration
+				if (!onHeap) {
+					erb.addStatement(new HavocStatement(loc, new VariableLHS[] { lhs }));
+				} else {
+					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
+					// old solution: havoc via an auxvar, new solution (below):
+					// just malloc at the right place (much shorter for arrays and structs..)
+					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
+					mMemoryHandler.addVariableToBeFreed(main,
+							new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
+				}
+				result = erb.build();
+			} else if (hasRealInitializer && !mProcedureManager.isGlobalScope()
+					&& !mTypeHandler.haveSeenStructDeclaration()) {
+				// in case of a local variable declaration with an initializer, the statements
+				// and delcs necessary for the initialization are the result
+				final VariableLHS lhs =
+						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
+				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+				final ExpressionResult initRex =
+						mInitHandler.initialize(loc, lhs, cDec.getType(), cDec.getInitializer(), d);
+
+				if (onHeap) {
+					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
+					mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
+					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
+				}
+				erb.addAllExceptLrValueAndHavocAux(initRex);
+				result = erb.build();
+			} else {
+				// in case of global variables, the result is the declaration, initialization is
+				// done in the postProcessor in case this simpleDeclaration is part of a struct
+				// definition, we also need the Declarations as a result
+				result = new DeclarationResult(cDec);
+			}
+			boogieDec = new VariableDeclaration(loc, new Attribute[0],
+					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
+		}
+
+		// reset the symbol table value with its final contents
+		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to happen?
+		mSymbolTable.storeCSymbol(d, cDec.getName(),
+				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, d, false));
+		return result;
+	}
+
+	/**
+	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration that we work
+	 * with. (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but this is too
+	 * early when we have something like struct list myList = { &myList}, because we need to have some symbolTable entry
+	 * for translating this initializer, see visit ISimpleDeclaraton for this, too.)
+	 *
+	 */
+	private static InitializerResult translateInitializer(final IDispatcher main, final CDeclaration cDec) {
+		final IASTInitializer init = cDec.getIASTInitializer();
+		if (init == null) {
+			return null;
+		}
+		final Result res = main.dispatch(init);
+
+		if (res instanceof InitializerResult) {
+			return (InitializerResult) res;
+		} else if (res instanceof ExpressionResult) {
+			return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) res).build();
+		} else {
+			throw new AssertionError(
+					"Expected either InitializerResult or ExpressionResult, but got " + res.getClass());
+		}
 	}
 
 	private static int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
@@ -2697,24 +2662,6 @@ public class CHandler {
 	 */
 	private static boolean isNewScopeRequired(final IASTNode env) {
 		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
-	}
-
-	private void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr, final Set<AuxVarInfo> auxVars,
-			final IASTNode hook) {
-		final BoogieIdExtractor bie = new BoogieIdExtractor();
-		bie.processExpression(expr);
-		for (final String id : bie.getIds()) {
-			final String cid = mSymbolTable.getCIdForBoogieId(id);
-			if (cid == null) {
-				// expression does not have a corresponding c identifier --> nothing to move on heap
-				continue;
-			}
-			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
-			final CType type = value.getCVariable().getUnderlyingType();
-			if (type instanceof CArray || type instanceof CStruct) {
-				addToVariablesOnHeap(value.getDeclarationNode());
-			}
-		}
 	}
 
 	private void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
@@ -3319,7 +3266,7 @@ public class CHandler {
 					final IdentifierExpression idExpr = (IdentifierExpression) expr;
 					moveIdOnHeap(loc, idExpr, hook);
 				} else {
-					moveArrayAndStructIdsOnHeap(loc, expr, er.getAuxVars(), hook);
+					moveArrayAndStructIdsOnHeap(loc, er.getLrValue().getUnderlyingType(), expr, er.getAuxVars(), hook);
 				}
 				rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
 			} else {

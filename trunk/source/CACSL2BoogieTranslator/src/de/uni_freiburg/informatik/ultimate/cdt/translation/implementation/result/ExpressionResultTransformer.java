@@ -128,19 +128,10 @@ public class ExpressionResultTransformer {
 			final ExpressionResult replaced = replaceCFunctionByCPointer(old);
 			return replaceEnumByInt(replaced);
 		} else if (old.getLrValue() instanceof LocalLValue) {
-			// TODO: Fix prerun thing
-			// if (main.mCHandler.isPreRunMode()) {
-			// if (old.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-			// // move it on-heap
-			// ((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, old.getLrValue().getValue(), mAuxVars, hook);
-			// }
-			// } else {
-			if (old.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-				throw new AssertionError(
-						"on-heap/off-heap bug: array " + old.getLrValue().toString() + " has to be on-heap");
-			}
-			// }
 			final CType underlyingType = old.getLrValue().getCType().getUnderlyingType();
+			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, old.getLrValue().getValue(), old.getAuxVars(),
+					hook);
+
 			final CType resultType;
 			if (underlyingType instanceof CArray) {
 				resultType = new CPointer(((CArray) underlyingType).getValueType());
@@ -156,7 +147,6 @@ public class ExpressionResultTransformer {
 			result = new ExpressionResultBuilder(old).setOrResetLrValue(newRVal).build();
 		} else if (old.getLrValue() instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) old.getLrValue();
-
 			CType underlyingType = old.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
