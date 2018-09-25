@@ -43,7 +43,7 @@ public class CPointer extends CType {
 	/**
 	 * The type, this pointer points to.
 	 */
-	public final CType mPointsToType;
+	private final CType mPointsToType;
 
 	/**
 	 * Constructor.
@@ -52,14 +52,29 @@ public class CPointer extends CType {
 	 *            the type, this pointer points to.
 	 */
 	public CPointer(final CType pointsToType) {
-		// super();
-		super(false, false, false, false); // FIXME: integrate those flags
-		this.mPointsToType = pointsToType;
+		// FIXME: integrate those flags
+		super(false, false, false, false);
+		mPointsToType = pointsToType;
+	}
+
+	public CType getPointsToType() {
+		return mPointsToType;
 	}
 
 	@Override
 	public String toString() {
 		return SFO.POINTER;
+	}
+
+	@Override
+	public CType getUnderlyingType() {
+		CType previous = mPointsToType;
+		CType current = mPointsToType;
+		do {
+			previous = current;
+			current = current.getUnderlyingType();
+		} while (previous != current);
+		return current;
 	}
 
 	@Override

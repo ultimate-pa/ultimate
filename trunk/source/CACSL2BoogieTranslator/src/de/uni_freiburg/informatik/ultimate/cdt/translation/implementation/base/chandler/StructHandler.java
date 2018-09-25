@@ -115,7 +115,7 @@ public class StructHandler {
 
 		CType foType = fieldOwner.getLrValue().getCType().getUnderlyingType();
 
-		foType = (node.isPointerDereference() ? ((CPointer) foType).mPointsToType : foType);
+		foType = (node.isPointerDereference() ? ((CPointer) foType).getPointsToType() : foType);
 
 		final CStruct cStructType = (CStruct) foType.getUnderlyingType();
 		final CType cFieldType = cStructType.getFieldType(field);

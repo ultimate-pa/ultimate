@@ -2424,8 +2424,8 @@ public class CHandler {
 		if (!(newCType instanceof CPointer) || !(expr.getLrValue().getCType() instanceof CPointer)) {
 			return;
 		}
-		final CType newPointsToType = ((CPointer) newCType).mPointsToType;
-		final CType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).mPointsToType;
+		final CType newPointsToType = ((CPointer) newCType).getPointsToType();
+		final CType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).getPointsToType();
 		if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
 			if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
 					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
@@ -3122,7 +3122,7 @@ public class CHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.mPointsToType, hook);
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -3273,7 +3273,7 @@ public class CHandler {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
-		final CType pointedType = pointer.mPointsToType;
+		final CType pointedType = pointer.getPointsToType();
 		if (pointedType.isIncomplete()) {
 			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
 		}
@@ -3716,7 +3716,7 @@ public class CHandler {
 					(CPrimitive) typeOfResult, right.getLrValue().getValue(), (CPrimitive) typeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
+			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -3728,7 +3728,7 @@ public class CHandler {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
 			}
 			typeOfResult = right.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
+			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -3748,8 +3748,8 @@ public class CHandler {
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
 			CType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).mPointsToType;
-				final CType rightPointsToType = ((CPointer) rType).mPointsToType;
+				final CType leftPointsToType = ((CPointer) lType).getPointsToType();
+				final CType rightPointsToType = ((CPointer) rType).getPointsToType();
 				if (!leftPointsToType.equals(rightPointsToType)) {
 					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
 					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)

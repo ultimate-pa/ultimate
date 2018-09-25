@@ -74,7 +74,8 @@ public class CStruct extends CType {
 	 *            the C declaration used.
 	 */
 	public CStruct(final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		// FIXME: integrate those flags
+		super(false, false, false, false);
 		mNames = fNames;
 		mTypes = fTypes;
 		mBitFieldWidths = bitFieldWidths;
@@ -82,7 +83,8 @@ public class CStruct extends CType {
 	}
 
 	public CStruct(final String name) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		// FIXME: integrate those flags
+		super(false, false, false, false);
 		mNames = new String[0];
 		mTypes = new CType[0];
 		mBitFieldWidths = Collections.emptyList();
