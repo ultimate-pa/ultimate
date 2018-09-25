@@ -85,7 +85,7 @@ public class StaticObjectsHandler {
 	}
 
 	public void freeze() {
-		assert !mIsFrozen;
+		assert !mIsFrozen : "called freeze but is already frozen";
 		mIsFrozen = true;
 	}
 

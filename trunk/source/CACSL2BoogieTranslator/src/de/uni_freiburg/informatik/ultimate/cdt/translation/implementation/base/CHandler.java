@@ -425,8 +425,13 @@ public class CHandler {
 	 * @param procedureManager
 	 *            the procedureManager is an argument because the {@link ACSLHandler} depends on having the same
 	 *            instance than the {@link CHandler}
+	 * @param expressionTranslation
+	 * @param typeHandler
+	 * @param staticObjectsHandler
 	 */
-	public CHandler(final CHandler prerunCHandler, final ProcedureManager procedureManager) {
+	public CHandler(final CHandler prerunCHandler, final ProcedureManager procedureManager,
+			final StaticObjectsHandler staticObjectsHandler, final TypeHandler typeHandler,
+			final ExpressionTranslation expressionTranslation) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
 		mIsPrerun = false;
 
@@ -437,25 +442,26 @@ public class CHandler {
 		mGlobAcslExtractors = new ArrayList<>();
 		mDeclarations = new ArrayList<>();
 
+		// reuse these parts of the old CHandler that have their own state relevant to the C translation
+		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
 		mFunctionToIndex = prerunCHandler.mFunctionToIndex;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
+		mNameHandler = prerunCHandler.mNameHandler;
 
-		mExpressionTranslation = prerunCHandler.mExpressionTranslation;
+		// reuse these parts of the old CHandler that do not have their own state relevant to the C translation
 		mLogger = prerunCHandler.mLogger;
 		mSymbolTable = prerunCHandler.mSymbolTable;
 		mTypeSizes = prerunCHandler.mTypeSizes;
 		mSettings = prerunCHandler.mSettings;
-
-		// reuse these parts of the old CHandler
-		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
 		mReachableDeclarations = prerunCHandler.mReachableDeclarations;
-
 		mReporter = prerunCHandler.mReporter;
-		mNameHandler = prerunCHandler.mNameHandler;
-		mTypeHandler = prerunCHandler.mTypeHandler;
 		mTypeSizeComputer = prerunCHandler.mTypeSizeComputer;
-		mStaticObjectsHandler = prerunCHandler.mStaticObjectsHandler;
+
+		// we need to replace the static objects handler and all classes that depend on it
+		mStaticObjectsHandler = staticObjectsHandler;
+		mTypeHandler = typeHandler;
+		mExpressionTranslation = expressionTranslation;
 
 		// we need to replace the procedure manager and all classes that depend on it
 		mProcedureManager = procedureManager;
