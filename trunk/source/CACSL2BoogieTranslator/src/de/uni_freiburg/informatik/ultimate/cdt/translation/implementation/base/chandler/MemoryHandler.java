@@ -2248,9 +2248,8 @@ public class MemoryHandler {
 	 * integer operand is converted to the same type that we use to represent pointer components. As a consequence we
 	 * have to return an ExpressionResult.
 	 */
-	public ExpressionResult doPointerArithmeticWithConversion(final IDispatcher main, final int operator,
-			final ILocation loc, final Expression ptrAddress, final RValue integer, final CType valueType,
-			final IASTNode hook) {
+	public ExpressionResult doPointerArithmeticWithConversion(final int operator, final ILocation loc,
+			final Expression ptrAddress, final RValue integer, final CType valueType, final IASTNode hook) {
 		final ExpressionResult eres = mExpressionTranslation.convertIntToInt(loc, new ExpressionResult(integer),
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression resultExpression =

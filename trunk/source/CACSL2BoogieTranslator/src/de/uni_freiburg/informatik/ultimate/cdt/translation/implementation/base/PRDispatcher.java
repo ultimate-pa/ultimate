@@ -105,6 +105,7 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -399,5 +400,10 @@ public class PRDispatcher implements IDispatcher {
 	@Override
 	public NextACSL nextACSLStatement() throws ParseException {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node) {
+		return null;
 	}
 }

@@ -137,8 +137,8 @@ public class ArrayHandler {
 			final Expression oldAddress = leftExpRes.getLrValue().getValue();
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).mPointsToType;
-			final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(main,
-					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
+			final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus,
+					loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.getLrValue().getValue();
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress_ER);
 			final HeapLValue lValue =
@@ -171,8 +171,7 @@ public class ArrayHandler {
 				final Expression oldAddress = ((HeapLValue) leftExpRes.getLrValue()).getAddress();
 				final RValue index = (RValue) subscript.getLrValue();
 				final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(
-						// main, IASTBinaryExpression.op_plus, loc, decayedArray.getValue(), index, resultCType);
-						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType, node);
+						IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType, node);
 				final Expression newAddress = newAddress_ER.getLrValue().getValue();
 				final HeapLValue lValue =
 						LRValueFactory.constructHeapLValue(mTypeHandler, newAddress, resultCType, false, null);

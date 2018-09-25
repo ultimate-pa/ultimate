@@ -1100,7 +1100,7 @@ public class StandardFunctionHandler {
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
 
-		return mCHandler.handleRelationalOperators(main, loc, op, rl, rr);
+		return mCHandler.handleRelationalOperators(loc, op, rl, rr);
 	}
 
 	private Result handleFloatBuiltinIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1173,9 +1173,9 @@ public class StandardFunctionHandler {
 		rightOp = newOps.getSecond();
 
 		final ExpressionResult lessThan =
-				mCHandler.handleRelationalOperators(main, loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
+				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
 		final ExpressionResult greaterThan =
-				mCHandler.handleRelationalOperators(main, loc, IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
+				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
 
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 				lessThan.getLrValue().getValue(), greaterThan.getLrValue().getValue());

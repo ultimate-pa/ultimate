@@ -667,7 +667,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleEqualityOperators(main, loc, node.getOperator(), rl, rr);
+			return handleEqualityOperators(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_greaterEqual:
 		case IASTBinaryExpression.op_greaterThan:
@@ -675,7 +675,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_lessThan: {
 			final ExpressionResult rl = mExprResultTransformer.switchToRValueIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.switchToRValueIfNecessary(rightOperand, loc, node);
-			return handleRelationalOperators(main, loc, node.getOperator(), rl, rr);
+			return handleRelationalOperators(loc, node.getOperator(), rl, rr);
 		}
 
 		case IASTBinaryExpression.op_logicalAnd: {
@@ -798,7 +798,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleMultiplicativeOperation(main, loc, null, node.getOperator(), rl, rr, node);
+			return handleMultiplicativeOperation(loc, null, node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -807,7 +807,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleMultiplicativeOperation(main, loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
+			return handleMultiplicativeOperation(loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
@@ -824,7 +824,7 @@ public class CHandler {
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rDecayed, loc, node);
 
-			return handleAdditiveOperation(main, loc, null, node.getOperator(), rl, rr, node);
+			return handleAdditiveOperation(loc, null, node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
@@ -840,7 +840,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(lDecayed, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rDecayed, loc, node);
-			return handleAdditiveOperation(main, loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
+			return handleAdditiveOperation(loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -849,7 +849,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleBitwiseArithmeticOperation(main, loc, null, node.getOperator(), rl, rr, node);
+			return handleBitwiseArithmeticOperation(loc, null, node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
@@ -858,8 +858,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleBitwiseArithmeticOperation(main, loc, leftOperand.getLrValue(), node.getOperator(), rl, rr,
-					node);
+			return handleBitwiseArithmeticOperation(loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -867,7 +866,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleBitshiftOperation(main, loc, null, node.getOperator(), rl, rr, node);
+			return handleBitshiftOperation(loc, null, node.getOperator(), rl, rr, node);
 
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
@@ -876,7 +875,7 @@ public class CHandler {
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(leftOperand, loc, node);
 			final ExpressionResult rr =
 					mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(rightOperand, loc, node);
-			return handleBitshiftOperation(main, loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
+			return handleBitshiftOperation(loc, leftOperand.getLrValue(), node.getOperator(), rl, rr, node);
 		}
 		default:
 			final String msg = "Unknown or unsupported unary operation";
@@ -977,7 +976,7 @@ public class CHandler {
 		opPositive = mExprResultTransformer.switchToRValueIfNecessary(opPositive, loc, node);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
 		opNegative = mExprResultTransformer.switchToRValueIfNecessary(opNegative, loc, node);
-		return handleConditionalOperator(loc, main, opCondition, opPositive, opNegative, node);
+		return handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTContinueStatement cs) {
@@ -1159,7 +1158,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
 		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
 	}
 
@@ -1217,7 +1216,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
 		return handleLoops(main, node, null, null, loopLabel, witnessInvariant);
 	}
 
@@ -2059,15 +2058,15 @@ public class CHandler {
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
 			final ExpressionResult rop = mExprResultTransformer.switchToRValueIfNecessary(operand, loc, node);
-			return handleUnaryArithmeticOperators(main, loc, node.getOperator(), rop, node);
+			return handleUnaryArithmeticOperators(loc, node.getOperator(), rop, node);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
 		case IASTUnaryExpression.op_postFixDecr: {
-			return handlePostfixIncrementAndDecrement(main, loc, node.getOperator(), operand, node);
+			return handlePostfixIncrementAndDecrement(loc, node.getOperator(), operand, node);
 		}
 		case IASTUnaryExpression.op_prefixDecr:
 		case IASTUnaryExpression.op_prefixIncr: {
-			return handlePrefixIncrementAndDecrement(main, node.getOperator(), loc, operand, node);
+			return handlePrefixIncrementAndDecrement(node.getOperator(), loc, operand, node);
 		}
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
@@ -2097,7 +2096,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
 		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
 	}
 
@@ -2638,17 +2637,6 @@ public class CHandler {
 		}
 	}
 
-	private static LoopInvariantSpecification fetchWitnessInvariantAtLoop(final IDispatcher main,
-			final IASTStatement node) {
-		final LoopInvariantSpecification witnessInvariant;
-		if (main instanceof MainDispatcher) {
-			witnessInvariant = ((MainDispatcher) main).fetchInvariantAtLoop(node);
-		} else {
-			witnessInvariant = null;
-		}
-		return witnessInvariant;
-	}
-
 	private RValue convertToPointerRValue(final LRValue lrValue, final BoogieType pointerType) {
 		assert mIsPrerun;
 		if (lrValue instanceof HeapLValue) {
@@ -2739,8 +2727,8 @@ public class CHandler {
 	 * @param erb
 	 *            {@link ExpressionResultBuilder} to which the additional statements are added.
 	 */
-	private ExpressionResultBuilder addBaseEqualityCheck(final IDispatcher main, final ILocation loc,
-			final Expression leftPtr, final Expression rightPtr, final ExpressionResultBuilder erb) {
+	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
+			final Expression rightPtr, final ExpressionResultBuilder erb) {
 
 		if (mSettings.getPointerSubtractionAndComparisonValidityCheckMode() == PointerCheckMode.IGNORE) {
 			// do not check anything
@@ -2769,8 +2757,7 @@ public class CHandler {
 	/**
 	 * Add to divisorExpRes a check if divisior is zero.
 	 */
-	private void addDivisionByZeroCheck(final IDispatcher main, final ILocation loc,
-			final ExpressionResult divisorExpRes) {
+	private void addDivisionByZeroCheck(final ILocation loc, final ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.getLrValue().getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.getLrValue().getCType();
 
@@ -2972,114 +2959,104 @@ public class CHandler {
 	 *            the parent node of the current ACSL node. This should only be set if called at the end of a
 	 *            <i>compound statement</i> and <code>null</code> otherwise.
 	 */
-	private void checkForACSL(final IDispatcher main, final ExpressionResultBuilder resultBuilder, // final
-																									// List<Statement>
-																									// stmt, final
-																									// List<Declaration>
-																									// decl,
-			final IASTNode next, final IASTNode parent, final boolean compoundStatement) {
-		if (mAcsl != null) {
-			if (next instanceof IASTTranslationUnit) {
-				for (final ACSLNode globAcsl : mAcsl.getAcsl()) {
-					if (globAcsl instanceof GlobalLTLInvariant) {
-						final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
-						extractor.run(globAcsl);
-						mGlobAcslExtractors.add(extractor);
-						try {
-							mAcsl = main.nextACSLStatement();
-						} catch (final ParseException e1) {
-							final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-							final ILocation loc = mLocationFactory.createCLocation(parent);
-							mReporter.unsupportedSyntax(loc, msg);
-						}
-					}
-				} // TODO: deal with other global ACSL stuff
-			} else if (mAcsl.getSuccessorCNode() == null) {
-				// if (parent != null && stmt != null && next == null) {
-				// TODO: unclear what the stmt != null case should be
-				if (parent != null && compoundStatement && next == null) {
-					// ACSL at the end of a function or at the end of the last statement in a switch
-					// that is not
-					// terminated by a break
-					// TODO: the latter case needs fixing, the ACSL is inserted outside the
-					// corresponding if-scope right
-					// now
-					// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield
-					// a unsafe boogie
-					// program
-					for (final ACSLNode acslNode : mAcsl.getAcsl()) {
-						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
-							return;// handle later ...
-						} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
-								&& parent.getFileLocation().getStartingLineNumber() <= acslNode
-										.getStartingLineNumber()) {
-							final Result acslResult = main.dispatch(acslNode, parent);
-							if (acslResult instanceof ExpressionResult) {
-								resultBuilder.addDeclarations(((ExpressionResult) acslResult).getDeclarations());
-								resultBuilder.addStatements(((ExpressionResult) acslResult).getStatements());
-								resultBuilder.addStatements(CTranslationUtil
-										.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
-								try {
-									mAcsl = main.nextACSLStatement();
-								} catch (final ParseException e1) {
-									final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-									final ILocation loc = mLocationFactory.createCLocation(parent);
-									mReporter.unsupportedSyntax(loc, msg);
-								}
-							} else {
-								final String msg = "Unexpected ACSL comment: " + acslResult.getNode().getClass();
-								final ILocation loc = mLocationFactory.createCLocation(parent);
-								throw new IncorrectSyntaxException(loc, msg);
-							}
-						}
+	private void checkForACSL(final IDispatcher main, final ExpressionResultBuilder resultBuilder, final IASTNode next,
+			final IASTNode parent, final boolean compoundStatement) {
+		if (mAcsl == null) {
+			return;
+		}
+		if (next instanceof IASTTranslationUnit) {
+			for (final ACSLNode globAcsl : mAcsl.getAcsl()) {
+				if (globAcsl instanceof GlobalLTLInvariant) {
+					final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
+					extractor.run(globAcsl);
+					mGlobAcslExtractors.add(extractor);
+					try {
+						mAcsl = main.nextACSLStatement();
+					} catch (final ParseException e1) {
+						final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+						final ILocation loc = mLocationFactory.createCLocation(parent);
+						mReporter.unsupportedSyntax(loc, msg);
 					}
 				}
-
-				// ELSE:
-				// ACSL for next compound statement -> handle it next call
-				// or in case of translation unit, ACSL in an unexpected
-				// location!
-			} else if (mAcsl.getSuccessorCNode().equals(next)) {
-				assert mContract.isEmpty();
+			} // TODO: deal with other global ACSL stuff
+		} else if (mAcsl.getSuccessorCNode() == null) {
+			if (parent != null && compoundStatement && next == null) {
+				// ACSL at the end of a function or at the end of the last statement in a switch
+				// that is not terminated by a break
+				// TODO: the latter case needs fixing, the ACSL is inserted outside the
+				// corresponding if-scope righ tnow
+				// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield
+				// a unsafe boogie program
 				for (final ACSLNode acslNode : mAcsl.getAcsl()) {
-					// if (stmt != null) {
-					if (compoundStatement) {
-						// this means we are in a compound statement
-						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
-							// Loop contract
-							mContract.add(acslNode);
-						} else if (acslNode instanceof CodeAnnot) {
-							final Result acslResult = main.dispatch(acslNode, next);
-							if (acslResult instanceof ExpressionResult) {
-								final ExpressionResult re = (ExpressionResult) acslResult;
-								resultBuilder.addStatements(re.getStatements());
-								resultBuilder.addDeclarations(re.getDeclarations());
-							} else {
-								resultBuilder.addStatement((Statement) acslResult.getNode());
+					if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
+						// handle later ...
+						return;
+					} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
+							&& parent.getFileLocation().getStartingLineNumber() <= acslNode.getStartingLineNumber()) {
+						final Result acslResult = main.dispatch(acslNode, parent);
+						if (acslResult instanceof ExpressionResult) {
+							resultBuilder.addDeclarations(((ExpressionResult) acslResult).getDeclarations());
+							resultBuilder.addStatements(((ExpressionResult) acslResult).getStatements());
+							resultBuilder.addStatements(CTranslationUtil
+									.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
+							try {
+								mAcsl = main.nextACSLStatement();
+							} catch (final ParseException e1) {
+								final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+								final ILocation loc = mLocationFactory.createCLocation(parent);
+								mReporter.unsupportedSyntax(loc, msg);
 							}
 						} else {
-							final String msg = "Unexpected ACSL comment: " + acslNode.getClass();
-							final ILocation loc = mLocationFactory.createCLocation(next);
+							final String msg = "Unexpected ACSL comment: " + acslResult.getNode().getClass();
+							final ILocation loc = mLocationFactory.createCLocation(parent);
 							throw new IncorrectSyntaxException(loc, msg);
-						}
-					} else {
-						// } else if (translationUnit) {
-						// this means we are in the translation unit
-						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
-							// Function contract
-							mContract.add(acslNode);
 						}
 					}
 				}
-				try {
-					mAcsl = main.nextACSLStatement();
-				} catch (final ParseException e1) {
-					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-					final ILocation loc = mLocationFactory.createCLocation(parent);
-					mReporter.unsupportedSyntax(loc, msg);
-				}
-
 			}
+
+			// ELSE:
+			// ACSL for next compound statement -> handle it next call
+			// or in case of translation unit, ACSL in an unexpected
+			// location!
+		} else if (mAcsl.getSuccessorCNode().equals(next)) {
+			assert mContract.isEmpty();
+			for (final ACSLNode acslNode : mAcsl.getAcsl()) {
+				if (compoundStatement) {
+					// this means we are in a compound statement
+					if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
+						// Loop contract
+						mContract.add(acslNode);
+					} else if (acslNode instanceof CodeAnnot) {
+						final Result acslResult = main.dispatch(acslNode, next);
+						if (acslResult instanceof ExpressionResult) {
+							final ExpressionResult re = (ExpressionResult) acslResult;
+							resultBuilder.addStatements(re.getStatements());
+							resultBuilder.addDeclarations(re.getDeclarations());
+						} else {
+							resultBuilder.addStatement((Statement) acslResult.getNode());
+						}
+					} else {
+						final String msg = "Unexpected ACSL comment: " + acslNode.getClass();
+						final ILocation loc = mLocationFactory.createCLocation(next);
+						throw new IncorrectSyntaxException(loc, msg);
+					}
+				} else {
+					// this means we are in the translation unit
+					if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
+						// Function contract
+						mContract.add(acslNode);
+					}
+				}
+			}
+			try {
+				mAcsl = main.nextACSLStatement();
+			} catch (final ParseException e1) {
+				final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+				final ILocation loc = mLocationFactory.createCLocation(parent);
+				mReporter.unsupportedSyntax(loc, msg);
+			}
+
 		}
 	}
 
@@ -3133,9 +3110,8 @@ public class CHandler {
 	 * @param result
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
-	private Expression constructXcrementedValue(final IDispatcher main, final ILocation loc,
-			final ExpressionResultBuilder result, final CType ctype, final int op, final Expression value,
-			final IASTNode hook) {
+	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
+			final CType ctype, final int op, final Expression value, final IASTNode hook) {
 		assert op == IASTBinaryExpression.op_plus
 				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
 		final Expression valueIncremented;
@@ -3168,16 +3144,17 @@ public class CHandler {
 	/**
 	 * Subtract two pointers.
 	 *
+	 * @param pointsToType
+	 *            {@link CType} of the objects to which the pointers point.
 	 * @param leftPtr
 	 *            Boogie {@link Expression} that represents the left pointer.
 	 * @param rightPtr
 	 *            Boogie {@link Expression} that represents the right pointer.
-	 * @param pointsToType
-	 *            {@link CType} of the objects to which the pointers point.
+	 *
 	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
-	private Expression doPointerSubtraction(final IDispatcher main, final ILocation loc, final Expression ptr1,
-			final Expression ptr2, final CType pointsToType, final IASTNode hook) {
+	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final CType pointsToType, final IASTNode hook) {
 		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
 		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
@@ -3202,12 +3179,9 @@ public class CHandler {
 	}
 
 	private void processTUchild(final IDispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {
-		{
-			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
-			// checkForACSL(main, null, decl, child, null);
-			checkForACSL(main, acslResultBuilder, child, null, false);
-			decl.addAll(acslResultBuilder.getDeclarations());
-		}
+		final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
+		checkForACSL(main, acslResultBuilder, child, null, false);
+		decl.addAll(acslResultBuilder.getDeclarations());
 		final Result childRes = main.dispatch(child);
 
 		if (childRes instanceof DeclarationResult) {
@@ -3215,7 +3189,6 @@ public class CHandler {
 			final DeclarationResult rd = (DeclarationResult) childRes;
 
 			for (final CDeclaration cd : rd.getDeclarations()) {
-				// mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
 
 				if (cd.getType().isIncomplete()) {
 					/*
@@ -3508,8 +3481,8 @@ public class CHandler {
 	 * the two assignments <code>t~post := LV</code> and <code>LV := t~post + 1</code>. Hence the auxiliary variable
 	 * <code>t~post</code> stores the old value of the object to which the lvalue <code>LV</code> refers.
 	 */
-	private Result handlePostfixIncrementAndDecrement(final IDispatcher main, final ILocation loc, final int postfixOp,
-			ExpressionResult exprRes, final IASTNode hook) {
+	private Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp, ExpressionResult exprRes,
+			final IASTNode hook) {
 		assert !exprRes.getLrValue().isBoogieBool();
 		final LRValue modifiedLValue = exprRes.getLrValue();
 		exprRes = mExprResultTransformer.switchToRValueIfNecessary(exprRes, loc, hook);
@@ -3539,7 +3512,7 @@ public class CHandler {
 
 		// in-/decremented value
 		final Expression valueXcremented =
-				constructXcrementedValue(main, loc, builder, oType, op, tmpRValue.getValue(), hook);
+				constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue(), hook);
 
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign =
@@ -3558,8 +3531,8 @@ public class CHandler {
 	 * increment/decrement operations in one expression. We might extend our implementation in a way where the operation
 	 * is done at a certain sequence point or all evaluation orders are considered.
 	 */
-	private Result handlePrefixIncrementAndDecrement(final IDispatcher main, final int prefixOp, final ILocation loc,
-			ExpressionResult exprRes, final IASTNode hook) {
+	private Result handlePrefixIncrementAndDecrement(final int prefixOp, final ILocation loc, ExpressionResult exprRes,
+			final IASTNode hook) {
 		assert !exprRes.getLrValue().isBoogieBool();
 		final LRValue modifiedLValue = exprRes.getLrValue();
 		exprRes = mExprResultTransformer.switchToRValueIfNecessary(exprRes, loc, hook);
@@ -3583,7 +3556,7 @@ public class CHandler {
 		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
 		final Expression valueXcremented =
-				constructXcrementedValue(main, loc, builder, oType, op, exprRes.getLrValue().getValue(), hook);
+				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue(), hook);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
@@ -3603,12 +3576,11 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
-	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
-	private ExpressionResult handleBitshiftOperation(final IDispatcher main, final ILocation loc, final LRValue lhs,
-			final int op, final ExpressionResult left, final ExpressionResult right, final IASTNode hook) {
+	private ExpressionResult handleBitshiftOperation(final ILocation loc, final LRValue lhs, final int op,
+			final ExpressionResult left, final ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -3657,12 +3629,11 @@ public class CHandler {
 	 * operands is an {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). requires that the Boogie
 	 * expressions in left (resp. right) are a non-boolean representation of these results (i.e.,
 	 * rexBoolToIntIfNecessary() has already been applied if needed).
-	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
-	private ExpressionResult handleBitwiseArithmeticOperation(final IDispatcher main, final ILocation loc,
-			final LRValue lhs, final int op, ExpressionResult left, ExpressionResult right, final IASTNode hook) {
+	private ExpressionResult handleBitwiseArithmeticOperation(final ILocation loc, final LRValue lhs,
+			final int op, ExpressionResult left, ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -3704,12 +3675,11 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
-	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
-	ExpressionResult handleAdditiveOperation(final IDispatcher main, final ILocation loc, final LRValue lhs,
-			final int op, ExpressionResult left, ExpressionResult right, final IASTNode hook) {
+	ExpressionResult handleAdditiveOperation(final ILocation loc, final LRValue lhs, final int op,
+			ExpressionResult left, ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
@@ -3743,8 +3713,8 @@ public class CHandler {
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
-			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(main, op, loc,
-					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType, hook);
+			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc, left.getLrValue().getValue(),
+					(RValue) right.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -3755,8 +3725,8 @@ public class CHandler {
 			}
 			typeOfResult = right.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).mPointsToType;
-			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(main, op, loc,
-					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType, hook);
+			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc, right.getLrValue().getValue(),
+					(RValue) left.getLrValue(), pointsToType, hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -3785,9 +3755,9 @@ public class CHandler {
 				pointsToType = leftPointsToType;
 			}
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-			addBaseEqualityCheck(main, loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
-			expr = doPointerSubtraction(main, loc, left.getLrValue().getValue(), right.getLrValue().getValue(),
-					pointsToType, hook);
+			addBaseEqualityCheck(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
+			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType,
+					hook);
 
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -3835,9 +3805,9 @@ public class CHandler {
 	 * testfiles.
 	 *
 	 */
-	ExpressionResult handleConditionalOperator(final ILocation loc, final IDispatcher main,
-			final ExpressionResult opConditionRaw, final ExpressionResult opPositiveRaw,
-			final ExpressionResult opNegativeRaw, final IASTNode hook) {
+	ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opConditionRaw,
+			final ExpressionResult opPositiveRaw, final ExpressionResult opNegativeRaw,
+			final IASTNode hook) {
 
 		final ExpressionResult opCondition = mExprResultTransformer.rexIntToBoolIfNecessary(opConditionRaw, loc);
 		ExpressionResult opPositive = mExprResultTransformer.rexBoolToIntIfNecessary(opPositiveRaw, loc);
@@ -4044,8 +4014,8 @@ public class CHandler {
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
 	 */
-	ExpressionResult handleEqualityOperators(final IDispatcher main, final ILocation loc, final int op,
-			ExpressionResult left, ExpressionResult right) {
+	ExpressionResult handleEqualityOperators(final ILocation loc, final int op, ExpressionResult left,
+			ExpressionResult right) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		{
@@ -4087,12 +4057,11 @@ public class CHandler {
 	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
-	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
 	 */
-	ExpressionResult handleMultiplicativeOperation(final IDispatcher main, final ILocation loc, final LRValue lhs,
-			final int op, ExpressionResult left, ExpressionResult right, final IASTNode hook) {
+	ExpressionResult handleMultiplicativeOperation(final ILocation loc, final LRValue lhs, final int op,
+			ExpressionResult left, ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -4101,7 +4070,7 @@ public class CHandler {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		if (op == IASTBinaryExpression.op_divide || op == IASTBinaryExpression.op_modulo) {
-			addDivisionByZeroCheck(main, loc, right);
+			addDivisionByZeroCheck(loc, right);
 		}
 		final Pair<ExpressionResult, ExpressionResult> newOps =
 				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
@@ -4155,8 +4124,8 @@ public class CHandler {
 	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	ExpressionResult handleRelationalOperators(final IDispatcher main, final ILocation loc, final int op,
-			ExpressionResult left, ExpressionResult right) {
+	ExpressionResult handleRelationalOperators(final ILocation loc, final int op, ExpressionResult left,
+			ExpressionResult right) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToIntIfNecessary(left, loc);
@@ -4231,8 +4200,8 @@ public class CHandler {
 	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	ExpressionResult handleUnaryArithmeticOperators(final IDispatcher main, final ILocation loc, final int op,
-			ExpressionResult operand, final IASTNode hook) {
+	ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand,
+			final IASTNode hook) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
 		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
