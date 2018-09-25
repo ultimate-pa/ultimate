@@ -145,7 +145,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager,
 			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
-//			final CCLiteralSetConstraints<ELEM> literalConstraints) {
 		mManager = manager;
 
 		mElementTVER = newElemPartition;
@@ -153,9 +152,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
 
-//		mLiteralSetConstraints = Objects.requireNonNull(literalConstraints);
 		mLiteralSetConstraints = new CCLiteralSetConstraints<>(mManager, this);
-//		mLiteralSetConstraints.setCongruenceClosure(this);
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -238,7 +235,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * Sets the flag for isFrozen() to true. (Propagations in CongruenceClosure are done immediately so no closure
 	 * needs to be executed here.)
 	 */
-//	@Override
 	public void freezeAndClose() {
 		assert !mIsFrozen;
 		mIsFrozen = true;
@@ -345,7 +341,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
 
 		{
-//			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
 			constantAndMixFunctionTreatmentOnAddEquality(e1OldRep, e2OldRep, mElementTVER.getEquivalenceClass(elem1),
 					mElementTVER.getEquivalenceClass(elem2), getAuxData(),
 					e -> mManager.addElement(this, e, true, true), this);
@@ -394,7 +389,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					mLiteralSetConstraints.reportEquality(e1OldRep, e2OldRep, mElementTVER.getRepresentative(elem1));
 			if (eqToProp != null) {
 				propInfo.getFirst().addAll(eqToProp);
-//				propInfo.getFirst().addPair(eqToProp.getFirst(), eqToProp.getSecond());
 			}
 
 			if (mLiteralSetConstraints.isInconsistent()) {
@@ -927,11 +921,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				return e;
 			}
 		}
-//		final Optional<ELEM> opt = eqc.stream().filter(e -> !e.equals(eqmember) &&
-//				(forbiddenSet == null || !forbiddenSet.contains(e))).findFirst();
-//		if (opt.isPresent()) {
-//			return opt.get();
-//		}
 		return null;
 	}
 
@@ -1173,27 +1162,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public Set<ELEM> getAllElements() {
 		return Collections.unmodifiableSet(mElementTVER.getAllElements());
 	}
-
-//	protected Set<Entry<ELEM, ELEM>> getPairsWithMatchingType(final Set<ELEM> baseSet,
-//			final boolean getReflexive, final boolean getSymmetric) {
-//		final BiPredicate<ELEM, ELEM> pred = (e1, e2) ->
-//			getReflexive ?
-//					e1.hasSameTypeAs(e2) : // dont care for refl
-//					 (e1.equals(e2) ? // dont get refl
-//							false :
-//						e1.hasSameTypeAs(e2));
-//
-////				e1.equals(e2) ?
-////						(getReflexive ?
-////								e1.hasSameTypeAs(e2)
-////								: false
-////								: true;
-//		return CrossProducts.binarySelectiveCrossProduct(baseSet, getSymmetric, pred).entrySet();
-////		return CrossProducts.binarySelectiveCrossProduct(baseSet, getReflexive, getSymmetric)
-////				.entrySet().stream()
-////				.filter(en -> en.getKey().hasSameTypeAs(en.getValue()))
-////				.collect(Collectors.toSet());
-//	}
 
 	public CCLiteralSetConstraints<ELEM> getLiteralSetConstraints() {
 		return mLiteralSetConstraints;
@@ -2078,13 +2046,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.getLogger();
 	}
 
-//	@Override
-//	public void freezeIfNecessary() {
-//		 if (!isFrozen()) {
-//			 freezeAndClose();
-//		 }
-//	}
-
 	public Set<ELEM> getEquivalenceClass(final ELEM elem) {
 		return Collections.unmodifiableSet(mElementTVER.getEquivalenceClass(elem));
 	}
@@ -2101,7 +2062,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
 		final HashRelation<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, literalSet);
 		if (eqToProp != null) {
-//			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
 			for (final Entry<ELEM, ELEM> en : eqToProp) {
 				mManager.reportEquality(en.getKey(), en.getValue(), this, true);
 			}
@@ -2109,11 +2069,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	@Override
-//	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> setCc) {
 	public void reportContainsConstraint(final ELEM elem, final Collection<SetConstraint<ELEM>> setCc) {
 		final HashRelation<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, new HashSet<>(setCc));
 		if (eqToProp != null) {
-//			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
 			for (final Entry<ELEM, ELEM> en : eqToProp) {
 				mManager.reportEquality(en.getKey(), en.getValue(), this, true);
 			}
@@ -2121,7 +2079,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	@Override
-//	public SetConstraintConjunction<ELEM> getContainsConstraintForElement(final ELEM elem) {
 	public Set<SetConstraint<ELEM>> getContainsConstraintForElement(final ELEM elem) {
 		final Set<SetConstraint<ELEM>> constraint = mLiteralSetConstraints.getConstraint(elem);
 		if (SetConstraintManager.isTautologicalWrtElement(elem, constraint)) {
