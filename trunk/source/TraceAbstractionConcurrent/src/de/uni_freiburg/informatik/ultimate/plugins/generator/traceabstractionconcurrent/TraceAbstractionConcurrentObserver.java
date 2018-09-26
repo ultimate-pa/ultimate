@@ -34,17 +34,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -59,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -149,7 +145,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		case USER_LIMIT_TRACEHISTOGRAM:
 			// TODO: The result handling is similar to that of the normal trace abstraction starter, merge the code and
 			// use the logic from there. Until then, just threat user limits like timeouts
-			reportTimeoutResult(errNodesOfAllProc);
+			reportTimeoutResult(result, errNodesOfAllProc, abstractCegarLoop.getRunningTaskStackProvider());
 			break;
 		case UNKNOWN:
 			reportUnproveableResult(abstractCegarLoop.getRcfgProgramExecution(), null);
@@ -244,18 +240,11 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(final Collection<IcfgLocation> errNodesOfAllProc) {
-		for (final IcfgLocation errorIpp : errNodesOfAllProc) {
-			final BoogieIcfgLocation errorLoc = (BoogieIcfgLocation) errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
-			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
-			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
-			// 2018-09-24 Matthias: maybe do not infer timeout by yourself
-			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
-					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
-			reportResult(timeOutRes);
-			mLogger.warn(timeOutMessage);
+	private void reportTimeoutResult(final Result result, final Collection<IcfgLocation> errorLocs,
+			final IRunningTaskStackProvider rtsp) {
+		for (final IcfgLocation errorIpp : errorLocs) {
+			final IResult res = TraceAbstractionStarter.constructLimitResult(mServices, result, rtsp, errorIpp);
+			reportResult(res);
 		}
 	}
 

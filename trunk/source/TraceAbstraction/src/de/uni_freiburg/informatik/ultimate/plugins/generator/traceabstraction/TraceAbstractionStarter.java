@@ -482,26 +482,32 @@ public class TraceAbstractionStarter {
 	private void reportLimitResult(final Result result, final Collection<IcfgLocation> errorLocs,
 			final IRunningTaskStackProvider rtsp) {
 		for (final IcfgLocation errorIpp : errorLocs) {
-			String description = "Unable to prove that ";
-			description += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
-			if (errorIpp instanceof BoogieIcfgLocation) {
-				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
-				description += " (line " + origin.getStartLine() + ").";
-			}
-			if (rtsp != null) {
-				description += " Cancelled " + rtsp.printRunningTaskMessage();
-			}
-
-			final IResult res;
-			if (result == Result.TIMEOUT) {
-				res = new TimeoutResultAtElement<>(errorIpp, Activator.PLUGIN_NAME,
-						mServices.getBacktranslationService(), description);
-			} else {
-				res = new UserSpecifiedLimitReachedResultAtElement<IElement>(result.toString(), errorIpp,
-						Activator.PLUGIN_NAME, mServices.getBacktranslationService(), description);
-			}
+			final IResult res = constructLimitResult(mServices, result, rtsp, errorIpp);
 			reportResult(res);
 		}
+	}
+
+	public static IResult constructLimitResult(final IUltimateServiceProvider services, final Result result,
+			final IRunningTaskStackProvider rtsp, final IcfgLocation errorIpp) {
+		String description = "Unable to prove that ";
+		description += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+		if (errorIpp instanceof BoogieIcfgLocation) {
+			final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
+			description += " (line " + origin.getStartLine() + ").";
+		}
+		if (rtsp != null) {
+			description += " Cancelled " + rtsp.printRunningTaskMessage();
+		}
+
+		final IResult res;
+		if (result == Result.TIMEOUT) {
+			res = new TimeoutResultAtElement<>(errorIpp, Activator.PLUGIN_NAME, services.getBacktranslationService(),
+					description);
+		} else {
+			res = new UserSpecifiedLimitReachedResultAtElement<IElement>(result.toString(), errorIpp,
+					Activator.PLUGIN_NAME, services.getBacktranslationService(), description);
+		}
+		return res;
 	}
 
 	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
