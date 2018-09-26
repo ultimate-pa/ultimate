@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWit
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Data structure that stores predicates in a tree, to check for equivalent predicates in a efficient way
@@ -83,15 +86,18 @@ public class PredicateTrie<T extends IPredicate> {
 		return Math.max(trueMaxDepth, falseMaxDepth);
 	}
 
-	public void print() {
-		stringHelper(mRoot);
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		stringHelper(mRoot, sb);
+		return sb.toString();
 	}
 
-	private void stringHelper(final IVertex vertex) {
-		vertex.print();
+	private void stringHelper(final IVertex vertex, StringBuilder sb) {
 		if (vertex instanceof ModelVertex) {
-			stringHelper(((ModelVertex) vertex).getChild(true));
-			stringHelper(((ModelVertex) vertex).getChild(false));
+			sb.append(vertex.print() + "\n");
+			stringHelper(((ModelVertex) vertex).getChild(true), sb);
+			stringHelper(((ModelVertex) vertex).getChild(false), sb);
 		}
 	}
 
@@ -263,5 +269,40 @@ public class PredicateTrie<T extends IPredicate> {
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
 		}
+	}
+
+	public boolean constructTrie(Pair<Integer, Map<Term, Term>> root, 
+			Map<Pair<Integer, Map<Term, Term>>, Pair<Pair<Integer, Map<Term, Term>>, 
+			Pair<Integer, Map<Term, Term>>>> witnesses,
+			Map<Term, T> preds) {
+		//trie must be empty
+		if(mRoot != null) return false;
+		Map<Pair<Integer, Map<Term, Term>>, ModelVertex> modelVertices = new HashMap<>();
+		
+		for(Pair<Integer, Map<Term, Term>> key : witnesses.keySet()) {
+			modelVertices.put(key, new ModelVertex(null, null, key.getSecond()));
+		}
+		for(Map.Entry<Pair<Integer, Map<Term, Term>>, Pair<Pair<Integer, Map<Term, Term>>, 
+				Pair<Integer, Map<Term, Term>>>> entry : witnesses.entrySet()) {
+			 Pair<Pair<Integer, Map<Term, Term>>, Pair<Integer, Map<Term, Term>>> children = entry.getValue();
+			if(children.getFirst().getFirst().equals(-1)){
+				// predicate
+				IVertex trueChild = new PredicateVertex(preds.get(children.getFirst().getSecond().keySet().iterator().next()));
+				modelVertices.get(entry.getKey()).setTrueChild(trueChild);
+			} else {
+				// model
+				modelVertices.get(entry.getKey()).setTrueChild(modelVertices.get(children.getFirst()));
+			}
+			if(children.getSecond().getFirst().equals(-1)){
+				// predicate
+				IVertex falseChild = new PredicateVertex(preds.get(children.getSecond().getSecond().keySet().iterator().next()));
+				modelVertices.get(entry.getKey()).setFalseChild(falseChild);
+			} else {
+				// model
+				modelVertices.get(entry.getKey()).setFalseChild(modelVertices.get(children.getSecond()));
+			}
+		}
+		mRoot = modelVertices.get(root);
+		return true;
 	}
 }

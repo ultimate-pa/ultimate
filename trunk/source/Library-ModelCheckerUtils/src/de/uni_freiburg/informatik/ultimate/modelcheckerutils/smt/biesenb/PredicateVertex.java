@@ -42,8 +42,8 @@ public class PredicateVertex<T extends IPredicate> implements IVertex {
 	}
 
 	@Override
-	public void print() {
-		System.out.println("leaf: " + mPredicate.toString());
+	public String print() {
+		return "leaf: " + mPredicate.toString();
 	}
 
 	@Override

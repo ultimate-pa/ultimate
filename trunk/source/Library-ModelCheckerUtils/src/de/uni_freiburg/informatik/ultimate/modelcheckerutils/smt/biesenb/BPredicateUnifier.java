@@ -63,7 +63,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
-	private final PredicateTrie<IPredicate> mPredicateTrie;
+	private PredicateTrie<IPredicate> mPredicateTrie;
 	private final ImplicationGraph<IPredicate> mImplicationGraph;
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final IPredicate mTruePredicate;
@@ -71,6 +71,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final Collection<IPredicate> mPredicates;
 	private final PredicateCoverageChecker mCoverageChecker;
 	private final IIcfgSymbolTable mSymbolTable;
+	private int mRestructureWitnessCounter;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
@@ -98,45 +99,42 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		logger.info("Initialized predicate-trie based predicate unifier");
 	}
 
-	/**
-	 * @deprecated Does not work at the moment
-	 */
-	@Deprecated
-	public Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> restructurePredicateTrie() {
+	public int restructurePredicateTrie() {
 		final int oldDepth = mPredicateTrie.getDepth();
-		// Empty trie
-		if (oldDepth <= 0) {
-			return new HashMap<>();
+		if (oldDepth < 2) {
 			// trie already has minimal depth (true and false are not in depth included)
-			// if(oldDepth <= minDepth(mPredicates.size() - 2)) return new HashMap<>();
+			return 0;
 		}
 
 		final Pair<ImplicationGraph<IPredicate>, Map<ImplicationVertex<IPredicate>, ImplicationVertex<IPredicate>>> copyPair =
 				mImplicationGraph.createFullCopy();
 		final ImplicationGraph<IPredicate> copy = copyPair.getFirst();
 
-		// while(!every ModelVertex is determend)
-		final Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> witnesses = new HashMap<>();
-		getWitnessInductive(copy, witnesses);
-		// Add all predicates to the trie
-
-		final PredicateTrie restructuredTrie =
-				new PredicateTrie(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
-		if (oldDepth - mPredicateTrie.getDepth() > 0) {
-			// mPredicateTrie = restructuredTrie;
+		final Map<Pair<Integer, Map<Term, Term>>, 
+		Pair<Pair<Integer, Map<Term, Term>>, Pair<Integer, Map<Term, Term>>>> witnesses = new HashMap<>();
+		Map<Term, IPredicate> preds = new HashMap<>();
+		mRestructureWitnessCounter = 0;
+		Pair<Integer, Map<Term, Term>> root = getWitnessInductive(copy, witnesses, preds);
+		final PredicateTrie<IPredicate> restructuredTrie =
+				new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		restructuredTrie.constructTrie(root, witnesses, preds);
+		if (oldDepth - restructuredTrie.getDepth() > 0) {
+			mPredicateTrie = restructuredTrie;
 		}
-		return witnesses;
-		// return oldDepth - mPredicateTrie.getDepth();
+		return oldDepth - mPredicateTrie.getDepth();
 	}
 
-	private Map<Term, Term> getWitnessInductive(final ImplicationGraph<IPredicate> graph,
-			final Map<Map<Term, Term>, Pair<Map<Term, Term>, Map<Term, Term>>> witnesses) {
+	@SuppressWarnings("unlikely-arg-type")
+	private Pair<Integer, Map<Term, Term>> getWitnessInductive(final ImplicationGraph<IPredicate> graph,
+			final Map<Pair<Integer, Map<Term, Term>>, 
+			Pair<Pair<Integer, Map<Term, Term>>, Pair<Integer, Map<Term, Term>>>> witnesses,
+			Map<Term, IPredicate> preds) {
 		// Find best vertex
-		final int optimum = graph.getVertices().size() / 2;
-		int minDif = optimum;
+		float optimum = ((float) graph.getVertices().size()) / 2;
+		float minDif = optimum;
 		ImplicationVertex<IPredicate> vertex = graph.getFalseVertex();
 		for (final ImplicationVertex<IPredicate> v : graph.getVertices()) {
-			final int vCount = v.getDescendants().size() + 1;
+			final float vCount = v.getDescendants().size() + 1;
 			if (vCount == optimum) {
 				vertex = v;
 				break;
@@ -146,32 +144,57 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		// Find model
-		final Map<Term, Term> witness = mPredicateTrie.getWitness(vertex.getPredicate(), getBranches(vertex));
-
-		Map<Term, Term> trueWitness = null;
-		Map<Term, Term> falseWitness = null;
+		mRestructureWitnessCounter += 1;
+		final Pair<Integer, Map<Term, Term>> witness = new Pair<>(mRestructureWitnessCounter,
+				mPredicateTrie.getWitness(vertex.getPredicate(), getBranches(vertex)));
+		Pair<Integer, Map<Term, Term>> trueWitness = null;
+		Pair<Integer, Map<Term, Term>> falseWitness = null;
 
 		final Set<ImplicationVertex<IPredicate>> trueSide = new HashSet<>();
 		trueSide.add(vertex);
 		final ImplicationGraph<IPredicate> trueGraph = graph.createSubCopy(trueSide, true).getFirst();
-		if (trueGraph.getVertices().size() > 3) {
-			trueWitness = getWitnessInductive(trueGraph, witnesses);
+		Set<ImplicationVertex<IPredicate>> tGVertices = trueGraph.getVertices();
+		if (tGVertices.size() > 3) {
+			trueWitness = getWitnessInductive(trueGraph, witnesses, preds);
+		}else {
+			for(ImplicationVertex<IPredicate> v : tGVertices) {
+				Term t = v.getPredicate().getFormula();
+				if(!t.equals(mScript.term("false")) && !t.equals(mScript.term("true"))) {
+					Map<Term, Term> map = new HashMap<>();
+					map.put(t, null);
+					trueWitness = new Pair(-1 ,map);
+					preds.put(t, v.getPredicate());
+				}
+			}
 		}
 		graph.removeAllImpliedVertices(vertex, true);
 		graph.removeVertex(vertex);
-		if (graph.getVertices().size() > 3) {
-			falseWitness = getWitnessInductive(graph, witnesses);
+		Set<ImplicationVertex<IPredicate>> fGVertices = graph.getVertices();
+		if (fGVertices.size() > 3) {
+			falseWitness = getWitnessInductive(graph, witnesses, preds);
+		}else {
+			for(ImplicationVertex<IPredicate> v : fGVertices) {
+				Term t = v.getPredicate().getFormula();
+				if(!t.equals(mScript.term("false")) && !t.equals(mScript.term("true"))) {
+					Map<Term, Term> map = new HashMap<>();
+					map.put(t, null);
+					falseWitness = new Pair(-1, map);
+					preds.put(t, v.getPredicate());
+				}
+			}
 		}
-		witnesses.put(witness, new Pair<>(trueWitness, falseWitness));
+		witnesses.put((witness), new Pair<>(trueWitness, falseWitness));
 		return witness;
 	}
 
-	private Set<IPredicate> getBranches(final ImplicationVertex vertex) {
-		final Set<ImplicationVertex<IPredicate>> decendents = vertex.getDescendants();
+	private Set<IPredicate> getBranches(final ImplicationVertex<IPredicate> vertex) {
+		final Set<ImplicationVertex<IPredicate>> descendants = vertex.getDescendants();
+		final Set<ImplicationVertex<IPredicate>> included = vertex.getDescendants();
+		included.add(vertex);
 		final Set<IPredicate> branches = new HashSet<>();
-		for (final ImplicationVertex<IPredicate> d : decendents) {
+		for (final ImplicationVertex<IPredicate> d : included) {
 			d.getParents().forEach(p -> {
-				if (!decendents.contains(p)) {
+				if (!descendants.contains(p)) {
 					branches.add(p.getPredicate());
 				}
 			});
@@ -368,9 +391,15 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return mFalsePredicate;
 	}
 
-	@Override
-	public String toString() {
-		return mPredicateTrie.toString() + " " + mImplicationGraph.toString();
+	public String print(boolean trie, boolean graph) {
+		StringBuilder sb = new StringBuilder();
+		if(trie) {
+			sb.append("Predicate Trie:\n" + mPredicateTrie.toString());
+		}
+		if(graph) {
+			sb.append("Implication Graph:\n" + mImplicationGraph.toString());
+		}
+		return sb.toString();
 	}
 
 	@Override

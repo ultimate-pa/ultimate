@@ -101,39 +101,31 @@ public class PredicateUnifierTest {
 	}
 
 	@Test
-	public void getWitness() {
+	public void restructurePredicateTrie() {
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
 
-		final Term term1 = mScript.term(">", mA.getTermVariable(), mZero);
-		final Term term2 = mScript.term(">", mA.getTermVariable(), mOne);
+		final Term term1 = mScript.term("=", mA.getTermVariable(), mZero);
+		final Term term2 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term term3 = mScript.term(">", mA.getTermVariable(), mTwo);
 		final Term term4 = mScript.term(">", mA.getTermVariable(), mThree);
-		final Term term5 = mScript.term("<", mA.getTermVariable(), mThree);
-		final Term term6 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term term7 = mScript.term("=", mA.getTermVariable(), mZero);
-		final Term term8 = mScript.term("=", mB.getTermVariable(), mOne);
-		final Term term9 = mScript.term("<", mB.getTermVariable(), mTwo);
+		final Term term5 = mScript.term("=", mB.getTermVariable(), mZero);
+		final Term term6 = mScript.term("=", mB.getTermVariable(), mOne);
+		final Term term7 = mScript.term(">", mB.getTermVariable(), mTwo);
+		final Term term8 = mScript.term(">", mB.getTermVariable(), mThree);
+		
 
 		unifier.getOrConstructPredicate(term1);
 		unifier.getOrConstructPredicate(term2);
 		unifier.getOrConstructPredicate(term3);
 		unifier.getOrConstructPredicate(term4);
+		unifier.getOrConstructPredicate(mScript.term("and", term4, term5));
+		unifier.getOrConstructPredicate(mScript.term("and", term4, term6));
+		unifier.getOrConstructPredicate(mScript.term("and", term4, term7));
+		unifier.getOrConstructPredicate(mScript.term("and", term4, term8));
 
-		unifier.getOrConstructPredicate(term5);
-		unifier.getOrConstructPredicate(term6);
-		unifier.getOrConstructPredicate(term7);
-		unifier.getOrConstructPredicate(term8);
-		unifier.getOrConstructPredicate(term9);
-		unifier.getOrConstructPredicate(mScript.term("and", term5, term1));
-		unifier.getOrConstructPredicate(mScript.term("and", term6, term8));
-		unifier.getOrConstructPredicate(mScript.term("and", term8, term9));
-		unifier.getOrConstructPredicate(mScript.term("or", term7, term4));
-		unifier.getOrConstructPredicate(mScript.term("or", term8, term2));
-		unifier.getOrConstructPredicate(mScript.term("or", term9, term6));
-
-		// unifier.mPredicateTrie.print();
-		mLogger.info(unifier.toString());
+		//mLogger.info(unifier.print(true, false));
 		mLogger.info(unifier.restructurePredicateTrie());
+		//mLogger.info(unifier.print(true, false));
 	}
 
 	@Test

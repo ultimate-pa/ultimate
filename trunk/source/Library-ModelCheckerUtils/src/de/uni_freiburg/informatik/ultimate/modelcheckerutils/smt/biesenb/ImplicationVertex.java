@@ -51,7 +51,7 @@ public class ImplicationVertex<T> {
 	/**
 	 * remove edges due to transitive reduction
 	 */
-	protected void updateEdges() {
+	protected void transitiveReductionAfterAdding() {
 		for (final ImplicationVertex<T> parent : mParents) {
 			for (final ImplicationVertex<T> child : mChildren) {
 				if (parent.mChildren.contains(child)) {

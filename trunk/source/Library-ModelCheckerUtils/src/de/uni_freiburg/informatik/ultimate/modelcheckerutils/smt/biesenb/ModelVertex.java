@@ -46,6 +46,14 @@ public class ModelVertex implements IVertex {
 		mTrueChild = trueChild;
 		mFalseChild = flaseChild;
 	}
+	
+	protected void setTrueChild(IVertex trueChild) {
+		mTrueChild = trueChild;
+	}
+	
+	protected void setFalseChild(IVertex falseChild) {
+		mFalseChild = falseChild;
+	}
 
 	protected IVertex getChild(final boolean edge) {
 		if (edge) {
@@ -75,9 +83,9 @@ public class ModelVertex implements IVertex {
 	}
 
 	@Override
-	public void print() {
-	System.out.println(("inner: " + hashCode()%100 + mWitness.toString() + " -> " + mTrueChild.hashCode()%100 + mTrueChild.toString()
-				+ " ^ " + mFalseChild.hashCode()%100 + mFalseChild.toString()));
+	public String print() {
+		return ("inner: " + hashCode()%100 + mWitness.toString() + " : " + mTrueChild.hashCode()%100 + mTrueChild.toString()
+				+ " | " + mFalseChild.hashCode()%100 + mFalseChild.toString());
 	}
 
 	@Override

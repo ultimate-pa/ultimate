@@ -97,8 +97,10 @@ public class ImplicationGraph<T extends IPredicate> {
 				p.removeChild(vertex);
 				for (final ImplicationVertex<T> c : children) {
 					c.removeParent(vertex);
-					c.addParent(p);
-					p.addChild(c);
+					if(!p.getDescendants().contains(c)) {
+						c.addParent(p);
+						p.addChild(c);
+					}
 				}
 			}
 			return true;
@@ -182,7 +184,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		final HashSet<ImplicationVertex<T>> children = new HashSet<>();
 		subCopy.getFirst().mVertices.forEach(v -> children.add(subCopy.getSecond().get(v)));
 		final ImplicationVertex<T> newVertex = new ImplicationVertex<>(predicate, children, parents);
-		newVertex.updateEdges();
+		newVertex.transitiveReductionAfterAdding();
 		mVertices.add(newVertex);
 		mPredicateMap.put(predicate, newVertex);
 		return newVertex;
@@ -200,9 +202,6 @@ public class ImplicationGraph<T extends IPredicate> {
 		final Deque<ImplicationVertex<T>> children = new ArrayDeque<>(vertex.getChildren());
 		while (!children.isEmpty()) {
 			final ImplicationVertex<T> current = children.pop();
-			if (keepTrueVertex && current.equals(mTrueVertex)) {
-				continue;
-			}
 			if (!mVertices.remove(current)) {
 				continue;
 			}
@@ -214,13 +213,13 @@ public class ImplicationGraph<T extends IPredicate> {
 			children.addAll(current.getChildren());
 		}
 		if (keepTrueVertex) {
-			final Set<ImplicationVertex<T>> pCopy = new HashSet<>(mTrueVertex.getParents());
-			for (final ImplicationVertex<T> p : pCopy) {
-				if (!mVertices.contains(p)) {
-					p.removeChild(mTrueVertex);
-					mTrueVertex.removeParent(p);
+			for(ImplicationVertex<T> v : mVertices) {
+				if(v.getChildren().isEmpty()) {
+					v.addChild(mTrueVertex);
+					mTrueVertex.addParent(v);
 				}
 			}
+			mVertices.add(mTrueVertex);
 		}
 		return true;
 	}
@@ -349,8 +348,8 @@ public class ImplicationGraph<T extends IPredicate> {
 	}
 
 	/**
-	 * creates a copy of the subgraph with the given set and the predicates that are implied by every predicate in the
-	 * set
+	 * creates a copy of the subgraph with the given set and the predicates that are implied
+	 *  by every predicate in the set
 	 */
 	protected Pair<ImplicationGraph<T>, Map<ImplicationVertex<T>, ImplicationVertex<T>>>
 			createSubCopy(final Set<ImplicationVertex<T>> parents, final boolean keep) {
