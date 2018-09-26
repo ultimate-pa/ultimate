@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,6 +72,7 @@ public class IcfgDuplicator {
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ManagedScript mManagedScript;
+	private final Map<IcfgEdge, IcfgEdge> mOld2New;
 
 	public IcfgDuplicator(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BlockEncodingBacktranslator backtranslator) {
@@ -78,6 +80,7 @@ public class IcfgDuplicator {
 		mBacktranslator = backtranslator;
 		mCallCache = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
+		mOld2New = new HashMap<>();
 	}
 
 	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg) {
@@ -170,6 +173,7 @@ public class IcfgDuplicator {
 		newTarget.addIncoming(newEdge);
 		ModelUtils.copyAnnotations(oldEdge, newEdge);
 		mBacktranslator.mapEdges(newEdge, oldEdge);
+		mOld2New.put(oldEdge, newEdge);
 		return newEdge;
 	}
 
@@ -200,7 +204,7 @@ public class IcfgDuplicator {
 		} else if (oldEdge instanceof IIcfgForkTransitionThreadCurrent) {
 			final IForkActionThreadCurrent fAction = (IForkActionThreadCurrent) newAction;
 			rtr = edgeFactory.createForkThreadCurrentTransition(newSource, newTarget, null, fAction.getTransformula(),
-					fAction.getForkSmtArguments());
+					fAction.getForkSmtArguments(), fAction.getNameOfForkedProcedure());
 		} else if (oldEdge instanceof IIcfgJoinTransitionThreadCurrent) {
 			final IJoinActionThreadCurrent jAction = (IJoinActionThreadCurrent) newAction;
 			rtr = edgeFactory.createJoinThreadCurrentTransition(newSource, newTarget, null, jAction.getTransformula(),
@@ -219,5 +223,11 @@ public class IcfgDuplicator {
 		mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
 		return rtr;
 	}
+
+	public Map<IcfgEdge, IcfgEdge> getOld2NewEdgeMapping() {
+		return Collections.unmodifiableMap(mOld2New);
+	}
+
+
 
 }

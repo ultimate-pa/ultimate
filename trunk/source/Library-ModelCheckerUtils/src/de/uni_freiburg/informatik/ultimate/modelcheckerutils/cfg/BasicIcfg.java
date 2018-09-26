@@ -155,6 +155,8 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 * Convenience method for {@link #addLocation(IcfgLocation, boolean, boolean, boolean, boolean, boolean)} without
 	 * any true.
 	 *
+	 * TODO 2018-09-23 Matthias: I think methods like these are bad practice
+	 *
 	 * @param loc
 	 *            The location to add.
 	 */

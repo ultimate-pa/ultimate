@@ -84,5 +84,10 @@ public class ForkThreadCurrent extends CodeBlock implements IIcfgForkTransitionT
 		mForkSmtArguments = forkSmtArguments;
 	}
 
+	@Override
+	public String getNameOfForkedProcedure() {
+		return mForkStatement.getProcedureName();
+	}
+
 
 }

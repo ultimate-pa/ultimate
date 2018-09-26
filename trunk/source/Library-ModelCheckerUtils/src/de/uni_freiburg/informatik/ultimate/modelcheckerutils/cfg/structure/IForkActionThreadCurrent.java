@@ -58,6 +58,7 @@ public interface IForkActionThreadCurrent extends IAction {
 		return
 	}*/
 
+	public String getNameOfForkedProcedure();
 
 	public ForkSmtArguments getForkSmtArguments();
 

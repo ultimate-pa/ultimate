@@ -65,9 +65,9 @@ public final class IcfgEdgeFactory {
 
 	public IcfgForkThreadCurrentTransition createForkThreadCurrentTransition(final IcfgLocation source,
 			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
-			final ForkSmtArguments forkSmtArguments) {
+			final ForkSmtArguments forkSmtArguments, final String nameOfForkedProcedure) {
 		return new IcfgForkThreadCurrentTransition(source, target, payload, transFormula, forkSmtArguments,
-				getNextFreeId());
+				nameOfForkedProcedure, getNextFreeId());
 	}
 
 	public IcfgJoinThreadCurrentTransition createJoinThreadCurrentTransition(final IcfgLocation source,

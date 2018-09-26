@@ -42,10 +42,13 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
@@ -85,11 +88,11 @@ public class ThreadInstanceAdder {
 
 //	public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer icfg,
 	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
-			final Collection<ForkThreadCurrent> forkCurrentThreads,
-			final Collection<JoinThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
+			final Collection<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
+			final Collection<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
 			final Map<String, ThreadInstance> threadInstanceMap, final CodeBlockFactory cbf) {
-		for (final ForkThreadCurrent fct : forkCurrentThreads) {
-			final ThreadInstance ti = threadInstanceMap.get(fct.getForkStatement().getProcedureName());
+		for (final IIcfgForkTransitionThreadCurrent fct : forkCurrentThreads) {
+			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
 
 			addForkOtherThreadTransition1(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
 		}
@@ -97,15 +100,67 @@ public class ThreadInstanceAdder {
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
-		for (final JoinThreadCurrent jot : joinCurrentThreads) {
+		for (final IIcfgJoinTransitionThreadCurrent jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 			for (final String procName : forkedProcedureNames) {
 				final ThreadInstance ti = threadInstanceMap.get(procName);
-				addJoinOtherThreadTransition1(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
+						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
+				final boolean returnValueCompatible = isReturnValueCompatible(
+						jot.getJoinSmtArguments().getAssignmentLhs(),
+						icfg.getCfgSmtToolkit().getOutParams().get(procName));
+				if (threadIdCompatible && returnValueCompatible) {
+					addJoinOtherThreadTransition1(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+				}
 			}
 			// }
 		}
 		return icfg;
+	}
+
+	/**
+	 * @return true iff
+	 * <ul>
+	 * <li> assignmentLhs is empty (which means that we do not care about the return value of this thread) and
+	 * <li> both list have same length and
+	 * <li> all Sorts are pairwise equivalent
+	 * </ul>
+	 */
+	private static boolean isReturnValueCompatible(final List<IProgramVar> assignmentLhs,
+			final List<ILocalProgramVar> outParams) {
+		if (assignmentLhs.isEmpty()) {
+			return true;
+		}
+		if (assignmentLhs.size() != outParams.size()) {
+			return false;
+		} else {
+			for (int i = 0; i < assignmentLhs.size(); i++) {
+				if (!assignmentLhs.get(i).getTerm().getSort().equals(outParams.get(i).getTerm().getSort())) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	/**
+	 * @return true iff
+	 * <ul>
+	 * <li> both arrays have same length and
+	 * <li> all Sorts are pairwise equivalent
+	 * </ul>
+	 */
+	private static boolean isThreadIdCompatible(final IProgramNonOldVar[] idVars, final Term[] terms) {
+		if (idVars.length != terms.length) {
+			return false;
+		} else {
+			for (int i=0; i<idVars.length; i++) {
+				if (!idVars[i].getTerm().getSort().equals(terms[i].getSort())) {
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 
 	/**
@@ -114,23 +169,22 @@ public class ThreadInstanceAdder {
 	 * @param edge
 	 *            that points to the next step in the current thread.
 	 */
-	private void addForkOtherThreadTransition1(final ForkThreadCurrent forkEdgeCurrent,
+	private void addForkOtherThreadTransition1(final IIcfgForkTransitionThreadCurrent fct,
 			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
 			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
 			final CodeBlockFactory cbf) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
-		final ForkStatement st = forkEdgeCurrent.getForkStatement();
-		final String callee = st.getProcedureName();
-		assert icfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee
+		final String forkedProcedure = fct.getNameOfForkedProcedure();
+		assert icfg.getProcedureEntryNodes().containsKey(forkedProcedure) : "Source code contains" + " fork of " + forkedProcedure
 				+ " but no such procedure.";
 
 		// Add fork transition from callerNode to procedures entry node.
-		final IcfgLocation callerNode = forkEdgeCurrent.getSource();
-		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(callee);
+		final IcfgLocation callerNode = fct.getSource();
+		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(forkedProcedure);
 
-		final ForkSmtArguments fsa = forkEdgeCurrent.getForkSmtArguments();
+		final ForkSmtArguments fsa = fct.getForkSmtArguments();
 
 		final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 
@@ -138,7 +192,7 @@ public class ThreadInstanceAdder {
 		{
 			final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
-					icfg.getCfgSmtToolkit().getInParams().get(st.getProcedureName()));
+					icfg.getCfgSmtToolkit().getInParams().get(forkedProcedure));
 			final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
 					Arrays.asList(threadIdVars));
@@ -151,7 +205,7 @@ public class ThreadInstanceAdder {
 		}
 
 		final IcfgForkThreadOtherTransition forkThreadOther = ef.createForkThreadOtherTransition(callerNode,
-				calleeEntryLoc, null, forkTransformula, forkEdgeCurrent);
+				calleeEntryLoc, null, forkTransformula, fct);
 		callerNode.addOutgoing(forkThreadOther);
 		calleeEntryLoc.addIncoming(forkThreadOther);
 
@@ -166,7 +220,7 @@ public class ThreadInstanceAdder {
 		// TODO Matthias 2018-09-15: Set overapproximations for both edges
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(forkEdgeCurrent);
+			new Overapprox(overapproximations).annotate(fct);
 		}
 	}
 
@@ -230,38 +284,37 @@ public class ThreadInstanceAdder {
 	 * Add JoinOtherThreadEdge from
 	 * @param edge
 	 */
-	private void addJoinOtherThreadTransition1(final JoinThreadCurrent joinEdgeCurrent, final String procName,
+	private void addJoinOtherThreadTransition1(final IIcfgJoinTransitionThreadCurrent jot, final String procName,
 			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
 			final IIcfg<? extends IcfgLocation> icfg, final CodeBlockFactory cbf) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
-		final JoinStatement st = joinEdgeCurrent.getJoinStatement();
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(procName);
-		final IcfgLocation callerNode = joinEdgeCurrent.getTarget();
+		final IcfgLocation callerNode = jot.getTarget();
 
 
-		final JoinSmtArguments jsa = joinEdgeCurrent.getJoinSmtArguments();
+		final JoinSmtArguments jsa = jot.getJoinSmtArguments();
 
-		// TODO Matthias 2018-08-16: IssueId:Feldberg
-		//
-		// use the following list and the jsa to do a comparison
-		// based on sorts (instead of types)
-		final List<ILocalProgramVar> outParams = icfg.getCfgSmtToolkit().getOutParams().get(procName);
-		//
-		//
-
-		if (threadIdVars.length != st.getThreadID().length) {
-			return;
-		} else {
-			int offset = 0;
-			for (final IProgramNonOldVar threadId : threadIdVars) {
-				if (st.getThreadID()[offset].getType() != ((BoogieIcfgContainer) icfg).getBoogie2SMT().getTypeSortTranslator()
-						.getType(threadId.getSort())) {
-					return;
-				}
-				offset++;
-			}
-		}
+//		// TODO Matthias 2018-08-16: IssueId:Feldberg
+//		//
+//		// use the following list and the jsa to do a comparison
+//		// based on sorts (instead of types)
+//		final List<ILocalProgramVar> outParams = icfg.getCfgSmtToolkit().getOutParams().get(procName);
+//		//
+//		//
+//
+//		if (threadIdVars.length != st.getThreadID().length) {
+//			return;
+//		} else {
+//			int offset = 0;
+//			for (final IProgramNonOldVar threadId : threadIdVars) {
+//				if (st.getThreadID()[offset].getType() != ((BoogieIcfgContainer) icfg).getBoogie2SMT().getTypeSortTranslator()
+//						.getType(threadId.getSort())) {
+//					return;
+//				}
+//				offset++;
+//			}
+//		}
 
 		final String caller = callerNode.getProcedure();
 
@@ -286,13 +339,13 @@ public class ThreadInstanceAdder {
 		}
 
 		final IcfgJoinThreadOtherTransition joinThreadOther = ef.createJoinThreadOtherTransition(exitNode, callerNode, null,
-				joinTransformula, joinEdgeCurrent);
+				joinTransformula, jot);
 		exitNode.addOutgoing(joinThreadOther);
 		callerNode.addIncoming(joinThreadOther);
 
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(joinEdgeCurrent);
+			new Overapprox(overapproximations).annotate(jot);
 		}
 	}
 

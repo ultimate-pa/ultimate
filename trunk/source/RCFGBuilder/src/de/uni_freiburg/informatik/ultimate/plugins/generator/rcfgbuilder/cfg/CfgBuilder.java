@@ -357,8 +357,6 @@ public class CfgBuilder {
 		}
 
 		// Add all transitions to the forked procedure entry locations.
-		final Collection<ForkThreadCurrent> forkCurrentThreads = mForkCurrentThreads;
-		final Collection<JoinThreadCurrent> joinCurrentThreads = mJoinCurrentThreads;
 		final Collection<String> forkedProcedureNames = mForkedProcedureNames;
 		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
 
@@ -368,8 +366,16 @@ public class CfgBuilder {
 		if (!mForkCurrentThreads.isEmpty()) {
 			final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
 					Term.class, mLogger);
-			result = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator)
-					.copy(result);
+			final IcfgDuplicator duplicator = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(),
+					backtranslator);
+			result = duplicator.copy(result);
+			final Map<IcfgEdge, IcfgEdge> old2newEdgeMapping = duplicator.getOld2NewEdgeMapping();
+			final Collection<IIcfgForkTransitionThreadCurrent> forkCurrentThreads = mForkCurrentThreads.stream()
+					.map(old2newEdgeMapping::get).map(x -> (IIcfgForkTransitionThreadCurrent) x)
+					.collect(Collectors.toList());
+			final Collection<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads = mJoinCurrentThreads.stream()
+					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
+					.collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap, cbf);

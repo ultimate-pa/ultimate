@@ -43,12 +43,15 @@ public final class IcfgForkThreadCurrentTransition extends AbstractIcfgTransitio
 	private static final long serialVersionUID = -4893486021673688404L;
 	private final UnmodifiableTransFormula mTransFormula;
 	private final ForkSmtArguments mForkSmtArguments;
+	private final String mNameOfForkedProcedure;
 
-	protected IcfgForkThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments, final int id) {
+	protected IcfgForkThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final ForkSmtArguments forkSmtArguments, final String nameOfForkedProcedure, final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 		mForkSmtArguments = Objects.requireNonNull(forkSmtArguments, "A forkSmtArguments is missing");
+		mNameOfForkedProcedure = Objects.requireNonNull(nameOfForkedProcedure, "forked procedure is missing");
 	}
 
 	@Override
@@ -65,5 +68,10 @@ public final class IcfgForkThreadCurrentTransition extends AbstractIcfgTransitio
 	@Override
 	public ForkSmtArguments getForkSmtArguments() {
 		return mForkSmtArguments;
+	}
+
+	@Override
+	public String getNameOfForkedProcedure() {
+		return mNameOfForkedProcedure;
 	}
 }

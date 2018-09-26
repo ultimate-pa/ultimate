@@ -36,12 +36,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 public class BasicForkActionCurrent extends AbstractBasicAction implements IForkActionThreadCurrent {
 	private final UnmodifiableTransFormula mTransFormula;
 	private final ForkSmtArguments mForkSmtArguments;
+	private final String mNameOfForkedProcedure;
 
 	public BasicForkActionCurrent(final String preceedingProcedure, final String succeedingProcedure,
-			final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments) {
+			final UnmodifiableTransFormula transFormula, final ForkSmtArguments forkSmtArguments,
+			final String nameOfForkedProcedure) {
 		super(preceedingProcedure, succeedingProcedure);
 		mTransFormula = transFormula;
 		mForkSmtArguments = forkSmtArguments;
+		mNameOfForkedProcedure = nameOfForkedProcedure;
 	}
 
 	@Override
@@ -52,5 +55,10 @@ public class BasicForkActionCurrent extends AbstractBasicAction implements IFork
 	@Override
 	public ForkSmtArguments getForkSmtArguments() {
 		return mForkSmtArguments;
+	}
+
+	@Override
+	public String getNameOfForkedProcedure() {
+		return mNameOfForkedProcedure;
 	}
 }

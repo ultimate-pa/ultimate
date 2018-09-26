@@ -88,7 +88,7 @@ public final class ActionUtils {
 			final IForkActionThreadCurrent fAction = (IForkActionThreadCurrent) action;
 			fAction.getTransformula();
 			rtr = new BasicForkActionCurrent(action.getPrecedingProcedure(), action.getSucceedingProcedure(),
-					fAction.getTransformula(), fAction.getForkSmtArguments());
+					fAction.getTransformula(), fAction.getForkSmtArguments(), fAction.getNameOfForkedProcedure());
 		} else if (action instanceof IJoinActionThreadCurrent) {
 			final IJoinActionThreadCurrent fAction = (IJoinActionThreadCurrent) action;
 			rtr = new BasicJoinActionCurrent(action.getPrecedingProcedure(), action.getSucceedingProcedure(),
