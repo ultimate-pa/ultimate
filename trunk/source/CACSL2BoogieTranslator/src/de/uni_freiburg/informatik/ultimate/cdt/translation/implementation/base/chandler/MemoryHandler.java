@@ -205,7 +205,7 @@ public class MemoryHandler {
 	private final TranslationSettings mSettings;
 
 	/**
-	 * Constructor.
+	 * Pre-run constructor.
 	 *
 	 */
 	public MemoryHandler(final TypeSizes typeSizes, final INameHandler nameHandler,
@@ -239,6 +239,9 @@ public class MemoryHandler {
 		mMemoryModelDeclarationInfos = new LinkedHashMap<>();
 	}
 
+	/**
+	 * Main run constructor
+	 */
 	public MemoryHandler(final MemoryHandler prerunMemoryHandler, final TypeSizes typeSizes,
 			final INameHandler nameHandler, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,

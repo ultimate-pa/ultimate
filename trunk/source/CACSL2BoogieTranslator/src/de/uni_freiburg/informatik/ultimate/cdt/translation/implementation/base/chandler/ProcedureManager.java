@@ -231,9 +231,7 @@ public class ProcedureManager {
 				// modifies clause is user defined --> leave the specification as is
 				newSpec = oldSpec;
 			} else {
-				// case: !procInfo.isModifiedGlobalsIsUsedDefined()
 				final Set<VariableLHS> currModClause = closedProcToModGlobals.get(procInfo);
-				// sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
 				procInfo.addModifiedGlobals(currModClause);
@@ -261,7 +259,7 @@ public class ProcedureManager {
 				{
 					int i = 0;
 					for (final VariableLHS modifyEntry : currModClause) {
-						modifyList[i++] = modifyEntry;// new VariableLHS(loc, modifyEntry);
+						modifyList[i++] = modifyEntry;
 					}
 				}
 				newSpec[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
@@ -407,44 +405,11 @@ public class ProcedureManager {
 			throw new IllegalStateException("Check for isGlobalScope first");
 		}
 		return mCurrentProcedureInfo.getProcedureName();
-		// if (mCurrentProcedure == null) {
-		// return null;
-		// }
-		// return mCurrentProcedure.getIdentifier();
 	}
-
-	// public void addMemoryModelDeclarations(final MemoryModelDeclarations...
-	// mmdecls) {
-	//
-	// final String currentProcId = mCurrentProcedure.getIdentifier();
-	// Set<String> str = mCallGraphOld.get(currentProcId);
-	// if (str == null) {
-	// str = new LinkedHashSet<>();
-	// mCallGraphOld.put(currentProcId, str);
-	// }
-	// for (final MemoryModelDeclarations mmdecl : mmdecls) {
-	// str.add(mmdecl.getName());
-	// }
-	// }
-
-	// public boolean noCurrentProcedure() {
-	// return mCurrentProcedure == null;
-	// }
-
-	// public void addCallGraphEdge(final String source, final String target) {
-	// Set<String> set = mCallGraphOld.get(source);
-	// if (set == null) {
-	// set = new LinkedHashSet<>();
-	// mCallGraphOld.put(source, set);
-	// }
-	// set.add(target);
-	// }
 
 	public CFunction getCFunctionType(final String function) {
 		final BoogieProcedureInfo procInfo = getProcedureInfo(function);
 		return procInfo.getCType();
-
-		// return mProcedureToCFunctionType.get(function);
 	}
 
 	/**
@@ -465,8 +430,6 @@ public class ProcedureManager {
 
 	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
 			final Statement[] statements, final String procName) {
-		// assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
-
 		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
 
 		final Collection<Statement> callsAndAssignments =
@@ -518,17 +481,6 @@ public class ProcedureManager {
 		// // TODO: what is the criterion for when an ensures clause constitutes a
 		// modification??
 		// // --> probably we have to set this manually!...
-		// if (!isFree) {
-		// final Set<IdentifierExpression> modifiedGlobals =
-		// new
-		// BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
-		// for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
-		// addModifiedGlobal((VariableLHS)
-		// CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
-		// }
-		// }
-		// modifiedGlobals.forEach(this::addModifiedGlobal);
-		// final BoogieProcedureInfo procInfo = getOrConstructProcedureInfo(procName);
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		procInfo.addModifiedGlobals(modifiedGlobals);
 
@@ -648,27 +600,20 @@ public class ProcedureManager {
 		 */
 		void updateCFunction(final CType returnType, final CDeclaration[] allParamDecs, final CDeclaration oneParamDec,
 				final boolean takesVarArgs) {
-			// final CFunction oldCFunction = this.getCType();
-
-			// final CType oldRetType = oldCFunction == null ? null :
-			// oldCFunction.getResultType();
 			final CType oldRetType = hasCType() ? getCType().getResultType() : null;
-			final CDeclaration[] oldInParams =
-					// oldCFunction == null ? new CDeclaration[0] :
-					// oldCFunction.getParameterTypes();
-					hasCType() ? getCType().getParameterTypes() : new CDeclaration[0];
-			// final boolean oldTakesVarArgs = oldCFunction == null ? false :
-			// oldCFunction.takesVarArgs();
+			final CDeclaration[] oldInParams = hasCType() ? getCType().getParameterTypes() : new CDeclaration[0];
 			final boolean oldTakesVarArgs = hasCType() ? getCType().takesVarArgs() : false;
 
 			CType newRetType = oldRetType;
 			CDeclaration[] newInParams = oldInParams;
 			final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
 
-			if (allParamDecs != null) { // set a new parameter list
+			if (allParamDecs != null) {
+				// set a new parameter list
 				assert oneParamDec == null;
 				newInParams = allParamDecs;
-			} else if (oneParamDec != null) { // add a parameter to the list
+			} else if (oneParamDec != null) {
+				// add a parameter to the list
 				assert allParamDecs == null;
 
 				final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));

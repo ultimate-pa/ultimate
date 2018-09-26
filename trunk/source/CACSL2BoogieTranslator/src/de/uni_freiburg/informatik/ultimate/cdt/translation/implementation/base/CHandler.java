@@ -473,7 +473,7 @@ public class CHandler {
 		// we need to replace the procedure manager and all instances that depend on it
 		mProcedureManager = procedureManager;
 
-		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, procedureManager);
+		mAuxVarInfoBuilder = new AuxVarInfoBuilder(nameHandler, typeHandler, procedureManager);
 
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,

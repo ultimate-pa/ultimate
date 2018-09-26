@@ -195,9 +195,9 @@ public class MainTranslator {
 
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
-		final ACSLHandler acslHandler = new ACSLHandler(witnessInvariants != null, flatSymbolTable,
-				expressionTranslation, typeHandler, procedureManager, prerunCHandler.getExpressionResultTransformer(),
-				locationFactory, mainCHandler);
+		final ACSLHandler acslHandler =
+				new ACSLHandler(witnessInvariants != null, flatSymbolTable, expressionTranslation, typeHandler,
+						procedureManager, mainCHandler.getExpressionResultTransformer(), locationFactory, mainCHandler);
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessInvariants, locationFactory,
 				typeHandler, mainCHandler, ppHandler, acslHandler);
 
