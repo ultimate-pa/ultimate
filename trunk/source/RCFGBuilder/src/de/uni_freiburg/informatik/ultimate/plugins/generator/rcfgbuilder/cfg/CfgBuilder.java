@@ -151,8 +151,8 @@ public class CfgBuilder {
 	Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
 
-	Collection<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
-	Collection<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
+	List<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
+	List<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
 	Collection<String> mForkedProcedureNames = new ArrayList<>();
 	private Map<String, ThreadInstance> mThreadInstanceMap;
 
@@ -370,10 +370,10 @@ public class CfgBuilder {
 					backtranslator);
 			result = duplicator.copy(result);
 			final Map<IcfgEdge, IcfgEdge> old2newEdgeMapping = duplicator.getOld2NewEdgeMapping();
-			final Collection<IIcfgForkTransitionThreadCurrent> forkCurrentThreads = mForkCurrentThreads.stream()
+			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads = mForkCurrentThreads.stream()
 					.map(old2newEdgeMapping::get).map(x -> (IIcfgForkTransitionThreadCurrent) x)
 					.collect(Collectors.toList());
-			final Collection<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads = mJoinCurrentThreads.stream()
+			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads = mJoinCurrentThreads.stream()
 					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
 					.collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);

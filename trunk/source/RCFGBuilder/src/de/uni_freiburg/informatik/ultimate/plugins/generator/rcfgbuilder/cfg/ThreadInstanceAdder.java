@@ -88,8 +88,8 @@ public class ThreadInstanceAdder {
 
 //	public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer icfg,
 	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
-			final Collection<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
-			final Collection<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
+			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
+			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
 			final Map<String, ThreadInstance> threadInstanceMap, final CodeBlockFactory cbf) {
 		for (final IIcfgForkTransitionThreadCurrent fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
