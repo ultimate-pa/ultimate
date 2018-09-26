@@ -156,6 +156,11 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 * any true.
 	 *
 	 * TODO 2018-09-23 Matthias: I think methods like these are bad practice
+	 * because the increase the overall complexity of the code
+	 * <li> more methods == higher complexity of this class
+	 * <li> method only used once
+	 * <li> method introduces new terminology (what is an "ordinary" location)
+	 * <li> if you use this method you have to read and understand the addLocation method anyway
 	 *
 	 * @param loc
 	 *            The location to add.
