@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
+public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, IcfgLocation, IcfgLocation> {
 
 	private static final boolean PRINT_MAPPINGS = false;
 
