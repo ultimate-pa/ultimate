@@ -33,7 +33,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Multifiles: The flat symbol table is used as a replacement for the old symbol table. The old symbol table used
@@ -435,5 +438,22 @@ public class FlatSymbolTable {
 			cursor = cursor.getParent();
 		}
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Global: ").append(CoreUtil.getPlatformLineSeparator());
+		sb.append(mGlobalScope.entrySet().stream().map(a -> a.getKey() + " " + a.getValue())
+				.collect(Collectors.joining(",")));
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		for (final Entry<IASTNode, Map<String, SymbolTableValue>> entry : mCTable.entrySet()) {
+			sb.append(entry.getKey().getClass().getSimpleName()).append(" ");
+			sb.append(entry.getKey().getFileLocation().getStartingLineNumber())
+					.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(entry.getValue().entrySet().stream().map(a -> a.getKey() + " " + a.getValue())
+					.collect(Collectors.joining(",")));
+		}
+		return sb.toString();
 	}
 }
