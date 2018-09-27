@@ -117,6 +117,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.typechecker.VariableInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
@@ -164,12 +165,13 @@ public class TypeChecker extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 
 	private final Map<Expression, BoogieType> mCache;
+	private final ILogger mLogger;
 
 	public TypeChecker(final IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCache = new HashMap<>();
 	}
-
 
 	private VariableInfo findVariable(final String name) {
 		final VariableInfo rtr = mVarScopes.get(name);
@@ -189,19 +191,17 @@ public class TypeChecker extends BaseObserver {
 			if (expr instanceof BinaryExpression) {
 				final BinaryExpression binexp = (BinaryExpression) expr;
 				resultType = TypeCheckHelper.typeCheckBinaryExpression(binexp.getOperator(),
-						typecheckExpression(binexp.getLeft()),
-						typecheckExpression(binexp.getRight()), new TypeErrorReporter(binexp));
+						typecheckExpression(binexp.getLeft()), typecheckExpression(binexp.getRight()),
+						new TypeErrorReporter(binexp));
 			} else if (expr instanceof UnaryExpression) {
 				final UnaryExpression unexp = (UnaryExpression) expr;
 				resultType = TypeCheckHelper.typeCheckUnaryExpression(unexp.getOperator(),
-						typecheckExpression(unexp.getExpr()),
-						new TypeErrorReporter(expr));
+						typecheckExpression(unexp.getExpr()), new TypeErrorReporter(expr));
 			} else if (expr instanceof BitVectorAccessExpression) {
 				final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
 				final BoogieType bvType = typecheckExpression(bvaexpr.getBitvec());
-				resultType = TypeCheckHelper.typeCheckBitVectorAccessExpression(
-						TypeCheckHelper.getBitVecLength(bvType), bvaexpr.getEnd(),
-						bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
+				resultType = TypeCheckHelper.typeCheckBitVectorAccessExpression(TypeCheckHelper.getBitVecLength(bvType),
+						bvaexpr.getEnd(), bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
 			} else if (expr instanceof StructAccessExpression) {
 				final StructAccessExpression sae = (StructAccessExpression) expr;
 				resultType = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs(
@@ -211,7 +211,8 @@ public class TypeChecker extends BaseObserver {
 				final BoogieType arrayType = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
 				final List<BoogieType> indicesTypes = Arrays.stream(aaexpr.getIndices())
 						.map(exp -> typecheckExpression(exp)).collect(Collectors.toList());
-				resultType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes, typeErrorReporter);
+				resultType =
+						TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes, typeErrorReporter);
 			} else if (expr instanceof ArrayStoreExpression) {
 				final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
 				final BoogieType arrayType = typecheckExpression(asexpr.getArray()).getUnderlyingType();
@@ -289,7 +290,6 @@ public class TypeChecker extends BaseObserver {
 				final BoogieType left = typecheckExpression(ite.getThenPart());
 				final BoogieType right = typecheckExpression(ite.getElsePart());
 
-
 				resultType = TypeCheckHelper.typeCheckIfThenElseExpression(condType, left, right, typeErrorReporter);
 			} else if (expr instanceof QuantifierExpression) {
 				final QuantifierExpression quant = (QuantifierExpression) expr;
@@ -330,15 +330,13 @@ public class TypeChecker extends BaseObserver {
 		return resultType;
 	}
 
-
 	/**
 	 * Compare existingDeclInfo with correctDeclInfo and raise an internalError if both are not equivalent.
 	 */
 	private static void checkExistingDeclarationInformation(final String id,
 			final DeclarationInformation existingDeclInfo, final DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id
-					+ ". Expected: " + correctDeclInfo
+			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo
 					+ "   Found: " + existingDeclInfo);
 		}
 	}
@@ -390,8 +388,8 @@ public class TypeChecker extends BaseObserver {
 			for (int i = 0; i < alhs.getIndices().length; i++) {
 				indicesTypes.add(typecheckExpression(alhs.getIndices()[i]));
 			}
-			resultType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
-					typeErrorReporter);
+			resultType =
+					TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes, typeErrorReporter);
 		} else {
 			TypeCheckHelper.internalError("Unknown LHS: " + lhs);
 			resultType = BoogieType.TYPE_ERROR;
@@ -484,8 +482,8 @@ public class TypeChecker extends BaseObserver {
 
 		mTypeManager.popTypeScope();
 
-		final BoogieFunctionSignature fs =
-				new BoogieFunctionSignature(funcDecl.getTypeParams().length, paramNames, paramTypes, valueName, valueType);
+		final BoogieFunctionSignature fs = new BoogieFunctionSignature(funcDecl.getTypeParams().length, paramNames,
+				paramTypes, valueName, valueType);
 		mDeclaredFunctions.put(name, new FunctionInfo(funcDecl, name, typeParams, fs));
 	}
 
@@ -805,7 +803,7 @@ public class TypeChecker extends BaseObserver {
 				typecheckExpression(threadId);
 			}
 		} else if (statement instanceof JoinStatement) {
-			final JoinStatement join = (JoinStatement) statement;			
+			final JoinStatement join = (JoinStatement) statement;
 			for (final Expression threadId : join.getThreadID()) {
 				if (threadId == null) {
 					typeError(statement, "Expression " + threadId + " does not exist.");
@@ -819,7 +817,6 @@ public class TypeChecker extends BaseObserver {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
 	}
-
 
 	/**
 	 * Type check the given block.
@@ -889,14 +886,14 @@ public class TypeChecker extends BaseObserver {
 	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
 	 */
 	private void checkModifiesTransitive(final CallStatement call, final String callee) {
-		checkModifiesTransitive((Statement)call, callee);
+		checkModifiesTransitive((Statement) call, callee);
 	}
 
 	/**
 	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
 	 */
 	private void checkModifiesTransitive(final ForkStatement fork, final String callee) {
-		checkModifiesTransitive((Statement)fork, callee);
+		checkModifiesTransitive((Statement) fork, callee);
 	}
 
 	/**
@@ -914,8 +911,6 @@ public class TypeChecker extends BaseObserver {
 			}
 		}
 	}
-
-
 
 	private void processBody(final Body body, final String prodecureId) {
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.LOCAL, prodecureId);
@@ -1125,9 +1120,7 @@ public class TypeChecker extends BaseObserver {
 	private void typeError(final BoogieASTNode BoogieASTNode, final String message) {
 		final TypeErrorResult<BoogieASTNode> result = new TypeErrorResult<>(BoogieASTNode, Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), message);
-
-		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID)
-				.error(BoogieASTNode.getLocation() + ": " + message);
+		mLogger.error(BoogieASTNode.getLocation() + ": " + message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
@@ -1142,7 +1135,7 @@ public class TypeChecker extends BaseObserver {
 
 		@Override
 		public void report(final Function<String, String> func) {
-//			final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
+			// final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
 			final String pp;
 			if (mReportNode instanceof Expression) {
 				pp = BoogiePrettyPrinter.print((Expression) mReportNode);
@@ -1156,20 +1149,19 @@ public class TypeChecker extends BaseObserver {
 
 	}
 
-//	class InternalErrorReporter implements ITypeErrorReporter<Object, String> {
-//
-//		private final Object mReportNode;
-//
-//		InternalErrorReporter(final Object reportNode) {
-//			mReportNode = reportNode;
-//		}
-//
-//		@Override
-//		public void report(final Function<Object, String> func) {
-//			TypeCheckHelper.internalError(func.apply(mReportNode));
-//		}
-//
-//	}
-
+	// class InternalErrorReporter implements ITypeErrorReporter<Object, String> {
+	//
+	// private final Object mReportNode;
+	//
+	// InternalErrorReporter(final Object reportNode) {
+	// mReportNode = reportNode;
+	// }
+	//
+	// @Override
+	// public void report(final Function<Object, String> func) {
+	// TypeCheckHelper.internalError(func.apply(mReportNode));
+	// }
+	//
+	// }
 
 }
