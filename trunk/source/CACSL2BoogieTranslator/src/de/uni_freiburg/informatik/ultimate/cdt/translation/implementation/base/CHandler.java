@@ -2994,7 +2994,7 @@ public class CHandler {
 				// ACSL at the end of a function or at the end of the last statement in a switch
 				// that is not terminated by a break
 				// TODO: the latter case needs fixing, the ACSL is inserted outside the
-				// corresponding if-scope righ tnow
+				// corresponding if-scope right now
 				// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield
 				// a unsafe boogie program
 				for (final ACSLNode acslNode : mAcsl.getAcsl()) {

@@ -774,8 +774,6 @@ public class ACSLHandler implements IACSLHandler {
 		Collections.reverse(args);
 		args.toArray(idx);
 		final ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arr, main.getAcslHook());
-
-		assert idExprRes.getClass() == ExpressionResult.class;
 		final Expression subExpr = idExprRes.getLrValue().getValue();
 
 		resultBuilder.addAllExceptLrValue(idExprRes);
