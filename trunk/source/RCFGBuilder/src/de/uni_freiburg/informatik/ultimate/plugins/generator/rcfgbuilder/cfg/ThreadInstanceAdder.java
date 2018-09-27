@@ -38,8 +38,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -51,6 +54,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgF
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -59,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -76,17 +84,17 @@ public class ThreadInstanceAdder {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-
-	public ThreadInstanceAdder(final IUltimateServiceProvider services)  {
+	public ThreadInstanceAdder(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
-//	public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer icfg,
+	// public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer
+	// icfg,
 	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
-			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
-			final Map<String, ThreadInstance> threadInstanceMap) {
+			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads,
+			final Collection<String> forkedProcedureNames, final Map<String, ThreadInstance> threadInstanceMap) {
 		for (final IIcfgForkTransitionThreadCurrent fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
 
@@ -116,11 +124,12 @@ public class ThreadInstanceAdder {
 
 	/**
 	 * @return true iff
-	 * <ul>
-	 * <li> assignmentLhs is empty (which means that we do not care about the return value of this thread) and
-	 * <li> both list have same length and
-	 * <li> all Sorts are pairwise equivalent
-	 * </ul>
+	 *         <ul>
+	 *         <li>assignmentLhs is empty (which means that we do not care about the
+	 *         return value of this thread) and
+	 *         <li>both list have same length and
+	 *         <li>all Sorts are pairwise equivalent
+	 *         </ul>
 	 */
 	private static boolean isReturnValueCompatible(final List<IProgramVar> assignmentLhs,
 			final List<ILocalProgramVar> outParams) {
@@ -141,16 +150,16 @@ public class ThreadInstanceAdder {
 
 	/**
 	 * @return true iff
-	 * <ul>
-	 * <li> both arrays have same length and
-	 * <li> all Sorts are pairwise equivalent
-	 * </ul>
+	 *         <ul>
+	 *         <li>both arrays have same length and
+	 *         <li>all Sorts are pairwise equivalent
+	 *         </ul>
 	 */
 	private static boolean isThreadIdCompatible(final IProgramNonOldVar[] idVars, final Term[] terms) {
 		if (idVars.length != terms.length) {
 			return false;
 		} else {
-			for (int i=0; i<idVars.length; i++) {
+			for (int i = 0; i < idVars.length; i++) {
 				if (!idVars[i].getTerm().getSort().equals(terms[i].getSort())) {
 					return false;
 				}
@@ -162,18 +171,19 @@ public class ThreadInstanceAdder {
 	/**
 	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry
 	 * location of the forked procedure.
+	 *
 	 * @param edge
 	 *            that points to the next step in the current thread.
 	 */
-	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent fct,
-			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg) {
+	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent fct, final IcfgLocation errorNode,
+			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
+			final IIcfg<? extends IcfgLocation> icfg) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
 		final String forkedProcedure = fct.getNameOfForkedProcedure();
-		assert icfg.getProcedureEntryNodes().containsKey(forkedProcedure) : "Source code contains" + " fork of " + forkedProcedure
-				+ " but no such procedure.";
+		assert icfg.getProcedureEntryNodes().containsKey(forkedProcedure) : "Source code contains" + " fork of "
+				+ forkedProcedure + " but no such procedure.";
 
 		// Add fork transition from callerNode to procedures entry node.
 		final IcfgLocation callerNode = fct.getSource();
@@ -221,6 +231,7 @@ public class ThreadInstanceAdder {
 
 	/**
 	 * Add JoinOtherThreadEdge from
+	 *
 	 * @param edge
 	 */
 	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent jot, final String procName,
@@ -230,7 +241,6 @@ public class ThreadInstanceAdder {
 		// overapproximation flags
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(procName);
 		final IcfgLocation callerNode = jot.getTarget();
-
 
 		final JoinSmtArguments jsa = jot.getJoinSmtArguments();
 
@@ -254,8 +264,8 @@ public class ThreadInstanceAdder {
 					Arrays.asList(parameterAssignment, threadIdAssumption, threadInUseAssignment));
 		}
 
-		final IcfgJoinThreadOtherTransition joinThreadOther = ef.createJoinThreadOtherTransition(exitNode, callerNode, null,
-				joinTransformula, jot);
+		final IcfgJoinThreadOtherTransition joinThreadOther = ef.createJoinThreadOtherTransition(exitNode, callerNode,
+				null, joinTransformula, jot);
 		exitNode.addOutgoing(joinThreadOther);
 		callerNode.addIncoming(joinThreadOther);
 
@@ -265,9 +275,9 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-
 	/**
 	 * TODO Concurrent Boogie:
+	 *
 	 * @param mgdScript
 	 */
 	private static UnmodifiableTransFormula constructForkInUseAssignment(final IProgramNonOldVar threadInUseVar,
@@ -281,27 +291,28 @@ public class ThreadInstanceAdder {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-
 	/**
 	 * TODO Concurrent Boogie:
+	 *
 	 * @param mgdScript
-	 * @return A {@link TransFormula} that represents the assume statement {@code var == true}.
+	 * @return A {@link TransFormula} that represents the assume statement
+	 *         {@code var == true}.
 	 */
 	private UnmodifiableTransFormula constructThreadInUseViolationAssumption(final IProgramNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> inVars = Collections.singletonMap(threadInUseVar,
 				threadInUseVar.getTermVariable());
 		final Map<IProgramVar, TermVariable> outVars = inVars;
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true,
-				Collections.emptySet(), true, Collections.emptySet(), true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
+				Collections.emptySet(), true);
 		tfb.setFormula(threadInUseVar.getTermVariable());
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mgdScript);
 	}
 
-
 	/**
 	 * TODO Concurrent Boogie:
+	 *
 	 * @param mgdScript
 	 * @return A {@link TransFormula} that represents the assignment statement
 	 *         {@code var := false}.
@@ -317,5 +328,66 @@ public class ThreadInstanceAdder {
 		return tfb.finishConstruction(mgdScript);
 	}
 
+	/**
+	 * Construct the {@link ThreadInstance} objects but does not yet add
+	 * {@link IProgramVar}s and error locations to the {@link IIcfg}.
+	 */
+	public Map<String, ThreadInstance> constructTreadInstances(final IIcfg<? extends IcfgLocation> icfg,
+			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads) {
+		final Map<String, ThreadInstance> result = new HashMap<>();
+		final DefaultIcfgSymbolTable symbolTable = (DefaultIcfgSymbolTable) icfg.getCfgSmtToolkit().getSymbolTable();
+		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+		int i = 0;
+		for (final IIcfgForkTransitionThreadCurrent fork : forkCurrentThreads) {
+			final String procedureName = fork.getNameOfForkedProcedure();
+			final String threadInstanceId = procedureName;
+			if (result.containsKey(procedureName)) {
+				// workaround
+				continue;
+			}
+			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
+			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
+					fork.getForkSmtArguments().getThreadIdArguments().getTerms());
+
+			final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(), i,
+					ProcedureErrorType.INUSE_VIOLATION);
+			final IcfgLocation errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
+			final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar,
+					errorLocation);
+			i++;
+		}
+		return result;
+	}
+
+	public static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
+			final ManagedScript mgdScript) {
+		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + threadInstanceId + "_inUse",
+				booleanSort, mgdScript);
+		return threadInUseVar;
+	}
+
+	public static BoogieNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
+			final ManagedScript mgdScript, final Term[] threadIdArguments) {
+		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[threadIdArguments.length];
+		int i = 0;
+		for (final Term forkId : threadIdArguments) {
+			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + threadInstanceId, forkId.getSort(),
+					mgdScript);
+			i++;
+		}
+		return threadIdVars;
+	}
+
+	/**
+	 * TODO Concurrent Boogie:
+	 */
+	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
+			final ManagedScript mgdScript) {
+		mgdScript.lock(id);
+		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
+		mgdScript.unlock(id);
+		return var;
+	}
 
 }
