@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.TranslatorConcatenation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -78,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -157,7 +159,8 @@ public class CfgBuilder {
 	private Map<String, ThreadInstance> mThreadInstanceMap;
 
 
-	private final RCFGBacktranslator mBacktranslator;
+	private final RCFGBacktranslator mRcfgBacktranslator;
+	private ITranslator mResultingBacktranslator;
 
 	private final CodeBlockSize mCodeBlockSize;
 
@@ -172,11 +175,10 @@ public class CfgBuilder {
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 
-	public CfgBuilder(final Unit unit, final RCFGBacktranslator backtranslator, final IUltimateServiceProvider services,
+	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBacktranslator = backtranslator;
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
@@ -205,6 +207,11 @@ public class CfgBuilder {
 
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization, forkStatements);
+		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
+		backtranslator.setTerm2Expression(mBoogie2smt.getTerm2Expression());
+		mRcfgBacktranslator = backtranslator;
+
+
 		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
 		if (concurInfo != null) {
 			mThreadInstanceMap = concurInfo.getThreadInstanceMap();
@@ -362,7 +369,6 @@ public class CfgBuilder {
 
 		IIcfg<? extends IcfgLocation> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
-		final CodeBlockFactory cbf = mCbf;
 		if (!mForkCurrentThreads.isEmpty()) {
 			final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
 					Term.class, mLogger);
@@ -377,8 +383,13 @@ public class CfgBuilder {
 					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
 					.collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
+//			threadInstanceMap = adder.constructTreadInstances(result, forkCurrentThreads)
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
-					threadInstanceMap, cbf);
+					threadInstanceMap);
+			mResultingBacktranslator = new TranslatorConcatenation<IcfgEdge, IcfgEdge, BoogieASTNode, Term, Term, Expression, IcfgLocation, IcfgLocation, String>(
+					backtranslator, mRcfgBacktranslator);
+		} else {
+			mResultingBacktranslator = mRcfgBacktranslator;
 		}
 
 		return result;
@@ -878,7 +889,7 @@ public class CfgBuilder {
 			for (final EnsuresSpecification spec : ensures) {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				ModelUtils.copyAnnotations(spec, st);
-				mBacktranslator.putAux(st, new BoogieASTNode[] { spec });
+				mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 				processAssuAssiHavoStatement(st, Origin.ENSURES);
 				mLastStmt = st;
 			}
@@ -898,7 +909,7 @@ public class CfgBuilder {
 					assumeSt = new AssumeStatement(spec.getLocation(), getNegation(specExpr));
 					final Statement st = assumeSt;
 					ModelUtils.copyAnnotations(spec, st);
-					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
+					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
 					final CodeBlock assumeEdge =
 							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
@@ -923,7 +934,7 @@ public class CfgBuilder {
 				for (final RequiresSpecification spec : requires) {
 					final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 					ModelUtils.copyAnnotations(spec, st);
-					mBacktranslator.putAux(st, new BoogieASTNode[] { spec });
+					mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 					processAssuAssiHavoStatement(st, Origin.REQUIRES);
 					mLastStmt = st;
 				}
@@ -1077,7 +1088,7 @@ public class CfgBuilder {
 			final Expression assertion = st.getFormula();
 			final AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			ModelUtils.copyAnnotations(st, assumeError);
-			mBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
+			mRcfgBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 			final StatementSequence assumeErrorCB =
 					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
@@ -1099,7 +1110,7 @@ public class CfgBuilder {
 			}
 			final Statement st1 = assumeSafe;
 			ModelUtils.copyAnnotations(st, st1);
-			mBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
+			mRcfgBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
 			final StatementSequence assumeSafeCB =
 					mCbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
 			ModelUtils.copyAnnotations(st, assumeSafeCB);
@@ -1205,7 +1216,7 @@ public class CfgBuilder {
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
 					final Statement st1 = assumeSt;
 					ModelUtils.copyAnnotations(st, st1);
-					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
+					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 					final StatementSequence errorCB =
 							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
@@ -1510,5 +1521,9 @@ public class CfgBuilder {
 			}
 			return result;
 		}
+	}
+
+	public ITranslator getBacktranslator() {
+		return mResultingBacktranslator;
 	}
 }

@@ -84,12 +84,10 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			return true;
 		}
 		final Unit unit = (Unit) root;
-		final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
-		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
+		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, mServices, mStorage);
 		try {
 			mGraphroot = recCFGBuilder.createIcfg(unit);
-			translator.setTerm2Expression(recCFGBuilder.getBoogie2smt().getTerm2Expression());
-			mServices.getBacktranslationService().addTranslator(translator);
+			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
 			if ("Cannot create quantifier in quantifier-free logic".equals(message)

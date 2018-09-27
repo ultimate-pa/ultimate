@@ -34,10 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -90,11 +86,11 @@ public class ThreadInstanceAdder {
 	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads, final Collection<String> forkedProcedureNames,
-			final Map<String, ThreadInstance> threadInstanceMap, final CodeBlockFactory cbf) {
+			final Map<String, ThreadInstance> threadInstanceMap) {
 		for (final IIcfgForkTransitionThreadCurrent fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
 
-			addForkOtherThreadTransition1(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg);
 		}
 
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
@@ -110,7 +106,7 @@ public class ThreadInstanceAdder {
 						jot.getJoinSmtArguments().getAssignmentLhs(),
 						icfg.getCfgSmtToolkit().getOutParams().get(procName));
 				if (threadIdCompatible && returnValueCompatible) {
-					addJoinOtherThreadTransition1(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg, cbf);
+					addJoinOtherThreadTransition(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg);
 				}
 			}
 			// }
@@ -169,10 +165,9 @@ public class ThreadInstanceAdder {
 	 * @param edge
 	 *            that points to the next step in the current thread.
 	 */
-	private void addForkOtherThreadTransition1(final IIcfgForkTransitionThreadCurrent fct,
+	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent fct,
 			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
-			final CodeBlockFactory cbf) {
+			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
@@ -225,68 +220,12 @@ public class ThreadInstanceAdder {
 	}
 
 	/**
-	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry
-	 * location of the forked procedure.
-	 * @param edge
-	 *            that points to the next step in the current thread.
-	 */
-	private void addForkOtherThreadTransition(final ForkThreadCurrent forkEdgeCurrent,
-			final BoogieIcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
-		// FIXME Matthias 2018-08-17: check method, especially for terminology and
-		// overapproximation flags
-
-		final ForkStatement st = forkEdgeCurrent.getForkStatement();
-		final String callee = st.getProcedureName();
-		assert icfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " fork of " + callee
-				+ " but no such procedure.";
-
-		// Add fork transition from callerNode to procedures entry node.
-		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) forkEdgeCurrent.getSource();
-		final BoogieIcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(callee);
-
-		final ForkSmtArguments fsa = forkEdgeCurrent.getForkSmtArguments();
-
-		final ForkThreadOther fork = cbf.constructForkOtherThread(callerNode, calleeEntryLoc, st, forkEdgeCurrent);
-		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(icfg.getSymboltable(),
-				icfg.getBoogie2SMT().getManagedScript(),
-				icfg.getCfgSmtToolkit().getInParams().get(st.getProcedureName()));
-
-		final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(icfg.getSymboltable(),
-				icfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVars));
-		final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
-				icfg.getCfgSmtToolkit().getManagedScript());
-		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-				Arrays.asList(parameterAssignment, threadIdAssignment, threadInUseAssignment));
-		fork.setTransitionFormula(forkTransformula);
-
-		// Add the assume statement for the error location and construct the
-		final ILocation forkLocation = st.getLocation();
-		final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar,
-				icfg.getCfgSmtToolkit().getManagedScript());
-		final Expression formula = icfg.getBoogie2SMT().getTerm2Expression()
-				.translate(forkErrorTransFormula.getFormula());
-		final AssumeStatement assumeError = new AssumeStatement(forkLocation, formula);
-		final StatementSequence errorStatement = cbf.constructStatementSequence(callerNode, errorNode, assumeError);
-		errorStatement.setTransitionFormula(forkErrorTransFormula);
-
-		// TODO Matthias 2018-09-15: Set overapproximations for both edges
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(forkEdgeCurrent);
-		}
-	}
-
-
-	/**
 	 * Add JoinOtherThreadEdge from
 	 * @param edge
 	 */
-	private void addJoinOtherThreadTransition1(final IIcfgJoinTransitionThreadCurrent jot, final String procName,
+	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent jot, final String procName,
 			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
-			final IIcfg<? extends IcfgLocation> icfg, final CodeBlockFactory cbf) {
+			final IIcfg<? extends IcfgLocation> icfg) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(procName);
@@ -294,29 +233,6 @@ public class ThreadInstanceAdder {
 
 
 		final JoinSmtArguments jsa = jot.getJoinSmtArguments();
-
-//		// TODO Matthias 2018-08-16: IssueId:Feldberg
-//		//
-//		// use the following list and the jsa to do a comparison
-//		// based on sorts (instead of types)
-//		final List<ILocalProgramVar> outParams = icfg.getCfgSmtToolkit().getOutParams().get(procName);
-//		//
-//		//
-//
-//		if (threadIdVars.length != st.getThreadID().length) {
-//			return;
-//		} else {
-//			int offset = 0;
-//			for (final IProgramNonOldVar threadId : threadIdVars) {
-//				if (st.getThreadID()[offset].getType() != ((BoogieIcfgContainer) icfg).getBoogie2SMT().getTypeSortTranslator()
-//						.getType(threadId.getSort())) {
-//					return;
-//				}
-//				offset++;
-//			}
-//		}
-
-		final String caller = callerNode.getProcedure();
 
 		final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 
@@ -348,71 +264,6 @@ public class ThreadInstanceAdder {
 			new Overapprox(overapproximations).annotate(jot);
 		}
 	}
-
-
-	/**
-	 * Add JoinOtherThreadEdge from
-	 * @param edge
-	 */
-	private void addJoinOtherThreadTransition(final JoinThreadCurrent joinEdgeCurrent, final String procName,
-			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
-			final BoogieIcfgContainer icfg, final CodeBlockFactory cbf) {
-		// FIXME Matthias 2018-08-17: check method, especially for terminology and
-		// overapproximation flags
-		final JoinStatement st = joinEdgeCurrent.getJoinStatement();
-		final BoogieIcfgLocation exitNode = icfg.getProcedureExitNodes().get(procName);
-		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) joinEdgeCurrent.getTarget();
-
-
-		final JoinSmtArguments jsa = joinEdgeCurrent.getJoinSmtArguments();
-
-		// TODO Matthias 2018-08-16: IssueId:Feldberg
-		//
-		// use the following list and the jsa to do a comparison
-		// based on sorts (instead of types)
-		final List<ILocalProgramVar> outParams = icfg.getCfgSmtToolkit().getOutParams().get(procName);
-		//
-		//
-
-		if (threadIdVars.length != st.getThreadID().length) {
-			return;
-		} else {
-			int offset = 0;
-			for (final IProgramNonOldVar threadId : threadIdVars) {
-				if (st.getThreadID()[offset].getType() != icfg.getBoogie2SMT().getTypeSortTranslator()
-						.getType(threadId.getSort())) {
-					return;
-				}
-				offset++;
-			}
-		}
-
-		final String caller = callerNode.getProcedure();
-
-		// Create JoinOtherThread object and add TransFormulas.
-		final JoinThreadOther joinOtherThread = cbf.constructJoinOtherThread(exitNode, callerNode, st,
-				joinEdgeCurrent);
-
-		final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(icfg.getSymboltable(),
-				icfg.getBoogie2SMT().getManagedScript(), Arrays.asList(threadIdVars));
-
-		final UnmodifiableTransFormula parameterAssignment = jsa.constructResultAssignment(
-				icfg.getBoogie2SMT().getManagedScript(), icfg.getCfgSmtToolkit().getOutParams().get(procName));
-
-		final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUseVar,
-				icfg.getCfgSmtToolkit().getManagedScript());
-		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-				Arrays.asList(parameterAssignment, threadIdAssumption, threadInUseAssignment));
-		joinOtherThread.setTransitionFormula(joinTransformula);
-
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(joinEdgeCurrent);
-		}
-	}
-
 
 
 	/**

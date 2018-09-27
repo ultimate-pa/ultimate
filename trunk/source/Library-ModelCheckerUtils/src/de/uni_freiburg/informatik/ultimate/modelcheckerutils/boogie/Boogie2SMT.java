@@ -234,7 +234,7 @@ public class Boogie2SMT {
 		} else {
 			final Map<String, ThreadInstance> result = new HashMap<>();
 			for (final ForkStatement st : forkStatements) {
-				final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
+				final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st.getProcedureName(), mgdScript);
 				final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
 				final ThreadInstance ti = new ThreadInstance(st.getProcedureName(),st.getProcedureName(), threadIdVars, threadInUseVar, null);
 				result.put(st.getProcedureName(), ti);
@@ -248,7 +248,7 @@ public class Boogie2SMT {
 			final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
 		final Map<String, BoogieNonOldVar> result = new HashMap<>();
 		for (final ForkStatement st : forkStatements) {
-			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st, mgdScript);
+			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st.getProcedureName(), mgdScript);
 			result.put(st.getProcedureName(), threadInUseVar);
 		}
 		return result;
@@ -265,9 +265,9 @@ public class Boogie2SMT {
 		return result;
 	}
 
-	public static BoogieNonOldVar constructThreadInUseVariable(final ForkStatement st, final ManagedScript mgdScript) {
+	public static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId, final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + st.getProcedureName() + "_inUse",
+		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + threadInstanceId + "_inUse",
 				booleanSort, mgdScript);
 		return threadInUseVar;
 	}
