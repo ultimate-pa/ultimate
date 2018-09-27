@@ -353,6 +353,8 @@ public class CHandler {
 	 * Constructor for CHandler in pre-run mode.
 	 *
 	 * @param staticObjectsHandler
+	 * @param functionToIndex
+	 * @param set
 	 *
 	 */
 	public CHandler(final IUltimateServiceProvider services, final ILogger logger,
@@ -361,7 +363,8 @@ public class CHandler {
 			final ExpressionTranslation exprTrans, final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final StaticObjectsHandler staticObjectsHandler) {
+			final StaticObjectsHandler staticObjectsHandler, final Map<String, Integer> functionToIndex,
+			final Set<IASTNode> variablesOnHeap) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -378,8 +381,8 @@ public class CHandler {
 		mStaticObjectsHandler = staticObjectsHandler;
 		mFunctionTable = functionTable;
 
-		mFunctionToIndex = new LinkedHashMap<>();
-		mVariablesOnHeap = new LinkedHashSet<>();
+		mFunctionToIndex = new LinkedHashMap<>(functionToIndex);
+		mVariablesOnHeap = new LinkedHashSet<>(variablesOnHeap);
 
 		mContract = new ArrayList<>();
 		mInnerMostLoopLabel = new ArrayDeque<>();
