@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -61,10 +63,6 @@ public class SymbolTableValue {
 	 * The variable declaration in the Boogie program.
 	 */
 	private final Declaration mBoogieDecl;
-	// /**
-	// * Whether the variable is a global variable in the C program or not.
-	// */
-	// private final boolean mIsGlobalVar;
 
 	private final boolean mIsIntFromPointer;
 
@@ -130,7 +128,7 @@ public class SymbolTableValue {
 			mHasConstantValue = true;
 		} else {
 			mConstantValue = constantValue;
-			mHasConstantValue = true;
+			mHasConstantValue = false;
 		}
 	}
 
@@ -163,7 +161,6 @@ public class SymbolTableValue {
 	 * @return the isGlobalVar
 	 */
 	public boolean isBoogieGlobalVar() {
-		// return mIsGlobalVar;
 		return mDeclarationInformation.getStorageClass() == StorageClass.GLOBAL;
 	}
 
@@ -198,7 +195,7 @@ public class SymbolTableValue {
 	/**
 	 * Returns a SymbolTableValue that is excactly like this object, but is marked as "isIntFromPointer" in addition.
 	 * (will return an exact copy if isIntFromPointer was already set)
-	 * 
+	 *
 	 * @return
 	 */
 	public SymbolTableValue createMarkedIsIntFromPointer() {
@@ -208,5 +205,24 @@ public class SymbolTableValue {
 
 	public DeclarationInformation getDeclarationInformation() {
 		return mDeclarationInformation;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mCDecl.getName());
+		sb.append(" : ");
+		sb.append(mCDecl.getType());
+		sb.append(" -> ");
+		if (mBoogieDecl != null) {
+			if (mBoogieDecl instanceof VariableDeclaration) {
+				sb.append(BoogiePrettyPrinter.print((VariableDeclaration) mBoogieDecl));
+			} else {
+				sb.append(mBoogieDecl);
+			}
+		} else {
+			sb.append(mBoogieName).append(" : ?");
+		}
+		return sb.toString();
 	}
 }

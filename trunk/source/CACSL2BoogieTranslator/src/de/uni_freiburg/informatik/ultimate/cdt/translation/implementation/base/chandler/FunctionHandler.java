@@ -649,7 +649,8 @@ public class FunctionHandler {
 		final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 		for (int i = 0; i < arguments.length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
-			ExpressionResult in = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, inParam);
+			ExpressionResult in =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, inParam);
 
 			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
@@ -889,7 +890,7 @@ public class FunctionHandler {
 					// we treat an array argument as a pointer -- thus no onHeap treatment here
 					final LocalLValue llv = new LocalLValue(tempLHS, cvar, null);
 					// malloc
-					memoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llv, igLoc));
+					memoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llv, igLoc));
 					// dereference
 					final HeapLValue hlv = LRValueFactory.constructHeapLValue(mTypeHandler, llv.getValue(), cvar, null);
 

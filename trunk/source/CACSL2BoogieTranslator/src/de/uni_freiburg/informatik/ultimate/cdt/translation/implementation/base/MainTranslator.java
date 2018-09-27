@@ -164,8 +164,9 @@ public class MainTranslator {
 		prerunDispatcher.dispatch(nodes);
 		mLogger.info("Completed pre-run");
 
-		final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-				locationFactory, witnessInvariants, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+		final CHandlerTranslationResult result =
+				performMainRun(translationSettings, prerunCHandler, reporter, locationFactory, witnessInvariants,
+						backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
 		mLogger.info("Completed translation");
 
 		return result.getNode();

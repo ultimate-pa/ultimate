@@ -132,10 +132,6 @@ public class TypeHandler implements ITypeHandler {
 	 * Is true iff we yet processed a floating type. (And hence floating types have to be added to Boogie).
 	 */
 	private boolean mFloatingTypesNeeded = false;
-	/**
-	 * counting levels of struct declaration.
-	 */
-	private int mStructCounter;
 
 	private final BoogieType mBoogiePointerType;
 
@@ -187,12 +183,6 @@ public class TypeHandler implements ITypeHandler {
 		mBoogiePointerType = prerunTypeHandler.mBoogiePointerType;
 		mDefinedTypes = prerunTypeHandler.mDefinedTypes;
 		mIncompleteType = prerunTypeHandler.mIncompleteType;
-	}
-
-	@Override
-	public boolean haveSeenStructDeclaration() {
-		assert mStructCounter >= 0;
-		return mStructCounter != 0;
 	}
 
 	@Override
@@ -425,7 +415,6 @@ public class TypeHandler implements ITypeHandler {
 		final ArrayList<String> fNames = new ArrayList<>();
 		final ArrayList<CType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
-		mStructCounter++;
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
@@ -449,7 +438,6 @@ public class TypeHandler implements ITypeHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
-		mStructCounter--;
 
 		final String cId = node.getName().toString();
 		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);

@@ -942,8 +942,7 @@ public class StandardFunctionHandler {
 		// stackframe is closed, i.e. at a return
 		if ("alloca".equals(methodName) || "__builtin_alloca".equals(methodName)) {
 			final LocalLValue llVal = new LocalLValue(auxvar.getLhs(), resultType, null);
-			mMemoryHandler.addVariableToBeFreed(main,
-					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
+			mMemoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after
 			// this, and free (triggered by the statement before) would fail.
 			erb.clearAuxVars();

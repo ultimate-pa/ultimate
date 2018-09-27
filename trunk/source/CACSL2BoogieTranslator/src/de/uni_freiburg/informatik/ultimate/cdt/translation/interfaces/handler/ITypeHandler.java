@@ -64,13 +64,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public interface ITypeHandler extends IHandler {
 
 	/**
-	 * Whether the current declaration is a struct declaration.
-	 *
-	 * @return true, iff struct field declarations are dispatched.
-	 */
-	boolean haveSeenStructDeclaration();
-
-	/**
 	 * Translates an IASTSimpleDeclSpecifier. Basically treats all the build in types of C
 	 *
 	 * @param main

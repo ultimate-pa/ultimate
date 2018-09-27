@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -188,12 +187,9 @@ public class ProcedureManager {
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
 	 *
-	 * @param main
-	 *            a reference to the main IDispatcher.
 	 * @return procedure declarations
 	 */
-	public List<Declaration> computeFinalProcedureDeclarations(final IDispatcher main,
-			final MemoryHandler memoryHandler) {
+	public List<Declaration> computeFinalProcedureDeclarations(final MemoryHandler memoryHandler) {
 		final BoogieProcedureInfo notDeclaredProcedure = isEveryCalledProcedureDeclared();
 		if (notDeclaredProcedure != null) {
 			throw new UndeclaredFunctionException(null, "a function that is called in the program "

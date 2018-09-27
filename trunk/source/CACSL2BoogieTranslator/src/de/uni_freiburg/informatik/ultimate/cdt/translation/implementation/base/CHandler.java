@@ -579,9 +579,9 @@ public class CHandler {
 		 * have to block this in prerun, because there, memory model is not declared which may cause problems with the
 		 * call graph computation
 		 */
-		if (!(main instanceof PRDispatcher)) {
+		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
-			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(main, mMemoryHandler));
+			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
 		}
 
 		/**
@@ -1262,7 +1262,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
-		if (main instanceof MainDispatcher) {
+		if (!mIsPrerun) {
 			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
 			if (assertWitnessInvariant != null) {
 				stmt.add(assertWitnessInvariant);
@@ -2452,25 +2452,28 @@ public class CHandler {
 	}
 
 	private Result handleIASTDeclarator(final IDispatcher main, final ILocation loc, final IASTSimpleDeclaration node,
-			final DeclaratorResult declResult, final IASTDeclarator d, final CDeclaration cDec,
+			final DeclaratorResult declResult, final IASTDeclarator hook, final CDeclaration cDec,
 			final CStorageClass storageClass) {
 
 		// if the same variable is declared multiple times (within the same scope), we
 		// only keep one declaration if one of them has an initializer, we keep that one.
 		// if we are inside a struct declaration however, this does not apply, we
 		// proceed as normal, as the result is needed to build the struct type
-		if (!mTypeHandler.haveSeenStructDeclaration()) {
-			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(d, cDec.getName());
+
+		final boolean isInsideStructDeclaration = mSymbolTable.isInsideStructDeclaration(hook);
+
+		if (!isInsideStructDeclaration) {
+			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(hook, cDec.getName());
 			if (stv != null && (!stv.getCDecl().hasInitializer() || cDec.hasInitializer())
-					&& mProcedureManager.isGlobalScope() && !mTypeHandler.haveSeenStructDeclaration()) {
+					&& mProcedureManager.isGlobalScope()) {
 				// Keep the last STV with an initializer
-				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
+				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(hook, cDec.getName()).getBoogieDecl());
 			}
 		}
 
 		final boolean onHeap = cDec.isOnHeap();
-		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(d), onHeap,
-				cDec.getType());
+		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
+				onHeap, cDec.getType());
 		if (onHeap) {
 			mBoogieIdsOfHeapVars.add(bId);
 		}
@@ -2478,7 +2481,8 @@ public class CHandler {
 		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
-		mSymbolTable.storeCSymbol(d, cDec.getName(), new SymbolTableValue(bId, null, cDec, dummyDeclInfo, d, false));
+		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+				new SymbolTableValue(bId, null, cDec, dummyDeclInfo, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -2528,8 +2532,7 @@ public class CHandler {
 			final boolean hasRealInitializer =
 					cDec.hasInitializer() && (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
 
-			if (!hasRealInitializer && !mProcedureManager.isGlobalScope()
-					&& !mTypeHandler.haveSeenStructDeclaration()) {
+			if (!hasRealInitializer && !mProcedureManager.isGlobalScope() && !isInsideStructDeclaration) {
 				// in case of a local variable declaration without an
 				// initializer, we need to insert a
 				// havoc statement (because otherwise the variable is
@@ -2559,23 +2562,22 @@ public class CHandler {
 					// old solution: havoc via an auxvar, new solution (below):
 					// just malloc at the right place (much shorter for arrays and structs..)
 					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
-					mMemoryHandler.addVariableToBeFreed(main,
+					mMemoryHandler.addVariableToBeFreed(
 							new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 				}
 				result = erb.build();
-			} else if (hasRealInitializer && !mProcedureManager.isGlobalScope()
-					&& !mTypeHandler.haveSeenStructDeclaration()) {
+			} else if (hasRealInitializer && !mProcedureManager.isGlobalScope() && !isInsideStructDeclaration) {
 				// in case of a local variable declaration with an initializer, the statements
 				// and delcs necessary for the initialization are the result
 				final VariableLHS lhs =
 						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 				final ExpressionResult initRex =
-						mInitHandler.initialize(loc, lhs, cDec.getType(), cDec.getInitializer(), d);
+						mInitHandler.initialize(loc, lhs, cDec.getType(), cDec.getInitializer(), hook);
 
 				if (onHeap) {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
-					mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
+					mMemoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llVal, loc));
 					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
 				}
 				erb.addAllExceptLrValueAndHavocAux(initRex);
@@ -2592,8 +2594,8 @@ public class CHandler {
 
 		// reset the symbol table value with its final contents
 		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to happen?
-		mSymbolTable.storeCSymbol(d, cDec.getName(),
-				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, d, false));
+		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
 		return result;
 	}
 

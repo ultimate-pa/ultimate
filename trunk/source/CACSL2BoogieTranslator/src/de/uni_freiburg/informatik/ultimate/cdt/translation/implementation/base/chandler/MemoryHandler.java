@@ -738,7 +738,7 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 
-	public void addVariableToBeFreed(final IDispatcher main, final LocalLValueILocationPair llvp) {
+	public void addVariableToBeFreed(final LocalLValueILocationPair llvp) {
 		mVariablesToBeFreed.put(llvp, mVariablesToBeFreed.getActiveScopeNum());
 	}
 
