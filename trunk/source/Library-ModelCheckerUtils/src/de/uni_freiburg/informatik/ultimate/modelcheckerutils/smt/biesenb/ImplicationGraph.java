@@ -67,6 +67,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		mVertices.add(mFalseVertex);
 		mPredicateMap.put(predicateTrue, mTrueVertex);
 		mPredicateMap.put(predicateFalse, mFalseVertex);
+		completeGraph();
 	}
 
 	protected ImplicationVertex<T> getTrueVertex() {

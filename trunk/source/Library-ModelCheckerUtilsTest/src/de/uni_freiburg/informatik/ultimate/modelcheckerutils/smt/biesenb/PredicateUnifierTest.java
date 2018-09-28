@@ -100,7 +100,6 @@ public class PredicateUnifierTest {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
-	@Test
 	public void restructurePredicateTrie() {
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
 
