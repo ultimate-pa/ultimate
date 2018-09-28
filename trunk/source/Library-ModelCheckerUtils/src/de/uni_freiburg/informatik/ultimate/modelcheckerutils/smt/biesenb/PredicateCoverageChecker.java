@@ -23,7 +23,7 @@ public class PredicateCoverageChecker implements IPredicateCoverageChecker {
 
 	@Override
 	public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
-		if (mImplicationGraph.implication(lhs, rhs, false)) {
+		if (mImplicationGraph.implication(lhs, rhs)) {
 			return Validity.VALID;
 		}
 		return Validity.INVALID;

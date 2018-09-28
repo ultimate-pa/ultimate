@@ -141,12 +141,12 @@ public class ImplicationGraph<T extends IPredicate> {
 				max = count;
 				maxVertex = vertex;
 			}
-			if (implication(maxVertex.getPredicate(), predicate, true)) {
+			if (internImplication(maxVertex.getPredicate(), predicate, true)) {
 				marked.add(maxVertex);
 				copy.getFirst().removeAllVerticesImplying(maxVertex);
 				continue;
 			}
-			copy.getFirst().removeAllImpliedVertices(maxVertex, false);
+			copy.getFirst().InternRemoveAllImpliedVertices(maxVertex, false);
 			for (final ImplicationVertex<T> v2 : maxVertex.getParents()) {
 				v2.removeChild(maxVertex);
 			}
@@ -170,9 +170,9 @@ public class ImplicationGraph<T extends IPredicate> {
 				max = count;
 				maxVertex = vertex;
 			}
-			if (implication(predicate, maxVertex.getPredicate(), true)) {
+			if (internImplication(predicate, maxVertex.getPredicate(), true)) {
 				marked.add(maxVertex);
-				subCopy.getFirst().removeAllImpliedVertices(maxVertex, false);
+				subCopy.getFirst().InternRemoveAllImpliedVertices(maxVertex, false);
 				continue;
 			}
 			subCopy.getFirst().removeAllVerticesImplying(maxVertex);
@@ -189,13 +189,17 @@ public class ImplicationGraph<T extends IPredicate> {
 		mPredicateMap.put(predicate, newVertex);
 		return newVertex;
 	}
-
+	
 	/**
 	 * removes all implied predicates from the implication graph
 	 *
 	 * @return false if the predicate is not in the implication graph, else true
 	 */
-	protected boolean removeAllImpliedVertices(final ImplicationVertex<T> vertex, final boolean keepTrueVertex) {
+	protected boolean removeAllImpliedVertices(final ImplicationVertex<T> vertex) {
+		return InternRemoveAllImpliedVertices(vertex, true);
+	}
+
+	private boolean InternRemoveAllImpliedVertices(final ImplicationVertex<T> vertex, final boolean keepTrueVertex) {
 		if (!mVertices.contains(vertex)) {
 			return false;
 		}
@@ -259,7 +263,7 @@ public class ImplicationGraph<T extends IPredicate> {
 			final ImplicationVertex<T> next = parentless.pop();
 			if (collection.contains(next.getPredicate())) {
 				result.add(next.getPredicate());
-				copyGraph.removeAllImpliedVertices(next, false);
+				copyGraph.InternRemoveAllImpliedVertices(next, false);
 			} else {
 				for (final ImplicationVertex<T> child : next.getChildren()) {
 					child.removeParent(next);
@@ -277,7 +281,11 @@ public class ImplicationGraph<T extends IPredicate> {
 	 *
 	 * @return true if a implies b
 	 */
-	protected boolean implication(final T a, final T b, final boolean useSolver) {
+	protected boolean implication(final T a, final T b) {
+		return internImplication(a, b, false);
+	}
+	
+	protected boolean internImplication(final T a, final T b, final boolean useSolver) {
 		if (a.equals(b)) {
 			return true;
 		}

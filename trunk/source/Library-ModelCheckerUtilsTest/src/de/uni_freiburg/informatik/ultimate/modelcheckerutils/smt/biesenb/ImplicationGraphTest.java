@@ -92,14 +92,14 @@ public class ImplicationGraphTest {
 		final TestPredicate pred5 = pred("=", b, 0);
 		final TestPredicate pred6 = or(pred1, pred5);
 
-		Assert.assertTrue("1", impG.implication(pred1, pred1, true));
-		Assert.assertFalse("2", impG.implication(pred1, pred2, true));
-		Assert.assertTrue("3", impG.implication(pred1, pred3, true));
-		Assert.assertFalse("4", impG.implication(pred1, pred4, true));
-		Assert.assertFalse("5", impG.implication(pred1, pred5, true));
-		Assert.assertTrue("6", impG.implication(pred1, pred6, true));
-		Assert.assertTrue("7", impG.implication(pred4, pred3, true));
-		Assert.assertFalse("8", impG.implication(pred3, pred1, true));
+		Assert.assertTrue("1", impG.internImplication(pred1, pred1, true));
+		Assert.assertFalse("2", impG.internImplication(pred1, pred2, true));
+		Assert.assertTrue("3", impG.internImplication(pred1, pred3, true));
+		Assert.assertFalse("4", impG.internImplication(pred1, pred4, true));
+		Assert.assertFalse("5", impG.internImplication(pred1, pred5, true));
+		Assert.assertTrue("6", impG.internImplication(pred1, pred6, true));
+		Assert.assertTrue("7", impG.internImplication(pred4, pred3, true));
+		Assert.assertFalse("8", impG.internImplication(pred3, pred1, true));
 	}
 	
 
