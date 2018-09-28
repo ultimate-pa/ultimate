@@ -2478,7 +2478,7 @@ public class CHandler {
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType());
 		if (onHeap) {
-			mBoogieIdsOfHeapVars.add(bId);
+			addBoogieIdsOfHeapVars(bId);
 		}
 
 		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
