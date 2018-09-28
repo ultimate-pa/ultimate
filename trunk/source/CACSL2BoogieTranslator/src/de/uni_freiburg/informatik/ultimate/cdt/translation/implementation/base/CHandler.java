@@ -1001,14 +1001,15 @@ public class CHandler {
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		final boolean isOnHeap = pendingResType.isOnHeap() || mIsPrerun ? false : mVariablesOnHeap.contains(node);
+		final boolean isOnHeap = pendingResType.isOnHeap() || (mIsPrerun ? false : mVariablesOnHeap.contains(node));
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		final TypesResult resType;
+
 		if (pointerOps.length == 0) {
-			resType = pendingResType;
+			resType = TypesResult.create(pendingResType, isOnHeap);
 		} else {
-			resType = TypesResult.create(pendingResType, new CPointer(pendingResType.getCType()));
+			resType = TypesResult.create(pendingResType, isOnHeap, new CPointer(pendingResType.getCType()));
 		}
 
 		// Adapt the name for multiparse input

@@ -777,10 +777,13 @@ public class ACSLHandler implements IACSLHandler {
 		args.toArray(idx);
 
 		// second, dispatch array expression
-		final ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arrayExpr, main.getAcslHook());
+		ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arrayExpr, main.getAcslHook());
+		idExprRes = mExprResultTransformer.switchToRValueIfNecessary(idExprRes, loc, main.getAcslHook());
 		final Expression subExpr = idExprRes.getLrValue().getValue();
 
 		resultBuilder.addAllExceptLrValue(idExprRes);
+
+		// TODO: This does not work for arrays on heap!
 
 		// TODO: compute the CType of returned ResultExpression
 		// basic idea: same as arrayType (below) except the last args.size() entries of

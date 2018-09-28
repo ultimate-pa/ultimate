@@ -86,11 +86,6 @@ public class TypesResult extends Result {
 		this(node, isConst, isVoid, false, cvar, Collections.emptyList());
 	}
 
-	private TypesResult(final TypesResult copy) {
-		this(copy.getAstType(), copy.isConst(), copy.isVoid(), copy.isOnHeap(), copy.getCType(),
-				copy.getTypeDeclarations());
-	}
-
 	private TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final boolean isOnHeap,
 			final CType cvar, final List<TypeDeclaration> typeDecls) {
 		super(node);
@@ -98,7 +93,7 @@ public class TypesResult extends Result {
 		mIsVoid = isVoid;
 		mCType = cvar;
 		mIsOnHeap = isOnHeap;
-		mTypeDeclarations = typeDecls;
+		mTypeDeclarations = Collections.unmodifiableList(typeDecls);
 	}
 
 	public ASTType getAstType() {
@@ -114,7 +109,7 @@ public class TypesResult extends Result {
 	}
 
 	public List<TypeDeclaration> getTypeDeclarations() {
-		return Collections.unmodifiableList(mTypeDeclarations);
+		return mTypeDeclarations;
 	}
 
 	public CType getCType() {
@@ -137,6 +132,11 @@ public class TypesResult extends Result {
 
 	public static TypesResult create(final TypesResult resType, final CType cType) {
 		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), resType.isOnHeap(), cType,
+				resType.getTypeDeclarations());
+	}
+
+	public static TypesResult create(final TypesResult resType, final boolean isOnHeap) {
+		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), isOnHeap, resType.getCType(),
 				resType.getTypeDeclarations());
 	}
 }
