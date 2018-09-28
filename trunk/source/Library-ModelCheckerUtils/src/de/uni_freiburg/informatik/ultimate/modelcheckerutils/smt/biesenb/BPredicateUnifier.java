@@ -241,7 +241,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		final Collection<IPredicate> minimalConjunction =
-				mImplicationGraph.removeImplyedVerticesFromCollection(conjunction);
+				mImplicationGraph.removeImpliedVerticesFromCollection(conjunction);
 		final IPredicate pred = mBasicPredicateFactory.and(minimalConjunction);
 		for (final IPredicate p : mPredicates) {
 			if (p.getFormula().equals(pred.getFormula())) {

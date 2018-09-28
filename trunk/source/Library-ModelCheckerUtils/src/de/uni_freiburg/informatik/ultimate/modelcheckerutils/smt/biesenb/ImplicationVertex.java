@@ -32,20 +32,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The implication vertex is part of the @ImplicationGraph.java and stores a predicate
- * Descendants are implied predicates and ancestors imply the predicate.
- * 
+ * The implication vertex is part of the {@link ImplicationGraph} and stores a predicate Descendants are implied
+ * predicates and ancestors imply the predicate.
+ *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class ImplicationVertex<T> {
 	private final T mPredicate;
 	private final Set<ImplicationVertex<T>> mChildren;
 	private final Set<ImplicationVertex<T>> mParents;
+	private Set<ImplicationVertex<T>> mDescendants;
 
-	public ImplicationVertex(final T predicate, final Set<ImplicationVertex<T>> children, final Set<ImplicationVertex<T>> parents) {
+	public ImplicationVertex(final T predicate, final Set<ImplicationVertex<T>> children,
+			final Set<ImplicationVertex<T>> parents) {
 		mPredicate = predicate;
 		mChildren = children;
 		mParents = parents;
+		mDescendants = null;
 	}
 
 	/**
@@ -132,6 +135,15 @@ public class ImplicationVertex<T> {
 	 * @return every predicate that is implied by mPredicate (mPredicate is not included)
 	 */
 	protected Set<ImplicationVertex<T>> getDescendants() {
+		return mDescendants;
+	}
+
+	/**
+	 * Compute all predicates implied by the current predicate.
+	 *
+	 * @return every predicate that is implied by mPredicate (mPredicate is not included)
+	 */
+	private Set<ImplicationVertex<T>> computeDescendants() {
 		final Set<ImplicationVertex<T>> decendants = new HashSet<>(mChildren);
 		final Deque<ImplicationVertex<T>> vertex = new ArrayDeque<>(mChildren);
 		while (!vertex.isEmpty()) {
@@ -141,7 +153,11 @@ public class ImplicationVertex<T> {
 		}
 		return decendants;
 	}
-	
+
+	protected void complete() {
+		mDescendants = computeDescendants();
+	}
+
 	/**
 	 * @return every predicate that implies mPredicate (mPredicate is not included)
 	 */
