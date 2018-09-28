@@ -33,11 +33,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -751,29 +751,33 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final ArrayAccessExpression node) {
+		// handle expressions of the form a[i][j]...
+
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final Stack<Expression> args = new Stack<>();
 
+		// first, dispatch all indices and extract the actual array expression
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-
-		de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression arr = node;
-		do {
-			assert arr instanceof ArrayAccessExpression;
-			assert ((ArrayAccessExpression) arr).getIndices().length == 1;
-			final ExpressionResult arg =
-					(ExpressionResult) main.dispatch(((ArrayAccessExpression) arr).getIndices()[0], main.getAcslHook());
-			assert arg.getClass() == ExpressionResult.class;
-			args.push(arg.getLrValue().getValue());
-			arr = ((ArrayAccessExpression) arr).getArray();
-
+		final Deque<Expression> args = new ArrayDeque<>();
+		de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression arrayExpr = node;
+		while (true) {
+			if (!(arrayExpr instanceof ArrayAccessExpression)) {
+				break;
+			}
+			final ArrayAccessExpression aaExpr = (ArrayAccessExpression) arrayExpr;
+			if (aaExpr.getIndices().length != 1) {
+				throw new AssertionError();
+			}
+			final ExpressionResult arg = (ExpressionResult) main.dispatch(aaExpr.getIndices()[0], main.getAcslHook());
+			args.addFirst(arg.getLrValue().getValue());
+			arrayExpr = aaExpr.getArray();
 			resultBuilder.addAllExceptLrValue(arg);
-
-		} while (arr instanceof ArrayAccessExpression);
+		}
 
 		final Expression[] idx = new Expression[args.size()];
-		Collections.reverse(args);
 		args.toArray(idx);
-		final ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arr, main.getAcslHook());
+
+		// second, dispatch array expression
+		final ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arrayExpr, main.getAcslHook());
 		final Expression subExpr = idExprRes.getLrValue().getValue();
 
 		resultBuilder.addAllExceptLrValue(idExprRes);
