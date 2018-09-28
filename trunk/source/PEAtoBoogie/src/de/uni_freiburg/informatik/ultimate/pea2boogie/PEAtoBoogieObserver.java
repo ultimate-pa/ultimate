@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 import java.util.List;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -55,11 +54,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	}
 
 	private IElement generateBoogie(final List<PatternType> patterns) {
-
-		final Unit unit = new Req2BoogieTranslator(mServices, mStorage, mLogger, patterns).getUnit();
-		if (unit != null) {
-			new PatternContainer(patterns).annotate(unit);
-		}
-		return unit;
+		return new Req2BoogieTranslator(mServices, mStorage, mLogger, patterns).getUnit();
 	}
 }

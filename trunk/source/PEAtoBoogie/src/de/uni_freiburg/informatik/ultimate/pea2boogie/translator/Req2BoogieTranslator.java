@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
@@ -207,6 +208,15 @@ public class Req2BoogieTranslator {
 		mRtInconcistencyConditionGenerator = rticGenerator;
 		decls.add(generateProcedures(init));
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
+		annotateContainedPatternSet(mUnit, mReq2Automata, init);
+
+	}
+
+	private void annotateContainedPatternSet(final Unit unit, final Map<PatternType, PhaseEventAutomata> req2Automata,
+			final List<InitializationPattern> init) {
+		final List<PatternType> patternList = new ArrayList<>(init);
+		req2Automata.entrySet().stream().map(e -> e.getKey()).forEachOrdered(patternList::add);
+		new PatternContainer(patternList).annotate(mUnit);
 	}
 
 	private Map<String, Integer> genId2Bounds(final List<InitializationPattern> inits) {

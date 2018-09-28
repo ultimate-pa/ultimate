@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -56,6 +58,8 @@ public class ReqToPEA {
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
+		final Map<Class<?>, Integer> counter = new HashMap<>();
+
 		for (final PatternType pat : patterns) {
 
 			final PhaseEventAutomata pea;
@@ -63,6 +67,7 @@ public class ReqToPEA {
 				if (ENABLE_DEBUG_LOGS) {
 					mLogger.info("Transforming " + pat.getId());
 				}
+				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
 				pea = pat.transformToPea(peaTrans, id2bounds);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
@@ -79,6 +84,11 @@ public class ReqToPEA {
 				continue;
 			}
 		}
+		mLogger.info("Following types of requirements were processed");
+		for (final Entry<Class<?>, Integer> entry : counter.entrySet()) {
+			mLogger.info(entry.getKey() + " : " + entry.getValue());
+		}
+
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
 		return req2automata;
