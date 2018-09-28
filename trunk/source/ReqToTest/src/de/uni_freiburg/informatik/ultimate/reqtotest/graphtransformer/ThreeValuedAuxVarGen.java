@@ -153,7 +153,7 @@ public class ThreeValuedAuxVarGen {
 		for(TermVariable var: mVariableToUseTerm.keySet()) {
 			final Term usevar = mVariableToUseTerm.get(var);
 			final Term define = SmtUtils.or(mScript, mVariableToDefineTerm.get(var));
-			guards.add(SmtUtils.implies(mScript,usevar ,define ));		
+			guards.add(SmtUtils.binaryBooleanEquality(mScript,usevar ,define ));		
 		}
 		return guards;
 	}
