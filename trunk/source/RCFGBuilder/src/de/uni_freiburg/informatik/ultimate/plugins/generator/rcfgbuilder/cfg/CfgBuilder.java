@@ -383,7 +383,9 @@ public class CfgBuilder {
 					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
 					.collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-//			threadInstanceMap = adder.constructTreadInstances(result, forkCurrentThreads);
+//			final Map<String, ThreadInstance> threadInstanceMap2 = adder.constructTreadInstances(result, forkCurrentThreads);
+//			final CfgSmtToolkit cfgToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2.values());
+//			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap);
 			mResultingBacktranslator = new TranslatorConcatenation<IcfgEdge, IcfgEdge, BoogieASTNode, Term, Term, Expression, IcfgLocation, IcfgLocation, String>(

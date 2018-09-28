@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -42,7 +43,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -72,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Adds thread instances to an ICFG
@@ -335,12 +340,11 @@ public class ThreadInstanceAdder {
 	public Map<String, ThreadInstance> constructTreadInstances(final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads) {
 		final Map<String, ThreadInstance> result = new HashMap<>();
-		final DefaultIcfgSymbolTable symbolTable = (DefaultIcfgSymbolTable) icfg.getCfgSmtToolkit().getSymbolTable();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
 		for (final IIcfgForkTransitionThreadCurrent fork : forkCurrentThreads) {
 			final String procedureName = fork.getNameOfForkedProcedure();
-			final String threadInstanceId = procedureName;
+			final String threadInstanceId = procedureName + " lol";
 			if (result.containsKey(procedureName)) {
 				// workaround
 				continue;
@@ -354,6 +358,7 @@ public class ThreadInstanceAdder {
 			final IcfgLocation errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
 			final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar,
 					errorLocation);
+			result.put(procedureName, ti);
 			i++;
 		}
 		return result;
@@ -388,6 +393,39 @@ public class ThreadInstanceAdder {
 		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
 		mgdScript.unlock(id);
 		return var;
+	}
+
+	public CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit, final Collection<ThreadInstance> threadInstances) {
+		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
+		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
+		for (final ThreadInstance ti : threadInstances) {
+			addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
+						for (final IProgramNonOldVar idVar : ti.getIdVars()) {
+				addVar(idVar, newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
+			}
+		}
+		newSymbolTable.finishConstruction();
+		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
+				newSymbolTable, cfgSmtToolkit.getAxioms(), cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
+				cfgSmtToolkit.getInParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
+				cfgSmtToolkit.getConcurrencyInformation());
+	}
+
+	private void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,
+			final HashRelation<String, IProgramNonOldVar> proc2Globals, final Set<String> allProcedures) {
+		newSymbolTable.add(var);
+		for (final String proc : allProcedures) {
+			proc2Globals.addPair(proc, var);
+		}
+	}
+
+	public void addInUseErrorLocations(final BasicIcfg<IcfgLocation> result,
+			final Collection<ThreadInstance> threadInstances) {
+		for (final ThreadInstance ti : threadInstances) {
+			result.addLocation(ti.getErrorLocation(), false, true, false, false, false);
+		}
+
+
 	}
 
 }
