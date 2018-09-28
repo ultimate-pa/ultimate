@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElement
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Wrapper for an {@link Script} with additional locking mechanism.
- * Additionally this class provides a mechanism to construct fresh variables.
+ * Wrapper for an {@link Script} with additional locking mechanism. Additionally this class provides a mechanism to
+ * construct fresh variables.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -77,7 +77,9 @@ public class ManagedScript {
 		}
 		if (mLockOwner == null) {
 			mLockOwner = lockOwner;
-			mLogger.debug(MANAGED_SCRIPT_LOCKED_BY + lockOwner.toString());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(MANAGED_SCRIPT_LOCKED_BY + lockOwner.toString());
+			}
 		} else {
 			throw new IllegalStateException("ManagedScript already locked by " + mLockOwner.toString());
 		}
@@ -89,7 +91,9 @@ public class ManagedScript {
 		}
 		if (mLockOwner == lockOwner) {
 			mLockOwner = null;
-			mLogger.debug("ManagedScript unlocked by " + lockOwner.toString());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("ManagedScript unlocked by " + lockOwner.toString());
+			}
 		} else {
 			throw new IllegalStateException(MANAGED_SCRIPT_LOCKED_BY + mLockOwner.toString());
 		}
@@ -104,7 +108,9 @@ public class ManagedScript {
 			throw new IllegalStateException("ManagedScript not locked");
 		}
 		if (mLockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
-			mLogger.debug("Asking " + mLockOwner + " to release lock");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Asking " + mLockOwner + " to release lock");
+			}
 			((ILockHolderWithVoluntaryLockRelease) mLockOwner).releaseLock();
 			return true;
 		}
@@ -113,11 +119,6 @@ public class ManagedScript {
 
 	public boolean isLockOwner(final Object allegedLockOwner) {
 		return allegedLockOwner == mLockOwner;
-	}
-
-	@FunctionalInterface
-	public interface ILockHolderWithVoluntaryLockRelease {
-		void releaseLock();
 	}
 
 	public void push(final Object lockOwner, final int levels) throws SMTLIBException {
@@ -178,7 +179,7 @@ public class ManagedScript {
 		return mScript.echo(msg);
 	}
 
-	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms)  {
+	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms) {
 		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
 		return mScript.getValue(terms);
 	}
@@ -242,14 +243,16 @@ public class ManagedScript {
 		return mSkolemFunctionManager.constructFreshSkolemFunctionName(parameterSorts, resultSort);
 	}
 
+	@FunctionalInterface
+	public interface ILockHolderWithVoluntaryLockRelease {
+		void releaseLock();
+	}
+
 	/**
-	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used
-	 * before). Each constructed TermVariable is named as follows.
-	 * The name start with the prefix "v_".
-	 * Next follows the "basename" which is a
-	 * name given by the caller of the VariableManager.
-	 * The name ends with the suffix "_n" where n is number that we use to ensure
-	 * that each variable is unique.
+	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used before). Each constructed
+	 * TermVariable is named as follows. The name start with the prefix "v_". Next follows the "basename" which is a
+	 * name given by the caller of the VariableManager. The name ends with the suffix "_n" where n is number that we use
+	 * to ensure that each variable is unique.
 	 *
 	 * @author Matthias Heizmann
 	 */
@@ -258,37 +261,29 @@ public class ManagedScript {
 		/**
 		 * Counter for the construction of fresh variables.
 		 */
-		private final MultiElementCounter<String> mTvForBasenameCounter =
-				new MultiElementCounter<>();
+		private final MultiElementCounter<String> mTvForBasenameCounter = new MultiElementCounter<>();
 
 		/**
-		 * Whenever we construct a TermVariable we store its basename.
-		 * This is the name for that the TermVariable was constructed.
-		 * Whenever we have to construct a fresh copy of a TermVariable
-		 * we use the basename of this TermVariable to obtain a unique but very
-		 * similar name for the new copy.
+		 * Whenever we construct a TermVariable we store its basename. This is the name for that the TermVariable was
+		 * constructed. Whenever we have to construct a fresh copy of a TermVariable we use the basename of this
+		 * TermVariable to obtain a unique but very similar name for the new copy.
 		 */
-		private final Map<TermVariable, String> mTv2Basename =
-				new HashMap<>();
+		private final Map<TermVariable, String> mTv2Basename = new HashMap<>();
 
 		private final Set<String> mVariableNames = new HashSet<>();
 
 		/**
-		 * Construct "fresh" TermVariables.
-		 * In mathematical logics a variable is called "fresh" if the variable has not
-		 * occurred in the same context.
-		 * TermVariables constructed by objects that implement this interface are
-		 * guaranteed to have a name which is different form all other TermVariables
-		 * constructed by this object. There is no guarantee that a similar variable
-		 * was not constructed with the same Script.
+		 * Construct "fresh" TermVariables. In mathematical logics a variable is called "fresh" if the variable has not
+		 * occurred in the same context. TermVariables constructed by objects that implement this interface are
+		 * guaranteed to have a name which is different form all other TermVariables constructed by this object. There
+		 * is no guarantee that a similar variable was not constructed with the same Script.
 		 *
 		 * @param name
-		 *            String that will occur as substring of the resulting
-		 *            TermVariable.
+		 *            String that will occur as substring of the resulting TermVariable.
 		 * @param sort
 		 *            Sort of the resulting TermVariable.
-		 * @return TermVariable whose name is different from the names
-		 *         of all other TermVariable that have been constructed by this object.
+		 * @return TermVariable whose name is different from the names of all other TermVariable that have been
+		 *         constructed by this object.
 		 */
 		public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
 			if (name.contains("|")) {
@@ -301,16 +296,15 @@ public class ManagedScript {
 		}
 
 		/**
-		 * Construct a copy of an existing {@link TermVariable} that is fresh
-		 * but has a very similar name.
+		 * Construct a copy of an existing {@link TermVariable} that is fresh but has a very similar name.
 		 *
 		 * @see mTv2Basename
 		 */
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
-				mLogger.warn("TermVariabe " + tv +
-						" not constructed by VariableManager. Cannot ensure absence of name clashes.");
+				mLogger.warn("TermVariabe " + tv
+						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 			}
 			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
@@ -318,8 +312,7 @@ public class ManagedScript {
 		}
 
 		/**
-		 * Construct variable but check if variable with this name was
-		 * already constructed.
+		 * Construct variable but check if variable with this name was already constructed.
 		 */
 		public TermVariable variable(final String varname, final Sort sort) {
 			if (mVariableNames.contains(varname)) {
@@ -337,8 +330,7 @@ public class ManagedScript {
 
 		private int counter;
 
-		public String constructFreshSkolemFunctionName(final Sort[] parameterSorts,
-				final Sort resultSort) {
+		public String constructFreshSkolemFunctionName(final Sort[] parameterSorts, final Sort resultSort) {
 			// TODO: give nicer name, perhaps using the signature
 			return SKOLEM_PREFIX + counter++;
 		}
