@@ -1268,7 +1268,9 @@ public class CfgBuilder {
 		 * @param st
 		 */
 		private void processForkStatement(final ForkStatement st) {
-			if (mDeadcode) { return; }
+			if (mDeadcode) {
+				return;
+			}
 
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
