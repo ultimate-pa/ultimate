@@ -35,8 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -356,6 +359,10 @@ public class ThreadInstanceAdder {
 			final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(), i,
 					ProcedureErrorType.INUSE_VIOLATION);
 			final IcfgLocation errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
+			ModelUtils.copyAnnotations(fork, errorLocation);
+			// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should introduce an InUseViolation.
+			final Check check = new Check(Spec.ASSERT);
+			check.annotate(errorLocation);
 			final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar,
 					errorLocation);
 			result.put(procedureName, ti);
