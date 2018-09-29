@@ -85,7 +85,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -155,8 +156,6 @@ public class CfgBuilder {
 
 	List<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
 	List<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
-	Collection<String> mForkedProcedureNames = new ArrayList<>();
-	private Map<String, ThreadInstance> mThreadInstanceMap;
 
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
@@ -173,6 +172,8 @@ public class CfgBuilder {
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	private final Collection<String> mForkedProcedureNames = new HashSet<>();
 
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services,
@@ -206,18 +207,12 @@ public class CfgBuilder {
 		}
 
 		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
-				simplePartialSkolemization, forkStatements);
+				simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
 		backtranslator.setTerm2Expression(mBoogie2smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
 
-
-		final ConcurrencyInformation concurInfo = mBoogie2smt.getConcurrencyInformation();
-		if (concurInfo != null) {
-			mThreadInstanceMap = concurInfo.getThreadInstanceMap();
-		}
-
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, concurInfo);
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, null);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}
@@ -355,17 +350,8 @@ public class CfgBuilder {
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
 
-		for (final ForkThreadCurrent fct : mForkCurrentThreads) {
-			final Map<DebugIdentifier, BoogieIcfgLocation> id2loc = mIcfg.getProgramPoints()
-					.get(fct.getPrecedingProcedure());
-			final BoogieIcfgLocation errorNode = addErrorNode(fct.getPrecedingProcedure(), fct.getForkStatement(),
-					id2loc);
-			mThreadInstanceMap.get(fct.getForkStatement().getProcedureName()).setErrorLocation(errorNode);
-		}
-
 		// Add all transitions to the forked procedure entry locations.
 		final Collection<String> forkedProcedureNames = mForkedProcedureNames;
-		final Map<String, ThreadInstance> threadInstanceMap = mThreadInstanceMap;
 
 		IIcfg<? extends IcfgLocation> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
@@ -383,11 +369,12 @@ public class CfgBuilder {
 					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
 					.collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-//			final Map<String, ThreadInstance> threadInstanceMap2 = adder.constructTreadInstances(result, forkCurrentThreads);
-//			final CfgSmtToolkit cfgToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2.values());
-//			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
+			final Map<String, ThreadInstance> threadInstanceMap2 = adder.constructTreadInstances(result, forkCurrentThreads);
+			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
+			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
+			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
-					threadInstanceMap);
+					threadInstanceMap2);
 			mResultingBacktranslator = new TranslatorConcatenation<IcfgEdge, IcfgEdge, BoogieASTNode, Term, Term, Expression, IcfgLocation, IcfgLocation, String>(
 					backtranslator, mRcfgBacktranslator);
 		} else {

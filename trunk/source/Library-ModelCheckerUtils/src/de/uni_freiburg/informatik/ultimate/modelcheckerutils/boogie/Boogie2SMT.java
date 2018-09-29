@@ -28,35 +28,21 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -90,11 +76,10 @@ public class Boogie2SMT {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final ConcurrencyInformation mConcurrencyInformation;
 
 	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
 			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services,
-			final boolean simplePartialSkolemization, final List<ForkStatement> forkStatements) {
+			final boolean simplePartialSkolemization) {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
@@ -102,21 +87,7 @@ public class Boogie2SMT {
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
 					mScript.getScript(), mServices);
-			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript, mTypeSortTranslator);
-			final Set<IProgramNonOldVar> concurInUseVars;
-			final Set<IProgramNonOldVar[]> concurIdVars;
-			if (mConcurrencyInformation == null) {
-				concurInUseVars = Collections.emptySet();
-				concurIdVars = Collections.emptySet();
-			} else {
-				concurInUseVars = new HashSet<>();
-				concurIdVars = new HashSet<>();
-				concurInUseVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream().map(Entry::getValue).map(ThreadInstance::getInUseVar)
-						.collect(Collectors.toSet()));
-				concurIdVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream().map(Entry::getValue).map(ThreadInstance::getIdVars)
-						.collect(Collectors.toSet()));
-			}
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurInUseVars);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, Collections.emptySet());
 			// TODO: add concurIdVars to mBoogie2SmtSymbolTable
 			mOperationTranslator =
 					new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -125,20 +96,7 @@ public class Boogie2SMT {
 		} else {
 			mTypeSortTranslator =
 					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
-			mConcurrencyInformation = constructConcurrencyInformation(forkStatements, mScript, mTypeSortTranslator);
-			final Set<IProgramNonOldVar> concurrencyAuxVars;
-			final Set<IProgramNonOldVar[]> concurIdVars;
-			if (mConcurrencyInformation == null) {
-				concurrencyAuxVars = Collections.emptySet();
-				concurIdVars = Collections.emptySet();
-			} else {
-				concurrencyAuxVars = new HashSet<>();
-				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream()
-						.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet()));
-				concurrencyAuxVars.addAll(mConcurrencyInformation.getThreadInstanceMap().entrySet().stream()
-						.flatMap(x -> Arrays.stream(x.getValue().getIdVars())).collect(Collectors.toSet()));
-			}
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, concurrencyAuxVars);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, Collections.emptySet());
 
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,
@@ -206,10 +164,6 @@ public class Boogie2SMT {
 		return mAxioms;
 	}
 
-	public ConcurrencyInformation getConcurrencyInformation() {
-		return mConcurrencyInformation;
-	}
-
 	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {
 		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator();
 		final IIdentifierTranslator[] its = new IIdentifierTranslator[] { coit };
@@ -224,76 +178,6 @@ public class Boogie2SMT {
 				ModelCheckerUtils.PLUGIN_ID, services.getBacktranslationService(), longDescription);
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
 		services.getProgressMonitorService().cancelToolchain();
-	}
-
-	private static ConcurrencyInformation constructConcurrencyInformation(final List<ForkStatement> forkStatements,
-			final ManagedScript mgdScript, final TypeSortTranslator typeSortTranslator) {
-		ConcurrencyInformation concurInfo;
-		if (forkStatements.isEmpty()) {
-			concurInfo = null;
-		} else {
-			final Map<String, ThreadInstance> result = new HashMap<>();
-			for (final ForkStatement st : forkStatements) {
-				final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st.getProcedureName(), mgdScript);
-				final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
-				final ThreadInstance ti = new ThreadInstance(st.getProcedureName(),st.getProcedureName(), threadIdVars, threadInUseVar, null);
-				result.put(st.getProcedureName(), ti);
-			}
-			concurInfo = new ConcurrencyInformation(result);
-		}
-		return concurInfo;
-	}
-
-	private static Map<String, BoogieNonOldVar> constructProcedureNameToThreadInUseMap(
-			final List<ForkStatement> forkStatements, final ManagedScript mgdScript) {
-		final Map<String, BoogieNonOldVar> result = new HashMap<>();
-		for (final ForkStatement st : forkStatements) {
-			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(st.getProcedureName(), mgdScript);
-			result.put(st.getProcedureName(), threadInUseVar);
-		}
-		return result;
-	}
-
-	private static Map<String, BoogieNonOldVar[]> constructProcedureNameToThreadIdMap(
-			final List<ForkStatement> forkStatements, final ManagedScript mgdScript,
-			final TypeSortTranslator typeSortTranslator) {
-		final Map<String, BoogieNonOldVar[]> result = new HashMap<>();
-		for (final ForkStatement st : forkStatements) {
-			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(st, mgdScript, typeSortTranslator);
-			result.put(st.getProcedureName(), threadIdVars);
-		}
-		return result;
-	}
-
-	public static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId, final ManagedScript mgdScript) {
-		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar = constructThreadAuxiliaryVariable("th_" + threadInstanceId + "_inUse",
-				booleanSort, mgdScript);
-		return threadInUseVar;
-	}
-
-	public static BoogieNonOldVar[] constructThreadIdVariable(final ForkStatement st, final ManagedScript mgdScript,
-			final TypeSortTranslator typeSortTranslator) {
-		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[st.getThreadID().length];
-		int i = 0;
-		for (final Expression forkId : st.getThreadID()) {
-			final Sort expressionSort = typeSortTranslator.getSort(forkId.getType(), st);
-			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + st.getProcedureName(), expressionSort, mgdScript);
-			i++;
-		}
-		return threadIdVars;
-	}
-
-
-	/**
-	 * TODO Concurrent Boogie:
-	 */
-	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
-			final ManagedScript mgdScript) {
-		mgdScript.lock(id);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
-		mgdScript.unlock(id);
-		return var;
 	}
 
 

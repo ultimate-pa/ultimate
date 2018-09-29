@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
@@ -402,20 +403,21 @@ public class ThreadInstanceAdder {
 		return var;
 	}
 
-	public CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit, final Collection<ThreadInstance> threadInstances) {
+	public CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit, final Map<String, ThreadInstance> threadInstanceMap2) {
 		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
-		for (final ThreadInstance ti : threadInstances) {
+		for (final ThreadInstance ti : threadInstanceMap2.values()) {
 			addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 						for (final IProgramNonOldVar idVar : ti.getIdVars()) {
 				addVar(idVar, newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			}
 		}
 		newSymbolTable.finishConstruction();
+		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap2);
 		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
 				newSymbolTable, cfgSmtToolkit.getAxioms(), cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
-				cfgSmtToolkit.getInParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
-				cfgSmtToolkit.getConcurrencyInformation());
+				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
+				concurrencyInformation);
 	}
 
 	private void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,
