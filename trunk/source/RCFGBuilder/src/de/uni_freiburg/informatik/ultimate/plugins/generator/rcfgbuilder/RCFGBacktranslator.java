@@ -65,8 +65,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -153,8 +155,18 @@ public class RCFGBacktranslator extends
 			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for fork.
 			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
 					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+		} else if (cb instanceof ForkThreadCurrent) {
+			final Statement st = ((ForkThreadCurrent) cb).getForkStatement();
+			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for fork.
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof JoinThreadOther) {
 			final Statement st = ((JoinThreadOther) cb).getJoinStatement();
+			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for join.
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+		} else if (cb instanceof JoinThreadCurrent) {
+			final Statement st = ((JoinThreadCurrent) cb).getJoinStatement();
 			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for join.
 			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
 					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
