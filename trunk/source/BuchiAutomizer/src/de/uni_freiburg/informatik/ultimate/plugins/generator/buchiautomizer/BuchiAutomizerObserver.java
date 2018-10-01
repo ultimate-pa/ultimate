@@ -103,7 +103,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
 
-
 	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
@@ -131,7 +130,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
+	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
@@ -168,13 +168,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
-	 * @param nestedLassoWord 
+	 *
+	 * @param nestedLassoWord
 	 */
 	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
 			final NestedLassoWord<? extends IIcfgTransition<?>> nestedLassoWord) {
-		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(nestedLassoWord.getStem().asList(), Collections.emptyMap());
-		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
-		final NonTerminationArgumentResult<IcfgEdge, Term> result;
+		final IcfgProgramExecution stemExecution =
+				new IcfgProgramExecution(nestedLassoWord.getStem().asList(), Collections.emptyMap());
+		final IcfgProgramExecution loopExecution =
+				new IcfgProgramExecution(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
+		final NonTerminationArgumentResult<IIcfgTransition<IcfgLocation>, Term> result;
 		final IcfgEdge honda1 = (IcfgEdge) nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
@@ -193,8 +196,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					gnta.getNus(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			
-			result = new FixpointNonTerminationResult<IcfgEdge, Term>(honda1, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+
+			result = new FixpointNonTerminationResult<>(honda1, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
 					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
@@ -202,7 +205,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result, final IIcfg<?> icfg) throws AssertionError {
+	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result, final IIcfg<?> icfg)
+			throws AssertionError {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
@@ -272,9 +276,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution loopPE = new IcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			final IResult ntreportRes =
-					new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda, Activator.PLUGIN_ID,
-							mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
+			final IResult ntreportRes = new NonterminatingLassoResult<>(honda, Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -323,9 +326,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution loopPE =
 					new IcfgProgramExecution(loop, partialProgramStateMapping, new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position,
-					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
-					ILocation.getAnnotation(position), ltlAnnot.getLTLProperty()));
+			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
+					ltlAnnot.getLTLProperty()));
 		}
 	}
 
@@ -408,7 +411,5 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// }
 	// return result;
 	// }
-
-
 
 }

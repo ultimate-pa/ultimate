@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -155,10 +156,8 @@ public class CfgBuilder {
 
 	Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
-
 	List<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
 	List<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
-
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
 	private ITranslator mResultingBacktranslator;
@@ -177,14 +176,12 @@ public class CfgBuilder {
 
 	private final Collection<String> mForkedProcedureNames = new HashSet<>();
 
-
-	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) throws IOException {
+	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services, final IToolchainStorage storage)
+			throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
-
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
@@ -197,8 +194,8 @@ public class CfgBuilder {
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
 
-		final CodeBlockSize userDefineCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
-				CodeBlockSize.class);
+		final CodeBlockSize userDefineCodeBlockSize =
+				prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
 		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && !forkStatements.isEmpty()) {
 			mCodeBlockSize = CodeBlockSize.SingleStatement;
 			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
@@ -219,18 +216,13 @@ public class CfgBuilder {
 		mCbf.storeFactory(storage);
 	}
 
-
 	public Boogie2SMT getBoogie2smt() {
 		return mBoogie2smt;
 	}
 
-
-
-
 	/**
-	 * Returns list of all {@link ForkStatement}s from all declarations. Expects
-	 * that the input has been "unstructured", i.e., all {@link WhileStatement}s and
-	 * {@link IfStatement}s have been removed.
+	 * Returns list of all {@link ForkStatement}s from all declarations. Expects that the input has been "unstructured",
+	 * i.e., all {@link WhileStatement}s and {@link IfStatement}s have been removed.
 	 */
 	private static List<ForkStatement> extractForkStatements(final BoogieDeclarations boogieDeclarations) {
 		final List<ForkStatement> result = new ArrayList<>();
@@ -243,7 +235,7 @@ public class CfgBuilder {
 				} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
 						|| (st instanceof HavocStatement) || (st instanceof GotoStatement) || (st instanceof Label)
 						|| (st instanceof JoinStatement) || (st instanceof CallStatement)
-						|| (st instanceof ReturnStatement)|| (st instanceof AssertStatement)) {
+						|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)) {
 					// do nothing
 				} else {
 					throw new UnsupportedOperationException(
@@ -296,7 +288,7 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public IIcfg createIcfg(final Unit unit) {
+	public IIcfg<?> createIcfg(final Unit unit) {
 
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2smt, mServices);
 
@@ -358,39 +350,39 @@ public class CfgBuilder {
 		IIcfg<? extends IcfgLocation> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
 		if (!mForkCurrentThreads.isEmpty()) {
-			final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
-					Term.class, mLogger);
-			final IcfgDuplicator duplicator = new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(),
-					backtranslator);
+			final BlockEncodingBacktranslator backtranslator =
+					new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+			final IcfgDuplicator duplicator =
+					new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator);
 			result = duplicator.copy(result);
-			final Map<IcfgEdge, IcfgEdge> old2newEdgeMapping = duplicator.getOld2NewEdgeMapping();
-			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads = mForkCurrentThreads.stream()
-					.map(old2newEdgeMapping::get).map(x -> (IIcfgForkTransitionThreadCurrent) x)
-					.collect(Collectors.toList());
-			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads = mJoinCurrentThreads.stream()
-					.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent) x)
-					.collect(Collectors.toList());
+			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
+					duplicator.getOld2NewEdgeMapping();
+			final List<IIcfgForkTransitionThreadCurrent<?>> forkCurrentThreads =
+					mForkCurrentThreads.stream().map(old2newEdgeMapping::get)
+							.map(x -> (IIcfgForkTransitionThreadCurrent<?>) x).collect(Collectors.toList());
+			final List<IIcfgJoinTransitionThreadCurrent<?>> joinCurrentThreads =
+					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
+							.map(x -> (IIcfgJoinTransitionThreadCurrent<?>) x).collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			final Map<String, ThreadInstance> threadInstanceMap2 = adder.constructTreadInstances(result, forkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
+			final Map<String, ThreadInstance> threadInstanceMap2 =
+					adder.constructTreadInstances(result, forkCurrentThreads);
+			final CfgSmtToolkit cfgSmtToolkit =
+					adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
-			final HashRelation<String, String> copyDirectives = ProcedureMultiplier.generateCopyDirectives(threadInstanceMap2.values());
+			final HashRelation<String, String> copyDirectives =
+					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap2.values());
 			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator);
 			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
 
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap2, backtranslator);
-			mResultingBacktranslator = new TranslatorConcatenation<IcfgEdge, IcfgEdge, BoogieASTNode, Term, Term, Expression, IcfgLocation, IcfgLocation, String>(
-					backtranslator, mRcfgBacktranslator);
+			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
 		} else {
 			mResultingBacktranslator = mRcfgBacktranslator;
 		}
 
 		return result;
 	}
-
-
-
 
 	private static Expression getNegation(final Expression expr) {
 		if (expr == null) {
@@ -413,7 +405,7 @@ public class CfgBuilder {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
 		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
-		+ " but no such procedure.";
+				+ " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) edge.getSource();
@@ -441,21 +433,9 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
-
-
-
-
-
-
-
-
-
-
-
 	public Collection<ForkThreadCurrent> getForkCurrentThreads() {
 		return mForkCurrentThreads;
 	}
-
 
 	public Collection<JoinThreadCurrent> getJoinCurrentThreads() {
 		return mJoinCurrentThreads;
@@ -499,8 +479,7 @@ public class CfgBuilder {
 		} else {
 			errorLocLabel = new ProcedureErrorDebugIdentifier(procName, locNodeNumber, type);
 		}
-		final BoogieIcfgLocation errorLocNode =
-				new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
+		final BoogieIcfgLocation errorLocNode = new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
 		if (check != null) {
 			check.annotate(errorLocNode);
 		}
@@ -508,9 +487,6 @@ public class CfgBuilder {
 		errorNodes.add(errorLocNode);
 		return errorLocNode;
 	}
-
-
-
 
 	/**
 	 * Build control flow graph of single procedures.
@@ -629,19 +605,19 @@ public class CfgBuilder {
 					if (mCurrent instanceof BoogieIcfgLocation) {
 						assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
 								|| mLastStmt instanceof Label : "If st is Label"
-								+ " and mcurrent is LocNode lastSt is Label";
+										+ " and mcurrent is LocNode lastSt is Label";
 						mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
 								+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
 								+ " CFG only the first label of those two (or" + " more) will be used");
 					}
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-						|| mLastStmt instanceof CallStatement : "If st"
-						+ " is a Label and the last constructed node"
-						+ " was a TransEdge, then the last"
-						+ " Statement must not be a Label, Return or" + " Goto";
-					mLogger.warn("Label in the middle of a codeblock.");
+								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+								|| mLastStmt instanceof CallStatement : "If st"
+										+ " is a Label and the last constructed node"
+										+ " was a TransEdge, then the last"
+										+ " Statement must not be a Label, Return or" + " Goto";
+						mLogger.warn("Label in the middle of a codeblock.");
 					}
 
 					processLabel((Label) st);
@@ -651,11 +627,11 @@ public class CfgBuilder {
 						|| st instanceof HavocStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-						|| mLastStmt instanceof CallStatement : "If the"
-						+ " last constructed node is a TransEdge, then"
-						+ " the last Statement must not be a Label,"
-						+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
+								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+								|| mLastStmt instanceof CallStatement : "If the"
+										+ " last constructed node is a TransEdge, then"
+										+ " the last Statement must not be a Label,"
+										+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
 					}
 					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 				}
@@ -663,11 +639,11 @@ public class CfgBuilder {
 				else if (st instanceof AssertStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-						|| mLastStmt instanceof CallStatement : "If the"
-						+ " last constructed node is a TransEdge, then"
-						+ " the last Statement must not be a Label,"
-						+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
+								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+								|| mLastStmt instanceof CallStatement : "If the"
+										+ " last constructed node is a TransEdge, then"
+										+ " the last Statement must not be a Label,"
+										+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
 					}
 					processAssertStatement((AssertStatement) st);
 				}
@@ -685,29 +661,26 @@ public class CfgBuilder {
 				else if (st instanceof CallStatement) {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-						|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-						|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
-						+ " must not be a Label, Return or Goto."
-						+ " (i.e. this is not the first Statemnt" + " of the block)";
+								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
+								|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
+										+ " must not be a Label, Return or Goto."
+										+ " (i.e. this is not the first Statemnt" + " of the block)";
 					}
 					if (mCurrent instanceof BoogieIcfgLocation) {
 						assert mLastStmt instanceof Label
-						|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
-						+ " first statement of a block or fist" + " statement after a call";
+								|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
+										+ " first statement of a block or fist" + " statement after a call";
 					}
 					processCallStatement((CallStatement) st);
 				}
 
 				else if (st instanceof ReturnStatement) {
 					processReturnStatement();
-				}
-				else if (st instanceof ForkStatement) {
+				} else if (st instanceof ForkStatement) {
 					processForkStatement((ForkStatement) st);
-				}
-				else if (st instanceof JoinStatement) {
+				} else if (st instanceof JoinStatement) {
 					processJoinStatement((JoinStatement) st);
-				}
-				else {
+				} else {
 					throw new UnsupportedOperationException("At the moment"
 							+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");
 				}
@@ -750,8 +723,6 @@ public class CfgBuilder {
 			}
 			// mBoogie2smt.removeLocals(proc);
 		}
-
-
 
 		/**
 		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
@@ -934,8 +905,6 @@ public class CfgBuilder {
 				}
 			}
 		}
-
-
 
 		private DebugIdentifier constructLocDebugIdentifier(final Statement stmt) {
 			final ILocation location = stmt.getLocation();
@@ -1148,8 +1117,6 @@ public class CfgBuilder {
 			mDeadcode = true;
 		}
 
-
-
 		private void processCallStatement(final CallStatement st) {
 			if (mDeadcode) {
 				return;
@@ -1277,7 +1244,8 @@ public class CfgBuilder {
 			}
 			final DebugIdentifier locName = constructLocDebugIdentifier(st);
 
-			final BoogieIcfgLocation forkCurrentNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
+			final BoogieIcfgLocation forkCurrentNode =
+					new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, forkCurrentNode);
 
 			final String callee = st.getProcedureName();
@@ -1303,7 +1271,9 @@ public class CfgBuilder {
 		 * @param st
 		 */
 		private void processJoinStatement(final JoinStatement st) {
-			if (mDeadcode) { return; }
+			if (mDeadcode) {
+				return;
+			}
 
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
@@ -1318,10 +1288,12 @@ public class CfgBuilder {
 			}
 			final DebugIdentifier locName = constructLocDebugIdentifier(st);
 
-			final BoogieIcfgLocation joinCurrentNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
+			final BoogieIcfgLocation joinCurrentNode =
+					new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, joinCurrentNode);
 
-			final JoinThreadCurrent joinCurrentThreadEdge = mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
+			final JoinThreadCurrent joinCurrentThreadEdge =
+					mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
 			final IIcfgElement cb = joinCurrentThreadEdge;
 			ModelUtils.copyAnnotations(st, cb);
 			mJoinCurrentThreads.add(joinCurrentThreadEdge);
@@ -1471,8 +1443,8 @@ public class CfgBuilder {
 				return false;
 			}
 			assert incoming instanceof StatementSequence || incoming instanceof SequentialComposition
-			|| incoming instanceof ParallelComposition || incoming instanceof Summary
-			|| incoming instanceof GotoEdge;
+					|| incoming instanceof ParallelComposition || incoming instanceof Summary
+					|| incoming instanceof GotoEdge;
 			final IcfgEdge outgoing = pp.getOutgoingEdges().get(0);
 			if (outgoing instanceof IIcfgForkTransitionThreadCurrent
 					|| outgoing instanceof IIcfgForkTransitionThreadOther
@@ -1485,8 +1457,8 @@ public class CfgBuilder {
 				return false;
 			}
 			assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
-			|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
-			|| outgoing instanceof GotoEdge;
+					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
+					|| outgoing instanceof GotoEdge;
 			return true;
 		}
 

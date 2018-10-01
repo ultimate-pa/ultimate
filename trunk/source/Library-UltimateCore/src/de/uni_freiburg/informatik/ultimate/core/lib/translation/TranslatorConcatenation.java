@@ -40,21 +40,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <STE>
- *            Source Trace Element. Type of trace elements (e.g., Statements,
- *            CodeBlocks, BoogieASTNodes) in the source program model.
+ *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
+ *            program model.
  * @param <TTE>
- *            Target Trace Elment. Type of trace elements (e.g., Statements,
- *            CodeBlocks, BoogieASTNodes) in the target program model.
+ *            Target Trace Elment. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
+ *            program model.
  * @param <SE>
  *            Source Expression. Type of expression in the source program model.
  * @param <TE>
  *            Target Expression. Type of expression in the target program model.
  * @param <SVL>
- *            Source vertex label. Type of the vertex label of a
- *            {@link IBacktranslatedCFG} in the source program model.
+ *            Source vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the source program model.
  * @param <TVL>
- *            Target vertex label. Type of the vertex label of a
- *            {@link IBacktranslatedCFG} in the target program model.
+ *            Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program model.
  */
 public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL>
 		implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
@@ -70,12 +68,12 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL>
 	}
 
 	@Override
-	public Class<STE> getSourceTraceElementClass() {
+	public Class<? extends STE> getSourceTraceElementClass() {
 		return mSource2IntermediateTranslator.getSourceTraceElementClass();
 	}
 
 	@Override
-	public Class<TTE> getTargetTraceElementClass() {
+	public Class<? extends TTE> getTargetTraceElementClass() {
 		return mIntermediate2TargetTranslator.getTargetTraceElementClass();
 	}
 
@@ -89,7 +87,6 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL>
 		return mIntermediate2TargetTranslator.getTargetExpressionClass();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<TTE> translateTrace(final List<STE> trace) {
 		return mIntermediate2TargetTranslator.translateTrace(mSource2IntermediateTranslator.translateTrace(trace));

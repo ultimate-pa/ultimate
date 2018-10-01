@@ -84,7 +84,7 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	/**
 	 * @return The instance of {@link Class} describing the type of the type parameter TE.
 	 */
-	Class<TE> getTraceElementClass();
+	Class<? extends TE> getTraceElementClass();
 
 	/**
 	 * Should return a human-readable representation of this program execution. Use {@link ProgramExecutionFormatter} to
@@ -117,7 +117,8 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	 */
 	IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider();
 
-	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass, final Class<TE> teClass) {
+	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass,
+			final Class<? extends TE> teClass) {
 		return new IProgramExecution<TE, E>() {
 
 			@Override
@@ -146,7 +147,7 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 			}
 
 			@Override
-			public Class<TE> getTraceElementClass() {
+			public Class<? extends TE> getTraceElementClass() {
 				return teClass;
 			}
 

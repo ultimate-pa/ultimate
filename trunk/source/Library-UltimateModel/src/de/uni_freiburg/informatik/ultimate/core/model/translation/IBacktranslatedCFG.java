@@ -44,7 +44,7 @@ public interface IBacktranslatedCFG<VL, TE> {
 
 	String getFilename();
 
-	Class<TE> getTraceElementClass();
+	Class<? extends TE> getTraceElementClass();
 
 	IBacktranslationValueProvider<TE, ?> getBacktranslationValueProvider();
 }

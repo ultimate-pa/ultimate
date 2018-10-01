@@ -83,9 +83,9 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 
 	public IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
 
-	public Class<STE> getSourceTraceElementClass();
+	public Class<? extends STE> getSourceTraceElementClass();
 
-	public Class<TTE> getTargetTraceElementClass();
+	public Class<? extends TTE> getTargetTraceElementClass();
 
 	public Class<SE> getSourceExpressionClass();
 

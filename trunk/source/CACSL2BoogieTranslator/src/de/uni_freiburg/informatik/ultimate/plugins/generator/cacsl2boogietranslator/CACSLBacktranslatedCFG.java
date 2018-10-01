@@ -21,7 +21,7 @@ public class CACSLBacktranslatedCFG extends BacktranslatedCFG<String, CACSLLocat
 
 	public CACSLBacktranslatedCFG(final String filename,
 			final List<? extends IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?>> cfgs,
-			final Class<CACSLLocation> clazz, final ILogger logger, final IUltimateServiceProvider services) {
+			final Class<? extends CACSLLocation> clazz, final ILogger logger, final IUltimateServiceProvider services) {
 		super(filename, cfgs, clazz);
 		mLogger = logger;
 		mServices = services;

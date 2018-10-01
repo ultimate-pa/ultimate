@@ -30,7 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
@@ -65,11 +66,11 @@ public interface IRefinementEngine<T> {
 	/**
 	 * @return RCFG program execution.
 	 */
-	IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution();
+	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution();
 
 	/**
-	 * Does sometimes return a Hoare triple checker. TODO: Find out under which
-	 * conditions a Hoare triple checker is returned.
+	 * Does sometimes return a Hoare triple checker. TODO: Find out under which conditions a Hoare triple checker is
+	 * returned.
 	 */
 	IHoareTripleChecker getHoareTripleChecker();
 

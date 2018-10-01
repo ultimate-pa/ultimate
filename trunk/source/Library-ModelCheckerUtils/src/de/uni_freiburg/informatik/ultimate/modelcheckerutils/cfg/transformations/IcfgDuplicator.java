@@ -72,7 +72,7 @@ public class IcfgDuplicator {
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ManagedScript mManagedScript;
-	private final Map<IcfgEdge, IcfgEdge> mOld2New;
+	private final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mOld2New;
 
 	public IcfgDuplicator(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BlockEncodingBacktranslator backtranslator) {
@@ -224,10 +224,8 @@ public class IcfgDuplicator {
 		return rtr;
 	}
 
-	public Map<IcfgEdge, IcfgEdge> getOld2NewEdgeMapping() {
+	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getOld2NewEdgeMapping() {
 		return Collections.unmodifiableMap(mOld2New);
 	}
-
-
 
 }

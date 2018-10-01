@@ -362,7 +362,7 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private Multigraph<String, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, String, BoogieASTNode, ?>, Multigraph<String, BoogieASTNode>> cache,
+			final Map<IExplicitEdgesMultigraph<?, ?, String, ? extends BoogieASTNode, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IMultigraphEdge<?, ?, String, BoogieASTNode, ?> oldEdge,
 			final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = translateTraceElement(oldEdge.getLabel());

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -56,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, IcfgLocation, IcfgLocation> {
+public class BlockEncodingBacktranslator extends
+		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, IcfgLocation, IcfgLocation> {
 
 	private static final boolean PRINT_MAPPINGS = false;
 
@@ -65,8 +67,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	private final ILogger mLogger;
 	private final Set<IcfgEdge> mIntermediateEdges;
 
-	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
-			final ILogger logger) {
+	public BlockEncodingBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
+			final Class<Term> expressionType, final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 		mLocationMapping = new HashMap<>();
@@ -76,7 +78,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<IcfgEdge, Term> translateProgramExecution(final IProgramExecution<IcfgEdge, Term> pe) {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
+			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
 		if (pe == null) {
 			throw new IllegalArgumentException("programExecution is null");
 		}
@@ -103,7 +106,7 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		}
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = programExecution.getTraceElement(i);
 			final List<IcfgEdge> mappedEdges = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdges == null || mappedEdges.isEmpty()) {
 				mLogger.warn("Skipped backtranslation of ATE [" + currentATE.getTraceElement().hashCode() + "] "
@@ -182,12 +185,12 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 
 	private static String markCodeblock(final IcfgEdge newEdge) {
 		return "";
-//		2018-09-14 Matthias: I commented the following lines to get rid
-//		of the dependency to CodeBlock
-//		if (newEdge instanceof CodeBlock) {
-//			return "";
-//		}
-//		return "!";
+		// 2018-09-14 Matthias: I commented the following lines to get rid
+		// of the dependency to CodeBlock
+		// if (newEdge instanceof CodeBlock) {
+		// return "";
+		// }
+		// return "!";
 	}
 
 	public void mapLocations(final IcfgLocation newLoc, final IcfgLocation oldLoc) {
@@ -227,16 +230,16 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	}
 
 	@Override
-	protected void printBrokenCallStackSource(final List<AtomicTraceElement<IcfgEdge>> trace,
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
 			final int breakpointIndex) {
-		final List<IcfgEdge> teList =
+		final List<IIcfgTransition<IcfgLocation>> teList =
 				trace.stream().limit(breakpointIndex).map(a -> a.getTraceElement()).collect(Collectors.toList());
 		mLogger.fatal(new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider())
 				.formatProgramExecution(new IcfgProgramExecution(teList, Collections.emptyMap())));
 	}
 
 	@Override
-	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<IcfgEdge>> trace,
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
 			final int breakpointIndex) {
 		printBrokenCallStackSource(trace, breakpointIndex);
 	}
