@@ -357,12 +357,12 @@ public class CfgBuilder {
 			result = duplicator.copy(result);
 			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
 					duplicator.getOld2NewEdgeMapping();
-			final List<IIcfgForkTransitionThreadCurrent<?>> forkCurrentThreads =
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads =
 					mForkCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgForkTransitionThreadCurrent<?>) x).collect(Collectors.toList());
-			final List<IIcfgJoinTransitionThreadCurrent<?>> joinCurrentThreads =
+							.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads =
 					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgJoinTransitionThreadCurrent<?>) x).collect(Collectors.toList());
+							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 			final Map<String, ThreadInstance> threadInstanceMap2 =
 					adder.constructTreadInstances(result, forkCurrentThreads);
@@ -374,7 +374,7 @@ public class CfgBuilder {
 			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator);
 			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
 
-			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap2, backtranslator);
 			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
 		} else {

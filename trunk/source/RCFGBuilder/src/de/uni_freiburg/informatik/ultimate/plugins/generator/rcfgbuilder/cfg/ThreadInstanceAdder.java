@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -103,12 +102,12 @@ public class ThreadInstanceAdder {
 
 	// public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer
 	// icfg,
-	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
-			final List<IIcfgForkTransitionThreadCurrent<?>> forkCurrentThreads,
-			final List<IIcfgJoinTransitionThreadCurrent<?>> joinCurrentThreads,
+	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
 			final Collection<String> forkedProcedureNames, final Map<String, ThreadInstance> threadInstanceMap,
 			final BlockEncodingBacktranslator backtranslator) {
-		for (final IIcfgForkTransitionThreadCurrent<?> fct : forkCurrentThreads) {
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
 
 			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
@@ -118,7 +117,7 @@ public class ThreadInstanceAdder {
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
-		for (final IIcfgJoinTransitionThreadCurrent<?> jot : joinCurrentThreads) {
+		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 			for (final ThreadInstance ti : threadInstanceMap.values()) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
@@ -127,8 +126,7 @@ public class ThreadInstanceAdder {
 						isReturnValueCompatible(jot.getJoinSmtArguments().getAssignmentLhs(),
 								icfg.getCfgSmtToolkit().getOutParams().get(ti.getThreadInstanceName()));
 				if (threadIdCompatible && returnValueCompatible) {
-					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), ti.getInUseVar(),
-							icfg);
+					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), ti.getInUseVar(), icfg, backtranslator);
 				}
 			}
 
@@ -189,7 +187,7 @@ public class ThreadInstanceAdder {
 	 * @param edge
 	 *            that points to the next step in the current thread.
 	 */
-	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<?> fct,
+	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
 			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
 			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
 			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator) {
@@ -227,9 +225,11 @@ public class ThreadInstanceAdder {
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
 		callerNode.addOutgoing(forkThreadOther);
 		calleeEntryLoc.addIncoming(forkThreadOther);
-		// TODO
-		// final IcfgEdge originalEdge = getOriginalEdge(fct, backtranslator);
-		// backtranslator.mapEdges(forkThreadOther, originalEdge);
+
+
+		// hack to get the original fork
+		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(fct, backtranslator);
+		backtranslator.mapEdges(forkThreadOther, originalEdge);
 
 		// Add the assume statement for the error location and construct the
 		final UnmodifiableTransFormula forkErrorTransFormula =
@@ -246,10 +246,11 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	private static IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgForkTransitionThreadCurrent<?> fct,
+
+	private IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
 			final BlockEncodingBacktranslator backtranslator) {
-		final List<IIcfgTransition<IcfgLocation>> transRes =
-				backtranslator.translateTrace(Collections.singletonList((IcfgEdge) fct));
+		final List<IIcfgTransition<IcfgLocation>> transRes = backtranslator
+				.translateTrace(Collections.singletonList(newEdge));
 		if (transRes.size() != 1) {
 			throw new IllegalStateException();
 		}
@@ -258,12 +259,13 @@ public class ThreadInstanceAdder {
 
 	/**
 	 * Add JoinOtherThreadEdge from
+	 * @param backtranslator
 	 *
 	 * @param edge
 	 */
-	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent<?> jot,
+	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot,
 			final String threadInstanceName, final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg) {
+			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg, final BlockEncodingBacktranslator backtranslator) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(threadInstanceName);
@@ -296,6 +298,10 @@ public class ThreadInstanceAdder {
 				ef.createJoinThreadOtherTransition(exitNode, callerNode, null, joinTransformula, jot);
 		exitNode.addOutgoing(joinThreadOther);
 		callerNode.addIncoming(joinThreadOther);
+
+		// hack to get the original fork
+		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(jot, backtranslator);
+		backtranslator.mapEdges(joinThreadOther, originalEdge);
 
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		if (!overapproximations.isEmpty()) {
@@ -359,7 +365,7 @@ public class ThreadInstanceAdder {
 	 * {@link IIcfg}.
 	 */
 	public Map<String, ThreadInstance> constructTreadInstances(final IIcfg<? extends IcfgLocation> icfg,
-			final List<IIcfgForkTransitionThreadCurrent<?>> forkCurrentThreads) {
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads) {
 		final Map<String, ThreadInstance> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;

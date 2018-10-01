@@ -95,7 +95,7 @@ public class AcyclicSubgraphMerger {
 						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
-				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = backtranslator.getEdgeMapping();
+				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = (Map) backtranslator.getEdgeMapping();
 				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge =
 						DataStructureUtils.constructReverseMapping(newEdge2oldEdge);
 				subgraphEdgesInCopy = translate(subgraphEdges, oldEdge2newEdge);
