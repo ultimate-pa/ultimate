@@ -502,4 +502,65 @@ public class TransFormulaBuilder {
 		}
 		return tfb.finishConstruction(script);
 	}
+
+	/**
+	 * Construct copy of a given {@link Transformula} where {@link IProgramVar}s are
+	 * replaced according to a given map.
+	 */
+	public static <E extends IProgramVar> UnmodifiableTransFormula constructCopy(final ManagedScript script,
+			final TransFormula tf, final Map<E, E> variableReplacement) {
+		Set<TermVariable> branchEncoders;
+		if (tf instanceof UnmodifiableTransFormula) {
+			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
+		} else {
+			branchEncoders = Collections.emptySet();
+		}
+		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			final E replacement = variableReplacement.get(entry.getKey());
+			if (replacement != null) {
+				final TermVariable inVar = script.constructFreshCopy(replacement.getTermVariable());
+				substitutionMapping.put(tf.getInVars().get(entry.getKey()), inVar);
+				newInVars.put(replacement, inVar);
+			} else {
+				newInVars.put(entry.getKey(), entry.getValue());
+			}
+		}
+		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			final E replacement = variableReplacement.get(entry.getKey());
+			if (replacement != null) {
+				TermVariable outVar;
+				if (entry.getValue().equals(tf.getInVars().get(entry.getKey()))) {
+					// inVar and outVar are similar
+					outVar = newInVars.get(replacement);
+				} else {
+					outVar = script.constructFreshCopy(replacement.getTermVariable());
+					substitutionMapping.put(tf.getOutVars().get(entry.getKey()), outVar);
+				}
+				newOutVars.put(replacement, outVar);
+			} else {
+				newOutVars.put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		final Infeasibility infeasibility;
+		if (tf instanceof UnmodifiableTransFormula) {
+			infeasibility = ((UnmodifiableTransFormula) tf).isInfeasible();
+		} else {
+			infeasibility = Infeasibility.NOT_DETERMINED;
+		}
+		final Term newFormula = new Substitution(script, substitutionMapping).transform(tf.getFormula());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars,
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
+				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
+		tfb.setFormula(newFormula);
+		tfb.setInfeasibility(infeasibility);
+		if (!auxVars.isEmpty()) {
+			tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		}
+		return tfb.finishConstruction(script);
+	}
 }
