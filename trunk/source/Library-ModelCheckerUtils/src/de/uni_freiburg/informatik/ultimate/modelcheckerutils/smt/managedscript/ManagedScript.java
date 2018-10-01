@@ -122,65 +122,65 @@ public class ManagedScript {
 	}
 
 	public void push(final Object lockOwner, final int levels) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.push(levels);
 	}
 
 	public void pop(final Object lockOwner, final int levels) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.pop(levels);
 	}
 
 	public LBool assertTerm(final Object lockOwner, final Term term) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.assertTerm(term);
 	}
 
 	public LBool checkSat(final Object lockOwner) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.checkSat();
 	}
 
 	public Term[] getUnsatCore(final Object lockOwner) throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getUnsatCore();
 	}
 
 	public Term annotate(final Object lockOwner, final Term t, final Annotation... annotations) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.annotate(t, annotations);
 	}
 
 	public Term term(final Object lockOwner, final String funcname, final Term... params) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.term(funcname, params);
 	}
 
 	public Term term(final Object lockOwner, final String funcname, final BigInteger[] indices, final Sort returnSort,
 			final Term... params) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 	public Term let(final Object lockOwner, final TermVariable[] vars, final Term[] values, final Term body)
 			throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.let(vars, values, body);
 	}
 
 	public void declareFun(final Object lockOwner, final String fun, final Sort[] paramSorts, final Sort resultSort)
 			throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
 	public QuotedObject echo(final Object lockOwner, final QuotedObject msg) {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.echo(msg);
 	}
 
 	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms) {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getValue(terms);
 	}
 
@@ -190,14 +190,25 @@ public class ManagedScript {
 
 	public Term[] getInterpolants(final Object lockOwner, final Term[] partition)
 			throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getInterpolants(partition);
 	}
 
 	public Term[] getInterpolants(final Object lockOwner, final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getInterpolants(partition, startOfSubtree);
+	}
+
+	private static String generateLockErrorMessage(final Object expectedLockOwner, final Object actualLockOwner) {
+		if (actualLockOwner == null) {
+			return "A " + expectedLockOwner.getClass().getSimpleName()
+					+ " wants to use this ManagedScript without locking";
+		} else {
+			return "A " + expectedLockOwner.getClass().getSimpleName()
+					+ " wants to use this ManagedScript but it is locked by some "
+					+ actualLockOwner.getClass().getSimpleName();
+		}
 	}
 
 	/**
