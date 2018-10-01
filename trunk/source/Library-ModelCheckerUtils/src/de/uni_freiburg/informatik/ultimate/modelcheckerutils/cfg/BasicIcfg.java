@@ -91,6 +91,14 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	/**
+	 * TODO: Documentation
+	 */
+	public void addProcedure(final String proc) {
+		mProgramPoints.put(proc, new HashMap<>());
+		mErrorNodes.put(proc, new HashSet<>());
+	}
+
+	/**
 	 * Add a new location to this {@link IIcfg}. The location has to have a procedure that is already known by the
 	 * {@link IIcfg}. Known procedures can be obtained from {@link CfgSmtToolkit#getProcedures()} via
 	 * {@link #getCfgSmtToolkit()}.
