@@ -120,7 +120,7 @@ public class AcyclicSubgraphMerger {
 						new ArrayList<>(initialCopyWithOldStartLoc.getSubgraphStartLocation().getOutgoingEdges());
 				for (final IcfgEdge edge : initOutgoing) {
 					if (edge != startLocErrorEdgeInCopy && subgraphEdgesInCopy.contains(edge)) {
-						// hashcode changes, we shoud remove and re-add it
+						// hashcode changes, we should remove and re-add it
 						subgraphEdgesInCopy.remove(edge);
 						edge.redirectSource(entryForStartLoc);
 						subgraphEdgesInCopy.add(edge);
