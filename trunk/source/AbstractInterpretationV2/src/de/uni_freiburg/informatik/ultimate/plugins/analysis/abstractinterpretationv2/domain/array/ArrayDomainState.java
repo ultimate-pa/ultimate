@@ -437,7 +437,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return (IProgramVar) old2newVars.get(oldVar);
 	}
 
-	// TODO: Support unification of null-segmentations
 	private UnificationResult<STATE> unify(final ArrayDomainState<STATE> other, final Segmentation segmentation,
 			final Segmentation otherSegmentation) {
 		final Script script = mToolkit.getScript();
@@ -637,8 +636,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			if (valueThis == null && valueOther == null) {
 				continue;
 			}
-			if (valueThis != null && valueThis.getSort().isArraySort()
-					|| valueOther != null && valueOther.getSort().isArraySort()) {
+			if (valueThis != null && valueOther != null && valueThis.getSort().isArraySort()) {
 				final Segmentation thisAuxSegmentation = currentStateThis.mSegmentationMap.getSegmentation(valueThis);
 				final Segmentation otherAuxSegmentation =
 						currentStateOther.mSegmentationMap.getSegmentation(valueOther);
@@ -730,16 +728,68 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 						newValues.add(thisValue);
 					} else if (thisValue != null) {
 						final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-						constraints.add(project(newValueVar, thisValue, thisState.getSubTerm()));
-						newVariables.add(newValueVar);
-						removedVarsThis.add(thisValue);
+						final LinkedList<IProgramVar> newVarsToProject = new LinkedList<>();
+						final LinkedList<IProgramVar> oldVarsToProject = new LinkedList<>();
+						newVarsToProject.add(newValueVar);
+						oldVarsToProject.add(thisValue);
 						newValues.add(newValueVar);
+						while (!newVarsToProject.isEmpty()) {
+							final IProgramVar newVar = newVarsToProject.remove();
+							final IProgramVar oldVar = oldVarsToProject.remove();
+							if (newVar.getSort().isArraySort()) {
+								final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars = new HashMap<>();
+								final Segmentation s = mSegmentationMap.getSegmentation(oldVar);
+								for (final IProgramVar b : s.getBounds()) {
+									final IProgramVar newBound = mToolkit.createBoundVar(mToolkit.getType(b.getSort()));
+									oldVarsToProject.add(b);
+									newVarsToProject.add(newBound);
+									old2newVars.put(b, newBound);
+								}
+								for (final IProgramVar v : s.getValues()) {
+									final IProgramVar newValue = mToolkit.createValueVar(mToolkit.getType(v.getSort()));
+									oldVarsToProject.add(v);
+									newVarsToProject.add(newValue);
+									old2newVars.put(v, newValue);
+								}
+								segmentationMap.add(newVar, createFreshSegmentationCopy(s, old2newVars));
+							} else {
+								constraints.add(project(newVar, oldVar, otherState.getSubTerm()));
+								newVariables.add(newVar);
+								removedVarsOther.add(oldVar);
+							}
+						}
 					} else if (otherValue != null) {
 						final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-						constraints.add(project(newValueVar, otherValue, otherState.getSubTerm()));
-						newVariables.add(newValueVar);
-						removedVarsOther.add(otherValue);
+						final LinkedList<IProgramVar> newVarsToProject = new LinkedList<>();
+						final LinkedList<IProgramVar> oldVarsToProject = new LinkedList<>();
+						newVarsToProject.add(newValueVar);
+						oldVarsToProject.add(otherValue);
 						newValues.add(newValueVar);
+						while (!newVarsToProject.isEmpty()) {
+							final IProgramVar newVar = newVarsToProject.remove();
+							final IProgramVar oldVar = oldVarsToProject.remove();
+							if (newVar.getSort().isArraySort()) {
+								final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars = new HashMap<>();
+								final Segmentation s = otherState.mSegmentationMap.getSegmentation(oldVar);
+								for (final IProgramVar b : s.getBounds()) {
+									final IProgramVar newBound = mToolkit.createBoundVar(mToolkit.getType(b.getSort()));
+									oldVarsToProject.add(b);
+									newVarsToProject.add(newBound);
+									old2newVars.put(b, newBound);
+								}
+								for (final IProgramVar v : s.getValues()) {
+									final IProgramVar newValue = mToolkit.createValueVar(mToolkit.getType(v.getSort()));
+									oldVarsToProject.add(v);
+									newVarsToProject.add(newValue);
+									old2newVars.put(v, newValue);
+								}
+								segmentationMap.add(newVar, createFreshSegmentationCopy(s, old2newVars));
+							} else {
+								constraints.add(project(newVar, oldVar, otherState.getSubTerm()));
+								newVariables.add(newVar);
+								removedVarsOther.add(oldVar);
+							}
+						}
 					} else {
 						// TODO: Return a bottom state here?
 						final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
