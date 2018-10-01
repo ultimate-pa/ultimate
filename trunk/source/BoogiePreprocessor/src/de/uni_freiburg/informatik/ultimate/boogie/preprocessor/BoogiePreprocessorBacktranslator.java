@@ -270,7 +270,8 @@ public class BoogiePreprocessorBacktranslator
 		if (elem instanceof CallStatement) {
 			return checkProcedureNames((CallStatement) elem, ate);
 		} else if (elem instanceof ForkStatement) {
-			return ate.getSucceedingProcedure().equals(((ForkStatement) elem).getProcedureName());
+			// we cannot say anything about proceeding and succeeding procedures
+			return true;
 		} else if (elem instanceof JoinStatement) {
 			// we cannot say anything about proceeding and succeeding procedures
 			return true;
