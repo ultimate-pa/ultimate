@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -103,11 +105,11 @@ public class ThreadInstanceAdder {
 	public IIcfg<? extends IcfgLocation> connectThreadInstances(final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent> joinCurrentThreads,
-			final Collection<String> forkedProcedureNames, final Map<String, ThreadInstance> threadInstanceMap) {
+			final Collection<String> forkedProcedureNames, final Map<String, ThreadInstance> threadInstanceMap, final BlockEncodingBacktranslator backtranslator) {
 		for (final IIcfgForkTransitionThreadCurrent fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
 
-			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg);
+			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg, ti.getThreadInstanceName(), backtranslator);
 		}
 
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
@@ -115,17 +117,17 @@ public class ThreadInstanceAdder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-			for (final String procName : forkedProcedureNames) {
-				final ThreadInstance ti = threadInstanceMap.get(procName);
+			for (final ThreadInstance ti : threadInstanceMap.values()) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
 						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
 				final boolean returnValueCompatible = isReturnValueCompatible(
 						jot.getJoinSmtArguments().getAssignmentLhs(),
-						icfg.getCfgSmtToolkit().getOutParams().get(procName));
+						icfg.getCfgSmtToolkit().getOutParams().get(ti.getThreadInstanceName()));
 				if (threadIdCompatible && returnValueCompatible) {
-					addJoinOtherThreadTransition(jot, procName, ti.getIdVars(), ti.getInUseVar(), icfg);
+					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), ti.getInUseVar(), icfg);
 				}
 			}
+
 			// }
 		}
 		return icfg;
@@ -180,23 +182,24 @@ public class ThreadInstanceAdder {
 	/**
 	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry
 	 * location of the forked procedure.
+	 * @param backtranslator
+	 * @param string
 	 *
 	 * @param edge
 	 *            that points to the next step in the current thread.
 	 */
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent fct, final IcfgLocation errorNode,
 			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
-			final IIcfg<? extends IcfgLocation> icfg) {
+			final IIcfg<? extends IcfgLocation> icfg, final String threadInstanceName, final BlockEncodingBacktranslator backtranslator) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
-		final String forkedProcedure = fct.getNameOfForkedProcedure();
-		assert icfg.getProcedureEntryNodes().containsKey(forkedProcedure) : "Source code contains" + " fork of "
-				+ forkedProcedure + " but no such procedure.";
+		assert icfg.getProcedureEntryNodes().containsKey(threadInstanceName) : "Thread instance "
+				+ threadInstanceName + " missing.";
 
 		// Add fork transition from callerNode to procedures entry node.
 		final IcfgLocation callerNode = fct.getSource();
-		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(forkedProcedure);
+		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(threadInstanceName);
 
 		final ForkSmtArguments fsa = fct.getForkSmtArguments();
 
@@ -206,7 +209,7 @@ public class ThreadInstanceAdder {
 		{
 			final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
-					icfg.getCfgSmtToolkit().getInParams().get(forkedProcedure));
+					icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName));
 			final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
 					Arrays.asList(threadIdVars));
@@ -222,6 +225,9 @@ public class ThreadInstanceAdder {
 				calleeEntryLoc, null, forkTransformula, fct);
 		callerNode.addOutgoing(forkThreadOther);
 		calleeEntryLoc.addIncoming(forkThreadOther);
+//		TODO
+//		final IcfgEdge originalEdge = getOriginalEdge(fct, backtranslator);
+//		backtranslator.mapEdges(forkThreadOther, originalEdge);
 
 		// Add the assume statement for the error location and construct the
 		final UnmodifiableTransFormula forkErrorTransFormula = constructThreadInUseViolationAssumption(threadInUseVar,
@@ -238,17 +244,25 @@ public class ThreadInstanceAdder {
 		}
 	}
 
+	private IcfgEdge getOriginalEdge(final IIcfgForkTransitionThreadCurrent fct, final BlockEncodingBacktranslator backtranslator) {
+		final List<IcfgEdge> transRes = backtranslator.translateTrace(Collections.singletonList((IcfgEdge) fct));
+		if (transRes.size() != 1) {
+			throw new IllegalStateException();
+		}
+		return transRes.get(0);
+	}
+
 	/**
 	 * Add JoinOtherThreadEdge from
 	 *
 	 * @param edge
 	 */
-	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent jot, final String procName,
+	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent jot, final String threadInstanceName,
 			final IProgramNonOldVar[] threadIdVars, final IProgramNonOldVar threadInUseVar,
 			final IIcfg<? extends IcfgLocation> icfg) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
-		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(procName);
+		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(threadInstanceName);
 		final IcfgLocation callerNode = jot.getTarget();
 
 		final JoinSmtArguments jsa = jot.getJoinSmtArguments();
@@ -263,7 +277,7 @@ public class ThreadInstanceAdder {
 					Arrays.asList(threadIdVars));
 
 			final UnmodifiableTransFormula parameterAssignment = jsa.constructResultAssignment(
-					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getOutParams().get(procName));
+					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
 
 			final UnmodifiableTransFormula threadInUseAssignment = constructThreadNotInUseAssingment(threadInUseVar,
 					icfg.getCfgSmtToolkit().getManagedScript());

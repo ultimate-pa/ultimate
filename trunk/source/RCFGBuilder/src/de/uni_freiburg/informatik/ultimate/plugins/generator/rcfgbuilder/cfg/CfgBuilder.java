@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ProcedureMultiplier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -121,6 +122,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -372,9 +374,12 @@ public class CfgBuilder {
 			final Map<String, ThreadInstance> threadInstanceMap2 = adder.constructTreadInstances(result, forkCurrentThreads);
 			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
+			final HashRelation<String, String> copyDirectives = ProcedureMultiplier.generateCopyDirectives(threadInstanceMap2.values());
+			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator);
 			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
+
 			result = adder.connectThreadInstances(result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
-					threadInstanceMap2);
+					threadInstanceMap2, backtranslator);
 			mResultingBacktranslator = new TranslatorConcatenation<IcfgEdge, IcfgEdge, BoogieASTNode, Term, Term, Expression, IcfgLocation, IcfgLocation, String>(
 					backtranslator, mRcfgBacktranslator);
 		} else {
