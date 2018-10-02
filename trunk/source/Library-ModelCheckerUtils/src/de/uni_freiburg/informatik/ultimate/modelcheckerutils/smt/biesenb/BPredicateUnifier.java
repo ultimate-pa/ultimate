@@ -71,6 +71,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final Collection<IPredicate> mPredicates;
 	private final IIcfgSymbolTable mSymbolTable;
 	private int mRestructureWitnessCounter;
+	
+	private long implicationTime = 0;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
@@ -87,9 +89,9 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		if(useMap) {
-			mImplicationGraph = new ImplicationGraph<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
+			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate, true);
 		} else {
-			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
+			mImplicationGraph = new ImplicationGraph<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
 		}
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
@@ -144,6 +146,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	public String collectPredicateUnifierStatistics() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(PredicateUnifierStatisticsType.getInstance().prettyprintBenchmarkData(mStatisticsTracker));
+		builder.append(" " + (implicationTime / 100)/10d + "s impTime");
 		return builder.toString();
 	}
 
@@ -233,6 +236,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			return mTruePredicate;
 		} else if (equalsTrue == LBool.UNKNOWN) {
 			//TODO
+			return predicate;
 		}
 		LBool equalsFalse = isDistinct(predicate, mFalsePredicate);
 		if(equalsFalse == LBool.UNSAT) {
@@ -241,11 +245,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			return mFalsePredicate;
 		}else if ( equalsFalse == LBool.UNKNOWN) {
 			//TODO
+			return predicate;
 		}
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);
 		// Check if predicate is new to the unifier
 		if (mPredicates.add(unifiedPredicate)) {
+			long start = System.currentTimeMillis();
 			mImplicationGraph.unifyPredicate(unifiedPredicate);
+			implicationTime += System.currentTimeMillis() - start;
 			mStatisticsTracker.incrementConstructedPredicates();
 		} else {
 			// Check syntactic or semantic match

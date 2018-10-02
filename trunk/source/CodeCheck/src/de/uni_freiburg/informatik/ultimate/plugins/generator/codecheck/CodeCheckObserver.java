@@ -757,7 +757,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final String shortDescription = "Ultimate CodeCheck benchmark data";
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
-
+		mLogger.info(mPredicateUnifier.collectPredicateUnifierStatistics());
 		reportResult(res);
 	}
 
@@ -813,7 +813,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportResult(final IResult res) {
-		mLogger.info(mPredicateUnifier.collectPredicateUnifierStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
