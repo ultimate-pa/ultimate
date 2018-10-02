@@ -75,6 +75,14 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 	public Set<ImplicationVertex<T>> getVertices(){
 		return mVertices;
 	}
+	
+	public ImplicationVertex<T> getFalseVertex(){
+		return mFalseVertex;
+	}
+	
+	public ImplicationVertex<T> getTrueVertex(){
+		return mTrueVertex;
+	}
 
 	@Override
 	public String toString() {
@@ -139,7 +147,7 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 				marked.add(maxVertex);
 				transitiveClosure.removeAncestorsFromTC(maxVertex);
 			}else {
-				transitiveClosure.removeDescendantsFromTC(maxVertex);
+				transitiveClosure.removeDescendantsFromTC(maxVertex, null);
 				transitiveClosure.removeVertex(maxVertex);
 			}
 		}
@@ -152,7 +160,7 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 			ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, false);
 			if (internImplication(predicate, maxVertex.getPredicate())) {
 				marked.add(maxVertex);
-				transitiveClosure.removeDescendantsFromTC(maxVertex);
+				transitiveClosure.removeDescendantsFromTC(maxVertex, null);
 			} else {
 				transitiveClosure.removeAncestorsFromTC(maxVertex);
 				transitiveClosure.removeVertex(maxVertex);

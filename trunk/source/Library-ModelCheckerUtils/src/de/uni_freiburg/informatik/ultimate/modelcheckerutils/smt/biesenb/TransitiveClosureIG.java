@@ -24,7 +24,7 @@ public class TransitiveClosureIG<T extends IPredicate> {
 		mVertices.forEach(v -> mDescendantsMapping.put(v, new HashSet<>(v.getDescendants())));
 		mVertices.forEach(v -> mAncestorsMapping.put(v, new HashSet<>(v.getAncestors())));
 	}
-	
+
 	public TransitiveClosureIG(ImplicationGraph<T> graph,  Set<ImplicationVertex<T>> init) {
 		mVertices = new HashSet<>(init.iterator().next().getDescendants());
 		for(ImplicationVertex<T> i : init) {
@@ -33,7 +33,6 @@ public class TransitiveClosureIG<T extends IPredicate> {
 				if(i.getDescendants().contains(v)) {
 					current.add(v);
 				}
-				
 			}
 			mVertices = current;
 		}
@@ -59,6 +58,38 @@ public class TransitiveClosureIG<T extends IPredicate> {
 		}
 	}
 	
+	/**
+	 * fore restructure
+	 */
+	public TransitiveClosureIG(final ImplicationVertex<T> root, final Set<ImplicationVertex<T>> descendants,  
+			final ImplicationVertex<T> falseVertex) {
+		mVertices = new HashSet<>(descendants);
+		mVertices.add(root);
+		mDescendantsMapping = new HashMap<>();
+		mAncestorsMapping = new HashMap<>();
+		for(ImplicationVertex<T> v : mVertices) {
+			Set<ImplicationVertex<T>> des = new HashSet<>();
+			for(ImplicationVertex<T> descendant : v.getDescendants()) {
+				if(mVertices.contains(descendant)) des.add(descendant);
+			}
+			mDescendantsMapping.put(v,des);
+			Set<ImplicationVertex<T>> ancestors = new HashSet<>();
+			for(ImplicationVertex<T> ancestor : v.getAncestors()) {
+				if(mVertices.contains(ancestor)) ancestors.add(ancestor);
+			}
+			mAncestorsMapping.put(v,ancestors);
+		}
+		mVertices.add(falseVertex);
+		mAncestorsMapping.put(falseVertex, new HashSet<>());
+		mDescendantsMapping.put(falseVertex, new HashSet<>());
+		for(ImplicationVertex<T> ancestor : mAncestorsMapping.keySet()) {
+			if(mAncestorsMapping.get(ancestor).isEmpty()) {
+				mAncestorsMapping.get(ancestor).add(falseVertex);
+				mDescendantsMapping.get(falseVertex).add(ancestor);
+			}
+		}
+	}
+	
 	protected void removeVertex(ImplicationVertex<T> vertex) {
 		if(mVertices.remove(vertex)) {
 			Set<ImplicationVertex<T>> descendants = mDescendantsMapping.remove(vertex);
@@ -79,10 +110,32 @@ public class TransitiveClosureIG<T extends IPredicate> {
 			}
 		}
 	}
-
-	public void removeDescendantsFromTC(ImplicationVertex<T> vertex) {
-		while(!mDescendantsMapping.get(vertex).isEmpty()) {
-			removeVertex(mDescendantsMapping.get(vertex).iterator().next());
+	
+	/**
+	 * If null is given as trueVertex it will be removed, else it remains
+	 */
+	public void removeDescendantsFromTC(ImplicationVertex<T> vertex, ImplicationVertex<T> trueVertex) {
+		if(trueVertex == null) {
+			while(!mDescendantsMapping.get(vertex).isEmpty()) {
+				removeVertex(mDescendantsMapping.get(vertex).iterator().next());
+			}
+		} else {
+			Set<ImplicationVertex<T>> a = new HashSet<>(mDescendantsMapping.get(vertex));
+			while(!a.isEmpty()) {
+				vertex = a.iterator().next();
+				a.remove(vertex);
+				if(!vertex.equals(trueVertex)) {
+					removeVertex(vertex);
+				} else {
+					mAncestorsMapping.get(trueVertex).clear();
+				}
+			}
+			for(ImplicationVertex<T> d : mDescendantsMapping.keySet()) {
+				if(mDescendantsMapping.get(d).isEmpty()) {
+					mDescendantsMapping.get(d).add(trueVertex);
+					mAncestorsMapping.get(trueVertex).add(d);
+				}
+			}
 		}
 	}
 	
@@ -108,6 +161,12 @@ public class TransitiveClosureIG<T extends IPredicate> {
 				maxVertex = vertex;
 			}
 		}
+//		ImplicationVertex<T> maxVertex = mVertices.iterator().next();
+//		for (final ImplicationVertex<T> vertex : mVertices) {
+//			if (!marked.contains(vertex)) {
+//				return vertex;
+//			}
+//		}
 		return maxVertex;
 	}
 	

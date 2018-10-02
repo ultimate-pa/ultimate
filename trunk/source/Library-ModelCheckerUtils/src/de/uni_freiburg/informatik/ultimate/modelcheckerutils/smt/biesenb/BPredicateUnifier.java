@@ -31,6 +31,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -69,6 +70,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
+	private final Set<IPredicate> mIntricatePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
 	private int mRestructureWitnessCounter;
 	
@@ -86,6 +88,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mTruePredicate = factory.newPredicate(mScript.term("true"));
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
+		mIntricatePredicate = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		if(useMap) {
@@ -146,7 +149,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	public String collectPredicateUnifierStatistics() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(PredicateUnifierStatisticsType.getInstance().prettyprintBenchmarkData(mStatisticsTracker));
-		builder.append(" " + (implicationTime / 100)/10d + "s impTime");
+		builder.append(" " + (implicationTime / 100)/10d + "s impTime " + mPredicateTrie.getDepth());
 		return builder.toString();
 	}
 
@@ -162,8 +165,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public boolean isIntricatePredicate(final IPredicate pred) {
-		boolean result = isDistinct(pred, mTruePredicate) == LBool.UNKNOWN || isDistinct(pred, mFalsePredicate) == LBool.UNKNOWN;
-		return result;
+		return mIntricatePredicate.contains(pred);
 	}
 
 	private LBool isDistinct(final IPredicate pred1, final IPredicate pred2) {
@@ -186,7 +188,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
 		final Term[] conjuncts = SmtUtils.cannibalize(mMgdScript, mServices, splitNumericEqualities, term);
-		final Set<IPredicate> result = new HashSet<>();
+		final Set<IPredicate> result = new HashSet<>(conjuncts.length);
 		for (final Term conjunct : conjuncts) {
 			final IPredicate predicate = getOrConstructPredicate(conjunct);
 			result.add(predicate);
@@ -204,11 +206,11 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return result;
 	}
 
-	@Override
 	/**
 	 * Returns the corresponding predicate for the term. If there is no such predicate a new predicate is constructed
 	 * and returned.
 	 */
+	@Override
 	public IPredicate getOrConstructPredicate(final Term term) {
 		mStatisticsTracker.incrementGetRequests();
 		return getOrConstructPredicateInternal(term);
@@ -219,34 +221,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
 		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
 		// catch terms equal to true of false
-		if (mTruePredicate.getFormula().equals(commuNF)) {
-			mStatisticsTracker.incrementSyntacticMatches();
-			mStatisticsTracker.stopTime();
-			return mTruePredicate;
-		}
-		if (mFalsePredicate.getFormula().equals(commuNF)) {
-			mStatisticsTracker.incrementSyntacticMatches();
-			mStatisticsTracker.stopTime();
-			return mFalsePredicate;
-		} 
-		LBool equalsTrue = isDistinct(predicate, mTruePredicate);
-		if (equalsTrue == LBool.UNSAT) {
-			mStatisticsTracker.incrementSemanticMatches();
-			mStatisticsTracker.stopTime();
-			return mTruePredicate;
-		} else if (equalsTrue == LBool.UNKNOWN) {
-			//TODO
-			return predicate;
-		}
-		LBool equalsFalse = isDistinct(predicate, mFalsePredicate);
-		if(equalsFalse == LBool.UNSAT) {
-			mStatisticsTracker.incrementSemanticMatches();
-			mStatisticsTracker.stopTime();
-			return mFalsePredicate;
-		}else if ( equalsFalse == LBool.UNKNOWN) {
-			//TODO
-			return predicate;
-		}
+		IPredicate tfPred = catchTrueOrFalse(predicate);
+		if(tfPred != null) return tfPred;
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);
 		// Check if predicate is new to the unifier
 		if (mPredicates.add(unifiedPredicate)) {
@@ -265,12 +241,44 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mStatisticsTracker.stopTime();
 		return unifiedPredicate;
 	}
+	
+	private IPredicate catchTrueOrFalse(IPredicate pred) {
+		if (mTruePredicate.getFormula().equals(pred.getFormula())) {
+			mStatisticsTracker.incrementSyntacticMatches();
+			mStatisticsTracker.stopTime();
+			return mTruePredicate;
+		}
+		if (mFalsePredicate.getFormula().equals(pred.getFormula())) {
+			mStatisticsTracker.incrementSyntacticMatches();
+			mStatisticsTracker.stopTime();
+			return mFalsePredicate;
+		} 
+		LBool equalsTrue = isDistinct(pred, mTruePredicate);
+		if (equalsTrue == LBool.UNSAT) {
+			mStatisticsTracker.incrementSemanticMatches();
+			mStatisticsTracker.stopTime();
+			return mTruePredicate;
+		} else if (equalsTrue == LBool.UNKNOWN) {
+			mIntricatePredicate.add(pred);
+			return pred;
+		}
+		LBool equalsFalse = isDistinct(pred, mFalsePredicate);
+		if(equalsFalse == LBool.UNSAT) {
+			mStatisticsTracker.incrementSemanticMatches();
+			mStatisticsTracker.stopTime();
+			return mFalsePredicate;
+		}else if (equalsFalse == LBool.UNKNOWN) {
+			mIntricatePredicate.add(pred);
+			return pred;
+		}
+		return null;
+	}
 
-	@Override
 	/**
 	 * Returns the corresponding predicate. If there is no such predicate the predicate is added to the unifier and
 	 * returned.
 	 */
+	@Override
 	public IPredicate getOrConstructPredicate(final IPredicate predicate) {
 		if (mPredicates.contains(predicate)) {
 			return predicate;
@@ -310,27 +318,33 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	}
 
 	@Override
-	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
-			final Map<IPredicate, Validity> expliedPredicates) {
-		// TODO Find a way to exploit that we already know this term is unique.
-		return getOrConstructPredicate(term);
+	public IPredicate constructNewPredicate(Term term, Map<IPredicate, Validity> impliedPredicates,
+			Map<IPredicate, Validity> expliedPredicates) {
+		// TODO Auto-generated method stub
+		return null;
 	}
-	
-	//
+
+	/**
+	 * under construction - do not use
+	 */
+//	@Override
+//	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
+//			final Map<IPredicate, Validity> expliedPredicates) {
+//		// TODO Find a way to exploit that we already know this term is unique.
+//		return getOrConstructPredicate(term);
+//	}
+//	
 //	public int restructurePredicateTrie() {
 //		final int oldDepth = mPredicateTrie.getDepth();
 //		// trie already has minimal depth (true and false are not in depth included)
 //		if (oldDepth <= minDepth(mPredicates.size())) return 0;
 //
-//		final Pair<ImplicationGraph<IPredicate>, Map<ImplicationVertex<IPredicate>, ImplicationVertex<IPredicate>>> copyPair =
-//				mImplicationGraph.createFullCopy();
-//		final ImplicationGraph<IPredicate> copy = copyPair.getFirst();
+//		TransitiveClosureIG<IPredicate> transitiveClosure = new TransitiveClosureIG<>(mImplicationGraph);
 //
-//		final Map<Witness, 
-//		Pair<Witness, Witness>> witnessMap = new HashMap<>();
+//		final Map<Witness, Pair<Witness, Witness>> witnessMap = new HashMap<>();
 //		Map<Term, IPredicate> preds = new HashMap<>();
 //		mRestructureWitnessCounter = 0;
-//		Witness root = getWitnessInductive(copy, witnessMap, preds);
+//		Witness root = getWitnessInductive(transitiveClosure, witnessMap, preds);
 //		final PredicateTrie<IPredicate> restructuredTrie =
 //				new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 //		restructuredTrie.fillTrie(root, witnessMap, preds);
@@ -340,13 +354,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 //		return oldDepth - mPredicateTrie.getDepth();
 //	}
 //
-//	private Witness getWitnessInductive(final ImplicationGraph<IPredicate> graph, 
+//	private Witness getWitnessInductive(final TransitiveClosureIG<IPredicate> transitiveClosure, 
 //			final Map<Witness, Pair<Witness, Witness>> witnessMap, Map<Term, IPredicate> preds) {
 //		// Find best vertex
-//		float optimum = ((float) graph.getVertices().size()) / 2;
+//		float optimum = ((float) transitiveClosure.getVertices().size()) / 2;
 //		float minDif = optimum;
-//		ImplicationVertex<IPredicate> vertex = graph.getFalseVertex();
-//		for (final ImplicationVertex<IPredicate> v : graph.getVertices()) {
+//		ImplicationVertex<IPredicate> vertex = mImplicationGraph.getFalseVertex();
+//		for (final ImplicationVertex<IPredicate> v : transitiveClosure.getVertices()) {
 //			final float vCount = v.getDescendants().size() + 1;
 //			if (vCount == optimum) {
 //				vertex = v;
@@ -363,9 +377,9 @@ public class BPredicateUnifier implements IPredicateUnifier {
 //		Witness trueWitness = null;
 //		Witness falseWitness = null;
 //
-//		final Set<ImplicationVertex<IPredicate>> trueSide = new HashSet<>();
-//		trueSide.add(vertex);
-//		final ImplicationGraph<IPredicate> trueGraph = graph.createSubCopy(trueSide, true).getFirst();
+//		final TransitiveClosureIG<IPredicate> trueGraph = new TransitiveClosureIG<>(vertex, 
+//				transitiveClosure.getDescendantsMapping().get(vertex), mImplicationGraph.getFalseVertex());
+//		System.out.println("trueSide " + vertex + trueGraph.getVertices());
 //		Set<ImplicationVertex<IPredicate>> tGVertices = trueGraph.getVertices();
 //		if (tGVertices.size() > 3) {
 //			trueWitness = getWitnessInductive(trueGraph, witnessMap, preds);
@@ -380,11 +394,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 //				}
 //			}
 //		}
-//		graph.removeAllImpliedVertices(vertex);
-//		graph.removeVertex(vertex);
-//		Set<ImplicationVertex<IPredicate>> fGVertices = graph.getVertices();
+//		transitiveClosure.removeDescendantsFromTC(vertex, mImplicationGraph.getTrueVertex());
+//		transitiveClosure.removeVertex(vertex);
+//		Set<ImplicationVertex<IPredicate>> fGVertices = transitiveClosure.getVertices();
+//		System.out.println("falseSide " + vertex + transitiveClosure.getVertices().size());
 //		if (fGVertices.size() > 3) {
-//			falseWitness = getWitnessInductive(graph, witnessMap, preds);
+//			falseWitness = getWitnessInductive(transitiveClosure, witnessMap, preds);
 //		}else {
 //			for(ImplicationVertex<IPredicate> v : fGVertices) {
 //				Term t = v.getPredicate().getFormula();

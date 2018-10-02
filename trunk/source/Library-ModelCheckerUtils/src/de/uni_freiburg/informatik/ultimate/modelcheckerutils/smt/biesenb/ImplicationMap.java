@@ -46,6 +46,7 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		return bld.toString();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Validity isCovered(IPredicate lhs, IPredicate rhs) {
 		if (getCoveringPredicates(lhs).contains(rhs)) {
