@@ -2,18 +2,20 @@
 #include <stdio.h>
 #include <assert.h>
 
+typedef unsigned long int pthread_t;
+
 
 void *inc(void *n) {
     int *ret = (int *)n;
     printf("%d\n", *ret);
-    ret++;
+    (*ret)++;
     printf("%d\n", *ret);
     return (void *)ret;
 }
 
 void *dec(void *n) {
     int *ret = (int *)n;
-    ret--;
+	(*ret)--;
     return (void *)ret;
 }
 
@@ -27,7 +29,8 @@ int main() {
     void *y;
     pthread_join(first_th_id, &y);
     int *final = (int *)y;
-    printf("%d", *final);
+    printf("%d\n", *final);
+	//@ assert \false;
     
     return 0;
 }
