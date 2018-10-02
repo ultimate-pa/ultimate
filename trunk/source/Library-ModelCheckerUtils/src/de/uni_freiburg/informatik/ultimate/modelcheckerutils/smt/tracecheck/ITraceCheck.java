@@ -33,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -69,7 +71,7 @@ public interface ITraceCheck {
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
-	IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution();
+	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution();
 
 	IStatisticsDataProvider getTraceCheckBenchmark();
 

@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Interface for abstract values that are able to represent themselves as an SMT {@link Term}.
@@ -40,15 +41,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface ITermProvider {
 	/**
-	 * Returns a {@link Term} for the current value.
+	 * Returns a {@link Term} that represents the value.
 	 *
 	 * @param script
 	 *            The script to create the term with.
 	 * @param sort
-	 *            The sorting of variables.
-	 * @param referenceTerm
-	 *            The term this value applies to.
-	 * @return A new {@link Term}.
+	 *            The sort of the {@link TermVariable} (??)
+	 * @param variable
+	 *            The {@link TermVariable} this value should represent.
+	 * @return A {@link Term} representing this value.
 	 */
-	Term getTerm(final Script script, final Sort sort, final Term referenceTerm);
+	Term getTerm(final Script script, final Sort sort, final Term variable);
 }

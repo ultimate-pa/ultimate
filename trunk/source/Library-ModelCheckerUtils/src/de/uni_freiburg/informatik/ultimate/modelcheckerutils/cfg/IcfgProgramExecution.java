@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
@@ -52,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
+public class IcfgProgramExecution implements IProgramExecution<IIcfgTransition<IcfgLocation>, Term> {
 
-	private final List<AtomicTraceElement<IcfgEdge>> mTrace;
+	private final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> mTrace;
 	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 
@@ -80,9 +81,9 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 
 		// a list of boogieastnodes is a trace that consists of atomic
 		// statements.
-		final List<AtomicTraceElement<IcfgEdge>> atomictrace = new ArrayList<>();
+		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> atomictrace = new ArrayList<>();
 		for (int i = 0; i < trace.size(); i++) {
-			final IcfgEdge te = (IcfgEdge) trace.get(i);
+			final IIcfgTransition<IcfgLocation> te = (IIcfgTransition<IcfgLocation>) trace.get(i);
 			final IRelevanceInformation ri;
 			if (relevanceInformation == null) {
 				ri = null;
@@ -115,7 +116,7 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	}
 
 	@Override
-	public AtomicTraceElement<IcfgEdge> getTraceElement(final int i) {
+	public AtomicTraceElement<IIcfgTransition<IcfgLocation>> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
 
@@ -134,7 +135,7 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 
 	@Override
 	public String toString() {
-		final ProgramExecutionFormatter<IcfgEdge, Term> pef =
+		final ProgramExecutionFormatter<IIcfgTransition<IcfgLocation>, Term> pef =
 				new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
@@ -145,13 +146,17 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	}
 
 	@Override
-	public Class<IcfgEdge> getTraceElementClass() {
+	public Class<? extends IIcfgTransition<IcfgLocation>> getTraceElementClass() {
+		return IcfgEdge.class;
+	}
+
+	public Class<? extends IIcfgTransition<? extends IcfgLocation>> getsTraceElementClass() {
 		return IcfgEdge.class;
 	}
 
 	public IcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
-		final List<IcfgEdge> edgeSequence = new ArrayList<>();
-		for (final AtomicTraceElement<IcfgEdge> ate : mTrace) {
+		final List<IIcfgTransition<IcfgLocation>> edgeSequence = new ArrayList<>();
+		for (final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());
 		}
 		return new IcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
@@ -159,7 +164,7 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	}
 
 	@Override
-	public IBacktranslationValueProvider<IcfgEdge, Term> getBacktranslationValueProvider() {
+	public IBacktranslationValueProvider<IIcfgTransition<IcfgLocation>, Term> getBacktranslationValueProvider() {
 		return new NoBacktranslationValueProvider<>();
 	}
 

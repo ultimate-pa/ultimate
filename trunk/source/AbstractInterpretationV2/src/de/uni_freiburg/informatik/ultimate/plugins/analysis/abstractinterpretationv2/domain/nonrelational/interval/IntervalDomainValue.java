@@ -1224,7 +1224,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
 	@Override
-	public IntervalDomainValue divide(final IntervalDomainValue other) {
+	public IntervalDomainValue divideReal(final IntervalDomainValue other) {
 		return divideInternally(other);
 	}
 

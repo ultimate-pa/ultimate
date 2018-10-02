@@ -270,7 +270,8 @@ public class BoogiePreprocessorBacktranslator
 		if (elem instanceof CallStatement) {
 			return checkProcedureNames((CallStatement) elem, ate);
 		} else if (elem instanceof ForkStatement) {
-			return ate.getSucceedingProcedure().equals(((ForkStatement) elem).getProcedureName());
+			// we cannot say anything about proceeding and succeeding procedures
+			return true;
 		} else if (elem instanceof JoinStatement) {
 			// we cannot say anything about proceeding and succeeding procedures
 			return true;
@@ -362,7 +363,7 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private Multigraph<String, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, String, BoogieASTNode, ?>, Multigraph<String, BoogieASTNode>> cache,
+			final Map<IExplicitEdgesMultigraph<?, ?, String, ? extends BoogieASTNode, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IMultigraphEdge<?, ?, String, BoogieASTNode, ?> oldEdge,
 			final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = translateTraceElement(oldEdge.getLabel());

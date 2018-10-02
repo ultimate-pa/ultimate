@@ -171,7 +171,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			constraints.add(SmtUtils.binaryEquality(script, auxVarTv, oldValue));
 			final Expression store = mToolkit.getExpression(
 					SmtUtils.multiDimensionalStore(script, select.getArray(), select.getIndex(), auxVarTv));
-			final ArrayDomainState<STATE> tmpState = oldValueResult.getFirst().addVariable(auxVar);
+			final ArrayDomainState<STATE> tmpState = oldValueResult.getFirst().addAuxVar(auxVar);
 			final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair = tmpState.getSegmentation(store);
 			newState = segmentationPair.getFirst();
 			final IProgramVarOrConst arrayVar = mToolkit.getBoogieVar((IdentifierExpression) arrayExpr);

@@ -159,19 +159,19 @@ public class CongruenceDomainValueTest {
 		final CongruenceDomainValue c5 = CongruenceDomainValue.createConstant(BigInteger.valueOf(-100));
 		final CongruenceDomainValue c6 = CongruenceDomainValue.createConstant(BigInteger.valueOf(-7));
 		final CongruenceDomainValue c7 = ZERO;
-		assertEquals(b.divide(z4).toString(), STR_BOT);
-		assertEquals(z4.divide(c1).toString(), STR_2Z_NO_ZERO);
-		assertEquals(z3.divide(c1).toString(), STR_1Z);
-		assertEquals(c2.divide(c1).toString(), "-3");
-		assertEquals(c1.divide(c2).toString(), "-1");
-		assertEquals(c2.negate().divide(c1.negate()).toString(), "-4");
-		assertEquals(c1.divide(c2.negate()).toString(), "1");
-		assertEquals(c3.divide(z4).toString(), STR_ZERO);
-		assertEquals(c4.divide(z3).toString(), STR_1Z);
-		assertEquals(c5.divide(c6).toString(), "15");
-		assertEquals(z3.divide(c7).toString(), STR_1Z);
-		assertEquals(z4.divide(c3).toString(), STR_1Z_NO_ZERO);
-		assertEquals(z3.divide(c1).toString(), STR_1Z);
+		assertEquals(b.divideReal(z4).toString(), STR_BOT);
+		assertEquals(z4.divideReal(c1).toString(), STR_2Z_NO_ZERO);
+		assertEquals(z3.divideReal(c1).toString(), STR_1Z);
+		assertEquals(c2.divideReal(c1).toString(), "-3");
+		assertEquals(c1.divideReal(c2).toString(), "-1");
+		assertEquals(c2.negate().divideReal(c1.negate()).toString(), "-4");
+		assertEquals(c1.divideReal(c2.negate()).toString(), "1");
+		assertEquals(c3.divideReal(z4).toString(), STR_ZERO);
+		assertEquals(c4.divideReal(z3).toString(), STR_1Z);
+		assertEquals(c5.divideReal(c6).toString(), "15");
+		assertEquals(z3.divideReal(c7).toString(), STR_1Z);
+		assertEquals(z4.divideReal(c3).toString(), STR_1Z_NO_ZERO);
+		assertEquals(z3.divideReal(c1).toString(), STR_1Z);
 	}
 
 	@Test

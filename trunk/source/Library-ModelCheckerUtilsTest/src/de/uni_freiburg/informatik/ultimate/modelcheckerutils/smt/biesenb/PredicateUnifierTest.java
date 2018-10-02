@@ -70,6 +70,7 @@ public class PredicateUnifierTest {
 	private IProgramNonOldVar mA, mB;
 	private BasicPredicateFactory mBasicFactory;
 	private Term mZero, mOne, mTwo, mThree;
+	private boolean useMap = true;
 
 	@Before
 	public void setUp() {
@@ -95,14 +96,18 @@ public class PredicateUnifierTest {
 		mOne = mScript.numeral(String.valueOf(1));
 		mTwo = mScript.numeral(String.valueOf(2));
 		mThree = mScript.numeral(String.valueOf(3));
+		
+		
 
 		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable, SimplificationTechnique.NONE,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
 	@Test
-	public void restructurePredicateTrie() {
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+	public void testRestructurePredicateTrie() {
+		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mZero);
 		final Term term2 = mScript.term("=", mA.getTermVariable(), mOne);
@@ -115,25 +120,35 @@ public class PredicateUnifierTest {
 		
 
 		unifier.getOrConstructPredicate(term1);
+		oUnifier.getOrConstructPredicate(term1);
 		unifier.getOrConstructPredicate(term2);
+		oUnifier.getOrConstructPredicate(term2);
 		unifier.getOrConstructPredicate(term3);
+		oUnifier.getOrConstructPredicate(term3);
 		unifier.getOrConstructPredicate(term4);
+		oUnifier.getOrConstructPredicate(term4);
 		unifier.getOrConstructPredicate(mScript.term("and", term4, term5));
+		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term5));
 		unifier.getOrConstructPredicate(mScript.term("and", term4, term6));
+		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term6));
 		unifier.getOrConstructPredicate(mScript.term("and", term4, term7));
+		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term7));
 		unifier.getOrConstructPredicate(mScript.term("and", term4, term8));
+		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term8));
 
 		//mLogger.info(unifier.print(true, false));
-		mLogger.info(unifier.restructurePredicateTrie());
+		//mLogger.info(unifier.restructurePredicateTrie());
 		//mLogger.info(unifier.print(true, false));
+		mLogger.info("B: " + unifier.collectPredicateUnifierStatistics());
+		mLogger.info("O: " + oUnifier.collectPredicateUnifierStatistics());
 	}
 
 	@Test
-	public void PredicateCoverageChecker() {
+	public void testPredicateCoverageChecker() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -191,7 +206,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -207,7 +222,7 @@ public class PredicateUnifierTest {
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
 		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
-
+		
 		final Collection<IPredicate> collection1 = new HashSet<>();
 		collection1.add(pred2);
 		collection1.add(pred3);
@@ -220,7 +235,6 @@ public class PredicateUnifierTest {
 
 		Assert.assertThat("1", unifier.getOrConstructPredicateForConjunction(collection1).getFormula().toString(),
 				Is.is(oUnifier.getOrConstructPredicateForConjunction(oCollection1).getFormula().toString()));
-
 		Assert.assertThat("2", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 	}
@@ -230,7 +244,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mTwo);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mOne);
@@ -267,7 +281,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testCannibalize() {
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -298,7 +312,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term term2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -336,11 +350,11 @@ public class PredicateUnifierTest {
 	}
 	
 	@Test
-	public void TestisIntricatePredicate() {
+	public void testIsIntricatePredicate() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 		
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
 		
@@ -367,7 +381,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		final TestPredicate pred1 = pred("=", mA, 1);
 		final TestPredicate pred2 = pred("=", mA, 1);
@@ -401,7 +415,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mMgdScript, mBasicFactory, mTable, useMap);
 
 		Assert.assertThat("1", unifier.getTruePredicate().getFormula(),
 				Is.is(oUnifier.getTruePredicate().getFormula()));

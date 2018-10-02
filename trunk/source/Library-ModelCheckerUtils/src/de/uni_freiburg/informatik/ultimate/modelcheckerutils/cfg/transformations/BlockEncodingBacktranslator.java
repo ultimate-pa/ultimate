@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -56,17 +57,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
+public class BlockEncodingBacktranslator extends
+		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, IcfgLocation, IcfgLocation> {
 
 	private static final boolean PRINT_MAPPINGS = false;
 
-	private final Map<IcfgEdge, List<IcfgEdge>> mEdgeMapping;
+	private final Map<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> mEdgeMapping;
 	private final Map<IcfgLocation, IcfgLocation> mLocationMapping;
 	private final ILogger mLogger;
-	private final Set<IcfgEdge> mIntermediateEdges;
+	private final Set<IIcfgTransition<IcfgLocation>> mIntermediateEdges;
+	private Function<Term, Term> mTermTranslator = (x -> x);
 
-	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
-			final ILogger logger) {
+	public BlockEncodingBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
+			final Class<Term> expressionType, final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 		mLocationMapping = new HashMap<>();
@@ -76,7 +79,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<IcfgEdge, Term> translateProgramExecution(final IProgramExecution<IcfgEdge, Term> pe) {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
+			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
 		if (pe == null) {
 			throw new IllegalArgumentException("programExecution is null");
 		}
@@ -91,26 +95,26 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		assert checkCallStackSourceProgramExecution(mLogger,
 				programExecution) : "callstack of initial program execution already broken";
 
-		final List<IcfgEdge> newTrace = new ArrayList<>();
+		final List<IIcfgTransition<IcfgLocation>> newTrace = new ArrayList<>();
 		final List<ProgramState<Term>> newValues = new ArrayList<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		if (PRINT_MAPPINGS) {
 			mLogger.info("Using the following mapping");
-			for (final Entry<IcfgEdge, List<IcfgEdge>> entry : mEdgeMapping.entrySet()) {
+			for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping.entrySet()) {
 				printMapping(entry.getKey(), entry.getValue());
 			}
 		}
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
-			final List<IcfgEdge> mappedEdges = mEdgeMapping.get(currentATE.getTraceElement());
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = programExecution.getTraceElement(i);
+			final List<IIcfgTransition<IcfgLocation>> mappedEdges = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdges == null || mappedEdges.isEmpty()) {
 				mLogger.warn("Skipped backtranslation of ATE [" + currentATE.getTraceElement().hashCode() + "] "
 						+ currentATE.getTraceElement() + " because there is no mapped edge");
 				continue;
 			}
-			final Iterator<IcfgEdge> iter = mappedEdges.iterator();
+			final Iterator<IIcfgTransition<IcfgLocation>> iter = mappedEdges.iterator();
 			while (iter.hasNext()) {
 				newTrace.add(iter.next());
 				if (iter.hasNext()) {
@@ -118,7 +122,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 					newBranchEncoders.add(null);
 				}
 			}
-			newValues.add(programExecution.getProgramState(i));
+			final ProgramState<Term> newProgramState = translateProgramState(programExecution.getProgramState(i));
+			newValues.add(newProgramState);
 			newBranchEncoders.add(oldBranchEncoders[i]);
 
 		}
@@ -135,18 +140,18 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		return newPe;
 	}
 
-	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
-		final List<IcfgEdge> limboEdges = mEdgeMapping.get(originalEdge);
+	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge, final IIcfgTransition<IcfgLocation> originalEdge) {
+		final List<IIcfgTransition<IcfgLocation>> limboEdges = mEdgeMapping.get(originalEdge);
 		if (limboEdges != null) {
 			// an intermediate edge is replaced by a new edge
 			mIntermediateEdges.add(originalEdge);
-			for (final IcfgEdge limboEdge : limboEdges) {
+			for (final IIcfgTransition<IcfgLocation> limboEdge : limboEdges) {
 				mapEdges(newEdge, limboEdge);
 			}
 			return;
 		}
 
-		List<IcfgEdge> originalEdges = mEdgeMapping.get(newEdge);
+		List<IIcfgTransition<IcfgLocation>> originalEdges = mEdgeMapping.get(newEdge);
 		if (originalEdges == null) {
 			originalEdges = new ArrayList<>();
 			mEdgeMapping.put(newEdge, originalEdges);
@@ -164,30 +169,30 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		if (PRINT_MAPPINGS) {
 			mLogger.info("Removing " + getCollectionString(mIntermediateEdges));
 		}
-		for (final IcfgEdge edge : mIntermediateEdges) {
+		for (final IIcfgTransition<IcfgLocation> edge : mIntermediateEdges) {
 			mEdgeMapping.remove(edge);
 		}
 		mIntermediateEdges.clear();
 	}
 
-	private void printMapping(final IcfgEdge newEdge, final List<IcfgEdge> originalEdges) {
+	private void printMapping(final IIcfgTransition<IcfgLocation> newEdge, final List<IIcfgTransition<IcfgLocation>> originalEdges) {
 		mLogger.info(
 				markCodeblock(newEdge) + newEdge.hashCode() + " is mapped to " + getCollectionString(originalEdges));
 	}
 
-	private static String getCollectionString(final Collection<IcfgEdge> originalEdges) {
+	private static String getCollectionString(final Collection<IIcfgTransition<IcfgLocation>> originalEdges) {
 		return originalEdges.stream().map(a -> markCodeblock(a) + String.valueOf(a.hashCode()))
 				.collect(Collectors.joining(","));
 	}
 
-	private static String markCodeblock(final IcfgEdge newEdge) {
+	private static String markCodeblock(final IIcfgTransition<IcfgLocation> newEdge) {
 		return "";
-//		2018-09-14 Matthias: I commented the following lines to get rid
-//		of the dependency to CodeBlock
-//		if (newEdge instanceof CodeBlock) {
-//			return "";
-//		}
-//		return "!";
+		// 2018-09-14 Matthias: I commented the following lines to get rid
+		// of the dependency to CodeBlock
+		// if (newEdge instanceof CodeBlock) {
+		// return "";
+		// }
+		// return "!";
 	}
 
 	public void mapLocations(final IcfgLocation newLoc, final IcfgLocation oldLoc) {
@@ -214,9 +219,9 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	 * @return Map from new edges to old edges.
 	 */
 	@Deprecated
-	public Map<IcfgEdge, IcfgEdge> getEdgeMapping() {
-		final Map<IcfgEdge, IcfgEdge> rtr = new HashMap<>();
-		for (final Entry<IcfgEdge, List<IcfgEdge>> entry : mEdgeMapping.entrySet()) {
+	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getEdgeMapping() {
+		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> rtr = new HashMap<>();
+		for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping.entrySet()) {
 			if (entry.getValue().size() > 1) {
 				throw new UnsupportedOperationException(
 						"The new edge " + entry.getKey() + " is mapped to multiple edges");
@@ -227,17 +232,30 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	}
 
 	@Override
-	protected void printBrokenCallStackSource(final List<AtomicTraceElement<IcfgEdge>> trace,
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
 			final int breakpointIndex) {
-		final List<IcfgEdge> teList =
+		final List<IIcfgTransition<IcfgLocation>> teList =
 				trace.stream().limit(breakpointIndex).map(a -> a.getTraceElement()).collect(Collectors.toList());
 		mLogger.fatal(new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider())
 				.formatProgramExecution(new IcfgProgramExecution(teList, Collections.emptyMap())));
 	}
 
 	@Override
-	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<IcfgEdge>> trace,
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
 			final int breakpointIndex) {
 		printBrokenCallStackSource(trace, breakpointIndex);
 	}
+
+	public void setTermTranslator(final Function<Term, Term> termTranslator) {
+		mTermTranslator = termTranslator;
+	}
+
+	@Override
+	public Term translateExpression(final Term expression) {
+		final Term result = mTermTranslator.apply(expression);
+		return result;
+	}
+
+
+
 }

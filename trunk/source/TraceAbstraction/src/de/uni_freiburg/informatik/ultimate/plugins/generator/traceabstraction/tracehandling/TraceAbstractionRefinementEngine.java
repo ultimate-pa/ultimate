@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -81,7 +81,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	}
 
 	@Override
-	public IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution() {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution() {
 		return mStrategy.getIcfgProgramExecution();
 	}
 

@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -211,7 +211,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * Program execution that leads to error. Only computed in the last iteration of the CEGAR loop if the program is
 	 * incorrect.
 	 */
-	protected IProgramExecution<IcfgEdge, Term> mRcfgProgramExecution;
+	protected IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mRcfgProgramExecution;
 
 	// used for debugging only
 	protected IAutomaton<LETTER, IPredicate> mArtifactAutomaton;
@@ -363,7 +363,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return mIteration;
 	}
 
-	public IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution() {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
 		return mRcfgProgramExecution;
 	}
 
@@ -462,10 +462,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 								&& mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 							mArtifactAutomaton = mInterpolAutomaton;
 						}
-//						if (mPref.dumpAutomata()) {
-//							writeAutomatonToFile(mInterpolAutomaton,
-//									automatonType + "Automaton_Iteration" + mIteration);
-//						}
+						// if (mPref.dumpAutomata()) {
+						// writeAutomatonToFile(mInterpolAutomaton,
+						// automatonType + "Automaton_Iteration" + mIteration);
+						// }
 					}
 
 					mInteractive.waitIfPaused();
@@ -494,10 +494,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 						mArtifactAutomaton = mAbstraction;
 					}
 
-//					if (mPref.dumpAutomata()) {
-//						final String filename = "Abstraction" + mIteration;
-//						writeAutomatonToFile(mAbstraction, filename);
-//					}
+					// if (mPref.dumpAutomata()) {
+					// final String filename = "Abstraction" + mIteration;
+					// writeAutomatonToFile(mAbstraction, filename);
+					// }
 
 					final boolean newMaximumReached =
 							mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);

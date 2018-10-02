@@ -110,7 +110,7 @@ public class ReqParser implements ISource {
 		final List<PatternType> unifiedPatterns = unify(rawPatterns);
 		logPatternSize(unifiedPatterns, "after unification");
 
-		return new ObjectContainer<>(rawPatterns);
+		return new ObjectContainer<>(unifiedPatterns);
 	}
 
 	private List<PatternType> parseFile(final String reqFileName) throws Exception {

@@ -148,7 +148,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final Deque<ProofObligation> mProofObligations;
 
 	private boolean mTraceCheckFinishedNormally;
-	private IProgramExecution<IcfgEdge, Term> mFeasibleProgramExecution;
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
 	private ToolchainCanceledException mToolchainCanceledException;
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
@@ -881,7 +881,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		}
 	}
 
-	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
 		// TODO: construct a real IProgramExecution using
 		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
 		// class becomes available here).
@@ -919,7 +919,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	@Override
-	public IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution() {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
 		if (mFeasibleProgramExecution == null) {
 			mFeasibleProgramExecution = computeProgramExecution();
 		}

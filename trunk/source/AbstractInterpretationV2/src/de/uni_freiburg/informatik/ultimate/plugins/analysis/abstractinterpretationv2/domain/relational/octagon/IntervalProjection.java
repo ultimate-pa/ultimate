@@ -162,7 +162,7 @@ public class IntervalProjection {
 				if (TypeUtils.isNumericInt(binExpr.getType())) {
 					return left.divideInteger(right);
 				}
-				return left.divide(right);
+				return left.divideReal(right);
 			case ARITHMOD:
 				assert TypeUtils.isNumericInt(binExpr.getType());
 				return left.modulo(right);

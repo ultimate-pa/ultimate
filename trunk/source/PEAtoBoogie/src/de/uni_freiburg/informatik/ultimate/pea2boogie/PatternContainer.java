@@ -49,7 +49,7 @@ public final class PatternContainer extends ModernAnnotations {
 	@Visualizable
 	private final List<PatternType> mPatterns;
 
-	PatternContainer(final List<PatternType> patterns) {
+	public PatternContainer(final List<PatternType> patterns) {
 		mPatterns = patterns;
 	}
 

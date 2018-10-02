@@ -707,7 +707,7 @@ public class CACSL2BoogieBacktranslator
 
 	@SuppressWarnings("unchecked")
 	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode, ?>, Multigraph<TVL, CACSLLocation>> cache,
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, ? extends BoogieASTNode, ?>, Multigraph<TVL, CACSLLocation>> cache,
 			final IMultigraphEdge<?, ?, ?, BoogieASTNode, ?> oldEdge,
 			final Multigraph<TVL, CACSLLocation> newSourceNode) {
 

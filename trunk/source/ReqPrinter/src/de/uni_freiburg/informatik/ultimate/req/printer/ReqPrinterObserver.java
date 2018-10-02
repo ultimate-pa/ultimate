@@ -78,22 +78,18 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 			final List<PatternType> pattern = new ArrayList<>(container.getPatterns());
 			printPatternList(root, pattern);
 			return false;
-		}  else if (root instanceof ObjectContainer) {
-			if(((ObjectContainer) root).getValue() instanceof List) {
+		} else if (root instanceof ObjectContainer) {
+			if (((ObjectContainer) root).getValue() instanceof List) {
 				final List<PatternType> pattern = (List<PatternType>) ((ObjectContainer) root).getValue();
 				printPatternList(root, pattern);
 			}
 			return false;
-		} 
+		}
 		return true;
 	}
-	
-	private void printPatternList(IElement root, List<PatternType> sortedPatterns) {
-		final PrintWriter writer = openTempFile(root);
-		/*if (writer == null) {
-			return false;
-		}*/
 
+	private void printPatternList(final IElement root, final List<PatternType> sortedPatterns) {
+		final PrintWriter writer = openTempFile(root);
 		sortedPatterns.sort(new Comparator<PatternType>() {
 
 			@Override

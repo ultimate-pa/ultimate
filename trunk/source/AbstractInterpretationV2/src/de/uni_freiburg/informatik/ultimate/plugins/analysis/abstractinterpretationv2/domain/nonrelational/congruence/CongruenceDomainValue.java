@@ -231,7 +231,7 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public CongruenceDomainValue divide(final CongruenceDomainValue other) {
+	public CongruenceDomainValue divideReal(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -411,7 +411,7 @@ public final class CongruenceDomainValue
 
 	@Override
 	public CongruenceDomainValue divideInteger(final CongruenceDomainValue other) {
-		return divide(other);
+		return divideReal(other);
 	}
 
 	@Override

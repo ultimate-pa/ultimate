@@ -80,13 +80,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 
-	private final Class<STE> mSourceTraceElementType;
-	private final Class<TTE> mTargetTraceElementType;
+	private final Class<? extends STE> mSourceTraceElementType;
+	private final Class<? extends TTE> mTargetTraceElementType;
 	private final Class<SE> mSourceExpressionType;
 	private final Class<TE> mTargetExpressionType;
 
-	public DefaultTranslator(final Class<STE> sourceTraceElementType, final Class<TTE> targetTraceElementType,
-			final Class<SE> sourceExpressionType, final Class<TE> targetExpressionType) {
+	public DefaultTranslator(final Class<? extends STE> sourceTraceElementType,
+			final Class<? extends TTE> targetTraceElementType, final Class<SE> sourceExpressionType,
+			final Class<TE> targetExpressionType) {
 		mSourceTraceElementType = sourceTraceElementType;
 		mTargetTraceElementType = targetTraceElementType;
 		mSourceExpressionType = sourceExpressionType;
@@ -98,12 +99,12 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	@Override
-	public Class<STE> getSourceTraceElementClass() {
+	public Class<? extends STE> getSourceTraceElementClass() {
 		return mSourceTraceElementType;
 	}
 
 	@Override
-	public Class<TTE> getTargetTraceElementClass() {
+	public Class<? extends TTE> getTargetTraceElementClass() {
 		return mTargetTraceElementType;
 	}
 
@@ -295,15 +296,16 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	protected IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
-			final IFunction<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, ? extends STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
+			final IFunction<String, List<Multigraph<TVL, TTE>>, Class<? extends TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
 
 		final List<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>> oldRoots = cfg.getCFGs();
 		final List<Multigraph<TVL, TTE>> newRoots = new ArrayList<>();
 
 		for (final IExplicitEdgesMultigraph<?, ?, SVL, STE, ?> oldRoot : oldRoots) {
 			final Multigraph<TVL, TTE> newRoot = createUnlabeledWitnessNode(oldRoot);
-			final Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>> nodeCache = new HashMap<>();
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, ? extends STE, ?>, Multigraph<TVL, TTE>> nodeCache =
+					new HashMap<>();
 			final Deque<Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>> worklist =
 					new ArrayDeque<>();
 			final Set<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>> closed = new HashSet<>();
@@ -346,7 +348,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 * @return A backtranslated CFG.
 	 */
 	protected IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, ? extends STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
 		return translateCFG(cfg, funTranslateEdge, (a, b, c) -> new BacktranslatedCFG<>(a, b, c));
 	}
 

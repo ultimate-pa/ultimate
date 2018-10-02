@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -93,15 +93,14 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	/* outputs */
 	private NestedWordAutomaton<LETTER, IPredicate> mInterpolantAutomaton;
 	private boolean mProvidesIcfgProgramExecution;
-	private IProgramExecution<IcfgEdge, Term> mIcfgProgramExecution;
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 	protected final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
-	public BaseRefinementStrategy(final ILogger logger,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+	public BaseRefinementStrategy(final ILogger logger, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mLogger = logger;
 		mEmptyStackFactory = emptyStackFactory;
 	}
@@ -458,7 +457,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		return mProvidesIcfgProgramExecution;
 	}
 
-	protected IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution() {
+	protected IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution() {
 		return mIcfgProgramExecution;
 	}
 

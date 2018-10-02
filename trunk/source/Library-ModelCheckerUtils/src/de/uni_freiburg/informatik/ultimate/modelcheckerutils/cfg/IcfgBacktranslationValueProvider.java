@@ -28,42 +28,44 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgBacktranslationValueProvider implements IBacktranslationValueProvider<IcfgEdge, Term> {
+public class IcfgBacktranslationValueProvider
+		implements IBacktranslationValueProvider<IIcfgTransition<IcfgLocation>, Term> {
 
 	@Override
-	public int getStartLineNumberFromStep(final IcfgEdge step) {
+	public int getStartLineNumberFromStep(final IIcfgTransition<IcfgLocation> step) {
 		return -1;
 	}
 
 	@Override
-	public int getEndLineNumberFromStep(final IcfgEdge step) {
+	public int getEndLineNumberFromStep(final IIcfgTransition<IcfgLocation> step) {
 		return -1;
 	}
 
 	@Override
-	public String getOriginFileNameFromStep(final IcfgEdge step) {
+	public String getOriginFileNameFromStep(final IIcfgTransition<IcfgLocation> step) {
 		return null;
 	}
 
 	@Override
-	public String getFileNameFromStep(final IcfgEdge step) {
+	public String getFileNameFromStep(final IIcfgTransition<IcfgLocation> step) {
 		return null;
 	}
 
 	@Override
-	public String getStringFromStep(final IcfgEdge step) {
+	public String getStringFromStep(final IIcfgTransition<IcfgLocation> step) {
 		return step.toString();
 	}
 
 	@Override
-	public String getStringFromTraceElement(final IcfgEdge traceelement) {
+	public String getStringFromTraceElement(final IIcfgTransition<IcfgLocation> traceelement) {
 		return traceelement.toString();
 	}
 

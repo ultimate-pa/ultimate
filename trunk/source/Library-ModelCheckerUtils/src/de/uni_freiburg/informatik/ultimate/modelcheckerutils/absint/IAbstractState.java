@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -177,8 +176,14 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	 * In particular, this is useful to separate the entry of a loop (i.e., the case were we do not enter a loop) from
 	 * the cases were we enter a loop.
 	 *
+	 * Note:
+	 * <ul>
+	 * <li>states contains this instance
+	 * <li>states may be modified and returned
+	 * </ul>
+	 *
 	 * @param states
-	 *            The other abstract states.
+	 *            All abstract states for which a union should be computed, including the current instance
 	 * @param The
 	 *            maximal number of resulting states.
 	 * @return A set of abstract states containing less or equal to maxSize abstract states that represent a union of
@@ -186,22 +191,23 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	 */
 	default Set<STATE> union(final Set<STATE> states, final int maxSize) {
 		assert states.size() > maxSize;
-		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
+		assert maxSize >= 1;
+		assert states.contains(this);
 		int numberOfMerges = states.size() - maxSize;
 		while (numberOfMerges > 0) {
-			final Iterator<STATE> iter = reducibleSet.iterator();
+			final Iterator<STATE> iter = states.iterator();
 			final STATE first = iter.next();
 			iter.remove();
 			final STATE second = iter.next();
 			iter.remove();
-			if (reducibleSet.add(first.union(second))) {
+			if (states.add(first.union(second))) {
 				--numberOfMerges;
 			} else {
 				numberOfMerges -= 2;
 			}
 		}
-		assert reducibleSet.size() <= maxSize;
-		return reducibleSet;
+		assert states.size() <= maxSize;
+		return states;
 	}
 
 	/**

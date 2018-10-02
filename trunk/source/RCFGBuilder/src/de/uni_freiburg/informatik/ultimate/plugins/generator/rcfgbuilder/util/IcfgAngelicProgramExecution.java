@@ -4,14 +4,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class IcfgAngelicProgramExecution implements IProgramExecution<IcfgEdge, Term> {
+public class IcfgAngelicProgramExecution implements IProgramExecution<IIcfgTransition<IcfgLocation>, Term> {
 
 	private final boolean mAngelicStatus;
-	private final IProgramExecution<IcfgEdge, Term> mProgramExecution;
+	private final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mProgramExecution;
 
-	public IcfgAngelicProgramExecution(final IProgramExecution<IcfgEdge, Term> pe, final boolean angelicStatus) {
+	public IcfgAngelicProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe,
+			final boolean angelicStatus) {
 		mProgramExecution = pe;
 		mAngelicStatus = angelicStatus;
 	}
@@ -26,7 +28,7 @@ public class IcfgAngelicProgramExecution implements IProgramExecution<IcfgEdge, 
 	}
 
 	@Override
-	public AtomicTraceElement<IcfgEdge> getTraceElement(final int index) {
+	public AtomicTraceElement<IIcfgTransition<IcfgLocation>> getTraceElement(final int index) {
 		return mProgramExecution.getTraceElement(index);
 	}
 
@@ -46,12 +48,12 @@ public class IcfgAngelicProgramExecution implements IProgramExecution<IcfgEdge, 
 	}
 
 	@Override
-	public Class<IcfgEdge> getTraceElementClass() {
+	public Class<? extends IIcfgTransition<IcfgLocation>> getTraceElementClass() {
 		return mProgramExecution.getTraceElementClass();
 	}
 
 	@Override
-	public IBacktranslationValueProvider<IcfgEdge, Term> getBacktranslationValueProvider() {
+	public IBacktranslationValueProvider<IIcfgTransition<IcfgLocation>, Term> getBacktranslationValueProvider() {
 		return mProgramExecution.getBacktranslationValueProvider();
 	}
 

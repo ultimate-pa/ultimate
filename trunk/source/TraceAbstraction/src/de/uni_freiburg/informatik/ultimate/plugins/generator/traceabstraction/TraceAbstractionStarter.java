@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -402,7 +401,7 @@ public class TraceAbstractionStarter {
 			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
-			final IProgramExecution<IcfgEdge, Term> pe = basicCegarLoop.getRcfgProgramExecution();
+			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe = basicCegarLoop.getRcfgProgramExecution();
 			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
 			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
 			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(pe));
@@ -459,7 +458,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
+	private void reportCounterexampleResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
@@ -472,7 +471,7 @@ public class TraceAbstractionStarter {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private static boolean isAngelicallySafe(final IProgramExecution<IcfgEdge, Term> pe) {
+	private static boolean isAngelicallySafe(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
 		if (pe instanceof IcfgAngelicProgramExecution) {
 			return !((IcfgAngelicProgramExecution) pe).getAngelicStatus();
 		}
@@ -510,7 +509,7 @@ public class TraceAbstractionStarter {
 		return res;
 	}
 
-	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
+	private void reportUnproveableResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -545,7 +544,7 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 
-	public static IcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
+	public static IcfgLocation getErrorPP(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();

@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElement
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Wrapper for an {@link Script} with additional locking mechanism.
- * Additionally this class provides a mechanism to construct fresh variables.
+ * Wrapper for an {@link Script} with additional locking mechanism. Additionally this class provides a mechanism to
+ * construct fresh variables.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -77,7 +77,9 @@ public class ManagedScript {
 		}
 		if (mLockOwner == null) {
 			mLockOwner = lockOwner;
-			mLogger.debug(MANAGED_SCRIPT_LOCKED_BY + lockOwner.toString());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(MANAGED_SCRIPT_LOCKED_BY + lockOwner.toString());
+			}
 		} else {
 			throw new IllegalStateException("ManagedScript already locked by " + mLockOwner.toString());
 		}
@@ -89,7 +91,9 @@ public class ManagedScript {
 		}
 		if (mLockOwner == lockOwner) {
 			mLockOwner = null;
-			mLogger.debug("ManagedScript unlocked by " + lockOwner.toString());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("ManagedScript unlocked by " + lockOwner.toString());
+			}
 		} else {
 			throw new IllegalStateException(MANAGED_SCRIPT_LOCKED_BY + mLockOwner.toString());
 		}
@@ -104,7 +108,9 @@ public class ManagedScript {
 			throw new IllegalStateException("ManagedScript not locked");
 		}
 		if (mLockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
-			mLogger.debug("Asking " + mLockOwner + " to release lock");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Asking " + mLockOwner + " to release lock");
+			}
 			((ILockHolderWithVoluntaryLockRelease) mLockOwner).releaseLock();
 			return true;
 		}
@@ -115,71 +121,66 @@ public class ManagedScript {
 		return allegedLockOwner == mLockOwner;
 	}
 
-	@FunctionalInterface
-	public interface ILockHolderWithVoluntaryLockRelease {
-		void releaseLock();
-	}
-
 	public void push(final Object lockOwner, final int levels) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.push(levels);
 	}
 
 	public void pop(final Object lockOwner, final int levels) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.pop(levels);
 	}
 
 	public LBool assertTerm(final Object lockOwner, final Term term) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.assertTerm(term);
 	}
 
 	public LBool checkSat(final Object lockOwner) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.checkSat();
 	}
 
 	public Term[] getUnsatCore(final Object lockOwner) throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getUnsatCore();
 	}
 
 	public Term annotate(final Object lockOwner, final Term t, final Annotation... annotations) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.annotate(t, annotations);
 	}
 
 	public Term term(final Object lockOwner, final String funcname, final Term... params) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.term(funcname, params);
 	}
 
 	public Term term(final Object lockOwner, final String funcname, final BigInteger[] indices, final Sort returnSort,
 			final Term... params) throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 	public Term let(final Object lockOwner, final TermVariable[] vars, final Term[] values, final Term body)
 			throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.let(vars, values, body);
 	}
 
 	public void declareFun(final Object lockOwner, final String fun, final Sort[] paramSorts, final Sort resultSort)
 			throws SMTLIBException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
 	public QuotedObject echo(final Object lockOwner, final QuotedObject msg) {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.echo(msg);
 	}
 
-	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms)  {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms) {
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getValue(terms);
 	}
 
@@ -189,14 +190,25 @@ public class ManagedScript {
 
 	public Term[] getInterpolants(final Object lockOwner, final Term[] partition)
 			throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getInterpolants(partition);
 	}
 
 	public Term[] getInterpolants(final Object lockOwner, final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.getInterpolants(partition, startOfSubtree);
+	}
+
+	private static String generateLockErrorMessage(final Object expectedLockOwner, final Object actualLockOwner) {
+		if (actualLockOwner == null) {
+			return "A " + expectedLockOwner.getClass().getSimpleName()
+					+ " wants to use this ManagedScript without locking";
+		} else {
+			return "A " + expectedLockOwner.getClass().getSimpleName()
+					+ " wants to use this ManagedScript but it is locked by some "
+					+ actualLockOwner.getClass().getSimpleName();
+		}
 	}
 
 	/**
@@ -242,14 +254,16 @@ public class ManagedScript {
 		return mSkolemFunctionManager.constructFreshSkolemFunctionName(parameterSorts, resultSort);
 	}
 
+	@FunctionalInterface
+	public interface ILockHolderWithVoluntaryLockRelease {
+		void releaseLock();
+	}
+
 	/**
-	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used
-	 * before). Each constructed TermVariable is named as follows.
-	 * The name start with the prefix "v_".
-	 * Next follows the "basename" which is a
-	 * name given by the caller of the VariableManager.
-	 * The name ends with the suffix "_n" where n is number that we use to ensure
-	 * that each variable is unique.
+	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used before). Each constructed
+	 * TermVariable is named as follows. The name start with the prefix "v_". Next follows the "basename" which is a
+	 * name given by the caller of the VariableManager. The name ends with the suffix "_n" where n is number that we use
+	 * to ensure that each variable is unique.
 	 *
 	 * @author Matthias Heizmann
 	 */
@@ -258,37 +272,29 @@ public class ManagedScript {
 		/**
 		 * Counter for the construction of fresh variables.
 		 */
-		private final MultiElementCounter<String> mTvForBasenameCounter =
-				new MultiElementCounter<>();
+		private final MultiElementCounter<String> mTvForBasenameCounter = new MultiElementCounter<>();
 
 		/**
-		 * Whenever we construct a TermVariable we store its basename.
-		 * This is the name for that the TermVariable was constructed.
-		 * Whenever we have to construct a fresh copy of a TermVariable
-		 * we use the basename of this TermVariable to obtain a unique but very
-		 * similar name for the new copy.
+		 * Whenever we construct a TermVariable we store its basename. This is the name for that the TermVariable was
+		 * constructed. Whenever we have to construct a fresh copy of a TermVariable we use the basename of this
+		 * TermVariable to obtain a unique but very similar name for the new copy.
 		 */
-		private final Map<TermVariable, String> mTv2Basename =
-				new HashMap<>();
+		private final Map<TermVariable, String> mTv2Basename = new HashMap<>();
 
 		private final Set<String> mVariableNames = new HashSet<>();
 
 		/**
-		 * Construct "fresh" TermVariables.
-		 * In mathematical logics a variable is called "fresh" if the variable has not
-		 * occurred in the same context.
-		 * TermVariables constructed by objects that implement this interface are
-		 * guaranteed to have a name which is different form all other TermVariables
-		 * constructed by this object. There is no guarantee that a similar variable
-		 * was not constructed with the same Script.
+		 * Construct "fresh" TermVariables. In mathematical logics a variable is called "fresh" if the variable has not
+		 * occurred in the same context. TermVariables constructed by objects that implement this interface are
+		 * guaranteed to have a name which is different form all other TermVariables constructed by this object. There
+		 * is no guarantee that a similar variable was not constructed with the same Script.
 		 *
 		 * @param name
-		 *            String that will occur as substring of the resulting
-		 *            TermVariable.
+		 *            String that will occur as substring of the resulting TermVariable.
 		 * @param sort
 		 *            Sort of the resulting TermVariable.
-		 * @return TermVariable whose name is different from the names
-		 *         of all other TermVariable that have been constructed by this object.
+		 * @return TermVariable whose name is different from the names of all other TermVariable that have been
+		 *         constructed by this object.
 		 */
 		public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
 			if (name.contains("|")) {
@@ -301,16 +307,15 @@ public class ManagedScript {
 		}
 
 		/**
-		 * Construct a copy of an existing {@link TermVariable} that is fresh
-		 * but has a very similar name.
+		 * Construct a copy of an existing {@link TermVariable} that is fresh but has a very similar name.
 		 *
 		 * @see mTv2Basename
 		 */
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
-				mLogger.warn("TermVariabe " + tv +
-						" not constructed by VariableManager. Cannot ensure absence of name clashes.");
+				mLogger.warn("TermVariabe " + tv
+						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 			}
 			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
@@ -318,8 +323,7 @@ public class ManagedScript {
 		}
 
 		/**
-		 * Construct variable but check if variable with this name was
-		 * already constructed.
+		 * Construct variable but check if variable with this name was already constructed.
 		 */
 		public TermVariable variable(final String varname, final Sort sort) {
 			if (mVariableNames.contains(varname)) {
@@ -337,8 +341,7 @@ public class ManagedScript {
 
 		private int counter;
 
-		public String constructFreshSkolemFunctionName(final Sort[] parameterSorts,
-				final Sort resultSort) {
+		public String constructFreshSkolemFunctionName(final Sort[] parameterSorts, final Sort resultSort) {
 			// TODO: give nicer name, perhaps using the signature
 			return SKOLEM_PREFIX + counter++;
 		}

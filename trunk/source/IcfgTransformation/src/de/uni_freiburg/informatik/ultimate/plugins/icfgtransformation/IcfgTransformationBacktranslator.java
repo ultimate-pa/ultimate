@@ -39,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -47,14 +48,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class IcfgTransformationBacktranslator
-		extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
+public class IcfgTransformationBacktranslator extends
+		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, String, String> {
 
-	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
+	private final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mEdgeMapping;
 	private final ILogger mLogger;
 
-	public IcfgTransformationBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
-			final ILogger logger) {
+	public IcfgTransformationBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
+			final Class<Term> expressionType, final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 		mLogger = logger;
@@ -62,23 +63,23 @@ public class IcfgTransformationBacktranslator
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<IcfgEdge, Term>
-			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
+			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof IcfgProgramExecution) {
 			oldBranchEncoders = ((IcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
-		final List<IcfgEdge> newTrace = new ArrayList<>();
+		final List<IIcfgTransition<IcfgLocation>> newTrace = new ArrayList<>();
 		final Map<Integer, ProgramState<Term>> newValues = new HashMap<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
-			final IcfgEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = programExecution.getTraceElement(i);
+			final IIcfgTransition<IcfgLocation> mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
 				// skip this, its not worth it.
 				mLogger.info("Skipped ATE [" + currentATE.getTraceElement().hashCode() + "] "
@@ -101,8 +102,9 @@ public class IcfgTransformationBacktranslator
 		newValues.put(i, programState);
 	}
 
-	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
-		final IcfgEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
+	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge,
+			final IIcfgTransition<IcfgLocation> originalEdge) {
+		final IIcfgTransition<IcfgLocation> realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
 			// this means we replaced an edge which we already replaced again
 			// with something new, we have to map this to the real original

@@ -44,15 +44,15 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 
 	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> mCFGs;
 	private final String mFilename;
-	private final Class<TE> mTraceElementClass;
+	private final Class<? extends TE> mTraceElementClass;
 
 	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE, ?> cfg,
-			final Class<TE> clazz) {
+			final Class<? extends TE> clazz) {
 		this(filename, Collections.singletonList(cfg), clazz);
 	}
 
 	public BacktranslatedCFG(final String filename,
-			final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> cfgs, final Class<TE> clazz) {
+			final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> cfgs, final Class<? extends TE> clazz) {
 		assert filename != null;
 		assert cfgs != null && !cfgs.isEmpty();
 		assert clazz != null;
@@ -72,7 +72,7 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 	}
 
 	@Override
-	public Class<TE> getTraceElementClass() {
+	public Class<? extends TE> getTraceElementClass() {
 		return mTraceElementClass;
 	}
 

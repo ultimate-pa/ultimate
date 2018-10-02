@@ -54,8 +54,25 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	Collection<V> complementInteger();
 
+	/**
+	 * Compares <code>this</code> with another value V for equality.
+	 *
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if <code>this</code> and other are both bottom, <code>this</code> and other
+	 *         are both top, or if the values represent the same abstract values.
+	 */
 	boolean isEqualTo(final V other);
 
+	/**
+	 * Compares <code>this</code> with another value V and checks whether <code>this</code> is included in other. If all
+	 * values that are represented by this instance are represented by the other instance, return true. Return false
+	 * otherwise.
+	 *
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
+	 */
 	boolean isContainedIn(final V other);
 
 	V add(final V other);
@@ -64,11 +81,31 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	V multiply(final V other);
 
+	/**
+	 * Negate this abstract value, i.e., perform unary minus.
+	 *
+	 * @return The negated abstract value.
+	 */
 	V negate();
 
+	/**
+	 * Compute the euclidean divison of dividend <code>this</code> with the divisor given as another value V of type
+	 * integer.
+	 *
+	 * @param other
+	 *            The divisor as another value V of type integer.
+	 * @return A new value V of type integer that represents the result of the divison.
+	 */
 	V divideInteger(final V other);
 
-	V divide(final V other);
+	/**
+	 * Compute the divison of dividend <code>this</code> with the divisor given as another value V of type real.
+	 *
+	 * @param other
+	 *            The divisor as another value V of type real.
+	 * @return A new value V of type real that represents the result of the divison.
+	 */
+	V divideReal(final V other);
 
 	V modulo(final V other);
 

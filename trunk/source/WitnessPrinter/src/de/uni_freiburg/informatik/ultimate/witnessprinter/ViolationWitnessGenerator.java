@@ -276,7 +276,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		}
 
 		@Override
-		public Class<TE> getTraceElementClass() {
+		public Class<? extends TE> getTraceElementClass() {
 			return mOriginalProgramExecution.getTraceElementClass();
 		}
 

@@ -91,6 +91,14 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	/**
+	 * TODO: Documentation
+	 */
+	public void addProcedure(final String proc) {
+		mProgramPoints.put(proc, new HashMap<>());
+		mErrorNodes.put(proc, new HashSet<>());
+	}
+
+	/**
 	 * Add a new location to this {@link IIcfg}. The location has to have a procedure that is already known by the
 	 * {@link IIcfg}. Known procedures can be obtained from {@link CfgSmtToolkit#getProcedures()} via
 	 * {@link #getCfgSmtToolkit()}.
@@ -156,6 +164,11 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 * any true.
 	 *
 	 * TODO 2018-09-23 Matthias: I think methods like these are bad practice
+	 * because the increase the overall complexity of the code
+	 * <li> more methods == higher complexity of this class
+	 * <li> method only used once
+	 * <li> method introduces new terminology (what is an "ordinary" location)
+	 * <li> if you use this method you have to read and understand the addLocation method anyway
 	 *
 	 * @param loc
 	 *            The location to add.

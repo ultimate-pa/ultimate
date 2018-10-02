@@ -170,7 +170,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		case INTEGER:
 			return onlyValue(first.getValue().divideInteger(second.getValue()));
 		case REAL:
-			return onlyValue(first.getValue().divide(second.getValue()));
+			return onlyValue(first.getValue().divideReal(second.getValue()));
 		default:
 			throw new UnsupportedOperationException("Division on types other than integers and reals is undefined.");
 		}
@@ -369,7 +369,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			if (mEvaluatorType == EvaluatorType.INTEGER) {
 				newValue = referenceValue.divideInteger(otherValue);
 			} else if (mEvaluatorType == EvaluatorType.REAL) {
-				newValue = referenceValue.divide(otherValue);
+				newValue = referenceValue.divideReal(otherValue);
 			} else {
 				throw new UnsupportedOperationException(
 						"Division on types other than integers and reals is not defined.");
@@ -383,7 +383,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				if (isLeft) {
 					newValue = referenceValue.multiply(otherValue);
 				} else {
-					newValue = otherValue.divide(referenceValue);
+					newValue = otherValue.divideReal(referenceValue);
 				}
 			} else {
 				throw new UnsupportedOperationException(
