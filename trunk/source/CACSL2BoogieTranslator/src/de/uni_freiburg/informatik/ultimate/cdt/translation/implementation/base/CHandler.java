@@ -1004,13 +1004,8 @@ public class CHandler {
 		final boolean isOnHeap = pendingResType.isOnHeap() || (mIsPrerun ? false : mVariablesOnHeap.contains(node));
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
-		final TypesResult resType;
-
-		if (pointerOps.length == 0) {
-			resType = TypesResult.create(pendingResType, isOnHeap);
-		} else {
-			resType = TypesResult.create(pendingResType, isOnHeap, new CPointer(pendingResType.getCType()));
-		}
+		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
+		final TypesResult resType = TypesResult.create(pendingResType, isOnHeap, nestedPointerType);
 
 		// Adapt the name for multiparse input
 		final String declName;
@@ -1089,8 +1084,8 @@ public class CHandler {
 			cType = arrayType;
 			declName = getNonFunctionDeclaratorName(node);
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
+			// functions as well as function pointers can have IASTStandardFunctionDeclarator
 			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
-
 			final IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
@@ -1150,6 +1145,24 @@ public class CHandler {
 		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(cType, declName, node.getInitializer(),
 				null, isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
+	}
+
+	/**
+	 * Create a nested {@link CPointer} type that ultimately points to the supplied type. If length is smaller or equal
+	 * zero, the supplied type is returned.
+	 *
+	 * @param length
+	 *            The nesting depth
+	 * @param cType
+	 *            The underlying type
+	 * @return The new CPointer.
+	 */
+	private static CType getPointerType(int length, final CType cType) {
+		CType type = cType;
+		for (; length > 0; --length) {
+			type = new CPointer(type);
+		}
+		return type;
 	}
 
 	public Result visit(final IDispatcher main, final IASTDefaultStatement node) {
