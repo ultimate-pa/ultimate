@@ -1,0 +1,23 @@
+Input A is bool
+Internal Y is bool
+Internal B is bool 
+Input G is bool
+Input I is bool
+Internal H is bool 
+Internal C is bool
+Output D is bool
+Internal E is bool
+Output X is bool
+
+req0: Globally, it is always the case that if "A" holds then "Y" holds as well.
+req1: Globally, it is always the case that if "Y" holds then "B" holds after at most 10 time units.
+req4: Globally, it is always the case that if "A" holds then "!H" holds for at least 9 time units.
+
+req2: Globally, it is always the case that if "G" holds then "H" holds after at most 10 time units.	
+
+req3: Globally, it is always the case that if "B && H" holds then "C" holds after at most 12 time units.	
+req4: Globally, it is always the case that if "I" holds then "E" holds for at least 120 time units.
+
+req5: Globally, it is always the case that if "C && E " holds then "D" holds after at most 10 time units.	
+
+req6: Globally,  it is always the case that if "!H" holds for at least "9" time units, then "X" holds afterwards for at least "111" time units

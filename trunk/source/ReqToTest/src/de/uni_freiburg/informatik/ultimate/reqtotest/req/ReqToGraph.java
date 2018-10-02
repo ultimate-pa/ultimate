@@ -194,7 +194,7 @@ public class ReqToGraph {
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			Term clockGuardleq = SmtUtils.less(mScript, clockIdent, mScript.numeral(duration));
 			Term clockGuard = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(duration));		
-					//define labels 
+			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
 			//normal labels
@@ -236,14 +236,27 @@ public class ReqToGraph {
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
-			q0.connectOutgoing(q0, new TimedLabel(R));
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR); 
+			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
+			final Term nR = SmtUtils.not(mScript, R);
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript,
+					SmtUtils.and(mScript, nuR, ndS), 
+					SmtUtils.and(mScript, uR, R, dS, S),
+					SmtUtils.and(mScript, uR, nR, ndS),
+					SmtUtils.and(mScript, S, uS))));
 			return q0;
 		} else {
 			throw new RuntimeException("Scope not implemented");
 		}
 	}
 	
-	/*
+	/*	This pattern is for discrete Step LTL
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds in the next Step.
 	 */
 	private ReqGuardGraph getImmediateResponsePatternToAutomaton(PatternType pattern){
