@@ -806,6 +806,19 @@ public class CoreUtil {
 				getCallerClassName(callStackDepth + 1).getSimpleName(), theFrame.getMethodName());
 	}
 
+	/**
+	 * Repeat the string s for n times
+	 */
+	public static String repeat(final int n, final String s) {
+		if (n == 0) {
+			return "";
+		}
+		if (n < 0) {
+			throw new IllegalArgumentException("n smaller than zero");
+		}
+		return new String(new char[n]).replace("\0", s);
+	}
+
 	@FunctionalInterface
 	public interface IReduce<T, K> {
 		T reduce(K entry);

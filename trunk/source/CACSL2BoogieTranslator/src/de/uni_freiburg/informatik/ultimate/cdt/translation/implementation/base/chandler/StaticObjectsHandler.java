@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -41,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * This class manages objects (in the meaning that the word has in the C-standard) with static storage duration.
@@ -67,13 +69,18 @@ public class StaticObjectsHandler {
 	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
 
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
+	private final Map<ICPossibleIncompleteType<?>, TypeDeclaration> mIncompleteType2TypeDecl;
 
-	public StaticObjectsHandler() {
+	private final ILogger mLogger;
+
+	public StaticObjectsHandler(final ILogger logger) {
 		mGlobalDeclarations = new ArrayList<>();
 		mStatementsForUltimateInit = new ArrayList<>();
 		mVariableDeclarationToAssociatedCDeclaration = new LinkedHashMap<>();
 		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
+		mIncompleteType2TypeDecl = new HashMap<>();
 		mIsFrozen = false;
+		mLogger = logger;
 	}
 
 	/**
@@ -99,6 +106,12 @@ public class StaticObjectsHandler {
 		assert Objects.nonNull(boogieDec) && Objects.nonNull(cDec);
 		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
+		final CType cType = cDec.getType();
+		if (cType.isIncomplete()) {
+			assert cType instanceof ICPossibleIncompleteType<?>;
+			final ICPossibleIncompleteType<?> incompleteType = (ICPossibleIncompleteType<?>) cType;
+			mIncompleteType2TypeDecl.put(incompleteType, boogieDec);
+		}
 	}
 
 	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
@@ -115,39 +128,28 @@ public class StaticObjectsHandler {
 	}
 
 	/**
-	 * mdeclarationsGlobalInBoogie may contain type declarations that stem from typedefs using an incomplete struct
+	 * mTypeDeclarationToCDeclaration may contain type declarations that stem from typedefs using an incomplete struct
 	 * type. This method is called when the struct type is completed.
 	 *
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-	public void completeTypeDeclaration(final CType incompleteType, final CType completedType,
+	public void completeTypeDeclaration(final ICPossibleIncompleteType<?> incompleteType, final CType completedType,
 			final ITypeHandler typeHandler) {
-
-		TypeDeclaration oldBooogieDec = null;
-		CDeclaration oldCDec = null;
-		TypeDeclaration newBoogieDec = null;
-
-		/*
-		 * find the CDeclaration that belongs to the given incomplete type
-		 */
-		for (final Entry<TypeDeclaration, CDeclaration> en : mTypeDeclarationToCDeclaration.entrySet()) {
-
-			if (en.getValue().getType().toString().equals(incompleteType.toString())) {
-				oldBooogieDec = en.getKey();
-
-				oldCDec = en.getValue();
-
-				newBoogieDec = new TypeDeclaration(oldBooogieDec.getLocation(), oldBooogieDec.getAttributes(),
-						oldBooogieDec.isFinite(), oldBooogieDec.getIdentifier(), oldBooogieDec.getTypeParams(),
-						typeHandler.cType2AstType(oldBooogieDec.getLocation(), completedType));
-				break;
-			}
+		assert incompleteType.isIncomplete();
+		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
+		if (oldBoogieDec == null) {
+			// already completed
+			return;
 		}
-		if (oldBooogieDec != null) {
-			removeDeclaration(oldBooogieDec);
-			addGlobalTypeDeclaration(newBoogieDec, oldCDec);
-		}
+		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
+
+		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
+				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
+				oldBoogieDec.getTypeParams(), typeHandler.cType2AstType(oldBoogieDec.getLocation(), completedType));
+
+		removeDeclaration(oldBoogieDec);
+		addGlobalTypeDeclaration(newBoogieDec, oldCDec);
 	}
 
 	public void removeDeclaration(final Declaration boogieDecl) {

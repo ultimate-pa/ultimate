@@ -344,12 +344,13 @@ public class TypeHandler implements ITypeHandler {
 		final String incompleteTypeName = "ENUM~" + rslvName;
 		if (mIncompleteType.contains(incompleteTypeName)) {
 			mIncompleteType.remove(incompleteTypeName);
-			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
-			final CEnum incompleteEnum = (CEnum) incompleteType.getCType();
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			final CEnum incompleteEnum = (CEnum) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
 			mStaticObjectsHandler.completeTypeDeclaration(incompleteEnum, cEnum, this);
-			incompleteEnum.complete(cEnum);
+			final CEnum completeEnum = incompleteEnum.complete(cEnum);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeEnum));
 		}
 
 		if (!enumId.equals(SFO.EMPTY)) {
@@ -446,12 +447,12 @@ public class TypeHandler implements ITypeHandler {
 		String name = null;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
 			name = "STRUCT~" + rslvName;
-			cvar = new CStruct(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
-					bitFieldWidths);
+			cvar = new CStruct(rslvName, fNames.toArray(new String[fNames.size()]),
+					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
 			name = "UNION~" + rslvName;
-			cvar = new CUnion(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
-					bitFieldWidths);
+			cvar = new CUnion(rslvName, fNames.toArray(new String[fNames.size()]),
+					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -461,15 +462,15 @@ public class TypeHandler implements ITypeHandler {
 		final ASTType type = namedType;
 		final TypesResult result = new TypesResult(type, false, false, cvar);
 
-		if (mIncompleteType.contains(name)) {
-			mIncompleteType.remove(name);
-			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
-			final CStruct incompleteStruct = (CStruct) incompleteType.getCType();
+		if (mIncompleteType.remove(name)) {
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			final CStruct incompleteStruct = (CStruct) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
 			mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
 
-			incompleteStruct.complete(cvar);
+			final CStruct completeStruct = incompleteStruct.complete(cvar);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
@@ -609,7 +610,7 @@ public class TypeHandler implements ITypeHandler {
 	 * Construct list of type declarations that are needed because the corresponding types are introduced by the
 	 * translation, e.g., pointers.
 	 */
-	public ArrayList<Declaration> constructTranslationDefiniedDelarations(final ILocation tuLoc,
+	public ArrayList<Declaration> constructTranslationDefinedDeclarations(final ILocation tuLoc,
 			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
@@ -924,7 +925,7 @@ public class TypeHandler implements ITypeHandler {
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
 
-		if (!(type1.getIdentifier().equals(type2.getIdentifier()))) {
+		if (!(type1.getName().equals(type2.getName()))) {
 			return false;
 		}
 		if (type1.getFieldIds().length != type2.getFieldIds().length) {

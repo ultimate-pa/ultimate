@@ -569,7 +569,7 @@ public class CHandler {
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		mDeclarations.addAll(
-				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
+				((TypeHandler) mTypeHandler).constructTranslationDefinedDeclarations(loc, mExpressionTranslation));
 
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short

@@ -32,6 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -62,7 +63,23 @@ public class CPointer extends CType {
 
 	@Override
 	public String toString() {
-		return "*" + getPointsToType().toString();
+		CPointer pointer = this;
+		CType pointsTo = null;
+		int i = 1;
+		while (true) {
+			pointsTo = pointer.getPointsToType();
+			if (pointsTo instanceof CPointer) {
+				pointer = (CPointer) pointsTo;
+				i++;
+			} else {
+				break;
+			}
+		}
+
+		if (pointsTo instanceof CStruct) {
+			return CoreUtil.repeat(i, "*") + ((CStruct) pointsTo).getName();
+		}
+		return CoreUtil.repeat(i, "*") + pointsTo.toString();
 	}
 
 	@Override

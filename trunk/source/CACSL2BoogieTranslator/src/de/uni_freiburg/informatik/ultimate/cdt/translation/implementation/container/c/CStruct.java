@@ -43,24 +43,25 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CStruct extends CType {
+public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> {
 	/**
 	 * Field names.
 	 */
-	private String[] mNames;
+	private final String[] mFieldNames;
 	/**
 	 * Field types.
 	 */
-	private CType[] mTypes;
+	private final CType[] mFieldTypes;
 
 	/**
 	 * Indicates if this represents an incomplete type. If 'this' is complete, this String is empty, otherwise it holds
 	 * the name of the incomplete struct.
 	 */
-	private String mIncompleteName = "";
+	private final String mStructName;
 
-	private String mToStringCached = null;
-	private List<Integer> mBitFieldWidths;
+	private final List<Integer> mBitFieldWidths;
+
+	private final boolean mIsComplete;
 
 	/**
 	 * Constructor.
@@ -73,27 +74,31 @@ public class CStruct extends CType {
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
-	public CStruct(final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
+	public CStruct(final String name, final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags
 		super(false, false, false, false);
-		mNames = fNames;
-		mTypes = fTypes;
-		mBitFieldWidths = bitFieldWidths;
-		mIncompleteName = "";
+		assert name != null;
+		mFieldNames = fNames;
+		mFieldTypes = fTypes;
+		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
+		mStructName = name;
+		mIsComplete = true;
 	}
 
 	public CStruct(final String name) {
 		// FIXME: integrate those flags
 		super(false, false, false, false);
-		mNames = new String[0];
-		mTypes = new CType[0];
+		assert name != null && !name.isEmpty();
+		mFieldNames = new String[0];
+		mFieldTypes = new CType[0];
 		mBitFieldWidths = Collections.emptyList();
-		mIncompleteName = name;
+		mStructName = name;
+		mIsComplete = false;
 	}
 
 	@Override
 	public boolean isIncomplete() {
-		return !mIncompleteName.isEmpty();
+		return !mIsComplete;
 	}
 
 	/**
@@ -102,7 +107,7 @@ public class CStruct extends CType {
 	 * @return the number of fields.
 	 */
 	public int getFieldCount() {
-		return mNames.length;
+		return mFieldNames.length;
 	}
 
 	/**
@@ -114,11 +119,11 @@ public class CStruct extends CType {
 	 */
 	public CType getFieldType(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		final int idx = Arrays.asList(mNames).indexOf(id);
+		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
 			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
 		}
-		return mTypes[idx];
+		return mFieldTypes[idx];
 	}
 
 	/**
@@ -127,7 +132,7 @@ public class CStruct extends CType {
 	 * @return the types of this strut's fields.
 	 */
 	public CType[] getFieldTypes() {
-		return mTypes;
+		return mFieldTypes;
 	}
 
 	/**
@@ -136,29 +141,37 @@ public class CStruct extends CType {
 	 * @return the set of fields in this struct.
 	 */
 	public String[] getFieldIds() {
-		return mNames.clone();
+		return mFieldNames.clone();
+	}
+
+	@Override
+	public String getName() {
+		return mStructName;
 	}
 
 	@Override
 	public String toString() {
-		final String structOrUnionPrefix = this instanceof CUnion ? "UNION#" : "STRUCT#";
+		final String structOrUnionPrefix = getPrefix();
 
 		if (isIncomplete()) {
-			return structOrUnionPrefix + "~incomplete~" + mIncompleteName;
-		} else if (mToStringCached != null) {
-			return mToStringCached;
-		} else {
-			final StringBuilder id = new StringBuilder(structOrUnionPrefix);
-			for (int i = 0; i < getFieldCount(); i++) {
-				id.append("?");
-				id.append(mNames[i]);
-				id.append("~");
-				id.append(mTypes[i].toString());
-			}
-			id.append("#");
-			mToStringCached = id.toString();
-			return mToStringCached;
+			return structOrUnionPrefix + "~incomplete~" + getName();
 		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append(structOrUnionPrefix);
+		sb.append('~');
+		sb.append(getName());
+		for (int i = 0; i < getFieldCount(); i++) {
+			sb.append("?");
+			sb.append(mFieldNames[i]);
+			sb.append("~");
+			sb.append(mFieldTypes[i].toString());
+		}
+		sb.append("#");
+		return sb.toString();
+	}
+
+	protected String getPrefix() {
+		return "STRUCT#";
 	}
 
 	@Override
@@ -178,37 +191,31 @@ public class CStruct extends CType {
 		}
 
 		final CStruct oStruct = (CStruct) oType;
-		if (mNames.length != oStruct.mNames.length) {
+		if (mFieldNames.length != oStruct.mFieldNames.length) {
 			return false;
 		}
-		for (int i = mNames.length - 1; i >= 0; --i) {
-			if (!(mNames[i].equals(oStruct.mNames[i]))) {
+		for (int i = mFieldNames.length - 1; i >= 0; --i) {
+			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
 				return false;
 			}
 		}
-		if (mTypes.length != oStruct.mTypes.length) {
+		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
 			return false;
 		}
-		for (int i = mTypes.length - 1; i >= 0; --i) {
-			if (!(mTypes[i].equals(oStruct.mTypes[i]))) {
+		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
+			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	/**
-	 *
-	 * @param cvar
-	 */
-	public void complete(final CStruct cvar) {
+	@Override
+	public CStruct complete(final CStruct cvar) {
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
-		mIncompleteName = "";
-		mNames = cvar.mNames;
-		mTypes = cvar.mTypes;
-		mBitFieldWidths = cvar.getBitFieldWidths();
+		return new CStruct(mStructName, cvar.mFieldNames, cvar.mFieldTypes, cvar.getBitFieldWidths());
 	}
 
 	@Override
@@ -228,14 +235,14 @@ public class CStruct extends CType {
 		}
 
 		final CStruct oStruct = (CStruct) oType;
-		if (mNames.length != oStruct.mNames.length) {
+		if (mFieldNames.length != oStruct.mFieldNames.length) {
 			return false;
 		}
-		if (mTypes.length != oStruct.mTypes.length) {
+		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
 			return false;
 		}
-		for (int i = mTypes.length - 1; i >= 0; --i) {
-			if (!(mTypes[i].equals(oStruct.mTypes[i]))) {
+		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
+			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
 				return false;
 			}
 		}
@@ -244,7 +251,7 @@ public class CStruct extends CType {
 
 	@Override
 	public int hashCode() {
-		return HashUtils.hashJenkins(31, mNames, mTypes, mIncompleteName);
+		return HashUtils.hashJenkins(31, mFieldNames, mFieldTypes, mStructName);
 	}
 
 	public List<Integer> getBitFieldWidths() {
@@ -257,7 +264,7 @@ public class CStruct extends CType {
 	 */
 	public int getBitfieldWidth(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		final int idx = Arrays.asList(mNames).indexOf(id);
+		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
 			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
 		}

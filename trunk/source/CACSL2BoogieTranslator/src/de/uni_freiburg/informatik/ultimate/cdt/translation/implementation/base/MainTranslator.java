@@ -149,7 +149,7 @@ public class MainTranslator {
 				preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
 
 		mLogger.info("Built tables and reachable declarations");
-		final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler();
+		final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
 		final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, prerunStaticObjectsHandler);
 
@@ -181,7 +181,7 @@ public class MainTranslator {
 
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst, nameHandler);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
-		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
+		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
 		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
