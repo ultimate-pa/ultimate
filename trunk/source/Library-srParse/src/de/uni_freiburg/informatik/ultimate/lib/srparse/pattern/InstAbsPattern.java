@@ -13,6 +13,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
+
+/*
+ *  * {scope}, it is never the case that "S" holds.
+ */
 public class InstAbsPattern extends PatternType {
 	public InstAbsPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {

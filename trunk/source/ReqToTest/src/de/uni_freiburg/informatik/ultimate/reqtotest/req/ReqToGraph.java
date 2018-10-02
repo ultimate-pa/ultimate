@@ -12,8 +12,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePatt
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -65,6 +67,17 @@ public class ReqToGraph {
 		}
 		return gs;
 	}
+	
+	
+	/*								  Global
+	    BndInvariancePattern			X
+    	BndResponsePatternTT			X
+    	BndResponsePatternUT			X
+       	BndResponsePatternTU 
+    	InvariantPattern				X
+    	InstAbsPattern					X
+      	UniversalityPattern				X
+	*/
 
 	public ReqGuardGraph patternToTestAutomaton(PatternType pattern){
 		if(pattern instanceof InvariantPattern){
@@ -75,6 +88,10 @@ public class ReqToGraph {
 			return getBndInvariance(pattern);		 
 		}else if(pattern instanceof BndResponsePatternTT){
 			return getBndResponsePatternTTPattern(pattern);
+		} else if(pattern instanceof UniversalityPattern){
+			return getUniversalityPattern(pattern);
+		} else if(pattern instanceof InstAbsPattern){
+			return getInstAbsPattern(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
 		}
@@ -250,6 +267,45 @@ public class ReqToGraph {
 					SmtUtils.and(mScript, uR, R, dS, S),
 					SmtUtils.and(mScript, uR, nR, ndS),
 					SmtUtils.and(mScript, S, uS))));
+			return q0;
+		} else {
+			throw new RuntimeException("Scope not implemented");
+		}
+	}
+	
+	/*
+	 *  * {scope}, it is always the case that if "S" holds.
+	 */
+	private ReqGuardGraph getUniversalityPattern(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			//normal labels;
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
+			return q0;
+		} else {
+			throw new RuntimeException("Scope not implemented");
+		}
+	}
+	
+	/*
+	 *  * {scope}, it is never the case that if "S" holds.
+	 */
+	private ReqGuardGraph getInstAbsPattern(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			//normal labels;
+			final Term nS = SmtUtils.not(mScript, S);
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nS, dS)));
 			return q0;
 		} else {
 			throw new RuntimeException("Scope not implemented");
