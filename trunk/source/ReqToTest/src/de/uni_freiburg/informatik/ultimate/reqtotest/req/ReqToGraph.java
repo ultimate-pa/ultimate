@@ -70,7 +70,7 @@ public class ReqToGraph {
 	}
 	
 	 
-	/*								  Global
+	/*								  Global		After		Until		After Until
 	    BndInvariancePattern			X
     	BndResponsePatternTT			X
     	BndResponsePatternUT			X
@@ -184,7 +184,7 @@ public class ReqToGraph {
 			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
 			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, triggerLess)));
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, triggerEq)));
-			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, triggerLess)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS, triggerLess)));
 			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript,  uR, R, dS, S)));
 			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript,  nR, uR, S, dS)));
 			
