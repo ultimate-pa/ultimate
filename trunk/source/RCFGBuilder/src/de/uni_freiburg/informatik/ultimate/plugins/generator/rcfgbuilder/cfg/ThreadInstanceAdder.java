@@ -105,10 +105,9 @@ public class ThreadInstanceAdder {
 	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
-			final Collection<String> forkedProcedureNames, final Map<String, ThreadInstance> threadInstanceMap,
-			final BlockEncodingBacktranslator backtranslator) {
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2, final BlockEncodingBacktranslator backtranslator) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
-			final ThreadInstance ti = threadInstanceMap.get(fct.getNameOfForkedProcedure());
+			final ThreadInstance ti = threadInstanceMap2.get(fct);
 
 			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
 					ti.getThreadInstanceName(), backtranslator);
@@ -119,7 +118,7 @@ public class ThreadInstanceAdder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-			for (final ThreadInstance ti : threadInstanceMap.values()) {
+			for (final ThreadInstance ti : threadInstanceMap2.values()) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
 						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
 				final boolean returnValueCompatible =
@@ -364,18 +363,14 @@ public class ThreadInstanceAdder {
 	 * Construct the {@link ThreadInstance} objects but does not yet add {@link IProgramVar}s and error locations to the
 	 * {@link IIcfg}.
 	 */
-	public Map<String, ThreadInstance> constructTreadInstances(final IIcfg<? extends IcfgLocation> icfg,
+	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructTreadInstances(final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads) {
-		final Map<String, ThreadInstance> result = new HashMap<>();
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
-		for (final IIcfgForkTransitionThreadCurrent<?> fork : forkCurrentThreads) {
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
 			final String procedureName = fork.getNameOfForkedProcedure();
-			final String threadInstanceId = procedureName + " lol";
-			if (result.containsKey(procedureName)) {
-				// workaround
-				continue;
-			}
+			final String threadInstanceId = generateThreadInstanceId(i, procedureName);
 			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
 			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 					fork.getForkSmtArguments().getThreadIdArguments().getTerms());
@@ -389,26 +384,30 @@ public class ThreadInstanceAdder {
 			check.annotate(errorLocation);
 			final ThreadInstance ti =
 					new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar, errorLocation);
-			result.put(procedureName, ti);
+			result.put(fork, ti);
 			i++;
 		}
 		return result;
 	}
 
-	public static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
+	private String generateThreadInstanceId(final int i, final String procedureName) {
+		return "Thread" + i + "_" + procedureName;
+	}
+
+	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
 			final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
 		final BoogieNonOldVar threadInUseVar =
-				constructThreadAuxiliaryVariable("th_" + threadInstanceId + "_inUse", booleanSort, mgdScript);
+				constructThreadAuxiliaryVariable(threadInstanceId + "_inUse", booleanSort, mgdScript);
 		return threadInUseVar;
 	}
 
-	public static BoogieNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
+	private static BoogieNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
 			final ManagedScript mgdScript, final Term[] threadIdArguments) {
 		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[threadIdArguments.length];
 		int i = 0;
 		for (final Term forkId : threadIdArguments) {
-			threadIdVars[i] = constructThreadAuxiliaryVariable("thidvar" + i + "_" + threadInstanceId, forkId.getSort(),
+			threadIdVars[i] = constructThreadAuxiliaryVariable(threadInstanceId + "_thidvar" + i, forkId.getSort(),
 					mgdScript);
 			i++;
 		}
@@ -418,7 +417,7 @@ public class ThreadInstanceAdder {
 	/**
 	 * TODO Concurrent Boogie:
 	 */
-	public static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
+	private static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
 			final ManagedScript mgdScript) {
 		mgdScript.lock(id);
 		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
@@ -426,8 +425,8 @@ public class ThreadInstanceAdder {
 		return var;
 	}
 
-	public CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
-			final Map<String, ThreadInstance> threadInstanceMap2) {
+	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2) {
 		final DefaultIcfgSymbolTable newSymbolTable =
 				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals =
@@ -453,7 +452,7 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	public void addInUseErrorLocations(final BasicIcfg<IcfgLocation> result,
+	static void addInUseErrorLocations(final BasicIcfg<IcfgLocation> result,
 			final Collection<ThreadInstance> threadInstances) {
 		for (final ThreadInstance ti : threadInstances) {
 			result.addLocation(ti.getErrorLocation(), false, true, false, false, false);

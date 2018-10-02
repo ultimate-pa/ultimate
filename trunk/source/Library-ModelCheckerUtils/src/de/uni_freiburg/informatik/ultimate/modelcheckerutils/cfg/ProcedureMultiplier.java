@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -81,6 +80,7 @@ public class ProcedureMultiplier {
 				icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
 
 		final Map<ILocalProgramVar, ILocalProgramVar> newVar2OldVar = new HashMap<>();
+		final Map<String, Map<ILocalProgramVar, ILocalProgramVar>> oldVar2newVar = new HashMap<>();
 		final Map<Term, Term> variableBacktranslationMapping = new HashMap<>();
 		icfg.getCfgSmtToolkit().getManagedScript().lock(this);
 		for (final String proc : copyDirectives.getDomain()) {
@@ -126,6 +126,7 @@ public class ProcedureMultiplier {
 				for (final IProgramNonOldVar modifiableGlobal : modifiableGlobals) {
 					proc2globals.addPair(copyIdentifier, modifiableGlobal);
 				}
+				oldVar2newVar.put(copyIdentifier, procOldVar2NewVar);
 			}
 		}
 		backtranslator.setTermTranslator(
@@ -166,7 +167,7 @@ public class ProcedureMultiplier {
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
 									managedScript, outEdge.getTransformula(),
-									DataStructureUtils.constructReverseMapping(newVar2OldVar));
+									oldVar2newVar.get(copyIdentifier));
 							final IcfgInternalTransition newInternalOutEdge = icfgEdgeFactory
 									.createInternalTransition(source, target, payload, transFormula);
 							backtranslator.mapEdges(newInternalOutEdge, oldInternalOutEdge);

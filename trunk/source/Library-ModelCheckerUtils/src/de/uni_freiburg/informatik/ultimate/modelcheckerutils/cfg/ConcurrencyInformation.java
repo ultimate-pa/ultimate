@@ -30,6 +30,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -37,17 +40,17 @@ import java.util.Map;
  */
 public class ConcurrencyInformation {
 
-	private final Map<String, ThreadInstance> mThreadInstanceMap;
+	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mThreadInstanceMap;
 
 
 
-	public ConcurrencyInformation(final Map<String, ThreadInstance> threadInstanceMap) {
-		mThreadInstanceMap = threadInstanceMap;
+	public ConcurrencyInformation(final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2) {
+		mThreadInstanceMap = threadInstanceMap2;
 	}
 
 
 
-	public Map<String, ThreadInstance> getThreadInstanceMap() {
+	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> getThreadInstanceMap() {
 		return mThreadInstanceMap;
 	}
 

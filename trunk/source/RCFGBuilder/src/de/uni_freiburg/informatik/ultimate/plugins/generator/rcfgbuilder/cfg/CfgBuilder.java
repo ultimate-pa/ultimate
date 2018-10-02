@@ -174,8 +174,6 @@ public class CfgBuilder {
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private final Collection<String> mForkedProcedureNames = new HashSet<>();
-
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services, final IToolchainStorage storage)
 			throws IOException {
 		mServices = services;
@@ -345,8 +343,6 @@ public class CfgBuilder {
 		}
 
 		// Add all transitions to the forked procedure entry locations.
-		final Collection<String> forkedProcedureNames = mForkedProcedureNames;
-
 		IIcfg<? extends IcfgLocation> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
 		if (!mForkCurrentThreads.isEmpty()) {
@@ -364,7 +360,7 @@ public class CfgBuilder {
 					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
 							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			final Map<String, ThreadInstance> threadInstanceMap2 =
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2 =
 					adder.constructTreadInstances(result, forkCurrentThreads);
 			final CfgSmtToolkit cfgSmtToolkit =
 					adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
@@ -374,7 +370,7 @@ public class CfgBuilder {
 			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator);
 			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
 
-			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
+			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
 					threadInstanceMap2, backtranslator);
 
 			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
@@ -1256,7 +1252,6 @@ public class CfgBuilder {
 				final IIcfgElement cb = forkCurrentThreadEdge;
 				ModelUtils.copyAnnotations(st, cb);
 				mForkCurrentThreads.add(forkCurrentThreadEdge);
-				mForkedProcedureNames.add(st.getProcedureName());
 			} else {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, false);
 				final IIcfgElement cb = forkCurrentThreadEdge;
