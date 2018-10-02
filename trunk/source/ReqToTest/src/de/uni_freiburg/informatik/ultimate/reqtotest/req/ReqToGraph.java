@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
@@ -68,12 +69,12 @@ public class ReqToGraph {
 		return gs;
 	}
 	
-	
+	 
 	/*								  Global
 	    BndInvariancePattern			X
     	BndResponsePatternTT			X
     	BndResponsePatternUT			X
-       	BndResponsePatternTU 
+       	BndResponsePatternTU 			X
     	InvariantPattern				X
     	InstAbsPattern					X
       	UniversalityPattern				X
@@ -90,8 +91,10 @@ public class ReqToGraph {
 			return getBndResponsePatternTTPattern(pattern);
 		} else if(pattern instanceof UniversalityPattern){
 			return getUniversalityPattern(pattern);
-		} else if(pattern instanceof InstAbsPattern){
+		} else if (pattern instanceof InstAbsPattern){
 			return getInstAbsPattern(pattern);
+		} else if(pattern instanceof BndResponsePatternTU){
+			return getBndResponsePatternTUPattern(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
 		}
@@ -142,6 +145,55 @@ public class ReqToGraph {
 			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
 			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript, uR, nR, ndS)));
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
+			
+			return q0;		
+		} else {
+			throw new RuntimeException("Scope not implemented");
+		}
+	}
+	
+	/*
+	 * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards.
+	 */
+	private ReqGuardGraph getBndResponsePatternTUPattern(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			//create states to identify automaton
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1);
+			final ReqGuardGraph q2 = new ReqGuardGraph(2);
+			final ReqGuardGraph qw = new ReqGuardGraph(3);
+			//create effect guards
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			final String duration = pattern.getDuration().get(0);
+			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
+			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
+			Term triggerLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(duration));
+			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(duration));	
+					//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR); 
+			final Term nR = SmtUtils.not(mScript, R);
+			
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, ndS, uR, nR)));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, triggerLess)));
+			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, triggerEq)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, triggerLess)));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript,  uR, R, dS, S)));
+			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript,  nR, uR, S, dS)));
+			
+			q0.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			q1.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, nR, ndS)));
+			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
+			
 			
 			return q0;		
 		} else {
@@ -266,7 +318,7 @@ public class ReqToGraph {
 					SmtUtils.and(mScript, nuR, ndS), 
 					SmtUtils.and(mScript, uR, R, dS, S),
 					SmtUtils.and(mScript, uR, nR, ndS),
-					SmtUtils.and(mScript, S, uS))));
+					SmtUtils.and(mScript, S, uS, ndS))));
 			return q0;
 		} else {
 			throw new RuntimeException("Scope not implemented");
