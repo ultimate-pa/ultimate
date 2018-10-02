@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
@@ -65,6 +66,7 @@ public class BlockEncodingBacktranslator extends
 	private final Map<IcfgLocation, IcfgLocation> mLocationMapping;
 	private final ILogger mLogger;
 	private final Set<IIcfgTransition<IcfgLocation>> mIntermediateEdges;
+	private Function<Term, Term> mTermTranslator = (x -> x);
 
 	public BlockEncodingBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
 			final Class<Term> expressionType, final ILogger logger) {
@@ -120,7 +122,8 @@ public class BlockEncodingBacktranslator extends
 					newBranchEncoders.add(null);
 				}
 			}
-			newValues.add(programExecution.getProgramState(i));
+			final ProgramState<Term> newProgramState = translateProgramState(programExecution.getProgramState(i));
+			newValues.add(newProgramState);
 			newBranchEncoders.add(oldBranchEncoders[i]);
 
 		}
@@ -242,4 +245,17 @@ public class BlockEncodingBacktranslator extends
 			final int breakpointIndex) {
 		printBrokenCallStackSource(trace, breakpointIndex);
 	}
+
+	public void setTermTranslator(final Function<Term, Term> termTranslator) {
+		mTermTranslator = termTranslator;
+	}
+
+	@Override
+	public Term translateExpression(final Term expression) {
+		final Term result = mTermTranslator.apply(expression);
+		return result;
+	}
+
+
+
 }
