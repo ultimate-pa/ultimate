@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -75,6 +76,9 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @since 2017-12-09
  */
 public class FlatSymbolTable {
+
+	private static final boolean DEBUG_ENABLE_STORE_LOGGING = false;
+
 	/**
 	 * The global scope, spanning all translation units. Every translation unit points to this scope.
 	 */
@@ -112,7 +116,10 @@ public class FlatSymbolTable {
 	 */
 	private final INameHandler mNameHandler;
 
-	public FlatSymbolTable(final MultiparseSymbolTable mst, final INameHandler nameHandler) {
+	private final ILogger mLogger;
+
+	public FlatSymbolTable(final ILogger logger, final MultiparseSymbolTable mst, final INameHandler nameHandler) {
+		mLogger = logger;
 		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
 		mCScopeIDs = new HashMap<>();
@@ -281,6 +288,10 @@ public class FlatSymbolTable {
 				if (scopeTable == null) {
 					scopeTable = new LinkedHashMap<>();
 					mCTable.put(cursor, scopeTable);
+				}
+				if (DEBUG_ENABLE_STORE_LOGGING) {
+					mLogger.info(String.format("%-50.50s[%-25.25s]: %s to %s", CoreUtil.getCallerSignature(4),
+							cursor.getClass().getSimpleName(), id, val));
 				}
 				scopeTable.put(id, val);
 				break;

@@ -123,7 +123,7 @@ public class ExpressionResultTransformer {
 	 * <li>switchToRValueIfNecessary
 	 * <li>convert
 	 * </ul>
-	 * 
+	 *
 	 * @param newTypeRaw
 	 */
 	public ExpressionResult dispatchDecaySwitchToRValueConvertFunctionArgument(final IDispatcher main,

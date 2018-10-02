@@ -32,7 +32,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -63,7 +62,7 @@ public class CPointer extends CType {
 
 	@Override
 	public String toString() {
-		return SFO.POINTER;
+		return "*" + getPointsToType().toString();
 	}
 
 	@Override

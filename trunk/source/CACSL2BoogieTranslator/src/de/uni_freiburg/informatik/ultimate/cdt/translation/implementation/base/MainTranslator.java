@@ -135,7 +135,7 @@ public class MainTranslator {
 		final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
 
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
-		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mst, nameHandler);
+		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst, nameHandler);
 		final TypeSizes typeSizes = new TypeSizes(ups, translationSettings, flatSymbolTable);
 
 		// Build the function table
@@ -179,7 +179,7 @@ public class MainTranslator {
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes prerunTypeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 
-		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mst, nameHandler);
+		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst, nameHandler);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
 		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);
