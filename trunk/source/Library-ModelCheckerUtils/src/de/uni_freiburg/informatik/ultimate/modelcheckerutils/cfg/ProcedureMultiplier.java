@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -79,6 +81,7 @@ public class ProcedureMultiplier {
 				icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
 
 		final Map<ILocalProgramVar, ILocalProgramVar> newVar2OldVar = new HashMap<>();
+		final Map<Term, Term> variableBacktranslationMapping = new HashMap<>();
 		icfg.getCfgSmtToolkit().getManagedScript().lock(this);
 		for (final String proc : copyDirectives.getDomain()) {
 			assert icfg.getCfgSmtToolkit().getProcedures().contains(proc) : "procedure " + proc + " missing";
@@ -93,6 +96,7 @@ public class ProcedureMultiplier {
 					inParamsOfCopy.add(inParamCopy);
 					newVar2OldVar.put(inParamCopy, inParam);
 					procOldVar2NewVar.put(inParam, inParamCopy);
+					variableBacktranslationMapping.put(inParamCopy.getTermVariable(), inParam.getTermVariable());
 					symbolTable.add(inParamCopy);
 				}
 				inParams.put(copyIdentifier, inParamsOfCopy);
@@ -103,6 +107,7 @@ public class ProcedureMultiplier {
 					outParamsOfCopy.add(outParamCopy);
 					newVar2OldVar.put(outParamCopy, outParam);
 					procOldVar2NewVar.put(outParam, outParamCopy);
+					variableBacktranslationMapping.put(outParamCopy.getTermVariable(), outParam.getTermVariable());
 					symbolTable.add(outParamCopy);
 				}
 				outParams.put(copyIdentifier, outParamsOfCopy);
@@ -110,6 +115,7 @@ public class ProcedureMultiplier {
 					if (!procOldVar2NewVar.containsKey(localVar)) {
 						final ILocalProgramVar localVarCopy = constructCopy(localVar, copyIdentifier,
 								icfg.getCfgSmtToolkit().getManagedScript(), this);
+						variableBacktranslationMapping.put(localVarCopy.getTermVariable(), localVar.getTermVariable());
 						symbolTable.add(localVarCopy);
 					}
 				}
@@ -122,6 +128,9 @@ public class ProcedureMultiplier {
 				}
 			}
 		}
+		backtranslator.setTermTranslator(
+				x -> new Substitution(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping)
+				.transform(x));
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);

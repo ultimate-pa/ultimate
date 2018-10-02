@@ -376,6 +376,7 @@ public class CfgBuilder {
 
 			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads, forkedProcedureNames,
 					threadInstanceMap2, backtranslator);
+
 			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
 		} else {
 			mResultingBacktranslator = mRcfgBacktranslator;
