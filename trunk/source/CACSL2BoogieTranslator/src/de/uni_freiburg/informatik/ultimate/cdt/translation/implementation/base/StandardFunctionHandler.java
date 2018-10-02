@@ -648,7 +648,25 @@ public class StandardFunctionHandler {
 	private Result handleJoin(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
+//		// get arguments
+//		final IASTInitializerClause[] arguments = node.getArguments();
+//		checkArguments(loc, 2, name, arguments);
+//		final ExpressionResult argThreadId = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+//		final ExpressionResult argAddressOfResultPointer = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+
+		// Object that will build our result
 		final ExpressionResultBuilder build = new ExpressionResultBuilder();
+
+//		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
+//		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+//		builder.addDeclaration(auxvarinfo.getVarDec());
+//		builder.addAuxVar(auxvarinfo);
+//		final Expression value = auxvarinfo.getExp();
+//
+//
+//		final MemoryHandler memoryHandler = main.mHandlerHandler.getMemoryHandler();
+//		memoryHandler.getWriteCall(main, loc, hlv, value, valueType, isStaticInitialization, hook)
+
 		return build.build();
 	}
 
