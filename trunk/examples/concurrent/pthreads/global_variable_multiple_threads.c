@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+
+typedef unsigned long int pthread_t;
  
 // One global variable - changes in threads.
 int g = 0;
@@ -24,6 +26,6 @@ int main()
     for (i = 0; i < 3; i++)
         pthread_create(&tid, NULL, myThread, (void *)&i);
  
-    pthread_join(tid, NULL)
+    pthread_join(tid, NULL);
     return 0;
 }

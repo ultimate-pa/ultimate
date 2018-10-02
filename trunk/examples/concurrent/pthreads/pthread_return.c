@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include <stdio.h>
 
+typedef unsigned long int pthread_t;
+
 void *myThread()
 {
     return (void *) 42;
