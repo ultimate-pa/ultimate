@@ -181,7 +181,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER)) {
 			mPredicateUnifier = new BPredicateUnifier(mServices, mLogger, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable());
+					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), true);
 		} else {
 			mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
@@ -813,6 +813,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportResult(final IResult res) {
+		mLogger.info(mPredicateUnifier.collectPredicateUnifierStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 

@@ -34,8 +34,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Data structure that stores predicates and there implication-relation. A predicate implies its descendants and is
@@ -43,15 +47,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
-public class ImplicationGraph<T extends IPredicate> {
+public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph<T>{
 	private final ManagedScript mMgdScript;
+	private final BPredicateUnifier mUnifier;
 	private final Set<ImplicationVertex<T>> mVertices;
 	private final Map<T, ImplicationVertex<T>> mPredicateMap;
 	private ImplicationVertex<T> mTrueVertex;
 	private ImplicationVertex<T> mFalseVertex;
 
-	protected ImplicationGraph(final ManagedScript script, final T predicateFalse, final T predicateTrue) {
+	protected ImplicationGraph(final ManagedScript script, BPredicateUnifier unifier, final T predicateFalse, final T predicateTrue) {
 		mMgdScript = script;
+		mUnifier = unifier;
 		mVertices = new HashSet<>();
 		mPredicateMap = new HashMap<>();
 		mFalseVertex = new ImplicationVertex<>(predicateFalse, new HashSet<>(), new HashSet<>());
@@ -65,24 +71,8 @@ public class ImplicationGraph<T extends IPredicate> {
 		mPredicateMap.put(predicateTrue, mTrueVertex);
 		mPredicateMap.put(predicateFalse, mFalseVertex);
 	}
-
-	protected ImplicationVertex<T> getTrueVertex() {
-		return mTrueVertex;
-	}
-
-	protected ImplicationVertex<T> getFalseVertex() {
-		return mFalseVertex;
-	}
-
-	protected ImplicationVertex<T> getVertex(final T pred) {
-		final ImplicationVertex<T> rtr = mPredicateMap.get(pred);
-		if (rtr == null) {
-			throw new IllegalArgumentException("predicate " + pred + " is unknown");
-		}
-		return rtr;
-	}
-
-	protected Set<ImplicationVertex<T>> getVertices() {
+	
+	public Set<ImplicationVertex<T>> getVertices(){
 		return mVertices;
 	}
 
@@ -94,21 +84,58 @@ public class ImplicationGraph<T extends IPredicate> {
 		}
 		return bld.toString();
 	}
+	
+	@Override
+	public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
+		Set<ImplicationVertex<T>> ancestors = mPredicateMap.get(pred).getAncestors();
+		Set<IPredicate> covered = new HashSet<>();
+		ancestors.forEach(a -> covered.add(a.getPredicate()));
+		covered.add(pred);
+		return covered;
+	}
+	
+	@Override
+	public Set<IPredicate> getCoveringPredicates(final IPredicate pred) {
+		Set<ImplicationVertex<T>> descendants = mPredicateMap.get(pred).getDescendants();
+		Set<IPredicate> covering = new HashSet<>();
+		descendants.forEach(a -> covering.add(a.getPredicate()));
+		covering.add(pred);
+		return covering;
+	}
+	
+	@Override
+	public IPartialComparator<IPredicate> getPartialComperator() {
+		return (o1, o2) -> {
+			if (!mUnifier.isRepresentative(o1) || !mUnifier.isRepresentative(o2)) {
+				throw new AssertionError("predicates unknown to predicate unifier");
+			}
+			if (o1.equals(o2)) {
+				return ComparisonResult.EQUAL;
+			}
+			if (getCoveringPredicates(o1).contains(o2)) {
+				return ComparisonResult.STRICTLY_SMALLER;
+			}
+			if (getCoveringPredicates(o2).contains(o1)) {
+				return ComparisonResult.STRICTLY_GREATER;
+			}
+			return ComparisonResult.INCOMPARABLE;
+		};
+	}
 
-	/**
-	 * Insert a predicate into the implication graph
-	 *
-	 * @param predicate
-	 * @return the implication-vertex it is stored in
-	 */
-	protected ImplicationVertex<T> unifyPredicate(final T predicate) {
+	@Override
+	public HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation() {
+		throw new UnsupportedOperationException("Not implemented yet");
+	}
+
+	@Override
+	public boolean unifyPredicate(final T predicate) {
 		TransitiveClosureIG<T> transitiveClosure = new TransitiveClosureIG<>(this);
 		final Set<ImplicationVertex<T>> marked = new HashSet<>();
 		// find the predicates that imply the given predicate
 		while (!marked.containsAll(transitiveClosure.getVertices())) {
 			// find predicate with highest count
 			ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, true);
-			if (internImplication(maxVertex.getPredicate(), predicate, true)) {
+			if (internImplication(maxVertex.getPredicate(), predicate)) {
 				marked.add(maxVertex);
 				transitiveClosure.removeAncestorsFromTC(maxVertex);
 			}else {
@@ -123,7 +150,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		marked.clear();
 		while (!marked.containsAll(transitiveClosure.getVertices())) {
 			ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, false);
-			if (internImplication(predicate, maxVertex.getPredicate(), true)) {
+			if (internImplication(predicate, maxVertex.getPredicate())) {
 				marked.add(maxVertex);
 				transitiveClosure.removeDescendantsFromTC(maxVertex);
 			} else {
@@ -131,17 +158,15 @@ public class ImplicationGraph<T extends IPredicate> {
 				transitiveClosure.removeVertex(maxVertex);
 			}
 		}
-		final HashSet<ImplicationVertex<T>> children = new HashSet<>(transitiveClosure.getVertices());
+		final Set<ImplicationVertex<T>> children = new HashSet<>(transitiveClosure.getVertices());
 		final ImplicationVertex<T> newVertex = new ImplicationVertex<>(predicate, children, parents);
 		mVertices.add(newVertex);
 		mPredicateMap.put(predicate, newVertex);
-		return newVertex;
+		return true;
 	}
 
-	/**
-	 * removes all predicates form the collection, that are implied within the collection
-	 */
-	protected Collection<T> removeImpliedVerticesFromCollection(final Collection<T> collection) {
+	@Override
+	public Collection<T> removeImpliedVerticesFromCollection(final Collection<T> collection) {
 		HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
 		collection.forEach(c -> vertexCollection.add(mPredicateMap.get(c)));
 		Collection<T> result = new HashSet<>(collection);
@@ -156,9 +181,7 @@ public class ImplicationGraph<T extends IPredicate> {
 		return result;
 	}
 	
-	/**
-	 * removes all predicates form the collection, that imply other predicates in the collection
-	 */
+	@Override
 	public Collection<T> removeImplyingVerticesFromCollection(final Collection<T> collection) {
 		HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
 		collection.forEach(c -> vertexCollection.add(mPredicateMap.get(c)));
@@ -174,47 +197,43 @@ public class ImplicationGraph<T extends IPredicate> {
 		return result;
 	}
 
-	/**
-	 * checks for implication - if the predicates are known, the graph is used
-	 *
-	 * @return true if a implies b
-	 */
-	protected boolean implication(final T a, final T b) {
-		return internImplication(a, b, false);
+	@Override
+	public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
+		if (getCoveringPredicates(lhs).contains(rhs)) {
+			return Validity.VALID;
+		}
+		return Validity.INVALID;
 	}
 
-	protected boolean internImplication(final T a, final T b, final boolean useSolver) {
+	public boolean internImplication(final IPredicate a, final IPredicate b) {
 		if (a.equals(b)) {
 			return true;
 		}
 		if (mPredicateMap.containsKey(a) && mPredicateMap.containsKey(b)) {
-			return getVertex(a).getDescendants().contains(getVertex(b));
+			return getCoveringPredicates(a).contains(b);
 		}
-		if (useSolver) {
-			final Term acf = a.getClosedFormula();
-			final Term bcf = b.getClosedFormula();
-			if (mMgdScript.isLocked()) {
-				mMgdScript.requestLockRelease();
-			}
-			mMgdScript.lock(this);
-			final Term imp = mMgdScript.term(this, "and", acf, mMgdScript.term(this, "not", bcf));
-			mMgdScript.push(this, 1);
-			try {
-				mMgdScript.assertTerm(this, imp);
-				final Script.LBool result = mMgdScript.checkSat(this);
-				if (result == Script.LBool.UNSAT) {
-					return true;
-				}
-				if (result == Script.LBool.SAT) {
-					return false;
-				}
-				throw new UnsupportedOperationException(
-						"Cannot handle case were solver cannot decide implication of predicates");
-			} finally {
-				mMgdScript.pop(this, 1);
-				mMgdScript.unlock(this);
-			}
+		final Term acf = a.getClosedFormula();
+		final Term bcf = b.getClosedFormula();
+		if (mMgdScript.isLocked()) {
+			mMgdScript.requestLockRelease();
 		}
-		throw new IllegalArgumentException("predicate is not known, use the solver-option");
+		mMgdScript.lock(this);
+		final Term imp = mMgdScript.term(this, "and", acf, mMgdScript.term(this, "not", bcf));
+		mMgdScript.push(this, 1);
+		try {
+			mMgdScript.assertTerm(this, imp);
+			final Script.LBool result = mMgdScript.checkSat(this);
+			if (result == Script.LBool.UNSAT) {
+				return true;
+			}
+			if (result == Script.LBool.SAT) {
+				return false;
+			}
+			throw new UnsupportedOperationException(
+					"Cannot handle case were solver cannot decide implication of predicates");
+		} finally {
+			mMgdScript.pop(this, 1);
+			mMgdScript.unlock(this);
+		}
 	}
 }

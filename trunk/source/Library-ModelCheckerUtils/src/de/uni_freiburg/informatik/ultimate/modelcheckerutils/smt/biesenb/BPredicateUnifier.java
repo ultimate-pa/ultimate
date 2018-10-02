@@ -64,19 +64,18 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
 	private PredicateTrie<IPredicate> mPredicateTrie;
-	private final ImplicationGraph<IPredicate> mImplicationGraph;
+	private final IImplicationGraph<IPredicate> mImplicationGraph;
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
 	private final Collection<IPredicate> mPredicates;
-	private final PredicateCoverageChecker mCoverageChecker;
 	private final IIcfgSymbolTable mSymbolTable;
 	private int mRestructureWitnessCounter;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
-			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
+			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap) {
 		mServices = services;
 		mMgdScript = script;
 		mScript = mMgdScript.getScript();
@@ -87,15 +86,18 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mPredicates = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
 		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
-		mImplicationGraph = new ImplicationGraph<>(mMgdScript, mFalsePredicate, mTruePredicate);
-		mCoverageChecker = new PredicateCoverageChecker(mImplicationGraph, this);
+		if(useMap) {
+			mImplicationGraph = new ImplicationGraph<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
+		} else {
+			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
+		}
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
 	}
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
-			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
-		this(services, script, factory, symbolTable);
+			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap) {
+		this(services, script, factory, symbolTable, useMap);
 		logger.info("Initialized predicate-trie based predicate unifier");
 	}
 
@@ -147,7 +149,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	@Override
 	public IPredicateCoverageChecker getCoverageRelation() {
-		return mCoverageChecker;
+		return mImplicationGraph;
 	}
 
 	@Override
