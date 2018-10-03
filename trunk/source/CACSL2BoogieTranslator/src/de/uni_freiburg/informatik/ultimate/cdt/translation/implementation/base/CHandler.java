@@ -3502,8 +3502,8 @@ public class CHandler {
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
-		assert resultBuilder.getLrValue() == null;
-		assert resultBuilder.getAuxVars().isEmpty();
+		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
+		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
 		return resultBuilder.build();
 	}
 

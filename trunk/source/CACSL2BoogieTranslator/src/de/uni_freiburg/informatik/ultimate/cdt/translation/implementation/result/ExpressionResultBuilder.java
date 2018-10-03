@@ -144,6 +144,7 @@ public class ExpressionResultBuilder {
 	public ExpressionResultBuilder addAllExceptLrValueAndHavocAux(final ExpressionResult exprResult) {
 		addAllExceptLrValue(exprResult);
 		addStatements(CTranslationUtil.createHavocsForAuxVars(exprResult.getAuxVars()));
+		mAuxVars.clear();
 		return this;
 	}
 
@@ -237,6 +238,7 @@ public class ExpressionResultBuilder {
 	 * @param newStatements
 	 */
 	public ExpressionResultBuilder resetStatements(final List<Statement> newStatements) {
+		assert newStatements != mStatements : "Someone hijacked our list";
 		mStatements.clear();
 		mStatements.addAll(newStatements);
 		return this;
