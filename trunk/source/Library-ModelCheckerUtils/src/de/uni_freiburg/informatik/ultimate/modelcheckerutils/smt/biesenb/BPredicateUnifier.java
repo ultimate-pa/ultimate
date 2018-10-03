@@ -76,6 +76,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	
 	private PredicateTrie<IPredicate> mPredicateTrie;
 	private long mImplicationTime = 0;
+	private int mDepthOffset;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
@@ -240,6 +241,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		mStatisticsTracker.stopTime();
+		int oldDepth = mPredicateTrie.getDepth();
+		if(oldDepth >  (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
+			restructurePredicateTrie();
+			mDepthOffset = mPredicateTrie.getDepth() - minDepth(mPredicates.size());
+			mLogger.info("--------PredicateTrie is restructured: " + "old depths: " + oldDepth + 
+					" new depth: " + mPredicateTrie.getDepth());
+		}
 		return unifiedPredicate;
 	}
 	
