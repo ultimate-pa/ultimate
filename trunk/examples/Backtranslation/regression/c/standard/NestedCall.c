@@ -1,5 +1,10 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
+int f(int b) {
+	return ++b;
+}
+
+
 int main() {
     int a = 5;
 	
@@ -15,6 +20,3 @@ int main() {
     return 1;
 }
 
-int f(int b) {
-	return ++b;
-}
