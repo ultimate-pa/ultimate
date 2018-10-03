@@ -77,11 +77,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private PredicateTrie<IPredicate> mPredicateTrie;
 	private long mImplicationTime = 0;
 	private int mDepthOffset;
+	private boolean mEnableRestructure;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
-			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap) {
+			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap, final boolean enableRestructure) {
 		mLogger = logger;
 		mServices = services;
 		mMgdScript = script;
@@ -242,7 +243,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		}
 		mStatisticsTracker.stopTime();
 		int oldDepth = mPredicateTrie.getDepth();
-		if(oldDepth >  (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
+		if(mEnableRestructure && oldDepth >  (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
 			restructurePredicateTrie();
 			mDepthOffset = mPredicateTrie.getDepth() - minDepth(mPredicates.size());
 			mLogger.info("--------PredicateTrie is restructured: " + "old depths: " + oldDepth + 

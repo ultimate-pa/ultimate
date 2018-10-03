@@ -183,7 +183,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER)) {
 			mPredicateUnifier = new BPredicateUnifier(mServices, mLogger, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), true);
+					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), true, true);
 		} else {
 			mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
