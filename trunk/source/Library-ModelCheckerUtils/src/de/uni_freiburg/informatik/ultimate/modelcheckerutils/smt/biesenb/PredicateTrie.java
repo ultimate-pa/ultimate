@@ -34,12 +34,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -57,11 +59,13 @@ public class PredicateTrie<T extends IPredicate> {
 	private final T mFalsePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
+	private final ILogger mLogger;
 
 	private IVertex mRoot;
 
-	protected PredicateTrie(final ManagedScript script, final T truePredicate, final T falsePredicate,
-			final IIcfgSymbolTable symbolTable) {
+	protected PredicateTrie(final ILogger logger, final ManagedScript script, final T truePredicate,
+			final T falsePredicate, final IIcfgSymbolTable symbolTable) {
+		mLogger = logger;
 		mMgdScript = script;
 		mSymbolTable = symbolTable;
 		mTruePredicate = truePredicate;
@@ -87,12 +91,12 @@ public class PredicateTrie<T extends IPredicate> {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		stringHelper(mRoot, sb);
 		return sb.toString();
 	}
 
-	private void stringHelper(final IVertex vertex, StringBuilder sb) {
+	private void stringHelper(final IVertex vertex, final StringBuilder sb) {
 		if (vertex instanceof ModelVertex) {
 			sb.append(vertex.print() + "\n");
 			stringHelper(((ModelVertex) vertex).getChild(true), sb);
@@ -100,7 +104,7 @@ public class PredicateTrie<T extends IPredicate> {
 		}
 	}
 
-	protected Map<Term, Term> getWitness(final T fulfill, final Set<T> unfulfill) {
+	private Map<Term, Term> getWitness(final T fulfill, final Set<T> unfulfill) {
 		final Script script = mMgdScript.getScript();
 		final Collection<Term> unfulfillTerms = new HashSet<>();
 		unfulfill.forEach(p -> unfulfillTerms.add(p.getFormula()));
@@ -155,7 +159,27 @@ public class PredicateTrie<T extends IPredicate> {
 	private boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
 		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgdScript, witness);
 		final Term result = subst.transform(predicate.getClosedFormula());
-		return mTruePredicate.getFormula().equals(result);
+
+		if (mTruePredicate.getFormula().equals(result)) {
+			return true;
+		}
+		assert checkFalseCase(predicate, witness, result) : "is neither equal to true nor to false";
+		return false;
+	}
+
+	private boolean checkFalseCase(final T predicate, final Map<Term, Term> witness, final Term result) {
+		if (mFalsePredicate.getFormula().equals(result)) {
+			return true;
+		}
+		final Term trueTerm = mTruePredicate.getClosedFormula();
+		final Term query = mMgdScript.getScript().term("distinct", trueTerm, result);
+		final LBool isNotTrue = SmtUtils.checkSatTerm(mMgdScript.getScript(), query);
+		if (isNotTrue == LBool.UNSAT) {
+			mLogger.fatal("Simplification failed: it is actually equal to true");
+			mLogger.fatal(query.toStringDirect());
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -170,8 +194,8 @@ public class PredicateTrie<T extends IPredicate> {
 			mMgdScript.requestLockRelease();
 		}
 		mMgdScript.lock(this);
-		final Term isEqual = mMgdScript.term(this, "distinct", local, other);
 		mMgdScript.push(this, 1);
+		final Term isEqual = mMgdScript.term(this, "distinct", local, other);
 		try {
 			mMgdScript.assertTerm(this, isEqual);
 			final LBool result = mMgdScript.checkSat(this);
@@ -212,37 +236,39 @@ public class PredicateTrie<T extends IPredicate> {
 				final Set<ApplicationTerm> terms =
 						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
 				return mMgdScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
-			} else {
-				throw new UnsupportedOperationException("Solver cannot find a model for the term " + term);
 			}
+			throw new UnsupportedOperationException("Solver cannot find a model for the term " + term);
 		} finally {
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
 		}
 	}
 
-	public PredicateTrie<T> fillTrie(Witness root, Map<Witness, Pair<Witness, Witness>> witnessMap, Map<Term, T> preds) {
-		if(mRoot != null) {
+	public PredicateTrie<T> fillTrie(final Witness root, final Map<Witness, Pair<Witness, Witness>> witnessMap,
+			final Map<Term, T> preds) {
+		if (mRoot != null) {
 			throw new UnsupportedOperationException("trie must be empty");
 		}
-		Map<Witness, ModelVertex> modelVertices = new HashMap<>();
-		
-		for(Witness key : witnessMap.keySet()) {
+		final Map<Witness, ModelVertex> modelVertices = new HashMap<>();
+
+		for (final Witness key : witnessMap.keySet()) {
 			modelVertices.put(key, new ModelVertex(null, null, key.getWitness()));
 		}
-		for(Map.Entry<Witness, Pair<Witness, Witness>> entry : witnessMap.entrySet()) {
-			 Pair<Witness, Witness> children = entry.getValue();
-			if(children.getFirst().getSerialNumber() < 0){
+		for (final Map.Entry<Witness, Pair<Witness, Witness>> entry : witnessMap.entrySet()) {
+			final Pair<Witness, Witness> children = entry.getValue();
+			if (children.getFirst().getSerialNumber() < 0) {
 				// predicate
-				IVertex trueChild = new PredicateVertex<>(preds.get(children.getFirst().getWitness().keySet().iterator().next()));
+				final IVertex trueChild =
+						new PredicateVertex<>(preds.get(children.getFirst().getWitness().keySet().iterator().next()));
 				modelVertices.get(entry.getKey()).setTrueChild(trueChild);
 			} else {
 				// model
 				modelVertices.get(entry.getKey()).setTrueChild(modelVertices.get(children.getFirst()));
 			}
-			if(children.getSecond().getSerialNumber() < 0){
+			if (children.getSecond().getSerialNumber() < 0) {
 				// predicate
-				IVertex falseChild = new PredicateVertex<>(preds.get(children.getSecond().getWitness().keySet().iterator().next()));
+				final IVertex falseChild =
+						new PredicateVertex<>(preds.get(children.getSecond().getWitness().keySet().iterator().next()));
 				modelVertices.get(entry.getKey()).setFalseChild(falseChild);
 			} else {
 				// model
