@@ -1089,7 +1089,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			originalCopy = mManager.copyWeqCc(this, true);
 		}
 
-		while (true) {
+		int loopCtr = 0;
+		final int loopBound = 10;
+		while (loopCtr++ < loopBound) {
+			if (mManager.isDebugMode()) {
+				mManager.getLogger().debug("ext and triangle closure, loop iteration #" + loopCtr);
+			}
+
 			// 1. fatten, then saturate propagations (fatten may trigger ext, ext may trigger reportEq, etc..)
 			{
 				boolean madeChanges = true;
