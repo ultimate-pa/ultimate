@@ -396,8 +396,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				break;
 			}
 
-			mLogger.debug("Exploring : " + procedureRoot);
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Exploring : " + procedureRoot);
+			}
 			final IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
 			while (mLoopForever || iterationsCount++ < mIterationsLimit) {
@@ -407,8 +408,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 
 				benchmarkGenerator.announceNextIteration();
-
-				mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
+				}
 				final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun =
 						emptinessCheck.checkForEmptiness(procedureRoot);
 
@@ -525,10 +527,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		// benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
-
+		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
 		ccb.aggregateBenchmarkData(benchmarkGenerator);
-
 		reportBenchmark(ccb);
 
 		if (overallResult == Result.SAFE) {
@@ -756,8 +757,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate CodeCheck benchmark data";
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
-		// s_Logger.warn(res.getLongDescription());
-		mLogger.info(mPredicateUnifier.collectPredicateUnifierStatistics());
 		reportResult(res);
 	}
 
