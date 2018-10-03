@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * The PredicateVertex is part of the @PredicateTrie.java and stores a predicate
- * 
+ * The PredicateVertex is part of the {@link PredicateTrie} and stores a predicate
+ *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class PredicateVertex<T extends IPredicate> implements IVertex {

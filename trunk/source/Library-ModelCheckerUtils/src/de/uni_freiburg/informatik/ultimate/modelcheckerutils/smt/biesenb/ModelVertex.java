@@ -31,27 +31,27 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * The ModelVertex is part of the @PredicateTrie.java and stores a model
- * 
+ * The ModelVertex is part of the {@link PredicateTrie} and stores a model
+ *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
 public class ModelVertex implements IVertex {
-	
+
 	private final Map<Term, Term> mWitness;
 	private IVertex mTrueChild;
 	private IVertex mFalseChild;
 
-	protected ModelVertex(final IVertex trueChild, final IVertex flaseChild, final Map<Term, Term> witness) {
+	protected ModelVertex(final IVertex trueChild, final IVertex falseChild, final Map<Term, Term> witness) {
 		mWitness = witness;
 		mTrueChild = trueChild;
-		mFalseChild = flaseChild;
+		mFalseChild = falseChild;
 	}
-	
-	protected void setTrueChild(IVertex trueChild) {
+
+	protected void setTrueChild(final IVertex trueChild) {
 		mTrueChild = trueChild;
 	}
-	
-	protected void setFalseChild(IVertex falseChild) {
+
+	protected void setFalseChild(final IVertex falseChild) {
 		mFalseChild = falseChild;
 	}
 
@@ -84,8 +84,8 @@ public class ModelVertex implements IVertex {
 
 	@Override
 	public String print() {
-		return ("inner: " + hashCode()%100 + mWitness.toString() + " : " + mTrueChild.hashCode()%100 + mTrueChild.toString()
-				+ " | " + mFalseChild.hashCode()%100 + mFalseChild.toString());
+		return ("inner: " + hashCode() % 100 + mWitness.toString() + " : " + mTrueChild.hashCode() % 100
+				+ mTrueChild.toString() + " | " + mFalseChild.hashCode() % 100 + mFalseChild.toString());
 	}
 
 	@Override
