@@ -108,7 +108,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mServices = services;
 
-		mIsDebugMode = true;
+		mIsDebugMode = !true;
 		if (mIsDebugMode) {
 			mBenchmark = new BenchmarkWithCounters();
 			mBenchmark.registerCountersAndWatches(BmNames.getNames());

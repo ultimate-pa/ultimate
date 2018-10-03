@@ -85,7 +85,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final WeqSettings mSettings;
 
-	private final boolean mBenchmarkMode = true;
+	private final boolean mBenchmarkMode = !true;
 	private BenchmarkWithCounters mBenchmark;
 
 	final boolean mDebug;
@@ -1878,6 +1878,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), newDisjuncts);
 		}
 
+	}
+
+	public boolean isDebugMode() {
+		return mDebug;
 	}
 
 }
