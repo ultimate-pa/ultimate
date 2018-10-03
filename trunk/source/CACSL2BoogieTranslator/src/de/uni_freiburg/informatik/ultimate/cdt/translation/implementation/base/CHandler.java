@@ -2788,7 +2788,7 @@ public class CHandler {
 	/**
 	 * Add to divisorExpRes a check if divisior is zero.
 	 */
-	private void addDivisionByZeroCheck(final ILocation loc, final ExpressionResult divisorExpRes) {
+	private ExpressionResult addDivisionByZeroCheck(final ILocation loc, final ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.getLrValue().getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.getLrValue().getCType();
 
@@ -2802,7 +2802,7 @@ public class CHandler {
 		}
 
 		if (checkMode == PointerCheckMode.IGNORE) {
-			return;
+			return divisorExpRes;
 		}
 
 		final Expression divisorNotZero;
@@ -2829,7 +2829,7 @@ public class CHandler {
 		} else {
 			throw new AssertionError("illegal");
 		}
-		divisorExpRes.getStatements().add(additionalStatement);
+		return new ExpressionResultBuilder(divisorExpRes).addStatement(additionalStatement).build();
 	}
 
 	/**
@@ -4105,7 +4105,7 @@ public class CHandler {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		if (op == IASTBinaryExpression.op_divide || op == IASTBinaryExpression.op_modulo) {
-			addDivisionByZeroCheck(loc, right);
+			right = addDivisionByZeroCheck(loc, right);
 		}
 		final Pair<ExpressionResult, ExpressionResult> newOps =
 				mExpressionTranslation.usualArithmeticConversions(loc, left, right);

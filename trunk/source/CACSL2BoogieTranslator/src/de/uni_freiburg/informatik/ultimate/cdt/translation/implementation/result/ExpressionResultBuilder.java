@@ -42,24 +42,20 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 public class ExpressionResultBuilder {
 
 	private final List<Statement> mStatements = new ArrayList<>();
-	private LRValue mLrVal;
 	private final List<Declaration> mDeclarations = new ArrayList<>();
 	private final List<Overapprox> mOverappr = new ArrayList<>();
 	private final Set<AuxVarInfo> mAuxVars = new HashSet<>();
 	private final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
 
+	private LRValue mLrVal;
+
 	/**
-	 * Creates an ExpressionResultBuidler with empty fields.
+	 * Creates an ExpressionResultBuidler without any content.
 	 */
 	public ExpressionResultBuilder() {
 		// do nothing
 	}
 
-	/**
-	 * copy constructor
-	 *
-	 * @param builderIn
-	 */
 	public ExpressionResultBuilder(final ExpressionResultBuilder original) {
 		mStatements.addAll(original.getStatements());
 		mDeclarations.addAll(original.getDeclarations());
@@ -69,6 +65,10 @@ public class ExpressionResultBuilder {
 		mLrVal = original.getLrValue();
 	}
 
+	/**
+	 * Creates a new {@link ExpressionResultBuilder} with the same content as the supplied {@link ExpressionResult}. In
+	 * particular, it also contains the LrValue.
+	 */
 	public ExpressionResultBuilder(final ExpressionResult er) {
 		mStatements.addAll(er.getStatements());
 		mDeclarations.addAll(er.getDeclarations());
