@@ -110,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IcfgDuplicator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -373,11 +374,25 @@ public class CfgBuilder {
 			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
 					threadInstanceMap2, backtranslator);
 
+			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap2.values());
+			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
+
 			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
 		} else {
 			mResultingBacktranslator = mRcfgBacktranslator;
 		}
 
+		return result;
+	}
+
+	private Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
+		final Set<Term> result = new HashSet<>();
+		for (final ThreadInstance ti : values) {
+			result.add(ti.getInUseVar().getTerm());
+			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
+				result.add(idVar.getTerm());
+			}
+		}
 		return result;
 	}
 
