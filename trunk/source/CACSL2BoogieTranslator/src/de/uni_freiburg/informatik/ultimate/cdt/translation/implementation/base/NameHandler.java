@@ -40,11 +40,9 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -56,18 +54,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class NameHandler implements INameHandler {
 
 	/**
-	 * Local variables with similar identifiers may occur in different scopes.
-	 * Since there are mainly two scopes in Boogie (global, local) we have to
-	 * make sure that every local C variables gets a unique name.
-	 * The simple solution is to append the "compound counter" as a suffix to
-	 * the Boogie variable.
-	 * This has however a negative impact on the reproducibility (important for,
-	 * e.g., the resue of automata). As soon as we add a new compound all
-	 * variables get different names.
-	 * As an alternative we have a different solution in which we only use
-	 * the compound counter to get a unique suffix for the variable.
-	 * (We count the occurrences of id/compound counter pairs and use this as
-	 * suffix.)
+	 * Local variables with similar identifiers may occur in different scopes. Since there are mainly two scopes in
+	 * Boogie (global, local) we have to make sure that every local C variables gets a unique name. The simple solution
+	 * is to append the "compound counter" as a suffix to the Boogie variable. This has however a negative impact on the
+	 * reproducibility (important for, e.g., the resue of automata). As soon as we add a new compound all variables get
+	 * different names. As an alternative we have a different solution in which we only use the compound counter to get
+	 * a unique suffix for the variable. (We count the occurrences of id/compound counter pairs and use this as suffix.)
 	 */
 	private static final boolean USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX = false;
 	private final NestedMap2<String, Integer, Integer> mLocalVarSuffix = new NestedMap2<>();
@@ -79,46 +71,25 @@ public class NameHandler implements INameHandler {
 
 	private int mGlobalCounter;
 
-	private final CACSL2BoogieBacktranslator mBacktranslator;
-	private final CTranslationState mHandlerHandler;
+	private final ICACSL2BoogieBacktranslatorMapping mBacktranslator;
 
-	public NameHandler(final CACSL2BoogieBacktranslator backtranslator, final CTranslationState handlerHandler) {
-		handlerHandler.setNameHandler(this);
-		mHandlerHandler = handlerHandler;
+	public NameHandler(final ICACSL2BoogieBacktranslatorMapping backtranslator) {
 		mBacktranslator = backtranslator;
 	}
 
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
 	@Override
-	public Result visit(final Dispatcher main, final IASTNode node) {
-		throw new UnsupportedOperationException("Implementation Error: Use C handler for " + node.getClass());
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final Dispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException("Implementation error: Use ACSL handler for " + node.getClass());
-	}
-
-	@Override
-	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap, final CType cType) {
+	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap,
+			final CType cType) {
 		if (cId.isEmpty()) {
 			cId = getGloballyUniqueIdentifier("unnamed");
 		}
 		final String boogieId;
 		{
 			// special case struct field identifier
-			// if some parent is IASTCompositeTypeSpecifier we need indentifier
-			// for
-			// field of struct, field of union, or constant of enum
-			// we return the original name.
-			IASTNode curr = scope; // TODO : is there a better way to do that?
+			// if some parent is IASTCompositeTypeSpecifier we need indentifier for
+			// field of struct, field of union, or constant of enum we return the original name.
+			IASTNode curr = scope;
+			// TODO : is there a better way to do that?
 			while (curr != null && !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
@@ -130,8 +101,7 @@ public class NameHandler implements INameHandler {
 		}
 		assert cId.length() > 0 : "Empty C identifier";
 		assert (compCnt >= 0);
-		// mark variables that we put on the heap manually (bc they are
-		// addressoffed)
+		// mark variables that we put on the heap manually (bc they are addressoffed)
 		// with a "#"
 		String onHeapStr = "";
 		if (isOnHeap) {
@@ -148,31 +118,28 @@ public class NameHandler implements INameHandler {
 		return boogieId;
 	}
 
-
 	private int generateUniqueLocalVarSuffix(final String cId, final int compCnt) {
 		if (USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX) {
 			return compCnt;
-		} else {
-			Integer result = mLocalVarSuffix.get(cId, compCnt);
-			if (result == null) {
-				final Map<Integer, Integer> map = mLocalVarSuffix.get(cId);
-				if (map == null) {
-					result = 0;
-				} else {
-					result = map.size();
-				}
-				mLocalVarSuffix.put(cId, compCnt, result);
-			}
-			return result;
 		}
+		Integer result = mLocalVarSuffix.get(cId, compCnt);
+		if (result == null) {
+			final Map<Integer, Integer> map = mLocalVarSuffix.get(cId);
+			if (map == null) {
+				result = 0;
+			} else {
+				result = map.size();
+			}
+			mLocalVarSuffix.put(cId, compCnt, result);
+		}
+		return result;
 	}
 
 	@Override
 	public String getInParamIdentifier(final String cId, final CType cType) {
 		// (alex:) in case of several unnamed parameters we need uniqueness
 		// (still a little bit overkill, to make it precise we would need to
-		// check whether
-		// the current method has more than one unnamed parameter)
+		// check whether the current method has more than one unnamed parameter)
 		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? mTmpUID++ : "");
 		mBacktranslator.putInVar(boogieId, cId, cType);
 		return boogieId;

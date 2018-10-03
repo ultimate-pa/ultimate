@@ -29,51 +29,63 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * This class manages objects (in the meaning that the word has in the
- * C-standard) with static storage duration.
+ * This class manages objects (in the meaning that the word has in the C-standard) with static storage duration.
  * <p>
- * Those objects typically require declaration of a global variable in the
- * Boogie code and sometimes initialization code in the procedure
- * ULTIMATE.Init.
+ * Those objects typically require declaration of a global variable in the Boogie code and sometimes initialization code
+ * in the procedure ULTIMATE.Init.
  * <p>
  * Examples of such objects are:
- * <li> variables declared as 'static' in the C program
- * <li> global variables in the C program
- * <li> string literals in the C program that are on-heap in our Boogie program
+ * <li>variables declared as 'static' in the C program
+ * <li>global variables in the C program
+ * <li>string literals in the C program that are on-heap in our Boogie program
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class StaticObjectsHandler {
 
-	private final Collection<Declaration> mGlobalDeclarations = new ArrayList<>();
-	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
+	private final Collection<Declaration> mGlobalDeclarations;
+	private final Collection<Statement> mStatementsForUltimateInit;
 
-	private boolean mIsFrozen = false;
-	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration =
-			new LinkedHashMap<>();
+	private boolean mIsFrozen;
+	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
 
-	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
+	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
+	private final Map<ICPossibleIncompleteType<?>, TypeDeclaration> mIncompleteType2TypeDecl;
+
+	private final ILogger mLogger;
+
+	public StaticObjectsHandler(final ILogger logger) {
+		mGlobalDeclarations = new ArrayList<>();
+		mStatementsForUltimateInit = new ArrayList<>();
+		mVariableDeclarationToAssociatedCDeclaration = new LinkedHashMap<>();
+		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
+		mIncompleteType2TypeDecl = new HashMap<>();
+		mIsFrozen = false;
+		mLogger = logger;
+	}
 
 	/**
 	 * Returns all Boogie declarations that need to be added to the translated program in global scope
 	 *
-	 * @return
 	 */
 	public Collection<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
@@ -86,7 +98,7 @@ public class StaticObjectsHandler {
 	}
 
 	public void freeze() {
-		assert !mIsFrozen;
+		assert !mIsFrozen : "called freeze but is already frozen";
 		mIsFrozen = true;
 	}
 
@@ -94,6 +106,12 @@ public class StaticObjectsHandler {
 		assert Objects.nonNull(boogieDec) && Objects.nonNull(cDec);
 		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
+		final CType cType = cDec.getType();
+		if (cType.isIncomplete()) {
+			assert cType instanceof ICPossibleIncompleteType<?>;
+			final ICPossibleIncompleteType<?> incompleteType = (ICPossibleIncompleteType<?>) cType;
+			mIncompleteType2TypeDecl.put(incompleteType, boogieDec);
+		}
 	}
 
 	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
@@ -101,37 +119,37 @@ public class StaticObjectsHandler {
 		mVariableDeclarationToAssociatedCDeclaration.put(boogieDec, cDec);
 	}
 
-	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration) {
+	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
+			final Axiom axiom) {
 		mGlobalDeclarations.add(cd);
+		if (axiom != null) {
+			mGlobalDeclarations.add(axiom);
+		}
 	}
 
-	public void completeTypeDeclaration(final CType incompleteType, final CType completedType,
+	/**
+	 * mTypeDeclarationToCDeclaration may contain type declarations that stem from typedefs using an incomplete struct
+	 * type. This method is called when the struct type is completed.
+	 *
+	 * @param cvar
+	 * @param incompleteStruct
+	 */
+	public void completeTypeDeclaration(final ICPossibleIncompleteType<?> incompleteType, final CType completedType,
 			final ITypeHandler typeHandler) {
-
-		TypeDeclaration oldBooogieDec = null;
-		CDeclaration oldCDec = null;
-		TypeDeclaration newBoogieDec = null;
-
-		/*
-		 * find the CDeclaration that belongs to the given incomplete type
-		 */
-		for (final Entry<TypeDeclaration, CDeclaration> en : mTypeDeclarationToCDeclaration.entrySet()) {
-
-			if (en.getValue().getType().toString().equals(incompleteType.toString())) {
-				oldBooogieDec = en.getKey();
-
-				oldCDec = en.getValue();
-
-				newBoogieDec = new TypeDeclaration(oldBooogieDec.getLocation(), oldBooogieDec.getAttributes(),
-						oldBooogieDec.isFinite(), oldBooogieDec.getIdentifier(), oldBooogieDec.getTypeParams(),
-						typeHandler.cType2AstType(oldBooogieDec.getLocation(), completedType));
-				break;
-			}
+		assert incompleteType.isIncomplete();
+		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
+		if (oldBoogieDec == null) {
+			// already completed
+			return;
 		}
-		if (oldBooogieDec != null) {
-			removeDeclaration(oldBooogieDec);
-			addGlobalTypeDeclaration(newBoogieDec, oldCDec);
-		}
+		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
+
+		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
+				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
+				oldBoogieDec.getTypeParams(), typeHandler.cType2AstType(oldBoogieDec.getLocation(), completedType));
+
+		removeDeclaration(oldBoogieDec);
+		addGlobalTypeDeclaration(newBoogieDec, oldCDec);
 	}
 
 	public void removeDeclaration(final Declaration boogieDecl) {
@@ -145,9 +163,9 @@ public class StaticObjectsHandler {
 	}
 
 	/**
-	 * Add a VariableDeclaration for the global Boogie scope without an associated CDeclaration.
-	 * Normally, the CDeclaration would be used for initializing the variable; in this case, initialization code
-	 * can be added manually via addStatementsForUltimateInit(..).
+	 * Add a VariableDeclaration for the global Boogie scope without an associated CDeclaration. Normally, the
+	 * CDeclaration would be used for initializing the variable; in this case, initialization code can be added manually
+	 * via addStatementsForUltimateInit(..).
 	 *
 	 * @param varDec
 	 */

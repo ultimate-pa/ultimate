@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -24,17 +24,16 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+/**
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ */
+public interface ICPossibleIncompleteType<T extends ICPossibleIncompleteType<T>> {
 
-public interface IPointerIntegerConversion {
+	boolean isIncomplete();
 
-	ExpressionResult convertPointerToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType);
+	T complete(final T cType);
 
-	ExpressionResult convertIntToPointer(ILocation loc, ExpressionResult rexp, CPointer newType);
-
+	String getName();
 }

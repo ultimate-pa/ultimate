@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_MultiBitprecise extends AMemoryModel {
+public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 
 	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
 	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();

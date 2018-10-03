@@ -32,7 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -43,7 +43,7 @@ public class CPointer extends CType {
 	/**
 	 * The type, this pointer points to.
 	 */
-	public final CType mPointsToType;
+	private final CType mPointsToType;
 
 	/**
 	 * Constructor.
@@ -52,19 +52,39 @@ public class CPointer extends CType {
 	 *            the type, this pointer points to.
 	 */
 	public CPointer(final CType pointsToType) {
-		// super();
-		super(false, false, false, false); // FIXME: integrate those flags
-		this.mPointsToType = pointsToType;
+		// FIXME: integrate those flags
+		super(false, false, false, false);
+		mPointsToType = pointsToType;
+	}
+
+	public CType getPointsToType() {
+		return mPointsToType;
 	}
 
 	@Override
 	public String toString() {
-		return SFO.POINTER;
+		CPointer pointer = this;
+		CType pointsTo = null;
+		int i = 1;
+		while (true) {
+			pointsTo = pointer.getPointsToType();
+			if (pointsTo instanceof CPointer) {
+				pointer = (CPointer) pointsTo;
+				i++;
+			} else {
+				break;
+			}
+		}
+
+		if (pointsTo instanceof CStruct) {
+			return CoreUtil.repeat(i, "*") + ((CStruct) pointsTo).getName();
+		}
+		return CoreUtil.repeat(i, "*") + pointsTo.toString();
 	}
 
 	@Override
 	public boolean equals(final Object o) {
-		if (super.equals(o)) {
+		if (this == o) {
 			return true;
 		}
 		if (!(o instanceof CType)) {

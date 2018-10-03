@@ -31,11 +31,24 @@ import java.util.List;
 
 public class CUnion extends CStruct {
 
-	public CUnion(final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
-		super(fNames, fTypes, bitFieldWidths);
+	public CUnion(final String unionName, final String[] fNames, final CType[] fTypes,
+			final List<Integer> bitFieldWidths) {
+		super(unionName, fNames, fTypes, bitFieldWidths);
 	}
 
 	public CUnion(final String incompleteName) {
 		super(incompleteName);
+	}
+
+	public CUnion complete(final CUnion cvar) {
+		if (!isIncomplete()) {
+			throw new AssertionError("only incomplete structs can be completed");
+		}
+		return new CUnion(getName(), cvar.getFieldIds(), cvar.getFieldTypes(), cvar.getBitFieldWidths());
+	}
+
+	@Override
+	protected String getPrefix() {
+		return "UNION#";
 	}
 }

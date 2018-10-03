@@ -5,16 +5,16 @@ import java.util.ArrayList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 /**
- * Represents the signature of a Boogie procedure in simpler terms, than the Procedure class.
- * Used for tracking the signatures of the dispatching procedures for function pointer calls. (ref. FunctionHandler)
- * 
+ * Represents the signature of a Boogie procedure in simpler terms, than the Procedure class. Used for tracking the
+ * signatures of the dispatching procedures for function pointer calls. (ref. FunctionHandler)
+ *
  * @author Alexander Nutz
  */
 public class ProcedureSignature {
@@ -22,21 +22,22 @@ public class ProcedureSignature {
 	private final ASTType mReturnType;
 	private final boolean mTakesVarArgs;
 	private final String mStringRepresentation;
-	
-	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
+
+	public ProcedureSignature(final ITypeHandler typehandler, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
-			final ASTType type = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
+			final ASTType type = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
 			mInParams.add(type);
 		}
-		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
+		if (cf.getResultType() instanceof CPrimitive
+				&& ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
 			mReturnType = null;
 		} else {
-			mReturnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
+			mReturnType = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
 		mTakesVarArgs = cf.takesVarArgs();
 		mStringRepresentation = buildStringRepresentation();
 	}
-	
+
 	public ASTType getReturnType() {
 		return mReturnType;
 	}
@@ -45,7 +46,7 @@ public class ProcedureSignature {
 	public String toString() {
 		return mStringRepresentation;
 	}
-	
+
 	private String buildStringRepresentation() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
@@ -66,29 +67,30 @@ public class ProcedureSignature {
 
 	@Override
 	public boolean equals(final Object o) {
-//		if (!(o instanceof ProcedureSignature)) {
-//			return false;
-//		}
-//		ProcedureSignature other = (ProcedureSignature) o;
-//		if (this.inParams.size() != other.inParams.size())
-//			return false;
-//		boolean result = true;
-//		result &= (this.returnType != null && this.returnType.equals(other.returnType)) || (this.returnType == null || other.returnType == null);
-//
-//		for (int i = 0; i < inParams.size(); i++)
-//			result &= this.inParams.get(i).equals(other.inParams.get(i));
-//		result &= this.takesVarArgs == other.takesVarArgs;
-//		return result;
+		// if (!(o instanceof ProcedureSignature)) {
+		// return false;
+		// }
+		// ProcedureSignature other = (ProcedureSignature) o;
+		// if (this.inParams.size() != other.inParams.size())
+		// return false;
+		// boolean result = true;
+		// result &= (this.returnType != null && this.returnType.equals(other.returnType)) || (this.returnType == null
+		// || other.returnType == null);
+		//
+		// for (int i = 0; i < inParams.size(); i++)
+		// result &= this.inParams.get(i).equals(other.inParams.get(i));
+		// result &= this.takesVarArgs == other.takesVarArgs;
+		// return result;
 		return toString().equals(o.toString());
 	}
 
 	@Override
 	public int hashCode() {
-//		int result = returnType != null ? HashUtils.hashJenkins(31, returnType) : 31;
-//		for (int i = 0; i < inParams.size(); i++) 
-//			result += HashUtils.hashJenkins(result, inParams.get(i));
-//		result = HashUtils.hashJenkins(result, takesVarArgs);
-//		return result;
+		// int result = returnType != null ? HashUtils.hashJenkins(31, returnType) : 31;
+		// for (int i = 0; i < inParams.size(); i++)
+		// result += HashUtils.hashJenkins(result, inParams.get(i));
+		// result = HashUtils.hashJenkins(result, takesVarArgs);
+		// return result;
 		return mStringRepresentation.hashCode();
 	}
 }

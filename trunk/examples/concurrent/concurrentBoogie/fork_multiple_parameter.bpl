@@ -1,3 +1,4 @@
+//#Safe
 /*
  * This example shows how the fork statement handles multiple parameter.
  *

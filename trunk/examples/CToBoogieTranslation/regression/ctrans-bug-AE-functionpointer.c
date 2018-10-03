@@ -9,3 +9,13 @@ void foo()
   (*x)();
 }
 
+int x(){
+  return 1;
+}
+
+int main(){
+  foo();
+  return 0;
+}
+
+

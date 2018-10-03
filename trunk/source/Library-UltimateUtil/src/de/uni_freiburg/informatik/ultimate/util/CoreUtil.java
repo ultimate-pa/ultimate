@@ -786,6 +786,39 @@ public class CoreUtil {
 		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth);
 	}
 
+	public static String getCallerMethodName(final int callStackDepth) {
+		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+		if (callStack.length < callStackDepth) {
+			return callStack[callStack.length - 1].getMethodName();
+		}
+		return callStack[callStackDepth].getMethodName();
+	}
+
+	public static String getCallerSignature(final int callStackDepth) {
+		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+		final StackTraceElement theFrame;
+		if (callStack.length < callStackDepth) {
+			theFrame = callStack[callStack.length - 1];
+		} else {
+			theFrame = callStack[callStackDepth];
+		}
+		return String.format("[L%4s] %15.15s.%s", theFrame.getLineNumber(),
+				getCallerClassName(callStackDepth + 1).getSimpleName(), theFrame.getMethodName());
+	}
+
+	/**
+	 * Repeat the string s for n times
+	 */
+	public static String repeat(final int n, final String s) {
+		if (n == 0) {
+			return "";
+		}
+		if (n < 0) {
+			throw new IllegalArgumentException("n smaller than zero");
+		}
+		return new String(new char[n]).replace("\0", s);
+	}
+
 	@FunctionalInterface
 	public interface IReduce<T, K> {
 		T reduce(K entry);

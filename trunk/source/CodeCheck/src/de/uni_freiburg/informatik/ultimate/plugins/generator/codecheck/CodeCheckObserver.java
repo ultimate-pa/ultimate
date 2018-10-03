@@ -83,6 +83,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -396,19 +398,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				break;
 			}
 
-			mLogger.debug("Exploring : " + procedureRoot);
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Exploring : " + procedureRoot);
+			}
 			final IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
-			while (mLoopForever || iterationsCount++ < mIterationsLimit) {
+			while (mLoopForever || iterationsCount < mIterationsLimit) {
+				iterationsCount++;
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					verificationInterrupted = true;
 					break;
 				}
 
 				benchmarkGenerator.announceNextIteration();
-
-				mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
+				}
 				final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun =
 						emptinessCheck.checkForEmptiness(procedureRoot);
 
@@ -525,10 +530,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		// benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
-
+		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
 		ccb.aggregateBenchmarkData(benchmarkGenerator);
-
 		reportBenchmark(ccb);
 
 		if (overallResult == Result.SAFE) {
@@ -575,6 +579,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (invariant == null) {
 					continue;
 				}
+				mLogger.info("Invariant with dag size " + new DagSizePrinter(invariant));
 
 				final InvariantResult<IIcfgElement, Term> invResult =
 						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, invariant);
@@ -660,15 +665,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final Map<IcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
 		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
-		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
-
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
-			IPredicate annot = falsePred;
-			for (final AnnotatedProgramPoint app : kvp.getValue()) {
-				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate()).getFormula();
-				annot = mPredicateFactory.newSPredicate(kvp.getKey(), tvp);
-			}
-			pp2HoareAnnotation.put(kvp.getKey(), annot.getFormula());
+			final List<Term> terms =
+					kvp.getValue().stream().map(a -> a.getPredicate().getFormula()).collect(Collectors.toList());
+			final Term orTerm =
+					SmtUtils.orWithExtendedLocalSimplification(mCsToolkit.getManagedScript().getScript(), terms);
+			final Term simplifiedOrTerm = SmtUtils.simplify(mCsToolkit.getManagedScript(), orTerm, mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			pp2HoareAnnotation.put(kvp.getKey(), simplifiedOrTerm);
 		}
 		return pp2HoareAnnotation;
 	}
@@ -756,8 +760,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate CodeCheck benchmark data";
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
-		// s_Logger.warn(res.getLongDescription());
-		mLogger.info(mPredicateUnifier.collectPredicateUnifierStatistics());
 		reportResult(res);
 	}
 

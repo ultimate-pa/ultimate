@@ -64,7 +64,6 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
-	private PredicateTrie<IPredicate> mPredicateTrie;
 	private final IImplicationGraph<IPredicate> mImplicationGraph;
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final IPredicate mTruePredicate;
@@ -73,13 +72,16 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final Set<IPredicate> mIntricatePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
 	private int mRestructureWitnessCounter;
+	private final ILogger mLogger;
 	
-	private long implicationTime = 0;
+	private PredicateTrie<IPredicate> mPredicateTrie;
+	private long mImplicationTime = 0;
 
 	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
-	public BPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript script,
+	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
 			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap) {
+		mLogger = logger;
 		mServices = services;
 		mMgdScript = script;
 		mScript = mMgdScript.getScript();
@@ -90,7 +92,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mPredicates = new HashSet<>();
 		mIntricatePredicate = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
-		mPredicateTrie = new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		mPredicateTrie = new PredicateTrie<>(logger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		if(useMap) {
 			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate, true);
 		} else {
@@ -98,11 +100,6 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		}
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
-	}
-
-	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
-			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap) {
-		this(services, script, factory, symbolTable, useMap);
 		logger.info("Initialized predicate-trie based predicate unifier");
 	}
 
@@ -115,14 +112,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		}
 		final Collection<IPredicate> minimalDisjunction =
 				mImplicationGraph.removeImplyingVerticesFromCollection(disjunction);
-		//TODO false or true
+		// TODO false or true
 		final IPredicate pred = mBasicPredicateFactory.or(false, minimalDisjunction);
 		for (final IPredicate p : mPredicates) {
 			if (p.getFormula().equals(pred.getFormula())) {
 				return p;
 			}
 		}
-		IPredicate result = getOrConstructPredicate(pred);
+		final IPredicate result = getOrConstructPredicate(pred);
 		return result;
 	}
 
@@ -141,7 +138,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		IPredicate result = getOrConstructPredicate(pred);
+		final IPredicate result = getOrConstructPredicate(pred);
 		return result;
 	}
 
@@ -149,7 +146,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	public String collectPredicateUnifierStatistics() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(PredicateUnifierStatisticsType.getInstance().prettyprintBenchmarkData(mStatisticsTracker));
-		builder.append(" " + (implicationTime / 100)/10d + "s impTime " + mPredicateTrie.getDepth());
+		builder.append(" " + (mImplicationTime / 100) / 10d + "s impTime " + mPredicateTrie.getDepth());
 		return builder.toString();
 	}
 
@@ -177,7 +174,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mMgdScript.push(this, 1);
 		try {
 			mMgdScript.assertTerm(this, isDistinct);
-			LBool result = mMgdScript.checkSat(this);
+			final LBool result = mMgdScript.checkSat(this);
 			return result;
 		} finally {
 			mMgdScript.pop(this, 1);
@@ -223,14 +220,16 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
 		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
 		// catch terms equal to true of false
-		IPredicate tfPred = catchTrueOrFalse(predicate);
-		if(tfPred != null) return tfPred;
+		final IPredicate tfPred = catchTrueOrFalse(predicate);
+		if (tfPred != null) {
+			return tfPred;
+		}
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);
 		// Check if predicate is new to the unifier
 		if (mPredicates.add(unifiedPredicate)) {
-			long start = System.currentTimeMillis();
+			final long start = System.currentTimeMillis();
 			mImplicationGraph.unifyPredicate(unifiedPredicate);
-			implicationTime += System.currentTimeMillis() - start;
+			mImplicationTime += System.currentTimeMillis() - start;
 			mStatisticsTracker.incrementConstructedPredicates();
 		} else {
 			// Check syntactic or semantic match
@@ -244,7 +243,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return unifiedPredicate;
 	}
 	
-	private IPredicate catchTrueOrFalse(IPredicate pred) {
+	private IPredicate catchTrueOrFalse(final IPredicate pred) {
 		if (mTruePredicate.getFormula().equals(pred.getFormula())) {
 			mStatisticsTracker.incrementSyntacticMatches();
 			mStatisticsTracker.stopTime();
@@ -254,8 +253,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mStatisticsTracker.incrementSyntacticMatches();
 			mStatisticsTracker.stopTime();
 			return mFalsePredicate;
-		} 
-		LBool equalsTrue = isDistinct(pred, mTruePredicate);
+		}
+		final LBool equalsTrue = isDistinct(pred, mTruePredicate);
 		if (equalsTrue == LBool.UNSAT) {
 			mStatisticsTracker.incrementSemanticMatches();
 			mStatisticsTracker.stopTime();
@@ -264,8 +263,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mIntricatePredicate.add(pred);
 			return pred;
 		}
-		LBool equalsFalse = isDistinct(pred, mFalsePredicate);
-		if(equalsFalse == LBool.UNSAT) {
+		final LBool equalsFalse = isDistinct(pred, mFalsePredicate);
+		if (equalsFalse == LBool.UNSAT) {
 			mStatisticsTracker.incrementSemanticMatches();
 			mStatisticsTracker.stopTime();
 			return mFalsePredicate;
@@ -308,12 +307,12 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return mFalsePredicate;
 	}
 
-	public String print(boolean trie, boolean graph) {
-		StringBuilder sb = new StringBuilder();
-		if(trie) {
+	public String print(final boolean trie, final boolean graph) {
+		final StringBuilder sb = new StringBuilder();
+		if (trie) {
 			sb.append("Predicate Trie:\n" + mPredicateTrie.toString());
 		}
-		if(graph) {
+		if (graph) {
 			sb.append("Implication Graph:\n" + mImplicationGraph.toString());
 		}
 		return sb.toString();
@@ -326,10 +325,6 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return getOrConstructPredicate(term);
 	}
 	
-	
-	/**
-	 * under construction - do not use
-	 */
 	public boolean restructurePredicateTrie() {
 		final int oldDepth = mPredicateTrie.getDepth();
 		// trie already has minimal depth (true and false are not in depth included)
@@ -359,8 +354,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		
 		RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap,  witnessMap);
 		
-		final PredicateTrie<IPredicate> restructuredTrie =
-				new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		final PredicateTrie<IPredicate> restructuredTrie = new PredicateTrie<>(mLogger, mMgdScript,
+				mTruePredicate, mFalsePredicate, mSymbolTable);
 		restructuredTrie.fillTrie(root, witnessMap);
 		if (oldDepth - restructuredTrie.getDepth() > 0) {
 			mPredicateTrie = restructuredTrie;

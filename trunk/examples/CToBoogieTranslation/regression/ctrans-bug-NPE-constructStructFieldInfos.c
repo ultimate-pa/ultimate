@@ -24,11 +24,11 @@ struct S
  int p;
  int n;
 };
-struct S a[100000];
+struct S a[10];
 
 void main()
 {
 
-  struct S s1 = a[0]   ;
+  struct S s1 = a[0];
 
 }

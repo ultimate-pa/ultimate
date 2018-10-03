@@ -28,9 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -128,30 +130,8 @@ public class PreRunner extends ASTVisitor {
 		mFunctionToIndex = new LinkedHashMap<>();
 	}
 
-	/**
-	 * Returns a set of variables, that have to be translated using the memory model.
-	 *
-	 * @return a set of variables, that have to be translated using the memory model.
-	 */
-	public LinkedHashSet<IASTNode> getVarsForHeap() {
-		return mVariablesOnHeap;
-	}
-
-	/**
-	 * @return a map of functions used as pointers.
-	 * @author Christian
-	 */
-	public LinkedHashMap<String, IASTDeclaration> getFunctionPointers() {
-		return mFunctionPointers;
-	}
-
-	/**
-	 * Whether the memory model is required or not.
-	 *
-	 * @return true if the MM is required.
-	 */
-	public boolean isMMRequired() {
-		return mIsMMRequired;
+	public PreRunnerResult getResult() {
+		return new PreRunnerResult(mVariablesOnHeap, mFunctionToIndex, mIsMMRequired);
 	}
 
 	@Override
@@ -207,8 +187,9 @@ public class PreRunner extends ASTVisitor {
 				if (id != null) {
 					final String rslvId = mSymTab.applyMultiparseRenaming(expression.getContainingFilename(), id);
 					final IASTNode function = mFunctionTable.get(rslvId);
-					if (function != null && mTemporarySymbolTable.get(rslvId) == null) { // id is the name of a function and
-																						// not shadowed here
+					if (function != null && mTemporarySymbolTable.get(rslvId) == null) { // id is the name of a function
+																							// and
+																							// not shadowed here
 						// Rename the ID according to multiparse rules
 						updateFunctionPointers(rslvId, function);
 						// functionPointers.put(id, function);
@@ -345,6 +326,71 @@ public class PreRunner extends ASTVisitor {
 		return super.visit(expression);
 	}
 
+	@Override
+	public int visit(final IASTDeclaration declaration) {
+		if (declaration instanceof CASTSimpleDeclaration) {
+			final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
+			for (final IASTDeclarator d : cd.getDeclarators()) {
+				IASTDeclarator nd = d;
+				do {
+					addNameOfNonFunctionDeclarator(nd);
+					if (nd.getPointerOperators() != null && nd.getPointerOperators().length != 0) {
+						mIsMMRequired = true;
+					}
+					nd = nd.getNestedDeclarator();
+
+				} while (nd != null);
+
+			}
+
+		} else if (declaration instanceof IASTFunctionDefinition) {
+			// IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
+			// functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
+			mTemporarySymbolTable.beginScope();
+		}
+		return super.visit(declaration);
+	}
+
+	@Override
+	public int leave(final IASTDeclaration declaration) {
+		if (declaration instanceof IASTFunctionDefinition) {
+			mTemporarySymbolTable.endScope();
+		}
+		return super.visit(declaration);
+	}
+
+	@Override
+	public int visit(final IASTStatement statement) {
+		if (statement instanceof IASTCompoundStatement && !(statement.getParent() instanceof IASTFunctionDefinition
+				|| statement.getParent() instanceof IASTForStatement)) {
+			mTemporarySymbolTable.beginScope();
+		}
+		if (statement instanceof IASTSwitchStatement) {
+			mTemporarySymbolTable.beginScope();
+		}
+		if (statement instanceof IASTForStatement) {
+			mTemporarySymbolTable.beginScope();
+		}
+		return super.visit(statement);
+	}
+
+	@Override
+	public int leave(final IASTStatement statement) {
+		if (statement instanceof IASTCompoundStatement && !(statement.getParent() instanceof IASTFunctionDefinition
+				|| statement.getParent() instanceof IASTForStatement)) {
+			// the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
+			// opened in parent before!
+			mTemporarySymbolTable.endScope();
+		}
+		if (statement instanceof IASTSwitchStatement) {
+			mTemporarySymbolTable.endScope();
+		}
+		if (statement instanceof IASTForStatement) {
+			mTemporarySymbolTable.endScope();
+		}
+		return super.leave(statement);
+	}
+
 	/**
 	 * Starting from some initializer (must be one of IASTEqualsInitializer or IASTInitializerList or
 	 * ICASTDesignatedInitializer) returns for the enclosing IASTEqualsInitializer.
@@ -403,31 +449,6 @@ public class PreRunner extends ASTVisitor {
 		return null;
 	}
 
-	@Override
-	public int visit(final IASTDeclaration declaration) {
-		if (declaration instanceof CASTSimpleDeclaration) {
-			final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
-			for (final IASTDeclarator d : cd.getDeclarators()) {
-				IASTDeclarator nd = d;
-				do {
-					addNameOfNonFunctionDeclarator(nd);
-					if (nd.getPointerOperators() != null && nd.getPointerOperators().length != 0) {
-						mIsMMRequired = true;
-					}
-					nd = nd.getNestedDeclarator();
-
-				} while (nd != null);
-
-			}
-
-		} else if (declaration instanceof IASTFunctionDefinition) {
-			// IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
-			// functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
-			mTemporarySymbolTable.beginScope();
-		}
-		return super.visit(declaration);
-	}
-
 	private void addNameOfNonFunctionDeclarator(final IASTDeclarator d) {
 		if (d instanceof IASTFunctionDeclarator) {
 			// do nothing
@@ -438,63 +459,11 @@ public class PreRunner extends ASTVisitor {
 		}
 	}
 
-	@Override
-	public int leave(final IASTDeclaration declaration) {
-		if (declaration instanceof IASTFunctionDefinition) {
-			mTemporarySymbolTable.endScope();
-		}
-		return super.visit(declaration);
-	}
-
-	@Override
-	public int visit(final IASTStatement statement) {
-		if (statement instanceof IASTCompoundStatement && !(statement.getParent() instanceof IASTFunctionDefinition
-				|| statement.getParent() instanceof IASTForStatement)) {
-			mTemporarySymbolTable.beginScope();
-		}
-		if (statement instanceof IASTSwitchStatement) {
-			mTemporarySymbolTable.beginScope();
-		}
-		if (statement instanceof IASTForStatement) {
-			mTemporarySymbolTable.beginScope();
-		}
-		return super.visit(statement);
-	}
-
-	@Override
-	public int leave(final IASTStatement statement) {
-		if (statement instanceof IASTCompoundStatement && !(statement.getParent() instanceof IASTFunctionDefinition
-				|| statement.getParent() instanceof IASTForStatement)) {
-			// the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
-			// opened in parent before!
-			mTemporarySymbolTable.endScope();
-		}
-		if (statement instanceof IASTSwitchStatement) {
-			mTemporarySymbolTable.endScope();
-		}
-		if (statement instanceof IASTForStatement) {
-			mTemporarySymbolTable.endScope();
-		}
-		return super.leave(statement);
-	}
-
-	public LinkedHashMap<String, Integer> getFunctionToIndex() {
-		return mFunctionToIndex;
-	}
-
 	private void updateFunctionToIndex(final String id) {
 		if (!mFunctionToIndex.containsKey(id)) {
 			mFunctionToIndex.put(id, mPointedToFunctionCounter++);
 		}
 	}
-	// IASTExpression removeBrackets(IASTExpression exp) {
-	// IASTExpression result = exp;
-	// while (result instanceof IASTUnaryExpression
-	// && ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
-	// result = ((IASTUnaryExpression) result).getOperand();
-	// }
-	// return result;
-	// }
 
 	/**
 	 * Getter to access the symbol table.
@@ -511,6 +480,32 @@ public class PreRunner extends ASTVisitor {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 		return mTemporarySymbolTable.get(n);
+	}
+
+	public static final class PreRunnerResult {
+
+		private final Set<IASTNode> mVariablesOnHeap;
+		private final Map<String, Integer> mFunctionToIndex;
+		private final boolean mHasDereferencedPointerVariables;
+
+		public PreRunnerResult(final Set<IASTNode> variablesOnHeap, final Map<String, Integer> functionToIndex,
+				final boolean hasDereferencedPointerVariables) {
+			mVariablesOnHeap = variablesOnHeap;
+			mFunctionToIndex = functionToIndex;
+			mHasDereferencedPointerVariables = hasDereferencedPointerVariables;
+		}
+
+		public Set<IASTNode> getVariablesOnHeap() {
+			return Collections.unmodifiableSet(mVariablesOnHeap);
+		}
+
+		public Map<String, Integer> getFunctionToIndex() {
+			return Collections.unmodifiableMap(mFunctionToIndex);
+		}
+
+		public boolean isHasDereferencedPointerVariables() {
+			return mHasDereferencedPointerVariables;
+		}
 	}
 
 }

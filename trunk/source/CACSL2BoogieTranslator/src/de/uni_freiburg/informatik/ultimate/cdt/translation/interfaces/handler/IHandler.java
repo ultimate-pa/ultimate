@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
@@ -49,21 +49,21 @@ public interface IHandler {
 	 * Visit a given C node.
 	 *
 	 * @param main
-	 *            reference to the main dispatcher
+	 *            reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, IASTNode node);
+	public Result visit(IDispatcher main, IASTNode node);
 
 	/**
 	 * Visit a given ACSL node.
 	 *
 	 * @param main
-	 *            reference to the main dispatcher
+	 *            reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, ACSLNode node);
+	public Result visit(IDispatcher main, ACSLNode node);
 }

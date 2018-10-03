@@ -43,19 +43,21 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author nutz
  * @date 18.09.2012
  */
-public class CEnum extends CType {
+public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	/**
 	 * Field names.
 	 */
-	private String[] mNames;
+	private final String[] mNames;
 	/**
 	 * Field values.
 	 */
-	private Expression[] mValues;
+	private final Expression[] mValues;
 	/**
 	 * The _boogie_ identifier of this enum set.
 	 */
 	private final String mIdentifier;
+
+	private final boolean mIsComplete;
 
 	/**
 	 * Constructor.
@@ -70,16 +72,21 @@ public class CEnum extends CType {
 	 *            this enums identifier.
 	 */
 	public CEnum(final String id, final String[] fNames, final Expression[] fValues) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		super(false, false, false, false);
+		// FIXME: integrate those flags
 		assert fNames.length == fValues.length;
+		assert id != null;
 		mIdentifier = id;
 		mNames = fNames;
 		mValues = fValues;
+		mIsComplete = true;
 	}
 
 	public CEnum(final String id) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		super(false, false, false, false);
+		// FIXME: integrate those flags
 		mIdentifier = id;
+		mIsComplete = false;
 		mNames = null;
 		mValues = null;
 	}
@@ -114,7 +121,7 @@ public class CEnum extends CType {
 	 * @return the set of fields in this enum.
 	 */
 	public String[] getFieldIds() {
-		return mNames.clone();
+		return mNames;
 	}
 
 	/**
@@ -122,19 +129,13 @@ public class CEnum extends CType {
 	 *
 	 * @return this enums identifier.
 	 */
-	public String getIdentifier() {
+	@Override
+	public String getName() {
 		return mIdentifier;
 	}
 
 	@Override
 	public String toString() {
-		// StringBuilder id = new StringBuilder("ENUM#");
-		// for (int i = 0; i < getFieldCount(); i++) {
-		// id.append("?");
-		// id.append(fNames[i]);
-		// }
-		// id.append("#");
-		// return id.toString();
 		return mIdentifier;
 	}
 
@@ -163,16 +164,14 @@ public class CEnum extends CType {
 		return true;
 	}
 
-	// @Override
 	@Override
 	public boolean isIncomplete() {
-		return mNames == null;
+		return !mIsComplete;
 	}
 
-	public void complete(final CEnum cEnum) {
-		mNames = cEnum.mNames;
-		mValues = cEnum.mValues;
-
+	@Override
+	public CEnum complete(final CEnum cEnum) {
+		return new CEnum(getName(), cEnum.getFieldIds(), cEnum.mValues);
 	}
 
 	@Override

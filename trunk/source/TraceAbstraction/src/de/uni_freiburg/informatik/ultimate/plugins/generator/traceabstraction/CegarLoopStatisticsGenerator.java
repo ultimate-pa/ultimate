@@ -41,7 +41,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private Object mResult;
 	private final StatisticsData mReuseStats = new StatisticsData();
 	private final StatisticsData mEcData = new StatisticsData();
-	private final StatisticsData mPuData = new StatisticsData();
+	private final StatisticsData mPredicateUnifierData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mAmData = new StatisticsData();
@@ -80,7 +80,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 
 	public void addPredicateUnifierData(final IStatisticsDataProvider pubd) {
-		mPuData.aggregateBenchmarkData(pubd);
+		mPredicateUnifierData.aggregateBenchmarkData(pubd);
 	}
 
 	public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
@@ -190,7 +190,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case REUSE_STATISTICS:
 			return mReuseStats;
 		case PredicateUnifierStatistics:
-			return mPuData;
+			return mPredicateUnifierData;
 		case traceCheckStatistics:
 			return mTcData;
 		case InterpolantConsolidationStatistics:

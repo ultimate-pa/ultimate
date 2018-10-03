@@ -48,14 +48,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**
  * @author Markus Lindenmann
@@ -66,88 +64,59 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
 public interface ITypeHandler extends IHandler {
 
 	/**
-	 * Whether the current declaration is a struct declaration.
-	 *
-	 * @return true, iff struct field declarations are dispatched.
-	 */
-	boolean isStructDeclaration();
-
-	/**
 	 * Translates an IASTSimpleDeclSpecifier. Basically treats all the build in types of C
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(Dispatcher main, IASTSimpleDeclSpecifier node);
+	Result visit(IDispatcher main, IASTSimpleDeclSpecifier node);
 
 	/**
 	 * Translates an IASTNamedTypeSpecifier.
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(Dispatcher main, IASTNamedTypeSpecifier node);
+	Result visit(IDispatcher main, IASTNamedTypeSpecifier node);
 
 	/**
 	 * Translates an IASTEnumerationSpecifier.
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(Dispatcher main, IASTEnumerationSpecifier node);
+	Result visit(IDispatcher main, IASTEnumerationSpecifier node);
 
 	/**
 	 * Translates an IASTElaboratedTypeSpecifier.
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node);
+	Result visit(IDispatcher main, IASTElaboratedTypeSpecifier node);
 
 	/**
 	 * Translates an IASTCompositeTypeSpecifier.
 	 *
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(Dispatcher main, IASTCompositeTypeSpecifier node);
-
-//	/**
-//	 * Translates an CDT IType to a Boogie type.
-//	 *
-//	 * @param main
-//	 *            a reference to the main dispatcher
-//	 * @param type
-//	 *            the node to visit
-//	 * @return a result object
-//	 */
-//	InferredType visit(Dispatcher main, IType type);
-
-//	/**
-//	 * Translates an CDT IBasicType to a Boogie type. This includes ICBasicType and CBasicType.
-//	 *
-//	 * @param main
-//	 *            a reference to the main dispatcher
-//	 * @param type
-//	 *            the node to visit
-//	 * @return a result object
-//	 */
-//	InferredType visit(final Dispatcher main, final IBasicType type);
+	Result visit(IDispatcher main, IASTCompositeTypeSpecifier node);
 
 	/**
 	 * Returns the type of the field in the struct.
@@ -160,30 +129,7 @@ public interface ITypeHandler extends IHandler {
 	 *            the LHS.
 	 * @return the type of the field <code>fieldId</code> in struct <code>structId</code>.
 	 */
-	ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs,
-			final IASTNode hook);
-
-//	/**
-//	 * Translates an CDT ITypedef to a Boogie type.
-//	 *
-//	 * @param main
-//	 *            a reference to the main dispatcher
-//	 * @param type
-//	 *            the node to visit
-//	 * @return a result object
-//	 */
-//	InferredType visit(Dispatcher main, ITypedef type);
-
-//	/**
-//	 * Translates an CDT IArrayType to a Boogie type.
-//	 *
-//	 * @param main
-//	 *            a reference to the main dispatcher
-//	 * @param type
-//	 *            the node to visit
-//	 * @return a result objectd
-//	 */
-//	InferredType visit(Dispatcher main, IArrayType type);
+	ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs, final IASTNode hook);
 
 	/**
 	 * Returns a list of undefined type identifiers.
@@ -211,30 +157,23 @@ public interface ITypeHandler extends IHandler {
 	 */
 	void endScope();
 
-	/**
-	 * Return the map of type aliases coming from C-typedefs.
-	 */
-	LinkedScopedHashMap<String, TypesResult> getDefinedTypes();
-
 	void addDefinedType(String id, TypesResult type);
 
 	ASTType constructPointerType(ILocation loc);
-
-	ICHandler getCHandler();
-
-	void setCHandler(CHandler cHandler);
 
 	BoogieType getBoogiePointerType();
 
 	BoogieType astTypeToBoogieType(ASTType astType);
 
-	/**
-	 * TypeHandler currently needs ExpressionTranslation to query for the pointer component type (could be done more
-	 * nicely..).
-	 *
-	 * @param expressionTranslation
-	 */
-	void setExpressionTranslation(ExpressionTranslation expressionTranslation);
+	BoogieType getBoogieTypeForSizeT();
 
-	boolean isBitvectorTranslation();
+	BoogieType getBoogieTypeForBoogieASTType(ASTType valueAstType);
+
+	BoogieType getBoogieTypeForPointerComponents();
+
+	BoogieType getBoogieTypeForCType(CType resultType);
+
+	ASTType byteSize2AstType(ILocation loc, CPrimitiveCategory inttype, int bytesize);
+
+	boolean areFloatingTypesNeeded();
 }

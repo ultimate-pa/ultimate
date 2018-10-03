@@ -36,31 +36,16 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
-import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainTranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -70,26 +55,19 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
- * @date 03.02.2012
  */
 public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
-	/**
-	 * The logger instance.
-	 */
+
 	private final ILogger mLogger;
-	/**
-	 * A Wrapper holding the root node of the resulting Boogie AST.
-	 */
-	private WrapperNode mRootNode;
 	private final IToolchainStorage mStorage;
-
 	private final IUltimateServiceProvider mServices;
-
+	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
+
+	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
 	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
-	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
@@ -145,83 +123,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
 			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
-			// clear witness extractor to make him loose unused references
-			// mWitnessExtractor.clear();
 		}
 		if (mLastModel) {
-			doTranslation();
+			mRootNode = new MainTranslator(mServices, mStorage, mLogger, mWitnessInvariants, mInputDecorator.getUnits(),
+					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
-	}
-
-	private void doTranslation() {
-		// translate to Boogie
-		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mServices);
-		final boolean isSvcomp = getSvcompMode();
-		mLogger.info("Starting translation in " + (isSvcomp ? " SV-COMP mode " : " normal mode"));
-		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mServices, mLogger,
-				mInputDecorator.getSymbolTable(), isSvcomp);
-		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
-
-		// if an additional Annotation was parsed put it into the root node
-		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
-			// (needs a fix probably) attach it to the first root node
-			final DecoratorNode rootNode = mInputDecorator.getUnit(0).getRootNode();
-			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
-			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
-			rootNode.getChildren().add(0, new DecoratorNode(rootNode, node));
-		}
-
-		try {
-			/**
-			 * Multifiles: One of the main parts where dispatching has changed is the ability of dispatching a list of
-			 * translation units. This is done via the list-accepting methods of both the Dispatcher and CHandler.
-			 * Internally, the translation units are dispatched as single units with the difference that 'global'
-			 * translation artifacts (i.e. things which only should be created once per multifile project) are only run
-			 * once after all translation units have been dispatched.
-			 */
-			BoogieASTNode outputTU = main.run(mInputDecorator.getUnits()).node;
-			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
-			mRootNode = new WrapperNode(null, outputTU);
-			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
-			map.setMap(main.getIdentifierMapping());
-			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
-			mServices.getBacktranslationService().addTranslator(backtranslator);
-		} catch (final IncorrectSyntaxException e) {
-			final IResult result =
-					new SyntaxErrorResult(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
-			commonDoTranslationExceptionHandling(result);
-		} catch (final UnsupportedSyntaxException e) {
-			final IResult result =
-					new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
-			commonDoTranslationExceptionHandling(result);
-		} catch (final UndeclaredFunctionException e) {
-			final IResult result = new ExceptionOrErrorResult(Activator.PLUGIN_NAME, e);
-			commonDoTranslationExceptionHandling(result);
-		}
-	}
-
-	private boolean getSvcompMode() {
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		TranslationMode mode = TranslationMode.BASE;
-		try {
-			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (final Exception e) {
-			throw new IllegalArgumentException("Unable to determine preferred mode.");
-		}
-		switch (mode) {
-		case BASE:
-			return false;
-		case SV_COMP14:
-			return true;
-		default:
-			throw new IllegalArgumentException("Unknown mode.");
-		}
-	}
-
-	private void commonDoTranslationExceptionHandling(final IResult result) {
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mLogger.warn(result.getShortDescription() + ": " + result.getLongDescription());
-		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
 	@Override
@@ -236,11 +142,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	/**
-	 * Getter for the root node.
-	 *
-	 * @return the root node of the translated Boogie tree
-	 */
 	public IElement getRoot() {
 		return mRootNode;
 	}

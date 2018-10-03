@@ -33,9 +33,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -43,16 +47,16 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Multifiles: The flat symbol table is used as a replacement for the old symbol table. The old symbol table used
@@ -72,6 +76,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @since 2017-12-09
  */
 public class FlatSymbolTable {
+
+	private static final boolean DEBUG_ENABLE_STORE_LOGGING = false;
+
 	/**
 	 * The global scope, spanning all translation units. Every translation unit points to this scope.
 	 */
@@ -93,10 +100,6 @@ public class FlatSymbolTable {
 	 */
 	private final Map<IASTNode, Integer> mCScopeIDs;
 	/**
-	 * The dispatcher is needed to get necessary informations about the compilation
-	 */
-	private final Dispatcher mDispatcher;
-	/**
 	 * The non-trivial skip relation in the C-AST regarding scopes
 	 */
 	private final Function<IASTNode, IASTNode> mCHookSkip;
@@ -113,13 +116,17 @@ public class FlatSymbolTable {
 	 */
 	private final INameHandler mNameHandler;
 
-	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp, final INameHandler nameHandler) {
+	private final ILogger mLogger;
+
+	public FlatSymbolTable(final ILogger logger, final MultiparseSymbolTable mst, final INameHandler nameHandler) {
+		mLogger = logger;
 		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
+		mCScopeIDs = new HashMap<>();
+		mBoogieIdToCId = new HashMap<>();
+		mCDeclToBoogieDecl = new HashMap<>();
 		mMultiparseInformation = mst;
 		mScopeCounter = 1;
-		mCScopeIDs = new HashMap<>();
-		mDispatcher = disp;
 		mCHookSkip = n -> {
 			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement) {
 				if (((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
@@ -130,11 +137,7 @@ public class FlatSymbolTable {
 			}
 			return n;
 		};
-		mBoogieIdToCId = new HashMap<>();
-		mCDeclToBoogieDecl = new HashMap<>();
-
 		mNameHandler = nameHandler;
-		// importAllGlobals(nameHandler);
 	}
 
 	/**
@@ -156,9 +159,12 @@ public class FlatSymbolTable {
 			if (cursor instanceof IASTTranslationUnit) {
 				// This node references the global scope
 				scope = mGlobalScope;
-			} else if (mCTable.containsKey(cursor)) {
-				// This node has an associated scope, check whether the ID is found in that scope
-				scope = mCTable.get(cursor);
+			} else {
+				final Map<String, SymbolTableValue> scopeCandidate = mCTable.get(cursor);
+				if (scopeCandidate != null) {
+					// This node has an associated scope, check whether the ID is found in that scope
+					scope = scopeCandidate;
+				}
 			}
 			if (scope != null) {
 				if (scope.containsKey(id)) {
@@ -260,30 +266,41 @@ public class FlatSymbolTable {
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, boolean)
 	 */
 	private void tableStore(final IASTNode hook, final String id, final SymbolTableValue val) {
-		if (mDispatcher.mTypeHandler == null || !mDispatcher.mTypeHandler.isStructDeclaration()) {
-			IASTNode cursor = mCHookSkip.apply(hook);
-			while (cursor != null) {
-				if (cursor instanceof IASTTranslationUnit) {
-					mGlobalScope.put(id, val);
-					break;
-				}
-				final boolean hasImplicitScope =
-						cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
-				final boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
-						&& !(cursor.getParent() instanceof IASTFunctionDefinition)
-						&& !(cursor.getParent() instanceof IASTForStatement);
-				if (hasImplicitScope || hasExplicitScope) {
-					// This node is the scope where values are currently stored inside
-					mCTable.computeIfAbsent(cursor, x -> new LinkedHashMap<>());
-					mCTable.get(cursor).put(id, val);
-					break;
-				}
-				cursor = cursor.getParent();
-				cursor = mCHookSkip.apply(cursor);
+		IASTNode cursor = mCHookSkip.apply(hook);
+		while (cursor != null) {
+			if (cursor instanceof IASTTranslationUnit) {
+				mGlobalScope.put(id, val);
+				break;
 			}
-			if (cursor == null) {
-				throw new IllegalStateException("Found no possible scope holder");
+			if (cursor instanceof IASTCompositeTypeSpecifier) {
+				// we are inside a struct or union declaration, we do not store the fields in the symbol table.
+				break;
 			}
+
+			final boolean hasImplicitScope =
+					cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
+			final boolean hasExplicitScope =
+					cursor instanceof IASTCompoundStatement && !(cursor.getParent() instanceof IASTFunctionDefinition)
+							&& !(cursor.getParent() instanceof IASTForStatement);
+			if (hasImplicitScope || hasExplicitScope) {
+				// This node is the scope where values are currently stored inside
+				Map<String, SymbolTableValue> scopeTable = mCTable.get(cursor);
+				if (scopeTable == null) {
+					scopeTable = new LinkedHashMap<>();
+					mCTable.put(cursor, scopeTable);
+				}
+				if (DEBUG_ENABLE_STORE_LOGGING) {
+					mLogger.info(String.format("%-50.50s[%-25.25s]: %s to %s", CoreUtil.getCallerSignature(4),
+							cursor.getClass().getSimpleName(), id, val));
+				}
+				scopeTable.put(id, val);
+				break;
+			}
+			cursor = cursor.getParent();
+			cursor = mCHookSkip.apply(cursor);
+		}
+		if (cursor == null) {
+			throw new IllegalStateException("Found no possible scope holder");
 		}
 	}
 
@@ -308,8 +325,9 @@ public class FlatSymbolTable {
 	public Iterable<SymbolTableValue> getInnermostCScopeValues(final IASTNode hook) {
 		IASTNode cursor = mCHookSkip.apply(hook);
 		while (cursor != null) {
-			if (mCTable.containsKey(cursor)) {
-				return Collections.unmodifiableCollection(mCTable.get(cursor).values());
+			final Map<String, SymbolTableValue> values = mCTable.get(cursor);
+			if (values != null) {
+				return Collections.unmodifiableCollection(values.values());
 			}
 			if (hasOwnScope(cursor)) {
 				return Collections.emptyList();
@@ -395,21 +413,6 @@ public class FlatSymbolTable {
 	}
 
 	/**
-	 * Fetches the type of a variable
-	 *
-	 * @param hook
-	 *            where to look for the variable
-	 * @param cId
-	 *            the c identifier
-	 * @param loc
-	 *            location for error reporting
-	 * @return the type
-	 */
-	public ASTType getTypeOfVariable(final IASTNode hook, final String cId, final ILocation loc) {
-		return mDispatcher.mTypeHandler.cType2AstType(loc, findCSymbol(hook, cId).getCVariable());
-	}
-
-	/**
 	 * Creates a boogie identifier.
 	 *
 	 * @param scope
@@ -435,5 +438,33 @@ public class FlatSymbolTable {
 				node instanceof IASTCompoundStatement && !(node.getParent() instanceof IASTFunctionDefinition)
 						&& !(node.getParent() instanceof IASTForStatement);
 		return hasImplicitScope || hasExplicitScope;
+	}
+
+	public boolean isInsideStructDeclaration(final IASTDeclarator hook) {
+		IASTNode cursor = hook;
+		while (cursor != null) {
+			if (cursor instanceof IASTCompositeTypeSpecifier) {
+				return true;
+			}
+			cursor = cursor.getParent();
+		}
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Global: ").append(CoreUtil.getPlatformLineSeparator());
+		sb.append(mGlobalScope.entrySet().stream().map(a -> a.getKey() + " " + a.getValue())
+				.collect(Collectors.joining(",")));
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		for (final Entry<IASTNode, Map<String, SymbolTableValue>> entry : mCTable.entrySet()) {
+			sb.append(entry.getKey().getClass().getSimpleName()).append(" ");
+			sb.append(entry.getKey().getFileLocation().getStartingLineNumber())
+					.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(entry.getValue().entrySet().stream().map(a -> a.getKey() + " " + a.getValue())
+					.collect(Collectors.joining(",")));
+		}
+		return sb.toString();
 	}
 }

@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class RValue extends LRValue {
 
-	public Expression value;
+	private final Expression mValue;
 
 	/**
 	 * The Value in a ResultExpression that may only be used on the right-hand side of an assignment, i.e. its
@@ -53,7 +53,6 @@ public class RValue extends LRValue {
 	 */
 	public RValue(final Expression value, final CType cType) {
 		this(value, cType, false);
-		checkType(cType);
 	}
 
 	/**
@@ -64,23 +63,22 @@ public class RValue extends LRValue {
 	 */
 	public RValue(final Expression value, final CType cType, final boolean boogieBool) {
 		this(value, cType, boogieBool, false);
-		checkType(cType);
 	}
 
 	public RValue(final RValue rval) {
-		this(rval.value, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
+		this(rval.mValue, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
 	}
 
 	public RValue(final Expression value, final CType cType, final boolean isBoogieBool,
 			final boolean isIntFromPointer) {
 		super(cType, isBoogieBool, isIntFromPointer);
-		this.value = value;
+		mValue = value;
 		checkType(cType);
 	}
 
 	@Override
 	public Expression getValue() {
-		return value;
+		return mValue;
 	}
 
 	public void checkType(final CType type) {
@@ -90,25 +88,24 @@ public class RValue extends LRValue {
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
-		if (!areBoogieAndCTypeCompatible(type, value.getType())) {
+		if (!areBoogieAndCTypeCompatible(type, mValue.getType())) {
 			throw new IllegalArgumentException(
 					String.format("The value of the constructed RValue has a BoogieType (%s) that is "
-							+ "incompatible with its CType (%s).", value.getType(), type));
+							+ "incompatible with its CType (%s).", mValue.getType(), type));
 		}
 	}
 
-	static RValue boolToInt(final ILocation loc, final RValue rVal, final ExpressionTranslation expressionTranslation) {
+	static RValue boolToInt(final ILocation loc, final RValue rVal, final TypeSizes typeSizes) {
 		assert rVal.isBoogieBool();
-		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
-		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		final Expression one =
+				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+		final Expression zero =
+				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
 				rVal.getCType(), false);
 	}
 
 	static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
-		// final BoogieType bType = (BoogieType) iBoogieType;
 		if (cType instanceof CPointer) {
 			if (!(bType instanceof BoogieStructType)) {
 				return false;

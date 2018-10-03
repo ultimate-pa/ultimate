@@ -55,7 +55,7 @@ public abstract class LRValue {
 	 * Abstract class constructor -- all inheritors of LRValue have at least an expression representing what the
 	 * containing result evaluates to.
 	 *
-	 * @param value
+	 * @param mValue
 	 */
 	public LRValue(final CType cType, final boolean isBoogieBool, final boolean isIntFromPointer) {
 		mCType = cType;
@@ -67,6 +67,10 @@ public abstract class LRValue {
 
 	public CType getCType() {
 		return mCType;
+	}
+
+	public CType getUnderlyingType() {
+		return mCType.getUnderlyingType();
 	}
 
 	public boolean isBoogieBool() {

@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
@@ -60,11 +61,11 @@ public class ExpressionResultBuilder {
 	 * @param builderIn
 	 */
 	public ExpressionResultBuilder(final ExpressionResultBuilder original) {
-		mStatements.addAll(original.mStatements);
-		mDeclarations.addAll(original.mDeclarations);
-		mOverappr.addAll(original.mOverappr);
-		mAuxVars.addAll(original.mAuxVars);
-		mNeighbourUnionFields.addAll(original.mNeighbourUnionFields);
+		mStatements.addAll(original.getStatements());
+		mDeclarations.addAll(original.getDeclarations());
+		mOverappr.addAll(original.getOverappr());
+		mAuxVars.addAll(original.getAuxVars());
+		mNeighbourUnionFields.addAll(original.getNeighbourUnionFields());
 		mLrVal = original.getLrValue();
 	}
 
@@ -75,6 +76,11 @@ public class ExpressionResultBuilder {
 		mAuxVars.addAll(er.getAuxVars());
 		mNeighbourUnionFields.addAll(er.getNeighbourUnionFields());
 		mLrVal = er.getLrValue();
+	}
+
+	public boolean isEmpty() {
+		return mStatements.isEmpty() && mDeclarations.isEmpty() && mOverappr.isEmpty() && mAuxVars.isEmpty()
+				&& mNeighbourUnionFields.isEmpty() && mLrVal == null;
 	}
 
 	public ExpressionResultBuilder setLrValue(final LRValue val) {
@@ -135,11 +141,12 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	/**
-	 *
-	 * @param exprResult
-	 * @return "this", i.e., the object it is called upon
-	 */
+	public ExpressionResultBuilder addAllExceptLrValueAndHavocAux(final ExpressionResult exprResult) {
+		addAllExceptLrValue(exprResult);
+		addStatements(CTranslationUtil.createHavocsForAuxVars(exprResult.getAuxVars()));
+		return this;
+	}
+
 	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult exprResult) {
 		addStatements(exprResult.getStatements());
 		addAllExceptLrValueAndStatements(exprResult);
@@ -157,11 +164,22 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	/**
+	 * Add all statements, declarations, auxVars and overapproximations of the supplied {@link ExpressionResult}s to
+	 * this builder.
+	 */
+	public ExpressionResultBuilder addAllExceptLrValue(final Collection<ExpressionResult> resExprs) {
+		for (final ExpressionResult resExpr : resExprs) {
+			addAllExceptLrValue(resExpr);
+		}
+		return this;
+	}
+
 	public ExpressionResultBuilder addAllExceptLrValueAndStatements(final ExpressionResult exprResult) {
 		addDeclarations(exprResult.getDeclarations());
 		addOverapprox(exprResult.getOverapprs());
 		addAuxVars(exprResult.getAuxVars());
-		if (exprResult.mOtherUnionFields != null && !exprResult.mOtherUnionFields.isEmpty()) {
+		if (exprResult.getNeighbourUnionFields() != null && !exprResult.getNeighbourUnionFields().isEmpty()) {
 			addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
 		}
 		return this;
@@ -187,7 +205,6 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mOverappr);
 	}
 
-	// public Map<VariableDeclaration, ILocation> getAuxVars() {
 	public Set<AuxVarInfo> getAuxVars() {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
@@ -196,19 +213,21 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mNeighbourUnionFields);
 	}
 
-	public void resetLrValue(final LRValue rVal) {
+	public ExpressionResultBuilder resetLrValue(final LRValue rVal) {
 		if (mLrVal == null) {
 			throw new IllegalStateException("use setLrVal instead");
 		}
 		mLrVal = rVal;
+		return this;
 	}
 
-	public void setOrResetLrValue(final LRValue lrVal) {
+	public ExpressionResultBuilder setOrResetLrValue(final LRValue lrVal) {
 		if (mLrVal == null) {
 			setLrValue(lrVal);
 		} else {
 			resetLrValue(lrVal);
 		}
+		return this;
 
 	}
 
@@ -217,9 +236,26 @@ public class ExpressionResultBuilder {
 	 *
 	 * @param newStatements
 	 */
-	public void resetStatements(final List<Statement> newStatements) {
+	public ExpressionResultBuilder resetStatements(final List<Statement> newStatements) {
 		mStatements.clear();
 		mStatements.addAll(newStatements);
+		return this;
+	}
+
+	public ExpressionResultBuilder addAllIncludingLrValue(final ExpressionResult expr) {
+		return addAllExceptLrValue(expr).setLrValue(expr.getLrValue());
+	}
+
+	@Override
+	public String toString() {
+		return build().toString();
+	}
+
+	/**
+	 * Remove all aux vars from this builder.
+	 */
+	public void clearAuxVars() {
+		mAuxVars.clear();
 	}
 
 }

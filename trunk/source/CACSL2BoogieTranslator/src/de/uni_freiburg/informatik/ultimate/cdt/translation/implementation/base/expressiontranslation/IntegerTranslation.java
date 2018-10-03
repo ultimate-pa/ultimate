@@ -43,18 +43,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationState;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -67,10 +66,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 
 /**
@@ -83,32 +82,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
 
-	private final UnsignedTreatment mUnsignedTreatment;
-
-	/**
-	 * Add assume statements that state that values of signed integer types are in range.
-	 */
-	private final boolean mAssumeThatSignedValuesAreInRange;
-
-	public IntegerTranslation(final TypeSizes typeSizeConstants, final CTranslationState handlerHandler,
-			final UnsignedTreatment unsignedTreatment, final boolean assumeSignedInRange,
-			final PointerIntegerConversion pointerIntegerConversion,
-			final boolean overapproximateFloatingPointOperations) {
-		super(typeSizeConstants, handlerHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
-		mUnsignedTreatment = unsignedTreatment;
-		mAssumeThatSignedValuesAreInRange = assumeSignedInRange;
+	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
+		super(typeSizeConstants, settings, typeHandler, symboltable);
 	}
 
 	@Override
 	public RValue translateIntegerLiteral(final ILocation loc, final String val) {
 		final RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, false, mTypeSizes);
 		return rVal;
-	}
-
-	@Override
-	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
-			final BigInteger value) {
-		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, mTypeSizes, type, value);
 	}
 
 	@Override
@@ -125,7 +107,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
+		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
 			assert mTypeSizes.isUnsigned(type2);
 			leftExpr = applyWraparound(loc, mTypeSizes, type1, leftExpr);
 			rightExpr = applyWraparound(loc, mTypeSizes, type2, rightExpr);
@@ -194,7 +176,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign: {
-			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight, hook);
+			final BigInteger integerLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
 			if (integerLiteralValue != null) {
 				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
 						Operator.ARITHMUL);
@@ -204,7 +186,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight, hook);
+			final BigInteger integerLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
 			if (integerLiteralValue != null) {
 				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
 						Operator.ARITHDIV);
@@ -219,8 +201,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right },
-				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(typeLeft));
+				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 		return func;
 	}
 
@@ -235,7 +216,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
 		}
 		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
-		final Expression shiftFactorExpr = constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
 		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 		return result;
 	}
@@ -259,7 +240,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
 		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
+				mTypeHandler.getBoogieTypeForCType(type));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -419,9 +400,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 				}
 			} else if (leftValue.signum() == -1) {
 				if (rightValue.signum() == 1) {
-					constantResult = (leftValue.negate().mod(rightValue)).negate().toString();
+					constantResult = leftValue.negate().mod(rightValue).negate().toString();
 				} else if (rightValue.signum() == -1) {
-					constantResult = (leftValue.negate().mod(rightValue.negate())).negate().toString();
+					constantResult = leftValue.negate().mod(rightValue.negate()).negate().toString();
 				} else {
 					constantResult = "0";
 				}
@@ -481,170 +462,142 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
+	public ExpressionResult convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
-			convertToIntegerType(loc, operand, resultType);
-		} else {
-			throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
+			return convertToIntegerType(loc, operand, resultType);
 		}
+		throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 	}
 
-	private void convertToIntegerType(final ILocation loc, final ExpressionResult operand,
+	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
 		final CPrimitive oldType = (CPrimitive) operand.getLrValue().getCType().getUnderlyingType();
-		if (oldType.isIntegerType()) {
-			final Expression newExpression;
-			if (mTypeSizes.isUnsigned(resultType)) {
-				final Expression oldWrappedIfNeeded;
-				if (mTypeSizes.isUnsigned(oldType)
-						&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
-					// required for sound Nutz transformation
-					// (see examples/programs/regression/c/NutzTransformation03.c)
-					oldWrappedIfNeeded = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
-				} else {
-					oldWrappedIfNeeded = operand.getLrValue().getValue();
-				}
-				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
-					final BigInteger maxValuePlusOne =
-							mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
-					final AssertStatement assertGeq0 = new AssertStatement(loc,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-									oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
-					final Check chk1 = new Check(Spec.UINT_OVERFLOW);
-					chk1.annotate(assertGeq0);
-					operand.mStmt.add(assertGeq0);
-
-					final AssertStatement assertLtMax = new AssertStatement(loc,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-									oldWrappedIfNeeded,
-									ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
-					final Check chk2 = new Check(Spec.UINT_OVERFLOW);
-					chk2.annotate(assertLtMax);
-					operand.mStmt.add(assertLtMax);
-				} else {
-					// do nothing
-				}
-				newExpression = oldWrappedIfNeeded;
-			} else {
-				assert !mTypeSizes.isUnsigned(resultType);
-				final Expression oldWrappedIfUnsigned;
-				if (mTypeSizes.isUnsigned(oldType)) {
-					// required for sound Nutz transformation
-					// (see examples/programs/regression/c/NutzTransformation01.c)
-					oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
-				} else {
-					oldWrappedIfUnsigned = operand.getLrValue().getValue();
-				}
-				if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
-						|| (mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
-								&& !mTypeSizes.isUnsigned(oldType))) {
-					newExpression = oldWrappedIfUnsigned;
-				} else {
-					// According to C11 6.3.1.3.3 the result is implementation-defined
-					// it the value cannot be represented by the new type
-					// We have chosen an implementation that is similar to
-					// taking the lowest bits in a two's complement representation:
-					// First we take the value modulo the cardinality of the
-					// data range (which is 2*(MAX_VALUE+1) for signed )
-					// If the number is strictly larger than MAX_VALUE we
-					// subtract the cardinality of the data range.
-					final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-					final Expression wrapped =
-							applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
-					final Expression maxValue = constructLiteralForIntegerType(loc, oldType,
-							mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-					final Expression condition =
-							ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
-					final Expression range = constructLiteralForIntegerType(loc, oldType,
-							mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-					newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
-							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
-				}
-
-			}
-			final RValue newRValue = new RValue(newExpression, resultType, false, false);
-			operand.setLrValue(newRValue);
-		} else {
+		if (!oldType.isIntegerType()) {
 			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
+		final Expression newExpression;
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
+		if (mTypeSizes.isUnsigned(resultType)) {
+			final Expression oldWrappedIfNeeded;
+			if (mTypeSizes.isUnsigned(oldType)
+					&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
+				// required for sound Nutz transformation
+				// (see examples/programs/regression/c/NutzTransformation03.c)
+				oldWrappedIfNeeded = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
+			} else {
+				oldWrappedIfNeeded = operand.getLrValue().getValue();
+			}
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.ASSERT) {
+				final BigInteger maxValuePlusOne =
+						mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
+				final AssertStatement assertGeq0 = new AssertStatement(loc,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+								oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
+				final Check chk1 = new Check(Spec.UINT_OVERFLOW);
+				chk1.annotate(assertGeq0);
+				erb.addStatement(assertGeq0);
+
+				final AssertStatement assertLtMax = new AssertStatement(loc,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, oldWrappedIfNeeded,
+								ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
+				final Check chk2 = new Check(Spec.UINT_OVERFLOW);
+				chk2.annotate(assertLtMax);
+				erb.addStatement(assertLtMax);
+			} else {
+				// do nothing
+			}
+			newExpression = oldWrappedIfNeeded;
+		} else {
+			assert !mTypeSizes.isUnsigned(resultType);
+			final Expression oldWrappedIfUnsigned;
+			if (mTypeSizes.isUnsigned(oldType)) {
+				// required for sound Nutz transformation
+				// (see examples/programs/regression/c/NutzTransformation01.c)
+				oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
+			} else {
+				oldWrappedIfUnsigned = operand.getLrValue().getValue();
+			}
+			if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
+					|| mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
+							&& !mTypeSizes.isUnsigned(oldType)) {
+				newExpression = oldWrappedIfUnsigned;
+			} else {
+				// According to C11 6.3.1.3.3 the result is implementation-defined
+				// it the value cannot be represented by the new type
+				// We have chosen an implementation that is similar to
+				// taking the lowest bits in a two's complement representation:
+				// First we take the value modulo the cardinality of the
+				// data range (which is 2*(MAX_VALUE+1) for signed )
+				// If the number is strictly larger than MAX_VALUE we
+				// subtract the cardinality of the data range.
+				final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
+				final Expression wrapped =
+						applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
+				final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+						mTypeSizes.getMaxValueOfPrimitiveType(resultType));
+				final Expression condition =
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
+				final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+						mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
+				newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
+						ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+			}
+
+		}
+		final RValue newRValue = new RValue(newExpression, resultType, false, false);
+		return erb.setLrValue(newRValue).build();
 	}
 
-	public void oldConvertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult oldConvertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		assert newType.isIntegerType();
 		assert rexp.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
-			super.convertPointerToInt(loc, rexp, newType);
-		} else {
-			final Expression pointerExpression = rexp.getLrValue().getValue();
-			final Expression intExpression;
-			if (mTypeSizes.useFixedTypeSizes()) {
-				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer =
-						ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
-				intExpression = constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-						constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
-								MemoryHandler.getPointerBaseAddress(pointerExpression, loc), newType, maxPointer,
-								newType),
-						newType, MemoryHandler.getPointerOffset(pointerExpression, loc), newType);
-			} else {
-				intExpression = MemoryHandler.getPointerOffset(pointerExpression, loc);
-			}
-			final RValue rValue = new RValue(intExpression, newType, false, true);
-			rexp.setLrValue(rValue);
+			return super.convertPointerToInt(loc, rexp, newType);
 		}
+		final Expression pointerExpression = rexp.getLrValue().getValue();
+		final Expression intExpression;
+		if (mTypeSizes.useFixedTypeSizes()) {
+			final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
+			final IntegerLiteral maxPointer =
+					ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
+			intExpression = constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+					constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
+							MemoryHandler.getPointerBaseAddress(pointerExpression, loc), newType, maxPointer, newType),
+					newType, MemoryHandler.getPointerOffset(pointerExpression, loc), newType);
+		} else {
+			intExpression = MemoryHandler.getPointerOffset(pointerExpression, loc);
+		}
+		final RValue rVal = new RValue(intExpression, newType, false, true);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
-	public void oldConvertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
+	public ExpressionResult oldConvertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
 		if (OVERAPPROXIMATE_INT_POINTER_CONVERSION) {
-			super.convertIntToPointer(loc, rexp, newType);
+			return super.convertIntToPointer(loc, rexp, newType);
+		}
+		final Expression intExpression = rexp.getLrValue().getValue();
+		final Expression baseAdress;
+		final Expression offsetAdress;
+		if (mTypeSizes.useFixedTypeSizes()) {
+			final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
+			final IntegerLiteral maxPointer =
+					ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
+			baseAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_divide, intExpression,
+					getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
+			offsetAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_modulo, intExpression,
+					getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
 		} else {
-			final Expression intExpression = rexp.getLrValue().getValue();
-			final Expression baseAdress;
-			final Expression offsetAdress;
-			if (mTypeSizes.useFixedTypeSizes()) {
-				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer =
-						ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
-				baseAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_divide, intExpression,
-						getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
-				offsetAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_modulo, intExpression,
-						getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
-			} else {
-				baseAdress = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
-				offsetAdress = intExpression;
-			}
-			final Expression pointerExpression =
-					MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
-			final RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.setLrValue(rValue);
+			baseAdress = mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
+			offsetAdress = intExpression;
 		}
-	}
-
-	@Override
-	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
-		if (cType.isIntegerType()) {
-			if (expr instanceof IntegerLiteral) {
-				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-				if (mTypeSizes.isUnsigned(((CPrimitive) cType))) {
-					final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
-					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-					return value.mod(maxValuePlusOne);
-				}
-				return value;
-			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
-				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCIdForBoogieId(bId);
-				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().findCSymbol(hook, cId);
-				if (stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType, hook);
-				}
-			}
-			return null;
-		}
-		return null;
+		final Expression pointerExpression =
+				MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
+		final RValue rValue = new RValue(pointerExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rValue).build();
 	}
 
 	@Override
@@ -655,7 +608,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final List<Statement> stmt) {
-		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
+		if (mSettings.assumeNondeterministicValuesInRange() && cType.getUnderlyingType().isIntegerType()) {
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				stmt.add(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
@@ -666,7 +619,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final ExpressionResultBuilder expressionResultBuilder) {
-		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
+		if (mSettings.assumeNondeterministicValuesInRange() && cType.getUnderlyingType().isIntegerType()) {
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				expressionResultBuilder
@@ -681,9 +634,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private AssumeStatement constructAssumeInRangeStatement(final TypeSizes typeSizes, final ILocation loc,
 			final Expression expr, final CPrimitive type) {
 		final Expression minValue =
-				constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
+				mTypeSizes.constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
 		final Expression maxValue =
-				constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+				mTypeSizes.constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
 
 		final Expression biggerMinInt =
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
@@ -716,7 +669,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructBinaryComparisonFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
-		if (mOverapproximateFloatingPointOperations) {
+		if (mSettings.overapproximateFloatingPointOperations()) {
 			final String functionName = "someBinary" + type1.toString() + "ComparisonOperation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -761,7 +714,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp, final CPrimitive type) {
-		if (mOverapproximateFloatingPointOperations) {
+		if (mSettings.overapproximateFloatingPointOperations()) {
 			final String functionName = "someUnary" + type.toString() + "operation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -772,7 +725,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
-					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
+					mTypeHandler.getBoogieTypeForCType(type));
 		}
 		return constructUnaryIntExprMinus(loc, exp, type);
 	}
@@ -780,7 +733,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
-		if (mOverapproximateFloatingPointOperations) {
+		if (mSettings.overapproximateFloatingPointOperations()) {
 			final String functionName = "someBinaryArithmetic" + type1.toString() + "operation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -791,8 +744,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 },
-					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type1));
+					new Expression[] { exp1, exp2 }, mTypeHandler.getBoogieTypeForCType(type1));
 		}
 		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
@@ -832,7 +784,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
-		if (mOverapproximateFloatingPointOperations) {
+		if (mSettings.overapproximateFloatingPointOperations()) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
@@ -844,10 +796,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if ((type1 instanceof CPrimitive) && (type2 instanceof CPrimitive)) {
+		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
 			final CPrimitive primitive1 = (CPrimitive) type1;
 			final CPrimitive primitive2 = (CPrimitive) type2;
-			if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
 				assert mTypeSizes.isUnsigned(primitive2);
 				leftExpr = applyWraparound(loc, mTypeSizes, primitive1, leftExpr);
 				rightExpr = applyWraparound(loc, mTypeSizes, primitive2, rightExpr);
@@ -869,13 +821,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			throw new IllegalArgumentException("operator is neither equals nor not equals");
 		}
 	}
-
-	// @Override
-	// protected String declareConversionFunction(final ILocation loc, final
-	// CPrimitive oldType, final CPrimitive
-	// newType) {
-	// return declareConversionFunctionOverApprox(loc, oldType, newType);
-	// }
 
 	@Override
 	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
@@ -902,31 +847,34 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
 		final RValue oldRValue = (RValue) rexp.getLrValue();
-		rexp.setLrValue(new RValue(oldRValue.getValue(), newType));
+		final RValue rVal = new RValue(oldRValue.getValue(), newType);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
-	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		doFloatIntAndIntFloatConversion(loc, rexp, newType);
+	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
+		return doFloatIntAndIntFloatConversion(loc, rexp, newType);
 	}
 
 	@Override
-	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		doFloatIntAndIntFloatConversion(loc, rexp, newType);
+	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
+		return doFloatIntAndIntFloatConversion(loc, rexp, newType);
 	}
 
-	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
+	private ExpressionResult doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { oldExpression },
-				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.setLrValue(rValue);
+				new Expression[] { oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+		final RValue rVal = new RValue(resultExpression, newType, false, false);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
@@ -940,9 +888,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
 			if (newType.isFloatingType()) {
-				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_real", null);
+				attributes =
+						generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), "to_real", null);
 			} else if (newType.isIntegerType()) {
-				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_int", null);
+				attributes =
+						generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), "to_int", null);
 			} else {
 				throw new AssertionError("unhandled case");
 			}
@@ -972,6 +922,22 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
 			final int remainingWith, final IASTNode hook) {
 		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
+	}
+
+	@Override
+	public void declareFloatingPointConstructors(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
+			final String[] bitvectorFunctions) {
+		throw new UnsupportedOperationException();
 	}
 
 }

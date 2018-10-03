@@ -66,7 +66,18 @@ public class BlockEncodingBacktranslator extends
 	private final Map<IcfgLocation, IcfgLocation> mLocationMapping;
 	private final ILogger mLogger;
 	private final Set<IIcfgTransition<IcfgLocation>> mIntermediateEdges;
+	/**
+	 * Function that determines how expression (here {@link Term}s) are translated.
+	 * By default we use the identity.
+	 */
 	private Function<Term, Term> mTermTranslator = (x -> x);
+	/**
+	 * Set of variables that are removed from {@link ProgramState}s.
+	 * By default we use the empty set.
+	 * (This can be helpful for auxiliary variables that we cannot
+	 * translate).
+	 */
+	private Set<Term> mVariableBlacklist = Collections.emptySet();
 
 	public BlockEncodingBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
 			final Class<Term> expressionType, final ILogger logger) {
@@ -255,6 +266,33 @@ public class BlockEncodingBacktranslator extends
 		final Term result = mTermTranslator.apply(expression);
 		return result;
 	}
+
+
+	@Override
+	public ProgramState<Term> translateProgramState(final ProgramState<Term> oldProgramState) {
+		if (oldProgramState == null) {
+			return null;
+		}
+		final Map<Term, Collection<Term>> variable2Values = new HashMap<>();
+		for (final Term oldVariable : oldProgramState.getVariables()) {
+			if (mVariableBlacklist.contains(oldVariable)) {
+				continue;
+			}
+			final Term newVariable = translateExpression(oldVariable);
+			final Collection<Term> newValues = new ArrayList<>();
+			for (final Term oldValue : oldProgramState.getValues(oldVariable)) {
+				newValues.add(translateExpression(oldValue));
+			}
+			variable2Values.put(newVariable, newValues);
+		}
+		return new ProgramState<>(variable2Values);
+	}
+
+	public void setVariableBlacklist(final Set<Term> variableBlacklist) {
+		mVariableBlacklist = variableBlacklist;
+	}
+
+
 
 
 

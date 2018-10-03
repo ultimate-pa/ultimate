@@ -35,8 +35,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -70,6 +70,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -94,22 +97,22 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
- * @date 07.02.2012
  * @author Alexander Nutz
  */
 public class TypeHandler implements ITypeHandler {
+
 	/**
 	 * Maps the cIdentifier of a struct, enumeration, or union (when this is implemented) to the ResultType that
 	 * represents this type at the moment
@@ -119,21 +122,6 @@ public class TypeHandler implements ITypeHandler {
 	 * Undefined struct types.
 	 */
 	private final LinkedHashSet<String> mIncompleteType;
-	/**
-	 * counting levels of struct declaration.
-	 */
-	private int mStructCounter;
-
-	/**
-	 * Contains all primitive types that occurred in program.
-	 */
-	private final Set<CPrimitive.CPrimitives> mOccurredPrimitiveTypes = new HashSet<>();
-
-	/**
-	 * if false we translate CPrimitives whose general type is INT to int. If true we translate CPrimitives whose
-	 * general type is INT to identically named types,
-	 */
-	private final boolean mBitvectorTranslation;
 
 	/**
 	 * States if an ASTNode for the pointer type was constructed and hence this type has to be declared.
@@ -144,45 +132,63 @@ public class TypeHandler implements ITypeHandler {
 	 * Is true iff we yet processed a floating type. (And hence floating types have to be added to Boogie).
 	 */
 	private boolean mFloatingTypesNeeded = false;
-	private ICHandler mCHandler;
 
-	private BoogieType mBoogiePointerType;
+	private final BoogieType mBoogiePointerType;
 
-	private ExpressionTranslation mExpressionTranslation;
-	private final CTranslationState mState;
+	private final CTranslationResultReporter mReporter;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param useIntForAllIntegerTypes
-	 */
-	public TypeHandler(final boolean bitvectorTranslation, final CTranslationState handlerHandler) {
-		mState = handlerHandler;
-		handlerHandler.setTypeHandler(this);
-		mBitvectorTranslation = bitvectorTranslation;
+	private final INameHandler mNameHandler;
+
+	private final TypeSizes mTypeSizes;
+
+	private final FlatSymbolTable mSymboltable;
+
+	private final TranslationSettings mTranslationSettings;
+	private final LocationFactory mLocationFactory;
+	private final StaticObjectsHandler mStaticObjectsHandler;
+
+	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
+			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
+			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler) {
+		mReporter = reporter;
+		mNameHandler = nameHandler;
+		mTypeSizes = typeSizes;
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
+		mSymboltable = symboltable;
+		mTranslationSettings = translationSettings;
+		mLocationFactory = locationFactory;
+		mStaticObjectsHandler = staticObjectsHandler;
+
+		// the type of pointer components currently (feb 18) is always int, but we are keeping all options..
+		final BoogieType componentType =
+				(BoogieType) cType2AstType(null, mTranslationSettings.getCTypeOfPointerComponents()).getBoogieType();
+		mBoogiePointerType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+				new BoogieType[] { componentType, componentType });
 	}
 
-	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
-		return mOccurredPrimitiveTypes;
+	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
+			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
+			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler,
+			final TypeHandler prerunTypeHandler) {
+		mReporter = reporter;
+		mNameHandler = nameHandler;
+		mTypeSizes = typeSizes;
+		mSymboltable = symboltable;
+		mTranslationSettings = translationSettings;
+		mLocationFactory = locationFactory;
+		mStaticObjectsHandler = staticObjectsHandler;
+
+		// reuse typehandler parts from prerun
+		mBoogiePointerType = prerunTypeHandler.mBoogiePointerType;
+		mDefinedTypes = prerunTypeHandler.mDefinedTypes;
+		mIncompleteType = prerunTypeHandler.mIncompleteType;
 	}
 
 	@Override
-	public boolean isBitvectorTranslation() {
-		return mBitvectorTranslation;
-	}
-
-	@Override
-	public boolean isStructDeclaration() {
-		assert mStructCounter >= 0;
-		return mStructCounter != 0;
-	}
-
-	@Override
-	public Result visit(final Dispatcher main, final IASTNode node) {
+	public Result visit(final IDispatcher main, final IASTNode node) {
 		final String msg = "TypeHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -191,15 +197,15 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	@Deprecated
 	@Override
-	public Result visit(final Dispatcher main, final ACSLNode node) {
+	public Result visit(final IDispatcher main, final ACSLNode node) {
 		throw new UnsupportedOperationException("Implementation Error: use ACSL handler for " + node.getClass());
 	}
 
 	@Override
-	public Result visit(final Dispatcher main, final IASTSimpleDeclSpecifier node) {
+	public Result visit(final IDispatcher main, final IASTSimpleDeclSpecifier node) {
 		// we have model.boogie.ast.PrimitiveType, which should
 		// only contain BOOL, INT, REAL ...
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		switch (node.getType()) {
 		case IASTSimpleDeclSpecifier.t_void: {
 			// there is no void in Boogie,
@@ -209,7 +215,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 		case IASTSimpleDeclSpecifier.t_unspecified: {
 			final String msg = "unspecified type, defaulting to int";
-			mState.getReporter().warn(loc, msg);
+			mReporter.warn(loc, msg);
 		}
 		case IASTSimpleDeclSpecifier.t_bool:
 		case IASTSimpleDeclSpecifier.t_char:
@@ -260,8 +266,8 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public Result visit(final Dispatcher main, final IASTNamedTypeSpecifier node) {
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
 
@@ -277,20 +283,17 @@ public class TypeHandler implements ITypeHandler {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
 			} else {
-				final String modifiedName =
-						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
-				final SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName);
+				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
+				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
 				if (stv == null) {
 					final String msg = "Undefined type " + cId;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
-				final BoogieType boogieType = mState.getBoogieTypeHelper().getBoogieTypeForCType(stv.getCVariable());
-				// (BoogieType) cType2AstType(loc,
-				// stv.getCVariable().getUnderlyingType()).getBoogieType();
+				final BoogieType boogieType = getBoogieTypeForCType(stv.getCVariable());
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
 				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), false, false,
-						new CNamed(bId, mDefinedTypes.get(bId).cType));
+						new CNamed(bId, mDefinedTypes.get(bId).getCType()));
 			}
 		}
 		final String msg = "Unknown or unsupported type! " + node.getClass();
@@ -298,20 +301,21 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+	public Result visit(final IDispatcher main, final IASTEnumerationSpecifier node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String cId = node.getName().toString();
-		final String rslvName =
-				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
+		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				main.mCHandler.getSymbolTable().getCScopeId(node), false, intType);
+		final String enumId = mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
+				mSymboltable.getCScopeId(node), false, intType);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		Expression valueOfPrecedingEnumConstant = null;
+
 		final Expression[] fValues = new Expression[nrFields];
-		final ConstDeclaration[] constDeclarations = new ConstDeclaration[nrFields];
+		final List<Pair<ConstDeclaration, Axiom>> constDecls = new ArrayList<>();
+
 		for (int i = 0; i < nrFields; i++) {
 			final IASTEnumerator e = node.getEnumerators()[i];
 			fNames[i] = e.getName().toString();
@@ -322,10 +326,9 @@ public class TypeHandler implements ITypeHandler {
 				fValues[i] = null;
 			}
 			final Expression specifiedValue = fValues[i];
-			final Expression value =
-					constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node, mExpressionTranslation);
-			final ConstDeclaration cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
-			constDeclarations[i] = cd;
+			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node);
+			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
+			constDecls.add(cd);
 			valueOfPrecedingEnumConstant = value;
 		}
 		final CEnum cEnum = new CEnum(enumId, fNames, fValues);
@@ -333,20 +336,21 @@ public class TypeHandler implements ITypeHandler {
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 		for (int i = 0; i < nrFields; i++) {
 			final String fId = fNames[i];
-			final ConstDeclaration cd = constDeclarations[i];
-			((CHandler) main.mCHandler).addGlobalConstDeclaration(cd, new CDeclaration(cEnum, fId));
+			final Pair<ConstDeclaration, Axiom> cd = constDecls.get(i);
+			mStaticObjectsHandler.addGlobalConstDeclaration(cd.getFirst(), new CDeclaration(cEnum, fId),
+					cd.getSecond());
 		}
 
 		final String incompleteTypeName = "ENUM~" + rslvName;
 		if (mIncompleteType.contains(incompleteTypeName)) {
 			mIncompleteType.remove(incompleteTypeName);
-			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
-			final CEnum incompleteEnum = (CEnum) incompleteType.cType;
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			final CEnum incompleteEnum = (CEnum) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
-			((CHandler) main.mCHandler).completeTypeDeclaration(incompleteEnum, cEnum);
-
-			incompleteEnum.complete(cEnum);
+			mStaticObjectsHandler.completeTypeDeclaration(incompleteEnum, cEnum, this);
+			final CEnum completeEnum = incompleteEnum.complete(cEnum);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeEnum));
 		}
 
 		if (!enumId.equals(SFO.EMPTY)) {
@@ -356,93 +360,20 @@ public class TypeHandler implements ITypeHandler {
 		return result;
 	}
 
-	/**
-	 * @param enumConstId
-	 *            Identifier of the enumeration constant as is appears in the C code.
-	 */
-	private ConstDeclaration handleEnumerationConstant(final ILocation loc, final String enumId,
-			final String enumConstId, final Expression value, final IASTEnumerationSpecifier node) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		// C standard says: "The identifiers in an enumerator list are declared
-		// as constants that have type int ..."
-		final ASTType enumAstType = cType2AstType(loc, typeOfEnumIdentifiers);
-		final String boogieId = enumId + "~" + enumConstId;
-		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
-		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
-
-		final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
-				mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(enumAstType), boogieId,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
-		((CHandler) mCHandler).addAxiom(new Axiom(loc, new Attribute[0],
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, value)));
-		mCHandler.getSymbolTable().storeCSymbol(node, enumConstId,
-				new SymbolTableValue(boogieId, cd,
-						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
-								CHandler.scConstant2StorageClass(node.getStorageClass())),
-						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
-		return cd;
-	}
-
-	/**
-	 * Construct an {@link Expression} that represents the value of an enumeration constant according to C11 6.7.2.2.3.
-	 * If the value of the enumeration constant is explicitly given in the C code, the argument for the parameter
-	 * specifiedValue of this method is not null. Otherwise the argument is null and the value is determined by the
-	 * value of the preceding enumeration constant in the list of this enumeration specifier.
-	 */
-	private static Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
-			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node,
-			final ExpressionTranslation expressionTranslation) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		final Expression value;
-		if (specifiedValue != null) {
-			// case where the value of the enumeration constant is explicitly defined by an
-			// integer constant expression
-			value = specifiedValue;
-		} else {
-			// case where the value of the enumeration constant is not explicitly defined by
-			// an integer constant expression and hence the value of the preceding
-			// enumeration constant in the list defines the value of this enumeration
-			// constant (see C11 6.7.2.2.3)
-			if (valueOfPrecedingEnumConstant == null) {
-				// case where this is the first enumeration constant in the list
-				final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.ZERO);
-				value = zero;
-			} else {
-				final BigInteger bi = expressionTranslation.extractIntegerValue(valueOfPrecedingEnumConstant,
-						typeOfEnumIdentifiers, node);
-				if (bi == null) {
-					throw new AssertionError("not an integer constant: " + specifiedValue);
-				}
-				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
-				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
-				value = expressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.valueOf(valueAsInt));
-			}
-		}
-		return value;
-	}
-
 	@Override
-	public Result visit(final Dispatcher main, final IASTElaboratedTypeSpecifier node) {
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+	public Result visit(final IDispatcher main, final IASTElaboratedTypeSpecifier node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 			final String type = node.getName().toString();
-			final String rslvName =
-					main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), type);
+			final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), type);
 
-			// if (mDefinedTypes.containsKey(type)) {
 			final TypesResult originalType = mDefinedTypes.get(rslvName);
-			// if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
-			// // --> we have an incomplete enum --> do nothing
-			// //(i cannot think of an effect of an incomplete enum declaration right now..)
-			// return new ResultSkip();
 			if (originalType != null) {
 				// --> we have a normal struct, union or enum declaration
-				final TypesResult withoutBoogieTypedef = new TypesResult(originalType.getType(), originalType.isConst,
-						originalType.isVoid, originalType.cType);
+				final TypesResult withoutBoogieTypedef = new TypesResult(originalType.getAstType(),
+						originalType.isConst(), originalType.isVoid(), originalType.getCType());
 				return withoutBoogieTypedef;
 			}
 			// --> This is a definition of an incomplete struct, enum or union.
@@ -457,8 +388,6 @@ public class TypeHandler implements ITypeHandler {
 
 			mIncompleteType.add(incompleteTypeName);
 			// FIXME : not sure, if null is a good idea!
-			// ResultTypes r = new ResultTypes(new NamedType(loc, name,
-			// new ASTType[0]), false, false, null);
 			CType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStruct(type);
@@ -479,15 +408,14 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public Result visit(final Dispatcher main, final IASTCompositeTypeSpecifier node) {
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+	public Result visit(final IDispatcher main, final IASTCompositeTypeSpecifier node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		// 2016-12-08 Matthias: it seems like field is never used.
 		final ArrayList<VarList> fields = new ArrayList<>();
 		// TODO : include inactives? what are inactives?
 		final ArrayList<String> fNames = new ArrayList<>();
 		final ArrayList<CType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
-		mStructCounter++;
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
@@ -497,7 +425,7 @@ public class TypeHandler implements ITypeHandler {
 					fTypes.add(declaration.getType());
 					fields.add(new VarList(loc, new String[] { declaration.getName() },
 							cType2AstType(loc, declaration.getType())));
-					if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS)) {
+					if (mTranslationSettings.useBitpreciseBitfields()) {
 						if (declaration.getBitfieldSize() != -1) {
 							final String msg = "bitfield implementation not yet bitprecise (soundness first)";
 							throw new UnsupportedSyntaxException(loc, msg);
@@ -511,22 +439,20 @@ public class TypeHandler implements ITypeHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
-		mStructCounter--;
 
 		final String cId = node.getName().toString();
-		final String rslvName =
-				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
+		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		CStruct cvar;
 		String name = null;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
 			name = "STRUCT~" + rslvName;
-			cvar = new CStruct(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
-					bitFieldWidths);
+			cvar = new CStruct(rslvName, fNames.toArray(new String[fNames.size()]),
+					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
 			name = "UNION~" + rslvName;
-			cvar = new CUnion(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
-					bitFieldWidths);
+			cvar = new CUnion(rslvName, fNames.toArray(new String[fNames.size()]),
+					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -536,15 +462,15 @@ public class TypeHandler implements ITypeHandler {
 		final ASTType type = namedType;
 		final TypesResult result = new TypesResult(type, false, false, cvar);
 
-		if (mIncompleteType.contains(name)) {
-			mIncompleteType.remove(name);
-			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
-			final CStruct incompleteStruct = (CStruct) incompleteType.cType;
+		if (mIncompleteType.remove(name)) {
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			final CStruct incompleteStruct = (CStruct) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
-			((CHandler) main.mCHandler).completeTypeDeclaration(incompleteStruct, cvar);
+			mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
 
-			incompleteStruct.complete(cvar);
+			final CStruct completeStruct = incompleteStruct.complete(cvar);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
@@ -564,48 +490,6 @@ public class TypeHandler implements ITypeHandler {
 		assert sT.containsCSymbol(hook, cId);
 		final ASTType t = cType2AstType(loc, sT.findCSymbol(hook, cId).getCVariable());
 		return traverseForType(loc, t, flat, 1);
-	}
-
-	/**
-	 * Returns the type of the field in the struct.
-	 *
-	 * @param loc
-	 *            the location, where errors should be set, if there are any!
-	 * @param t
-	 *            the type to process.
-	 * @param flat
-	 *            the flattend LHS.
-	 * @param i
-	 *            index in flat[].
-	 * @return the type of the field.
-	 */
-	private static ASTType traverseForType(final ILocation loc, final ASTType t, final String[] flat, final int i) {
-		assert i > 0 && i <= flat.length;
-		if (i >= flat.length) {
-			return t;
-		}
-		if (t instanceof ArrayType) {
-			return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
-		}
-		if (t instanceof StructType) {
-			for (final VarList vl : ((StructType) t).getFields()) {
-				assert vl.getIdentifiers().length == 1;
-				// should hold by construction!
-				if (vl.getIdentifiers()[0].equals(flat[i])) {
-					// found the field!
-					return traverseForType(loc, vl.getType(), flat, i + 1);
-				}
-			}
-			final String msg = "Field '" + flat[i] + "' not found in " + t;
-			throw new IncorrectSyntaxException(loc, msg);
-		}
-		final String msg = "Something went wrong while determining types!";
-		throw new UnsupportedSyntaxException(loc, msg);
-	}
-
-	@Override
-	public LinkedScopedHashMap<String, TypesResult> getDefinedTypes() {
-		return mDefinedTypes;
 	}
 
 	@Override
@@ -663,35 +547,14 @@ public class TypeHandler implements ITypeHandler {
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
 
-	private ASTType cPrimitive2AstType(final ILocation loc, final CPrimitive cPrimitive) {
-		final BoogieType boogieType = mState.getBoogieTypeHelper().getBoogieTypeForCType(cPrimitive);
-
-		switch (cPrimitive.getGeneralType()) {
-		case VOID:
-			return null; // (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-		case INTTYPE:
-			if (mBitvectorTranslation) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
-			}
-			return new PrimitiveType(loc, boogieType, SFO.INT);
-		case FLOATTYPE:
-			mFloatingTypesNeeded = true;
-			if (mBitvectorTranslation) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
-			}
-			return new PrimitiveType(loc, boogieType, SFO.REAL);
-		default:
-			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-		}
-	}
-
-	public ASTType bytesize2asttype(final ILocation loc, final CPrimitiveCategory generalprimitive,
+	@Override
+	public ASTType byteSize2AstType(final ILocation loc, final CPrimitiveCategory generalprimitive,
 			final int bytesize) {
 		switch (generalprimitive) {
 		case VOID:
 			throw new UnsupportedOperationException();
 		case INTTYPE:
-			if (mBitvectorTranslation) {
+			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
 				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
@@ -700,7 +563,7 @@ public class TypeHandler implements ITypeHandler {
 			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
-			if (mBitvectorTranslation) {
+			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
 				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
@@ -735,19 +598,6 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public BoogieType getBoogiePointerType() {
-		// the type of pointer components currently (feb 18) is always int, but we are keeping all options..
-		if (mBoogiePointerType == null) {
-			final BoogieType componentType =
-					(BoogieType) cType2AstType(null, mExpressionTranslation.getCTypeOfPointerComponents())
-							.getBoogieType();
-			mBoogiePointerType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-					new BoogieType[] { componentType, componentType });
-		}
-		return mBoogiePointerType;
-	}
-
-	@Override
 	public BoogieType astTypeToBoogieType(final ASTType astType) {
 		if (astType == null) {
 			// "null" astType represents a void type
@@ -760,7 +610,7 @@ public class TypeHandler implements ITypeHandler {
 	 * Construct list of type declarations that are needed because the corresponding types are introduced by the
 	 * translation, e.g., pointers.
 	 */
-	public ArrayList<Declaration> constructTranslationDefiniedDelarations(final ILocation tuLoc,
+	public ArrayList<Declaration> constructTranslationDefinedDeclarations(final ILocation tuLoc,
 			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
@@ -780,21 +630,9 @@ public class TypeHandler implements ITypeHandler {
 		return decl;
 	}
 
+	@Override
 	public boolean areFloatingTypesNeeded() {
 		return mFloatingTypesNeeded;
-	}
-
-	public static boolean isAggregateCType(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
-
-		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer
-				|| cType instanceof CUnion || cType instanceof CFunction) {
-			return false;
-		} else if (cType instanceof CArray || cType instanceof CStruct) {
-			return true;
-		} else {
-			throw new UnsupportedOperationException("missed a type??");
-		}
 	}
 
 	/**
@@ -811,6 +649,238 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	public static boolean areMatchingTypes(final CType type1, final CType type2) {
 		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13 The initializer for a
+	 * structure or union object that has automatic storage duration shall be either an initializer list as described
+	 * below, or a single expression that has compatible structure or union type.
+	 *
+	 * @param type1
+	 * @param type2
+	 * @return
+	 */
+	public static boolean isCompatibleType(final CType type1, final CType type2) {
+		// TODO: check the notion of compatibility with the standard
+		if (isCharArray(type1) && isCharArray(type2)) {
+			return true;
+		}
+		if (type1 instanceof CStruct && type2 instanceof CStruct) {
+			return areMatchingTypes(type1, type2);
+		}
+		return false;
+	}
+
+	@Override
+	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
+		if (asttype == null) {
+			return BoogieType.TYPE_ERROR;
+		}
+		final BoogieType result = (BoogieType) asttype.getBoogieType();
+		assert result != null;
+		return result;
+	}
+
+	@Override
+	public BoogieType getBoogieTypeForSizeT() {
+		return BoogieType.TYPE_INT;
+	}
+
+	@Override
+	public BoogieType getBoogieTypeForCType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive) {
+			if (mTranslationSettings.isBitvectorTranslation()) {
+				final Integer byteSize = mTypeSizes.getSize(((CPrimitive) cType).getType());
+				return BoogieType.createBitvectorType(byteSize * 8);
+			}
+			switch (((CPrimitive) cType).getGeneralType()) {
+			case FLOATTYPE:
+				return BoogieType.TYPE_REAL;
+			case INTTYPE:
+				return BoogieType.TYPE_INT;
+			case VOID:
+				return BoogieType.TYPE_ERROR;
+			default:
+				throw new AssertionError();
+			}
+		} else if (cType instanceof CPointer) {
+			return getBoogiePointerType();
+		} else if (cType instanceof CEnum) {
+			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
+		} else if (cType instanceof CArray) {
+
+			// may have to change this from int to something depending on bitvector settings and stuff..
+			final BoogieType[] indexTypes =
+					new BoogieType[] { getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT)) };
+
+			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
+			return BoogieType.createArrayType(0, indexTypes, valueType);
+		} else if (cType instanceof CFunction) {
+			return getBoogiePointerType();
+		} else if (cType instanceof CStruct) {
+			final CStruct cStructType = (CStruct) cType;
+			final BoogieType[] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
+			for (int i = 0; i < cStructType.getFieldCount(); i++) {
+				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
+			}
+			return BoogieType.createStructType(cStructType.getFieldIds(), boogieFieldTypes);
+		} else {
+			throw new AssertionError("unknown type " + cType);
+		}
+	}
+
+	@Override
+	public BoogieType getBoogiePointerType() {
+		return mBoogiePointerType;
+	}
+
+	@Override
+	public BoogieType getBoogieTypeForPointerComponents() {
+		return getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents());
+	}
+
+	private static boolean isCharArray(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+		if (!(cType instanceof CArray)) {
+			return false;
+		}
+		final CArray cArrayType = (CArray) cType;
+		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
+			return false;
+		}
+		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
+		if (primitiveValueType.getType() != CPrimitives.CHAR && primitiveValueType.getType() != CPrimitives.UCHAR
+				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param enumConstId
+	 *            Identifier of the enumeration constant as is appears in the C code.
+	 */
+	private Pair<ConstDeclaration, Axiom> handleEnumerationConstant(final ILocation loc, final String enumId,
+			final String enumConstId, final Expression value, final IASTEnumerationSpecifier node) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		// C standard says: "The identifiers in an enumerator list are declared
+		// as constants that have type int ..."
+		final ASTType enumAstType = cType2AstType(loc, typeOfEnumIdentifiers);
+		final String boogieId = enumId + "~" + enumConstId;
+		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
+		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
+
+		final Expression identifier =
+				ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(enumAstType),
+						boogieId, new DeclarationInformation(StorageClass.GLOBAL, null));
+		mSymboltable.storeCSymbol(node, enumConstId,
+				new SymbolTableValue(boogieId, cd,
+						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
+								CHandler.scConstant2StorageClass(node.getStorageClass())),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
+		return new Pair<>(cd, new Axiom(loc, new Attribute[0],
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, identifier, value)));
+	}
+
+	/**
+	 * Construct an {@link Expression} that represents the value of an enumeration constant according to C11 6.7.2.2.3.
+	 * If the value of the enumeration constant is explicitly given in the C code, the argument for the parameter
+	 * specifiedValue of this method is not null. Otherwise the argument is null and the value is determined by the
+	 * value of the preceding enumeration constant in the list of this enumeration specifier.
+	 */
+	private Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
+			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final Expression value;
+		if (specifiedValue != null) {
+			// case where the value of the enumeration constant is explicitly defined by an
+			// integer constant expression
+			value = specifiedValue;
+		} else {
+			// case where the value of the enumeration constant is not explicitly defined by
+			// an integer constant expression and hence the value of the preceding
+			// enumeration constant in the list defines the value of this enumeration
+			// constant (see C11 6.7.2.2.3)
+			if (valueOfPrecedingEnumConstant == null) {
+				// case where this is the first enumeration constant in the list
+				final Expression zero =
+						mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+				value = zero;
+			} else {
+				final BigInteger bi =
+						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers, node);
+				if (bi == null) {
+					throw new AssertionError("not an integer constant: " + specifiedValue);
+				}
+				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
+				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
+				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						BigInteger.valueOf(valueAsInt));
+			}
+		}
+		return value;
+	}
+
+	/**
+	 * Returns the type of the field in the struct.
+	 *
+	 * @param loc
+	 *            the location, where errors should be set, if there are any!
+	 * @param t
+	 *            the type to process.
+	 * @param flat
+	 *            the flattend LHS.
+	 * @param i
+	 *            index in flat[].
+	 * @return the type of the field.
+	 */
+	private static ASTType traverseForType(final ILocation loc, final ASTType t, final String[] flat, final int i) {
+		assert i > 0 && i <= flat.length;
+		if (i >= flat.length) {
+			return t;
+		}
+		if (t instanceof ArrayType) {
+			return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
+		}
+		if (t instanceof StructType) {
+			for (final VarList vl : ((StructType) t).getFields()) {
+				assert vl.getIdentifiers().length == 1;
+				// should hold by construction!
+				if (vl.getIdentifiers()[0].equals(flat[i])) {
+					// found the field!
+					return traverseForType(loc, vl.getType(), flat, i + 1);
+				}
+			}
+			final String msg = "Field '" + flat[i] + "' not found in " + t;
+			throw new IncorrectSyntaxException(loc, msg);
+		}
+		final String msg = "Something went wrong while determining types!";
+		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	private ASTType cPrimitive2AstType(final ILocation loc, final CPrimitive cPrimitive) {
+		final BoogieType boogieType = getBoogieTypeForCType(cPrimitive);
+
+		switch (cPrimitive.getGeneralType()) {
+		case VOID:
+			// (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
+			return null;
+		case INTTYPE:
+			if (mTranslationSettings.isBitvectorTranslation()) {
+				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+			}
+			return new PrimitiveType(loc, boogieType, SFO.INT);
+		case FLOATTYPE:
+			mFloatingTypesNeeded = true;
+			if (mTranslationSettings.isBitvectorTranslation()) {
+				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+			}
+			return new PrimitiveType(loc, boogieType, SFO.REAL);
+		default:
+			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+		}
 	}
 
 	private static boolean areMatchingTypes(final CType type1, final CType type2,
@@ -855,7 +925,7 @@ public class TypeHandler implements ITypeHandler {
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
 
-		if (!(type1.getIdentifier().equals(type2.getIdentifier()))) {
+		if (!(type1.getName().equals(type2.getName()))) {
 			return false;
 		}
 		if (type1.getFieldIds().length != type2.getFieldIds().length) {
@@ -948,61 +1018,5 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13 The initializer for a
-	 * structure or union object that has automatic storage duration shall be either an initializer list as described
-	 * below, or a single expression that has compatible structure or union type.
-	 *
-	 * @param type1
-	 * @param type2
-	 * @return
-	 */
-	public static boolean isCompatibleType(final CType type1, final CType type2) {
-		// TODO: check the notion of compatibility with the standard
-		if (isCharArray(type1) && isCharArray(type2)) {
-			return true;
-		}
-		if (type1 instanceof CStruct && type2 instanceof CStruct) {
-			return areMatchingTypes(type1, type2);
-		}
-		return false;
-	}
-
-	public static boolean isCharArray(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
-		if (!(cType instanceof CArray)) {
-			return false;
-		}
-		final CArray cArrayType = (CArray) cType;
-		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
-			return false;
-		}
-		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
-		if (primitiveValueType.getType() != CPrimitives.CHAR && primitiveValueType.getType() != CPrimitives.UCHAR
-				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public ICHandler getCHandler() {
-		assert mCHandler != null : "plan is to call setCHandler in the CHandler constructor (the CHandler constructor "
-				+ "takes a typeHandler as argument)";
-		return mCHandler;
-	}
-
-	@Override
-	public void setCHandler(final CHandler cHandler) {
-		assert cHandler != null;
-		assert mCHandler == null : "don't call this twice";
-		mCHandler = cHandler;
-	}
-
-	@Override
-	public void setExpressionTranslation(final ExpressionTranslation expressionTranslation) {
-		mExpressionTranslation = expressionTranslation;
 	}
 }

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2014-2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -24,17 +25,24 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 
-public interface IPointerIntegerConversion {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public interface ICACSL2BoogieBacktranslatorMapping {
 
-	ExpressionResult convertPointerToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType);
+	void putVar(String boogieId, String cId, CType cType);
 
-	ExpressionResult convertIntToPointer(ILocation loc, ExpressionResult rexp, CPointer newType);
+	void putInVar(String boogieId, String cId, CType cType);
+
+	void putTempVar(String boogieId, AUXVAR purpose, CType cType);
+
+	boolean isTempVar(String boogieId);
 
 }

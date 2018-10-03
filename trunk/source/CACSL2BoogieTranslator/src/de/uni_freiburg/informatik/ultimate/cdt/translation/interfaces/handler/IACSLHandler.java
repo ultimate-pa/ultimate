@@ -32,7 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -69,236 +69,236 @@ public interface IACSLHandler extends IHandler {
 	 * Translates an CodeAnnot.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, CodeAnnot node);
+	public Result visit(IDispatcher main, CodeAnnot node);
 	
 	/**
 	 * Translates an BinaryExpression.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, BinaryExpression node);
+	public Result visit(IDispatcher main, BinaryExpression node);
 	
 	/**
 	 * Translates an UnaryExpression.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, UnaryExpression node);
+	public Result visit(IDispatcher main, UnaryExpression node);
 	
 	/**
 	 * Translates an IntegerLiteral.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, IntegerLiteral node);
+	public Result visit(IDispatcher main, IntegerLiteral node);
 	
 	/**
 	 * Translates an BooleanLiteral.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, BooleanLiteral node);
+	public Result visit(IDispatcher main, BooleanLiteral node);
 	
 	/**
 	 * Translates an RealLiteral.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, RealLiteral node);
+	public Result visit(IDispatcher main, RealLiteral node);
 	
 	/**
 	 * Translates an IdentifierExpression.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, IdentifierExpression node);
+	public Result visit(IDispatcher main, IdentifierExpression node);
 	
 	/**
 	 * Translates an Contract.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, Contract node);
+	public Result visit(IDispatcher main, Contract node);
 	
 	/**
 	 * Translates an Requires.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, Requires node);
+	public Result visit(IDispatcher main, Requires node);
 	
 	/**
 	 * Translates an Ensures.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, Ensures node);
+	public Result visit(IDispatcher main, Ensures node);
 	
 	/**
 	 * Translates an Assigns.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, Assigns node);
+	public Result visit(IDispatcher main, Assigns node);
 	
 	/**
 	 * Translates an ResultExpression.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, ACSLResultExpression node);
+	public Result visit(IDispatcher main, ACSLResultExpression node);
 	
 	/**
 	 * Translates an LoopAnnot.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, LoopAnnot node);
+	public Result visit(IDispatcher main, LoopAnnot node);
 	
 	/**
 	 * Translates an LoopInvariant.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, LoopInvariant node);
+	public Result visit(IDispatcher main, LoopInvariant node);
 	
 	/**
 	 * Translates an LoopVariant.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, LoopVariant node);
+	public Result visit(IDispatcher main, LoopVariant node);
 	
 	/**
 	 * Translates an LoopAssigns.
 	 * 
 	 * @param main
-	 *            a reference to the main dispatcher
+	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, LoopAssigns node);
+	public Result visit(IDispatcher main, LoopAssigns node);
 	
 	/**
      * Translates an ArrayAccessExpression.
      * 
      * @param main
-     *            a reference to the main dispatcher
+     *            a reference to the main IDispatcher
      * @param node
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, ArrayAccessExpression node);
+    public Result visit(IDispatcher main, ArrayAccessExpression node);
     
     /**
      * Translates an FieldAccessExpression.
      * 
      * @param main
-     *            a reference to the main dispatcher
+     *            a reference to the main IDispatcher
      * @param node
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, FieldAccessExpression node);
+    public Result visit(IDispatcher main, FieldAccessExpression node);
     
     /**
      * Translates an FreeableExpression.
      * 
      * @param main
-     *            a reference to the main dispatcher
+     *            a reference to the main IDispatcher
      * @param node
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, FreeableExpression node);
+    public Result visit(IDispatcher main, FreeableExpression node);
     
     /**
      * Translates an MallocableExpression.
      * 
      * @param main
-     *            a reference to the main dispatcher
+     *            a reference to the main IDispatcher
      * @param node
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, MallocableExpression node);
+    public Result visit(IDispatcher main, MallocableExpression node);
     
     /**
      * Translates an ValidExpression.
      * 
      * @param main
-     *            a reference to the main dispatcher
+     *            a reference to the main IDispatcher
      * @param node
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, ValidExpression node);
+    public Result visit(IDispatcher main, ValidExpression node);
     
-    public Result visit(Dispatcher main, CastExpression node);
+    public Result visit(IDispatcher main, CastExpression node);
     
-    public Result visit(Dispatcher main, IfThenElseExpression node);
+    public Result visit(IDispatcher main, IfThenElseExpression node);
     
     
 }

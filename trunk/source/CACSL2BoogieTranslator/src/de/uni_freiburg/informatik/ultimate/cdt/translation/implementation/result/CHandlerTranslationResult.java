@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -24,17 +24,28 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import java.util.Map;
 
-public interface IPointerIntegerConversion {
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 
-	ExpressionResult convertPointerToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType);
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class CHandlerTranslationResult extends Result {
 
-	ExpressionResult convertIntToPointer(ILocation loc, ExpressionResult rexp, CPointer newType);
+	private final Map<String, String> mIdentifierMapping;
+
+	public CHandlerTranslationResult(final BoogieASTNode node, final Map<String, String> identifierMapping) {
+		super(node);
+		mIdentifierMapping = identifierMapping;
+	}
+
+	public Map<String, String> getIdentifierMapping() {
+		return mIdentifierMapping;
+	}
 
 }

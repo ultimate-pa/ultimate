@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.Dispatcher;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
@@ -95,8 +94,7 @@ public class CDeclaration {
 
 	public InitializerResult getInitializer() {
 		if (!mIsInitializerTranslated) {
-			throw new AssertionError("Initializer must have been translated (with method "
-					+ "CDeclaration.translateInitializer()) before this is called.");
+			throw new AssertionError("Initializer must have been translated before this is called.");
 		}
 		return mInitializer;
 	}
@@ -114,25 +112,15 @@ public class CDeclaration {
 		return mType.toString() + ' ' + mName + " = " + mInitializer;
 	}
 
-	/**
-	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration that we work
-	 * with. (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but this is too
-	 * early when we have something like struct list myList = { &myList}, because we need to have some symbolTable entry
-	 * for translating this initializer, see visit ISimpleDeclaraton for this, too.)
-	 */
-	public void translateInitializer(final Dispatcher main) {
+	public IASTInitializer getIASTInitializer() {
+		return mCAstInitializer;
+	}
+
+	public void setInitializerResult(final InitializerResult initializer) {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
-			final Result res = main.dispatch(mCAstInitializer);
-
-			if (res instanceof InitializerResult) {
-				mInitializer = (InitializerResult) res;
-			} else if (res instanceof ExpressionResult) {
-				mInitializer = new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) res).build();
-			} else {
-				throw new AssertionError("should not happen");
-			}
+			mInitializer = initializer;
 		}
 		mIsInitializerTranslated = true;
 	}

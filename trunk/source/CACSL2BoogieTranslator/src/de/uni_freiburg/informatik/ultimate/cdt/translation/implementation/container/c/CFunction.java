@@ -60,18 +60,18 @@ public class CFunction extends CType {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("CFunction: ");
-		String times = "";
+		sb.append("((");
 		for (int i = 0; i < mParamTypes.length; i++) {
-			sb.append(times);
 			sb.append(mParamTypes[i].getType().toString());
-			times = " x ";
+			sb.append(" ");
 		}
 		if (mTakesVarArgs) {
-			sb.append(" x ...");
+			sb.append("...");
 		}
-		sb.append(" -> ");
+		sb.append(")");
+		sb.append(" : ");
 		sb.append(mResultType.toString());
+		sb.append(")");
 		return sb.toString();
 	}
 
