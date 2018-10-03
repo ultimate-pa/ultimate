@@ -215,7 +215,9 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mStatisticsTracker.incrementGetRequests();
 		return getOrConstructPredicateInternal(term);
 	}
-
+	
+ boolean re = true;
+ 
 	private IPredicate getOrConstructPredicateInternal(final Term term) {
 		mStatisticsTracker.continueTime();
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
@@ -318,120 +320,191 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	}
 
 	@Override
-	public IPredicate constructNewPredicate(Term term, Map<IPredicate, Validity> impliedPredicates,
-			Map<IPredicate, Validity> expliedPredicates) {
-		// TODO Auto-generated method stub
-		return null;
+	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
+			final Map<IPredicate, Validity> expliedPredicates) {
+		// TODO Find a way to exploit that we already know this term is unique.
+		return getOrConstructPredicate(term);
 	}
-
+	
+	
 	/**
 	 * under construction - do not use
 	 */
-//	@Override
-//	public IPredicate constructNewPredicate(final Term term, final Map<IPredicate, Validity> impliedPredicates,
-//			final Map<IPredicate, Validity> expliedPredicates) {
-//		// TODO Find a way to exploit that we already know this term is unique.
-//		return getOrConstructPredicate(term);
-//	}
-//	
-//	public int restructurePredicateTrie() {
-//		final int oldDepth = mPredicateTrie.getDepth();
-//		// trie already has minimal depth (true and false are not in depth included)
-//		if (oldDepth <= minDepth(mPredicates.size())) return 0;
-//
-//		TransitiveClosureIG<IPredicate> transitiveClosure = new TransitiveClosureIG<>(mImplicationGraph);
-//
-//		final Map<Witness, Pair<Witness, Witness>> witnessMap = new HashMap<>();
-//		Map<Term, IPredicate> preds = new HashMap<>();
-//		mRestructureWitnessCounter = 0;
-//		Witness root = getWitnessInductive(transitiveClosure, witnessMap, preds);
-//		final PredicateTrie<IPredicate> restructuredTrie =
-//				new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
-//		restructuredTrie.fillTrie(root, witnessMap, preds);
-//		if (oldDepth - restructuredTrie.getDepth() > 0) {
-//			mPredicateTrie = restructuredTrie;
-//		}
-//		return oldDepth - mPredicateTrie.getDepth();
-//	}
-//
-//	private Witness getWitnessInductive(final TransitiveClosureIG<IPredicate> transitiveClosure, 
-//			final Map<Witness, Pair<Witness, Witness>> witnessMap, Map<Term, IPredicate> preds) {
-//		// Find best vertex
-//		float optimum = ((float) transitiveClosure.getVertices().size()) / 2;
-//		float minDif = optimum;
-//		ImplicationVertex<IPredicate> vertex = mImplicationGraph.getFalseVertex();
-//		for (final ImplicationVertex<IPredicate> v : transitiveClosure.getVertices()) {
-//			final float vCount = v.getDescendants().size() + 1;
-//			if (vCount == optimum) {
-//				vertex = v;
-//				break;
-//			} else if (Math.abs(optimum - vCount) < minDif) {
-//				minDif = Math.abs(optimum - vCount);
-//				vertex = v;
-//			}
-//		}
-//		// Find model
-//		mRestructureWitnessCounter += 1;
-//		final Witness witness = new Witness(mRestructureWitnessCounter,
-//				mPredicateTrie.getWitness(vertex.getPredicate(), getBranches(vertex)));
-//		Witness trueWitness = null;
-//		Witness falseWitness = null;
-//
-//		final TransitiveClosureIG<IPredicate> trueGraph = new TransitiveClosureIG<>(vertex, 
-//				transitiveClosure.getDescendantsMapping().get(vertex), mImplicationGraph.getFalseVertex());
-//		System.out.println("trueSide " + vertex + trueGraph.getVertices());
-//		Set<ImplicationVertex<IPredicate>> tGVertices = trueGraph.getVertices();
-//		if (tGVertices.size() > 3) {
-//			trueWitness = getWitnessInductive(trueGraph, witnessMap, preds);
-//		}else {
-//			for(ImplicationVertex<IPredicate> v : tGVertices) {
-//				Term t = v.getPredicate().getFormula();
-//				if(!t.equals(mScript.term("false")) && !t.equals(mScript.term("true"))) {
-//					Map<Term, Term> map = new HashMap<>();
-//					map.put(t, null);
-//					trueWitness = new Witness(-1 ,map);
-//					preds.put(t, v.getPredicate());
-//				}
-//			}
-//		}
-//		transitiveClosure.removeDescendantsFromTC(vertex, mImplicationGraph.getTrueVertex());
-//		transitiveClosure.removeVertex(vertex);
-//		Set<ImplicationVertex<IPredicate>> fGVertices = transitiveClosure.getVertices();
-//		System.out.println("falseSide " + vertex + transitiveClosure.getVertices().size());
-//		if (fGVertices.size() > 3) {
-//			falseWitness = getWitnessInductive(transitiveClosure, witnessMap, preds);
-//		}else {
-//			for(ImplicationVertex<IPredicate> v : fGVertices) {
-//				Term t = v.getPredicate().getFormula();
-//				if(!t.equals(mScript.term("false")) && !t.equals(mScript.term("true"))) {
-//					Map<Term, Term> map = new HashMap<>();
-//					map.put(t, null);
-//					falseWitness = new Witness(-1, map);
-//					preds.put(t, v.getPredicate());
-//				}
-//			}
-//		}
-//		witnessMap.put((witness), new Pair<>(trueWitness, falseWitness));
-//		return witness;
-//	}
-//
-//	private Set<IPredicate> getBranches(final ImplicationVertex<IPredicate> vertex) {
-//		final Set<ImplicationVertex<IPredicate>> descendants = vertex.getDescendants();
-//		final Set<ImplicationVertex<IPredicate>> included = vertex.getDescendants();
-//		included.add(vertex);
-//		final Set<IPredicate> branches = new HashSet<>();
-//		for (final ImplicationVertex<IPredicate> d : included) {
-//			d.getParents().forEach(p -> {
-//				if (!descendants.contains(p)) {
-//					branches.add(p.getPredicate());
-//				}
-//			});
-//		}
-//		branches.remove(vertex.getPredicate());
-//		return branches;
-//	}
-//
-//	private int minDepth(final int x) {
-//		return (int) Math.ceil(Math.log(x) / Math.log(2) + 1);
-//	}
+	public boolean restructurePredicateTrie() {
+		final int oldDepth = mPredicateTrie.getDepth();
+		// trie already has minimal depth (true and false are not in depth included)
+		if (oldDepth <= minDepth(mPredicates.size())) return false;
+		ImplicationMap<IPredicate> map;
+		if(mImplicationGraph instanceof ImplicationMap) {
+			map = (ImplicationMap<IPredicate>) mImplicationGraph;
+		} else {
+			throw new UnsupportedOperationException("restructure only possible with ImplicationMap");
+		}
+
+		//restructure
+		// remove true and false, as they are not included in the predicate trie
+		Map<IPredicate, Set<IPredicate>> descendantsMap = new HashMap<>();
+		map.getDescendantsMap().entrySet().forEach(d -> descendantsMap.put(d.getKey(), new HashSet<>(d.getValue())));
+		descendantsMap.remove(mFalsePredicate);
+		descendantsMap.remove(mTruePredicate);
+		descendantsMap.keySet().forEach(d -> descendantsMap.get(d).remove(mTruePredicate));
+		Map<IPredicate, Set<IPredicate>> ancestorsMap = new HashMap<>();
+		map.getAncestorsMap().entrySet().forEach(a -> ancestorsMap.put(a.getKey(), new HashSet<>(a.getValue())));
+		ancestorsMap.remove(mFalsePredicate);
+		ancestorsMap.remove(mTruePredicate);
+		ancestorsMap.keySet().forEach(a -> ancestorsMap.get(a).remove(mFalsePredicate));
+		
+		final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap = new HashMap<>();
+		mRestructureWitnessCounter = 0;
+		
+		RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap,  witnessMap);
+		
+		final PredicateTrie<IPredicate> restructuredTrie =
+				new PredicateTrie<>(mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		restructuredTrie.fillTrie(root, witnessMap);
+		if (oldDepth - restructuredTrie.getDepth() > 0) {
+			mPredicateTrie = restructuredTrie;
+			return true;
+		}
+		return false;
+	}
+
+	private RestructureHelperObject getWitnessInductive(final Map<IPredicate, Set<IPredicate>> descendantsMap, 
+			final Map<IPredicate, Set<IPredicate>> ancestorsMap,
+			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
+		//get witnessSet to split predicates in two groups
+		Pair<IPredicate, IPredicate> pivot = getPivot(descendantsMap, ancestorsMap);
+		Term distinct = mScript.term("and", pivot.getFirst().getFormula(), 
+				mScript.term("not", pivot.getSecond().getFormula()));
+		mRestructureWitnessCounter += 1;
+		final RestructureHelperObject witness = new RestructureHelperObject(mRestructureWitnessCounter,
+				mPredicateTrie.getWitness(distinct), null);
+		
+		Pair<Set<IPredicate>, Set<IPredicate>> split = splitPredicates(witness, pivot, descendantsMap, ancestorsMap);
+		
+		RestructureHelperObject trueWitness = null;
+		RestructureHelperObject falseWitness = null;
+
+		//call function inductively until all predicates are sorted
+		Pair<Map<IPredicate, Set<IPredicate>>,Map<IPredicate, Set<IPredicate>>> trueSide = 
+				prepareSubGraph(split.getFirst(), descendantsMap, ancestorsMap);
+		if (trueSide.getFirst().size() == 1) {
+			trueWitness = new RestructureHelperObject(-1 , null, trueSide.getFirst().keySet().iterator().next());
+		}else {
+			trueWitness = getWitnessInductive(trueSide.getFirst(), trueSide.getSecond(), witnessMap);
+		}
+		Pair<Map<IPredicate, Set<IPredicate>>,Map<IPredicate, Set<IPredicate>>> falseSide = 
+				prepareSubGraph(split.getSecond(), descendantsMap, ancestorsMap);
+		if (falseSide.getFirst().size() == 1) {
+			falseWitness = new RestructureHelperObject(-1 , null, falseSide.getFirst().keySet().iterator().next());
+		}else {
+			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap);
+		}
+		witnessMap.put((witness), new Pair<>(trueWitness, falseWitness));
+		return witness;
+	}
+
+	private Pair<Map<IPredicate, Set<IPredicate>>, Map<IPredicate, Set<IPredicate>>> prepareSubGraph(
+			Set<IPredicate> preds, Map<IPredicate, Set<IPredicate>> descendantsMap,
+			Map<IPredicate, Set<IPredicate>> ancestorsMap) {
+		Map<IPredicate, Set<IPredicate>> newDescendantsMap = new HashMap<>();
+		for(IPredicate pred : preds) {
+			newDescendantsMap.put(pred, new HashSet<>(descendantsMap.get(pred)));
+			for(IPredicate old : descendantsMap.get(pred)) {
+				if(!preds.contains(old)) {
+					newDescendantsMap.get(pred).remove(old);
+				}
+			}
+		}
+		Map<IPredicate, Set<IPredicate>> newAncestersMap = new HashMap<>();
+		for(IPredicate pred : preds) {
+			newAncestersMap.put(pred, new HashSet<>(ancestorsMap.get(pred)));
+			for(IPredicate old : ancestorsMap.get(pred)) {
+				if(!preds.contains(old)) {
+					newAncestersMap.get(pred).remove(old);
+				}
+			}
+		}
+		return new Pair<>(newDescendantsMap, newAncestersMap);
+	}
+
+	private Pair<Set<IPredicate>, Set<IPredicate>> splitPredicates(RestructureHelperObject witness,
+			Pair<IPredicate, IPredicate> pivot, Map<IPredicate, Set<IPredicate>> descendantsMap,
+			Map<IPredicate, Set<IPredicate>> ancestorsMap) {
+		
+		Deque<IPredicate> toCheck = new HashDeque<>();
+		toCheck.addAll(descendantsMap.keySet());
+		Set<IPredicate> included = new HashSet<>(descendantsMap.get(pivot.getFirst()));
+		included.add(pivot.getFirst());
+		Set<IPredicate> excluded = new HashSet<>(ancestorsMap.get(pivot.getSecond()));
+		excluded.add(pivot.getSecond());
+		excluded.removeAll(included);
+		toCheck.removeAll(included);
+		toCheck.removeAll(excluded);
+		
+		while(!toCheck.isEmpty()) {
+			IPredicate current = toCheck.pop();
+			if(mPredicateTrie.fulfillsPredicate(current, witness.getWitness())){
+				included.add(current);
+				included.addAll(descendantsMap.get(current));
+				toCheck.removeAll(descendantsMap.get(current));
+			} else {
+				excluded.add(current);
+				excluded.addAll(ancestorsMap.get(current));
+				toCheck.removeAll(ancestorsMap.get(current));
+			}
+		}
+		return new Pair<>(included, excluded);
+	}
+
+	private Pair<IPredicate, IPredicate> getPivot(final Map<IPredicate, Set<IPredicate>> descendantsMap, 
+			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
+		assert(!descendantsMap.isEmpty() && !ancestorsMap.isEmpty());
+		float optimum = ((float) descendantsMap.keySet().size()) / 2;
+		float minDif = optimum;
+		IPredicate pivotIn = null;
+		//find pivotIn
+		for (final IPredicate pred : descendantsMap.keySet()) {
+			final float vCount = descendantsMap.get(pred).size() + 1;
+			if (vCount == optimum) {
+				pivotIn = pred;
+				break;
+			} else if (Math.abs(optimum - vCount) < minDif) {
+				minDif = Math.abs(optimum - vCount);
+				pivotIn  = pred;
+			}
+		}
+		//update ancestors
+		Map<IPredicate, Set<IPredicate>> ancestors= new HashMap<>();
+		for(Map.Entry<IPredicate, Set<IPredicate>> ancestor : ancestorsMap.entrySet()) {
+			ancestors.put(ancestor.getKey(), new HashSet<>(ancestor.getValue()));
+		}
+		for(IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
+			for(IPredicate descendants : descendantsMap.get(pivotDescendants)) {
+				ancestors.get(descendants).remove(pivotDescendants);
+			}
+		}
+		for(IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
+			ancestors.remove(pivotDescendants);
+		}
+		ancestors.remove(pivotIn);
+		minDif = optimum;
+		//find pivotOut
+		IPredicate pivotOut = null;
+		for (final Entry<IPredicate, Set<IPredicate>> pred : ancestors.entrySet()) {
+			final float vCount = pred.getValue().size() + 1;
+			if (vCount == optimum) {
+				pivotOut = pred.getKey();
+				break;
+			} else if (Math.abs(optimum - vCount) < minDif) {
+				minDif = Math.abs(optimum - vCount);
+				pivotOut  = pred.getKey();
+			}
+		}
+		return new Pair<>(pivotIn, pivotOut);
+	}
+
+	private int minDepth(final int x) {
+		return (int) Math.ceil(Math.log(x) / Math.log(2) + 1);
+	}
 }

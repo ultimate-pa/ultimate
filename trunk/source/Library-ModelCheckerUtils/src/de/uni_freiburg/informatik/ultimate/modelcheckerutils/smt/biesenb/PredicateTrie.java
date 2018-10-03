@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,22 +68,6 @@ public class PredicateTrie<T extends IPredicate> {
 		mRoot = null;
 	}
 
-	protected int getDepth() {
-		if (mRoot == null) {
-			return 0;
-		}
-		return getDepthHelper(mRoot, 0);
-	}
-
-	private int getDepthHelper(final IVertex vertex, final int depth) {
-		if (vertex instanceof PredicateVertex) {
-			return depth + 1;
-		}
-		final int trueMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(false), depth + 1);
-		final int falseMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(true), depth + 1);
-		return Math.max(trueMaxDepth, falseMaxDepth);
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -98,19 +81,6 @@ public class PredicateTrie<T extends IPredicate> {
 			stringHelper(((ModelVertex) vertex).getChild(true), sb);
 			stringHelper(((ModelVertex) vertex).getChild(false), sb);
 		}
-	}
-
-	protected Map<Term, Term> getWitness(final T fulfill, final Set<T> unfulfill) {
-		final Script script = mMgdScript.getScript();
-		final Collection<Term> unfulfillTerms = new HashSet<>();
-		unfulfill.forEach(p -> unfulfillTerms.add(p.getFormula()));
-		Term joined = script.term("true");
-		if (!unfulfillTerms.isEmpty()) {
-			unfulfillTerms.add(mFalsePredicate.getFormula());
-			joined = script.term("not", script.term("or", unfulfillTerms.toArray(new Term[unfulfillTerms.size()])));
-		}
-		final Term all = script.term("and", fulfill.getFormula(), joined);
-		return getWitness(all);
 	}
 
 	/**
@@ -152,7 +122,7 @@ public class PredicateTrie<T extends IPredicate> {
 	/**
 	 * check if model fulfills predicate
 	 */
-	private boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
+	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
 		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgdScript, witness);
 		final Term result = subst.transform(predicate.getClosedFormula());
 		return mTruePredicate.getFormula().equals(result);
@@ -197,7 +167,9 @@ public class PredicateTrie<T extends IPredicate> {
 		}
 	}
 
-	private Map<Term, Term> getWitness(final Term term) {
+	// -- functions for restructure --
+	
+	protected Map<Term, Term> getWitness(final Term term) {
 		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript.getScript(), mSymbolTable);
 		if (mMgdScript.isLocked()) {
 			mMgdScript.requestLockRelease();
@@ -221,28 +193,47 @@ public class PredicateTrie<T extends IPredicate> {
 		}
 	}
 
-	public PredicateTrie<T> fillTrie(Witness root, Map<Witness, Pair<Witness, Witness>> witnessMap, Map<Term, T> preds) {
+	protected int getDepth() {
+		if (mRoot == null) {
+			return 0;
+		}
+		return getDepthHelper(mRoot, 0);
+	}
+
+	private int getDepthHelper(final IVertex vertex, final int depth) {
+		if (vertex instanceof PredicateVertex) {
+			return depth + 1;
+		}
+		final int trueMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(false), depth + 1);
+		final int falseMaxDepth = getDepthHelper(((ModelVertex) vertex).getChild(true), depth + 1);
+		return Math.max(trueMaxDepth, falseMaxDepth);
+	}
+
+	public PredicateTrie<T> fillTrie(RestructureHelperObject root, 
+			Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
 		if(mRoot != null) {
 			throw new UnsupportedOperationException("trie must be empty");
 		}
-		Map<Witness, ModelVertex> modelVertices = new HashMap<>();
 		
-		for(Witness key : witnessMap.keySet()) {
+		Map<RestructureHelperObject, ModelVertex> modelVertices = new HashMap<>();
+		
+		for(RestructureHelperObject key : witnessMap.keySet()) {
 			modelVertices.put(key, new ModelVertex(null, null, key.getWitness()));
 		}
-		for(Map.Entry<Witness, Pair<Witness, Witness>> entry : witnessMap.entrySet()) {
-			 Pair<Witness, Witness> children = entry.getValue();
-			if(children.getFirst().getSerialNumber() < 0){
+		for(Map.Entry<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> entry :
+			witnessMap.entrySet()) {
+			 Pair<RestructureHelperObject, RestructureHelperObject> children = entry.getValue();
+			if(children.getFirst().getSerialNumber() == -1){
 				// predicate
-				IVertex trueChild = new PredicateVertex<>(preds.get(children.getFirst().getWitness().keySet().iterator().next()));
+				IVertex trueChild = new PredicateVertex<>(children.getFirst().getPredicatet());
 				modelVertices.get(entry.getKey()).setTrueChild(trueChild);
 			} else {
 				// model
 				modelVertices.get(entry.getKey()).setTrueChild(modelVertices.get(children.getFirst()));
 			}
-			if(children.getSecond().getSerialNumber() < 0){
+			if(children.getSecond().getSerialNumber() == -1){
 				// predicate
-				IVertex falseChild = new PredicateVertex<>(preds.get(children.getSecond().getWitness().keySet().iterator().next()));
+				IVertex falseChild = new PredicateVertex<>(children.getSecond().getPredicatet());
 				modelVertices.get(entry.getKey()).setFalseChild(falseChild);
 			} else {
 				// model

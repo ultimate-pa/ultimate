@@ -37,6 +37,14 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		mAncestors.get(truePred).add(falsePred);
 	}
 	
+	protected Map<T, Set<T>> getDescendantsMap(){
+		return mDescendants;
+	}
+	
+	protected Map<T, Set<T>> getAncestorsMap(){
+		return mAncestors;
+	}
+	
 	@Override
 	public String toString() {
 		final StringBuilder bld = new StringBuilder();
@@ -58,7 +66,7 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	@Override
 	public Set<IPredicate> getCoveredPredicates(IPredicate pred) {
 		Set<T> ancestors = mAncestors.get(pred);
-		Set<IPredicate> covered = new HashSet<>();
+		Set<IPredicate> covered = new HashSet<>(ancestors.size() + 1);
 		ancestors.forEach(a -> covered.add(a));
 		covered.add(pred);
 		return covered;
@@ -67,7 +75,7 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	@Override
 	public Set<IPredicate> getCoveringPredicates(IPredicate pred) {
 		Set<T> descendants = mDescendants.get(pred);
-		Set<IPredicate> covering = new HashSet<>();
+		Set<IPredicate> covering = new HashSet<>(descendants.size() + 1);
 		descendants.forEach(d -> covering.add(d));
 		covering.add(pred);
 		return covering;
