@@ -922,8 +922,7 @@ public class ACSLHandler implements IACSLHandler {
 		final CPrimitive resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
 		expr = mExprResultTransformer.switchToRValueIfNecessary(expr, loc, main.getAcslHook());
-		mExpressionTranslation.convertIfNecessary(loc, expr, resultType);
-		return expr;
+		return mExpressionTranslation.convertIfNecessary(loc, expr, resultType);
 	}
 
 	@Override

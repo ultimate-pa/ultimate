@@ -691,24 +691,25 @@ public class StandardFunctionHandler {
 	private Result handleJoin(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-//		// get arguments
-//		final IASTInitializerClause[] arguments = node.getArguments();
-//		checkArguments(loc, 2, name, arguments);
-//		final ExpressionResult argThreadId = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-//		final ExpressionResult argAddressOfResultPointer = dispatchAndConvertFunctionArgument(main, loc, arguments[1]);
+		// // get arguments
+		// final IASTInitializerClause[] arguments = node.getArguments();
+		// checkArguments(loc, 2, name, arguments);
+		// final ExpressionResult argThreadId = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
+		// final ExpressionResult argAddressOfResultPointer = dispatchAndConvertFunctionArgument(main, loc,
+		// arguments[1]);
 
 		// Object that will build our result
 		final ExpressionResultBuilder build = new ExpressionResultBuilder();
 
-//		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
-//		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
-//		builder.addDeclaration(auxvarinfo.getVarDec());
-//		builder.addAuxVar(auxvarinfo);
-//		final Expression value = auxvarinfo.getExp();
-//
-//
-//		final MemoryHandler memoryHandler = main.mHandlerHandler.getMemoryHandler();
-//		memoryHandler.getWriteCall(main, loc, hlv, value, valueType, isStaticInitialization, hook)
+		// final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
+		// final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+		// builder.addDeclaration(auxvarinfo.getVarDec());
+		// builder.addAuxVar(auxvarinfo);
+		// final Expression value = auxvarinfo.getExp();
+		//
+		//
+		// final MemoryHandler memoryHandler = main.mHandlerHandler.getMemoryHandler();
+		// memoryHandler.getWriteCall(main, loc, hlv, value, valueType, isStaticInitialization, hook)
 
 		return build.build();
 	}
@@ -942,7 +943,8 @@ public class StandardFunctionHandler {
 		// stackframe is closed, i.e. at a return
 		if ("alloca".equals(methodName) || "__builtin_alloca".equals(methodName)) {
 			final LocalLValue llVal = new LocalLValue(auxvar.getLhs(), resultType, null);
-			mMemoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
+			mMemoryHandler.addVariableToBeFreed(
+					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after
 			// this, and free (triggered by the statement before) would fail.
 			erb.clearAuxVars();
@@ -1063,10 +1065,11 @@ public class StandardFunctionHandler {
 		}
 		final List<ExpressionResult> rtr = new ArrayList<>();
 		for (final IASTInitializerClause argument : arguments) {
-			final ExpressionResult arg =
+			final ExpressionResult decayedArgument =
 					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, argument);
-			mExpressionTranslation.convertIfNecessary(loc, arg, floatFunction.getType());
-			rtr.add(arg);
+			final ExpressionResult convertedArgument =
+					mExpressionTranslation.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
+			rtr.add(convertedArgument);
 		}
 
 		final CPrimitive typeDeterminedByName = floatFunction.getType();
