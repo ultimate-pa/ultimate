@@ -195,7 +195,8 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 		// assuming the formula is in DNF
 		final List<Term> disjunctsWithLocUpdatesAndLocInitialization = new ArrayList<>();
 		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
-			if (!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or")) {
+			if (!SmtUtils.isAtomicFormula(disjunct) &&
+					(!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or"))) {
 				throw new AssertionError("the code below only works for conjunctive formulas");
 			}
 
