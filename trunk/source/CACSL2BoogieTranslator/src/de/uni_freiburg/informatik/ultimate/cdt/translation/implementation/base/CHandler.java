@@ -923,10 +923,10 @@ public class CHandler {
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
 
 		if (!expr.hasLRValue()) {
-			// creates a void expression for nul RValues
+			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			expr = new ExpressionResultBuilder().setLrValue(rVal).build();
+			expr = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rVal).build();
 		}
 		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, this, loc, newCType, node);
 
