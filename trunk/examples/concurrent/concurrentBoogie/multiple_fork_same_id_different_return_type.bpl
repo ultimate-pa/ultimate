@@ -1,5 +1,8 @@
+//#Safe
 /*
  * This example shows how fork and join works for different types as expression.
+ * Only the thread that executes foo is joined because for the other
+ * the return type does not match.
  *
  * Author: Lars Nitzke (lars.nitzke@outlook.com)
  * Date: 24.08.2018
@@ -20,6 +23,7 @@ implementation ULTIMATE.start()
     fork 1 sam();
     
     join 1 assign x;
+    assert x == 6;
 }
 
 procedure foo() returns (ret : int);

@@ -1,3 +1,4 @@
+//#Unsafe
 /*
  * This example shows how fork and join works for different types as expression.
  *
@@ -20,6 +21,7 @@ implementation ULTIMATE.start()
     fork y bar();
     
     join true;
+    assert false;
 }
 
 procedure foo();

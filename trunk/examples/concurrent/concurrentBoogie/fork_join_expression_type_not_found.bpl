@@ -1,3 +1,4 @@
+//#Safe
 /*
  * This example shows how fork and join works, if there is no fitting type for
  * the join exepression.

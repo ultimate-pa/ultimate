@@ -1,3 +1,4 @@
+//#Unsafe
 /*
  * A little example to show that the verification of fork statements in a loop work
  * iff there is also a join statement in the same loop.
@@ -22,7 +23,7 @@ implementation ULTIMATE.start()
         join x;
         x := x + 1;
     }
-    
+    assert false;
     join x;
 }
 

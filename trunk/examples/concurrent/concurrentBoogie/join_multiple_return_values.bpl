@@ -1,3 +1,4 @@
+//#Safe
 /*
  * This example shows how the join statement handles multiple return values.
  *
@@ -19,6 +20,7 @@ implementation ULTIMATE.start()
     x := 3;
     
     join 1 assign x, y;
+    assert (x == 1 && !y);
 }
 
 procedure foo(num : int) returns(ret : int, ret_bool : bool);
