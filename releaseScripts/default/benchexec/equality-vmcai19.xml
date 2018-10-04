@@ -27,6 +27,8 @@
         <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-12.bpl</includesfile>
         <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-14.bpl</includesfile>
         <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-16.bpl</includesfile>
+        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-18.bpl</includesfile>
+        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-20.bpl</includesfile>
     </tasks>
 
 </benchmark>
