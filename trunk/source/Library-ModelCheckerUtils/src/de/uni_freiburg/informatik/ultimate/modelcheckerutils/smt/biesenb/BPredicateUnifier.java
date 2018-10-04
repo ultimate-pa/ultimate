@@ -61,6 +61,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class BPredicateUnifier implements IPredicateUnifier {
 
+	private static final boolean USE_MAP = true;
+	private static final boolean USE_RESTRUCTURE = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
@@ -71,18 +74,17 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private final Collection<IPredicate> mPredicates;
 	private final Set<IPredicate> mIntricatePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
-	private int mRestructureWitnessCounter;
+	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 	private final ILogger mLogger;
-	
+
 	private PredicateTrie<IPredicate> mPredicateTrie;
+
+	// hack to prevent creating own statistics object (should be done instead of using this)
 	private long mImplicationTime = 0;
 	private int mDepthOffset;
-	private boolean mEnableRestructure;
-
-	private final PredicateUnifierStatisticsGenerator mStatisticsTracker;
 
 	public BPredicateUnifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript script,
-			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable, final boolean useMap, final boolean enableRestructure) {
+			final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mMgdScript = script;
@@ -95,13 +97,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mIntricatePredicate = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
 		mPredicateTrie = new PredicateTrie<>(logger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
-		if(useMap) {
+		if (USE_MAP) {
 			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate, true);
 		} else {
 			mImplicationGraph = new ImplicationGraph<>(mMgdScript, this, mFalsePredicate, mTruePredicate);
 		}
 		mPredicates.add(mTruePredicate);
 		mPredicates.add(mFalsePredicate);
+		mDepthOffset = 0;
 		logger.info("Initialized predicate-trie based predicate unifier");
 	}
 
@@ -214,9 +217,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mStatisticsTracker.incrementGetRequests();
 		return getOrConstructPredicateInternal(term);
 	}
-	
- boolean re = true;
- 
+
 	private IPredicate getOrConstructPredicateInternal(final Term term) {
 		mStatisticsTracker.continueTime();
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
@@ -241,17 +242,21 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				mStatisticsTracker.incrementSemanticMatches();
 			}
 		}
-		mStatisticsTracker.stopTime();
-		int oldDepth = mPredicateTrie.getDepth();
-		if(mEnableRestructure && oldDepth >  (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
-			restructurePredicateTrie();
-			mDepthOffset = mPredicateTrie.getDepth() - minDepth(mPredicates.size());
-			mLogger.info("--------PredicateTrie is restructured: " + "old depths: " + oldDepth + 
-					" new depth: " + mPredicateTrie.getDepth());
+
+		if (USE_RESTRUCTURE) {
+			final int oldDepth = mPredicateTrie.getDepth();
+			if (oldDepth > (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
+				restructurePredicateTrie();
+				final int newDepth = mPredicateTrie.getDepth();
+				mDepthOffset = newDepth - minDepth(mPredicates.size());
+				mLogger.info("--------PredicateTrie is restructured: " + "old depths: " + oldDepth + " new depth: "
+						+ newDepth);
+			}
 		}
+		mStatisticsTracker.stopTime();
 		return unifiedPredicate;
 	}
-	
+
 	private IPredicate catchTrueOrFalse(final IPredicate pred) {
 		if (mTruePredicate.getFormula().equals(pred.getFormula())) {
 			mStatisticsTracker.incrementSyntacticMatches();
@@ -277,7 +282,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mStatisticsTracker.incrementSemanticMatches();
 			mStatisticsTracker.stopTime();
 			return mFalsePredicate;
-		}else if (equalsFalse == LBool.UNKNOWN) {
+		} else if (equalsFalse == LBool.UNKNOWN) {
 			mIntricatePredicate.add(pred);
 			return pred;
 		}
@@ -333,38 +338,40 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		// TODO Find a way to exploit that we already know this term is unique.
 		return getOrConstructPredicate(term);
 	}
-	
+
 	public boolean restructurePredicateTrie() {
 		final int oldDepth = mPredicateTrie.getDepth();
 		// trie already has minimal depth (true and false are not in depth included)
-		if (oldDepth <= minDepth(mPredicates.size())) return false;
+		if (oldDepth <= minDepth(mPredicates.size())) {
+			return false;
+		}
 		ImplicationMap<IPredicate> map;
-		if(mImplicationGraph instanceof ImplicationMap) {
+		if (mImplicationGraph instanceof ImplicationMap) {
 			map = (ImplicationMap<IPredicate>) mImplicationGraph;
 		} else {
 			throw new UnsupportedOperationException("restructure only possible with ImplicationMap");
 		}
 
-		//restructure
+		// restructure
 		// remove true and false, as they are not included in the predicate trie
-		Map<IPredicate, Set<IPredicate>> descendantsMap = new HashMap<>();
+		final Map<IPredicate, Set<IPredicate>> descendantsMap = new HashMap<>();
 		map.getDescendantsMap().entrySet().forEach(d -> descendantsMap.put(d.getKey(), new HashSet<>(d.getValue())));
 		descendantsMap.remove(mFalsePredicate);
 		descendantsMap.remove(mTruePredicate);
 		descendantsMap.keySet().forEach(d -> descendantsMap.get(d).remove(mTruePredicate));
-		Map<IPredicate, Set<IPredicate>> ancestorsMap = new HashMap<>();
+		final Map<IPredicate, Set<IPredicate>> ancestorsMap = new HashMap<>();
 		map.getAncestorsMap().entrySet().forEach(a -> ancestorsMap.put(a.getKey(), new HashSet<>(a.getValue())));
 		ancestorsMap.remove(mFalsePredicate);
 		ancestorsMap.remove(mTruePredicate);
 		ancestorsMap.keySet().forEach(a -> ancestorsMap.get(a).remove(mFalsePredicate));
-		
-		final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap = new HashMap<>();
-		mRestructureWitnessCounter = 0;
-		
-		RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap,  witnessMap);
-		
-		final PredicateTrie<IPredicate> restructuredTrie = new PredicateTrie<>(mLogger, mMgdScript,
-				mTruePredicate, mFalsePredicate, mSymbolTable);
+
+		final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap =
+				new HashMap<>();
+
+		final RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap, witnessMap, 0);
+
+		final PredicateTrie<IPredicate> restructuredTrie =
+				new PredicateTrie<>(mLogger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
 		restructuredTrie.fillTrie(root, witnessMap);
 		if (oldDepth - restructuredTrie.getDepth() > 0) {
 			mPredicateTrie = restructuredTrie;
@@ -373,58 +380,60 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return false;
 	}
 
-	private RestructureHelperObject getWitnessInductive(final Map<IPredicate, Set<IPredicate>> descendantsMap, 
+	private RestructureHelperObject getWitnessInductive(final Map<IPredicate, Set<IPredicate>> descendantsMap,
 			final Map<IPredicate, Set<IPredicate>> ancestorsMap,
-			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
-		//get witnessSet to split predicates in two groups
-		Pair<IPredicate, IPredicate> pivot = getPivot(descendantsMap, ancestorsMap);
-		Term distinct = mScript.term("and", pivot.getFirst().getFormula(), 
-				mScript.term("not", pivot.getSecond().getFormula()));
-		mRestructureWitnessCounter += 1;
-		final RestructureHelperObject witness = new RestructureHelperObject(mRestructureWitnessCounter,
-				mPredicateTrie.getWitness(distinct), null);
-		
-		Pair<Set<IPredicate>, Set<IPredicate>> split = splitPredicates(witness, pivot, descendantsMap, ancestorsMap);
-		
+			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap,
+			int helperSerial) {
+		// get witnessSet to split predicates in two groups
+		final Pair<IPredicate, IPredicate> pivot = getPivot(descendantsMap, ancestorsMap);
+		final Term distinct =
+				mScript.term("and", pivot.getFirst().getFormula(), mScript.term("not", pivot.getSecond().getFormula()));
+		helperSerial++;
+		final RestructureHelperObject witness =
+				new RestructureHelperObject(helperSerial, mPredicateTrie.getWitness(distinct), null);
+
+		final Pair<Set<IPredicate>, Set<IPredicate>> split =
+				splitPredicates(witness, pivot, descendantsMap, ancestorsMap);
+
 		RestructureHelperObject trueWitness = null;
 		RestructureHelperObject falseWitness = null;
 
-		//call function inductively until all predicates are sorted
-		Pair<Map<IPredicate, Set<IPredicate>>,Map<IPredicate, Set<IPredicate>>> trueSide = 
+		// call function inductively until all predicates are sorted
+		final Pair<Map<IPredicate, Set<IPredicate>>, Map<IPredicate, Set<IPredicate>>> trueSide =
 				prepareSubGraph(split.getFirst(), descendantsMap, ancestorsMap);
 		if (trueSide.getFirst().size() == 1) {
-			trueWitness = new RestructureHelperObject(-1 , null, trueSide.getFirst().keySet().iterator().next());
-		}else {
-			trueWitness = getWitnessInductive(trueSide.getFirst(), trueSide.getSecond(), witnessMap);
+			trueWitness = new RestructureHelperObject(-1, null, trueSide.getFirst().keySet().iterator().next());
+		} else {
+			trueWitness = getWitnessInductive(trueSide.getFirst(), trueSide.getSecond(), witnessMap, helperSerial);
 		}
-		Pair<Map<IPredicate, Set<IPredicate>>,Map<IPredicate, Set<IPredicate>>> falseSide = 
+		final Pair<Map<IPredicate, Set<IPredicate>>, Map<IPredicate, Set<IPredicate>>> falseSide =
 				prepareSubGraph(split.getSecond(), descendantsMap, ancestorsMap);
 		if (falseSide.getFirst().size() == 1) {
-			falseWitness = new RestructureHelperObject(-1 , null, falseSide.getFirst().keySet().iterator().next());
-		}else {
-			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap);
+			falseWitness = new RestructureHelperObject(-1, null, falseSide.getFirst().keySet().iterator().next());
+		} else {
+			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap, helperSerial);
 		}
 		witnessMap.put((witness), new Pair<>(trueWitness, falseWitness));
 		return witness;
 	}
 
 	private Pair<Map<IPredicate, Set<IPredicate>>, Map<IPredicate, Set<IPredicate>>> prepareSubGraph(
-			Set<IPredicate> preds, Map<IPredicate, Set<IPredicate>> descendantsMap,
-			Map<IPredicate, Set<IPredicate>> ancestorsMap) {
-		Map<IPredicate, Set<IPredicate>> newDescendantsMap = new HashMap<>();
-		for(IPredicate pred : preds) {
+			final Set<IPredicate> preds, final Map<IPredicate, Set<IPredicate>> descendantsMap,
+			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
+		final Map<IPredicate, Set<IPredicate>> newDescendantsMap = new HashMap<>();
+		for (final IPredicate pred : preds) {
 			newDescendantsMap.put(pred, new HashSet<>(descendantsMap.get(pred)));
-			for(IPredicate old : descendantsMap.get(pred)) {
-				if(!preds.contains(old)) {
+			for (final IPredicate old : descendantsMap.get(pred)) {
+				if (!preds.contains(old)) {
 					newDescendantsMap.get(pred).remove(old);
 				}
 			}
 		}
-		Map<IPredicate, Set<IPredicate>> newAncestersMap = new HashMap<>();
-		for(IPredicate pred : preds) {
+		final Map<IPredicate, Set<IPredicate>> newAncestersMap = new HashMap<>();
+		for (final IPredicate pred : preds) {
 			newAncestersMap.put(pred, new HashSet<>(ancestorsMap.get(pred)));
-			for(IPredicate old : ancestorsMap.get(pred)) {
-				if(!preds.contains(old)) {
+			for (final IPredicate old : ancestorsMap.get(pred)) {
+				if (!preds.contains(old)) {
 					newAncestersMap.get(pred).remove(old);
 				}
 			}
@@ -432,23 +441,23 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return new Pair<>(newDescendantsMap, newAncestersMap);
 	}
 
-	private Pair<Set<IPredicate>, Set<IPredicate>> splitPredicates(RestructureHelperObject witness,
-			Pair<IPredicate, IPredicate> pivot, Map<IPredicate, Set<IPredicate>> descendantsMap,
-			Map<IPredicate, Set<IPredicate>> ancestorsMap) {
-		
-		Deque<IPredicate> toCheck = new HashDeque<>();
+	private Pair<Set<IPredicate>, Set<IPredicate>> splitPredicates(final RestructureHelperObject witness,
+			final Pair<IPredicate, IPredicate> pivot, final Map<IPredicate, Set<IPredicate>> descendantsMap,
+			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
+
+		final Deque<IPredicate> toCheck = new HashDeque<>();
 		toCheck.addAll(descendantsMap.keySet());
-		Set<IPredicate> included = new HashSet<>(descendantsMap.get(pivot.getFirst()));
+		final Set<IPredicate> included = new HashSet<>(descendantsMap.get(pivot.getFirst()));
 		included.add(pivot.getFirst());
-		Set<IPredicate> excluded = new HashSet<>(ancestorsMap.get(pivot.getSecond()));
+		final Set<IPredicate> excluded = new HashSet<>(ancestorsMap.get(pivot.getSecond()));
 		excluded.add(pivot.getSecond());
 		excluded.removeAll(included);
 		toCheck.removeAll(included);
 		toCheck.removeAll(excluded);
-		
-		while(!toCheck.isEmpty()) {
-			IPredicate current = toCheck.pop();
-			if(mPredicateTrie.fulfillsPredicate(current, witness.getWitness())){
+
+		while (!toCheck.isEmpty()) {
+			final IPredicate current = toCheck.pop();
+			if (mPredicateTrie.fulfillsPredicate(current, witness.getWitness())) {
 				included.add(current);
 				included.addAll(descendantsMap.get(current));
 				toCheck.removeAll(descendantsMap.get(current));
@@ -461,13 +470,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		return new Pair<>(included, excluded);
 	}
 
-	private Pair<IPredicate, IPredicate> getPivot(final Map<IPredicate, Set<IPredicate>> descendantsMap, 
+	private Pair<IPredicate, IPredicate> getPivot(final Map<IPredicate, Set<IPredicate>> descendantsMap,
 			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
-		assert(!descendantsMap.isEmpty() && !ancestorsMap.isEmpty());
-		float optimum = ((float) descendantsMap.keySet().size()) / 2;
+		assert (!descendantsMap.isEmpty() && !ancestorsMap.isEmpty());
+		final float optimum = ((float) descendantsMap.keySet().size()) / 2;
 		float minDif = optimum;
 		IPredicate pivotIn = null;
-		//find pivotIn
+		// find pivotIn
 		for (final IPredicate pred : descendantsMap.keySet()) {
 			final float vCount = descendantsMap.get(pred).size() + 1;
 			if (vCount == optimum) {
@@ -475,25 +484,25 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				break;
 			} else if (Math.abs(optimum - vCount) < minDif) {
 				minDif = Math.abs(optimum - vCount);
-				pivotIn  = pred;
+				pivotIn = pred;
 			}
 		}
-		//update ancestors
-		Map<IPredicate, Set<IPredicate>> ancestors= new HashMap<>();
-		for(Map.Entry<IPredicate, Set<IPredicate>> ancestor : ancestorsMap.entrySet()) {
+		// update ancestors
+		final Map<IPredicate, Set<IPredicate>> ancestors = new HashMap<>();
+		for (final Map.Entry<IPredicate, Set<IPredicate>> ancestor : ancestorsMap.entrySet()) {
 			ancestors.put(ancestor.getKey(), new HashSet<>(ancestor.getValue()));
 		}
-		for(IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
-			for(IPredicate descendants : descendantsMap.get(pivotDescendants)) {
+		for (final IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
+			for (final IPredicate descendants : descendantsMap.get(pivotDescendants)) {
 				ancestors.get(descendants).remove(pivotDescendants);
 			}
 		}
-		for(IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
+		for (final IPredicate pivotDescendants : descendantsMap.get(pivotIn)) {
 			ancestors.remove(pivotDescendants);
 		}
 		ancestors.remove(pivotIn);
 		minDif = optimum;
-		//find pivotOut
+		// find pivotOut
 		IPredicate pivotOut = null;
 		for (final Entry<IPredicate, Set<IPredicate>> pred : ancestors.entrySet()) {
 			final float vCount = pred.getValue().size() + 1;
@@ -502,7 +511,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				break;
 			} else if (Math.abs(optimum - vCount) < minDif) {
 				minDif = Math.abs(optimum - vCount);
-				pivotOut  = pred.getKey();
+				pivotOut = pred.getKey();
 			}
 		}
 		return new Pair<>(pivotIn, pivotOut);

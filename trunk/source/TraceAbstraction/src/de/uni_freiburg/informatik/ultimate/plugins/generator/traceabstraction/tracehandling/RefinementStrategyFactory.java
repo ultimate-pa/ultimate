@@ -139,7 +139,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
-			return new BPredicateUnifier(mServices, mLogger, managedScript, mPredicateFactory, symbolTable, true, true);
+			return new BPredicateUnifier(mServices, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
 		return new PredicateUnifier(mLogger, mServices, managedScript, mPredicateFactory, symbolTable,
 				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
