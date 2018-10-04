@@ -1050,17 +1050,6 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name) {
 		final FloatFunction floatFunction = FloatFunction.decode(name);
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
-
-		// integer arguments are cast to double
-		if (args.get(0).getLrValue().getCType() instanceof CPrimitive
-				&& args.get(0).getLrValue().getCType().isIntegerType()) {
-			args.set(0, mExprResultTransformer.convert(loc, args.get(0), new CPrimitive(CPrimitives.DOUBLE)));
-		}
-		if (args.get(1).getLrValue().getCType() instanceof CPrimitive
-				&& args.get(1).getLrValue().getCType().isIntegerType()) {
-			args.set(1, mExprResultTransformer.convert(loc, args.get(1), new CPrimitive(CPrimitives.DOUBLE)));
-		}
-
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
 		return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();

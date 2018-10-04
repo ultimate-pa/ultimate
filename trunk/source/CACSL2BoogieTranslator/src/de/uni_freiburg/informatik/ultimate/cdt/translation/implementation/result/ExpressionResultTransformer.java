@@ -544,7 +544,9 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * Handle conversions according to Section 6.3 of C11.
+	 * Handle implicit conversions according to Section 6.3 of C11.
+	 *
+	 * See also {@link ExpressionTranslation#usualArithmeticConversions(ILocation, ExpressionResult, ExpressionResult)}.
 	 *
 	 * Modifies a given {@link ExpressionResult} such that the effect of a cast from the current {@link CType} of the
 	 * {@link ExpressionResult} to resultType is captured. Method may exchange the {@link RValue} of the
