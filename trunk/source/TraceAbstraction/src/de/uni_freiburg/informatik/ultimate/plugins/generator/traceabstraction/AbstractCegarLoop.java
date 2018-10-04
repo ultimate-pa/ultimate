@@ -254,6 +254,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mInteractive = new InteractiveCegar(services, logger);
+		mLogger.info("Starting to check reachability of " + errorLocs.size() + " error locations.");
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
