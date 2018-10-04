@@ -7,13 +7,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 
 public class RestructureHelperObject {
 
-	final private int mSerialNumber;
-	final private Map<Term, Term> mWitness;
-	final private IPredicate mPredicate;
+	private static int sSerial = 0;
+
+	private final int mSerialNumber;
+	private final Map<Term, Term> mWitness;
+	private final IPredicate mPredicate;
 
 	public RestructureHelperObject(final int serialNumber, final Map<Term, Term> witnesses,
 			final IPredicate predicate) {
 		mSerialNumber = serialNumber;
+		mWitness = witnesses;
+		mPredicate = predicate;
+	}
+
+	public RestructureHelperObject(final Map<Term, Term> witnesses, final IPredicate predicate) {
+		mSerialNumber = sSerial++;
 		mWitness = witnesses;
 		mPredicate = predicate;
 	}

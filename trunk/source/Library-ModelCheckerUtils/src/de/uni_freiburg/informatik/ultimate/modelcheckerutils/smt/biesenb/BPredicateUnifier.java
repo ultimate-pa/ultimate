@@ -368,7 +368,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap =
 				new HashMap<>();
 
-		final RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap, witnessMap, 0);
+		final RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap, witnessMap);
 
 		final PredicateTrie<IPredicate> restructuredTrie =
 				new PredicateTrie<>(mLogger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
@@ -382,15 +382,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	private RestructureHelperObject getWitnessInductive(final Map<IPredicate, Set<IPredicate>> descendantsMap,
 			final Map<IPredicate, Set<IPredicate>> ancestorsMap,
-			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap,
-			int helperSerial) {
+			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
 		// get witnessSet to split predicates in two groups
 		final Pair<IPredicate, IPredicate> pivot = getPivot(descendantsMap, ancestorsMap);
 		final Term distinct =
 				mScript.term("and", pivot.getFirst().getFormula(), mScript.term("not", pivot.getSecond().getFormula()));
-		helperSerial++;
-		final RestructureHelperObject witness =
-				new RestructureHelperObject(helperSerial, mPredicateTrie.getWitness(distinct), null);
+
+		final RestructureHelperObject witness = new RestructureHelperObject(mPredicateTrie.getWitness(distinct), null);
 
 		final Pair<Set<IPredicate>, Set<IPredicate>> split =
 				splitPredicates(witness, pivot, descendantsMap, ancestorsMap);
@@ -404,14 +402,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		if (trueSide.getFirst().size() == 1) {
 			trueWitness = new RestructureHelperObject(-1, null, trueSide.getFirst().keySet().iterator().next());
 		} else {
-			trueWitness = getWitnessInductive(trueSide.getFirst(), trueSide.getSecond(), witnessMap, helperSerial);
+			trueWitness = getWitnessInductive(trueSide.getFirst(), trueSide.getSecond(), witnessMap);
 		}
 		final Pair<Map<IPredicate, Set<IPredicate>>, Map<IPredicate, Set<IPredicate>>> falseSide =
 				prepareSubGraph(split.getSecond(), descendantsMap, ancestorsMap);
 		if (falseSide.getFirst().size() == 1) {
 			falseWitness = new RestructureHelperObject(-1, null, falseSide.getFirst().keySet().iterator().next());
 		} else {
-			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap, helperSerial);
+			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap);
 		}
 		witnessMap.put((witness), new Pair<>(trueWitness, falseWitness));
 		return witness;
