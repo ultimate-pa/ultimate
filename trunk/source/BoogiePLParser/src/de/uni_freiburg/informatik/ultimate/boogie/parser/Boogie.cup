@@ -101,7 +101,7 @@ terminal FALSE, TRUE;
 terminal ASSUME, ASSERT, HAVOC, FORK, JOIN, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO;
 /* Other Symbols */
 terminal COMMA, COLON, SEMI, COLONEQUALS, EQUALS, ASSIGN;
-terminal LPAR, RPAR, LBKT, RBKT, LBRC, RBRC, LANG, RANG;
+terminal LPAR, RPAR, LBKT, RBKT, LBRCCOLON, LBRC, RBRC, LANG, RANG;
 terminal LESS, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
@@ -368,7 +368,7 @@ attrtriggers ::=
 	| attrtriggers:as trigger:t {: as.add(t); RESULT = as; :}
 	;
 attribute ::=
-	LBRC COLON ID:name attrArgCommaStar:attr RBRC
+	LBRCCOLON ID:name attrArgCommaStar:attr RBRC
 	  {: RESULT = new NamedAttribute(getLocation(name$,attr$), name, attr.toArray(new Expression[attr.size()])); :}
 	;
 attrArgCommaStar ::=

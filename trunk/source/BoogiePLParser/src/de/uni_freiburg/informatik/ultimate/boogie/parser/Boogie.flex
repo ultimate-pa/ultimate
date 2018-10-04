@@ -109,6 +109,7 @@ BvType = "bv" {DecIntegerLiteral}
   ")"             { return symbol(LexerSymbols.RPAR); }
   "["             { return symbol(LexerSymbols.LBKT); }
   "]"             { return symbol(LexerSymbols.RBKT); }
+  "{" {WhiteSpace}* ":" { return symbol(LexerSymbols.LBRCCOLON); }
   "{"             { return symbol(LexerSymbols.LBRC); }
   "}"             { return symbol(LexerSymbols.RBRC); }
   ","             { return symbol(LexerSymbols.COMMA); }
