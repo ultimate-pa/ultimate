@@ -59,6 +59,7 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 		mPrettyPrintedStatements = null;
 	}
 
+	@Override
 	public boolean calledProcedureHasImplementation() {
 		return mCalledProcedureHasImplementation;
 	}
@@ -78,6 +79,6 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 
 	@Override
 	public String toString() {
-		return "SUMMARY for " + mPrettyPrintedStatements + " srcloc: " + mSource;
+		return "SUMMARY for " + getPrettyPrintedStatements() + " srcloc: " + mSource;
 	}
 }
