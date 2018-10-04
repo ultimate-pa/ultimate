@@ -19,16 +19,16 @@
     </rundefinition>
     
     <tasks name="Poc03">
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-02.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-04.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-06.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-08.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-10.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-12.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-14.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-16.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-18.bpl</includesfile>
-        <includesfile>../../../trunk/examples/programs/heapseparator/speedup-poc03-20.bpl</includesfile>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-02.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-04.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-06.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-08.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-10.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-12.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-14.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-16.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-18.bpl</include>
+        <include>../../../trunk/examples/programs/heapseparator/speedup-poc03-20.bpl</include>
     </tasks>
 
 </benchmark>
