@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -102,12 +103,16 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
+		final Set<IcfgLocation> threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap().entrySet()
+				.stream().map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
 		for (final Entry<String, Set<? extends IcfgLocation>> proc2errorLocs : proc2errNodes.entrySet()) {
 			for (final IcfgLocation errorLoc : proc2errorLocs.getValue()) {
-				errNodesOfAllProc.add(errorLoc);
+				if (!threadErrorLocations.contains(errorLoc)) {
+					errNodesOfAllProc.add(errorLoc);
+				}
 			}
 		}
 
