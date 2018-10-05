@@ -28,9 +28,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * An example for a main IDispatcher implementation.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
@@ -752,6 +749,7 @@ public class MainDispatcher implements IDispatcher {
 		return mPreprocessorHandler.visit(this, n);
 	}
 
+	@Override
 	public LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node) {
 		final AssertStatement as = fetchInvariantAt(node);
 		LoopInvariantSpecification result;
