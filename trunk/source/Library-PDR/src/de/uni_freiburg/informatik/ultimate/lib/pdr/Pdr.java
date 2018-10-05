@@ -191,12 +191,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 
-		mLogger.debug("PDR initialized...");
-		mLogger.debug("Analyting Trace: " + mTrace);
+		mLogger.info("Analyzing path program with PDR");
 
 		try {
 			mPdrBenchmark.start(PdrStatisticsDefinitions.PDR_RUNTIME);
 			mIsTraceCorrect = computePdr();
+			mLogger.info("Finished analyzing path program with PDR");
 			mTraceCheckFinishedNormally = true;
 			mReasonUnknown = null;
 		} catch (final ToolchainCanceledException tce) {
@@ -339,11 +339,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final IcfgLocation location = proofObligation.getLocation();
 			final int level = mLevel - proofObligation.getLevel();
 
-			mLogger.debug("ProofObligation: " + proofObligation);
-			mLogger.debug("predecessors: " + location.getIncomingNodes());
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("ProofObligation: " + proofObligation);
+				mLogger.debug("predecessors: " + location.getIncomingNodes());
+			}
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
-				mLogger.debug("Predecessor Transition: " + predecessorTransition);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Predecessor Transition: " + predecessorTransition);
+				}
 				final IcfgLocation predecessor = predecessorTransition.getSource();
 				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1).getSecond();
 				final Triple<IPredicate, IAction, IPredicate> query =
@@ -606,10 +609,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
 			mFrames.get(location).set(i, new Pair<>(ChangedFrame.CHANGED, fTerm));
 		}
-		mLogger.debug("Frames: Updated");
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
-			mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
-					.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Frames: Updated");
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
+				mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
+						.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+			}
 		}
 	}
 
@@ -775,7 +780,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @return
 	 */
 	private IPredicate[] computeInterpolants() {
-		mLogger.debug("computing interpolants.");
+		mLogger.debug("Computing interpolants.");
 
 		final Map<IcfgLocation, IPredicate> traceFrames = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
