@@ -98,9 +98,6 @@ public class MainTranslator {
 	private WrapperNode run(final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
 			final List<DecoratedUnit> units, final ACSLNode acslAnnotation, final MultiparseSymbolTable mst) {
 
-		// TODO: DD Seems wrong here
-		// mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
-
 		// if an additional Annotation was parsed put it into the root node
 		if (acslAnnotation != null) {
 			// (needs a fix probably) attach it to the first root node
