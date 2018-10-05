@@ -137,8 +137,8 @@ public class ArrayHandler {
 			final Expression oldAddress = leftExpRes.getLrValue().getValue();
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).getPointsToType();
-			final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus,
-					loc, oldAddress, integer, valueType, node);
+			final ExpressionResult newAddress_ER = mMemoryHandler.doPointerArithmeticWithConversion(
+					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.getLrValue().getValue();
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress_ER);
 			final HeapLValue lValue =
@@ -188,7 +188,7 @@ public class ArrayHandler {
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
-				mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
+				subscript = mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
 
 				final RValue index = (RValue) subscript.getLrValue();
 				final ArrayLHS newInnerArrayLHS;

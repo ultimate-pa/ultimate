@@ -612,9 +612,8 @@ public class MemoryHandler {
 
 			resultBuilder.setLrValue(new RValue(returnedValueIdExpr, resultType));
 
-			final ExpressionResult intermediateResult = resultBuilder.build();
-			mExpressionTranslation.convertIntToInt(loc, intermediateResult,
-					(CPrimitive) resultType.getUnderlyingType());
+			final ExpressionResult intermediateResult = mExpressionTranslation.convertIntToInt(loc,
+					resultBuilder.build(), (CPrimitive) resultType.getUnderlyingType());
 			resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult)
 					.setLrValue(intermediateResult.getLrValue());
 
@@ -1372,10 +1371,9 @@ public class MemoryHandler {
 				new CPrimitive(CPrimitives.VOID), hook);
 		for (final HeapDataArray hda : heapDataArrays) {
 			final Expression convertedValue;
-			final ExpressionResult exprRes =
-					new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
+			ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
 			if (hda.getName().equals(SFO.POINTER)) {
-				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
+				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -1385,7 +1383,7 @@ public class MemoryHandler {
 				final List<ReadWriteDefinition> rwds =
 						mMemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
-				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
+				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
 				convertedValue = exprRes.getLrValue().getValue();
 			}
 			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc, hda.getVariableLHS(),
@@ -1486,8 +1484,9 @@ public class MemoryHandler {
 
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
-		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
-		final Expression convertedValue = exprRes.getLrValue().getValue();
+		final ExpressionResult convertedExprRes =
+				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
+		final Expression convertedValue = convertedExprRes.getLrValue().getValue();
 
 		final List<Statement> loopBody =
 				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, convertedValue, procName, hook);
@@ -1508,11 +1507,6 @@ public class MemoryHandler {
 
 		// EDIT: the function handler should completely deal with modifies clauses if we announce them correctly
 		// add modifies spec
-		// final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
-		// specs.add(modifiesSpec);
-		// announceModifiedGlobals(procName, heapDataArrays);
-		// heapDataArrays.forEach(
-		// heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
 
 		// add requires #valid[#ptr!base];
 		specs.addAll(constructPointerBaseValidityCheck(ignoreLoc, inParamPtr, procName));
@@ -1524,12 +1518,10 @@ public class MemoryHandler {
 		specs.addAll(constructPointerTargetFullyAllocatedCheck(ignoreLoc, inParamAmountExprDecl, inParamPtr, procName));
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(
-				ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
-						// new IdentifierExpression(ignoreLoc, outParamResult),
+		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
+				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
 								outParamResult, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procName)),
-						// new IdentifierExpression(ignoreLoc, inParamPtr)));
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
 								inParamPtr, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName))),
 				Collections.emptySet());
@@ -1537,11 +1529,6 @@ public class MemoryHandler {
 		specs.add(returnValue);
 
 		// add the procedure declaration
-		// final Procedure procDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
-		// outParams,
-		// specs.toArray(new Specification[specs.size()]), null);
-		// decls.add(procDecl);
-		// mProcedureManager.registerProcedureDeclaration(procName, procDecl);
 		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
 
 		// add the procedure implementation

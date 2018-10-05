@@ -902,10 +902,10 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTCaseStatement node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
-		c = mExprResultTransformer.switchToRValueIfNecessary(c, mLocationFactory.createCLocation(node), node);
-		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(CPrimitives.INT));
-		return c;
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(node.getExpression());
+		final ExpressionResult switched = mExprResultTransformer.switchToRValueIfNecessary(dispatched,
+				mLocationFactory.createCLocation(node), node);
+		return mExpressionTranslation.convertIntToInt(loc, switched, new CPrimitive(CPrimitives.INT));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCastExpression node) {
@@ -1034,14 +1034,13 @@ public class CHandler {
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
-					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
-					er = mExprResultTransformer.switchToRValueIfNecessary(er, loc, node);
-					// FIXME: 2015-10-25 Matthias: uncomment once the simplification of Boogie
-					// expressions is implemented
-					mExpressionTranslation.convertIntToInt(loc, er,
+					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
+					final ExpressionResult switched =
+							mExprResultTransformer.switchToRValueIfNecessary(dispatched, loc, node);
+					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched,
 							mExpressionTranslation.getCTypeOfPointerComponents());
-					expressionResults.add(er);
-					sizeFactor = (RValue) er.getLrValue();
+					expressionResults.add(converted);
+					sizeFactor = (RValue) converted.getLrValue();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
@@ -1875,7 +1874,7 @@ public class CHandler {
 			}
 
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
-				final ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
+				ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
 					final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 							ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
@@ -1902,9 +1901,8 @@ public class CHandler {
 
 				if (child instanceof IASTCaseStatement) {
 					// 6.8.4.2-5: "The constant expression in each case label is converted to the
-					// promoted type of the
-					// controlling expression"
-					mExpressionTranslation.convertIntToInt(locC, caseExpression,
+					// promoted type of the controlling expression"
+					caseExpression = mExpressionTranslation.convertIntToInt(locC, caseExpression,
 							(CPrimitive) expr.getLrValue().getCType());
 					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg,
 							caseExpression.getLrValue().getValue());

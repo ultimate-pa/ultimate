@@ -72,9 +72,10 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 	}
 
 	@Override
-	public ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+	public ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult old,
 			final CPointer newType) {
-		mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
+		final ExpressionResult rexp =
+				mExpressionTranslation.convertIntToInt(loc, old, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		final RValue rVal =

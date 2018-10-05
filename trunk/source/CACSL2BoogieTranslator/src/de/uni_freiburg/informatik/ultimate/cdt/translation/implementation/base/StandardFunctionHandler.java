@@ -837,31 +837,32 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 
-		final ExpressionResult argS =
+		final ExpressionResult dispatchedArgS =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
-		final ExpressionResult argC =
+		final ExpressionResult dispatchedArgC =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
-		mExpressionTranslation.convertIntToInt(loc, argC, new CPrimitive(CPrimitives.INT));
-		final ExpressionResult argN =
+		final ExpressionResult dispatchedArgN =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[2]);
-		mExpressionTranslation.convertIntToInt(loc, argN, mTypeSizeComputer.getSizeT());
 
-		final ExpressionResultBuilder result = new ExpressionResultBuilder().setLrValue(argS.getLrValue());
+		// TODO: No conversion for ArgS?
+		final ExpressionResult convertedArgC =
+				mExpressionTranslation.convertIntToInt(loc, dispatchedArgC, new CPrimitive(CPrimitives.INT));
+		final ExpressionResult convertedArgN =
+				mExpressionTranslation.convertIntToInt(loc, dispatchedArgN, mTypeSizeComputer.getSizeT());
 
-		result.addAllExceptLrValue(argS);
-		result.addAllExceptLrValue(argC);
-		result.addAllExceptLrValue(argN);
+		final ExpressionResultBuilder result = new ExpressionResultBuilder().setLrValue(dispatchedArgS.getLrValue());
+
+		result.addAllExceptLrValue(dispatchedArgS);
+		result.addAllExceptLrValue(convertedArgC);
+		result.addAllExceptLrValue(convertedArgN);
 
 		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, voidPointerType, SFO.AUXVAR.MEMSETRES);
 		result.addDeclaration(auxvar.getVarDec());
 		result.addAuxVar(auxvar);
 
-		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, argS.getLrValue().getValue(),
-				argC.getLrValue().getValue(), argN.getLrValue().getValue(), auxvar.getLhs()));
-
-		// mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
-
+		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, dispatchedArgS.getLrValue().getValue(),
+				convertedArgC.getLrValue().getValue(), convertedArgN.getLrValue().getValue(), auxvar.getLhs()));
 		return result.build();
 	}
 
