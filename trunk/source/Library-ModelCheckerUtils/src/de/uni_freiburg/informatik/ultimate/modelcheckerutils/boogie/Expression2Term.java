@@ -243,8 +243,8 @@ public class Expression2Term {
 
 		} else if (exp instanceof BitVectorAccessExpression) {
 			final BigInteger[] indices = new BigInteger[2];
-			indices[0] = new BigInteger(Integer.toString(((BitVectorAccessExpression) exp).getEnd() - 1));
-			indices[1] = new BigInteger(Integer.toString(((BitVectorAccessExpression) exp).getStart()));
+			indices[0] = BigInteger.valueOf(((BitVectorAccessExpression) exp).getEnd() - 1);
+			indices[1] = BigInteger.valueOf(((BitVectorAccessExpression) exp).getStart());
 
 			final Term result =
 					mScript.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
