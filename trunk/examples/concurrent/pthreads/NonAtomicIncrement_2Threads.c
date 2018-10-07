@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
+typedef unsigned long int pthread_t;
+
 int x;
 
 void *firstIncrement() {

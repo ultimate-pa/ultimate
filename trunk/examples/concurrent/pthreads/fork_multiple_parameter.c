@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <assert.h>
 
+typedef unsigned long int pthread_t;
+
+
 void *add(void *n) {
     int *numbers = (int *)n;
     int result = numbers[0] + numbers[1];

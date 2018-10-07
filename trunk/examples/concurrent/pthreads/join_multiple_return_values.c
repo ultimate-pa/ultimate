@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <assert.h>
 
+typedef unsigned long int pthread_t;
+
+
 struct int_bool {
     int num;
     bool ret_bool;

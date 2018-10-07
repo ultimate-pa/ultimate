@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <assert.h>
 
+typedef unsigned long int pthread_t;
+
+
 int globVar;
 
 void *increment(void *n) {

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <assert.h>
 
+typedef unsigned long int pthread_t;
+
+
 void *foo(void *n) {
     int *x = (int *)n;
     return 0;

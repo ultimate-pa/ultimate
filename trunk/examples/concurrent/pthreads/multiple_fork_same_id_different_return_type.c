@@ -1,6 +1,9 @@
 #include <pthread.h>
 #include <stdio.h>
 
+typedef unsigned long int pthread_t;
+
+
 void *bar(void *b) {
     printf("Created thread bar\n");
     int x = 0;

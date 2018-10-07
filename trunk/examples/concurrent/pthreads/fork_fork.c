@@ -1,6 +1,9 @@
 #include <pthread.h>
 #include <stdio.h>
 
+typedef unsigned long int pthread_t;
+
+
 void *bar(void *b) {
     int *c = (int *)b;
     printf("c* = %d\n", *c);

@@ -1,6 +1,9 @@
 #include <pthread.h>
 #include <stdio.h>
 
+typedef unsigned long int pthread_t;
+
+
 void *foo(void *i) {
     int y = 4;
 }
