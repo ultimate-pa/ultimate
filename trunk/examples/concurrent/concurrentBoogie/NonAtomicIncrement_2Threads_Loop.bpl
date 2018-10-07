@@ -13,8 +13,6 @@ modifies x;
 
 implementation ULTIMATE.start()
 {
-    var x : int;
-    var y : bool;
     x := 0;
 
     fork 1 fistIncrementProcess();
