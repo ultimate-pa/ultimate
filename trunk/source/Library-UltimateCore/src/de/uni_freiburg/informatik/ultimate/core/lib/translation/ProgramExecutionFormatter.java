@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.lib.translation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
@@ -143,13 +142,8 @@ public class ProgramExecutionFormatter<TE, E> {
 			return null;
 		}
 
-		Collections.sort(keys, new Comparator<E>() {
-			@Override
-			public int compare(final E arg0, final E arg1) {
-				return mStringProvider.getStringFromExpression(arg0)
-						.compareToIgnoreCase(mStringProvider.getStringFromExpression(arg1));
-			}
-		});
+		Collections.sort(keys, (arg0, arg1) -> mStringProvider.getStringFromExpression(arg0)
+				.compareToIgnoreCase(mStringProvider.getStringFromExpression(arg1)));
 
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
@@ -171,7 +165,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return sb.toString();
 	}
 
-	private void addFixedLength(final StringBuilder sb, final String actualString, final int fillLength,
+	private static void addFixedLength(final StringBuilder sb, final String actualString, final int fillLength,
 			final String fillChar) {
 		sb.append(actualString);
 		sb.append(fillWithChar(fillChar, fillLength - actualString.length()));
@@ -181,7 +175,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		if (length <= 0) {
 			return "";
 		}
-		final StringBuffer outputBuffer = new StringBuffer(length);
+		final StringBuilder outputBuffer = new StringBuilder(length);
 		for (int i = 0; i < length; i++) {
 			outputBuffer.append(string);
 		}
@@ -254,9 +248,8 @@ public class ProgramExecutionFormatter<TE, E> {
 		}
 		if (numberOfRelevanceInformations == 0) {
 			return null;
-		} else {
-			return rtr;
 		}
+		return rtr;
 	}
 
 }
