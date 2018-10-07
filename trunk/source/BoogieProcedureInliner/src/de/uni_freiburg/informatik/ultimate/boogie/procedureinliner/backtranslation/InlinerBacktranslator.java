@@ -152,6 +152,10 @@ public class InlinerBacktranslator
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> exec) {
+
+		assert checkCallStackSourceProgramExecution(mLogger,
+				exec) : "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
+
 		final int length = exec.getLength();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		final CallReinserter callReinserter = new CallReinserter();
@@ -169,7 +173,8 @@ public class InlinerBacktranslator
 			translatedTrace.addAll(
 					callReinserter.recoverInlinedCallsBefore(traceElem, traceElemMapping, collectedRelevanceInfo));
 			if (traceElemMapping == null) {
-				translatedTrace.add(traceElem); // traceElem wasn't affected by inlining
+				// traceElem wasn't affected by inlining
+				translatedTrace.add(traceElem);
 			} else {
 				final BoogieASTNode translatedTraceElem = traceElemMapping.getOriginalNode();
 				if (translatedTraceElem != null) {
@@ -189,7 +194,8 @@ public class InlinerBacktranslator
 					} else {
 						collectedRelevanceInfo = collectedRelevanceInfo.merge(traceElem.getRelevanceInformation());
 					}
-					continue; // discards the associated ProgramState (State makes no sense without Statement)
+					// discards the associated ProgramState (State makes no sense without Statement)
+					continue;
 				}
 			}
 			final ProgramState<Expression> progState = exec.getProgramState(i);
@@ -206,6 +212,8 @@ public class InlinerBacktranslator
 				translatedStates.put(translatedTrace.size() - 1, new ProgramState<>(translatedVar2Values));
 			}
 		}
+		assert checkCallStackTarget(mLogger, translatedTrace) : "callstack broken after backtranslation by "
+				+ getClass().getSimpleName();
 		return new BoogieProgramExecution(translatedStates, translatedTrace);
 	}
 

@@ -484,6 +484,10 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		for (final AtomicTraceElement<?> elem : trace) {
 			i++;
 			if (elem.hasStepInfo(StepInfo.PROC_CALL)) {
+				if (elem.getSucceedingProcedure() == null) {
+					logger.fatal("Callstack has procedure call flag but succeeding procedure is empty at " + elem);
+					return i;
+				}
 				callStack.push(elem.getSucceedingProcedure());
 			}
 			if (elem.hasStepInfo(StepInfo.PROC_RETURN)) {
