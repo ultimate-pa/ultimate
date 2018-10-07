@@ -281,16 +281,20 @@ public class ThreadInstanceAdder {
 					jsa.constructThreadIdAssumption(icfg.getCfgSmtToolkit().getSymbolTable(),
 							icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
 
-			final UnmodifiableTransFormula parameterAssignment =
-					jsa.constructResultAssignment(icfg.getCfgSmtToolkit().getManagedScript(),
-							icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
-
+			final UnmodifiableTransFormula resultAssignment;
+			if (jsa.getAssignmentLhs().isEmpty()) {
+				// no result assignment
+				resultAssignment = TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
+			} else {
+				resultAssignment =jsa.constructResultAssignment(icfg.getCfgSmtToolkit().getManagedScript(),
+						icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
+			}
 			final UnmodifiableTransFormula threadInUseAssignment =
 					constructThreadNotInUseAssingment(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
 			joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-					Arrays.asList(parameterAssignment, threadIdAssumption, threadInUseAssignment));
+					Arrays.asList(resultAssignment, threadIdAssumption, threadInUseAssignment));
 		}
 
 		final IcfgJoinThreadOtherTransition joinThreadOther =
