@@ -33,7 +33,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IPath;
@@ -49,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -173,48 +177,22 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			customMessages.add(errorMsg);
 			fail = true;
 		} else {
-			// compare linewise
-			final String platformLineSeparator = CoreUtil.getPlatformLineSeparator();
-			final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
-			final String[] actualLines = actualCounterExample.split(platformLineSeparator);
+			final StringCounterexample desired = new StringCounterexample(desiredCounterExample);
+			final StringCounterexample actual = new StringCounterexample(actualCounterExample);
 
-			if (desiredLines.length != actualLines.length) {
-				fail = true;
-			} else {
-				for (int i = 0; i < desiredLines.length; ++i) {
-					final String curDes = desiredLines[i].trim();
-					final String curAct = actualLines[i].trim();
-					if (!(curDes.equals(curAct))) {
-						// ok it does not match, but we may make an
-						// exception for value lines
-						if (!isValueLineOk(curDes, curAct)) {
-							// it is either not a value line or the
-							// value lines differ too much
-							fail = true;
-							break;
-						}
-					}
-				}
-			}
+			final Difference difference = desired.getFirstDifference(actual);
+
+			fail = difference != null;
 
 			if (fail) {
 				tryWritingActualResultToFile(actualCounterExample);
 				setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
 						customMessages);
-				customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
-						+ actualCounterExample.length());
-				customMessages.add("Desired error trace:");
-				int i = 0;
-				for (final String s : desiredCounterExample.split(platformLineSeparator)) {
-					customMessages.add("[L" + i + "] " + s);
-					++i;
-				}
-				i = 0;
-				customMessages.add("Actual error trace:");
-				for (final String s : actualCounterExample.split(platformLineSeparator)) {
-					customMessages.add("[L" + i + "] " + s);
-					++i;
-				}
+				customMessages.add("Lengths: Desired=" + desired.mLines.size() + " Actual=" + actual.mLines.size());
+				customMessages.addAll(difference.getCustomDifferenceMessage());
+				customMessages
+						.add("Desired error trace:" + CoreUtil.getPlatformLineSeparator() + desiredCounterExample);
+				customMessages.add("Actual error trace:" + CoreUtil.getPlatformLineSeparator() + actualCounterExample);
 			} else {
 				setResultCategory("Success");
 			}
@@ -255,40 +233,6 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return file.getName().replaceAll("\\..*", "");
 	}
 
-	/**
-	 * @param curDes
-	 *            A line from the desired error trace, already trimmed
-	 * @param curAct
-	 *            The corresponding line from the actual error trace, already trimmed
-	 * @return true iff it is a value line and the values do not differ too much (i.e. there is the same number of the
-	 *         same variables, but the values do not match)
-	 */
-	private static boolean isValueLineOk(final String curDes, final String curAct) {
-		if ((curDes.startsWith("VAL") && curAct.startsWith("VAL"))
-				|| (curDes.startsWith("IVAL") && curAct.startsWith("IVAL"))) {
-			final String[] curDesVals = curDes.split(",");
-			final String[] curActVals = curAct.split(",");
-			if (curDesVals.length != curActVals.length) {
-				return false;
-			}
-
-			for (int i = 0; i < curDesVals.length; ++i) {
-				final String[] singleDesVal = curDesVals[i].split("=");
-				final String[] singleActVal = curActVals[i].split("=");
-				if (singleDesVal.length != singleActVal.length) {
-					return false;
-				}
-				// check for the name of the var
-				if (!singleDesVal[0].equals(singleActVal[0])) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		return false;
-	}
-
 	@Override
 	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
@@ -317,6 +261,219 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			return true;
 		} catch (final IOException e) {
 			return false;
+		}
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	private static final class StringCounterexample {
+
+		private final List<StringCounterexampleLine> mLines;
+
+		private StringCounterexample(final String counterexampleAsString) {
+			mLines = transformCex(counterexampleAsString);
+		}
+
+		private static List<StringCounterexampleLine> transformCex(final String counterexampleAsString) {
+			final String platformLineSeparator = CoreUtil.getPlatformLineSeparator();
+			final String[] lines = counterexampleAsString.split(platformLineSeparator);
+			final List<StringCounterexampleLine> rtr = new ArrayList<>(lines.length);
+			for (int i = 0; i < lines.length; ++i) {
+				final int j = i + 1;
+				final String current = lines[i];
+				if (current.trim().startsWith("IVAL")) {
+					rtr.add(new StringCounterexampleLine(null, current));
+					continue;
+				}
+				if (j < lines.length) {
+					final String next = lines[j];
+					if (next.trim().startsWith("VAL")) {
+						rtr.add(new StringCounterexampleLine(current, next));
+						i = j;
+						continue;
+					}
+				}
+				rtr.add(new StringCounterexampleLine(current, null));
+			}
+
+			return rtr;
+		}
+
+		public Difference getFirstDifference(final StringCounterexample actual) {
+			int i = 0;
+			for (; i < mLines.size(); ++i) {
+				final StringCounterexampleLine desiredLine = mLines.get(i);
+				if (i >= actual.mLines.size()) {
+					// other has less lines than this
+					return new Difference(desiredLine, null);
+				}
+				final StringCounterexampleLine actualLine = actual.mLines.get(i);
+				if (desiredLine.isSimilar(actualLine)) {
+					continue;
+				}
+				return new Difference(desiredLine, actualLine);
+			}
+			if (i < actual.mLines.size()) {
+				// other has more lines than this
+				final StringCounterexampleLine actualLine = actual.mLines.get(i);
+				return new Difference(null, actualLine);
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	private static final class StringCounterexampleLine {
+
+		private static final Pattern LINE_REGEX = Pattern.compile("^\\[L(\\d+)\\]\\s+(\\w*)\\s+(.*)$");
+
+		private final String mLine;
+		private final String mStmt;
+		private final int mLineNumber;
+		private final String mLineCategory;
+		private final String mValueLine;
+
+		/**
+		 * Expects Strings that represent a line of a counterexample and the following value line. Both can be null: the
+		 * value line if none is present, and the line if it is the initial value line.
+		 * 
+		 */
+		private StringCounterexampleLine(final String line, final String valueLine) {
+			if (line == null) {
+				mLine = null;
+				mLineCategory = null;
+				mStmt = null;
+				mLineNumber = -1;
+				mValueLine = Objects.requireNonNull(valueLine);
+				return;
+			}
+
+			final Matcher matcher = LINE_REGEX.matcher(line.trim());
+			if (!matcher.find() || matcher.groupCount() != 3) {
+				throw new IllegalArgumentException("Line has unexpected format: " + line);
+			}
+			mLine = Objects.requireNonNull(line);
+			mValueLine = valueLine;
+
+			mLineNumber = Integer.parseInt(matcher.group(1));
+			String linecat;
+			String stmt;
+			try {
+				linecat = StepInfo.valueOf(matcher.group(2)).name();
+				stmt = matcher.group(3);
+			} catch (final IllegalArgumentException iae) {
+				linecat = null;
+				final String g2 = matcher.group(2);
+				if (g2.isEmpty()) {
+					stmt = matcher.group(3);
+				} else {
+					stmt = matcher.group(2) + " " + matcher.group(3);
+				}
+			}
+			mLineCategory = linecat;
+			mStmt = stmt;
+		}
+
+		public boolean isSimilar(final StringCounterexampleLine other) {
+			if (mLine == null) {
+				if (other.mValueLine == null) {
+					return false;
+				}
+				return isValueLineOk(other.mValueLine, mValueLine);
+			}
+			if (other.mLineNumber != mLineNumber) {
+				return false;
+			}
+			if (!Objects.equals(mLineCategory, other.mLineCategory)) {
+				return false;
+			}
+			if (!other.mStmt.equals(mStmt)) {
+				return false;
+			}
+			if (other.mValueLine == null || mValueLine == null) {
+				if (other.mValueLine == null && mValueLine == null) {
+					// both have no value
+					return true;
+				}
+				// one has no value
+				return false;
+			}
+			return isValueLineOk(other.mValueLine, mValueLine);
+		}
+
+		/**
+		 * @param desiredValue
+		 *            A line from the desired error trace
+		 * @param actualValue
+		 *            The corresponding line from the actual error trace
+		 * @return true iff it is a value line and the values do not differ too much (i.e. there is the same number of
+		 *         the same variables, but the values do not match)
+		 */
+		private static boolean isValueLineOk(final String desiredValueLine, final String actualValueLine) {
+			final String desiredValue = desiredValueLine.trim();
+			final String actualValue = actualValueLine.trim();
+			if (desiredValue.startsWith("VAL") && actualValue.startsWith("VAL")
+					|| desiredValue.startsWith("IVAL") && actualValue.startsWith("IVAL")) {
+				final String[] curDesVals = desiredValue.split(",");
+				final String[] curActVals = actualValue.split(",");
+				if (curDesVals.length != curActVals.length) {
+					return false;
+				}
+
+				for (int i = 0; i < curDesVals.length; ++i) {
+					final String[] singleDesVal = curDesVals[i].split("=");
+					final String[] singleActVal = curActVals[i].split("=");
+					if (singleDesVal.length != singleActVal.length) {
+						return false;
+					}
+					// check for the name of the var
+					if (!singleDesVal[0].equals(singleActVal[0])) {
+						return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public String toString() {
+			if (mLine == null) {
+				return mValueLine;
+			} else if (mValueLine == null) {
+				return mLine;
+			} else {
+				return mLine + " followed by " + mValueLine;
+			}
+		}
+	}
+
+	private static final class Difference {
+		private final StringCounterexampleLine mDesired;
+		private final StringCounterexampleLine mActual;
+
+		private Difference(final StringCounterexampleLine desired, final StringCounterexampleLine actual) {
+			mDesired = desired;
+			mActual = actual;
+		}
+
+		private List<String> getCustomDifferenceMessage() {
+			final List<String> rtr = new ArrayList<>();
+			if (mDesired == null) {
+				rtr.add("Counterexample should have been shorter, but was identical up to the following line.");
+				rtr.add(mActual.toString());
+			} else if (mActual == null) {
+				rtr.add("Counterexample should have been longer. The next missing line is the following.");
+				rtr.add(mDesired.toString());
+			} else {
+				rtr.add("Counterexamples first differ at the following lines.");
+				rtr.add("Desired: " + mDesired.toString());
+				rtr.add("Actual: " + mActual.toString());
+			}
+			return rtr;
 		}
 	}
 }
