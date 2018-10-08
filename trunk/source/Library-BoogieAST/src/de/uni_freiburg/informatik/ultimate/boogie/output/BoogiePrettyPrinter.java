@@ -127,7 +127,7 @@ public final class BoogiePrettyPrinter {
 		return sb.toString();
 	}
 
-	public static IToString<BoogieASTNode> getBoogieToStringprovider() {
+	public static IToString<BoogieASTNode> getBoogieToStringProvider() {
 		return BOOGIE_STRING_PROVIDER;
 	}
 

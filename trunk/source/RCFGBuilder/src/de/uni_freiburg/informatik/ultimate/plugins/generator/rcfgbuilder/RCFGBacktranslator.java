@@ -141,7 +141,7 @@ public class RCFGBacktranslator extends
 	private void addCodeBlock(final IIcfgTransition<IcfgLocation> cb,
 			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders,
 			final IRelevanceInformation relevanceInformation) {
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		if (cb instanceof Call) {
 			final Statement st = ((Call) cb).getCallStatement();
 			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation,

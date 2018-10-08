@@ -117,7 +117,7 @@ public class InlinerBacktranslator
 		final Set<CallStatement> knownCalls = new HashSet<>();
 		final List<BoogieASTNode> translatedTrace = new ArrayList<>();
 		final CallReinserter callReinserter = new CallReinserter();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		for (final BoogieASTNode traceElem : trace) {
 			AtomicTraceElement<BoogieASTNode> atomicTraceElem;
 			if (traceElem instanceof CallStatement) {
@@ -157,7 +157,7 @@ public class InlinerBacktranslator
 				exec) : "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
 
 		final int length = exec.getLength();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		final CallReinserter callReinserter = new CallReinserter();
 		final Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		final List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();

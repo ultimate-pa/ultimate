@@ -151,13 +151,13 @@ public class CallReinserter {
 
 	private static AtomicTraceElement<BoogieASTNode> makeAtomicCall(final CallStatement originalCall) {
 		return new AtomicTraceElement<>(originalCall, originalCall, StepInfo.PROC_CALL,
-				BoogiePrettyPrinter.getBoogieToStringprovider(), null, null, originalCall.getMethodName());
+				BoogiePrettyPrinter.getBoogieToStringProvider(), null, null, originalCall.getMethodName());
 	}
 
 	private static AtomicTraceElement<BoogieASTNode> makeAtomicReturn(final CallStatement originalReturn,
 			final IRelevanceInformation relevanceInfo) {
 		return new AtomicTraceElement<>(originalReturn, originalReturn, StepInfo.PROC_RETURN,
-				BoogiePrettyPrinter.getBoogieToStringprovider(), relevanceInfo, originalReturn.getMethodName(), null);
+				BoogiePrettyPrinter.getBoogieToStringProvider(), relevanceInfo, originalReturn.getMethodName(), null);
 	}
 
 	/**

@@ -216,7 +216,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
 		return translateProgramExecution(remaining, translated);
 	}
-	
+
+	@Override
 	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
@@ -224,21 +225,21 @@ class ModelTranslationContainer implements IBacktranslationService {
 			current.push(trans);
 			// TODO: check if we can translate
 			canTranslate = true;
-//			if (trans.getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
-//					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
-//				canTranslate = true;
-//			}
+			// if (trans.getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+			// && trans.getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+			// canTranslate = true;
+			// }
 		}
 		if (!canTranslate) {
 			throw new IllegalArgumentException("You cannot translate " + programState
 					+ " with this backtranslation service, as there is no compatible ITranslator available");
 		}
 
-//		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
-//				|| !current.peek().getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
-//			throw new IllegalArgumentException("You cannot translate " + programExecution
-//					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
-//		}
+		// if (!current.peek().getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+		// || !current.peek().getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+		// throw new IllegalArgumentException("You cannot translate " + programExecution
+		// + " with this backtranslation service, as the last ITranslator in this chain is not compatible");
+		// }
 		return translateProgramState(current, programState);
 	}
 

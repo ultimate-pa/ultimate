@@ -186,7 +186,7 @@ public class BoogiePreprocessorBacktranslator
 			final IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 
 		for (int i = 0; i < translatedTrace.size(); ++i) {
 			final BoogieASTNode elem = translatedTrace.get(i);
@@ -261,9 +261,9 @@ public class BoogiePreprocessorBacktranslator
 			i++;
 		}
 
-		final BoogieProgramExecution newPe = new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
-		assert checkCallStackSourceProgramExecution(mLogger, newPe) : "callstack broke during translation";
-		return newPe;
+		assert checkCallStackTarget(mLogger, actualAtomicTrace) : "callstack broke during translation by "
+				+ getClass().getSimpleName();
+		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
 	}
 
 	private static boolean checkProcedureNames(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {

@@ -170,7 +170,7 @@ public class CACSL2BoogieBacktranslator
 		// dirty but quick: convert trace to program execution
 		// TODO: set the correct step info (but how?)
 		final List<AtomicTraceElement<BoogieASTNode>> ateTrace = trace.stream()
-				.map(a -> new AtomicTraceElement<>(a, BoogiePrettyPrinter.getBoogieToStringprovider(), null))
+				.map(a -> new AtomicTraceElement<>(a, BoogiePrettyPrinter.getBoogieToStringProvider(), null))
 				.collect(Collectors.toList());
 		final IProgramExecution<BoogieASTNode, Expression> tracePE =
 				new BoogieProgramExecution(Collections.emptyMap(), ateTrace);
