@@ -803,8 +803,19 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 			alignElements(weqcc1Copy, weqcc2Copy, true);
 
-			final WeqCongruenceClosure<NODE> weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
-			final WeqCongruenceClosure<NODE> weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
+			WeqCongruenceClosure<NODE> weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
+			WeqCongruenceClosure<NODE> weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
+
+			//TODO: not that happy with this loop
+			int counter = 0;
+			while (!weqcc1Copy.getAllElements().equals(weqcc2Copy.getAllElements())) {
+				if (++counter > 2) {
+					throw new AssertionError("not expecting to do many iterations here --> check");
+				}
+				alignElements(weqcc1Copy, weqcc2Copy, true);
+				weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
+				weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
+			}
 
 			weqcc1CopyClosed.freezeIfNecessary();
 			weqcc2CopyClosed.freezeIfNecessary();

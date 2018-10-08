@@ -196,7 +196,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		// if one of the disjuncts is "top", remove all other disjuncts
 		if (constraintList.stream().filter(cons -> cons.isTop()).findAny().isPresent()) {
-			return getTopDisjunctiveConstraint();
+			return getEmptyDisjunctiveConstraint(false);
 		}
 
 		// filter out bottom-constraints among the disjuncts
@@ -549,9 +549,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return mEqNodeAndFunctionFactory;
 	}
 
-	public EqDisjunctiveConstraint<NODE> getTopDisjunctiveConstraint() {
-		return mEmptyDisjunctiveConstraint;
-	}
+//	public EqDisjunctiveConstraint<NODE> getTopDisjunctiveConstraint() {
+//		return mEmptyDisjunctiveConstraint;
+//	}
 
 	public ManagedScript getMgdScript() {
 		return mMgdScript;
@@ -584,7 +584,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<NODE> getEmptyDisjunctiveConstraint(final boolean modifiable) {
-		return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint(modifiable)));
+		if (modifiable) {
+			return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint(true)));
+		} else {
+			return mEmptyDisjunctiveConstraint;
+		}
 	}
 
 	public BenchmarkWithCounters getBenchmark() {

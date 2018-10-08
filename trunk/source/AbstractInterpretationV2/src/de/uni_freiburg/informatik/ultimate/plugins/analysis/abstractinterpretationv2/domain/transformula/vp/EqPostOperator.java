@@ -130,7 +130,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			// timeout
 			debugEnd(BmNames.APPLY_NORMAL);
-			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), oldState.getVariables());
+			return toEqStates(mEqConstraintFactory.getEmptyDisjunctiveConstraint(false), oldState.getVariables());
 		}
 
 		final EqTransitionRelation transitionRelation =
@@ -196,7 +196,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			// timeout
 			debugEnd(BmNames.APPLY_RETURN);
-			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), hierarchicalPrestate.getVariables());
+			return toEqStates(mEqConstraintFactory.getEmptyDisjunctiveConstraint(false),
+					hierarchicalPrestate.getVariables());
 		}
 
 		if (transition instanceof ICallAction) {

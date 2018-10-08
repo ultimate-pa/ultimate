@@ -48,30 +48,21 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
-//	protected boolean mIsConstant;
-
 	protected final Term mTerm;
 
 	private final boolean mDependsOnUntrackedArray;
 
-//	private final MultiDimensionalSort mMdSort;
-
-	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory, final boolean isUntrackedArray) {
+	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory, final boolean dependsOnUntrackedArray) {
 		assert term != null;
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 
-		mDependsOnUntrackedArray = isUntrackedArray;
-//		mMdSort = mEqNodeFactory.isFunction(term) ? new MultiDimensionalSort(mTerm.getSort()) : null;
+		mDependsOnUntrackedArray = dependsOnUntrackedArray;
 	}
 
 	@Override
 	public abstract boolean isLiteral();
 
-//	public boolean isConstant() {
-//		return mIsConstant;
-//	}
-//
 	public Collection<TermVariable> getFreeVariables() {
 		return Arrays.asList(mTerm.getFreeVars());
 	}
@@ -141,6 +132,11 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
+	public boolean dependsOnUntrackedArray() {
+		return mDependsOnUntrackedArray;
+	}
+
+	@Override
 	public final int hashCode() {
 		return mTerm.hashCode();
 	}
@@ -159,24 +155,4 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		final EqNode other = (EqNode) obj;
 		return other.mTerm == mTerm;
 	}
-
-	@Override
-	public boolean dependsOnUntrackedArray() {
-		return mDependsOnUntrackedArray;
-	}
-
-
-//	@Override
-//	public boolean isConstantFunction() {
-//		// default case, override this in the classes that are a constant function
-//		return false;
-//	}
-//
-//	@Override
-//	public EqNode getConstantFunctionValue() {
-//		// default case, override this in the classes that are a constant function
-//		throw new UnsupportedOperationException("not a constant function");
-//	}
-
-
 }

@@ -1787,7 +1787,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				}
 				assert removeElementInfo == null
 						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
-				assert dependsOnAny(substituted, elemsToKeep);
+				/*
+				 * dropped this assertion since because of set constraints we also need elements that do not depend on
+				 * a weq var
+				 */
+//				assert dependsOnAny(substituted, elemsToKeep);
 				mManager.addElement(copy, substituted, true, false);
 				worklist.add(substituted);
 			}
@@ -1806,7 +1810,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				}
 				assert removeElementInfo == null
 						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
-				assert dependsOnAny(substituted, elemsToKeep);
+				/*
+				 * dropped this assertion since because of set constraints we also need elements that do not depend on
+				 * a weq var
+				 */
+//				assert dependsOnAny(substituted, elemsToKeep);
 				mManager.addElement(copy, substituted, true, false);
 				worklist.add(substituted);
 			}

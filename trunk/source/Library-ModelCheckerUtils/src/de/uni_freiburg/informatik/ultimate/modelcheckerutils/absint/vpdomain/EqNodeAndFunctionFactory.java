@@ -227,36 +227,12 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	protected EqNode newBaseElement(final Term term, final boolean isLiteral) {
-//		// first, check if we have a constant array
-//
-//		if (isConstantArray(term)) {
-//			final ApplicationTerm at = (ApplicationTerm) term;
-//			final EqNode value = getOrConstructNode(at.getParameters()[0]);
-//
-//			if (isAtomic(term)) {
-//				return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
-//			} else {
-//				throw new AssertionError("todo: implement");
-//			}
-//		}
-
 		// no constant array, "normal case"
 		if (isAtomic(term)) {
-//			final EqConstantArrayNode constantArrayNode = checkForConstantArray(term);
-//			if (constantArrayNode != null) {
-//				return constantArrayNode;
-//			}
-
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
 			// return new EqAtomicBaseNode(term, isTermALiteral(term), this);
 			return new EqAtomicBaseNode(term, isLiteral, this, dependsOnUntrackedArray(term));
 		} else {
-//			final Object constantArrayNode = checkForConstantArray(term);
-//			if (constantArrayNode != null) {
-//				throw new AssertionError("todo: implement");
-//			}
-
-
 			assert !isLiteral;
 			assert term.getFreeVars().length > 0;
 			final Set<EqNode> supportingNodes = new HashSet<>();
@@ -382,9 +358,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		if (mTrackedArraySubstrings == null) {
 			return false;
 		}
-//		if (!term.getSort().isArraySort()) {
-//			return false;
-//		}
+
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			return dependsOnUntrackedArray(((ApplicationTerm) term).getParameters()[0]);
 		}

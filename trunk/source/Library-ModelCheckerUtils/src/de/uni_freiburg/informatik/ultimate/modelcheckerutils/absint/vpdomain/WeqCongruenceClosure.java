@@ -436,9 +436,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet();
 
 			for (final Entry<NODE, NODE> ccc1 : array1RepCcChildren) {
+				if (ccc1.getKey().dependsOnUntrackedArray()) {
+					continue;
+				}
+
 				for (final Entry<NODE, NODE> ccc2 : array2RepCcChildren) {
 					if (isInconsistent(false)) {
 						return true;
+					}
+
+					if (ccc2.getKey().dependsOnUntrackedArray()) {
+						continue;
 					}
 
 					if (mCongruenceClosure.getEqualityStatus(ccc1.getValue(), ccc2.getValue())
