@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Regression Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.regressiontest.translation;
+package de.uni_freiburg.informatik.ultimate.regressiontest.backtranslation;
 
 import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -32,16 +32,16 @@ import de.uni_freiburg.informatik.ultimate.test.decider.BacktranslationTestResul
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
-public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
+public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static final int TIMEOUT = 10_000;
-	private static final String ROOT_DIR = TestUtil.getPathFromTrunk("examples/Backtranslation");
-	private static final String FILE_ENDING = ".c";
+	private static final int TIMEOUT = 60_000;
+	private static final String ROOT_FOLDER = TestUtil.getPathFromTrunk("examples/Backtranslation");
+	private static final String FILE_ENDING = ".bpl";
 
-	public CBacktranslationRegressionTestSuite() {
+	public BoogieBacktranslationRegressionTestSuite() {
 		super();
 		mTimeout = TIMEOUT;
-		mRootFolder = ROOT_DIR;
+		mRootFolder = ROOT_FOLDER;
 		mFiletypesToConsider = new String[] { FILE_ENDING };
 	}
 
