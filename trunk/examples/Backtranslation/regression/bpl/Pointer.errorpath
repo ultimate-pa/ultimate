@@ -1,37 +1,38 @@
 [L49]  CALL       call ULTIMATE.init();
-       VAL        [#NULL!base=1, #NULL!offset=2, old(#NULL!base)=1, old(#NULL!offset)=2]
+       VAL        [#NULL!base=8, #NULL!offset=6, old(#NULL!base)=8, old(#NULL!offset)=6]
 [L42]             #NULL := { base: 0, offset: 0 };
-       VAL        [#NULL!base=0, #NULL!offset=0, old(#NULL!base)=1, old(#NULL!offset)=2]
+       VAL        [#NULL!base=0, #NULL!offset=0, old(#NULL!base)=8, old(#NULL!offset)=6]
 [L43]             #valid[0] := false;
-       VAL        [#NULL!base=0, #NULL!offset=0, old(#NULL!base)=1, old(#NULL!offset)=2]
+       VAL        [#NULL!base=0, #NULL!offset=0, old(#NULL!base)=8, old(#NULL!offset)=6]
 [L49]  RET        call ULTIMATE.init();
        VAL        [#NULL!base=0, #NULL!offset=0]
 [L50]  CALL       call #t~ret4 := main();
+       VAL        [#NULL!base=0, #NULL!offset=0]
 [L8]   FCALL      call ~#a~4 := ~malloc(4);
-       VAL        [~#a~4!base=7, ~#a~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0]
 [L9]              havoc ~p1~4;
-       VAL        [~#a~4!base=7, ~#a~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0]
 [L10]             ~p1~4 := ~#a~4;
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L11]  FCALL      call write~int(5, ~#a~4, 4);
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L12]  FCALL      call #t~mem1 := read~int(~#a~4, 4);
-       VAL        [#t~mem1=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem1=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L13]             #t~post2 := #t~mem1;
-       VAL        [#t~mem1=5, #t~post2=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem1=5, #t~post2=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L14]  FCALL      call write~int(#t~post2 - 1, ~#a~4, 4);
-       VAL        [#t~mem1=5, #t~post2=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem1=5, #t~post2=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L15]             havoc #t~post2;
-       VAL        [#t~mem1=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem1=5, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L16]             havoc #t~mem1;
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L17]  FCALL      call #t~mem3 := read~int(~p1~4, 4);
-       VAL        [#t~mem3=4, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem3=4, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L18]  COND TRUE  #t~mem3 == 4
-       VAL        [#t~mem3=4, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, #t~mem3=4, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L19]             havoc #t~mem3;
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L20]  FCALL      call assert_fail();
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
 [L31]             assert false;
-       VAL        [~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
+       VAL        [#NULL!base=0, #NULL!offset=0, ~#a~4!base=7, ~#a~4!offset=0, ~p1~4!base=7, ~p1~4!offset=0]
