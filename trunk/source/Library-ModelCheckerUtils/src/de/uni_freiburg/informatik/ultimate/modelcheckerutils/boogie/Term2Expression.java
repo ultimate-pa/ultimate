@@ -670,5 +670,41 @@ public final class Term2Expression implements Serializable {
 		ScopedHashMap<TermVariable, VarList> getQuantifiedVariables() {
 			return mQuantifiedVariables;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + mFreshIdentiferCounter;
+			result = prime * result + ((mQuantifiedVariables == null) ? 0 : mQuantifiedVariables.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final TranslateState other = (TranslateState) obj;
+			if (mFreshIdentiferCounter != other.mFreshIdentiferCounter) {
+				return false;
+			}
+			if (mQuantifiedVariables == null) {
+				if (other.mQuantifiedVariables != null) {
+					return false;
+				}
+			} else if (!mQuantifiedVariables.equals(other.mQuantifiedVariables)) {
+				return false;
+			}
+			return true;
+		}
+
+
 	}
 }
