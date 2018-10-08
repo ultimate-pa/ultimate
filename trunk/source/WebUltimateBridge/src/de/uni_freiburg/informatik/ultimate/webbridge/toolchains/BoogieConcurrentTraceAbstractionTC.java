@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Tool;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
 
 /**
  * @author Markus Lindenmann
@@ -18,24 +18,24 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.TOOL_AUTOMIZER_CONCURRENT;
+		return NameStrings.TOOL_AUTOMIZER_PETRI;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.TOOL_AUTOMIZER_CONCURRENT;
+		return NameStrings.TOOL_AUTOMIZER_PETRI;
 	}
 
 	@Override
 	protected String defineId() {
 		return "boogieConcurrentTraceAbstr";
 	}
-	
+
 	@Override
 	protected String defineUserInfo() {
-		return "Convention: we use the procedure ~init to initialize global variables, each other procedure is considered as a thread of a concurrent system";
+		return null;
 	}
-	
+
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
 		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
@@ -53,7 +53,7 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected TaskNames[] defineTaskName() {
-		return new TaskNames[] { TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
+		return new TaskNames[] { TaskNames.CONCURRENT_BOOGIE };
 	}
 
 	@Override
@@ -66,9 +66,10 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 		final List<Tool> tools = new ArrayList<Tool>();
 
 		tools.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		tools.add(new Tool(PrefStrings.BOOGIE_PROCEDURE_INLINER));
 		tools.add(new Tool(PrefStrings.RCFGBUILDER));
 		tools.add(new Tool(PrefStrings.TRACE_ABSTRACTION_CONCURRENT));
-		
+
 		return tools;
 	}
 
@@ -81,10 +82,10 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 //						PrefStrings.s_RCFG_VALUE_Block }, true));
 		return rtr;
 	}
-	
+
 	@Override
 	protected String defineToolchainSettingsFile() {
-		return "TraceAbstractionConcurrent.epf";
+		return "PetriAutomizer-default.epf";
 	}
 
 }

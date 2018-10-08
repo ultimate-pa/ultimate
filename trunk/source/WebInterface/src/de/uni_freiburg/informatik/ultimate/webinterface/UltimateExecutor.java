@@ -184,7 +184,7 @@ public class UltimateExecutor {
 			fileExtension = ".ats";
 			break;
 		case AUTOMIZER_BOOGIE:
-		case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
+		case CONCURRENT_BOOGIE:
 		case RANK_SYNTHESIS_BOOGIE:
 		case TERMINATION_BOOGIE:
 		case KOJAK_BOOGIE:

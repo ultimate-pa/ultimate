@@ -44,6 +44,10 @@
 			<fileset dir="${trunkEx.dir}/programs/toy/showcase" includes="*.bpl" />
 		</copy>
 		
+		<copy todir="${localEx.dir}/verifyConcurrentBoogie" verbose="true">
+			<fileset dir="${trunkEx.dir}/concurrent/concurrentBoogie/showcase/" includes="*.bpl" />
+		</copy>
+		
 		<copy todir="${localEx.dir}/verifyC" verbose="true">
 			<fileset dir="${trunkEx.dir}/programs/toy/showcase" includes="*.c" />
 			<fileset dir="${trunkEx.dir}/programs/quantifier/regression/c/" includes="FunctionPointers01.c" />

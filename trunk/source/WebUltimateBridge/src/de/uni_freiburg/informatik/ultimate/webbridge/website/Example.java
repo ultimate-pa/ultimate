@@ -95,7 +95,7 @@ public final class Example {
 		final Tasks.TaskNames[] automataScript = { Tasks.TaskNames.AUTOMATA_SCRIPT };
 		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
 
-		final Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
+		final Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyConcurrentBoogie/", verifyConcurrentBoogie);
 
 		final Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };

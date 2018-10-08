@@ -120,7 +120,7 @@ public class Worker {
 		} else {
 			switch (workerName) {
 			case NameStrings.TOOL_AUTOMIZER:
-			case NameStrings.TOOL_AUTOMIZER_CONCURRENT:
+			case NameStrings.TOOL_AUTOMIZER_PETRI:
 				result = NameStrings.TASK_VERIFY;
 				break;
 			case NameStrings.TOOL_AUTOMIZER_BUCHI:

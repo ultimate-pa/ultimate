@@ -17,6 +17,7 @@ public class PrefStrings {
 	public static final String CACSL2BOOGIETRANSLATOR =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator";
 	public static final String BOOGIE_PREPROCESSOR = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
+	public static final String BOOGIE_PROCEDURE_INLINER = "de.uni_freiburg.informatik.ultimate.boogie.procedureinliner";
 	public static final String RCFGBUILDER = "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder";
 	public static final String BUCHIAUTOMIZER =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer";

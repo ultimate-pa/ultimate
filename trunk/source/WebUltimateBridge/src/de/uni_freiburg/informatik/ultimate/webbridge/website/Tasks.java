@@ -86,7 +86,7 @@ public class Tasks {
 
 		AUTOMATA_SCRIPT,
 
-		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
+		CONCURRENT_BOOGIE,
 
 		LTLAUTOMIZER_C,
 
@@ -147,7 +147,7 @@ public class Tasks {
 			case AUTOMIZER_BOOGIE:
 			case TERMINATION_BOOGIE:
 			case RANK_SYNTHESIS_BOOGIE:
-			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
+			case CONCURRENT_BOOGIE:
 			case KOJAK_BOOGIE:
 			case TAIPAN_BOOGIE:
 				return "boogie";
@@ -203,8 +203,8 @@ public class Tasks {
 				NameStrings.TASK_RUN, NameStrings.DESCRIPTION_AUTOMATA_LIBRARY);
 		automataScriptInterpreter.setUserInfo("");
 
-		addWorker(NameStrings.TOOL_AUTOMIZER_CONCURRENT, NameStrings.TASK_VERIFY,
-				NameStrings.DESCRIPTION_AUTOMIZER_CONCURRENT);
+		addWorker(NameStrings.TOOL_AUTOMIZER_PETRI, NameStrings.TASK_VERIFY,
+				NameStrings.DESCRIPTION_AUTOMIZER_PETRI);
 
 		completeInitWorker();
 	}
@@ -251,7 +251,7 @@ public class Tasks {
 		TASK_STRINGS.put(TaskNames.TERMINATION_C, "Analyze Termination C");
 		TASK_STRINGS.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
 		TASK_STRINGS.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
-		TASK_STRINGS.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
+		TASK_STRINGS.put(TaskNames.CONCURRENT_BOOGIE, "Verify concurrent Boogie");
 		TASK_STRINGS.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
 		TASK_STRINGS.put(TaskNames.KOJAK_C, "Verify C");
 		TASK_STRINGS.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
