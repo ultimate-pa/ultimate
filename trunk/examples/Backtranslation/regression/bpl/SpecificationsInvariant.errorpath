@@ -7,32 +7,32 @@
 [L9]     COND TRUE  y > 0
          VAL        [x=1, y=4]
 [L12]               res := res + x;
-         VAL        [res=-2, x=1, y=4]
+         VAL        [res=*, x=1, y=4]
 [L13]               y := y - 1;
-         VAL        [res=-2, x=1, y=3]
+         VAL        [res=*, x=1, y=3]
 [L10]               invariant y > 0;
-         VAL        [res=-2, x=1, y=3]
+         VAL        [res=*, x=1, y=3]
 [L9]     COND TRUE  y > 0
-         VAL        [res=-2, x=1, y=3]
+         VAL        [res=*, x=1, y=3]
 [L12]               res := res + x;
-         VAL        [res=-1, x=1, y=3]
+         VAL        [res=*, x=1, y=3]
 [L13]               y := y - 1;
-         VAL        [res=-1, x=1, y=2]
+         VAL        [res=*, x=1, y=2]
 [L10]               invariant y > 0;
-         VAL        [res=-1, x=1, y=2]
+         VAL        [res=*, x=1, y=2]
 [L9]     COND TRUE  y > 0
-         VAL        [res=-1, x=1, y=2]
+         VAL        [res=*, x=1, y=2]
 [L12]               res := res + x;
-         VAL        [res=0, x=1, y=2]
+         VAL        [res=*, x=1, y=2]
 [L13]               y := y - 1;
-         VAL        [res=0, x=1, y=1]
+         VAL        [res=*, x=1, y=1]
 [L10]               invariant y > 0;
-         VAL        [res=0, x=1, y=1]
+         VAL        [res=*, x=1, y=1]
 [L9]     COND TRUE  y > 0
-         VAL        [res=0, x=1, y=1]
+         VAL        [res=*, x=1, y=1]
 [L12]               res := res + x;
-         VAL        [res=1, x=1, y=1]
+         VAL        [res=*, x=1, y=1]
 [L13]               y := y - 1;
-         VAL        [res=1, x=1, y=0]
+         VAL        [res=*, x=1, y=0]
 [L10]               invariant y > 0;
-         VAL        [res=1, x=1, y=0]
+         VAL        [res=*, x=1, y=0]
