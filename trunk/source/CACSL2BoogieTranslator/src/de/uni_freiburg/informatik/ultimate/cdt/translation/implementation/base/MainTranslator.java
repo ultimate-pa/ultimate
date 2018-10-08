@@ -115,8 +115,6 @@ public class MainTranslator {
 			 * once after all translation units have been dispatched.
 			 */
 			final BoogieASTNode outputTU = translate(units, witnessInvariants, mst);
-			// TODO: DD: Why do we copy the AST?
-			// outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 
 			return new WrapperNode(null, outputTU);
 		} catch (final IncorrectSyntaxException e) {
