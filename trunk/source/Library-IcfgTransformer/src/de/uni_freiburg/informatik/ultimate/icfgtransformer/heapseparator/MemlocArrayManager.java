@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -213,11 +214,14 @@ public class MemlocArrayManager {
 		IProgramVarOrConst result = mArrayPvocToDimToLocArrayPvoc.get(pvoc, dim);
 		if (result == null) {
 			if (pvoc instanceof IProgramNonOldVar) {
+				mMgdScript.lock(this);
 				result = ProgramVarUtils.constructGlobalProgramVarPair(
 						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort), locArraySort, mMgdScript, this);
+				mMgdScript.unlock(this);
 				mGlobalLocArrays.add((IProgramNonOldVar) result);
 			} else if (pvoc instanceof ILocalProgramVar) {
-				throw new UnsupportedOperationException("todo: deal local variables");
+				result = constructLocalBoogieVar(sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort),
+						((ILocalProgramVar) pvoc).getProcedure(), locArraySort);
 			} else if (pvoc instanceof IProgramConst) {
 				throw new UnsupportedOperationException("todo: deal with constants");
 			} else {
@@ -226,6 +230,23 @@ public class MemlocArrayManager {
 			mArrayPvocToDimToLocArrayPvoc.put(pvoc, dim, result);
 		}
 		return result;
+	}
+
+	private IProgramVarOrConst constructLocalBoogieVar(final String identifier, final String procedure,
+			final Sort sort) {
+		// (mostly copied from Boogie2SmtSymbolTable#constructLocalBoogieVar
+
+		final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, false, false);
+
+		final TermVariable termVariable = mMgdScript.variable(name, sort);
+
+		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
+		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
+
+		final LocalBoogieVar bv =
+				new LocalBoogieVar(identifier, procedure, null, termVariable, defaultConstant, primedConstant);
+		// where is this added to the symbol table? automatically by TransformedIcfgBuilder or so?..
+		return bv;
 	}
 
 	private String sanitizeVarName(final String string) {

@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -96,33 +97,15 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 		mInputIcfg = originalIcfg;
 
-		process(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, // "freezeVarsFrozen",
-				transformer);
+		process(originalIcfg, funLocFac, backtranslationTracker, outLocationClass);
 	}
 
 	private void process(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final ITransformulaTransformer transformer) {
-
-		transformer.preprocessIcfg(originalIcfg);
+			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass) {
 
 		processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
 
 		mBuilder.finish();
-	}
-
-	private OUTLOC createAndAddNewLocation(final INLOC originalInitNode, final boolean isInitial, final boolean isError,
-			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation,
-			final DebugIdentifier locName) {
-		// TODO: general solution.. this one works for BoogieIcfgLocations
-		// final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
-		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(locName, originalInitNode.getProcedure(), false,
-				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
-
-		// add fresh location to resultIcfg
-		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
-
-		return freshLoc;
 	}
 
 	private void processLocationsOmitInitEdges(final Set<INLOC> initLocations,
@@ -136,6 +119,13 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 		// we need to create new return transitions after new call transitions have been created
 		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
 
+		/*
+		 * recreate the full icfg like the input icfg (via calls to lst), except for
+		 *  - return edges (which are cached, as usual in icfgtransformers, and reproduced after this loop)
+		 *  - initial edges
+		 *  - edges directly succeeding initial edges
+		 *   the latter two are saved for further processing
+		 */
 		while (iter.hasNext()) {
 			final INLOC oldSource = iter.next();
 
@@ -174,17 +164,19 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 		for (final IcfgEdge initEdge : initEdges) {
 			if (initEdge instanceof IcfgCallTransition) {
 				/*
-				 * basic idea: <li> split target location of each init edge in two, say s1, s2 <li> connect the splits
-				 * with an edge holding the initialization code <li> the edge properties have to be correctly split up,
-				 * too: s1 is procedure entry location, s2 is not s2 takes over all other flags from the original init
-				 * edge target (loop entry, proc exit etc) neither should be an init location (assertion) <li> both
-				 * locations are fresh <li> both locations take over BoogieASTNode, procedure from the original init
-				 * target
+				 * basic idea:
+				 * <li> split target location of each init edge in two, say s1, s2
+				 * <li> connect the splits
+				 *  with an edge holding the initialization code
+				 * <li> the edge properties have to be correctly split up, too: s1 is procedure entry location, s2 is
+				 *  not, s2 takes over all other flags from the original init edge target (loop entry, proc exit etc)
+				 *  neither should be an init location (assertion)
+				 * <li> both locations are fresh
+				 * <li> both locations take over BoogieASTNode, procedure from the original init target
 				 */
 
 				// add an edge after the initEdge, split the init edge's target node
 				final INLOC oldInitTarget = (INLOC) initEdge.getTarget();
-
 				assert oldInitTarget.getIncomingEdges().size() == 1;
 
 				// the source of the init edge is unchanged
@@ -192,47 +184,92 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 //				assert !mBuilder.hasNewLoc(oldInitTarget) : "init edge target should not have been recreated " + "here";
 
-				final OUTLOC s1 = createAndAddNewLocation(oldInitTarget, false, false, true, false, false,
-						new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));
-				final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
-						mInputIcfg.getProcedureErrorNodes().get(initEdge.getSucceedingProcedure())
-								.contains(oldInitTarget),
-						false,
-						mInputIcfg.getProcedureExitNodes().get(initEdge.getSucceedingProcedure()).equals(oldInitTarget),
-						mInputIcfg.getLoopLocations().contains(oldInitTarget),
-						new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"));
+
+
+				final String succeedingProcedureAfterInitEdge = initEdge.getSucceedingProcedure();
+				final Pair<OUTLOC, OUTLOC> split = splitLocation(oldInitTarget, succeedingProcedureAfterInitEdge);
 
 				// final OUTLOC oldInitEdgeTargetInNewCfg = mBuilder.createNewLocation((INLOC) initEdge.getTarget());
 
 				// the copy of the init edge leads to newInitEdgeTarget
-				mBuilder.createNewTransition(initEdgeSource, s1, initEdge);
+				mBuilder.createNewTransition(initEdgeSource, split.getFirst(), initEdge);
 
 				/*
 				 * insert the edge carrying the new initialization code between newInitEdgeTarget and
 				 * oldInitEdgeTargetInNewCfg
 				 */
-				mBuilder.createNewInternalTransition(s1, s2, mInitializingTransformula, false);
+				mBuilder.createNewInternalTransition(split.getFirst(), split.getSecond(), mInitializingTransformula, false);
 
 				/*
 				 * recreate the outgoing transitions of the original init edge, now outgoing from s2
 				 */
 				for (final IcfgEdge succEdge : edgesSucceedingInitEdges.getImage(initEdge)) {
-					mBuilder.createNewTransition(s2, mBuilder.createNewLocation((INLOC) succEdge.getTarget()),
-							succEdge);
+					mBuilder.createNewTransition(split.getSecond(),
+							mBuilder.createNewLocation((INLOC) succEdge.getTarget()), succEdge);
 				}
 			} else if (initEdge instanceof IcfgInternalTransition) {
-				// add an edge before the init edge
-				throw new UnsupportedOperationException("TOOD: implement this case");
+				/*
+				 *  add an edge before the init edge
+				 *   - split init location in two
+				 *   - create new edge e, insert as (split1, e, split2)
+				 *   - insert init edge as (split2, initedge, oldinitedgetarget)
+				 */
+				final INLOC oldInitSource = (INLOC) initEdge.getSource();
+				final INLOC oldInitTarget = (INLOC) initEdge.getTarget();
+
+				final Pair<OUTLOC, OUTLOC> split = splitLocation(oldInitSource, initEdge.getSucceedingProcedure());
+
+				mBuilder.createNewInternalTransition(split.getFirst(), split.getSecond(), mInitializingTransformula,
+						false);
+
+				mBuilder.createNewTransition(split.getSecond(), mBuilder.createNewLocation(oldInitTarget), initEdge);
+
 			} else {
 				throw new AssertionError("init edge is neither call nor internal transition");
 			}
 		}
 
 		/*
-		 * Delayed processing of return transitions, als they can only be processed once their corresponding call has
+		 * Delayed processing of return transitions, also, they can only be processed once their corresponding call has
 		 * been processed
 		 */
 		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
+	}
+
+	private Pair<OUTLOC, OUTLOC> splitLocation(final INLOC oldInitTarget, final String containingprocedure) {
+		Pair<OUTLOC, OUTLOC> p;
+		{
+			final OUTLOC s1 = createAndAddNewLocation(oldInitTarget,
+					mInputIcfg.getInitialNodes().contains(oldInitTarget),
+					false,
+					mInputIcfg.getProcedureEntryNodes().get(containingprocedure).equals(oldInitTarget),
+					false,
+					false,
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));
+			final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
+					mInputIcfg.getProcedureErrorNodes().get(containingprocedure)
+					.contains(oldInitTarget),
+					false,
+					mInputIcfg.getProcedureExitNodes().get(containingprocedure).equals(oldInitTarget),
+					mInputIcfg.getLoopLocations().contains(oldInitTarget),
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"));
+			p = new Pair<>(s1, s2);
+		}
+		return p;
+	}
+
+	private OUTLOC createAndAddNewLocation(final INLOC originalInitNode, final boolean isInitial, final boolean isError,
+			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation,
+			final DebugIdentifier locName) {
+		// TODO: general solution.. this one works for BoogieIcfgLocations
+		// final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
+		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(locName, originalInitNode.getProcedure(), false,
+				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
+
+		// add fresh location to resultIcfg
+		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+
+		return freshLoc;
 	}
 
 	@Override
