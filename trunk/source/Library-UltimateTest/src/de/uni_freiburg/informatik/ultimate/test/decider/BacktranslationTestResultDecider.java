@@ -156,7 +156,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		boolean fail = false;
 		String desiredCounterExample = null;
 		try {
-			desiredCounterExample = getDesiredCounterExample(mRunDefinition);
+			desiredCounterExample = getDesiredCounterExample(log, mRunDefinition);
 		} catch (final IOException e) {
 			setResultCategory(e.getMessage());
 			setResultMessage(e.toString());
@@ -198,7 +198,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
-	private static String getDesiredCounterExample(final UltimateRunDefinition rundefinition) throws IOException {
+	private static String getDesiredCounterExample(final ILogger log, final UltimateRunDefinition rundefinition)
+			throws IOException {
 		final File inputFile = rundefinition.selectPrimaryInputFile();
 		final String inputDir = inputFile.getParentFile().getAbsolutePath();
 		final String inputFileNameWithoutEnding = removeFileEnding(inputFile);
@@ -214,8 +215,12 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding));
 		candidates.add(getDesiredCounterExampleCandidate(inputDir, inputFileNameWithoutEnding));
 
+		log.info("Considering desired error paths:");
+		candidates.stream().forEach(log::info);
+
 		for (final File candidate : candidates) {
 			if (candidate.canRead()) {
+				log.info("Using " + candidate);
 				return CoreUtil.readFile(candidate);
 			}
 		}
