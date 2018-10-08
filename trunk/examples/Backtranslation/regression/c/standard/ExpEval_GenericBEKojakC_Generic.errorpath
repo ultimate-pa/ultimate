@@ -1,0 +1,15 @@
+[L4]              int a=0;
+[L5]              int b=0;
+[L7]   EXPR       a++
+[L7]   EXPR       b++
+[L7]   EXPR       ++a
+[L7]   EXPR       ++b
+[L7]              a = a++ + b++ + ++a + ++b
+[L8]   EXPR       a--
+[L8]   EXPR       b--
+[L8]   EXPR       --a
+[L8]   EXPR       --b
+[L8]              b = a-- - b-- - --a - --b
+[L11]  COND TRUE  b == 0
+[L17]             __VERIFIER_error()
+       VAL        [a=2, b=0]
