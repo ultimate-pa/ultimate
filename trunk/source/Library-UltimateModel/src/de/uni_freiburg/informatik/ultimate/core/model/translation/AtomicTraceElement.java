@@ -210,14 +210,13 @@ public class AtomicTraceElement<TE> {
 
 	@Override
 	public String toString() {
-		final IRelevanceInformation relInfo = getRelevanceInformation();
 		final String rtr;
 		if (mStepInfo.contains(StepInfo.NONE)) {
 			rtr = mToStringFunc.toString(getTraceElement());
 		} else {
-			rtr = String.format("%s %s %s", getStepInfo(), mToStringFunc.toString(getStep()),
-					getRelevanceInformation());
+			rtr = String.format("%s %s", getStepInfo(), mToStringFunc.toString(getStep()));
 		}
+		final IRelevanceInformation relInfo = getRelevanceInformation();
 		if (relInfo != null) {
 			return rtr + " " + relInfo;
 		}
