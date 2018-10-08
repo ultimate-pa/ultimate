@@ -120,7 +120,6 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 	 * @param preprocessing
 	 */
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
-//		final HashRelation<Integer, StoreInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
 
 		if (eps.isBottom()) {
 			mLogger.warn("equality analysis on preprocessed graph computed array read to be unreachable: "
@@ -134,9 +133,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			// i_dim is the index prefix up to the current dimension
 			final ArrayIndex indexForCurrentDim = selectIndex.getFirst(dim);
 
-//			final LocArrayInfo locArray = mMemLocArrayManager.getLocArray(selectInfo.getEdgeInfo(),
 			final LocArrayInfo locArray = mMemLocArrayManager.getOrConstructLocArray(selectInfo.getEdgeInfo(),
-//					selectInfo.getArrayCellAccess().getArray(), dim);
 					selectInfo.getArrayCellAccess().getArray(), dim, true);
 
 			// build the term a-loc-dim[i_dim]

@@ -99,7 +99,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
 
-	private final HashRelation<EdgeInfo, StoreInfo> mEdgeToStoreInfos = new HashRelation<>();
+//	private final HashRelation<EdgeInfo, StoreInfo> mEdgeToStoreInfos = new HashRelation<>();
 
 	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
