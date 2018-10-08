@@ -1,32 +1,35 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 int main() {
-    int a, b;
-	a = 12;
-	b = 0;
+    int a, b, c, d, e, f;
+	a = 2;
+	b = 2;
+    c = 2;
+    d = 2;
+    e = 2;
+    f = 2;
 	
-    while (a > 10) {
+    while (a > 0) {
 		a--;
 	} 
 	
-	while (a > 5){
-		b++;
-		while(a > 7){
-			a--;
+	while (b > 0){
+		b--;
+		while(c > 0){
+			c--;
 		}
-		a--;
 	}
 	
-	for(;a>0;a--){
-		b++;
+	for(;d>0;d--){
+		e--;
 	}
 	
 	do{
-		b--;
-	} while(b>0);
+		f--;
+	} while(f>0);
 	
 	
-	if(b == 0){
+	if(a == 0){
         goto ERROR;
     }
 

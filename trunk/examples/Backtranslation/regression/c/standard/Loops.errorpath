@@ -1,96 +1,58 @@
-[L4]               int a, b;
-[L5]               a = 12
-[L6]               b = 0
-       VAL         [a=12, b=0]
-[L8]   COND TRUE   a > 10
-[L9]               a--
-       VAL         [a=11, b=0]
-[L8]   COND TRUE   a > 10
-[L9]               a--
-       VAL         [a=10, b=0]
-[L8]   COND FALSE  !(a > 10)
-       VAL         [a=10, b=0]
-[L12]  COND TRUE   a > 5
-[L13]              b++
-       VAL         [a=10, b=1]
-[L14]  COND TRUE   a > 7
-[L15]              a--
-       VAL         [a=9, b=1]
-[L14]  COND TRUE   a > 7
-[L15]              a--
-       VAL         [a=8, b=1]
-[L14]  COND TRUE   a > 7
-[L15]              a--
-       VAL         [a=7, b=1]
-[L14]  COND FALSE  !(a > 7)
-       VAL         [a=7, b=1]
-[L17]              a--
-       VAL         [a=6, b=1]
-[L12]  COND TRUE   a > 5
-[L13]              b++
-       VAL         [a=6, b=2]
-[L14]  COND FALSE  !(a > 7)
-       VAL         [a=6, b=2]
-[L17]              a--
-       VAL         [a=5, b=2]
-[L12]  COND FALSE  !(a > 5)
-       VAL         [a=5, b=2]
-[L20]  COND TRUE   a>0
-[L21]              b++
-       VAL         [a=5, b=3]
-[L20]              a--
-       VAL         [a=4, b=3]
-[L20]  COND TRUE   a>0
-[L21]              b++
-       VAL         [a=4, b=4]
-[L20]              a--
-       VAL         [a=3, b=4]
-[L20]  COND TRUE   a>0
-[L21]              b++
-       VAL         [a=3, b=5]
-[L20]              a--
-       VAL         [a=2, b=5]
-[L20]  COND TRUE   a>0
-[L21]              b++
-       VAL         [a=2, b=6]
-[L20]              a--
-       VAL         [a=1, b=6]
-[L20]  COND TRUE   a>0
-[L21]              b++
-       VAL         [a=1, b=7]
-[L20]              a--
-       VAL         [a=0, b=7]
-[L20]  COND FALSE  !(a>0)
-       VAL         [a=0, b=7]
-[L25]              b--
-       VAL         [a=0, b=6]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=6]
-[L25]              b--
-       VAL         [a=0, b=5]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=5]
-[L25]              b--
-       VAL         [a=0, b=4]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=4]
-[L25]              b--
-       VAL         [a=0, b=3]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=3]
-[L25]              b--
-       VAL         [a=0, b=2]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=2]
-[L25]              b--
-       VAL         [a=0, b=1]
-[L26]  COND TRUE   b>0
-       VAL         [a=0, b=1]
-[L25]              b--
-       VAL         [a=0, b=0]
-[L26]  COND FALSE  !(b>0)
-       VAL         [a=0, b=0]
-[L29]  COND TRUE   b == 0
-       VAL         [a=0, b=0]
-[L35]              __VERIFIER_error()
-       VAL         [a=0, b=0]
+[L4]               int a, b, c, d, e, f;
+[L5]               a = 2
+[L6]               b = 2
+[L7]               c = 2
+[L8]               d = 2
+[L9]               e = 2
+[L10]              f = 2
+       VAL         [a=2, b=2, c=2, d=2, e=2, f=2]
+[L12]  COND TRUE   a > 0
+[L13]              a--
+       VAL         [a=1, b=2, c=2, d=2, e=2, f=2]
+[L12]  COND TRUE   a > 0
+[L13]              a--
+       VAL         [a=0, b=2, c=2, d=2, e=2, f=2]
+[L12]  COND FALSE  !(a > 0)
+       VAL         [a=0, b=2, c=2, d=2, e=2, f=2]
+[L16]  COND TRUE   b > 0
+[L17]              b--
+       VAL         [a=0, b=1, c=2, d=2, e=2, f=2]
+[L18]  COND TRUE   c > 0
+[L19]              c--
+       VAL         [a=0, b=1, c=1, d=2, e=2, f=2]
+[L18]  COND TRUE   c > 0
+[L19]              c--
+       VAL         [a=0, b=1, c=0, d=2, e=2, f=2]
+[L18]  COND FALSE  !(c > 0)
+       VAL         [a=0, b=1, c=0, d=2, e=2, f=2]
+[L16]  COND TRUE   b > 0
+[L17]              b--
+       VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
+[L18]  COND FALSE  !(c > 0)
+       VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
+[L16]  COND FALSE  !(b > 0)
+       VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
+[L23]  COND TRUE   d>0
+[L24]              e--
+       VAL         [a=0, b=0, c=0, d=2, e=1, f=2]
+[L23]              d--
+       VAL         [a=0, b=0, c=0, d=1, e=1, f=2]
+[L23]  COND TRUE   d>0
+[L24]              e--
+       VAL         [a=0, b=0, c=0, d=1, e=0, f=2]
+[L23]              d--
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=2]
+[L23]  COND FALSE  !(d>0)
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=2]
+[L28]              f--
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=1]
+[L29]  COND TRUE   f>0
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=1]
+[L28]              f--
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+[L29]  COND FALSE  !(f>0)
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+[L32]  COND TRUE   a == 0
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+[L38]              __VERIFIER_error()
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
