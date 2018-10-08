@@ -219,24 +219,21 @@ public class BoogiePreprocessorBacktranslator
 				// for call statements, we rely on the stepinfo of our
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
-
+				assert checkProcedureNames(elem, ate) : "Call stack broken";
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					assert checkProcedureNames(elem, ate);
 					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
 							ate.getRelevanceInformation()));
+				} else if (ate.hasStepInfo(StepInfo.PROC_CALL) || ate.hasStepInfo(StepInfo.PROC_RETURN)) {
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation(), ate.getPrecedingProcedure(), ate.getSucceedingProcedure()));
+
+				} else if (Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation()));
 				} else {
-					assert checkProcedureNames((CallStatement) elem, ate) : "Call stack broken";
-					if (Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
-						atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-								ate.getRelevanceInformation()));
-					} else {
-						atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-								ate.getRelevanceInformation(), ate.getPrecedingProcedure(),
-								ate.getSucceedingProcedure()));
-					}
-
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation(), ate.getPrecedingProcedure(), ate.getSucceedingProcedure()));
 				}
-
 			} else {
 				assert checkProcedureNames(elem, ate);
 				// it could be that we missed some cases... revisit this if you
