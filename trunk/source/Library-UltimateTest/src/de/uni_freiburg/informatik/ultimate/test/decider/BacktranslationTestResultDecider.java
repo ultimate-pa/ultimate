@@ -331,7 +331,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		/**
 		 * Expects Strings that represent a line of a counterexample and the following value line. Both can be null: the
 		 * value line if none is present, and the line if it is the initial value line.
-		 * 
+		 *
 		 */
 		private StringCounterexampleLine(final String line, final String valueLine) {
 			if (line == null) {
@@ -344,14 +344,14 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			mValueLine = valueLine;
 		}
 
-		public boolean isSimilar(final StringCounterexampleLine other) {
-			if (Objects.equals(other.mLine, mLine)) {
-				if (Objects.equals(other.mValueLine, mValueLine)) {
-					if (other.mValueLine == null) {
-						return true;
-					}
-					return isValueLineOk(other.mValueLine, mValueLine);
+		public boolean isSimilar(final StringCounterexampleLine actual) {
+			if (Objects.equals(actual.mLine, mLine)) {
+				if (mValueLine == null && actual.mValueLine == null) {
+					return true;
+				} else if (mValueLine == null || actual.mValueLine == null) {
+					return false;
 				}
+				return isValueLineOk(mValueLine, actual.mValueLine);
 			}
 			return false;
 		}
@@ -367,28 +367,46 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		private static boolean isValueLineOk(final String desiredValueLine, final String actualValueLine) {
 			final String desiredValue = desiredValueLine.trim();
 			final String actualValue = actualValueLine.trim();
-			if (desiredValue.startsWith("VAL") && actualValue.startsWith("VAL")
-					|| desiredValue.startsWith("IVAL") && actualValue.startsWith("IVAL")) {
-				final String[] curDesVals = desiredValue.split(",");
-				final String[] curActVals = actualValue.split(",");
-				if (curDesVals.length != curActVals.length) {
+			if ((!desiredValue.startsWith("VAL") || !actualValue.startsWith("VAL"))
+					&& (!desiredValue.startsWith("IVAL") || !actualValue.startsWith("IVAL"))) {
+				// not a valid value line
+				return false;
+			}
+
+			final String[] curDesVals = getValues(desiredValue);
+			final String[] curActVals = getValues(actualValue);
+			if (curDesVals.length != curActVals.length) {
+				// not the same amount of variables
+				return false;
+			}
+
+			for (int i = 0; i < curDesVals.length; ++i) {
+				final String[] singleDesVal = curDesVals[i].split("=");
+				final String[] singleActVal = curActVals[i].split("=");
+				if (singleDesVal.length != singleActVal.length) {
 					return false;
 				}
-
-				for (int i = 0; i < curDesVals.length; ++i) {
-					final String[] singleDesVal = curDesVals[i].split("=");
-					final String[] singleActVal = curActVals[i].split("=");
-					if (singleDesVal.length != singleActVal.length) {
-						return false;
-					}
-					// check for the name of the var
-					if (!singleDesVal[0].equals(singleActVal[0])) {
-						return false;
-					}
+				// check for the name of the var
+				if (!singleDesVal[0].equals(singleActVal[0])) {
+					return false;
 				}
-				return true;
+				// check the value; if the desired value is *, we allow all values for the actual value
+				if ("*".equals(singleDesVal[1])) {
+					continue;
+				}
+				if (!singleDesVal[1].equals(singleActVal[1])) {
+					return false;
+				}
 			}
-			return false;
+			return true;
+
+		}
+
+		private static String[] getValues(final String value) {
+			final int lbracketIdx = value.indexOf('[');
+			final int rbracketIdx = value.lastIndexOf(']');
+			final String values = value.substring(lbracketIdx + 1, rbracketIdx);
+			return values.split(",");
 		}
 
 		@Override
