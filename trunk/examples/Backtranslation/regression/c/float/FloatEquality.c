@@ -11,11 +11,7 @@ float __VERIFIER_nondet_float();
 
 int main() {
 	float x = __VERIFIER_nondet_float();
-	float y = __VERIFIER_nondet_float();
-	if (x == x && y != y) {
-		// do nothing
-	} else {
+	if (x != x) {
 		//@ assert \false;
 	}
-
 }

@@ -1,4 +1,4 @@
 [L2]        float x = 1.0;
-      VAL   [x=1]
+      VAL   [x=1.0]
 [L3]        CodeAnnotStmt[Assertion]
-      VAL   [x=1]
+      VAL   [x=1.0]

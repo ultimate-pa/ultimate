@@ -1,8 +1,6 @@
-[L13]              float x = __VERIFIER_nondet_float();
-       VAL         [__VERIFIER_nondet_float()=0, x=0]
-[L14]              float y = __VERIFIER_nondet_float();
-       VAL         [__VERIFIER_nondet_float()=0, x=0, y=0]
-[L15]  COND FALSE  !(x == x && y != y)
-       VAL         [x=0, y=0]
-[L18]              CodeAnnotStmt[Assertion]
-       VAL         [x=0, y=0]
+[L13]             float x = __VERIFIER_nondet_float();
+       VAL        [__VERIFIER_nondet_float()=NaN, x=NaN]
+[L14]  COND TRUE  x != x
+       VAL        [x=NaN]
+[L15]             CodeAnnotStmt[Assertion]
+       VAL        [x=NaN]
