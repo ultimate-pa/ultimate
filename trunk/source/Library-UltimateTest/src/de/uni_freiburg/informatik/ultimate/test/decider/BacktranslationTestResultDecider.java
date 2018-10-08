@@ -35,8 +35,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IPath;
@@ -52,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -328,12 +325,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 */
 	private static final class StringCounterexampleLine {
 
-		private static final Pattern LINE_REGEX = Pattern.compile("^\\[L(\\d+)\\]\\s+(\\w*)\\s+(.*)$");
-
 		private final String mLine;
-		private final String mStmt;
-		private final int mLineNumber;
-		private final String mLineCategory;
 		private final String mValueLine;
 
 		/**
@@ -344,64 +336,24 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		private StringCounterexampleLine(final String line, final String valueLine) {
 			if (line == null) {
 				mLine = null;
-				mLineCategory = null;
-				mStmt = null;
-				mLineNumber = -1;
 				mValueLine = Objects.requireNonNull(valueLine);
 				return;
 			}
 
-			final Matcher matcher = LINE_REGEX.matcher(line.trim());
-			if (!matcher.find() || matcher.groupCount() != 3) {
-				throw new IllegalArgumentException("Line has unexpected format: " + line);
-			}
 			mLine = Objects.requireNonNull(line);
 			mValueLine = valueLine;
-
-			mLineNumber = Integer.parseInt(matcher.group(1));
-			String linecat;
-			String stmt;
-			try {
-				linecat = StepInfo.valueOf(matcher.group(2)).name();
-				stmt = matcher.group(3);
-			} catch (final IllegalArgumentException iae) {
-				linecat = null;
-				final String g2 = matcher.group(2);
-				if (g2.isEmpty()) {
-					stmt = matcher.group(3);
-				} else {
-					stmt = matcher.group(2) + " " + matcher.group(3);
-				}
-			}
-			mLineCategory = linecat;
-			mStmt = stmt;
 		}
 
 		public boolean isSimilar(final StringCounterexampleLine other) {
-			if (mLine == null) {
-				if (other.mValueLine == null) {
-					return false;
+			if (Objects.equals(other.mLine, mLine)) {
+				if (Objects.equals(other.mValueLine, mValueLine)) {
+					if (other.mValueLine == null) {
+						return true;
+					}
+					return isValueLineOk(other.mValueLine, mValueLine);
 				}
-				return isValueLineOk(other.mValueLine, mValueLine);
 			}
-			if (other.mLineNumber != mLineNumber) {
-				return false;
-			}
-			if (!Objects.equals(mLineCategory, other.mLineCategory)) {
-				return false;
-			}
-			if (!other.mStmt.equals(mStmt)) {
-				return false;
-			}
-			if (other.mValueLine == null || mValueLine == null) {
-				if (other.mValueLine == null && mValueLine == null) {
-					// both have no value
-					return true;
-				}
-				// one has no value
-				return false;
-			}
-			return isValueLineOk(other.mValueLine, mValueLine);
+			return false;
 		}
 
 		/**
