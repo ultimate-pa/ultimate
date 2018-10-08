@@ -96,7 +96,7 @@
 
 								<copy todir="${websiteExamplesDir}/verifyConcurrentBoogie"
 									verbose="true">
-									<fileset dir="${examplesDir}/concurrent/regression"
+									<fileset dir="${examplesDir}/concurrent/concurrentBoogie/showcase/"
 										includes="*.bpl" />
 								</copy>
 
