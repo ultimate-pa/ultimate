@@ -191,7 +191,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreInfo sample) {
 		final ArrayGroup arrayGroup = selectInfo.getArrayGroup();//mArrayToArrayGroup.get(array);
-		assert selectInfo.getArrayGroup().equals(sample.getArrayGroup());
+		assert selectInfo.getArrayGroup().equals(sample.getArrayGroup()) || sample instanceof NoStoreInfo;
 
 		UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 		if (partition == null) {

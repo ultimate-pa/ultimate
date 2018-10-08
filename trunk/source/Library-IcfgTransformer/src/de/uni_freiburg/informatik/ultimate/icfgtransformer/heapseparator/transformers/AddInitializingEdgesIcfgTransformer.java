@@ -224,6 +224,16 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 				mBuilder.createNewTransition(split.getSecond(), mBuilder.createNewLocation(oldInitTarget), initEdge);
 
+				/*
+				 * recreate the outgoing transitions of the original init edge, still outgoing from s2
+				 * (doing this because the "initEdge instanceof IcfgCallTransition" case works this way)
+				 */
+				for (final IcfgEdge succEdge : edgesSucceedingInitEdges.getImage(initEdge)) {
+					mBuilder.createNewTransition(mBuilder.createNewLocation(oldInitTarget),
+							mBuilder.createNewLocation((INLOC) succEdge.getTarget()), succEdge);
+				}
+
+
 			} else {
 				throw new AssertionError("init edge is neither call nor internal transition");
 			}

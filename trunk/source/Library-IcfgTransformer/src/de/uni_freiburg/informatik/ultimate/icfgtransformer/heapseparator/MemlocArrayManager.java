@@ -120,7 +120,9 @@ public class MemlocArrayManager {
 				assert !edgeInfo.getEdge().getTransformula().getAssignedVars().contains(pvoc);
 
 				final Sort locArraySort = computeLocArraySort(baseArrayTerm.getSort(), dim);
+				mMgdScript.lock(this);
 				final IProgramVarOrConst locPvoc = getLocArrayPvocForArrayPvoc(pvoc, dim, locArraySort);
+				mMgdScript.unlock(this);
 
 				/*
 				 *  because there is no update to the array, no LocArray was constructed here during pre-ai-processing
@@ -211,13 +213,13 @@ public class MemlocArrayManager {
 
 	private IProgramVarOrConst getLocArrayPvocForArrayPvoc(final IProgramVarOrConst pvoc, final int dim,
 			final Sort locArraySort) {
+		assert mMgdScript.isLockOwner(this) : "locking before calling this, by convention "
+				+ "(unclear if there are compelling arguments for the convention)";
 		IProgramVarOrConst result = mArrayPvocToDimToLocArrayPvoc.get(pvoc, dim);
 		if (result == null) {
 			if (pvoc instanceof IProgramNonOldVar) {
-				mMgdScript.lock(this);
 				result = ProgramVarUtils.constructGlobalProgramVarPair(
 						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort), locArraySort, mMgdScript, this);
-				mMgdScript.unlock(this);
 				mGlobalLocArrays.add((IProgramNonOldVar) result);
 			} else if (pvoc instanceof ILocalProgramVar) {
 				result = constructLocalBoogieVar(sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort),

@@ -200,10 +200,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 							arrayCellAccessToDimensionToLocationBlock,
 							edgeInfo, mArrayGroupToDimensionToLocationBlocks,
 							mCsiag,
-//							mArrayToArrayGroup,
-//							mCsiag.getArrayToArrayGroup(),
-//							mEdgeToIndexToStoreIndexInfo,
-							mHeapArrays);//,
+							mHeapArrays);
 			final Term transformedFormulaRaw = ppttf.transform(tf.getFormula());
 			ppttf.finish();
 
@@ -225,6 +222,14 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 				final TermVariable inTv = ppttf.getNewInVars().get(ov.getKey());
 				final TermVariable outTv = ov.getValue();
+				assert outTv != null;
+
+				if (inTv == null) {
+					/* outvar has no corresponding invar --> there are no "neutral" terms like a1' = a1,
+					 *  --> current equation is definitely an actual update */
+					  continue;
+				}
+
 				if (inTv.equals(outTv)) {
 					// not an assigned var
 					continue;

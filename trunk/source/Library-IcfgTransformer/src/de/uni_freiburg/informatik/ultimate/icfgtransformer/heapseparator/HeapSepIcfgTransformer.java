@@ -287,11 +287,18 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 * 2. run the equality analysis
 		 */
 		{
-//			final List<String> trackedArraySubstrings = null;
+
+			/*
+			 * tracked arrays are
+			 *  - the loc arrays, because we want information about them
+			 *  - the valid array, because it is important in order for inferring that malloc always returns fresh
+			 *   (valid) values
+			 */
 			final List<String> trackedArraySubstrings = new ArrayList<>();
 			trackedArraySubstrings.add(MemlocArrayManager.LOC_ARRAY_PREFIX);
 			trackedArraySubstrings.add("valid");
 //			trackedArraySubstrings.add("rep");
+
 			equalityProvider.setTrackedArrays(trackedArraySubstrings);
 			equalityProvider.preprocess(preprocessedIcfg);
 			mLogger.info("finished equality analysis");
