@@ -50,15 +50,15 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
  */
 public class DefaultParser implements IParser {
 	protected static final int DEFAULT_OPTIONS = ILanguage.OPTION_NO_IMAGE_LOCATIONS | ILanguage.OPTION_IS_SOURCE_UNIT;
-	
+
 	protected static final String DEFAULT_FILEPATH = "<input>";
-	
+
 	protected final ILogger mLogger;
 	protected final String mDummySourceFilePath;
 	protected final ScannerInfo mScannerInfo;
 	protected final IncludeFileContentProvider mIncludeFileContentProvider;
 	protected final IParserLogService mParserLogService;
-	
+
 	/**
 	 * Default constructor.
 	 *
@@ -68,7 +68,7 @@ public class DefaultParser implements IParser {
 	public DefaultParser(final ILogger logger) {
 		this(logger, DEFAULT_FILEPATH);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            logger instance
@@ -79,7 +79,7 @@ public class DefaultParser implements IParser {
 		this(logger, dummySourceFilePath, new ScannerInfo(), IncludeFileContentProvider.getEmptyFilesProvider(),
 				new NullLogService());
 	}
-	
+
 	/**
 	 * @param logger
 	 *            logger instance
@@ -100,7 +100,7 @@ public class DefaultParser implements IParser {
 		mIncludeFileContentProvider = Objects.requireNonNull(includeFileContentProvider);
 		mParserLogService = Objects.requireNonNull(parserLogService);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            logger instance
@@ -117,17 +117,17 @@ public class DefaultParser implements IParser {
 				new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
 				new NoWorkspaceSavedFilesProvider(), new NullLogService());
 	}
-	
+
 	@Override
 	public IPSTTranslationUnit createPst(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
 		return new PSTBuilder(mLogger, ast, sourceDocument).build();
 	}
-	
+
 	@Override
 	public IASTTranslationUnit parse(final String source) {
 		return parse(source, DEFAULT_OPTIONS);
 	}
-	
+
 	@Override
 	public IASTTranslationUnit parse(final String source, final int options) {
 		try {
