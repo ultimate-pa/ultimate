@@ -502,9 +502,9 @@ public class ProofChecker extends NonRecursive {
 		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
 		 * pair. strongPaths contains the sets of all proven strong paths.
 		 */
-		final HashSet<SymmetricPair<Term>> strongPaths = new HashSet<SymmetricPair<Term>>();
+		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
 		/* indexDiseqs contains all index equalities in the clause */
-		final HashSet<SymmetricPair<Term>> indexDiseqs = new HashSet<SymmetricPair<Term>>();
+		final HashSet<SymmetricPair<Term>> indexDisequalities = new HashSet<SymmetricPair<Term>>();
 
 		/* collect literals and search for the disequality */
 		boolean foundDiseq = false;
@@ -521,7 +521,7 @@ public class ProofChecker extends NonRecursive {
 					reportError("Expected binary equality, found " + atom);
 					return;
 				}
-				strongPaths.add(new SymmetricPair<Term>(sides[0], sides[1]));
+				allEqualities.add(new SymmetricPair<Term>(sides[0], sides[1]));
 			} else {
 				final Term atom = unquote(literal);
 				if (!isApplication("=", atom)) {
@@ -533,13 +533,15 @@ public class ProofChecker extends NonRecursive {
 						reportError("Unexpected positive literal in CC lemma.");
 					}
 					final Term[] sides = ((ApplicationTerm) atom).getParameters();
-					indexDiseqs.add(new SymmetricPair<Term>(sides[0], sides[1]));
+					indexDisequalities.add(new SymmetricPair<Term>(sides[0], sides[1]));
 				}
 				foundDiseq = true;
 			}
 		}
 
 		SymmetricPair<Term> lastPath = null;
+		SymmetricPair<Term> lastWeakPath = null;
+		Term lastWeakIdx = null;
 		/*
 		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
 		 */
@@ -558,7 +560,7 @@ public class ProofChecker extends NonRecursive {
 				final Term idx = (Term) annot[0];
 				final Term[] path = (Term[]) annot[1];
 				/* check weak path */
-				checkArrayPath(idx, path, strongPaths, null, indexDiseqs);
+				checkArrayPath(idx, path, allEqualities, null, indexDisequalities);
 				/* add it to premises */
 				final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(path[0], path[path.length - 1]);
 				HashSet<Term> weakIdxs = weakPaths.get(endPoints);
@@ -567,22 +569,82 @@ public class ProofChecker extends NonRecursive {
 					weakPaths.put(endPoints, weakIdxs);
 				}
 				weakIdxs.add(idx);
+				lastWeakIdx = idx;
+				lastWeakPath = endPoints;
 			} else if (ccAnnotation[i] == ":subpath" && (annot instanceof Term[])) {
 				final Term[] path = (Term[]) annot;
 				final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(path[0], path[path.length - 1]);
 				/* check path */
-				checkArrayPath(null, path, strongPaths, weakPaths.get(endPoints), indexDiseqs);
+				checkArrayPath(null, path, allEqualities, weakPaths.get(endPoints), indexDisequalities);
 				/* add it to premises */
-				strongPaths.add(endPoints);
+				allEqualities.add(endPoints);
 				lastPath = endPoints;
 			} else {
 				reportError("Unknown subpath annotation");
 			}
 		}
 
+		SymmetricPair<Term> provedEquality;
+		switch (type) {
+		case ":CC":
+		case ":weakeq-ext":
+			if (lastPath == null) {
+				reportError("Missing main path in lemma");
+				return;
+			}
+			provedEquality = lastPath;
+			break;
+		case ":read-over-weakeq": {
+			if (!isApplication("=", goalEquality)) {
+				reportError("Goal equality is not an equality in read-over-weakeq lemma");
+				return;
+			}
+			final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
+			if (isApplication("select", sides[0]) && isApplication("select", sides[1])) {
+				final Term[] p1 = ((ApplicationTerm) sides[0]).getParameters();
+				final Term[] p2 = ((ApplicationTerm) sides[1]).getParameters();
+				if (p1[1] != p2[1]  && !allEqualities.contains(new SymmetricPair<Term>(p1[1], p2[1]))) {
+					reportError("Missing index equality in read-over-weakeq lemma");
+				}
+				if (lastWeakIdx != p1[1] && lastWeakIdx != p2[1]) {
+					reportError("Wrong index in weak path");
+				}
+				if (lastWeakPath == null || !lastWeakPath.equals(new SymmetricPair<Term>(p1[0], p2[0]))) {
+					reportError("Wrong path ends in weak path");
+				}
+			}
+			provedEquality = new SymmetricPair<Term>(sides[0], sides[1]);
+			break;
+		}
+		case ":const-weakeq": {
+			if (lastPath == null || !isApplication("const", lastPath.getFirst())
+					|| !isApplication("const", lastPath.getSecond())) {
+				reportError("Main path in const-weakeq not between const arrays.");
+				return;
+			}
+			final Term c1 = ((ApplicationTerm) lastPath.getFirst()).getParameters()[0];
+			final Term c2 = ((ApplicationTerm) lastPath.getSecond()).getParameters()[0];
+			provedEquality = new SymmetricPair<Term>(c1, c2);
+			break;
+		}
+		case ":read-const-weakeq": {
+			if (lastWeakPath == null || lastWeakIdx == null || !isApplication("const", lastWeakPath.getSecond())) {
+				reportError("Main weak path in read-const-weakeq not to a const array.");
+				return;
+			}
+			final Term c1 = mSkript.term("select", lastWeakPath.getFirst(), lastWeakIdx);
+			final Term c2 = ((ApplicationTerm) lastWeakPath.getSecond()).getParameters()[0];
+			provedEquality = new SymmetricPair<Term>(c1, c2);
+			break;
+		}
+		default:
+			reportError("Unknown rule " + type);
+			return;
+		}
+
 		if (startSubpathAnnot == 0) {
 			/* check that the mainPath is really a contradiction */
-			if (!checkTrivialDisequality(lastPath.getFirst(), lastPath.getSecond())) {
+			if (!checkTrivialDisequality(provedEquality.getFirst(), provedEquality.getSecond())) {
 				reportError("No diseq, but main path is " + lastPath);
 			}
 		} else {
@@ -598,62 +660,9 @@ public class ProofChecker extends NonRecursive {
 				reportError("Expected binary equality in CC lemma");
 				return;
 			}
-			switch (type) {
-			case ":CC":
-			case ":weakeq-ext":
-				if (strongPaths.contains(new SymmetricPair<Term>(sides[0], sides[1]))) {
-					/* everything fine */
-					return;
-				}
-				break;
-			case ":read-over-weakeq":
-				if (isApplication("select", sides[0]) && isApplication("select", sides[1])) {
-					final Term[] p1 = ((ApplicationTerm) sides[0]).getParameters();
-					final Term[] p2 = ((ApplicationTerm) sides[1]).getParameters();
-					if (p1[1] == p2[1] || strongPaths.contains(new SymmetricPair<Term>(p1[1], p2[1]))) {
-						final HashSet<Term> weakPs = weakPaths.get(new SymmetricPair<Term>(p1[0], p2[0]));
-						if (weakPs != null && (weakPs.contains(p1[1]) || weakPs.contains(p2[1]))) {
-							return;
-						}
-					}
-				}
-				break;
-			case ":const-weakeq":
-				for (final SymmetricPair<Term> strongEq : strongPaths) {
-					if (!isApplication("const", strongEq.getFirst()) || !isApplication("const", strongEq.getSecond())) {
-						continue;
-					}
-					final Term c1 = ((ApplicationTerm) strongEq.getFirst()).getParameters()[0];
-					final Term c2 = ((ApplicationTerm) strongEq.getSecond()).getParameters()[0];
-					if (sides[0] == c1 && sides[1] == c2) {
-						return;
-					}
-					if (sides[0] == c2 && sides[1] == c1) {
-						return;
-					}
-				}
-				break;
-			case ":read-const-weakeq":
-				if (isApplication("select", sides[0])) {
-					final Term[] p1 = ((ApplicationTerm) sides[0]).getParameters();
-					final Term const2 = mSkript.term("const", null, p1[0].getSort(), sides[1]);
-					final HashSet<Term> weakPs = weakPaths.get(new SymmetricPair<Term>(p1[0], const2));
-					if (weakPs != null && weakPs.contains(p1[1])) {
-						return;
-					}
-				}
-				if (isApplication("select", sides[1])) {
-					final Term[] p1 = ((ApplicationTerm) sides[1]).getParameters();
-					final Term const2 = mSkript.term("const", null, p1[0].getSort(), sides[0]);
-					final HashSet<Term> weakPs = weakPaths.get(new SymmetricPair<Term>(p1[0], const2));
-					if (weakPs != null && weakPs.contains(p1[1])) {
-						return;
-					}
-				}
-				break;
+			if (!provedEquality.equals(new SymmetricPair<Term>(sides[0], sides[1]))) {
+				reportError("Cannot explain main equality " + goalEquality);
 			}
-
-			reportError("Cannot explain main equality " + goalEquality);
 		}
 	}
 
@@ -748,6 +757,16 @@ public class ProofChecker extends NonRecursive {
 					&& checkSelectConst(strongPath.getSecond(), termPair.getFirst(), weakIdx, strongPaths)) {
 				return true;
 			}
+		}
+		if (isApplication("const", termPair.getFirst())
+				&& checkSelectConst(((ApplicationTerm) termPair.getFirst()).getParameters()[0],
+						termPair.getSecond(), weakIdx, strongPaths)) {
+			return true;
+		}
+		if (isApplication("const", termPair.getSecond())
+				&& checkSelectConst(((ApplicationTerm) termPair.getSecond()).getParameters()[0],
+						termPair.getFirst(), weakIdx, strongPaths)) {
+			return true;
 		}
 		return false;
 	}

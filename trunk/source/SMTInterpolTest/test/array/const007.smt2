@@ -2,13 +2,13 @@
 (set-option :proof-check-mode true)
 (set-option :print-terms-cse false)
 
-(set-logic QF_AX)
+(set-logic QF_ALIA)
 (declare-sort U 0)
 (declare-fun v () U)
 (declare-fun w () U)
-(declare-fun i () U)
+(declare-fun i () Int)
 
-(assert (= (select ((as const (Array U U)) v) i) w))
+(assert (= (select ((as const (Array Int U)) v) i) w))
 (assert (not (= v w)))
 (check-sat)
 (get-proof)

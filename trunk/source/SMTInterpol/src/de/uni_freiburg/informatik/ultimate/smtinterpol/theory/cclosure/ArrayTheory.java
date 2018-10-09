@@ -419,8 +419,7 @@ public class ArrayTheory implements ITheory {
 						storeNode.mSelects.put(index, select);
 					} else {
 						mergeConstSelects.remove(index);
-						if (select.getRepresentative() 
-								!= otherSelect.getRepresentative()) {
+						if (select.getRepresentative() != otherSelect.getRepresentative()) {
 							// add propagated equality
 							propEqualities.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
 						}
@@ -434,9 +433,13 @@ public class ArrayTheory implements ITheory {
 				for (final Entry<CCTerm, CCAppTerm> entry : mergeConstSelects.entrySet()) {
 					final CCTerm index = entry.getKey();
 					final CCAppTerm select = entry.getValue();
-					if (select.getRepresentative() != const1.getRepresentative()
-							&& constNode.getWeakIRepresentative(index) == storeNode) {
-						propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
+					// check if selected array is weakly equal to the const array
+					if (constNode.getWeakIRepresentative(index) == storeNode) {
+						// do not keep select, we will merge it with the constant value
+						storeNode.mSelects.remove(index);
+						if (select.getRepresentative() != const1.getRepresentative()) {
+							propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
+						}
 					}
 				}
 			}
@@ -503,9 +506,13 @@ public class ArrayTheory implements ITheory {
 				CCTerm const1 = getValueFromConst(storeNode.mConstTerm);
 				ArrayNode constNode = mCongRoots.get(storeNode.mConstTerm.getRepresentative());
 				CCAppTerm select = storeNode.mSelects.get(storeIndex);
-				if (select != null && select.getRepresentative() != const1.getRepresentative()
-						&& constNode.getWeakIRepresentative(storeIndex) == storeNode) {
-					propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
+				// check if select exists and is weakly equal to the constant array in the congruence class.
+				if (select != null && constNode.getWeakIRepresentative(storeIndex) == storeNode) {
+					// do not keep select, we will merge it with the constant value
+					storeNode.mSelects.remove(storeIndex);
+					if (select.getRepresentative() != const1.getRepresentative()) {
+						propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
+					}
 				}
 			}
 		}

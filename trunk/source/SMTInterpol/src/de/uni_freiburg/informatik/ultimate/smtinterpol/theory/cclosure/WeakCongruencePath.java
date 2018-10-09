@@ -227,8 +227,8 @@ public class WeakCongruencePath extends CongruencePath {
 		if (rep1 == rep2) {
 			return computeWeakPath(array1, array2, index, produceProofs);
 		}
-		final CCAppTerm select1 = rep1.mSelects.get(indexRep);
-		final CCAppTerm select2 = rep2.mSelects.get(indexRep);
+		final CCAppTerm select1 = rep1.mConstTerm != null ? null : rep1.mSelects.get(indexRep);
+		final CCAppTerm select2 = rep2.mConstTerm != null ? null : rep2.mSelects.get(indexRep);
 		if (select1 == null) {
 			assert select2 != null;
 			return computeSelectConstPath(array2, select2, array1, rep1, index, produceProofs);
@@ -273,13 +273,15 @@ public class WeakCongruencePath extends CongruencePath {
 		final CCAppTerm const2 = rep2.mConstTerm;
 
 		// match select indices with index.
-		SubPath indexPath;
-		indexPath = computePath(index, ArrayTheory.getIndexFromSelect(select1));
+		final SubPath indexPath = computePath(index, ArrayTheory.getIndexFromSelect(select1));
 		if (indexPath != null) {
 			mAllPaths.addFirst(indexPath);
 		}
 		// compute the path between the select and constant.
-		mAllPaths.addFirst(computePath(select1, ArrayTheory.getValueFromConst(const2)));
+		final SubPath selectPath = computePath(select1, ArrayTheory.getValueFromConst(const2));
+		if (selectPath != null) {
+			mAllPaths.addFirst(selectPath);
+		}
 
 		// go from ccArrays to select arrays
 		final CCTerm selArray1 = ArrayTheory.getArrayFromSelect(select1);
@@ -389,10 +391,11 @@ public class WeakCongruencePath extends CongruencePath {
 
 	private Clause generateClause(CCEquality diseq, boolean produceProofs,
 			RuleKind rule) {
-		assert diseq != null;
-		// Note that it can actually happen that diseq is already in
-		// the list of all literals (because it is an index assumption).
-		mAllLiterals.add(diseq.negate());
+		if (diseq != null) {
+			// Note that it can actually happen that diseq is already in
+			// the list of all literals (because it is an index assumption).
+			mAllLiterals.add(diseq.negate());
+		}
 
 		final Literal[] lemma = new Literal[mAllLiterals.size()];
 		int i = 0;

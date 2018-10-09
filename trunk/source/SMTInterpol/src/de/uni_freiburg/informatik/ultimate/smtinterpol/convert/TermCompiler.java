@@ -526,9 +526,39 @@ public class TermCompiler extends TermTransformer {
 				}
 				break;
 			}
+			case "const": {
+				Sort sort = mTracker.getProvedTerm(convertedApp).getSort();
+				assert sort.isArraySort();
+				if (!isInfinite(sort.getArguments()[0])) {
+					/*
+					 * We don't support const over non-infinite index sorts. So we require the sort to be internal and
+					 * non-bool. Non-bool is already checked earlier.
+					 */
+					throw new SMTLIBException("Const is only supported for inifinite index sort");
+				}
+			}
 			}
 		}
 		setResult(convertedApp);
+	}
+
+	private boolean isInfinite(Sort sort) {
+		if (sort.isInternal()) {
+			switch (sort.getName()) {
+			case "Int":
+			case "Real":
+				return true;
+			case "Array": {
+				Sort[] args = sort.getArguments();
+				Sort indexSort = args[0];
+				Sort elemSort = args[1];
+				return elemSort.isInternal() && isInfinite(indexSort);
+			}
+			default:
+				return false;
+			}
+		}
+		return false;
 	}
 
 	public final static Rational constDiv(final Rational c0, final Rational c1) {

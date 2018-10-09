@@ -2055,12 +2055,33 @@ public class LinArSolve implements ITheory {
 					lcongclass));
 			final Iterator<SharedTerm> it = lcongclass.iterator();
 			final SharedTerm shared1 = it.next();
+			SharedTerm shared1OtherSort = null;
 			while (it.hasNext()) {
 				final SharedTerm shared2 = it.next();
-				final EqualityProxy eq = shared1.createEquality(shared2);
-				assert eq != EqualityProxy.getTrueProxy();
-				assert eq != EqualityProxy.getFalseProxy();
-				final CCEquality cceq = eq.createCCEquality(shared1, shared2);
+				final EqualityProxy eq;
+				final CCEquality cceq;
+				if (shared1.getTerm().getSort() == shared2.getTerm().getSort()) {
+					eq = shared1.createEquality(shared2);
+					assert eq != EqualityProxy.getTrueProxy();
+					assert eq != EqualityProxy.getFalseProxy();
+					cceq = eq.createCCEquality(shared1, shared2);
+				} else if (shared1OtherSort == null) {
+					/*
+					 * never merge terms of different sort. Note that mixed int/real equalities are translated to LA in
+					 * the preprocessor.
+					 * 
+					 * We need to remember this term in case there are more shared terms of this sort.
+					 */
+					shared1OtherSort = shared2;
+					continue;
+				} else {
+					// only two numeric sorts supported
+					assert shared1OtherSort.getSort() == shared2.getSort();
+					eq = shared1OtherSort.createEquality(shared2);
+					assert eq != EqualityProxy.getTrueProxy();
+					assert eq != EqualityProxy.getFalseProxy();
+					cceq = eq.createCCEquality(shared1OtherSort, shared2);
+				}
 				if (cceq.getLASharedData().getDecideStatus() != null) { // NOPMD
 					if (cceq.getDecideStatus() == cceq.negate()) {
 						return generateEqualityClause(cceq);
