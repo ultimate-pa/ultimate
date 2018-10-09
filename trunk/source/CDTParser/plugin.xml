@@ -6,4 +6,12 @@
       <impl
             class="de.uni_freiburg.informatik.ultimate.cdt.parser.CDTParser"></impl>
    </extension>
+   <extension
+         id="ultimateSettingsProviderId"
+         name="ultimateSettingsProvider"
+         point="org.eclipse.cdt.core.externalSettingsProvider">
+      <provider
+            class="de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider">
+      </provider>
+   </extension>
 </plugin>

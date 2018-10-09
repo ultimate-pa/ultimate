@@ -28,11 +28,6 @@
  * licensors of the ULTIMATE CDTParser plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * CDTParser Plugin, it starts the CDT-Parser on a given C-File(s).
- * The resources are taken out of the lib-Folder, these should be
- * updated manually.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import java.io.File;
@@ -55,6 +50,8 @@ import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -83,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider.ToolchainDependency;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -205,8 +203,6 @@ public class CDTParser implements ISource {
 			final CommentParser parser =
 					new CommentParser(tu.getComments(), visitor.getLineRange(), mLogger, mServices);
 			final List<ACSLNode> acslNodes = parser.processComments();
-
-			// validateLTLProperty(acslNodes); See comment at method below
 			decorator.provideAcslASTs(acslNodes);
 			final DecoratorNode rootNode = decorator.mapASTs(tu);
 
@@ -220,11 +216,25 @@ public class CDTParser implements ISource {
 		mCdtProject = createCDTProject();
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 
+		// add all source files
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
 		sourceFolder.create(IResource.VIRTUAL, true, NULL_MONITOR);
 		for (final File file : files) {
-			addFilesToProject(mCdtProject, sourceFolder, file);
+			addLinkToFolder(sourceFolder, file);
 		}
+
+		// TODO: this adds includes and makes them resolvable, but seems like the wrong way
+		final String includes =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
+		for (final String includePath : includes.split(";")) {
+			mLogger.info("Adding includes from " + includePath + " as file ");
+			final File[] includeFiles = new File(includePath).listFiles();
+			for (final File f : includeFiles) {
+				addLinkToFolder(sourceFolder, f);
+			}
+		}
+
+		// TODO: The indexer is empty and I dont know why
 
 		final CoreModel model = CoreModel.getDefault();
 		final ICProject icdtProject = model.create(mCdtProject);
@@ -233,7 +243,6 @@ public class CDTParser implements ISource {
 
 	public static List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) throws CoreException {
 		final List<IASTTranslationUnit> tuList = new ArrayList<>();
-
 		// get source folders
 		try {
 			for (final ISourceRoot sourceRoot : cproject.getSourceRoots()) {
@@ -347,9 +356,6 @@ public class CDTParser implements ISource {
 			return "UNKNOWN LOCATION";
 		}
 		return loc.toOSString();
-		// final IPath outerPath = project.getWorkspace().getRoot().getLocation();
-		// final IPath innerPath = project.getFullPath();
-		// return outerPath.append(innerPath).toOSString();
 	}
 
 	private IProject createCDTProject() throws CoreException {
@@ -368,7 +374,8 @@ public class CDTParser implements ISource {
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
 		prjDescription.setLocation(root.getLocation().append(projectNamespace + File.separator + projectName));
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
-		project.open(null);
+
+		project.open(NULL_MONITOR);
 
 		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager()
 				.getContentType(CCorePlugin.CONTENT_TYPE_CSOURCE);
@@ -381,13 +388,25 @@ public class CDTParser implements ISource {
 		CoreModel.getDefault().create(project)
 				.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(project.getFullPath()) }, NULL_MONITOR);
 
+		final ICProjectDescription projDesc = CoreModel.getDefault().getProjectDescription(project);
+		final ICConfigurationDescription conf = projDesc.getActiveConfiguration();
+
+		// annotate necessary params for external settings provider
+		ToolchainDependency.annotate(project, mServices, mLogger);
+		/*
+		 * Specify the external setting provider ID. The ID is the ID specified in plugin.xml prefixed with the class
+		 * package name.
+		 */
+		conf.setExternalSettingsProviderIds(
+				new String[] { "de.uni_freiburg.informatik.ultimate.cdt.parser.ultimateSettingsProviderId" });
+
+		CoreModel.getDefault().setProjectDescription(project, projDesc);
 		waitForProjectRefreshToFinish();
 		return project;
 	}
 
-	public static IFile addFilesToProject(final IProject project, final IFolder sourceFolder, final File file)
+	public static IFile addLinkToFolder(final IFolder sourceFolder, final File file)
 			throws CoreException, FileNotFoundException {
-
 		final Path filePath = new Path(file.getName());
 		if (filePath.segmentCount() > 1) {
 			throw new IllegalArgumentException("File has to be a single file");
