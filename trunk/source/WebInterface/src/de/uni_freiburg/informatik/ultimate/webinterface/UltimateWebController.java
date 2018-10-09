@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
+import org.eclipse.core.runtime.IStatus;
 import org.json.JSONObject;
 import org.xml.sax.SAXException;
 
@@ -52,8 +53,9 @@ public class UltimateWebController implements IController<RunDefinition> {
 
 	public JSONObject runUltimate(final JSONObject json) throws Throwable {
 		try {
-			mExternalUltimateCore.runUltimate();
-			UltimateResultProcessor.processUltimateResults(mCurrentServices, json);
+			final IStatus status = mExternalUltimateCore.runUltimate();
+			mLogger.log("Ultimate returned with status " + status);
+			UltimateResultProcessor.processUltimateResults(mLogger, mCurrentServices, json);
 		} finally {
 			mExternalUltimateCore.complete();
 		}

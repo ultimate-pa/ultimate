@@ -3,13 +3,13 @@ package de.uni_freiburg.informatik.ultimate.webinterface;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
@@ -30,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.SimpleLogger;
 
 public class UltimateResultProcessor {
 
@@ -39,28 +39,29 @@ public class UltimateResultProcessor {
 	private static final String LVL_INFO = "info";
 	private static final String LVL_ERROR = "error";
 
-	public static void processUltimateResults(final IUltimateServiceProvider services, final JSONObject json)
-			throws JSONException {
+	public static void processUltimateResults(final ServletLogger logger, final IUltimateServiceProvider services,
+			final JSONObject json) throws JSONException {
 		// get Result from Ultimate
 		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
 		final List<JSONObject> jsonResults = new ArrayList<>();
-		for (final List<IResult> toolResults : results.values()) {
+		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
+			final List<IResult> toolResults = entry.getValue();
 			for (final IResult result : toolResults) {
 				if (result instanceof StatisticsResult<?>) {
-					SimpleLogger.log("skipping result " + result);
+					logger.log("Skipping result " + result.getLongDescription());
 					continue;
 				}
-				final UltimateResult jsonResult = processResult(result);
+				final UltimateResult jsonResult = processResult(logger, result);
 				jsonResults.add(new JSONObject(jsonResult));
-				SimpleLogger.log("added result: " + jsonResult.toString());
+				logger.log("Added result: " + jsonResult.toString());
 			}
 		}
 		json.put("results", new JSONArray(jsonResults.toArray(new JSONObject[jsonResults.size()])));
 	}
 
-	private static UltimateResult processResult(final IResult r) {
-		SimpleLogger.log("processing result " + r.getShortDescription());
+	private static UltimateResult processResult(final ServletLogger logger, final IResult r) {
+		logger.log("Processing result " + r.getShortDescription());
 		String type = "UNDEF";
 		final UltimateResult packagedResult = new UltimateResult();
 		if (r instanceof ExceptionOrErrorResult) {
@@ -118,7 +119,7 @@ public class UltimateResultProcessor {
 		if (r instanceof IResultWithLocation) {
 			final ILocation loc = ((IResultWithLocation) r).getLocation();
 			if (loc == null) {
-				SimpleLogger.log("IResultWithLocation with getLocation()==null, ignoring...");
+				logger.log("IResultWithLocation with getLocation()==null, ignoring...");
 				setEmptyLocation(packagedResult);
 			} else {
 				packagedResult.startLNr = loc.getStartLine();
