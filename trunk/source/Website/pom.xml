@@ -82,6 +82,21 @@
 						</configuration>
 					</plugin>
 
+					<plugin>
+						<artifactId>maven-clean-plugin</artifactId>
+						<version>${maven-clean-version}</version>
+						<configuration>
+							<filesets>
+								<fileset>
+									<directory>${websiteJsonDir}</directory>
+									<includes>
+										<include>*.json</include>
+									</includes>
+								</fileset>
+							</filesets>
+						</configuration>
+					</plugin>
+
 				</plugins>
 			</build>
 		</profile>
