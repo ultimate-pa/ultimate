@@ -29,6 +29,7 @@
 		<maven-war-version>3.2.0</maven-war-version>
 		<maven-assembly-version>3.1.0</maven-assembly-version>
 		<maven-resources-version>3.0.2</maven-resources-version>
+		<maven-compiler-version>3.8.0</maven-compiler-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
