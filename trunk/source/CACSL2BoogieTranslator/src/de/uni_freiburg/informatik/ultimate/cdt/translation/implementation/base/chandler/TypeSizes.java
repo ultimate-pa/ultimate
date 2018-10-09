@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -354,6 +355,24 @@ public class TypeSizes {
 				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
 				if (stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
+				}
+			} else if (expr instanceof BinaryExpression) {
+				final BigInteger leftValue = extractIntegerValue(((BinaryExpression) expr).getLeft(), cType, hook);
+				final BigInteger rightValue = extractIntegerValue(((BinaryExpression) expr).getRight(), cType, hook);
+
+				switch (((BinaryExpression) expr).getOperator()) {
+				case ARITHDIV:
+					return leftValue.divide(rightValue);
+				case ARITHMINUS:
+					return leftValue.subtract(rightValue);
+				case ARITHMOD:
+					return leftValue.mod(rightValue);
+				case ARITHMUL:
+					return leftValue.multiply(rightValue);
+				case ARITHPLUS:
+					return leftValue.add(rightValue);
+				default:
+					return null;
 				}
 			}
 			return null;
