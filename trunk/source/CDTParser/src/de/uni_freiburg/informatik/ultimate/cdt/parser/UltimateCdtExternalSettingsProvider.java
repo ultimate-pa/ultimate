@@ -66,6 +66,9 @@ public class UltimateCdtExternalSettingsProvider extends CExternalSettingProvide
 		final String includes =
 				td.mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
 		for (final String includePath : includes.split(";")) {
+			if (!new File(includePath).exists()) {
+				continue;
+			}
 			td.mLogger.info("Adding includes from " + includePath);
 			final File[] includeFiles = new File(includePath).listFiles();
 			Arrays.stream(includeFiles)

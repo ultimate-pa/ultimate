@@ -227,6 +227,9 @@ public class CDTParser implements ISource {
 		final String includes =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
 		for (final String includePath : includes.split(";")) {
+			if (!new File(includePath).exists()) {
+				continue;
+			}
 			mLogger.info("Adding includes from " + includePath + " as file ");
 			final File[] includeFiles = new File(includePath).listFiles();
 			for (final File f : includeFiles) {
