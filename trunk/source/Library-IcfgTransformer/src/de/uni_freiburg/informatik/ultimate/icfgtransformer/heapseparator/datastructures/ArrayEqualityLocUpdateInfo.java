@@ -62,17 +62,21 @@ public class ArrayEqualityLocUpdateInfo {
 
 	private final ManagedScript mMgdScript;
 
+	private final Set<IProgramVar> mDefinitelyUnconstrainedVariables;
+
 	/**
 	 *
 	 * @param edge
 	 * @param locArrayManager
 	 */
 	public ArrayEqualityLocUpdateInfo(final ManagedScript mgdScript, final ApplicationTerm equality,
-			final EdgeInfo edge, final MemlocArrayManager locArrayManager) {
+			final EdgeInfo edge, final MemlocArrayManager locArrayManager,
+			final Set<IProgramVar> definitelyUnconstrainedVariables) {
 		mMgdScript = mgdScript;
 		mEdge = edge;
 		mLocArrayManager = locArrayManager;
 		mEquality = equality;
+		mDefinitelyUnconstrainedVariables = definitelyUnconstrainedVariables;
 	}
 
 	public void addEnclosedStoreInfo(final StoreInfo storeInfo, final SubtreePosition posRelativeToEquality) {
@@ -90,11 +94,6 @@ public class ArrayEqualityLocUpdateInfo {
 				.filter(bat -> mLocArrayManager.isArrayTermSubjectToSeparation(mEdge, bat))
 				.collect(Collectors.toSet());
 
-		// final StoreInfo lhsStoreInfo = mRelPositionToInnerStoreInfo.get(new
-		// SubtreePosition().append(0));
-		// final StoreInfo rhsStoreInfo = mRelPositionToInnerStoreInfo.get(new
-		// SubtreePosition().append(1));
-
 		final int dimensionality = computeDimensionality();
 
 		final List<Term> conjuncts = new ArrayList<>();
@@ -111,7 +110,6 @@ public class ArrayEqualityLocUpdateInfo {
 			// final Term equalityWithLocArrays;
 			final Map<Term, Term> termSubstitutionMapping = new HashMap<>();
 			{
-				// final Map<Term, Term> subs = new HashMap<>();
 				for (final Term bat : baseArrayTerms) {
 
 					// obtain the loc array for the given base array term (typically a term-variable
@@ -126,7 +124,13 @@ public class ArrayEqualityLocUpdateInfo {
 					 * a-loc-1, then a-loc-1 must also be an invar.
 					 */
 					if (mEdge.getInVars().containsValue(bat)) {
-						mExtraInVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
+						if (isDefinitelyUnconstrained(bat) && mEdge.getOutVar(bat) == mEdge.getInVar(bat)) {
+							/* omit this invar --> effectively makes an assignment out of an assume on the loc array
+							 *  (this is sound because the base array is in a freshly-havocced state, thus it would not
+							 *   make a difference to havoc the base array, too) */
+						} else {
+							mExtraInVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
+						}
 					}
 					if (mEdge.getOutVars().containsValue(bat)) {
 						mExtraOutVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
@@ -138,8 +142,6 @@ public class ArrayEqualityLocUpdateInfo {
 						mExtraConstants.add((IProgramConst) locArray.getPvoc());
 					}
 				}
-				// equalityWithLocArrays = new Substitution(mMgdScript,
-				// subs).transform(mEquality);
 			}
 
 			/*
@@ -158,8 +160,6 @@ public class ArrayEqualityLocUpdateInfo {
 					mExtraConstants.add(si.getLocLiteral());
 				}
 				equalityWithLocArraysAndLocLiterals =
-						// new PositionAwareSubstitution(mMgdScript,
-						// substitutionMapping).transform(equalityWithLocArrays);
 						new PositionAwareSubstitution(mMgdScript, positionSubstitutionMapping, termSubstitutionMapping)
 								.transform(mEquality);
 			}
@@ -171,15 +171,17 @@ public class ArrayEqualityLocUpdateInfo {
 		mFinalized = true;
 	}
 
+	private boolean isDefinitelyUnconstrained(final Term baseArrayTerm) {
+		if (baseArrayTerm instanceof TermVariable) {
+			final IProgramVar invar = mEdge.getInVar(baseArrayTerm);
+			if (mDefinitelyUnconstrainedVariables.contains(invar)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public int computeDimensionality() {
-		// final int dimensionality = mRelPositionToInnerStoreInfo.get(new
-		// SubtreePosition().append(0))
-		// .getArrayGroup().getDimensionality();
-		// assert dimensionality == mRelPositionToInnerStoreInfo.get(new
-		// SubtreePosition().append(1))
-		// .getArrayGroup().getDimensionality();
-		// assert dimensionality == new
-		// MultiDimensionalSort(mEquality.getParameters()[0].getSort()).getDimension();
 		final int dimensionality = new MultiDimensionalSort(mEquality.getParameters()[0].getSort()).getDimension();
 		assert mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0)) == null
 				|| dimensionality == mRelPositionToInnerStoreInfo.get(new SubtreePosition().append(0)).getArrayGroup()

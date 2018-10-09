@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
@@ -99,8 +100,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
 
-//	private final HashRelation<EdgeInfo, StoreInfo> mEdgeToStoreInfos = new HashRelation<>();
-
 	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
 	private boolean mFrozen;
@@ -150,8 +149,9 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 				final Map<Term, ArrayGroup> termToArrayGroupForCurrentEdge = mEdgeToTermToArrayGroup.get(edgeInfo);
 
+
 				final BuildStoreInfos bsi = new BuildStoreInfos(edgeInfo, termToArrayGroupForCurrentEdge, mMgdScript,
-						mLocArrayManager, mStoreInfoCounter);
+						mLocArrayManager, mStoreInfoCounter, collectDefinitelyUnconstrainedVariables(edgeInfo));
 				bsi.buildStoreInfos();
 				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en :
 						bsi.getLocArrayUpdateInfos().entrySet()) {
@@ -167,6 +167,50 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		}
 
 		mFrozen = true;
+	}
+
+	private Set<IProgramVar> collectDefinitelyUnconstrainedVariables(final EdgeInfo edgeInfo) {
+		final Set<IProgramVar> result = new HashSet<>();
+		// we are only interested in invars of the given edge
+		for (final IProgramVar invar : edgeInfo.getInVars().keySet()) {
+			if (isDefinitelyUnconstrained(invar, edgeInfo)) {
+				result.add(invar);
+			}
+		}
+		return result;
+	}
+
+
+	private boolean isDefinitelyUnconstrained(final IProgramVar var, final EdgeInfo edgeInfo) {
+		IcfgEdge currentEdge = edgeInfo.getEdge();
+		while (true) {
+			{
+				final List<IcfgEdge> inEdges = currentEdge.getSource().getIncomingEdges();
+//				if (inEdges.size() == 0) {
+//					// no incoming edge, var was not constrained so far
+//					return true;
+//				}
+				if (inEdges.size() != 1) {
+					// more than two incoming edges --> give up
+					return false;
+				}
+				currentEdge = inEdges.get(0);
+			}
+
+			if (currentEdge.getTransformula().getAssignedVars().contains(var)) {
+				if (!currentEdge.getTransformula().getInVars().containsKey(var)
+						&& SmtUtils.isTrue(currentEdge.getTransformula().getFormula())) {
+					// we have a (simple) havoc
+					return true;
+				} else {
+					// we have something that is not a simple havoc (perhaps an assignment) of var
+					return false;
+				}
+			} else if (currentEdge.getTransformula().getOutVars().containsKey(var)) {
+				// edge might put constraints on var
+				return false;
+			}
+		}
 	}
 
 	/**
@@ -280,8 +324,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 					final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
 					final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
 
-//					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsArrayTerm);
-//					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsArrayTerm);
 					perTfArrayPartition.union(lhsArrayTerm, rhsArrayTerm);
 				}
 				edgeToPerEdgeArrayPartition.put(edgeInfo, perTfArrayPartition);
@@ -525,14 +567,20 @@ class BuildStoreInfos extends NonRecursive {
 	private final Map<SubtreePosition, ArrayEqualityLocUpdateInfo> mPositionToLocArrayUpdateInfos = new HashMap<>();
 	private final Map<HeapSepProgramConst, StoreInfo> mLocLitToStoreInfo = new HashMap<>();
 
+	/**
+	 * Program variables that are definitely unconstrained when {@link mEdge} is taken.
+	 */
+	private final Set<IProgramVar> mDefinitelyUnconstrainedVariables;
 
 	BuildStoreInfos(final EdgeInfo edge, final Map<Term, ArrayGroup> termToArrayGroup, final ManagedScript mgdScript,
-			final MemlocArrayManager locArrayManager, final int storeInfoCounter) {
+			final MemlocArrayManager locArrayManager, final int storeInfoCounter,
+			final Set<IProgramVar> definitelyUnconstrainedVariables) {
 		mEdge = edge;
 		mTermToArrayGroup = termToArrayGroup;
 		mMgdScript = mgdScript;
 		mLocArrayManager = locArrayManager;
 		mSiidCtr = storeInfoCounter;
+		mDefinitelyUnconstrainedVariables = definitelyUnconstrainedVariables;
 	}
 
 	public Map<HeapSepProgramConst, StoreInfo> getLocLitToStoreInfo() {
@@ -631,7 +679,8 @@ class BuildStoreInfos extends NonRecursive {
 				if (term.getParameters()[0].getSort().isArraySort()) {
 					assert mEnclosingEquality == null;
 					final ArrayEqualityLocUpdateInfo newEnclosingEquality =
-							new ArrayEqualityLocUpdateInfo(mMgdScript, term, mEdge, mLocArrayManager);
+							new ArrayEqualityLocUpdateInfo(mMgdScript, term, mEdge, mLocArrayManager,
+									mDefinitelyUnconstrainedVariables);
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
 						 mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(0)));
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[1], mSubTreePosition.append(1),
