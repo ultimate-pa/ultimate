@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -31,6 +32,36 @@
 			<build>
 				<finalName>Website</finalName>
 				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>${maven-antrun-version}</version>
+						<executions>
+							<execution>
+								<id>generate parser sources</id>
+								<phase>generate-sources</phase>
+								<configuration>
+									<tasks>
+										<echo>>Converting .html in ${websiteHtmlDir} to .json in
+											${websiteJsonDir}</echo>
+										<apply executable="java">
+											<arg value="-jar" />
+											<arg value="${websiteHtmlDir}/convertHTMLtoJSON.jar" />
+											<srcfile />
+											<arg value="${websiteJsonDir}" />
+
+											<fileset dir="${websiteHtmlDir}" casesensitive="yes">
+												<include name="**/*.html" />
+											</fileset>
+										</apply>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-war-plugin</artifactId>

@@ -56,6 +56,8 @@
 		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta</crocottaDir>
 		<examplesDir>${workspaceDir}/../examples</examplesDir>
 		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
+		<websiteHtmlDir>${workspaceDir}/Website/html</websiteHtmlDir>
+		<websiteJsonDir>${workspaceDir}/Website/WebContent/json</websiteJsonDir>
 
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
