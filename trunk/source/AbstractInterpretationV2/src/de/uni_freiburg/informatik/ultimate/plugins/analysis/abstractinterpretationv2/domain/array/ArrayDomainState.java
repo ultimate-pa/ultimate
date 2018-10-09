@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -738,7 +739,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 							final IProgramVar oldVar = oldVarsToProject.remove();
 							if (newVar.getSort().isArraySort()) {
 								final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars = new HashMap<>();
-								final Segmentation s = mSegmentationMap.getSegmentation(oldVar);
+								final Segmentation s = thisState.mSegmentationMap.getSegmentation(oldVar);
 								for (final IProgramVar b : s.getBounds()) {
 									final IProgramVar newBound = mToolkit.createBoundVar(mToolkit.getType(b.getSort()));
 									oldVarsToProject.add(b);
@@ -753,9 +754,9 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 								}
 								segmentationMap.add(newVar, createFreshSegmentationCopy(s, old2newVars));
 							} else {
-								constraints.add(project(newVar, oldVar, otherState.getSubTerm()));
+								constraints.add(project(newVar, oldVar, getSubTerm()));
 								newVariables.add(newVar);
-								removedVarsOther.add(oldVar);
+								removedVarsThis.add(oldVar);
 							}
 						}
 					} else if (otherValue != null) {
@@ -875,7 +876,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			if (!added) {
 				final Term lastConstraint = SmtUtils.less(script, bounds.get(bounds.size() - 2), rep);
 				if (mSubState.evaluate(script, lastConstraint) == EvalResult.TRUE) {
-					bounds.add(bounds.size() - 2, rep);
+					bounds.add(bounds.size() - 1, rep);
 					values.add(values.get(values.size() - 1));
 				}
 			}
@@ -1291,5 +1292,23 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					new EquivalenceFinder(getSubTerm(), mToolkit.getServices(), mToolkit.getManagedScript());
 		}
 		return mEquivalenceFinder;
+	}
+
+	@Override
+	public Set<ArrayDomainState<STATE>> union(final Set<ArrayDomainState<STATE>> states, final int maxSize) {
+		final LinkedList<ArrayDomainState<STATE>> newStates = new LinkedList<>(states);
+		int numberOfMerges = states.size() - maxSize;
+		while (numberOfMerges > 0) {
+			// Merge the states in reversed order
+			final ArrayDomainState<STATE> state1 = newStates.removeLast();
+			final ArrayDomainState<STATE> state2 = newStates.removeLast();
+			if (newStates.add(state1.union(state2))) {
+				--numberOfMerges;
+			} else {
+				numberOfMerges -= 2;
+			}
+		}
+		assert states.size() <= maxSize;
+		return new LinkedHashSet<>(newStates);
 	}
 }
