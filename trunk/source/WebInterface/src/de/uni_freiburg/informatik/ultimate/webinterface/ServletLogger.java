@@ -4,13 +4,12 @@ import javax.servlet.http.HttpServlet;
 
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
-
 public class ServletLogger {
 
 	private final HttpServlet mServlet;
 	private final boolean mDebug;
 
-	public ServletLogger(HttpServlet servlet, String id, boolean debug) {
+	public ServletLogger(final HttpServlet servlet, final String id, final boolean debug) {
 		mServlet = servlet;
 		mDebug = debug;
 	}
@@ -24,8 +23,8 @@ public class ServletLogger {
 			String timestamp = CoreUtil.getCurrentDateTimeAsString();
 			timestamp = "[" + timestamp + "][DEBUG] ";
 			message = timestamp + message;
-			mServlet.log(message);
 			System.out.println(message);
+			mServlet.log(message);
 		}
 	}
 
@@ -34,8 +33,8 @@ public class ServletLogger {
 			String timestamp = CoreUtil.getCurrentDateTimeAsString();
 			timestamp = "[" + timestamp + "] ";
 			message = timestamp + message;
-			mServlet.log(message);
 			System.out.println(message);
+			mServlet.log(message);
 		}
 	}
 }

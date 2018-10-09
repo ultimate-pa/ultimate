@@ -42,11 +42,11 @@ public class UltimateHttpServlet extends HttpServlet {
 	public UltimateHttpServlet() {
 		super();
 		mLogger = new ServletLogger(this, "Servlet", DEBUG);
-		mLogger.log("##########################");
-		mLogger.log("## UltimateHttpServlet  ##");
-		mLogger.log("##########################");
-		mLogger.log("");
-		mLogger.log("Starting Server ...");
+		// mLogger.log("##########################");
+		// mLogger.log("## UltimateHttpServlet ##");
+		// mLogger.log("##########################");
+		// mLogger.log("");
+		// mLogger.log("Starting Server ...");
 	}
 
 	@Override

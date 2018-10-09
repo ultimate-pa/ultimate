@@ -89,7 +89,7 @@ public class UltimateExecutor {
 			json.put("error", "Internal server error: IO");
 			mLogger.log("Internal server error: " + e.getClass().getSimpleName());
 			mLogger.logDebug(e.toString());
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			json = new JSONObject();
 			json.put("error", "Internal server error: Generic");
 			mLogger.log("Internal server error: " + e.getClass().getSimpleName());
@@ -126,6 +126,7 @@ public class UltimateExecutor {
 					new UltimateWebController(mLogger, settingsFile, inputFile, toolchainFile, timeout);
 			uwc.runUltimate(json);
 		} catch (final Throwable t) {
+			mLogger.log("fail");
 			final String sep = CoreUtil.getPlatformLineSeparator();
 			final String message = "failed to run ULTIMATE" + sep + t.toString() + sep + t.getMessage();
 			mLogger.log(message);
