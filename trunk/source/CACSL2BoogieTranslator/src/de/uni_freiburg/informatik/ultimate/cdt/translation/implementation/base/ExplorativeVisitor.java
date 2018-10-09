@@ -37,7 +37,9 @@ import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.ICompositeType;
 import org.eclipse.cdt.core.dom.ast.IFunction;
 import org.eclipse.cdt.core.dom.ast.IFunctionType;
+import org.eclipse.cdt.core.dom.ast.IProblemType;
 import org.eclipse.cdt.core.dom.ast.IScope;
+import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.IVariable;
 
@@ -64,12 +66,14 @@ public class ExplorativeVisitor extends ASTVisitor {
 		mLogger.info("--");
 		mLogger.info(name.getRawSignature());
 		final IBinding binding = name.resolveBinding();
+		final IASTName[] declarations = name.getTranslationUnit().getDeclarationsInAST(binding);
+		Arrays.stream(declarations).forEach(a -> mLogger.info(a.getRawSignature() + " as " + a.getRoleOfName(true)));
 		final IScope scope;
 		final ILinkage linkage = binding.getLinkage();
 		try {
 			scope = binding.getScope();
 		} catch (final DOMException e) {
-			mLogger.fatal(e.getMessage());
+			mLogger.fatal("Exception during getScope: ", e);
 			return super.visit(name);
 		}
 
@@ -83,10 +87,11 @@ public class ExplorativeVisitor extends ASTVisitor {
 
 		if (binding instanceof IVariable) {
 			final IVariable var = (IVariable) binding;
-			mLogger.info(var.getType() + " " + var.getType().getClass().getSimpleName());
+			printType(var.getType());
+
 		} else if (binding instanceof ITypedef) {
 			final ITypedef typedef = (ITypedef) binding;
-			mLogger.info(typedef.getType() + " " + typedef.getType().getClass().getSimpleName());
+			printType(typedef.getType());
 		} else if (binding instanceof IFunction) {
 			final IFunction function = (IFunction) binding;
 			final IScope fScope = function.getFunctionScope();
@@ -101,18 +106,30 @@ public class ExplorativeVisitor extends ASTVisitor {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(function.getName());
 			sb.append("(");
-			sb.append(Arrays.stream(fType.getParameterTypes()).map(a -> a.toString()).collect(Collectors.joining(",")));
+			sb.append(Arrays.stream(fType.getParameterTypes()).map(this::toString).collect(Collectors.joining(",")));
 			sb.append(") :");
-			sb.append(fType.getReturnType());
+			sb.append(toString(fType.getReturnType()));
 			mLogger.info(sb.toString() + " " + function.getType().getClass().getSimpleName());
 		} else if (binding instanceof ICompositeType) {
 			final ICompositeType compType = (ICompositeType) binding;
 			mLogger.info("Fields: " + compType.getFields());
 		} else {
-			mLogger.info("Binding type:" + binding.getClass().getSimpleName());
+			mLogger.info("Unhandled binding class:" + binding.getClass().getSimpleName());
 		}
 
 		return super.visit(name);
+	}
+
+	private void printType(final IType type) {
+		mLogger.info(toString(type));
+	}
+
+	private String toString(final IType type) {
+		if (type instanceof IProblemType) {
+			final IProblemType probType = (IProblemType) type;
+			return "Problem: " + probType.getMessage();
+		}
+		return type + " (" + type.getClass().getSimpleName() + ")";
 	}
 
 }
