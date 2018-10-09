@@ -150,14 +150,6 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
-//		if (TRACK_CONSTANTS) {
-//			/* update the all constants tracking */
-//			mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
-//					.findMatchingSubterms(tf.getFormula())
-//					.stream().map(t -> (ConstantTerm) t)
-//					.collect(Collectors.toList()));
-//		}
-
 		if (mEdgeToPositionToLocUpdateInfo.get(edgeInfo) == null
 				&& mEdgeToUnconstrainedVars.getImage(edgeInfo) == null) {
 			// edge does not have any array equalities or unconstrained vars --> nothing to do
@@ -188,7 +180,6 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 		} else {
 			transitionFormulaWithLocUpdates = tf.getFormula();
 		}
-
 
 		// conjoin initialization code for unconstrained loc array variables
 

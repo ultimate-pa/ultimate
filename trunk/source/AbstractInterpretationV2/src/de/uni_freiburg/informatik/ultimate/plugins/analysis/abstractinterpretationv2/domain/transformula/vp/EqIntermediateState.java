@@ -38,7 +38,8 @@ public class EqIntermediateState implements IEqualityProvidingIntermediateState 
 
 	@Override
 	public Set<Term> getSetConstraintForExpression(final Term locArraySelect) {
-		return mConstraint.getSetConstraintForExpression(locArraySelect);
+		final Set<Term> result = mConstraint.getSetConstraintForExpression(locArraySelect);
+		return result;
 	}
 
 }

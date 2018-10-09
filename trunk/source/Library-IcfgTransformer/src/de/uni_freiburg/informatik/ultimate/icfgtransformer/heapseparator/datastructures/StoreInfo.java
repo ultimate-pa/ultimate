@@ -39,14 +39,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * Represents a store term somewhere in the program and the location in the program where that
  * store happens; colloquially: a "write location".
  *
- * A StoreInfo is identified by a {@link SubtreePosition} and an {@link EdgeInfo}. (It represents the store term at that position
- * in the edge's transition formula.)
+ * A StoreInfo is identified by a {@link SubtreePosition} and an {@link EdgeInfo}. (It represents the store term at that
+ * position in the edge's transition formula.)
  *
  * A write location has the following properties:
  * <ul>
  *  <li> the program location it occurs in
  *  <li> the store term that does the "write" to the array
- *  <li> the array that is written to
+ *  <li> the (program-level) {@link ArrayGroup} that is concerned (i.e. both the base array of the store term and the
+ *    array on the other side of the equation belong to it)
  *  <li> if the store term is inside a multidimensional write (i.e., if it's array is not a TermVariable but a select
  *       term):  <br>
  *       the indices in the enclosing store terms (in a {@link MultiDimensionalStore}, the normal case, they coincide
@@ -56,13 +57,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * The last three parameters are extracted from the store term for convenience. The "value" argument of the store term
  *  (which may contain another store) is ignored.
  *
- *  EDIT:
- *   Note that a storeInfo is not identified only by the program location and the store term. That store Term may appear
+ * (Note that a storeInfo is not identified only by the program location and the store term. That store Term may appear
  *    in many places in the TransFormula! In particular the enclosing indices may change. We want a different StoreInfo
- *    for each occurrence of that store Term in that TransFormula!
+ *    for each occurrence of that store Term in that TransFormula!)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
  */
 public class StoreInfo {
 
@@ -87,9 +86,6 @@ public class StoreInfo {
 	private final IProgramConst mLocLit;
 
 	private final SubtreePosition mSubtreePosition;
-
-
-//	private LocUpdateInfo mLocUpdateInfo;
 
 	private final ArrayEqualityLocUpdateInfo mEnclosingEquality;
 
@@ -145,23 +141,8 @@ public class StoreInfo {
 				mStoreIndex = stIndex;
 			}
 		}
-
-
 		mId = id;
 	}
-
-
-
-//	/**
-//	 * Builds {@link #mLocUpdateTerm}.
-//	 * @param script
-//	 *
-//	 * @return
-//	 */
-//	private LocUpdateInfo buildLocUpdateTerm(final ManagedScript script) {
-//		mFinalized = true;
-//		return new LocUpdateInfo(script);
-//	}
 
 	public EdgeInfo getEdgeInfo() {
 		return mEdgeInfo;
@@ -176,9 +157,10 @@ public class StoreInfo {
 	}
 
 	/**
-	 * If the array in the store term (its first argument) is a (multidimensional) select, this stores its index.
-	 * EDIT: that is wrong in general.
-	 * See {@link StoreInfo}
+	 * The store term of this store info may be enclosed inside multidimensional store. This stores the indices of the
+	 * enclosing stores.
+	 * <p>
+	 * See also {@link StoreInfo}.
 	 * @return
 	 */
 	public ArrayIndex getEnclosingIndices() {
@@ -186,8 +168,7 @@ public class StoreInfo {
 	}
 
 	/**
-	 *
-	 * @return
+	 * @return The array group that is concerned by the store.
 	 */
 	public ArrayGroup getArrayGroup() {
 		return mArrayGroup;
@@ -239,18 +220,9 @@ public class StoreInfo {
 		return mLocLit;
 	}
 
-
-
 	public int getId() {
 		return mId;
 	}
-
-//	public LocUpdateInfo getLocUpdateInfo(final ManagedScript script) {
-//		assert isOutermost();
-//		mLocUpdateInfo = buildLocUpdateTerm(script);
-//		assert mFinalized;
-//		return mLocUpdateInfo;
-//	}
 
 	/**
 	 * Determine if this store is "top-level", i.e., it is not inside another store.
@@ -265,60 +237,6 @@ public class StoreInfo {
 		return mPositionOfStoredValueRelativeToEquality;
 	}
 
-//	public class LocUpdateInfo {
-//
-//		/**
-//		 * The term that the store must be replaced with in order to have the static analysis compute reaching definitions
-//		 * information through loc-arrays.
-//		 */
-//		private final Term mTermWithLocUpdates;
-//		private final Map<IProgramVar, TermVariable> mExtraInVars;
-//		private final Set<TermVariable> mExtraAuxVars;
-//		private final Set<IProgramConst> mExtraConstants;
-//		private final Map<IProgramVar, TermVariable> mExtraOutVars;
-//
-//		public LocUpdateInfo(final ManagedScript script, final MemlocArrayManager locArrayManager) {
-//			assert mOuterMost == null;
-//			assert mEnclosingIndices.isEmpty();
-//			assert mRelPositionToInnerStoreInfo != null;
-//
-//			final List<Term> conjuncts = new ArrayList<>(getDimension() + 1);
-//			conjuncts.add(getStoreTerm());
-//
-//			for (int dim = 0; dim < getDimension(); dim++) {
-//				// construct loc update conjunct for dimension dim
-//
-//				locArrayForDim = locArrayManager.getOrConstructLocArray(mEdgeInfo, m, dim)
-//
-//				conjunctForDim =
-//
-//			}
-//
-//			mTermWithLocUpdates = SmtUtils.and(script.getScript(), conjuncts);
-//		}
-//
-//		public Term getTermWithLocUpdates() {
-//			return mTermWithLocUpdates;
-//		}
-//
-//		public Map<IProgramVar, TermVariable> getExtraInVars() {
-//			return mExtraInVars;
-//		}
-//
-//		public Set<TermVariable> getExtraAuxVars() {
-//			return mExtraAuxVars;
-//		}
-//
-//		public Set<IProgramConst> getExtraConstants() {
-//			return mExtraConstants;
-//		}
-//
-//		public Map<IProgramVar, TermVariable> getExtraOutVars() {
-//			return mExtraOutVars;
-//		}
-//
-//	}
-
 	/**
 	 * Tree position of the mStoreTerm in mEdgeInfo's formula.
 	 * @return
@@ -326,8 +244,6 @@ public class StoreInfo {
 	public SubtreePosition getPosition() {
 		return mSubtreePosition;
 	}
-
-
 
 	/**
 	 * unclear if this method is needed or if we can just use the constructor..

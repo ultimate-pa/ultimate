@@ -29,25 +29,21 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.FindSelects;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
 /**
- * Represents a set of arrays that the heap separator treats like one array.
- * <p>
- * Arrays that are equated within the program are put into one array group. The array groups are computed by
- * {@link FindSelects}.
- * <p>
- * Update (17/08/2018):
- * The purpose of array groups is now only to enable the restriction of the separation to some arrays (the "heap
- *  arrays"). I.e., array groups will be used simply to determine for a given TermVariable or IProgramVarOrConst, if it
+ * The purpose of array groups is to enable the restriction of the separation to some arrays (the "heap arrays").
+ * I.e., array groups will be used to determine for a given {@link TermVariable} or {@link IProgramVarOrConst}, if it
  *  is subject to heap/array separation (e.g. a loc-array should be introduced for it).
- * It is not
+ *  <p>
+ * Historical comments:
+ * ArrayGroups are not
  * <ul>
  *  <li> about "aligning" sub-arrays
- *  <li> about tracking which arrays are assumed equal in the program (we do handle programs with assumes between heap
- *    arrays)
+ *  <li> about tracking which arrays are assumed equal in the program (we do not handle programs with assumes between
+ *    heap arrays)
  * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
