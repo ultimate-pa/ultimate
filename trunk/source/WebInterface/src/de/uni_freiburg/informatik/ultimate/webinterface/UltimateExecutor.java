@@ -27,7 +27,7 @@ public class UltimateExecutor {
 	 * the minimum of this number and the timeout of the {@link WebToolchain}. Reducing this to a small number is
 	 * helpful if the website is running on a computer that is not able to handle many requests in parallel.
 	 */
-	private static final long sTimeoutUpperBound = 24 * 60 * 60 * 1000;
+	private static final long TIMEOUT = 24 * 60 * 60 * 1000;
 
 	public UltimateExecutor(final ServletLogger logger) {
 		mLogger = logger;
@@ -68,33 +68,38 @@ public class UltimateExecutor {
 
 			// TODO: write additional settings file that will be loaded after
 			// the default settings file was loaded Apply additional settings
-
 			mLogger.log("Written temporary files to " + inputFile.getParent() + " with timestamp " + timestamp);
 
 			// run ultimate
-			final long timeout = Math.min(tc.getTimeout(), sTimeoutUpperBound);
-			runUltimate(json, inputFile, settingsFile, toolchainFile, timeout);
-			mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
+			final long timeout = Math.min(tc.getTimeout(), TIMEOUT);
+			if (runUltimate(json, inputFile, settingsFile, toolchainFile, timeout)) {
+				mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
+			} else {
+				mLogger.log(
+						"Ultimate terminated abnormally for task ID " + taskId + " and toolchain ID " + tcId + "...");
+			}
 
 		} catch (final IllegalArgumentException e) {
-			e.printStackTrace();
 			json = new JSONObject();
-			json.put("error", "Invalid request! error code UI04");
-			mLogger.logDebug("This was an invalid request! " + e.getMessage());
-		} catch (final IOException e) {
-			e.printStackTrace();
-			json = new JSONObject();
-			json.put("error", "Internal server error (IO)!");
-			mLogger.logDebug("There was an IO Exception:" + e.getMessage());
-		} catch (final Exception e) {
-			mLogger.logDebug("There was an Exception: " + e.getClass().getSimpleName());
+			json.put("error", "Invalid request: Error code UI04.");
+			mLogger.log("Internal server error: " + e.getClass().getSimpleName());
 			mLogger.logDebug(e.toString());
-			json.put("error", "Internal server error (Generic)!");
+		} catch (final IOException e) {
+			json = new JSONObject();
+			json.put("error", "Internal server error: IO");
+			mLogger.log("Internal server error: " + e.getClass().getSimpleName());
+			mLogger.logDebug(e.toString());
+		} catch (final Exception e) {
+			json = new JSONObject();
+			json.put("error", "Internal server error: Generic");
+			mLogger.log("Internal server error: " + e.getClass().getSimpleName());
+			mLogger.logDebug(e.toString());
 		} finally {
 			postProcessTemporaryFiles(settingsFile, toolchainFile, inputFile);
 		}
 		if (json.length() < 1) {
-			json.put("error", "Internal server error (Unexpected behaviour)!");
+			json.put("error", "Internal server error: No message produced");
+			mLogger.log("Internal server error: No message produced");
 		}
 		return json;
 	}
@@ -113,40 +118,29 @@ public class UltimateExecutor {
 		return rtr[0];
 	}
 
-	/**
-	 *
-	 * @param json
-	 * @param toolchainFile
-	 * @param settingsFile
-	 * @param inputFile
-	 * @return true iff ultimate terminated normally, false otherwise
-	 * @throws JSONException
-	 */
 	private boolean runUltimate(final JSONObject json, final File inputFile, final File settingsFile,
 			final File toolchainFile, final long timeout) throws JSONException {
 		try {
-			mLogger.logDebug("ULTIMATE Application started");
+			mLogger.log("Starting Ultimate...");
 			final UltimateWebController uwc =
-					new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
+					new UltimateWebController(mLogger, settingsFile, inputFile, toolchainFile, timeout);
 			uwc.runUltimate(json);
 		} catch (final Throwable t) {
-			t.printStackTrace();
-			final String message = "failed to run ULTIMATE" + System.getProperty("line.separator") + t.toString()
-					+ System.getProperty("line.separator") + t.getMessage();
-			mLogger.logDebug(message);
+			final String sep = CoreUtil.getPlatformLineSeparator();
+			final String message = "failed to run ULTIMATE" + sep + t.toString() + sep + t.getMessage();
+			mLogger.log(message);
 			json.put("error", message);
 			return false;
 		}
 		return true;
 	}
 
-	private static void postProcessTemporaryFiles(final File settingsFile, final File tcFile, final File codeFile) {
-		// if (logRun) {
+	private void postProcessTemporaryFiles(final File settingsFile, final File tcFile, final File codeFile) {
 		final File logDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "log" + File.separator);
 		if (!logDir.exists()) {
 			logDir.mkdir();
 		}
-		System.out.println("Moving input, setting and toolchain file to " + logDir.getAbsoluteFile());
+		mLogger.log("Moving input, setting and toolchain file to " + logDir.getAbsoluteFile());
 		if (codeFile != null) {
 			codeFile.renameTo(new File(logDir, codeFile.getName()));
 		}
@@ -155,14 +149,6 @@ public class UltimateExecutor {
 		}
 		if (tcFile != null) {
 			tcFile.renameTo(new File(logDir, tcFile.getName()));
-			// } else {
-			// if (codeFile != null)
-			// codeFile.delete();
-			// if (settingsFile != null)
-			// settingsFile.delete();
-			// if (tcFile != null)
-			// tcFile.delete();
-			// }
 		}
 	}
 

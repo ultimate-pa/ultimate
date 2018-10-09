@@ -33,25 +33,27 @@ public class UltimateWebController implements IController<RunDefinition> {
 	private final File mInputFile;
 	private final File mToolchainFile;
 	private final long mDeadline;
-
-	private IUltimateServiceProvider mCurrentServices;
 	private final ExternalUltimateCore mExternalUltimateCore;
-	private ICore<RunDefinition> mCore;
 
-	public UltimateWebController(final File settings, final File input, final File toolchain, final long deadline) {
+	private ICore<RunDefinition> mCore;
+	private IUltimateServiceProvider mCurrentServices;
+
+	private final ServletLogger mLogger;
+
+	public UltimateWebController(final ServletLogger logger, final File settings, final File input,
+			final File toolchain, final long deadline) {
 		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mSettingsFile = settings;
 		mInputFile = input;
 		mToolchainFile = toolchain;
 		mDeadline = deadline;
+		mLogger = logger;
 	}
 
-	public JSONObject runUltimate(final JSONObject json) {
+	public JSONObject runUltimate(final JSONObject json) throws Throwable {
 		try {
 			mExternalUltimateCore.runUltimate();
 			UltimateResultProcessor.processUltimateResults(mCurrentServices, json);
-		} catch (final Throwable e) {
-			e.printStackTrace();
 		} finally {
 			mExternalUltimateCore.complete();
 		}
@@ -76,7 +78,7 @@ public class UltimateWebController implements IController<RunDefinition> {
 			mCurrentServices = tc.getServices();
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
-			e.printStackTrace();
+			mLogger.log("Exception during tool selection: " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			return null;
 		}
 	}
@@ -114,8 +116,9 @@ public class UltimateWebController implements IController<RunDefinition> {
 
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
-			final Throwable ex) {
-
+			final Throwable e) {
+		mLogger.log("Exception during Ultimate run: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+		mLogger.log(description);
 	}
 
 	@Override
