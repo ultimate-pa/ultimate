@@ -289,10 +289,13 @@ public class TypeHandler implements ITypeHandler {
 					final String msg = "Undefined type " + cId;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
-				final BoogieType boogieType = getBoogieTypeForCType(stv.getCVariable());
+				final CType cType = stv.getCVariable();
+				final BoogieType boogieType = getBoogieTypeForCType(cType);
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
-				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), false, false,
+				final boolean isConstant = false;
+				final boolean isVoid = false;
+				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
 						new CNamed(bId, mDefinedTypes.get(bId).getCType()));
 			}
 		}
