@@ -53,14 +53,14 @@ public class NodeLabeler {
 	public NodeLabeler(Collection<String> entryPorcedures) {
 		mEntryProcedures = entryPorcedures;
 	}
-	
+
 	/**
 	 * Sets the node labels for a call graph.
 	 * <p>
 	 * The inline flags for the call graph edges should have their final value assigned,
 	 * because the node labels depend on the inline flags.
 	 * 
-	 * @param callGraph Boogie call graph, which's inline flags don't change anymore.
+	 * @param callGraph Boogie call graph whose inline flags don't change anymore.
 	 * 
 	 * @return Identifiers from all existing procedures, marked as entry or re-entry procedures.
 	 * 
@@ -71,11 +71,13 @@ public class NodeLabeler {
 		mCallGraph = callGraph;
 		for (final String entryId : mEntryProcedures) {
 			final CallGraphNode entryNode = callGraph.get(entryId);
-			if (entryNode != null) {
-				entryNode.setLabel(CallGraphNodeLabel.ENTRY);
-				mEntryAndReEntryProcedures.add(entryId);
-				visitChilds(entryNode);
+			if (entryNode == null) {
+				// user specified a non-existent procedure as a possible entry point
+				continue;
 			}
+			entryNode.setLabel(CallGraphNodeLabel.ENTRY);
+			mEntryAndReEntryProcedures.add(entryId);
+			visitChildren(entryNode);
 		}
 		labelNonLabeledNodesAsDead();
 		return mEntryAndReEntryProcedures;
@@ -87,21 +89,22 @@ public class NodeLabeler {
 		mEntryAndReEntryProcedures = new HashSet<>();
 	}
 
-	private void visitChilds(CallGraphNode source) {
+	private void visitChildren(CallGraphNode source) {
 		final Iterator<CallGraphEdgeLabel> arcs = source.getOutgoingEdgeLabels().iterator();
 		final Iterator<CallGraphNode> targets = source.getOutgoingNodes().iterator();
 		while (arcs.hasNext() && targets.hasNext()) {
 			final CallGraphNode target = targets.next();
 			final CallGraphEdgeLabel arc = arcs.next();
 			final boolean arcAlreadyVisited = !mVisitedEdges.add(arc);
-			if (arcAlreadyVisited || target.getLabel() != null) {
+			final boolean targetNodeAlreadyLabeled = target.getLabel() != null;
+			if (arcAlreadyVisited || targetNodeAlreadyLabeled) {
 				continue;
 			}
 			if (!arc.getInlineFlag()) {
 				target.setLabel(CallGraphNodeLabel.RE_ENTRY);
 				mEntryAndReEntryProcedures.add(target.getId());
 			}
-			visitChilds(target);
+			visitChildren(target);
 		}
 	}
 	

@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNodeLabel;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -97,7 +98,7 @@ public enum PreferenceItem {
 			Boolean.TRUE,
 			PreferenceType.Boolean),
 	
-	// see CallGraphNodeLabel
+	/** @see CallGraphNodeLabel#isDead() */
 	ELIMINATE_DEAD_CODE("Remove dead code", "Eliminate dead code after inlining.", Boolean.TRUE,
 			PreferenceType.Boolean);
 	

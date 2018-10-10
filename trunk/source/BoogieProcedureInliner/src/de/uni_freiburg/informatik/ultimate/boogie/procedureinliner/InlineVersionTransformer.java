@@ -772,7 +772,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private List<Statement> flattenStatement(final Statement stat) throws CancelToolchainException {
 		checkTimeout();
 		Statement newStat = null;
-		if (stat instanceof CallStatement) {
+		if (stat instanceof ForkStatement) {
+			getAndUpdateEdgeIndex();
+		} else if (stat instanceof CallStatement) {
 			final CallStatement call = (CallStatement) stat;
 			final int edgeIndex = getAndUpdateEdgeIndex();
 			final CallGraphNode callerNode = mProcedureStack.peek();

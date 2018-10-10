@@ -86,7 +86,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				.getBoolean(PreferenceItem.INLINE_IMPLEMENTED.getName());
 		mIgnoreCallForAll = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.getName());
-		mUserList = new HashSet<String>(PreferenceItem.USER_LIST.getStringValueTokens(services));
+		mUserList = new HashSet<>(PreferenceItem.USER_LIST.getStringValueTokens(services));
 		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(PreferenceItem.USER_LIST_TYPE.getName(),
 				UserListType.class);
 		mIgnoreRecursive = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -103,7 +103,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 
 	@Override
 	public void setInlineFlags(Map<String, CallGraphNode> callGraph) {
-		mLastInlinedCall = new HashMap<String, CallGraphEdgeLabel>();
+		mLastInlinedCall = new HashMap<>();
 		final List<ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
 		if (!mUserListType.isOnly()) {
 			updaterQueue.add(mGeneralSettingsFilter);
@@ -124,15 +124,6 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				assert outgoingEdgeLabelsIterator.hasNext() == outgoingNodesIterator.hasNext();
 			}
 		}
-	}
-
-	private boolean hasFreeRequiresSpecification(CallGraphNode procNode) {
-		for (final Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
-			if (spec instanceof RequiresSpecification && spec.isFree()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private final class UserListFilter implements ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> {
@@ -162,31 +153,47 @@ public class PreferencesInlineSelector implements IInlineSelector {
 
 	private final class GeneralSettingsFilter implements ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> {
 		@Override
-		public boolean accept(CallGraphNode caller, CallGraphEdgeLabel callLabel, CallGraphNode callee) {
-			boolean inline;
+		public boolean accept(final CallGraphNode caller,
+				final CallGraphEdgeLabel callLabel, final CallGraphNode callee) {
 			if (mIgnoreWithFreeRequires && hasFreeRequiresSpecification(callee)) {
-				inline = false;
+				return false;
 			} else if (mIgnorePolymorphic && (caller.isPolymorphic() || callee.isPolymorphic())) {
-				inline = false;
+				return false;
 			} else if (mIgnoreRecursive && callLabel.getEdgeType().isRecursive()) {
-				inline = false;
+				return false;
 			} else if (mIgnoreCallForAll && callLabel.getEdgeType() == EdgeType.CALL_FORALL) {
-				inline = false;
+				return false;
+			} else if (callLabel.getEdgeType() == EdgeType.FORK) {
+				return false;
 			} else {
-				// Assume that all procedures are called only once.
-				final boolean isImplemented = callee.isImplemented();
-				inline = (mInlineImplemented && isImplemented) || (mInlineUnimplemented && !isImplemented);
-				if (inline && mIgnoreMultipleCalled) {
-					final CallGraphEdgeLabel inlinedCallOfSameProcedure = mLastInlinedCall.put(callee.getId(),
-							callLabel);
-					if (inlinedCallOfSameProcedure != null) {
-						// The assumption was false. There where multiple calls => undo
-						inlinedCallOfSameProcedure.setInlineFlag(false);
-						inline = false;
-					}
+				return acceptNormalCall(callLabel, callee);
+			}
+		}
+
+		private boolean acceptNormalCall(final CallGraphEdgeLabel callLabel, final CallGraphNode callee) {
+			// Assume that all procedures are called only once (can be undone later)
+			final boolean isImplemented = callee.isImplemented();
+			final boolean inlineIfSingleCall = (mInlineImplemented && isImplemented)
+					|| (mInlineUnimplemented && !isImplemented);
+			if (!inlineIfSingleCall || !mIgnoreMultipleCalled) {
+				return inlineIfSingleCall;
+			}
+			final CallGraphEdgeLabel inlinedCallOfSameProcedure = mLastInlinedCall.put(callee.getId(), callLabel);
+			if (inlinedCallOfSameProcedure != null) {
+				// The assumption was false. There where multiple calls => undo
+				inlinedCallOfSameProcedure.setInlineFlag(false);
+				return false;
+			}
+			return true;
+		}
+
+		private boolean hasFreeRequiresSpecification(CallGraphNode procNode) {
+			for (final Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
+				if (spec instanceof RequiresSpecification && spec.isFree()) {
+					return true;
 				}
 			}
-			return inline;
+			return false;
 		}
 	}
 }

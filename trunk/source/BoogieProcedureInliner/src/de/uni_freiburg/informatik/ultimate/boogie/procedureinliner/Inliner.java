@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersion
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation.InlinerBacktranslator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNodeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.NodeLabeler;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
@@ -207,7 +206,7 @@ public class Inliner implements IUnmanagedObserver {
 				.getBoolean(PreferenceItem.ELIMINATE_DEAD_CODE.getName());
 		for (final CallGraphNode proc : mCallGraph.values()) {
 			// label might be null => NodeLabeler wasn't executed, => everything was processed => there is no dead code
-			if (eliminateDeadCode && proc.getLabel() == CallGraphNodeLabel.DEAD) {
+			if (eliminateDeadCode && proc.getLabel().isDead()) {
 				continue;
 			}
 			final Procedure oldProcWithSpec = proc.getProcedureWithSpecification();

@@ -39,31 +39,33 @@ public class CallGraphEdgeLabel {
 	 * 
 	 * @author schaetzc@informatik.uni-freiburg.de
 	 */
-	public static enum EdgeType {
+	public enum EdgeType {
 		/** A normal call to an unimplemented procedure. */
 		SIMPLE_CALL_UNIMPLEMENTED,
 		/** A normal call to an implemented procedure. */
 		SIMPLE_CALL_IMPLEMENTED,
 		/** A {@code call forall} statement. */
 		CALL_FORALL,
-		/** A call to a recursive procedure, which doesn't calls the caller again (neither directly nor indirectly). */
+		/** A call to a recursive procedure which does not call the caller again (neither directly nor indirectly). */
 		EXTERN_RECURSIVE_CALL,
-		/** A recursive call, where the caller is called directly or indirectly from the callee. */
-		INTERN_RECURSIVE_CALL;
-		
+		/** A recursive call where the caller is called directly or indirectly from the callee. */
+		INTERN_RECURSIVE_CALL,
+		/** A fork (starts another thread, cannot be inlined). Joins are not represented in the call graph. */
+		FORK;
+
 		public boolean isSimpleCall() {
 			return ordinal() <= SIMPLE_CALL_IMPLEMENTED.ordinal();
 		}
-		
+
 		public boolean isRecursive() {
-			return ordinal() >= EXTERN_RECURSIVE_CALL.ordinal();
+			return this == EXTERN_RECURSIVE_CALL || this == INTERN_RECURSIVE_CALL;
 		}
-	} 
-	
+	}
+
 	private final String mCalleeProcedureId;
 
 	private EdgeType mEdgeType;
-	
+
 	/** The call, represented by this CallGraphEdge shall be inlined. */
 	private boolean mInlineFlag = false;
 
@@ -92,11 +94,11 @@ public class CallGraphEdgeLabel {
 	public void setInlineFlag(boolean inlineFlag) {
 		mInlineFlag = inlineFlag;
 	}
-	
+
 	public boolean getInlineFlag() {
 		return mInlineFlag;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mEdgeType + "(" + mCalleeProcedureId + ")" + (mInlineFlag ? "*" : "");

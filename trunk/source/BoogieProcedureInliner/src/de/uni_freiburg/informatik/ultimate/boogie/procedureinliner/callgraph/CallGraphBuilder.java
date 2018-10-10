@@ -39,6 +39,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -174,7 +175,11 @@ public class CallGraphBuilder {
 	private void registerCallStatementsInGraph(final CallGraphNode callerNode, final Statement[] statementBlock) {
 		for (final Statement statement : statementBlock) {
 			if (statement instanceof CallStatement) {
-				registerCallStatementInGraph(callerNode, (CallStatement) statement);
+				final CallStatement callStatement = (CallStatement) statement;
+				final EdgeType edgeType = callStatement.isForall() ? EdgeType.CALL_FORALL : null;
+				addEdge(callerNode, edgeType, callStatement.getMethodName());
+			} else if (statement instanceof ForkStatement) {
+				addEdge(callerNode, EdgeType.FORK, ((ForkStatement) statement).getProcedureName());
 			} else if (statement instanceof IfStatement) {
 				final IfStatement ifStatement = (IfStatement) statement;
 				registerCallStatementsInGraph(callerNode, ifStatement.getThenPart());
@@ -187,9 +192,8 @@ public class CallGraphBuilder {
 		}
 	}
 
-	private void registerCallStatementInGraph(final CallGraphNode callerNode, final CallStatement callStatement) {
-		final CallGraphNode calleeNode = getOrCreateNode(callStatement.getMethodName());
-		final EdgeType edgeType = callStatement.isForall() ? EdgeType.CALL_FORALL : null;
+	private void addEdge(CallGraphNode callerNode, EdgeType edgeType, String calleeMethodName) {
+		final CallGraphNode calleeNode = getOrCreateNode(calleeMethodName);
 		callerNode.addOutgoingNode(calleeNode, new CallGraphEdgeLabel(calleeNode.getId(), edgeType));
 		calleeNode.addIncomingNode(callerNode);
 	}
@@ -227,7 +231,8 @@ public class CallGraphBuilder {
 			final List<CallGraphNode> outgoingNodes = node.getOutgoingNodes();
 			final List<CallGraphEdgeLabel> outgoingEdgeLabels = node.getOutgoingEdgeLabels();
 			for (int i = 0; i < outgoingNodes.size(); ++i) {
-				if (outgoingEdgeLabels.get(i).getEdgeType() != EdgeType.CALL_FORALL) {
+				final EdgeType edgeType = outgoingEdgeLabels.get(i).getEdgeType();
+				if (edgeType == null) {
 					simpleOutgoingNodesRepresentation.add(outgoingNodes.get(i).getId());
 				}
 			}
@@ -241,7 +246,7 @@ public class CallGraphBuilder {
 			final Set<String> callerRecursiveComponent = recursiveComponentOf(callerNode.getId());
 			for (final CallGraphEdgeLabel label : callerNode.getOutgoingEdgeLabels()) {
 				final String calleeProcedureId = label.getCalleeProcedureId();
-				if (label.getEdgeType() != EdgeType.CALL_FORALL) {
+				if (label.getEdgeType() == null) {
 					label.setEdgeType(findEdgeTypeForNormalCall(callerRecursiveComponent, calleeProcedureId));
 				}
 			}
