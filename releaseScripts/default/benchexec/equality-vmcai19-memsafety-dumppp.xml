@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="600" cpuCores="2">
+    
+    <option name="--traceabstraction.dump.automata.to.the.following.directory">dump</option>
+
+    <rundefinition name="AutomizerCInline">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf</option>
+    </rundefinition>
+    
+    <tasks name="32bitMem">
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
+    </tasks>
+    
+</benchmark>
+
