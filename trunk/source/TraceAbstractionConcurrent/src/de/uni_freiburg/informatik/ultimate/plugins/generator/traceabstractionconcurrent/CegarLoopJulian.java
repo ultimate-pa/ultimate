@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -67,7 +68,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -84,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
@@ -261,6 +265,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
 							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
+				final Set<LETTER> universalMinuendLoopers = determineUniversalMinuendLoopers(mAbstraction.getAlphabet(),
+						interpolAutomaton.getStates());
+				mLogger.info("Number of universal loopers: " + universalMinuendLoopers.size() + " out of "
+						+ mAbstraction.getAlphabet().size());
 				new DifferencePairwiseOnDemand(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
 				raw.switchToReadonlyMode();
@@ -292,6 +300,37 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						+ mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
 		return dia;
+	}
+
+	private Set<LETTER> determineUniversalMinuendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
+		final Set<LETTER> result = new HashSet<>();
+		for (final LETTER letter : alphabet) {
+			final boolean isUniversalLooper = isUniversalLooper(letter, states);
+			if (isUniversalLooper) {
+				result.add(letter);
+			}
+		}
+		return result;
+	}
+
+	private boolean isUniversalLooper(final LETTER letter, final Set<IPredicate> states) {
+		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
+			return false;
+		}
+		for (final IPredicate predicate : states) {
+			final boolean isIndependent = isIndependent(letter, predicate);
+			if (!isIndependent) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean isIndependent(final LETTER letter, final IPredicate predicate) {
+		final Set<IProgramVar> in = letter.getTransformula().getInVars().keySet();
+		final Set<IProgramVar> out = letter.getTransformula().getOutVars().keySet();
+		return !DataStructureUtils.haveNonEmptyIntersection(in, predicate.getVars())
+				&& !DataStructureUtils.haveNonEmptyIntersection(out, predicate.getVars());
 	}
 
 	@Override
