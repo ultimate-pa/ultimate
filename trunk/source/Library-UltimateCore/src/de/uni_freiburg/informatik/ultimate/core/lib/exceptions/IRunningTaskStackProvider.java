@@ -53,9 +53,9 @@ public interface IRunningTaskStackProvider {
 		for (int i = runningTaskStack.size() - 1; i >= 0; i--) {
 			final RunningTaskInfo rti = runningTaskStack.get(i);
 			if (rti.getTaskDescription() == null) {
-				sb.append(" while executing " + rti.getClassOfTaskExecutor().getSimpleName());
+				sb.append("while executing " + rti.getClassOfTaskExecutor().getSimpleName());
 			} else {
-				sb.append(" while ");
+				sb.append("while ");
 				sb.append(rti.getClassOfTaskExecutor().getSimpleName());
 				sb.append(" was ");
 				sb.append(rti.getTaskDescription());

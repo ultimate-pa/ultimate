@@ -139,10 +139,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	enum Flow {
-		NORMAL,
-		BREAK,
-		CONTINUE,
-		RETURN;
+		NORMAL, BREAK, CONTINUE, RETURN;
 	}
 
 	/**
@@ -151,10 +148,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	public enum LoggerSeverity {
-		INFO,
-		WARNING,
-		ERROR,
-		DEBUG
+		INFO, WARNING, ERROR, DEBUG
 	}
 
 	/**
@@ -163,10 +157,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	private enum Finished {
-		FINISHED,
-		TIMEOUT,
-		ERROR,
-		OUTOFMEMORY
+		FINISHED, TIMEOUT, ERROR, OUTOFMEMORY
 	}
 
 	/**
@@ -298,8 +289,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final String fakeFilename = "mySettingsFileGivenStringDoesNotHaveFilename";
 			final String fakeFileAbsolutePath = "mySettingsFileGivenStringDoesNotHaveFileAbsolutePath";
 			final Reader reader = new InputStreamReader(new ByteArrayInputStream(commandAdapted.getBytes()));
-			final AutomataTestFileAST astNode = new AutomataScriptParserRun(
-					mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
+			final AutomataTestFileAST astNode =
+					new AutomataScriptParserRun(mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath)
+							.getResult();
 			statements = astNode.getStatementList();
 		} else {
 			statements = ats.getStatementList();
@@ -339,7 +331,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						if (cause instanceof AutomataOperationCanceledException) {
 							interpretationFinished = Finished.TIMEOUT;
 							errorMessage =
-									"Timeout" + ((AutomataOperationCanceledException) cause).printRunningTaskMessage();
+									"Timeout " + ((AutomataOperationCanceledException) cause).printRunningTaskMessage();
 						} else if (cause instanceof OutOfMemoryError) {
 							interpretationFinished = Finished.OUTOFMEMORY;
 						} else {
@@ -391,8 +383,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			if (size == 0) {
 				throw new IllegalArgumentException(message + " There were no automata found in the input.");
 			} else if (size == 1) {
-				throw new IllegalArgumentException(message
-						+ " There was only 1 automaton found, so only $1 is legal.");
+				throw new IllegalArgumentException(message + " There was only 1 automaton found, so only $1 is legal.");
 			} else {
 				throw new IllegalArgumentException(String.format(
 						"%s There were only %d automata found, so only $1 to $%d are legal.", message, size, size));
@@ -426,28 +417,28 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final Object oldValue = mVariables.get(var.getIdentifier());
 		final Integer assignValue;
 		switch (as.getOperator()) {
-			case ASSIGN:
-				mVariables.put(var.getIdentifier(), newValue);
-				break;
-			case PLUSASSIGN:
-				assignValue = ((Integer) oldValue) + ((Integer) newValue);
-				mVariables.put(var.getIdentifier(), assignValue);
-				break;
-			case MINUSASSIGN:
-				assignValue = ((Integer) oldValue) - ((Integer) newValue);
-				mVariables.put(var.getIdentifier(), assignValue);
-				break;
-			case MULTASSIGN:
-				assignValue = ((Integer) oldValue) * ((Integer) newValue);
-				mVariables.put(var.getIdentifier(), assignValue);
-				break;
-			case DIVASSIGN:
-				assignValue = ((Integer) oldValue) / ((Integer) newValue);
-				mVariables.put(var.getIdentifier(), assignValue);
-				break;
-			default:
-				throw new InterpreterException(as.getLocation(),
-						"AssignmentExpression: This type of operator is not supported: " + as.getOperator());
+		case ASSIGN:
+			mVariables.put(var.getIdentifier(), newValue);
+			break;
+		case PLUSASSIGN:
+			assignValue = (Integer) oldValue + (Integer) newValue;
+			mVariables.put(var.getIdentifier(), assignValue);
+			break;
+		case MINUSASSIGN:
+			assignValue = (Integer) oldValue - (Integer) newValue;
+			mVariables.put(var.getIdentifier(), assignValue);
+			break;
+		case MULTASSIGN:
+			assignValue = (Integer) oldValue * (Integer) newValue;
+			mVariables.put(var.getIdentifier(), assignValue);
+			break;
+		case DIVASSIGN:
+			assignValue = (Integer) oldValue / (Integer) newValue;
+			mVariables.put(var.getIdentifier(), assignValue);
+			break;
+		default:
+			throw new InterpreterException(as.getLocation(),
+					"AssignmentExpression: This type of operator is not supported: " + as.getOperator());
 		}
 		return oldValue;
 	}
@@ -512,17 +503,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final Integer v2 = (Integer) interpret(children.get(1));
 
 		switch (be.getOperator()) {
-			case PLUS:
-				return v1 + v2;
-			case MINUS:
-				return v1 - v2;
-			case MULTIPLICATION:
-				return v1 * v2;
-			case DIVISION:
-				return v1 / v2;
-			default:
-				throw new InterpreterException(be.getLocation(),
-						" BinaryExpression: This type of operator is not supported: " + be.getOperator());
+		case PLUS:
+			return v1 + v2;
+		case MINUS:
+			return v1 - v2;
+		case MULTIPLICATION:
+			return v1 * v2;
+		case DIVISION:
+			return v1 / v2;
+		default:
+			throw new InterpreterException(be.getLocation(),
+					" BinaryExpression: This type of operator is not supported: " + be.getOperator());
 		}
 	}
 
@@ -535,16 +526,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private Boolean interpret(final ConditionalBooleanExpressionAST cbe) throws InterpreterException {
 		final List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
-			case NOT:
-				return !((Boolean) interpret(children.get(0)));
-			case AND:
-				return !(Boolean) interpret(children.get(0)) ? false : (Boolean) interpret(children.get(1));
-			case OR:
-				return (Boolean) interpret(children.get(0)) ? true : (Boolean) interpret(children.get(1));
-			default:
-				final String message = "ConditionalBooleanExpression: This type of operator is not supported: "
-						+ cbe.getOperator();
-				throw new InterpreterException(cbe.getLocation(), message);
+		case NOT:
+			return !((Boolean) interpret(children.get(0)));
+		case AND:
+			return !(Boolean) interpret(children.get(0)) ? false : (Boolean) interpret(children.get(1));
+		case OR:
+			return (Boolean) interpret(children.get(0)) ? true : (Boolean) interpret(children.get(1));
+		default:
+			final String message =
+					"ConditionalBooleanExpression: This type of operator is not supported: " + cbe.getOperator();
+			throw new InterpreterException(cbe.getLocation(), message);
 		}
 	}
 
@@ -575,15 +566,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 					continue;
 				}
 				switch (mFlow) {
-					case BREAK:
-					case RETURN:
-						mFlow = Flow.NORMAL;
-						return null;
-					case CONTINUE:
-						mFlow = Flow.NORMAL;
-						break;
-					default:
-						throw new UnsupportedOperationException();
+				case BREAK:
+				case RETURN:
+					mFlow = Flow.NORMAL;
+					return null;
+				case CONTINUE:
+					mFlow = Flow.NORMAL;
+					break;
+				default:
+					throw new UnsupportedOperationException();
 				}
 			}
 			// execute the update statement
@@ -716,8 +707,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		reportToLogger(LoggerSeverity.INFO,
 				"Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
 		final IAutomaton<String, String> automaton = (IAutomaton<String, String>) arguments.get(0);
-		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
-				format, "output according to \"write\" command", automaton);
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename, format,
+				"output according to \"write\" command", automaton);
 	}
 
 	private void executePrintMethod(final OperationInvocationExpressionAST oe, final List<AtsASTNode> children,
@@ -735,29 +726,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 					try {
 						format = Format.valueOf((String) arguments.get(1));
 					} catch (final Exception e) {
-						throw new InterpreterException(oe.getLocation(),
-								"unknown format " + (String) arguments.get(1));
+						throw new InterpreterException(oe.getLocation(), "unknown format " + (String) arguments.get(1));
 					}
 				} else {
-					throw new InterpreterException(oe.getLocation(),
-							"if first argument of print command is an "
-									+ "automaton second argument has to be a string "
-									+ "that defines an output format");
+					throw new InterpreterException(oe.getLocation(), "if first argument of print command is an "
+							+ "automaton second argument has to be a string " + "that defines an output format");
 				}
 			} else {
 				throw new InterpreterException(oe.getLocation(),
-						"if first argument of print command is an "
-								+ "automaton only two arguments are allowed");
+						"if first argument of print command is an " + "automaton only two arguments are allowed");
 			}
 			mLastPrintedAutomaton = (IAutomaton<String, String>) arguments.get(0);
-			text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
-					"automaton", format, mLastPrintedAutomaton))
-							.getDefinitionAsString();
+			text = new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "automaton",
+					format, mLastPrintedAutomaton).getDefinitionAsString();
 		} else {
 			if (arguments.size() > 1) {
 				throw new InterpreterException(oe.getLocation(),
-						"if first argument of print command is not an "
-								+ "automaton no second argument allowed");
+						"if first argument of print command is not an " + "automaton no second argument allowed");
 			}
 			text = String.valueOf(arguments.get(0));
 		}
@@ -795,21 +780,21 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final int v1 = (Integer) interpret(children.get(0));
 			final int v2 = (Integer) interpret(children.get(1));
 			switch (re.getOperator()) {
-				case GREATERTHAN:
-					return v1 > v2;
-				case LESSTHAN:
-					return v1 < v2;
-				case GREATER_EQ_THAN:
-					return v1 >= v2;
-				case LESS_EQ_THAN:
-					return v1 <= v2;
-				case EQ:
-					return v1 == v2;
-				case NOT_EQ:
-					return v1 != v2;
-				default:
-					throw new InterpreterException(re.getLocation(), "This type of operator is not supported: "
-							+ re.getOperator());
+			case GREATERTHAN:
+				return v1 > v2;
+			case LESSTHAN:
+				return v1 < v2;
+			case GREATER_EQ_THAN:
+				return v1 >= v2;
+			case LESS_EQ_THAN:
+				return v1 <= v2;
+			case EQ:
+				return v1 == v2;
+			case NOT_EQ:
+				return v1 != v2;
+			default:
+				throw new InterpreterException(re.getLocation(),
+						"This type of operator is not supported: " + re.getOperator());
 			}
 		}
 		return null;
@@ -839,22 +824,22 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final Integer oldVal = (Integer) interpret(var);
 
 		switch (ue.getOperator()) {
-			case EXPR_PLUSPLUS:
-				mVariables.put(var.getIdentifier(), oldVal + 1);
-				return oldVal;
-			case EXPR_MINUSMINUS:
-				mVariables.put(var.getIdentifier(), oldVal - 1);
-				return oldVal;
-			case PLUSPLUS_EXPR:
-				mVariables.put(var.getIdentifier(), oldVal + 1);
-				return oldVal + 1;
-			case MINUSMINUS_EXPR:
-				mVariables.put(var.getIdentifier(), oldVal - 1);
-				return oldVal - 1;
-			default:
-				final String message = ue.getLocation().getStartLine()
-						+ ": UnaryExpression: This type of operator is not supported: " + ue.getOperator();
-				throw new InterpreterException(ue.getLocation(), message);
+		case EXPR_PLUSPLUS:
+			mVariables.put(var.getIdentifier(), oldVal + 1);
+			return oldVal;
+		case EXPR_MINUSMINUS:
+			mVariables.put(var.getIdentifier(), oldVal - 1);
+			return oldVal;
+		case PLUSPLUS_EXPR:
+			mVariables.put(var.getIdentifier(), oldVal + 1);
+			return oldVal + 1;
+		case MINUSMINUS_EXPR:
+			mVariables.put(var.getIdentifier(), oldVal - 1);
+			return oldVal - 1;
+		default:
+			final String message = ue.getLocation().getStartLine()
+					+ ": UnaryExpression: This type of operator is not supported: " + ue.getOperator();
+			throw new InterpreterException(ue.getLocation(), message);
 		}
 	}
 
@@ -894,15 +879,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 					continue;
 				}
 				switch (mFlow) {
-					case BREAK:
-					case RETURN:
-						mFlow = Flow.NORMAL;
-						return null;
-					case CONTINUE:
-						mFlow = Flow.NORMAL;
-						break;
-					default:
-						throw new UnsupportedOperationException();
+				case BREAK:
+				case RETURN:
+					mFlow = Flow.NORMAL;
+					return null;
+				case CONTINUE:
+					mFlow = Flow.NORMAL;
+					break;
+				default:
+					throw new UnsupportedOperationException();
 				}
 			}
 			loopCondition = (Boolean) interpret(children.get(0));
@@ -955,8 +940,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 	@Override
 	public void printMessage(final Severity severityForResult, final LoggerSeverity severityForLogger,
-			final String longDescr,
-			final String shortDescr, final AtsASTNode node) {
+			final String longDescr, final String shortDescr, final AtsASTNode node) {
 		reportToUltimate(severityForResult, longDescr, shortDescr, node);
 		reportToLogger(severityForLogger, longDescr);
 	}
@@ -977,8 +961,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (node == null) {
 			result = new GenericResult(Activator.PLUGIN_ID, shortDescr, longDescr, sev);
 		} else {
-			result = new GenericResultAtElement<>(node, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), shortDescr, longDescr, sev);
+			result = new GenericResultAtElement<>(node, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+					shortDescr, longDescr, sev);
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
@@ -993,19 +977,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private void reportToLogger(final LoggerSeverity sev, final String toPrint) {
 		switch (sev) {
-			case ERROR:
-				mLogger.error(toPrint);
-				break;
-			case WARNING:
-				mLogger.warn(toPrint);
-				break;
-			case DEBUG:
-				mLogger.debug(toPrint);
-				break;
-			case INFO:
-			default:
-				mLogger.info(toPrint);
-				break;
+		case ERROR:
+			mLogger.error(toPrint);
+			break;
+		case WARNING:
+			mLogger.warn(toPrint);
+			break;
+		case DEBUG:
+			mLogger.debug(toPrint);
+			break;
+		case INFO:
+		default:
+			mLogger.info(toPrint);
+			break;
 		}
 	}
 
@@ -1029,18 +1013,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final OperationInvocationExpressionAST oe, final List<Object> arguments) throws InterpreterException {
 		final String operationName = oe.getOperationName();
 		if (!mExistingOperations.containsKey(operationName)) {
-			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
-			final String longDescr =
-					"Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator")
-							+ "We support only the following operations " + System.getProperty("line.separator")
-							+ allOperations;
+			final String allOperations = new ListExistingOperations(mExistingOperations).prettyPrint();
+			final String longDescr = "Unsupported operation \"" + operationName + "\""
+					+ System.getProperty("line.separator") + "We support only the following operations "
+					+ System.getProperty("line.separator") + allOperations;
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 		for (final Class<?> operationClass : mExistingOperations.get(operationName)) {
 			final Constructor<?>[] operationConstructors = operationClass.getConstructors();
 			if (operationConstructors.length == 0) {
-				final String description = "Error in automata library: operation " + operationName
-						+ " does not have a constructor";
+				final String description =
+						"Error in automata library: operation " + operationName + " does not have a constructor";
 				throw new InterpreterException(oe.getLocation(), description, description);
 			}
 			// Find the constructor which expects the correct arguments
@@ -1187,13 +1170,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * NOTE: The following directories are scanned recursively. Hence, do not add directories where one directory is
 		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
-		final String[] packages = {
-				"de.uni_freiburg.informatik.ultimate.automata.alternating",
+		final String[] packages = { "de.uni_freiburg.informatik.ultimate.automata.alternating",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.petrinet",
-				"de.uni_freiburg.informatik.ultimate.automata.tree.operations"
-		};
+				"de.uni_freiburg.informatik.ultimate.automata.tree.operations" };
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
 
@@ -1247,9 +1228,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Tries to resolve the fully qualified name from the package name and the found file.
-	 * If the package is a.b.c.d and we found a class with the path /foo/bar/a/b/c/d/huh/OurClass.class, then the fully
-	 * qualified name is a.b.c.d.huh.OurClass
+	 * Tries to resolve the fully qualified name from the package name and the found file. If the package is a.b.c.d and
+	 * we found a class with the path /foo/bar/a/b/c/d/huh/OurClass.class, then the fully qualified name is
+	 * a.b.c.d.huh.OurClass
 	 */
 	private static String getQualifiedNameFromFile(final String packageName, final File file) {
 		assert file != null;

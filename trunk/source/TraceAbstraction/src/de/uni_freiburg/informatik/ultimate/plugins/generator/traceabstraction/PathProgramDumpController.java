@@ -47,35 +47,40 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  *
  */
 public class PathProgramDumpController<LETTER extends IIcfgTransition<?>> {
-	
-	private enum DumpStop { NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE }
+
+	private enum DumpStop {
+		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
+	}
+
+	private static final int DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD = Integer.MAX_VALUE;
+	private static final DumpStop STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED = DumpStop.BEFORE_FIRST_DUPLICATE;
+	private static final InputMode DUMP_PATH_PROGRAMS_INPUT_MODE = InputMode.ICFG;
+
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPref;
 	private final IIcfg<?> mIcfg;
 	private final Set<Set<LETTER>> mAlreadyDumped = new HashSet<>();
-	public PathProgramDumpController(final IUltimateServiceProvider services, final TAPreferences pref, final IIcfg<?> icfgContainer) {
+
+	public PathProgramDumpController(final IUltimateServiceProvider services, final TAPreferences pref,
+			final IIcfg<?> icfgContainer) {
 		mServices = services;
 		mPref = pref;
 		mIcfg = icfgContainer;
 	}
-	private static final int DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD = Integer.MAX_VALUE;
-	private static final DumpStop STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED = DumpStop.BEFORE_FIRST_DUPLICATE;
-	private static final InputMode DUMP_PATH_PROGRAMS_INPUT_MODE = InputMode.ICFG;
-	
-	
-	public void reportPathProgram(final NestedRun<LETTER, IPredicate> counterexample, final boolean perfectInterpolatSequenceFound, final int iteration) {
+
+	public void reportPathProgram(final NestedRun<LETTER, IPredicate> counterexample,
+			final boolean perfectInterpolatSequenceFound, final int iteration) {
 		if (!perfectInterpolatSequenceFound) {
 			announceDump(counterexample, iteration);
 			doDump(counterexample, iteration);
-		} else if (DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD != Integer.MAX_VALUE)  {
+		} else if (DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD != Integer.MAX_VALUE) {
 			announceDump(counterexample, iteration);
-			final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<LETTER>(counterexample.getWord());
+			final HistogramOfIterable<LETTER> traceHistogram =
+					new HistogramOfIterable<LETTER>(counterexample.getWord());
 			if (traceHistogram.getMax() > DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD) {
-				final String filename = mPref.dumpPath() + File.separator + mIcfg.getIdentifier() + "_"
-						+ iteration + ".bpl";
-				new PathProgramDumper(mIcfg, mServices,
-						counterexample, filename,
-						DUMP_PATH_PROGRAMS_INPUT_MODE);
+				final String filename =
+						mPref.dumpPath() + File.separator + mIcfg.getIdentifier() + "_" + iteration + ".bpl";
+				new PathProgramDumper(mIcfg, mServices, counterexample, filename, DUMP_PATH_PROGRAMS_INPUT_MODE);
 				if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED == DumpStop.AFTER_FIRST_DUMP) {
 					final String message = "dumped path program with trace histogram max " + traceHistogram.getMax();
 					final String taskDescription = "trying to verify (iteration " + iteration + ")";
@@ -83,9 +88,7 @@ public class PathProgramDumpController<LETTER extends IIcfgTransition<?>> {
 				}
 			}
 		}
-		
 	}
-
 
 	private void announceDump(final NestedRun<LETTER, IPredicate> counterexample, final int iteration) {
 		final Set<LETTER> letters = new HashSet<>(counterexample.getWord().asList());
@@ -95,24 +98,16 @@ public class PathProgramDumpController<LETTER extends IIcfgTransition<?>> {
 			final String taskDescription = "trying to verify (iteration " + iteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
-		
+
 	}
 
-
 	private void doDump(final NestedRun<? extends IAction, IPredicate> counterexample, final int iteration) {
-		final String filename = mPref.dumpPath() + File.separator + mIcfg.getIdentifier() + "_"
-				+ iteration + ".bpl";
-		new PathProgramDumper(mIcfg, mServices,
-				counterexample, filename,
-				DUMP_PATH_PROGRAMS_INPUT_MODE);
+		final String filename = mPref.dumpPath() + File.separator + mIcfg.getIdentifier() + "_" + iteration + ".bpl";
+		new PathProgramDumper(mIcfg, mServices, counterexample, filename, DUMP_PATH_PROGRAMS_INPUT_MODE);
 		if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED == DumpStop.AFTER_FIRST_DUMP) {
 			final String message = "dumped path program for which we did not find perfect sequence of interpolants";
 			final String taskDescription = "trying to verify (iteration " + iteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
 	}
-	
-	
-
-
 }

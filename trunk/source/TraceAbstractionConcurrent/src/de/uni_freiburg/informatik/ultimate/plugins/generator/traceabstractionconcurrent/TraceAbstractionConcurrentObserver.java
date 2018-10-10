@@ -103,8 +103,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
-		final Set<IcfgLocation> threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap().entrySet()
-				.stream().map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
+		final Set<IcfgLocation> threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap()
+				.entrySet().stream().map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
@@ -262,8 +262,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
-		// s_Logger.warn(res.getLongDescription());
-
 		reportResult(res);
 	}
 
