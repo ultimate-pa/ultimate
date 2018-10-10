@@ -164,12 +164,7 @@ public class SymbolTableValue {
 		return mDeclarationInformation.getStorageClass() == StorageClass.GLOBAL;
 	}
 
-	/**
-	 * Getter for the C variable description.
-	 *
-	 * @return the C variable description.
-	 */
-	public CType getCVariable() {
+	public CType getCType() {
 		return mCDecl.getType();
 	}
 

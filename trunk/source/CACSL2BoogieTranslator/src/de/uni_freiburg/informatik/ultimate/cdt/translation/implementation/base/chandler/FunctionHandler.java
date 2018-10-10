@@ -846,7 +846,7 @@ public class FunctionHandler {
 				final String inparamCId = mSymboltable.getCIdForBoogieId(inparamBId);
 
 				ASTType type = inparamVarList.getType();
-				final CType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCVariable();
+				final CType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCType();
 
 				// onHeap case for a function parameter means the parameter is
 				// addressoffed in the function body

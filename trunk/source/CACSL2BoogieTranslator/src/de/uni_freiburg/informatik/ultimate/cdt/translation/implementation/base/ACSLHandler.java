@@ -531,7 +531,7 @@ public class ACSLHandler implements IACSLHandler {
 
 			if (mSymboltable.containsCSymbol(main.getAcslHook(), cId)) {
 				stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
-				cType = stv.getCVariable();
+				cType = stv.getCType();
 			} else {
 				throw new UnsupportedOperationException(
 						"not yet implemented: " + "unable to determine CType for variable " + id);

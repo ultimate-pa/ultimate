@@ -289,7 +289,7 @@ public class TypeHandler implements ITypeHandler {
 					final String msg = "Undefined type " + cId;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
-				final CType cType = stv.getCVariable();
+				final CType cType = stv.getCType();
 				final BoogieType boogieType = getBoogieTypeForCType(cType);
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
@@ -491,7 +491,7 @@ public class TypeHandler implements ITypeHandler {
 		assert sT.containsBoogieSymbol(leftMostId);
 		final String cId = sT.getCIdForBoogieId(leftMostId);
 		assert sT.containsCSymbol(hook, cId);
-		final ASTType t = cType2AstType(loc, sT.findCSymbol(hook, cId).getCVariable());
+		final ASTType t = cType2AstType(loc, sT.findCSymbol(hook, cId).getCType());
 		return traverseForType(loc, t, flat, 1);
 	}
 

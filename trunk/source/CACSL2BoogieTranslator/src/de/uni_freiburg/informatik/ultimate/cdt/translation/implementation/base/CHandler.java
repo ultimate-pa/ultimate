@@ -1358,7 +1358,7 @@ public class CHandler {
 			// a local variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cId);
 			bId = stv.getBoogieName();
-			cType = stv.getCVariable();
+			cType = stv.getCType();
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
@@ -1366,7 +1366,7 @@ public class CHandler {
 			// we have a normal variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cIdMp);
 			bId = stv.getBoogieName();
-			cType = stv.getCVariable();
+			cType = stv.getCType();
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
@@ -2432,7 +2432,7 @@ public class CHandler {
 				continue;
 			}
 			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
-			final CType type = value.getCVariable().getUnderlyingType();
+			final CType type = value.getCType().getUnderlyingType();
 			if (type instanceof CArray || type instanceof CStruct) {
 				addToVariablesOnHeap(value.getDeclarationNode());
 			}
