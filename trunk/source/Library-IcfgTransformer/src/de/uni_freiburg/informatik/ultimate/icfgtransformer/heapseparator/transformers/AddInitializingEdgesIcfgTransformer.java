@@ -249,18 +249,23 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	private Pair<OUTLOC, OUTLOC> splitLocation(final INLOC oldInitTarget, final String containingprocedure) {
 		Pair<OUTLOC, OUTLOC> p;
 		{
+			final boolean wasProcedureEntryNode = !mInputIcfg.getProcedureEntryNodes().isEmpty()
+					&& mInputIcfg.getProcedureEntryNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s1 = createAndAddNewLocation(oldInitTarget,
 					mInputIcfg.getInitialNodes().contains(oldInitTarget),
 					false,
-					mInputIcfg.getProcedureEntryNodes().get(containingprocedure).equals(oldInitTarget),
+					wasProcedureEntryNode,
 					false,
 					false,
 					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));
+
+			final boolean wasProcedureExitNode = !mInputIcfg.getProcedureExitNodes().isEmpty()
+					&& mInputIcfg.getProcedureExitNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
 					mInputIcfg.getProcedureErrorNodes().get(containingprocedure)
 					.contains(oldInitTarget),
 					false,
-					mInputIcfg.getProcedureExitNodes().get(containingprocedure).equals(oldInitTarget),
+					wasProcedureExitNode,
 					mInputIcfg.getLoopLocations().contains(oldInitTarget),
 					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"));
 			p = new Pair<>(s1, s2);
