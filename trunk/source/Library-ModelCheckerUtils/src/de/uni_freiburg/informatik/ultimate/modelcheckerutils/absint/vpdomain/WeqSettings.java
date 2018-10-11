@@ -16,8 +16,6 @@ public class WeqSettings {
 
 
 
-	private boolean mUseFullWeqccDuringProjectAway = true;
-
 	private boolean mDeactivateWeakEquivalences = false;
 
 	// setting would not work -- weq-prime architecture would need rework
@@ -116,10 +114,6 @@ public class WeqSettings {
 		return mProjectToElementsInplace;
 	}
 
-	public boolean isUseFullWeqccDuringProjectaway() {
-		return mUseFullWeqccDuringProjectAway;
-	}
-
 	public boolean isAlwaysReportChangeToGpa() {
 		return mAlwaysReportChangeToGpa;
 	}
@@ -166,10 +160,6 @@ public class WeqSettings {
 
 	public boolean isDeactivateWeakEquivalences() {
 		return mDeactivateWeakEquivalences;
-	}
-
-	public void setUseFullWeqccDuringProjectaway(final boolean b) {
-		mUseFullWeqccDuringProjectAway = b;
 	}
 
 	public void setDeactivateWeakEquivalences(final boolean b) {

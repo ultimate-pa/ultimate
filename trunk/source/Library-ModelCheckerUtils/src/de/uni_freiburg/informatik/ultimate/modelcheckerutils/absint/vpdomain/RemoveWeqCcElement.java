@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IElementRemovalTarget;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRestoreNodesBeforeRemove;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
@@ -22,7 +22,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 
 	private final NODE mElem;
 	private final boolean mIntroduceNewNodes;
-	private final boolean mUseWeqGpa;
+//	private final boolean mUseWeqGpa;
 
 	private final boolean mMadeChanges;
 	private Set<NODE> mElementsToRemove;
@@ -33,7 +33,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 	private WeqCongruenceClosure<NODE> mWeqCc;
 
 	public RemoveWeqCcElement(final WeqCongruenceClosure<NODE> elementContainer, final NODE elem,
-			final boolean introduceNewNodes, final boolean useWeqGpa) {
+			final boolean introduceNewNodes) {
 		assert !elem.isFunctionApplication() : "unexpected..";
 
 		if (elementContainer.isInconsistent(false)) {
@@ -50,7 +50,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 			mMadeChanges = false;
 			mAddedNodes = Collections.emptySet();
 			mIntroduceNewNodes = false;
-			mUseWeqGpa = false;
+//			mUseWeqGpa = false;
 			mDidRemoval = true;
 			return;
 		}
@@ -58,14 +58,14 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 		mWeqCc = elementContainer;
 		mElem = elem;
 		mIntroduceNewNodes = introduceNewNodes;
-		mUseWeqGpa = useWeqGpa;
+//		mUseWeqGpa = useWeqGpa;
 		mMadeChanges = false;
 
-		mAddedNodes = mUseWeqGpa && mIntroduceNewNodes ? null : new HashSet<>();
+		mAddedNodes = !mIntroduceNewNodes ? null : new HashSet<>();
 	}
 
 	public Set<NODE> getAddedNodes() {
-		assert !mUseWeqGpa : "currently the only case we need this, right?";
+//		assert !mUseWeqGpa : "currently the only case we need this, right?";
 		assert mDidRemoval;
 		return mAddedNodes;
 	}
@@ -143,13 +143,13 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 		assert !mWeqCc.isInconsistent(false);
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
-		mWeqCc.fatten(mUseWeqGpa);
-		assert !mUseWeqGpa || mWeqCc.assertAllEdgeLabelsHaveWeqFatFlagSet();
+		mWeqCc.fatten();
+//		assert !mUseWeqGpa || mWeqCc.assertAllEdgeLabelsHaveWeqFatFlagSet();
 
 		// TODO: should we do a full closure here (like when freezing??)
 
 		final Set<NODE> nodesAddedInLabels = mWeqCc.removeElementAndDependents(mElem, elementsToRemove,
-					nodeToReplacementNode, mUseWeqGpa);
+					nodeToReplacementNode);
 
 		mWeqCc.thin();
 
@@ -228,12 +228,11 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	public static <NODE extends IEqNodeIdentifier<NODE>> void removeSimpleElement(
 			final WeqCongruenceClosure<NODE> cc, final NODE elem) {
-		removeSimpleElement(cc, elem, true, cc.getManager().getSettings().isUseFullWeqccDuringProjectaway());
+		removeSimpleElement(cc, elem, true);
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE>> RemoveWeqCcElement<NODE> removeSimpleElement(
-			final WeqCongruenceClosure<NODE> cc, final NODE elem, final boolean introduceNewNodes,
-			final boolean useWeqGpa) {
+			final WeqCongruenceClosure<NODE> cc, final NODE elem, final boolean introduceNewNodes) {
 		if (elem.isFunctionApplication()) {
 			throw new IllegalArgumentException();
 		}
@@ -242,7 +241,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		assert cc.getElementCurrentlyBeingRemoved() == null;
-		final RemoveWeqCcElement<NODE> re = new RemoveWeqCcElement<>(cc, elem, introduceNewNodes, useWeqGpa);
+		final RemoveWeqCcElement<NODE> re = new RemoveWeqCcElement<>(cc, elem, introduceNewNodes);
 
 		if (!cc.hasElement(elem)) {
 			// re recognizes this case -- no need to execute doRemoval
@@ -269,7 +268,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 	public static <NODE extends IEqNodeIdentifier<NODE>> Set<NODE> removeSimpleElementDontUseWeqGpaTrackAddedNodes(
 			final WeqCongruenceClosure<NODE> lab, final NODE elem) {
 		final RemoveWeqCcElement<NODE> re =
-				removeSimpleElement(lab, elem, true, false);
+				removeSimpleElement(lab, elem, true);
 		return re.getAddedNodes();
 	}
 
@@ -284,7 +283,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public ICongruenceClosure<NODE> getElementContainer() {
+	public IElementRemovalTarget<NODE> getElementContainer() {
 		return mWeqCc;
 	}
 

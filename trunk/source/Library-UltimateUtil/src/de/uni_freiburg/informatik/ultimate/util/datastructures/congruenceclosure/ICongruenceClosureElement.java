@@ -3,6 +3,13 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Abstracts from {@link EqNode} and {@link StringCcElement} (the latter is used for testing purposes)
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <ELEM>
+ */
 public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	boolean hasSameTypeAs(ELEM other);

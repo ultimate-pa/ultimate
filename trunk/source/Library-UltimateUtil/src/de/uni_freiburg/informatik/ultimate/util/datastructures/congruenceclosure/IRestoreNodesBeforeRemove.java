@@ -15,7 +15,7 @@ public interface IRestoreNodesBeforeRemove<ELEM extends ICongruenceClosureElemen
 
 	ELEM getElem();
 
-	ICongruenceClosure<ELEM> getElementContainer();
+	IElementRemovalTarget<ELEM> getElementContainer();
 
 	void registerAddedNodes(Set<ELEM> nodesToAdd);
 

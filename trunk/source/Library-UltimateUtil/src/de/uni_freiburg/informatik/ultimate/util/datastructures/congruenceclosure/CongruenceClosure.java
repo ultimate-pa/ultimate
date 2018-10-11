@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            or function applications.
  */
 public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
-		implements ICongruenceClosure<ELEM> {
+		implements IEqualityReportingTarget<ELEM>, IElementRemovalTarget<ELEM> {
 
 	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
 
@@ -240,7 +240,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mIsFrozen = true;
 	}
 
-	@Override
 	public boolean isFrozen() {
 		return mIsFrozen;
 	}
@@ -302,7 +301,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void doFwccAndBwccPropagationsFromMerge(
-			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo, final ICongruenceClosure<ELEM> icc) {
+			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo, final IEqualityReportingTarget<ELEM> icc) {
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = propInfo.getFirst();
 		final HashRelation<ELEM, ELEM> disequalitiesToPropagate = propInfo.getSecond();
 		/*
@@ -495,14 +494,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param omitSanityCheck
 	 * @return
 	 */
-	public boolean addElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+	public boolean addElement(final ELEM elem, final IEqualityReportingTarget<ELEM> newEqualityTarget,
 			final boolean omitSanityCheck) {
 		final boolean result = addElementRec(elem, newEqualityTarget, null);
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || omitSanityCheck || sanityCheck();
 		return result;
 	}
 
-	private boolean addElementRec(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+	private boolean addElementRec(final ELEM elem, final IEqualityReportingTarget<ELEM> newEqualityTarget,
 			final IRemovalInfo<ELEM> remInfo) {
 		assert !mIsFrozen;
 		final boolean newlyAdded = mElementTVER.addElement(elem);
@@ -522,11 +521,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @param elem
 	 */
-	private void registerNewElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget) {
+	private void registerNewElement(final ELEM elem, final IEqualityReportingTarget<ELEM> newEqualityTarget) {
 		registerNewElement(elem, newEqualityTarget, null);
 	}
 
-	private void registerNewElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+	private void registerNewElement(final ELEM elem, final IEqualityReportingTarget<ELEM> newEqualityTarget,
 			final IRemovalInfo<ELEM> remInfo) {
 		if (elem.isLiteral()) {
 			mAllLiterals.add(elem);
@@ -612,7 +611,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddElement(
 			final ELEM elem, final BiConsumer<ELEM, ELEM> reportEquality, final Consumer<ELEM> addElement,
 			final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction,
-			final ICongruenceClosure<ELEM> congruenceClosure) {
+			final IEqualityReportingTarget<ELEM> congruenceClosure) {
 		/*
 		 * treatment for constant functions:
 		 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
@@ -703,7 +702,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantAndMixFunctionTreatmentOnAddEquality(
 			final ELEM elemRep1, final ELEM elemRep2, final Set<ELEM> elem1EquivalenceClass,
 			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement,
-			final ICongruenceClosure<ELEM> congruenceClosure) {
+			final IEqualityReportingTarget<ELEM> congruenceClosure) {
 		for (final ELEM equivalentFunction1 : new HashSet<>(elem1EquivalenceClass)) {
 			if ((CcSettings.SUPPORT_MIX_FUNCTION && equivalentFunction1.isMixFunction()) ||
 					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction1.isConstantFunction())) {
@@ -1158,7 +1157,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return result;
 	}
 
-	@Override
 	public Set<ELEM> getAllElements() {
 		return Collections.unmodifiableSet(mElementTVER.getAllElements());
 	}
@@ -1227,7 +1225,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
-	@Override
 	public boolean assertSingleElementIsFullyRemoved(final ELEM elem) {
 		for (final Entry<ELEM, ELEM> en : mFaAuxData.getNodeToDependentPairs()) {
 			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
@@ -1297,7 +1294,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return sanityCheckOnlyCc(remInfo);
 	}
 
-	@Override
 	public boolean sanityCheckOnlyCc() {
 		return sanityCheckOnlyCc(null);
 	}
@@ -1307,7 +1303,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @return
 	 */
-	@Override
 	@SuppressWarnings("unused")
 	public boolean sanityCheckOnlyCc(final IRemovalInfo<ELEM> remInfo) {
 		if (mConstructorInitializationPhase) {
@@ -1594,7 +1589,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return tver1.getAllElements().equals(tver2.getAllElements());
 	}
 
-	@Override
 	public boolean isTautological() {
 		if (isInconsistent()) {
 			return false;
@@ -1610,7 +1604,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param functionTransformer
 	 * @return
 	 */
-	@Override
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
 		assert !mIsFrozen;
 //		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
@@ -1675,6 +1668,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 		if (isConstrainedDirectly(elem)) {
 			return true;
+		}
+		if (elem.isDependentNonFunctionApplication()) {
+			for (final ELEM supp : elem.getSupportingNodes()) {
+				if (isConstrained(supp)) {
+					return true;
+				}
+			}
 		}
 		for (final ELEM afpar : mFaAuxData.getAfParents(elem)) {
 			if (isConstrained(afpar)) {
@@ -1915,7 +1915,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return false;
 	}
 
-	@Override
 	public IRemovalInfo<ELEM> getElementCurrentlyBeingRemoved() {
 		return mElementCurrentlyBeingRemoved;
 	}
@@ -2076,7 +2075,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 	}
 
-	@Override
 	public void reportContainsConstraint(final ELEM elem, final Collection<SetConstraint<ELEM>> setCc) {
 		final HashRelation<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, new HashSet<>(setCc));
 		if (eqToProp != null) {
@@ -2086,7 +2084,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 	}
 
-	@Override
 	public Set<SetConstraint<ELEM>> getContainsConstraintForElement(final ELEM elem) {
 		final Set<SetConstraint<ELEM>> constraint = mLiteralSetConstraints.getConstraint(elem);
 		if (SetConstraintManager.isTautologicalWrtElement(elem, constraint)) {

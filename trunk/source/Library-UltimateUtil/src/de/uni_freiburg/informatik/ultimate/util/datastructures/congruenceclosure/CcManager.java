@@ -256,6 +256,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public Set<CongruenceClosure<ELEM>> filterRedundantCcs(final Set<CongruenceClosure<ELEM>> unionList,
 			final PartialOrderCache<CongruenceClosure<ELEM>> ccPoCache) {
 		bmStart(CcBmNames.FILTERREDUNDANT);
+		if (unionList.isEmpty()) {
+			bmEnd(CcBmNames.FILTERREDUNDANT);
+			return unionList;
+		}
+
 		final Set<CongruenceClosure<ELEM>> maxReps = ccPoCache.getMaximalRepresentatives(unionList);
 		// some additional processing: if maxReps is {False}, return the empty set
 		assert !maxReps.stream().anyMatch(cc -> cc.isInconsistent()) || maxReps.size() == 1;
@@ -427,7 +432,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
-			final ICongruenceClosure<ELEM> newEqualityTarget,
+			final IEqualityReportingTarget<ELEM> newEqualityTarget,
 			final boolean inplace, final boolean omitSanityCheck) {
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		assert inplace != congruenceClosure.isFrozen();

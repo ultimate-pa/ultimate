@@ -43,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcAuxData;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IElementRemovalTarget;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IEqualityReportingTarget;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
@@ -51,15 +52,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
-		implements ICongruenceClosure<NODE> {
+		implements IEqualityReportingTarget<NODE>, IElementRemovalTarget<NODE> {
 
 	private CongruenceClosure<NODE> mCongruenceClosure;
 
 	// slim version
-	private WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> mWeakEquivalenceGraphThin;
+	private WeakEquivalenceGraph<NODE> mWeakEquivalenceGraphThin;
 
-	private WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> mWeakEquivalenceGraphCcFat;
-	private WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>> mWeakEquivalenceGraphWeqCcFat;
+	private WeakEquivalenceGraph<NODE> mWeakEquivalenceGraphCcFat;
+//	private WeakEquivalenceGraph<NODE> mWeakEquivalenceGraphWeqCcFat;
 
 	/**
 	 * True iff this WeqCc is a disjunct in a weq label (in contrast to being a "base WeqCc" that is not used inside
@@ -117,7 +118,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param manager
 	 */
 	public WeqCongruenceClosure(final CongruenceClosure<NODE> cc,
-			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weqGraph,
+			final WeakEquivalenceGraph<NODE> weqGraph,
 			final WeqCcManager<NODE> manager) {
 		assert !cc.isFrozen();
 
@@ -152,7 +153,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !mCongruenceClosure.isFrozen();
 		assert original.mManager != null;
 
-		if (original.mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT && original.mDiet != Diet.TRANSITORY_THIN_TO_CCFAT
+		if (//original.mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT &&
+				original.mDiet != Diet.TRANSITORY_THIN_TO_CCFAT
 				&& original.mDiet != Diet.THIN) {
 			throw new AssertionError();
 		}
@@ -168,7 +170,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	/**
 	 *
 	 * @return always "true", meaning something might have changed
-	 * 	 (added just to match the {@link ICongruenceClosure} interface)
+	 * 	 (added just to match the {@link IEqualityReportingTarget} interface)
 	 */
 	@Override
 	public boolean addElement(final NODE elem, final boolean omitSanityChecks) {
@@ -189,7 +191,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
-	@Override
 	public boolean isFrozen() {
 		assert isInconsistent(false) || mIsFrozen == mCongruenceClosure.isFrozen();
 		return mIsFrozen;
@@ -276,7 +277,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param edgeLabel
 	 */
 	private void reportWeakEquivalence(final NODE array1, final NODE array2,
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		if (isInconsistent(false)) {
 			return;
@@ -298,9 +299,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		boolean fwmc = false;
-		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> fwResult =
+		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> fwResult =
 				getCcWeakEquivalenceGraph().propagateViaTriangleRule();
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> fwEdge : fwResult
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> fwEdge : fwResult
 				.entrySet()) {
 			fwmc |= reportWeakEquivalenceDoOnlyRoweqPropagations(fwEdge.getKey().getOneElement(),
 					fwEdge.getKey().getOtherElement(), fwEdge.getValue(), omitSanityChecks);
@@ -316,7 +317,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		assert !mManager.getSettings().isDeactivateWeakEquivalences();
 		assert !array1.dependsOnUntrackedArray();
@@ -336,7 +337,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mManager.addNode(array1, this, true, omitSanityChecks);
 		mManager.addNode(array2, this, true, omitSanityChecks);
 
-		final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> strengthenedEdgeLabel;
+		final WeakEquivalenceEdgeLabel<NODE> strengthenedEdgeLabel;
 		{
 			final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
 			final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
@@ -412,7 +413,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					 * i ~ j holds propagate array1[i] -- -- array2[j] (note that this adds the
 					 * arrayX[Y] nodes, possibly -- EDIT: not..)
 					 */
-					final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
+					final WeakEquivalenceEdgeLabel<NODE> projectedLabel =
 							getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(
 									strengthenedEdgeLabel, ccp1.getArgument(),
 									mManager.getAllWeqVarsNodeForFunction(array1));
@@ -454,7 +455,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 						continue;
 					}
 
-					final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> shiftedLabelWithException =
+					final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException =
 							getCcWeakEquivalenceGraph().shiftLabelAndAddException(strengthenedEdgeLabel,
 									ccc1.getValue(), mManager.getAllWeqVarsNodeForFunction(ccc1.getKey()));
 
@@ -482,7 +483,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * TODO: this rule might be obsolete because of a more general rule involving set constraints and weak equivalences
 	 */
 	private void constArrayWeqProp(final NODE array1, final NODE array2,
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel) {
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel) {
 		// picking the reps again, because propagations may have changed them
 		final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
 		final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
@@ -764,9 +765,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				 *  i'~j'  && a--phi(q)--b ==> a[i']--phi(i')--b[j']
 				 *  (the current merge establishes i'~j')
 				 */
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> aToBLabel =
+				final WeakEquivalenceEdgeLabel<NODE> aToBLabel =
 						getCcWeakEquivalenceGraph().getEdgeLabel(ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
+				final WeakEquivalenceEdgeLabel<NODE> projectedLabel =
 						getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(aToBLabel, ccp1.getArgument(),
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
@@ -779,9 +780,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				 *  i'~j'  && a[i']--phi(q)--b[j'] ==> a--(q!=i' \/ phi(q+))--b
 				 *  (the current merge establishes i'~j')
 				 */
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> aiToBjLabel =
+				final WeakEquivalenceEdgeLabel<NODE> aiToBjLabel =
 						getCcWeakEquivalenceGraph().getEdgeLabel(ccp1, ccp2);
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> shiftedLabelWithException =
+				final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException =
 						getCcWeakEquivalenceGraph().shiftLabelAndAddException(aiToBjLabel, node1,
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
@@ -840,10 +841,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean madeChanges = false;
 		for (final Entry<NODE, NODE> ccc : oldAuxData.getCcChildren(nodeOldRep)) {
 			// ccc = (b,j) , as in b[j]
-			for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> edgeAdjacentToNode
+			for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE>> edgeAdjacentToNode
 					: getCcWeakEquivalenceGraph() .getAdjacentWeqEdges(nodeOldRep).entrySet()) {
 				final NODE n = edgeAdjacentToNode.getKey();
-				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> phi = edgeAdjacentToNode.getValue();
+				final WeakEquivalenceEdgeLabel<NODE> phi = edgeAdjacentToNode.getValue();
 
 				// TODO is it ok here to use that auxData from after the merge??
 				if (!oldAuxData.getArgCcPars(ccc.getValue())
@@ -858,7 +859,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 					// propagate b -- q != j, Phi+ -- a
 
-					final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> shiftedLabelWithException =
+					final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException =
 							getCcWeakEquivalenceGraph().shiftLabelAndAddException(phi, ccc.getValue(),
 									mManager.getAllWeqVarsNodeForFunction(ccc.getKey()));
 					// recursive call
@@ -893,7 +894,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		boolean madeChanges = false;
 		while (getWeakEquivalenceGraph().hasConstraintsToReport()) {
-			final WeakEquivalenceGraph<NODE, ICongruenceClosure<NODE>>.ConstraintFromWeqGraph aeq =
+			final WeakEquivalenceGraph<NODE>.ConstraintFromWeqGraph aeq =
 					getWeakEquivalenceGraph().pollStoredConstraintAndRemoveRelatedWeqEdge();
 			if (aeq.isIsArrayEquality()) {
 				madeChanges |= reportEquality(aeq.getEquality().getFirst(), aeq.getEquality().getSecond(),
@@ -970,7 +971,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	}
 
-	@Override
 	public void reportContainsConstraint(final NODE elem, final Collection<SetConstraint<NODE>> setCc) {
 		mCongruenceClosure.reportContainsConstraint(elem, setCc);
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
@@ -1006,7 +1006,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return madeChanges;
 	}
 
-	@Override
 	public boolean isTautological() {
 		if (mCongruenceClosure == null) {
 			return false;
@@ -1017,6 +1016,19 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> other) {
 		assert this.isClosed() && other.isClosed() : "caller ensures this, right?";
 		assert this.getAllElements().equals(other.getAllElements());
+
+		if (this.isInconsistent()) {
+			return true;
+		}
+		if (other.isTautological()) {
+			return true;
+		}
+		if (this.isTautological()) {
+			return false;
+		}
+		if (other.isInconsistent()) {
+			return false;
+		}
 
 		if (!mManager.isStrongerThan(this.mCongruenceClosure, other.mCongruenceClosure)) {
 			return false;
@@ -1035,7 +1047,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 *
 	 * @param useWeqGpa
 	 */
-	public void fatten(final boolean useWeqGpa) {
+//	public void fatten(final boolean useWeqGpa) {
+	public void fatten() {
 		assert !isFrozen();
 
 		if (this.isInconsistent(false)) {
@@ -1046,32 +1059,32 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
 		// this case may occur for a weqCc that labels an weq edge (when the base weqCc has diet WEQCCFAT)
-		case TRANSITORY_THIN_TO_WEQCCFAT:
-			mDiet = useWeqGpa ? Diet.TRANSITORY_THIN_TO_WEQCCFAT : Diet.TRANSITORY_THIN_TO_CCFAT;
+//		case TRANSITORY_THIN_TO_WEQCCFAT:
+			mDiet =Diet.TRANSITORY_THIN_TO_CCFAT;
 			break;
 		case CCFAT:
 			mDiet = Diet.TRANSITORY_CCREFATTEN;
 			break;
-		case WEQCCFAT:
-			mDiet = Diet.TRANSITORY_WEQCCREFATTEN;
-			break;
+//		case WEQCCFAT:
+//			mDiet = Diet.TRANSITORY_WEQCCREFATTEN;
+//			break;
 		default:
 			throw new IllegalStateException();
 		}
 
-		if (useWeqGpa) {
-			mWeakEquivalenceGraphWeqCcFat =
-					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(this,
-							// get a modifiable copy because freezing would trigger this closure recursively
-							mManager.copyWeqCc(this, true));
-			mWeakEquivalenceGraphThin = null;
-			mDiet = Diet.WEQCCFAT;
-//			assert mWeakEquivalenceGraphWeqCcFat.assertAllEdgeLabelsHaveWeqFatFlagSet(); //holds, but check is redundant
-		} else {
+//		if (useWeqGpa) {
+//			mWeakEquivalenceGraphWeqCcFat =
+//					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(this,
+//							// get a modifiable copy because freezing would trigger this closure recursively
+//							mManager.copyWeqCc(this, true));
+//			mWeakEquivalenceGraphThin = null;
+//			mDiet = Diet.WEQCCFAT;
+////			assert mWeakEquivalenceGraphWeqCcFat.assertAllEdgeLabelsHaveWeqFatFlagSet(); //holds, but check is redundant
+//		} else {
 			mWeakEquivalenceGraphCcFat = getWeakEquivalenceGraph().ccFattenEdgeLabels();
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.CCFAT;
-		}
+//		}
 		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
@@ -1121,7 +1134,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					 *  and we don't account for that e.g. in reportWeakEquivalence..)
 					 */
 					assert omitSanityChecks || sanityCheck();
-					fatten(false);
+					fatten();
 					madeChanges = reportAllConstraintsFromWeqGraph(omitSanityChecks);
 				}
 			}
@@ -1145,7 +1158,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
-			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
+			final Map<NODE, NODE> nodeToReplacementNode) {
 		// not the case (see caller, if we close fully after addNodesToKeep, we loose performance massively)
 //		assert this.isClosed();
 
@@ -1155,7 +1168,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final Set<NODE> nodesToAddInGpa = getWeakEquivalenceGraph().projectAwaySimpleElementInEdgeLabels(elem);
 
-		assert useWeqGpa || nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
+		assert nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
 				+ "are not in the meet-with-WeqGpa case";
 
 		mCongruenceClosure.removeElements(elementsToRemove, nodeToReplacementNode);
@@ -1208,7 +1221,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final NODE j = iToBeRemovedToo ? jEqualToI : elemToRemove.getArgument();
 
 		// forall b --Phi(q)-- a
-		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> edge
+		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE>> edge
 				: getCcWeakEquivalenceGraph().getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
 			assert !edge.getKey().equals(elemToRemove.getAppliedFunction());
 			if (elementsToRemove.contains(edge.getKey())) {
@@ -1216,7 +1229,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				continue;
 			}
 
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
+			final WeakEquivalenceEdgeLabel<NODE> projectedLabel =
 					getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(edge.getValue(), elemToRemove.getArgument(),
 							mManager.getAllWeqVarsNodeForFunction(elemToRemove.getAppliedFunction()));
 
@@ -1350,10 +1363,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 
 			// get label of edge between a and b
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> weqEdgeLabelContents =
+			final WeakEquivalenceEdgeLabel<NODE> weqEdgeLabelContents =
 					getCcWeakEquivalenceGraph().getEdgeLabel(ccp.getAppliedFunction(), elem.getAppliedFunction());
 
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> projectedLabel =
+			final WeakEquivalenceEdgeLabel<NODE> projectedLabel =
 					getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(weqEdgeLabelContents, ccp.getArgument(),
 							mManager.getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
 
@@ -1376,7 +1389,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 *   ==>
 		 *   a[i] in L cup {l}
 		 */
-		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>>>  adjacentEdge
+		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE>>  adjacentEdge
 				: getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).entrySet()) {
 			// is weakly equal array a constant function?
 			final NODE weaklyEqualArray = adjacentEdge.getKey();
@@ -1393,7 +1406,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final NODE aQ =
 					elem.replaceArgument(mManager.getWeqVariableNodeForDimension(0, elem.getArgument().getSort()));
 
-			final WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>> edgeLabel = adjacentEdge.getValue();
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel = adjacentEdge.getValue();
 			final Set<SetConstraint<NODE>> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
 //			assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
 //					+ "literals --> unexpected..";
@@ -1431,12 +1444,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.hasElements(elems);
 	}
 
-	@Override
 	public void transformElementsAndFunctions(final Function<NODE, NODE> elemTransformer) {
 		assert !isFrozen();
 
 		if (mCongruenceClosure.isFrozen()) {
-			final CongruenceClosure<NODE> ccUnfrozen = mManager.unfreeze(mCongruenceClosure);
+			final CongruenceClosure<NODE> ccUnfrozen = mManager.getCcManager().unfreeze(mCongruenceClosure);
 			ccUnfrozen.transformElementsAndFunctions(elemTransformer);
 			updateCongruenceClosure(ccUnfrozen);
 		} else {
@@ -1444,7 +1456,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (getWeakEquivalenceGraph().isFrozen()) {
-			final WeakEquivalenceGraph<NODE, ICongruenceClosure<NODE>> weqGraphUnfrozen =
+			final WeakEquivalenceGraph<NODE> weqGraphUnfrozen =
 					mManager.unfreeze(getWeakEquivalenceGraph());
 			weqGraphUnfrozen.transformElementsAndFunctions(elemTransformer);
 			updateWeqGraph(weqGraphUnfrozen);
@@ -1454,22 +1466,22 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert sanityCheck();
 	}
 
-	private <DISJUNCT extends ICongruenceClosure<NODE>> void updateWeqGraph(
-			final WeakEquivalenceGraph<NODE, DISJUNCT> weqGraphUnfrozen) {
+	private  void updateWeqGraph(
+			final WeakEquivalenceGraph<NODE> weqGraphUnfrozen) {
 		switch (mDiet) {
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
-		case TRANSITORY_THIN_TO_WEQCCFAT:
-			mWeakEquivalenceGraphThin = (WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>>) weqGraphUnfrozen;
+//		case TRANSITORY_THIN_TO_WEQCCFAT:
+			mWeakEquivalenceGraphThin = weqGraphUnfrozen;
 			break;
 		case CCFAT:
 		case TRANSITORY_CCREFATTEN:
-			mWeakEquivalenceGraphCcFat = (WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>>) weqGraphUnfrozen;
+			mWeakEquivalenceGraphCcFat = weqGraphUnfrozen;
 			break;
-		case TRANSITORY_WEQCCREFATTEN:
-		case WEQCCFAT:
-			mWeakEquivalenceGraphWeqCcFat = (WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>>) weqGraphUnfrozen;
-			break;
+//		case TRANSITORY_WEQCCREFATTEN:
+//		case WEQCCFAT:
+//			mWeakEquivalenceGraphWeqCcFat = (WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>>) weqGraphUnfrozen;
+//			break;
 		}
 
 	}
@@ -1492,12 +1504,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.assertSimpleElementIsFullyRemoved(elem);
 	}
 
-	@Override
 	public Set<NODE> getAllElements() {
 		return mCongruenceClosure.getAllElements();
 	}
 
-	@Override
 	public boolean assertSingleElementIsFullyRemoved(final NODE elem) {
 		if (!getWeakEquivalenceGraph().assertElementIsFullyRemoved(elem)) {
 			assert false;
@@ -1571,7 +1581,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		// report all weq edges from other
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> edge
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> edge
 				: other.getCcWeakEquivalenceGraph().getEdges().entrySet()) {
 
 			result.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
@@ -1644,10 +1654,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (!isInconsistent(false)
-				&& !mIsWeqFatEdgeLabel
-				&& mDiet != Diet.WEQCCFAT
-				&& mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
-				&& mDiet != Diet.TRANSITORY_WEQCCREFATTEN) {
+//				&& !mIsWeqFatEdgeLabel
+//				&& mDiet != Diet.WEQCCFAT
+//				&& mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
+//				&& mDiet != Diet.TRANSITORY_WEQCCREFATTEN
+				) {
 			for (final NODE el : getAllElements()) {
 				if (CongruenceClosure.dependsOnAny(el, mManager.getAllWeqPrimedNodes())) {
 					assert false;
@@ -1761,7 +1772,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
-	@Override
 	public IRemovalInfo<NODE> getElementCurrentlyBeingRemoved() {
 		return mCongruenceClosure.getElementCurrentlyBeingRemoved();
 	}
@@ -1788,36 +1798,36 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mLogger;
 	}
 
-	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> getCcWeakEquivalenceGraph() {
+	public WeakEquivalenceGraph<NODE> getCcWeakEquivalenceGraph() {
 		assert assertDietSanity();
 		switch (mDiet) {
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
-		case TRANSITORY_THIN_TO_WEQCCFAT:
+//		case TRANSITORY_THIN_TO_WEQCCFAT:
 			return mWeakEquivalenceGraphThin;
 		case CCFAT:
 		case TRANSITORY_CCREFATTEN:
 			return mWeakEquivalenceGraphCcFat;
-		case WEQCCFAT:
-			throw new IllegalStateException();
+//		case WEQCCFAT:
+//			throw new IllegalStateException();
 		default:
 			throw new AssertionError();
 		}
 	}
 
-	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> getWeakEquivalenceGraph() {
+	public  WeakEquivalenceGraph<NODE> getWeakEquivalenceGraph() {
 		assert assertDietSanity();
 		switch (mDiet) {
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
-		case TRANSITORY_THIN_TO_WEQCCFAT:
-			return (WeakEquivalenceGraph<NODE, DISJUNCT>) mWeakEquivalenceGraphThin;
+//		case TRANSITORY_THIN_TO_WEQCCFAT:
+			return mWeakEquivalenceGraphThin;
 		case CCFAT:
 		case TRANSITORY_CCREFATTEN:
-			return (WeakEquivalenceGraph<NODE, DISJUNCT>) mWeakEquivalenceGraphCcFat;
-		case WEQCCFAT:
-		case TRANSITORY_WEQCCREFATTEN:
-			return (WeakEquivalenceGraph<NODE, DISJUNCT>) mWeakEquivalenceGraphWeqCcFat;
+			return mWeakEquivalenceGraphCcFat;
+//		case WEQCCFAT:
+//		case TRANSITORY_WEQCCREFATTEN:
+//			return (WeakEquivalenceGraph<NODE>) mWeakEquivalenceGraphWeqCcFat;
 		default:
 			throw new AssertionError();
 		}
@@ -1827,7 +1837,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		switch (mDiet) {
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
-		case TRANSITORY_THIN_TO_WEQCCFAT:
+//		case TRANSITORY_THIN_TO_WEQCCFAT:
 			if (mWeakEquivalenceGraphThin == null) {
 				assert false;
 				return false;
@@ -1836,10 +1846,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert false;
 				return false;
 			}
-			if (mWeakEquivalenceGraphWeqCcFat != null) {
-				assert false;
-				return false;
-			}
+//			if (mWeakEquivalenceGraphWeqCcFat != null) {
+//				assert false;
+//				return false;
+//			}
 			break;
 		case CCFAT:
 		case TRANSITORY_CCREFATTEN:
@@ -1851,36 +1861,34 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert false;
 				return false;
 			}
-			if (mWeakEquivalenceGraphWeqCcFat != null) {
-				assert false;
-				return false;
-			}
+//			if (mWeakEquivalenceGraphWeqCcFat != null) {
+//				assert false;
+//				return false;
+//			}
 			break;
-		case WEQCCFAT:
-		case TRANSITORY_WEQCCREFATTEN:
-				if (mWeakEquivalenceGraphThin != null) {
-				assert false;
-				return false;
-			}
-			if (mWeakEquivalenceGraphCcFat != null) {
-				assert false;
-				return false;
-			}
-			if (mWeakEquivalenceGraphWeqCcFat == null) {
-				assert false;
-				return false;
-			}
-			break;
+//		case WEQCCFAT:
+//		case TRANSITORY_WEQCCREFATTEN:
+//				if (mWeakEquivalenceGraphThin != null) {
+//				assert false;
+//				return false;
+//			}
+//			if (mWeakEquivalenceGraphCcFat != null) {
+//				assert false;
+//				return false;
+//			}
+//			if (mWeakEquivalenceGraphWeqCcFat == null) {
+//				assert false;
+//				return false;
+//			}
+//			break;
 		}
 		return true;
 	}
 
-	@Override
 	public boolean sanityCheckOnlyCc() {
 		return mCongruenceClosure.sanityCheck();
 	}
 
-	@Override
 	public boolean sanityCheckOnlyCc(final IRemovalInfo<NODE> remInfo) {
 		return mCongruenceClosure.sanityCheck(remInfo);
 	}
@@ -1889,10 +1897,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !mIsFrozen;
 		assert mDiet != Diet.THIN;
 		assert assertDietSanity();
-		if (mWeakEquivalenceGraphWeqCcFat != null) {
-			mWeakEquivalenceGraphThin = mWeakEquivalenceGraphWeqCcFat.thinLabels(this);
-			mWeakEquivalenceGraphWeqCcFat = null;
-		} else if (mWeakEquivalenceGraphCcFat != null) {
+//		if (mWeakEquivalenceGraphWeqCcFat != null) {
+//			mWeakEquivalenceGraphThin = mWeakEquivalenceGraphWeqCcFat.thinLabels(this);
+//			mWeakEquivalenceGraphWeqCcFat = null;
+//		} else
+			if (mWeakEquivalenceGraphCcFat != null) {
 			mWeakEquivalenceGraphThin = mWeakEquivalenceGraphCcFat.thinLabels(this);
 			mWeakEquivalenceGraphCcFat = null;
 		} else {
@@ -1921,21 +1930,21 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 *
 	 * @return
 	 */
-	public boolean assertAllEdgeLabelsHaveWeqFatFlagSet() {
-		assert mDiet == Diet.WEQCCFAT;
-
-		if (mIsWeqFatEdgeLabel) {
-			assert false;
-			return false;
-		}
-
-		if (!getWeakEquivalenceGraph().assertAllEdgeLabelsHaveWeqFatFlagSet()) {
-			assert false;
-			return false;
-		}
-
-		return true;
-	}
+//	public boolean assertAllEdgeLabelsHaveWeqFatFlagSet() {
+//		assert mDiet == Diet.WEQCCFAT;
+//
+//		if (mIsWeqFatEdgeLabel) {
+//			assert false;
+//			return false;
+//		}
+//
+//		if (!getWeakEquivalenceGraph().assertAllEdgeLabelsHaveWeqFatFlagSet()) {
+//			assert false;
+//			return false;
+//		}
+//
+//		return true;
+//	}
 
 	public WeqCcManager<NODE> getManager() {
 		return mManager;
@@ -1945,7 +1954,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.getAllLiterals();
 	}
 
-	@Override
 	public Set<SetConstraint<NODE>> getContainsConstraintForElement(final NODE elem) {
 		return mCongruenceClosure.getContainsConstraintForElement(elem);
 	}
@@ -1973,14 +1981,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
  *
  */
 enum Diet {
-	THIN, CCFAT, WEQCCFAT,
+	THIN, CCFAT,
+	//WEQCCFAT,
 	/**
 	 * state for the transition from thin to fat (relevant for sanity checks)
 	 */
 	TRANSITORY_THIN_TO_CCFAT,
-	TRANSITORY_THIN_TO_WEQCCFAT,
+//	TRANSITORY_THIN_TO_WEQCCFAT,
 
 	TRANSITORY_CCREFATTEN,
-	TRANSITORY_WEQCCREFATTEN
+//	TRANSITORY_WEQCCREFATTEN
 	;
 }

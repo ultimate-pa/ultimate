@@ -317,7 +317,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 	}
 
 	@Override
-	public ICongruenceClosure<ELEM> getElementContainer() {
+	public IElementRemovalTarget<ELEM> getElementContainer() {
 		return mElementContainer;
 	}
 
