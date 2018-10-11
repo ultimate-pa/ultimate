@@ -31,6 +31,7 @@ known_exceptions = {
     "TypeCheckException": True,
 	"SMTLIBException: Cannot handle literal (exists" : True,
 	"IllegalArgumentException: cannot bring into simultaneous update form" : True,
+	"No Boogie because C type is incomplete" : True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
