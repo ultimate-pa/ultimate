@@ -158,9 +158,9 @@ public class PredicateTrie<T extends IPredicate> {
 		// empty tree
 		if (mRoot == null) {
 			mRoot = new PredicateVertex<>(predicate);
-			final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
-			final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
-			final T newPred = (T) mFactory.newPredicate(commuNF);
+//			final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
+//			final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+//			final T newPred = (T) mFactory.newPredicate(commuNF);
 			mPredicates.add(predicate);
 			return predicate;
 		}
@@ -214,9 +214,9 @@ public class PredicateTrie<T extends IPredicate> {
 		} else {
 			mRoot = newNode;
 		}
-		final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
-		final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
-		final T newPred = (T) mFactory.newPredicate(commuNF);
+//		final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
+//		final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+//		final T newPred = (T) mFactory.newPredicate(commuNF);
 		mPredicates.add(predicate);
 		return predicate;
 	}
@@ -272,11 +272,7 @@ public class PredicateTrie<T extends IPredicate> {
 				return Collections.emptyMap();
 			} else if (result == LBool.SAT) {
 				// they are not equal
-				final Set<IProgramVar> vars = new HashSet<>();
-				vars.addAll(predicate.getVars());
-				vars.addAll(localPred.getVars());
-				final Set<ApplicationTerm> terms =
-						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
+				final Set<ApplicationTerm> terms = mSymbolTable.computeAllDefaultConstants();
 				// this is a witness that should be accepted by one and rejected by the other
 				return mMgdScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
 			} else {

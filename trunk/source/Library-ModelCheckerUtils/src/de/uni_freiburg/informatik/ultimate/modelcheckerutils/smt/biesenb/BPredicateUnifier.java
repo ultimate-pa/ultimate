@@ -243,7 +243,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			}
 		}
 
-		if (USE_RESTRUCTURE) {
+		if (false && USE_RESTRUCTURE) {
 			final int oldDepth = mPredicateTrie.getDepth();
 			if (oldDepth > (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
 				restructurePredicateTrie();
