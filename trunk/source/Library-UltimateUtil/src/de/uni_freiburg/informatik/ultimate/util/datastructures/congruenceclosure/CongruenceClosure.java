@@ -578,11 +578,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		{
 			constantFunctionTreatmentOnAddElement(elem,
 					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
-					e -> mManager.addElement(this, e, true, true),
+					e -> mManager.addElement(this, e, newEqualityTarget, true, true),
 					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()), this);
 			mixFunctionTreatmentOnAddElement(elem,
 					(e, set) -> newEqualityTarget.reportContainsConstraint(e, set),
-					e -> mManager.addElement(this, e, true, true),
+					e -> mManager.addElement(this, e, newEqualityTarget, true, true),
 					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
 		}
 
