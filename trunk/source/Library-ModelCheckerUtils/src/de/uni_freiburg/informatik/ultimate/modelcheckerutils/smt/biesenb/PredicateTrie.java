@@ -42,9 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -71,8 +69,9 @@ public class PredicateTrie<T extends IPredicate> {
 
 	private IVertex mRoot;
 
-	protected PredicateTrie(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script, final T truePredicate,
-			final T falsePredicate, final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
+	protected PredicateTrie(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script,
+			final T truePredicate, final T falsePredicate, final BasicPredicateFactory factory,
+			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mFactory = factory;
 		mLogger = logger;
@@ -82,10 +81,10 @@ public class PredicateTrie<T extends IPredicate> {
 		mFalsePredicate = falsePredicate;
 		mRoot = null;
 	}
-	
-	private Deque<Map<Term,Term>> findRPath (T pred){
-		Deque<Map<Term,Term>> path = new HashDeque<>();
-		
+
+	private Deque<Map<Term, Term>> findRPath(final T pred) {
+		final Deque<Map<Term, Term>> path = new HashDeque<>();
+
 		IVertex current = mRoot;
 		ModelVertex parent = null;
 		// find the predicate with the same fulfilling models
@@ -98,39 +97,39 @@ public class PredicateTrie<T extends IPredicate> {
 		mLogger.info("predicate at end of path: " + current);
 		return path;
 	}
-	
-	private Deque<Map<Term,Term>> findRealPath (T pred){
+
+	private Deque<Map<Term, Term>> findRealPath(final T pred) {
 		ArrayDeque<ModelVertex> path = new ArrayDeque<>();
 		path.addFirst((ModelVertex) mRoot);
-		ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
-		ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
-		if(pathT.size() > pathF.size()) {
+		final ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
+		final ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
+		if (pathT.size() > pathF.size()) {
 			path = pathT;
-		}else {
+		} else {
 			path = pathF;
 		}
 		mLogger.info("predicate at end of path true: " + path.getLast().getChild(true));
 		mLogger.info("predicate at end of path false: " + path.getLast().getChild(false));
-		ArrayDeque<Map<Term,Term>> result = new ArrayDeque<>();
-		while(!path.isEmpty()) {
+		final ArrayDeque<Map<Term, Term>> result = new ArrayDeque<>();
+		while (!path.isEmpty()) {
 			result.addLast(path.removeFirst().getWitness());
 		}
 		return result;
 	}
-	
-	private ArrayDeque<ModelVertex> findPathHelper(T pred, boolean turn, final ArrayDeque<ModelVertex> path){
-		IVertex end = path.getLast().getChild(turn);
-		if(end instanceof PredicateVertex) {
-			if(((PredicateVertex)end).mPredicate.equals(pred)) {
+
+	private ArrayDeque<ModelVertex> findPathHelper(final T pred, final boolean turn,
+			final ArrayDeque<ModelVertex> path) {
+		final IVertex end = path.getLast().getChild(turn);
+		if (end instanceof PredicateVertex) {
+			if (((PredicateVertex<?>) end).mPredicate.equals(pred)) {
 				return path;
-			}else {
-				return new ArrayDeque<>();
 			}
+			return new ArrayDeque<>();
 		}
 		path.addLast((ModelVertex) end);
-		ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
-		ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
-		if(pathT.size() > pathF.size()) {
+		final ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
+		final ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
+		if (pathT.size() > pathF.size()) {
 			return pathT;
 		}
 		return pathF;
@@ -158,9 +157,10 @@ public class PredicateTrie<T extends IPredicate> {
 		// empty tree
 		if (mRoot == null) {
 			mRoot = new PredicateVertex<>(predicate);
-//			final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
-//			final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
-//			final T newPred = (T) mFactory.newPredicate(commuNF);
+			// final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices,
+			// SimplificationTechnique.SIMPLIFY_DDA);
+			// final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+			// final T newPred = (T) mFactory.newPredicate(commuNF);
 			mPredicates.add(predicate);
 			return predicate;
 		}
@@ -179,8 +179,8 @@ public class PredicateTrie<T extends IPredicate> {
 		if (newWitness.isEmpty()) {
 			return currentPredicate;
 		}
-		//______________
-		for(T p : mPredicates) {
+		// ______________
+		for (final T p : mPredicates) {
 			final Term a = p.getClosedFormula();
 			final Term b = predicate.getClosedFormula();
 			if (mMgdScript.isLocked()) {
@@ -204,7 +204,7 @@ public class PredicateTrie<T extends IPredicate> {
 				mMgdScript.unlock(this);
 			}
 		}
-		//______________
+		// ______________
 		// the given predicate is new and inserted to the tree
 		final ModelVertex newNode = fulfillsPredicate(predicate, newWitness)
 				? new ModelVertex(new PredicateVertex<>(predicate), current, newWitness)
@@ -214,9 +214,10 @@ public class PredicateTrie<T extends IPredicate> {
 		} else {
 			mRoot = newNode;
 		}
-//		final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
-//		final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
-//		final T newPred = (T) mFactory.newPredicate(commuNF);
+		// final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices,
+		// SimplificationTechnique.SIMPLIFY_DDA);
+		// final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+		// final T newPred = (T) mFactory.newPredicate(commuNF);
 		mPredicates.add(predicate);
 		return predicate;
 	}
@@ -286,7 +287,7 @@ public class PredicateTrie<T extends IPredicate> {
 	}
 
 	// -- functions for restructure --
-	
+
 	protected Map<Term, Term> getWitness(final Term term) {
 		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript.getScript(), mSymbolTable);
 		if (mMgdScript.isLocked()) {
@@ -326,31 +327,31 @@ public class PredicateTrie<T extends IPredicate> {
 		return Math.max(trueMaxDepth, falseMaxDepth);
 	}
 
-	public PredicateTrie<T> fillTrie(RestructureHelperObject root, 
-			Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
-		if(mRoot != null) {
+	public PredicateTrie<T> fillTrie(final RestructureHelperObject root,
+			final Map<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> witnessMap) {
+		if (mRoot != null) {
 			throw new UnsupportedOperationException("trie must be empty");
 		}
-		
-		Map<RestructureHelperObject, ModelVertex> modelVertices = new HashMap<>();
-		
-		for(RestructureHelperObject key : witnessMap.keySet()) {
+
+		final Map<RestructureHelperObject, ModelVertex> modelVertices = new HashMap<>();
+
+		for (final RestructureHelperObject key : witnessMap.keySet()) {
 			modelVertices.put(key, new ModelVertex(null, null, key.getWitness()));
 		}
-		for(Map.Entry<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> entry :
-			witnessMap.entrySet()) {
-			 Pair<RestructureHelperObject, RestructureHelperObject> children = entry.getValue();
-			if(children.getFirst().getSerialNumber() == -1){
+		for (final Map.Entry<RestructureHelperObject, Pair<RestructureHelperObject, RestructureHelperObject>> entry : witnessMap
+				.entrySet()) {
+			final Pair<RestructureHelperObject, RestructureHelperObject> children = entry.getValue();
+			if (children.getFirst().getSerialNumber() == -1) {
 				// predicate
-				IVertex trueChild = new PredicateVertex<>(children.getFirst().getPredicate());
+				final IVertex trueChild = new PredicateVertex<>(children.getFirst().getPredicate());
 				modelVertices.get(entry.getKey()).setTrueChild(trueChild);
 			} else {
 				// model
 				modelVertices.get(entry.getKey()).setTrueChild(modelVertices.get(children.getFirst()));
 			}
-			if(children.getSecond().getSerialNumber() == -1){
+			if (children.getSecond().getSerialNumber() == -1) {
 				// predicate
-				IVertex falseChild = new PredicateVertex<>(children.getSecond().getPredicate());
+				final IVertex falseChild = new PredicateVertex<>(children.getSecond().getPredicate());
 				modelVertices.get(entry.getKey()).setFalseChild(falseChild);
 			} else {
 				// model
