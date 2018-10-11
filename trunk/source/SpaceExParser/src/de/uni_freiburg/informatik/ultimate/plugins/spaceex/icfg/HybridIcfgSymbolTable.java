@@ -120,4 +120,9 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		return null;
 	}
 
+	@Override
+	public Set<ApplicationTerm> computeAllDefaultConstants() {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
 }

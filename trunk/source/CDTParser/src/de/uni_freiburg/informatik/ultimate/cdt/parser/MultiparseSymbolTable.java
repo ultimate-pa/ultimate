@@ -114,7 +114,8 @@ public class MultiparseSymbolTable extends ASTVisitor {
 
 				if (include.isSystemInclude()) {
 					if (!include.isResolved()) {
-						mLogger.warn("System include " + include.getName() + " could not be resolved.");
+						mLogger.warn("System include " + include.getName()
+								+ " could not be resolved by CDT -- only built-in system includes are available.");
 					}
 					continue;
 				}
