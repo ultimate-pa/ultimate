@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -398,5 +399,26 @@ public class CTranslationUtil {
 		} else {
 			throw new UnsupportedOperationException("missed a type??");
 		}
+	}
+
+	/**
+	 * Returns the value of an expression in case the expression is a literal.
+	 * </p>
+	 * Warning: This method is not suitable for obtaining the value of C
+	 * expressions. If you also want to get integer values of constants (in the
+	 * sense of variables that got statically some value assigned) then use
+	 * {@link TypeSizes#extractIntegerValue(Expression, CType, IASTNode)}
+	 *
+	 */
+	public static BigInteger extractIntegerValue(final Expression expr) {
+		BigInteger result;
+		if (expr instanceof IntegerLiteral) {
+			result = new BigInteger(((IntegerLiteral) expr).getValue());
+		} else if (expr instanceof BitvecLiteral) {
+			result = new BigInteger(((BitvecLiteral) expr).getValue());
+		} else {
+			result = null;
+		}
+		return result;
 	}
 }

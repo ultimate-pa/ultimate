@@ -124,4 +124,9 @@ public class CNamed extends CType {
 	public int hashCode() {
 		return HashUtils.hashJenkins(31, getUnderlyingType());
 	}
+
+	@Override
+	public boolean isIncomplete() {
+		return getUnderlyingType().isIncomplete();
+	}
 }

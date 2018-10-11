@@ -122,4 +122,10 @@ public class CPointer extends CType {
 	public int hashCode() {
 		return HashUtils.hashJenkins(31, mPointsToType);
 	}
+
+	@Override
+	public boolean isIncomplete() {
+		// pointer is never incomplete - even if it points to an incomplete type!
+		return false;
+	}
 }

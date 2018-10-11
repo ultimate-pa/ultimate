@@ -31,11 +31,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -46,6 +49,11 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class CArray extends CType {
+
+	/**
+	 * Size that we use to indicate that an array has a variable length.
+	 */
+	public static final int INCOMPLETE_ARRY_MAGIC_NUMBER = -1234567;
 
     /**
      * Array bound. Note that we use nesting of array types for multidimensional array types
@@ -163,5 +171,11 @@ public class CArray extends CType {
 	@Override
 	public int hashCode() {
 		return HashUtils.hashJenkins(31, mBound, mValueType);
+	}
+
+	@Override
+	public boolean isIncomplete() {
+		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
+		return boundValue.equals(BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER));
 	}
 }

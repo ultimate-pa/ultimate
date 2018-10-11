@@ -241,6 +241,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class CHandler {
 
+
 	/**
 	 * If set to true we say Unsupported Syntax if there is some cast of pointers. Right now we are unable to handle
 	 * casts of pointers soundly. However these soundness errors occur seldom.
@@ -1068,7 +1069,7 @@ public class CHandler {
 					} else {
 						// we have an incomplete array type without an initializer --
 						// this may happen in a function parameter..
-						intSizeFactor = -1234567;
+						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
 					}
 					final CPrimitive ctype = mExpressionTranslation.getCTypeOfPointerComponents();
 					final Expression sizeExpression =

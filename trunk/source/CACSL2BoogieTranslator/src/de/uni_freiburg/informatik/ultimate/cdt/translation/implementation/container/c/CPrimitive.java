@@ -330,4 +330,9 @@ public class CPrimitive extends CType {
 		return false;
 	}
 
+	@Override
+	public boolean isIncomplete() {
+		return mType == CPrimitives.VOID;
+	}
+
 }

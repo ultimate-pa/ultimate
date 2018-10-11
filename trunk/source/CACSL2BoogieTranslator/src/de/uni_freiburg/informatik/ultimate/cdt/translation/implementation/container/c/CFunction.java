@@ -142,4 +142,10 @@ public class CFunction extends CType {
 		result = HashUtils.hashJenkins(result, mTakesVarArgs);
 		return result;
 	}
+
+	@Override
+	public boolean isIncomplete() {
+		// can a CFunction be incomplete? I never checked that carefully
+		return false;
+	}
 }

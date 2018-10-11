@@ -70,9 +70,7 @@ public abstract class CType {
 		return mIsVolatile;
 	}
 
-	public boolean isIncomplete() {
-		return false;
-	}
+	public abstract boolean isIncomplete();
 
 	@Override
 	public abstract String toString();
