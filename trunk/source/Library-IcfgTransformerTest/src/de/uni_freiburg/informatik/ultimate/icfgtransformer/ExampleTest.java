@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
-import java.io.IOException;
-
 import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Assert;
@@ -59,11 +57,7 @@ public class ExampleTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript = UltimateMocks.createZ3Script();
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		// script = new SMTInterpol();
 		mMgdScript = new ManagedScript(mServices, mScript);
 

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.fastupr;
 
-import java.io.IOException;
 import java.math.BigInteger;
 
 import org.junit.After;
@@ -69,11 +68,7 @@ public class SmtExample {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript = UltimateMocks.createZ3Script();
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		mScript.setLogic(Logics.ALL);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mLogger.info("setUp() complete");

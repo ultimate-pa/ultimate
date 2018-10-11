@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,11 +75,7 @@ public class QuantifierEliminationTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);

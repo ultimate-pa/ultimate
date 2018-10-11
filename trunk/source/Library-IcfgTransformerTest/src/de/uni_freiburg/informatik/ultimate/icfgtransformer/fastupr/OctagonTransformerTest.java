@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.fastupr;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Set;
 
@@ -52,9 +51,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  *
  * This is a basic example for a unit test.
  *
- * You may need some mock classes. Have a look at QuantifiierEliminiationTest in
- * Library-ModelCheckerUtilsTest to see examples for creating
- * {@link IUltimateServiceProvider}, {@link ILogger} and {@link Script} mocks.
+ * You may need some mock classes. Have a look at QuantifiierEliminiationTest in Library-ModelCheckerUtilsTest to see
+ * examples for creating {@link IUltimateServiceProvider}, {@link ILogger} and {@link Script} mocks.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -71,11 +69,7 @@ public class OctagonTransformerTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript = UltimateMocks.createZ3Script();
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		// script = new SMTInterpol();
 		mMgdScript = new ManagedScript(mServices, mScript);
 
@@ -102,8 +96,8 @@ public class OctagonTransformerTest {
 	public void testTermTransformation() {
 		System.out.println("TermTransformationTest:");
 		final OctagonDetector detector = new OctagonDetector(mLogger, mMgdScript, mServices);
-		final OctagonTransformer transformer = new OctagonTransformer(new FastUPRUtils(mLogger, false), mScript,
-				detector);
+		final OctagonTransformer transformer =
+				new OctagonTransformer(new FastUPRUtils(mLogger, false), mScript, detector);
 		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
 		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
 		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.decimal(BigDecimal.ONE)), outVarX);

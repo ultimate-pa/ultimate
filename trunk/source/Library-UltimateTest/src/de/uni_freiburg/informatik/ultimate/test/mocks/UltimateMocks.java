@@ -58,15 +58,18 @@ public class UltimateMocks {
 		return new UltimateServiceProviderMock(defaultLogLevel);
 	}
 
-	public static Script createZ3Script() throws IOException {
+	public static Script createZ3Script() {
 		return createZ3Script(LogLevel.DEBUG);
 	}
 
-	public static Script createZ3Script(final LogLevel defaultLogLevel) throws IOException {
+	public static Script createZ3Script(final LogLevel defaultLogLevel) {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
-		return new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in",
-				services.getLoggingService().getLogger(UltimateMocks.class), services, createToolchainStorageMock(),
-				"z3");
+		try {
+			return new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in",
+					services.getLoggingService().getLogger(UltimateMocks.class), services, createToolchainStorageMock(),
+					"z3");
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
-
 }
