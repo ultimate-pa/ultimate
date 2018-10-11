@@ -261,7 +261,7 @@ public class FunctionHandler {
 
 		definedProcInfo.updateCFunction(returnCType, null, null, false);
 
-		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
+		VarList[] in = processInParams(loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -285,13 +285,8 @@ public class FunctionHandler {
 		}
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, definedProcInfo);
 
-		// Procedure proc = mProcedures.get(methodName);
-
-		// if (proc == null) {
 		if (!definedProcInfo.hasDeclaration()) {
-			/*
-			 * we have not seen this procedure yet, make a new declaration, register the procedure
-			 */
+			// we have not seen this procedure yet, make a new declaration, register the procedure
 			final Attribute[] attr = new Attribute[0];
 			final String[] typeParams = new String[0];
 			final Procedure proc = new Procedure(loc, attr, definedProcName, typeParams, in, out, spec, null);
@@ -310,10 +305,6 @@ public class FunctionHandler {
 					// as we will take the ones of the implementation anyway
 					checkInParams = false;
 					declIn = in;
-					// } else if (isInParamVoid(proc.getInParams()) && (in.length == 0 || isInParamVoid(in))) {
-					// declIn = new VarList[0];
-					// in = new VarList[0];
-					// checkInParams = false;
 				} else {
 					final String msg = "Implementation does not match declaration!";
 					throw new IncorrectSyntaxException(loc, msg);
@@ -347,12 +338,9 @@ public class FunctionHandler {
 					procDecl.getTypeParams(), declIn, procDecl.getOutParams(), spec, null);
 
 			definedProcInfo.resetDeclaration(procDecl);
-			// mProcedures.put(methodName, procDecl);
 		}
 
-		/*
-		 * one more transformation of the declaration:
-		 */
+		// one more transformation of the declaration:
 		{
 			final Procedure proc = definedProcInfo.getDeclaration();
 			final Procedure declWithCorrectlyNamedInParams = new Procedure(proc.getLocation(), proc.getAttributes(),
@@ -394,9 +382,6 @@ public class FunctionHandler {
 		final Procedure impl = new Procedure(loc, proc.getAttributes(), definedProcName, proc.getTypeParams(), in,
 				proc.getOutParams(), null, body);
 
-		// not sure if this is needed..
-		// definedProcInfo.setImplementation(impl);
-
 		mProcedureManager.endProcedureScope(mCHandler);
 
 		return new Result(impl);
@@ -422,15 +407,12 @@ public class FunctionHandler {
 	 *
 	 * @param loc
 	 * @param main
-	 * @param memoryHandler
-	 * @param structHandler
 	 * @param functionName
 	 * @param arguments
 	 * @return
 	 */
 	private Result handleFunctionPointerCall(final ILocation loc, final IDispatcher main,
-			final MemoryHandler memoryHandler, final StructHandler structHandler, final IASTExpression functionName,
-			final IASTInitializerClause[] arguments) {
+			final IASTExpression functionName, final IASTInitializerClause[] arguments) {
 		assert functionName != null : "functionName is null";
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
 
@@ -456,8 +438,6 @@ public class FunctionHandler {
 					calledFuncCFunction.takesVarArgs());
 		}
 
-		// new Procedure()
-		// functionSignaturesThatHaveAFunctionPointer = null;
 		// TODO: use CType.isCompatibleWith instead of equals/set, make the name of the inserted procedure compatible to
 		// isCompatibleWith
 		// TODO: DD 2017-11-23: Could we remove this collection of unknown symbols if we had a complete function symbol
@@ -475,8 +455,7 @@ public class FunctionHandler {
 		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
 		newArgs[newArgs.length - 1] = functionName;
 
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, procName, newArgs,
-				functionName);
+		return handleFunctionCallGivenNameAndArguments(main, loc, procName, newArgs, functionName);
 	}
 
 	/**
@@ -484,17 +463,14 @@ public class FunctionHandler {
 	 *
 	 * @param main
 	 *            a reference to the main IDispatcher.
-	 * @param memoryHandler
-	 *            a reference to the memory Handler.
 	 * @param node
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleFunctionCallExpression(final IDispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final ILocation loc, final IASTExpression functionName,
-			final IASTInitializerClause[] arguments) {
+	public Result handleFunctionCallExpression(final IDispatcher main, final ILocation loc,
+			final IASTExpression functionName, final IASTInitializerClause[] arguments) {
 		if (!(functionName instanceof IASTIdExpression)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
+			return handleFunctionPointerCall(loc, main, functionName, arguments);
 		}
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
@@ -505,12 +481,11 @@ public class FunctionHandler {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
 			final SymbolTableValue nd = mSymboltable.findCSymbol(functionName, methodName);
 			if (!(nd.getDeclarationNode().getParent() instanceof IASTFunctionDefinition)) {
-				return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
+				return handleFunctionPointerCall(loc, main, functionName, arguments);
 			}
 		}
 
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments,
-				functionName);
+		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, functionName);
 	}
 
 	/**
@@ -605,9 +580,8 @@ public class FunctionHandler {
 		return resultBuilder.build();
 	}
 
-	private Result handleFunctionCallGivenNameAndArguments(final IDispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final ILocation loc, final String calleeName,
-			final IASTInitializerClause[] arguments, final IASTNode hook) {
+	private Result handleFunctionCallGivenNameAndArguments(final IDispatcher main, final ILocation loc,
+			final String calleeName, final IASTInitializerClause[] arguments, final IASTNode hook) {
 
 		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
@@ -626,7 +600,6 @@ public class FunctionHandler {
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
-
 		if (calleeProcInfo.getCType() != null && calleeProcInfo.getCType().takesVarArgs()) {
 			throw new UnsupportedSyntaxException(loc,
 					"encountered a call to a var args function, var args are not supported at the moment: "
@@ -753,14 +726,15 @@ public class FunctionHandler {
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
-	 *
+	 * 
 	 * @param updateSymbolTable
 	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
 	 *            interest and side effects are unwanted
+	 *
 	 * @return
 	 */
-	private VarList[] processInParams(final IDispatcher main, final ILocation loc, final CFunction cFun,
-			final BoogieProcedureInfo procInfo, final IASTNode hook, final boolean updateSymbolTable) {
+	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
+			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -841,7 +815,6 @@ public class FunctionHandler {
 		assert inparamVarListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final VarList inparamVarList = inparamVarListArray[i];
-			// final IASTParameterDeclaration paramDec = paramDecs[i];
 			final IASTNode paramDec = paramDecs[i];
 			for (final String inparamBId : inparamVarList.getIdentifiers()) {
 				final String inparamCId = mSymboltable.getCIdForBoogieId(inparamBId);
@@ -932,7 +905,7 @@ public class FunctionHandler {
 		// begin new scope for retranslation of ACSL specification
 		mCHandler.beginScope();
 
-		final VarList[] in = processInParams(main, loc, funcType, procInfo, hook, false);
+		final VarList[] in = processInParams(loc, funcType, procInfo, hook, false);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -944,7 +917,6 @@ public class FunctionHandler {
 		if (funcType.getResultType() instanceof CPrimitive
 				&& ((CPrimitive) funcType.getResultType()).getType() == CPrimitives.VOID
 				&& !(funcType.getResultType() instanceof CPointer)) {
-			// if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			if (mProcedureManager.isCalledBeforeDeclared(procInfo)) {
 				// this method was assumed to return int -> return int
 				out[0] = new VarList(loc, new String[] { SFO.RES },
@@ -992,44 +964,37 @@ public class FunctionHandler {
 	Result makeTheFunctionCallItself(final ILocation loc, final String methodName,
 			final ExpressionResultBuilder functionCallExpressionResultBuilder,
 			final List<Expression> translatedParameters) {
-		Expression returnedValue = null;
-		Statement call;
-
-		BoogieProcedureInfo procInfo;
-
+		final Expression returnedValue;
+		final Statement call;
+		final BoogieProcedureInfo procInfo;
 		if (mProcedureManager.hasProcedure(methodName)) {
 			procInfo = mProcedureManager.getProcedureInfo(methodName);
 			final VarList[] outParamVarlists = procInfo.getDeclaration().getOutParams();
 
-			if (outParamVarlists.length == 0) { // void
+			if (outParamVarlists.length == 0) {
+				// void
 				// C has only one return statement -> no need for forall
-				// call = new CallStatement(loc, false, new VariableLHS[0], methodName,
-				// call = mProcedureManager.constructCallStatement(loc, false, new VariableLHS[0], methodName,
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
-			} else if (outParamVarlists.length == 1) { // one return value
-				final VariableLHS returnedValueAsLhs;
-				// final VariableDeclaration tmpVarDecl;
-				AuxVarInfo auxvar;
-				{
-					final ASTType astType = outParamVarlists[0].getType();
-					auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
-					returnedValue = auxvar.getExp();
-					returnedValueAsLhs = auxvar.getLhs();
-				}
+				returnedValue = null;
+			} else if (outParamVarlists.length == 1) {
+				// one return value
+				final ASTType astType = outParamVarlists[0].getType();
+				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
+				returnedValue = auxvar.getExp();
+				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
 				functionCallExpressionResultBuilder.addAuxVar(auxvar);
 				functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
-			} else { // unsupported!
+			} else {
 				final String msg = "Cannot handle multiple out params! (makes no sense in the translation of a C "
 						+ "program) " + loc.toString();
 				throw new AssertionError(msg);
 			}
 		} else {
 			procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
-			// mMethodsCalledBeforeDeclared.add(procInfo);
 			mProcedureManager.registerCalledBeforeDeclaredFunction(procInfo);
 
 			final String longDescription = "Method was called before it was declared: '" + methodName
@@ -1098,14 +1063,11 @@ public class FunctionHandler {
 		// FIXME string to SFO..?
 		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp");
 
-		final CFunction cFuncWithFP = new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
-		return cFuncWithFP;
+		return new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
 	}
 
 	/**
-	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
 	 */
 	private static final class ASTTypeComparisonVisitor extends GeneratedBoogieAstVisitor {
 

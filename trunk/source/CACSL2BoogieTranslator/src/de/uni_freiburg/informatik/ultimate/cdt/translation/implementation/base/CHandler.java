@@ -1264,8 +1264,7 @@ public class CHandler {
 		}
 		final Check check = new Check(Check.Spec.PRE_CONDITION);
 		final ILocation loc = mLocationFactory.createCLocation(node, check);
-		return mFunctionHandler.handleFunctionCallExpression(main, mMemoryHandler, mStructHandler, loc, functionName,
-				node.getArguments());
+		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments());
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionDefinition node) {
