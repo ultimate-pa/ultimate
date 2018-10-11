@@ -772,9 +772,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private List<Statement> flattenStatement(final Statement stat) throws CancelToolchainException {
 		checkTimeout();
 		Statement newStat = null;
-		if (stat instanceof ForkStatement) {
-			getAndUpdateEdgeIndex();
-		} else if (stat instanceof CallStatement) {
+		if (stat instanceof CallStatement) {
 			final CallStatement call = (CallStatement) stat;
 			final int edgeIndex = getAndUpdateEdgeIndex();
 			final CallGraphNode callerNode = mProcedureStack.peek();
@@ -810,6 +808,10 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final Statement[] newBody = flattenStatementsArray(whileStat.getBody());
 			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
 		}  else if (stat instanceof ForkStatement) {
+			getAndUpdateEdgeIndex();
+			// TODO Move code out of this function.
+			// Fork statements should be inlined as every other statement.
+			// Special treatment (apart from the one method call above) should not be necessary.
 			final ForkStatement forkstmt = (ForkStatement) stat;
 			final Expression[] threadId = forkstmt.getThreadID();
 			final String procName = forkstmt.getProcedureName();
@@ -818,6 +820,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final Expression[] newArguments = processExpressions(arguments);
 			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
 		}  else if (stat instanceof JoinStatement) {
+			// TODO Move code out of this function.
+			// Join statements should be inlined as every other statement.
+			// Special treatment should not be necessary.
 			final JoinStatement joinstmt = (JoinStatement) stat;
 			final Expression[] threadId = joinstmt.getThreadID();
 			final VariableLHS[] lhs = joinstmt.getLhs();
