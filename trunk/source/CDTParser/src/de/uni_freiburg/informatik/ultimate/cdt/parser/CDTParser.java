@@ -48,6 +48,7 @@ import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IPathEntry;
+import org.eclipse.cdt.core.model.ISourceEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
@@ -110,7 +111,7 @@ public class CDTParser implements ISource {
 	private ILogger mLogger;
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
-	private IProject mCdtProject;
+	private IProject mProject;
 
 	public CDTParser() {
 		mFileTypes = new String[] { ".c", ".i", ".h" };
@@ -213,15 +214,22 @@ public class CDTParser implements ISource {
 	}
 
 	private ICProject createCDTProjectFromFiles(final File[] files) throws CoreException, FileNotFoundException {
-		mCdtProject = createCDTProject();
-		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
+		mProject = createProject();
+		mLogger.info("Created temporary CDT project at " + getFullPath(mProject));
+
+		final ISourceEntry sourceEntry = CoreModel.newSourceEntry(mProject.getFullPath());
 
 		// add all source files
-		final IFolder sourceFolder = mCdtProject.getFolder("src");
+		final IFolder sourceFolder = mProject.getFolder(sourceEntry.getPath());
 		sourceFolder.create(IResource.VIRTUAL, true, NULL_MONITOR);
 		for (final File file : files) {
 			addLinkToFolder(sourceFolder, file);
 		}
+
+		final ICProject cProject = CoreModel.getDefault().create(mProject);
+		cProject.setRawPathEntries(new IPathEntry[] { sourceEntry }, NULL_MONITOR);
+
+		attachExternalSettingsProvider(mProject);
 
 		// TODO: this adds includes and makes them resolvable, but seems like the wrong way
 		final String includes =
@@ -237,10 +245,11 @@ public class CDTParser implements ISource {
 			}
 		}
 
-		// TODO: The indexer is empty and I dont know why
+		// TODO: The indexer is empty and I dont know why -- reindexing does not help
+		// CCorePlugin.getIndexManager().reindex(cProject);
 
 		final CoreModel model = CoreModel.getDefault();
-		final ICProject icdtProject = model.create(mCdtProject);
+		final ICProject icdtProject = model.create(mProject);
 		return icdtProject;
 	}
 
@@ -324,7 +333,7 @@ public class CDTParser implements ISource {
 
 	@Override
 	public void finish() {
-		if (mCdtProject == null) {
+		if (mProject == null) {
 			return;
 		}
 		try {
@@ -332,11 +341,11 @@ public class CDTParser implements ISource {
 			final IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(CCorePlugin.PLUGIN_ID);
 			final Preferences indexerNode = prefs.node("indexer");
 			indexerNode.removeNode();
-			mCdtProject.setPersistentProperty(new QualifiedName("org.eclipse.cdt.core", "pdomName"), null);
+			mProject.setPersistentProperty(new QualifiedName("org.eclipse.cdt.core", "pdomName"), null);
 			// then, remove the project
-			mLogger.info("About to delete temporary CDT project at " + getFullPath(mCdtProject));
-			final IWorkspace workspace = mCdtProject.getWorkspace();
-			final File parentFolder = mCdtProject.getLocation().removeLastSegments(1).toFile();
+			mLogger.info("About to delete temporary CDT project at " + getFullPath(mProject));
+			final IWorkspace workspace = mProject.getWorkspace();
+			final File parentFolder = mProject.getLocation().removeLastSegments(1).toFile();
 			workspace.getRoot().delete(IResource.FORCE | IResource.ALWAYS_DELETE_PROJECT_CONTENT, null);
 			if (parentFolder.exists()) {
 				parentFolder.delete();
@@ -361,7 +370,7 @@ public class CDTParser implements ISource {
 		return loc.toOSString();
 	}
 
-	private IProject createCDTProject() throws CoreException {
+	private IProject createProject() throws CoreException {
 		// It would be nicer to have the project in a tmp directory, but this seems not to be trivially
 		// possible with the current CDT parsing.
 		final String projectName = mCdtPProjectHierachyFlag;
@@ -376,9 +385,6 @@ public class CDTParser implements ISource {
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
 		prjDescription.setLocation(root.getLocation().append(projectNamespace + File.separator + projectName));
-		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
-
-		project.open(NULL_MONITOR);
 
 		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager()
 				.getContentType(CCorePlugin.CONTENT_TYPE_CSOURCE);
@@ -388,9 +394,12 @@ public class CDTParser implements ISource {
 			throw new IllegalStateException("Could not add .i to C extensions.", e);
 		}
 
-		CoreModel.getDefault().create(project)
-				.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(project.getFullPath()) }, NULL_MONITOR);
+		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
+		project.open(NULL_MONITOR);
+		return project;
+	}
 
+	private void attachExternalSettingsProvider(final IProject project) throws CoreException {
 		final ICProjectDescription projDesc = CoreModel.getDefault().getProjectDescription(project);
 		final ICConfigurationDescription conf = projDesc.getActiveConfiguration();
 
@@ -405,7 +414,6 @@ public class CDTParser implements ISource {
 
 		CoreModel.getDefault().setProjectDescription(project, projDesc);
 		waitForProjectRefreshToFinish();
-		return project;
 	}
 
 	public static IFile addLinkToFolder(final IFolder sourceFolder, final File file)
@@ -427,7 +435,7 @@ public class CDTParser implements ISource {
 			// refresh manager to refresh the project 200ms later. This Job
 			// interferes
 			// with the resource change handler firing see: bug 271264
-			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, null);
+			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, NULL_MONITOR);
 		} catch (final Exception e) {
 			// Ignore
 		}
