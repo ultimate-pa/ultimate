@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.LocArrayInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.MemlocArrayManager;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -59,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -127,7 +130,11 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVars = new HashRelation<>();
 
-	public MemlocArrayUpdaterTransformulaTransformer(final ILogger logger,
+	private final IUltimateServiceProvider mServices;
+
+	public MemlocArrayUpdaterTransformulaTransformer(
+			final IUltimateServiceProvider services,
+			final ILogger logger,
 			final CfgSmtToolkit oldCsToolkit,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
@@ -141,6 +148,8 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 		mNewSymbolTable = new DefaultIcfgSymbolTable(oldCsToolkit.getSymbolTable(), oldCsToolkit.getProcedures());
 		mNewModifiableGlobals = new HashRelation<>(oldCsToolkit.getModifiableGlobalsTable().getProcToGlobals());
+
+		mServices = services;
 	}
 
 	@Override
@@ -185,7 +194,10 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 		// assuming the formula is in DNF
 		final List<Term> disjunctsWithLocUpdatesAndLocInitialization = new ArrayList<>();
-		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
+//		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
+		for (final Term disjunct :
+			SmtUtils.getDisjuncts(SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION))) {
+
 			if (!SmtUtils.isAtomicFormula(disjunct) &&
 					(!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or"))) {
 				throw new AssertionError("the code below only works for conjunctive formulas");
@@ -259,6 +271,11 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 		tfBuilder.addAuxVarsButRenameToFreshCopies(DataStructureUtils.union(tf.getAuxVars(), extraAuxVars), mMgdScript);
 
 		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
+
+		assert (SmtUtils.checkSatTerm(mMgdScript.getScript(), oldEdge.getTransformula().getClosedFormula())
+					== LBool.UNSAT)
+				|| (SmtUtils.checkSatTerm(mMgdScript.getScript(), newTf.getClosedFormula()) != LBool.UNSAT);
+
 		return new TransformulaTransformationResult(newTf);
 	}
 
