@@ -161,8 +161,8 @@ public class PredicateTrie<T extends IPredicate> {
 			final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
 			final T newPred = (T) mFactory.newPredicate(commuNF);
-			mPredicates.add(newPred);
-			return newPred;
+			mPredicates.add(predicate);
+			return predicate;
 		}
 		IVertex current = mRoot;
 		ModelVertex parent = null;
@@ -217,8 +217,8 @@ public class PredicateTrie<T extends IPredicate> {
 		final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
 		final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
 		final T newPred = (T) mFactory.newPredicate(commuNF);
-		mPredicates.add(newPred);
-		return newPred;
+		mPredicates.add(predicate);
+		return predicate;
 	}
 
 	/**
