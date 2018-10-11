@@ -31,10 +31,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -67,11 +70,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from
- * TermVariables that are representatives of BoogieVars to these BoogieVars.
+ * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
+ * BoogieVars to these BoogieVars.
  *
- * TODO 2018-09-15 Matthias: This class was build before we had
- * {@link DeclarationInformation} and might be unnecessarily complicated.
+ * TODO 2018-09-15 Matthias: This class was build before we had {@link DeclarationInformation} and might be
+ * unnecessarily complicated.
  *
  * @author Matthias Heizmann
  *
@@ -116,7 +119,6 @@ public class Boogie2SmtSymbolTable
 
 	final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
 
-
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator, final Set<IProgramNonOldVar> cfgAuxVars) {
 		super();
@@ -126,8 +128,8 @@ public class Boogie2SmtSymbolTable
 		mCfgAuxVars = cfgAuxVars;
 
 		for (final IProgramVar cfgAuxVar : cfgAuxVars) {
-			final BoogieASTNode someAstNode = boogieDeclarations.getProcImplementation().entrySet().iterator().next()
-					.getValue();
+			final BoogieASTNode someAstNode =
+					boogieDeclarations.getProcImplementation().entrySet().iterator().next().getValue();
 			mICfgSymbolTable.add(cfgAuxVar);
 			mBoogieVar2AstNode.put(cfgAuxVar, someAstNode);
 		}
@@ -535,7 +537,8 @@ public class Boogie2SmtSymbolTable
 
 	private void declareParams(final String procId, final VarList[] specVl, final VarList[] implVl,
 			final Map<String, Map<String, IProgramVar>> specMap, final Map<String, Map<String, IProgramVar>> implMap,
-			final DeclarationInformation declarationInformation, final Map<String, List<ILocalProgramVar>> proc2params) {
+			final DeclarationInformation declarationInformation,
+			final Map<String, List<ILocalProgramVar>> proc2params) {
 		if (specVl.length != implVl.length) {
 			throw new IllegalArgumentException("specification and implementation have different param length");
 		}
@@ -715,6 +718,27 @@ public class Boogie2SmtSymbolTable
 		return Collections.unmodifiableMap(mProc2OutParams);
 	}
 
+	@Override
+	public Set<ApplicationTerm> computeAllDefaultConstants() {
+		final Set<ApplicationTerm> rtr = new LinkedHashSet<>();
+		final Function<IProgramVar, ApplicationTerm> fun = a -> a.getDefaultConstant();
+		getAll(mSpecificationInParam, fun).forEachOrdered(rtr::add);
+		getAll(mSpecificationOutParam, fun).forEachOrdered(rtr::add);
+		getAll(mImplementationInParam, fun).forEachOrdered(rtr::add);
+		getAll(mImplementationOutParam, fun).forEachOrdered(rtr::add);
+		mImplementationLocals.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
+				.map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
+		mProc2InParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(a -> fun.apply(a))
+				.forEachOrdered(rtr::add);
+		mProc2OutParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(a -> fun.apply(a))
+				.forEachOrdered(rtr::add);
+		mGlobals.entrySet().stream().map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
+		mOldGlobals.entrySet().stream().map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
+		return rtr;
+	}
 
+	private static <V, T, K1, K2> Stream<T> getAll(final Map<K1, Map<K2, V>> map, final Function<V, T> fun) {
+		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
+	}
 
 }
