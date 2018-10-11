@@ -26,8 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
-import java.util.Collection;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,17 +36,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -55,22 +60,80 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class PredicateTrie<T extends IPredicate> {
+	private final IUltimateServiceProvider mServices;
+	private final BasicPredicateFactory mFactory;
 	private final T mTruePredicate;
 	private final T mFalsePredicate;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
+	private final Set<T> mPredicates = new HashSet<>();
 
 	private IVertex mRoot;
 
-	protected PredicateTrie(final ILogger logger, final ManagedScript script, final T truePredicate,
-			final T falsePredicate, final IIcfgSymbolTable symbolTable) {
+	protected PredicateTrie(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script, final T truePredicate,
+			final T falsePredicate, final BasicPredicateFactory factory, final IIcfgSymbolTable symbolTable) {
+		mServices = services;
+		mFactory = factory;
 		mLogger = logger;
 		mMgdScript = script;
 		mSymbolTable = symbolTable;
 		mTruePredicate = truePredicate;
 		mFalsePredicate = falsePredicate;
 		mRoot = null;
+	}
+	
+	private Deque<Map<Term,Term>> findRPath (T pred){
+		Deque<Map<Term,Term>> path = new HashDeque<>();
+		
+		IVertex current = mRoot;
+		ModelVertex parent = null;
+		// find the predicate with the same fulfilling models
+		while (current instanceof ModelVertex) {
+			parent = (ModelVertex) current;
+			final boolean edge = fulfillsPredicate(pred, parent.getWitness());
+			current = parent.getChild(edge);
+			path.add(parent.getWitness());
+		}
+		mLogger.info("predicate at end of path: " + current);
+		return path;
+	}
+	
+	private Deque<Map<Term,Term>> findRealPath (T pred){
+		ArrayDeque<ModelVertex> path = new ArrayDeque<>();
+		path.addFirst((ModelVertex) mRoot);
+		ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
+		ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
+		if(pathT.size() > pathF.size()) {
+			path = pathT;
+		}else {
+			path = pathF;
+		}
+		mLogger.info("predicate at end of path true: " + path.getLast().getChild(true));
+		mLogger.info("predicate at end of path false: " + path.getLast().getChild(false));
+		ArrayDeque<Map<Term,Term>> result = new ArrayDeque<>();
+		while(!path.isEmpty()) {
+			result.addLast(path.removeFirst().getWitness());
+		}
+		return result;
+	}
+	
+	private ArrayDeque<ModelVertex> findPathHelper(T pred, boolean turn, final ArrayDeque<ModelVertex> path){
+		IVertex end = path.getLast().getChild(turn);
+		if(end instanceof PredicateVertex) {
+			if(((PredicateVertex)end).mPredicate.equals(pred)) {
+				return path;
+			}else {
+				return new ArrayDeque<>();
+			}
+		}
+		path.addLast((ModelVertex) end);
+		ArrayDeque<ModelVertex> pathT = findPathHelper(pred, true, path.clone());
+		ArrayDeque<ModelVertex> pathF = findPathHelper(pred, false, path.clone());
+		if(pathT.size() > pathF.size()) {
+			return pathT;
+		}
+		return pathF;
 	}
 
 	@Override
@@ -95,7 +158,11 @@ public class PredicateTrie<T extends IPredicate> {
 		// empty tree
 		if (mRoot == null) {
 			mRoot = new PredicateVertex<>(predicate);
-			return predicate;
+			final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+			final T newPred = (T) mFactory.newPredicate(commuNF);
+			mPredicates.add(newPred);
+			return newPred;
 		}
 		IVertex current = mRoot;
 		ModelVertex parent = null;
@@ -112,6 +179,32 @@ public class PredicateTrie<T extends IPredicate> {
 		if (newWitness.isEmpty()) {
 			return currentPredicate;
 		}
+		//______________
+		for(T p : mPredicates) {
+			final Term a = p.getClosedFormula();
+			final Term b = predicate.getClosedFormula();
+			if (mMgdScript.isLocked()) {
+				mMgdScript.requestLockRelease();
+			}
+			mMgdScript.lock(this);
+			mMgdScript.push(this, 1);
+			final Term isEqual = mMgdScript.term(this, "distinct", a, b);
+			try {
+				mMgdScript.assertTerm(this, isEqual);
+				final LBool result = mMgdScript.checkSat(this);
+				if (result == LBool.UNSAT) {
+					mLogger.info("new: " + predicate);
+					mLogger.info("newPath: " + findRPath(predicate));
+					mLogger.info("old: " + p);
+					mLogger.info("newPath: " + findRealPath(p));
+					throw new UnsupportedOperationException("EQUALITY NOT FOUND" + mPredicates.size());
+				}
+			} finally {
+				mMgdScript.pop(this, 1);
+				mMgdScript.unlock(this);
+			}
+		}
+		//______________
 		// the given predicate is new and inserted to the tree
 		final ModelVertex newNode = fulfillsPredicate(predicate, newWitness)
 				? new ModelVertex(new PredicateVertex<>(predicate), current, newWitness)
@@ -121,7 +214,11 @@ public class PredicateTrie<T extends IPredicate> {
 		} else {
 			mRoot = newNode;
 		}
-		return predicate;
+		final Term term = SmtUtils.simplify(mMgdScript, predicate.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final Term commuNF = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+		final T newPred = (T) mFactory.newPredicate(commuNF);
+		mPredicates.add(newPred);
+		return newPred;
 	}
 
 	/**

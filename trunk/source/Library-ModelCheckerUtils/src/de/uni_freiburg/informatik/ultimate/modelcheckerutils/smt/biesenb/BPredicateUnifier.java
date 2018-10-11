@@ -96,7 +96,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mPredicates = new HashSet<>();
 		mIntricatePredicate = new HashSet<>();
 		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
-		mPredicateTrie = new PredicateTrie<>(logger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+		mPredicateTrie = new PredicateTrie<>(logger, services, mMgdScript, mTruePredicate, mFalsePredicate, factory, mSymbolTable);
 		if (USE_MAP) {
 			mImplicationGraph = new ImplicationMap<>(mMgdScript, this, mFalsePredicate, mTruePredicate, true);
 		} else {
@@ -371,7 +371,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		final RestructureHelperObject root = getWitnessInductive(descendantsMap, ancestorsMap, witnessMap);
 
 		final PredicateTrie<IPredicate> restructuredTrie =
-				new PredicateTrie<>(mLogger, mMgdScript, mTruePredicate, mFalsePredicate, mSymbolTable);
+				new PredicateTrie<>(mLogger, mServices, mMgdScript, mTruePredicate, mFalsePredicate, mBasicPredicateFactory, mSymbolTable);
 		restructuredTrie.fillTrie(root, witnessMap);
 		if (oldDepth - restructuredTrie.getDepth() > 0) {
 			mPredicateTrie = restructuredTrie;
