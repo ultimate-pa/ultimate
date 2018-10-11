@@ -1,11 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 public class WeqSettings {
-//	public final boolean FREEZE_ALL_IN_MANAGER = true;
-
-//	final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
-	// TOOD: is this a good name? was it "before join", not before meetWGpa/fattenWeq/project??
-	private boolean mFlattenWeqEdgesBeforeWeqFatten = false;
 
 	private final boolean mReportEqDeqInplace = true;
 
@@ -14,12 +9,7 @@ public class WeqSettings {
 	private final boolean mAddNodeInplace = false;
 	private final boolean mProjectToElementsInplace = false;
 
-
-
 	private boolean mDeactivateWeakEquivalences = false;
-
-	// setting would not work -- weq-prime architecture would need rework
-// 	private final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
 
 	/**
 	 * if reportChangeToGpa should be called during every report(Dis)Equality
@@ -40,8 +30,6 @@ public class WeqSettings {
 
 
 	/* flags to switch sanity checks on/off */
-
-//	private final boolean SANITYCHECK_AFTER_ADD_NODE = false;
 
 	// general flag to capture e.g. sanity checks that are done for intermediate steps of a methods and similar ones
 
@@ -86,17 +74,9 @@ public class WeqSettings {
 	/**
 	 * See {@link #closeAfterInplaceMeet()}.
 	 */
-	private final boolean mCloseAfterInplaceMeet = false;
+	private final boolean mCloseAfterInplaceMeet = !false;
 
 	private final boolean mCloseBeforeIsInconsistentCheck = false;
-
-//	public WeqSettings() {
-//
-//	}
-
-	public boolean isFlattenWeqEdgesBeforeMeetWWeqGpa() {
-		return mFlattenWeqEdgesBeforeWeqFatten;
-	}
 
 	public boolean isReportEqDeqInplace() {
 		return mReportEqDeqInplace;
@@ -164,10 +144,6 @@ public class WeqSettings {
 
 	public void setDeactivateWeakEquivalences(final boolean b) {
 		mDeactivateWeakEquivalences = b;
-	}
-
-	public void setFlattenWeqEdgesBeforeMeetWWeqGpa(final boolean b) {
-		mFlattenWeqEdgesBeforeWeqFatten = b;
 	}
 
 	public void setPreciseWeqLabelComparison(final boolean b) {

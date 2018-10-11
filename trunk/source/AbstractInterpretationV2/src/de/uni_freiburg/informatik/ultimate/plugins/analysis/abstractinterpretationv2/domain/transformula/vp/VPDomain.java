@@ -125,7 +125,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		final WeqSettings settings = new WeqSettings();
 		settings.setDeactivateWeakEquivalences(ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES));
 		settings.setPreciseWeqLabelComparison(ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR));
-		settings.setFlattenWeqEdgesBeforeMeetWWeqGpa(ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN));
 		return settings;
 	}
 

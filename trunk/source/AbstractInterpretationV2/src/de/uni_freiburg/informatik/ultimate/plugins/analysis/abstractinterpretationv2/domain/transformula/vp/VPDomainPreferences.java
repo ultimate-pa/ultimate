@@ -15,8 +15,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  */
 public class VPDomainPreferences {
 
+	@Deprecated
 	public static final String LABEL_USE_WEQ_IN_PROJECT = "Weq Fattening";
+	@Deprecated
 	public static final String LABEL_FLATTEN_BEFORE_FATTEN = "Flatten before fatten";
+
 	public static final String LABEL_DEACTIVATE_WEAK_EQUIVALENCES = "Deactivate Weak Equivalences";
 	public static final String LABEL_PRECISE_COMPARISON_OPERATOR = "Precise comparison operator";
 

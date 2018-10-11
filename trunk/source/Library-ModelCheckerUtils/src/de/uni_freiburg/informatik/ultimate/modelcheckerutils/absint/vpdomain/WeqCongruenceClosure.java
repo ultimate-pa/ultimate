@@ -1922,30 +1922,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mIsWeqFatEdgeLabel = true;
 	}
 
-	/**
-	 * checks that all disjuncts in the weq labels of this's weq graph have the corresponding flag "mIsWeqFatEdgeLabel"
-	 * set
-	 *
-	 * assumes
-	 *
-	 * @return
-	 */
-//	public boolean assertAllEdgeLabelsHaveWeqFatFlagSet() {
-//		assert mDiet == Diet.WEQCCFAT;
-//
-//		if (mIsWeqFatEdgeLabel) {
-//			assert false;
-//			return false;
-//		}
-//
-//		if (!getWeakEquivalenceGraph().assertAllEdgeLabelsHaveWeqFatFlagSet()) {
-//			assert false;
-//			return false;
-//		}
-//
-//		return true;
-//	}
-
 	public WeqCcManager<NODE> getManager() {
 		return mManager;
 	}
@@ -1982,14 +1958,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
  */
 enum Diet {
 	THIN, CCFAT,
-	//WEQCCFAT,
 	/**
 	 * state for the transition from thin to fat (relevant for sanity checks)
 	 */
 	TRANSITORY_THIN_TO_CCFAT,
-//	TRANSITORY_THIN_TO_WEQCCFAT,
-
 	TRANSITORY_CCREFATTEN,
-//	TRANSITORY_WEQCCREFATTEN
 	;
 }
