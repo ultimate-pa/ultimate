@@ -198,7 +198,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<IcfgEdge, IcfgEdge> originalEdgeToTransformedEdgeMapping = new HashMap<>();
 		{
 			final MemlocArrayUpdaterTransformulaTransformer<INLOC, OUTLOC> mauit =
-					new MemlocArrayUpdaterTransformulaTransformer<>(mLogger,
+					new MemlocArrayUpdaterTransformulaTransformer<>(
+							mServices,
+							mLogger,
 							originalIcfg.getCfgSmtToolkit(),
 							locArrayManager,
 							mHeapArrays, csiiaag.getEdgeToPositionToLocUpdateInfo());

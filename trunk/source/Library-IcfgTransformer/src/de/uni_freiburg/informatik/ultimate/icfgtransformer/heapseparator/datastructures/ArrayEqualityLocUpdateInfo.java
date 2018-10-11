@@ -127,7 +127,9 @@ public class ArrayEqualityLocUpdateInfo {
 						if (isDefinitelyUnconstrained(bat) && mEdge.getOutVar(bat) == mEdge.getInVar(bat)) {
 							/* omit this invar --> effectively makes an assignment out of an assume on the loc array
 							 *  (this is sound because the base array is in a freshly-havocced state, thus it would not
-							 *   make a difference to havoc the base array, too) */
+							 *   make a difference to havoc the base array, too)
+							 *  TODO: If this cannot be done for assume statements that relate maps, we should crash,
+							 *   as we do not support that syntax. */
 						} else {
 							mExtraInVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
 						}
