@@ -539,7 +539,12 @@ public class TypeHandler implements ITypeHandler {
 			final BoogieStructType boogieType = BoogieType.createStructType(fieldNames, fieldBoogieTypes);
 			return new StructType(loc, boogieType, fields);
 		} else if (cType instanceof CNamed) {
-			final BoogieType boogieType = (BoogieType) cType2AstType(loc, cType.getUnderlyingType()).getBoogieType();
+			final BoogieType boogieType;
+			if (cType.getUnderlyingType().isIncomplete()) {
+				boogieType = null;
+			} else {
+				boogieType = (BoogieType) cType2AstType(loc, cType.getUnderlyingType()).getBoogieType();
+			}
 			// should work as we save the unique typename we computed in CNamed, not the name from the source c file
 			return new NamedType(loc, boogieType, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {

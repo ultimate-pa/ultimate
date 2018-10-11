@@ -2512,7 +2512,11 @@ public class CHandler {
 		if (onHeap) {
 			translatedType = mTypeHandler.constructPointerType(loc);
 		} else {
-			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
+			if (cDec.getType().isIncomplete()) {
+				translatedType = null;
+			} else {
+				translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
+			}
 		}
 
 		final DeclarationInformation declarationInformation;
