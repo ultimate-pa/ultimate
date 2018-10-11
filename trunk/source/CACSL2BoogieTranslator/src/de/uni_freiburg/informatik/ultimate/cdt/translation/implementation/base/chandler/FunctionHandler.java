@@ -629,7 +629,8 @@ public class FunctionHandler {
 
 		if (calleeProcInfo.getCType() != null && calleeProcInfo.getCType().takesVarArgs()) {
 			throw new UnsupportedSyntaxException(loc,
-					"encountered a call to a var args function, var args are not " + "supported at the moment");
+					"encountered a call to a var args function, var args are not supported at the moment: "
+							+ calleeProcInfo.getProcedureName());
 		}
 
 		/*
