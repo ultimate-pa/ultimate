@@ -259,7 +259,7 @@ public class FunctionHandler {
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		definedProcInfo.updateCFunction(returnCType, null, null, false);
+		definedProcInfo.updateCFunctionReturnType(returnCType);
 
 		VarList[] in = processInParams(loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
@@ -434,7 +434,7 @@ public class FunctionHandler {
 				paramDecsFromCall[i] = new CDeclaration(rex.getLrValue().getCType(), "#param" + i); // TODO:
 				// SFO?
 			}
-			calledFuncCFunction = calledFuncCFunction.newDeclaration(paramDecsFromCall);
+			calledFuncCFunction = calledFuncCFunction.newParameter(paramDecsFromCall);
 		}
 
 		// TODO: use CType.isCompatibleWith instead of equals/set, make the name of the inserted procedure compatible to
@@ -632,8 +632,7 @@ public class FunctionHandler {
 
 			if (isCalleeSignatureNotYetDetermined) {
 				// add the current parameter to the procedure's signature
-				calleeProcInfo.updateCFunction(null, null,
-						new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i), false);
+				calleeProcInfo.updateCFunctionParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				CType expectedParamType =
@@ -759,7 +758,7 @@ public class FunctionHandler {
 						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 			}
 		}
-		procInfo.updateCFunction(null, paramDecs, null, false);
+		procInfo.updateCFunctionParam(paramDecs);
 		return in;
 	}
 
@@ -945,7 +944,9 @@ public class FunctionHandler {
 
 		procInfo.resetDeclaration(newDeclaration);
 
-		procInfo.updateCFunction(funcType.getResultType(), null, null, funcType.takesVarArgs());
+		// TODO: Why do we update varargs and result type here? I removed the varargs.
+		// procInfo.updateCFunction(funcType.getResultType(), null, null, funcType.takesVarArgs());
+		procInfo.updateCFunctionReturnType(funcType.getResultType());
 		// end scope for retranslation of ACSL specification
 		mCHandler.endScope();
 	}
@@ -1062,7 +1063,7 @@ public class FunctionHandler {
 		// FIXME string to SFO..?
 		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp");
 
-		return calledFuncCFunction.newDeclaration(newCDecs);
+		return calledFuncCFunction.newParameter(newCDecs);
 	}
 
 	/**

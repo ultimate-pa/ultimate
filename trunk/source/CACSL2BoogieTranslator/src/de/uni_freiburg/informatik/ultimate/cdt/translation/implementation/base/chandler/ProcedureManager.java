@@ -71,8 +71,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -591,39 +589,31 @@ public class ProcedureManager {
 		}
 
 		/**
-		 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
-		 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
+		 * Replace all parameter of the current function with the specified one.
 		 */
-		void updateCFunction(final CType returnType, final CDeclaration[] allParamDecs, final CDeclaration oneParamDec,
-				final boolean takesVarArgs) {
-			final CType oldRetType = hasCType() ? getCType().getResultType() : null;
-			final CDeclaration[] oldInParams = hasCType() ? getCType().getParameterTypes() : new CDeclaration[0];
-			final boolean oldTakesVarArgs = hasCType() ? getCType().takesVarArgs() : false;
-
-			CType newRetType = oldRetType;
-			CDeclaration[] newInParams = oldInParams;
-			final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
-
-			if (allParamDecs != null) {
-				// set a new parameter list
-				assert oneParamDec == null;
-				newInParams = allParamDecs;
-			} else if (oneParamDec != null) {
-				// add a parameter to the list
-				assert allParamDecs == null;
-
-				final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
-				ips.add(oneParamDec);
-				newInParams = ips.toArray(new CDeclaration[ips.size()]);
-			}
-			if (returnType != null) {
-				newRetType = returnType;
-			}
-
+		public void updateCFunctionReturnType(final CType returnCType) {
 			if (hasCType()) {
-				resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+				mCType = mCType.newReturnType(returnCType);
 			} else {
-				setCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+				CFunction.createEmptyCFunction().newReturnType(returnCType);
+			}
+		}
+
+		/**
+		 * Replace all parameter of the current function with the specified one.
+		 */
+		public void updateCFunctionParam(final CDeclaration param) {
+			updateCFunctionParam(new CDeclaration[] { param });
+		}
+
+		/**
+		 * Replace all parameter of the current function with the specified ones.
+		 */
+		public void updateCFunctionParam(final CDeclaration[] params) {
+			if (hasCType()) {
+				mCType = mCType.newParameter(params);
+			} else {
+				CFunction.createEmptyCFunction().newParameter(params);
 			}
 		}
 
@@ -640,7 +630,7 @@ public class ProcedureManager {
 		}
 
 		private void setDefaultCType(final ILocation loc) {
-			setCType(new CFunction(new CPrimitive(CPrimitives.INT), new CDeclaration[0], false));
+			setCType(CFunction.createDefaultCFunction());
 		}
 
 		/**
@@ -689,6 +679,7 @@ public class ProcedureManager {
 		public String toString() {
 			return mProcedureName + " : " + mCType;
 		}
+
 	}
 
 	class CallAndAssignmentStatementFinder extends BoogieVisitor {

@@ -38,11 +38,6 @@ public class CFunction extends CType {
 
 	private final boolean mTakesVarArgs;
 
-	public CFunction(final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs) {
-		// FIXME: integrate those flags
-		this(false, false, false, false, false, resultType, paramTypes, takesVarArgs);
-	}
-
 	public CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
 			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes,
 			final boolean takesVarArgs) {
@@ -52,9 +47,37 @@ public class CFunction extends CType {
 		mTakesVarArgs = takesVarArgs;
 	}
 
-	public CFunction newDeclaration(final CDeclaration[] newParamTypes) {
+	/**
+	 * Create a new {@link CFunction} that is identical to this one except for the parameter types.
+	 */
+	public CFunction newParameter(final CDeclaration[] newParamTypes) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
 				newParamTypes, takesVarArgs());
+	}
+
+	/**
+	 * Create a new {@link CFunction} that is identical to this one except for the return type.
+	 */
+	public CFunction newReturnType(final CType returnType) {
+		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), returnType,
+				getParameterTypes(), takesVarArgs());
+	}
+
+	/**
+	 * Create a default CFunction without arguments and with int as return type.
+	 */
+	public static CFunction createDefaultCFunction() {
+		return new CFunction(false, false, false, false, false, new CPrimitive(CPrimitives.INT), new CDeclaration[0],
+				false);
+	}
+
+	/**
+	 * Create an empty CFunction without arguments and wit return type null
+	 *
+	 * TODO: This seems like a legacy method
+	 */
+	public static CFunction createEmptyCFunction() {
+		return new CFunction(false, false, false, false, false, null, new CDeclaration[0], false);
 	}
 
 	public CType getResultType() {
@@ -160,4 +183,5 @@ public class CFunction extends CType {
 		// can a CFunction be incomplete? I never checked that carefully
 		return false;
 	}
+
 }
