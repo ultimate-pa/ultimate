@@ -220,11 +220,6 @@ public class StandardFunctionHandler {
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-		// TODO: DD 2018-10-11 printk workaround
-		// This is a workaround until we fully support variadic functions
-		// treat printk like printf, although it is not a standard function:
-		// https://en.wikipedia.org/wiki/Printk
-		fill(map, "printk", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);

@@ -110,7 +110,12 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IFunction;
+import org.eclipse.cdt.core.dom.ast.IFunctionType;
+import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.core.dom.ast.IType;
+import org.eclipse.cdt.core.dom.ast.IVariable;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
@@ -1107,9 +1112,42 @@ public class CHandler {
 				paramsParsed[i] = decl.getDeclaration();
 			}
 			final IASTName name = funcDecl.getName();
-			final IFunction binding = (IFunction) name.resolveBinding();
-			final CFunction funcType = new CFunction(false, binding.isInline(), false, false, binding.isExtern(),
-					resType.getCType(), paramsParsed, binding.takesVarArgs());
+			final IBinding binding = name.resolveBinding();
+			final CFunction funcType;
+
+			if (binding == null) {
+				// this happens if the parent is actually a cast
+				funcType =
+						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
+			} else if (binding instanceof IFunction) {
+				final IFunction funBinding = (IFunction) binding;
+				funcType = new CFunction(false, funBinding.isInline(), false, false, funBinding.isExtern(),
+						resType.getCType(), paramsParsed, funBinding.takesVarArgs());
+			} else if (binding instanceof IVariable) {
+				// it is a function pointer
+				final IVariable varBinding = (IVariable) binding;
+				IType varType = varBinding.getType();
+				final IPointerType initialPointer;
+				if (varType instanceof IPointerType) {
+					initialPointer = (IPointerType) varType;
+				} else {
+					throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
+				}
+				while (varType instanceof IPointerType) {
+					varType = ((IPointerType) varType).getType();
+				}
+				if (varType instanceof IFunctionType) {
+					// it was indeed a function pointer
+					funcType = new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
+							initialPointer.isVolatile(), varBinding.isExtern(), resType.getCType(), paramsParsed,
+							((IFunctionType) varType).takesVarArgs());
+				} else {
+					throw new UnsupportedOperationException("Cannot extract function type from pointer to " + varType);
+				}
+			} else {
+				throw new UnsupportedOperationException(
+						"Cannot extract function type from binding " + binding.getClass());
+			}
 			cType = funcType;
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {

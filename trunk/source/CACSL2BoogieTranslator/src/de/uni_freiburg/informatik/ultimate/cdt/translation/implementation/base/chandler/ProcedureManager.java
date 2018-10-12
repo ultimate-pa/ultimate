@@ -540,11 +540,6 @@ public class ProcedureManager {
 			mModifiedGlobals = new LinkedHashSet<>();
 		}
 
-		public void resetCType(final CFunction cFunction) {
-			assert mCType != null : "use setCType in this case";
-			mCType = cFunction;
-		}
-
 		/**
 		 * replace the existing declaration with another (refined) one
 		 *
@@ -583,11 +578,6 @@ public class ProcedureManager {
 			return mCType;
 		}
 
-		public void setCType(final CFunction cType) {
-			assert mCType == null : "can only be set once!";
-			mCType = cType;
-		}
-
 		/**
 		 * Replace all parameter of the current function with the specified one.
 		 */
@@ -595,26 +585,38 @@ public class ProcedureManager {
 			if (hasCType()) {
 				mCType = mCType.newReturnType(returnCType);
 			} else {
-				CFunction.createEmptyCFunction().newReturnType(returnCType);
+				mCType = CFunction.createEmptyCFunction().newReturnType(returnCType);
 			}
 		}
 
 		/**
-		 * Replace all parameter of the current function with the specified one.
+		 * Add a parameter to the current function.
 		 */
-		public void updateCFunctionParam(final CDeclaration param) {
-			updateCFunctionParam(new CDeclaration[] { param });
+		public void updateCFunctionAddParam(final CDeclaration param) {
+			final CDeclaration[] newParams;
+			if (hasCType()) {
+				final CDeclaration[] oldParams = getCType().getParameterTypes();
+				newParams = Arrays.copyOf(oldParams, oldParams.length + 1);
+				newParams[newParams.length - 1] = param;
+			} else {
+				newParams = new CDeclaration[] { param };
+			}
+			updateCFunctionReplaceParams(newParams);
 		}
 
 		/**
 		 * Replace all parameter of the current function with the specified ones.
 		 */
-		public void updateCFunctionParam(final CDeclaration[] params) {
+		public void updateCFunctionReplaceParams(final CDeclaration[] params) {
 			if (hasCType()) {
 				mCType = mCType.newParameter(params);
 			} else {
-				CFunction.createEmptyCFunction().newParameter(params);
+				mCType = CFunction.createEmptyCFunction().newParameter(params);
 			}
+		}
+
+		public void updateCFunction(final CFunction funcType) {
+			mCType = funcType;
 		}
 
 		public Procedure getDeclaration() {
@@ -626,11 +628,7 @@ public class ProcedureManager {
 
 		public void setDefaultDeclarationAndCType(final ILocation loc, final ASTType intType) {
 			setDefaultDeclaration(loc, intType);
-			setDefaultCType(loc);
-		}
-
-		private void setDefaultCType(final ILocation loc) {
-			setCType(CFunction.createDefaultCFunction());
+			mCType = CFunction.createDefaultCFunction();
 		}
 
 		/**

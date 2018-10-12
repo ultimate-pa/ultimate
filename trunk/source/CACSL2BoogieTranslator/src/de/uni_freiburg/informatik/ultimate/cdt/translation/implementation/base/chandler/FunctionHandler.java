@@ -103,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -598,8 +599,28 @@ public class FunctionHandler {
 		}
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
+		final CFunction calleeProcCType = calleeProcInfo.getCType();
 		assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
-		if (calleeProcInfo.getCType() != null && calleeProcInfo.getCType().takesVarArgs()) {
+		if (calleeProcCType != null && calleeProcCType.takesVarArgs()) {
+			if (calleeProcCType.isExtern()) {
+				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
+				// non-deterministic return value. We do not need to declare the actual function.
+				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+				final AuxVarInfo auxvarinfo =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
+				resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+				resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+				final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
+				resultBuilder.setLrValue(returnValue);
+
+				// dispatch all arguments
+				for (final IASTInitializerClause arg : arguments) {
+					final ExpressionResult argRes =
+							mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arg);
+					resultBuilder.addAllExceptLrValue(argRes);
+				}
+				return resultBuilder.build();
+			}
 			throw new UnsupportedSyntaxException(loc,
 					"encountered a call to a var args function, var args are not supported at the moment: "
 							+ calleeProcInfo.getProcedureName());
@@ -632,7 +653,7 @@ public class FunctionHandler {
 
 			if (isCalleeSignatureNotYetDetermined) {
 				// add the current parameter to the procedure's signature
-				calleeProcInfo.updateCFunctionParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
+				calleeProcInfo.updateCFunctionAddParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				CType expectedParamType =
@@ -758,7 +779,7 @@ public class FunctionHandler {
 						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 			}
 		}
-		procInfo.updateCFunctionParam(paramDecs);
+		procInfo.updateCFunctionReplaceParams(paramDecs);
 		return in;
 	}
 
@@ -944,9 +965,9 @@ public class FunctionHandler {
 
 		procInfo.resetDeclaration(newDeclaration);
 
-		// TODO: Why do we update varargs and result type here? I removed the varargs.
+		// TODO: Why do we update varargs and result type here? I just update everything.
 		// procInfo.updateCFunction(funcType.getResultType(), null, null, funcType.takesVarArgs());
-		procInfo.updateCFunctionReturnType(funcType.getResultType());
+		procInfo.updateCFunction(funcType);
 		// end scope for retranslation of ACSL specification
 		mCHandler.endScope();
 	}
@@ -956,14 +977,13 @@ public class FunctionHandler {
 	 *
 	 * @param loc
 	 * @param methodName
-	 * @param functionCallExpressionResultBuilder
+	 * @param functionCallERB
 	 * @param translatedParameters
 	 *
 	 * @return
 	 */
 	Result makeTheFunctionCallItself(final ILocation loc, final String methodName,
-			final ExpressionResultBuilder functionCallExpressionResultBuilder,
-			final List<Expression> translatedParameters) {
+			final ExpressionResultBuilder functionCallERB, final List<Expression> translatedParameters) {
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;
@@ -983,8 +1003,8 @@ public class FunctionHandler {
 				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
 				returnedValue = auxvar.getExp();
 				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
-				functionCallExpressionResultBuilder.addAuxVar(auxvar);
-				functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
+				functionCallERB.addAuxVar(auxvar);
+				functionCallERB.addDeclaration(auxvar.getVarDec());
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
@@ -1007,30 +1027,29 @@ public class FunctionHandler {
 
 			returnedValue = auxvar.getExp();
 
-			functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
-			functionCallExpressionResultBuilder.addAuxVar(auxvar);
+			functionCallERB.addDeclaration(auxvar.getVarDec());
+			functionCallERB.addAuxVar(auxvar);
 
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
 					methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
 		}
-		functionCallExpressionResultBuilder.addStatement(call);
+		functionCallERB.addStatement(call);
 
 		final CType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)
 				: procInfo.getCType().getResultType();
 
 		if (returnedValue != null) {
-			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType,
-					functionCallExpressionResultBuilder);
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType, functionCallERB);
 		}
 
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, functionCallExpressionResultBuilder.getDeclarations(),
-				functionCallExpressionResultBuilder.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, functionCallERB.getDeclarations(),
+				functionCallERB.getAuxVars());
 
 		if (returnedValue != null) {
-			functionCallExpressionResultBuilder.setLrValue(new RValue(returnedValue, returnCType));
+			functionCallERB.setLrValue(new RValue(returnedValue, returnCType));
 		}
 
-		return functionCallExpressionResultBuilder.build();
+		return functionCallERB.build();
 	}
 
 	public Set<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
