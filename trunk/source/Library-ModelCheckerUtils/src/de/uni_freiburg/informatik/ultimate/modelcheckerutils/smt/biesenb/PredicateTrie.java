@@ -232,7 +232,7 @@ public class PredicateTrie<T extends IPredicate> {
 		if (mTruePredicate.getFormula().equals(result)) {
 			return true;
 		}
-		assert checkFalseCase(predicate, witness, result) : "is neither equal to true nor to false";
+		assert checkFalseCase(predicate, witness, result) : "unexpected false case";
 		return false;
 	}
 
@@ -246,6 +246,8 @@ public class PredicateTrie<T extends IPredicate> {
 		if (isNotTrue == LBool.UNSAT) {
 			mLogger.fatal("Simplification failed: it is actually equal to true");
 			mLogger.fatal(query.toStringDirect());
+			mLogger.fatal("original predicate: " + predicate.toString());
+			mLogger.fatal("witness           : " + witness.toString());
 			return false;
 		}
 		return true;
