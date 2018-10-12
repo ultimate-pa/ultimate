@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -103,7 +102,7 @@ public class StaticObjectsHandler {
 	}
 
 	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
-		assert Objects.nonNull(boogieDec) && Objects.nonNull(cDec);
+		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
@@ -143,6 +142,8 @@ public class StaticObjectsHandler {
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
+		assert oldCDec != null : "We have a Boogie declaration, we should also have a C declaration: "
+				+ oldBoogieDec.getIdentifier();
 
 		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
 				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
