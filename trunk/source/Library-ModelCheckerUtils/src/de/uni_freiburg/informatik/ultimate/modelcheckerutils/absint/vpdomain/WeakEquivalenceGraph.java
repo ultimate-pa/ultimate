@@ -741,10 +741,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	private void putEdgeLabelDuringRemove(final Doubleton<NODE> sourceAndTarget,
 			final WeakEquivalenceEdgeLabel<NODE> label, final NODE replacement) {
-		assert sourceAndTarget.getOneElement() == replacement
-				|| mWeqCc.isRepresentative(sourceAndTarget.getOneElement());
-		assert sourceAndTarget.getOtherElement() == replacement
-				|| mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
+//		assert sourceAndTarget.getOneElement() == replacement
+//				|| mWeqCc.isRepresentative(sourceAndTarget.getOneElement());
+//		assert sourceAndTarget.getOtherElement() == replacement
+//				|| mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
 		mWeakEquivalenceEdges.put(sourceAndTarget, label);
 	}
 

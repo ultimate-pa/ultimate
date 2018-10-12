@@ -165,6 +165,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	/**
+	 * (called from projectToElements)
 	 *
 	 * @param logger a logger, can be null (isDebug will return false, then)
 	 * @param newElemPartition
@@ -172,6 +173,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
 			final CCLiteralSetConstraints<ELEM> literalConstraints, final IRemovalInfo<ELEM> remInfo) {
+		/* Note: the following two assertions do not need to hold because this may be called during element removal
+		 *  preparations*/
+//		assert assertNoElementsFromRemInfoInTver(newElemPartition, remInfo);
+//		assert assertNoElementsFromRemInfoInLitSetConstraints(literalConstraints, remInfo);
+		assert newElemPartition.getAllElements()
+			.containsAll(literalConstraints.getAllElementsMentionedInASetConstraint());
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
@@ -576,9 +583,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		{
 			constantFunctionTreatmentOnAddElement(elem,
-					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
-					e -> mManager.addElement(this, e, newEqualityTarget, true, true),
-					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()), this);
+//					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
+//					e -> mManager.addElement(this, e, newEqualityTarget, true, true),
+					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()), newEqualityTarget);
 			mixFunctionTreatmentOnAddElement(elem,
 					(e, set) -> newEqualityTarget.reportContainsConstraint(e, set),
 					e -> mManager.addElement(this, e, newEqualityTarget, true, true),
@@ -609,9 +616,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *   of elem
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddElement(
-			final ELEM elem, final BiConsumer<ELEM, ELEM> reportEquality, final Consumer<ELEM> addElement,
+			final ELEM elem,
+//			final BiConsumer<ELEM, ELEM> reportEquality, final Consumer<ELEM> addElement,
 			final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction,
-			final IEqualityReportingTarget<ELEM> congruenceClosure) {
+			final IEqualityReportingTarget<ELEM> newEqualityTarget) {
 		/*
 		 * treatment for constant functions:
 		 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
@@ -619,11 +627,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
 		 *   then we add the element g(x)
 		 */
-		if (elem.getAppliedFunction().isConstantFunction() && !congruenceClosure.isInconsistent(false)) {
-			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
+		if (elem.getAppliedFunction().isConstantFunction() && !newEqualityTarget.isInconsistent(false)) {
+//			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
+			newEqualityTarget.reportEqualityRec(elem, elem.getAppliedFunction().getConstantFunctionValue());
 		}
 		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
-			if (congruenceClosure.isInconsistent(false)) {
+			if (newEqualityTarget.isInconsistent(false)) {
 				return;
 			}
 			if (equivalentFunction == elem.getAppliedFunction()) {
@@ -631,7 +640,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 			if (equivalentFunction.isConstantFunction()) {
 				// add element g(x)
-				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
+//				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
+				newEqualityTarget.addElement(elem.replaceAppliedFunction(equivalentFunction), false);
 			}
 		}
 	}
@@ -1174,6 +1184,43 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public boolean isInconsistent(final boolean close) {
 		// CongruenceClosure is always closed immediately..
 		return isInconsistent();
+	}
+
+	private boolean assertNoElementsFromRemInfoInLitSetConstraints(
+			final CCLiteralSetConstraints<ELEM> literalConstraints,
+			final IRemovalInfo<ELEM> remInfo) {
+		if (remInfo == null) {
+			return true;
+		}
+
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : literalConstraints.getConstraints().entrySet()) {
+			if (dependsOnAny(en.getKey(), remInfo.getRemovedElements())) {
+				return false;
+			}
+			if (dependsOnAny(en.getValue().getConstrainedElement(), remInfo.getRemovedElements())) {
+				return false;
+			}
+			for (final ELEM el : en.getValue().getAllRhsElements()) {
+				if (dependsOnAny(el, remInfo.getRemovedElements())) {
+					return false;
+				}
+			}
+		}
+		return true;
+
+	}
+
+	private boolean assertNoElementsFromRemInfoInTver(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
+			final IRemovalInfo<ELEM> remInfo) {
+		if (remInfo == null) {
+			return true;
+		}
+		for (final ELEM elem : newElemPartition.getAllElements()) {
+			if (dependsOnAny(elem, remInfo.getRemovedElements())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean assertElementsAreSuperset(final Set<ELEM> a, final Set<ELEM> b) {
@@ -1852,10 +1899,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
 				copy.mLiteralSetConstraints.filterAndKeepOnlyConstraintsThatIntersectWith(elemsInConstraintsToKeep);
 
-		/*
-		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
-		 *  we either need a special constructor or do something else..
-		 */
+		/* Set constraints that are kept due to elemsInConstraintsToKeep may refer to elements that are not kept due to
+		 * equality or disequality constraints. Thus we must add them to newTver in order to ensure the invariant that
+		 * all elements in a set constraint are known to the enclosing congruenceClosure. */
+		for (final ELEM elem : newLiteralSetConstraints.getAllElementsMentionedInASetConstraint()) {
+			newTver.addElement(elem);
+		}
+
+		/*(former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
+		 *  we either need a special constructor or do something else.. */
 		final CongruenceClosure<ELEM> result = mManager.getCongruenceClosureFromTver(newTver, removeElementInfo,
 				newLiteralSetConstraints, true);
 		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(), elemsToKeep)

@@ -766,4 +766,13 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		}
 		return mContainsConstraints.get(elem) != null;
 	}
+
+	public Set<ELEM> getAllElementsMentionedInASetConstraint() {
+		final Set<ELEM> result = new HashSet<>();
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
+			result.add(en.getValue().getConstrainedElement());
+			result.addAll(en.getValue().getAllRhsElements());
+		}
+		return result;
+	}
 }

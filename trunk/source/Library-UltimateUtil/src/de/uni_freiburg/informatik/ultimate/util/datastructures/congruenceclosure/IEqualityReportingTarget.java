@@ -69,6 +69,7 @@ public interface IEqualityReportingTarget<ELEM extends ICongruenceClosureElement
 //
 //	ILogger getLogger();
 //
-//	boolean addElement(ELEM proxyElem, boolean b);
+	boolean addElement(ELEM proxyElem, boolean omitSanityCheck);
+
 	boolean isConstrainedDirectly(ELEM elem);
 }

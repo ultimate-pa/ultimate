@@ -1333,8 +1333,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		{
 			CongruenceClosure.constantFunctionTreatmentOnAddElement(elem,
-					(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
-					e -> mManager.addNode(e, this, true, true),
+//					(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
+//					e -> mManager.addNode(e, this, true, true),
 					getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet(), this);
 			CongruenceClosure.mixFunctionTreatmentOnAddElement(elem,
 					(e, lits) -> mManager.reportContainsConstraint(e, lits, this, true),
