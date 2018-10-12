@@ -434,8 +434,7 @@ public class FunctionHandler {
 				paramDecsFromCall[i] = new CDeclaration(rex.getLrValue().getCType(), "#param" + i); // TODO:
 				// SFO?
 			}
-			calledFuncCFunction = new CFunction(calledFuncCFunction.getResultType(), paramDecsFromCall,
-					calledFuncCFunction.takesVarArgs());
+			calledFuncCFunction = calledFuncCFunction.newDeclaration(paramDecsFromCall);
 		}
 
 		// TODO: use CType.isCompatibleWith instead of equals/set, make the name of the inserted procedure compatible to
@@ -726,7 +725,7 @@ public class FunctionHandler {
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
-	 * 
+	 *
 	 * @param updateSymbolTable
 	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
 	 *            interest and side effects are unwanted
@@ -1063,7 +1062,7 @@ public class FunctionHandler {
 		// FIXME string to SFO..?
 		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp");
 
-		return new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
+		return calledFuncCFunction.newDeclaration(newCDecs);
 	}
 
 	/**

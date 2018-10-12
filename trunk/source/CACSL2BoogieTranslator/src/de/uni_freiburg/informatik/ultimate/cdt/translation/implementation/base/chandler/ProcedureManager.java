@@ -524,7 +524,7 @@ public class ProcedureManager {
 	static final class BoogieProcedureInfo {
 
 		/**
-		 * the procedure's name (in the Boogie program)
+		 * the procedure's name in the Boogie program
 		 */
 		private final String mProcedureName;
 

@@ -88,6 +88,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
@@ -109,6 +110,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IFunction;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
@@ -240,7 +242,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Alexander Nutz
  */
 public class CHandler {
-
 
 	/**
 	 * If set to true we say Unsupported Syntax if there is some cast of pointers. Right now we are unable to handle
@@ -1105,7 +1106,10 @@ public class CHandler {
 				}
 				paramsParsed[i] = decl.getDeclaration();
 			}
-			final CFunction funcType = new CFunction(resType.getCType(), paramsParsed, funcDecl.takesVarArgs());
+			final IASTName name = funcDecl.getName();
+			final IFunction binding = (IFunction) name.resolveBinding();
+			final CFunction funcType = new CFunction(false, binding.isInline(), false, false, binding.isExtern(),
+					resType.getCType(), paramsParsed, binding.takesVarArgs());
 			cType = funcType;
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
