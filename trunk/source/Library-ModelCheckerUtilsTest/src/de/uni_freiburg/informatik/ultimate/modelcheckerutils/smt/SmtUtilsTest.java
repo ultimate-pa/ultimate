@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -57,6 +58,7 @@ public class SmtUtilsTest {
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	private Term mTrue;
+	private Term mFalse;
 
 	@Before
 	public void setUp() {
@@ -66,10 +68,11 @@ public class SmtUtilsTest {
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mTrue = mScript.term("true");
+		mFalse = mScript.term("false");
 	}
 
 	@Test
-	public void testSubstitutionWithLocalSimplification() {
+	public void testSubstitutionWithLocalSimplification1() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final String names = "ABCDE";
@@ -99,6 +102,45 @@ public class SmtUtilsTest {
 		mLogger.info("(distinct true result): " + isDistinct);
 		mLogger.info("isEqualToTrue:          " + isEqualToTrue);
 		Assert.isTrue(isDistinct == LBool.UNSAT && isEqualToTrue);
+	}
+
+	@Test
+	public void testSubstitutionWithLocalSimplification2() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final boolean fail = true;
+		final Term evilSubstitute;
+		if (fail) {
+			evilSubstitute = mScript.term("-", mScript.numeral("1"));
+		} else {
+			evilSubstitute = Rational.MONE.toTerm(intSort);
+		}
+
+		final String names = "AB";
+		final Term[] values = new Term[] { evilSubstitute, mScript.numeral("0") };
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+			if (i < values.length) {
+				final Term value = values[i];
+				substitutionMapping.put(term, value);
+			}
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(= A B)");
+
+		final SubstitutionWithLocalSimplification swls =
+				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+		final Term result = swls.transform(input);
+		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mFalse, result));
+		final boolean isEqualToFalse = result.equals(mFalse);
+
+		mLogger.info("Original:                " + input.toStringDirect());
+		mLogger.info("Witness:                 " + substitutionMapping.toString());
+		mLogger.info("After Substitution:      " + result.toStringDirect());
+		mLogger.info("(distinct false result): " + isDistinct);
+		mLogger.info("isEqualToFalse:          " + isEqualToFalse);
+		Assert.isTrue(isDistinct == LBool.UNSAT && isEqualToFalse);
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
