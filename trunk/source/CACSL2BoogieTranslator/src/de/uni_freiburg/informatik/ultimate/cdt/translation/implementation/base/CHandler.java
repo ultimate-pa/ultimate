@@ -110,10 +110,12 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IFunction;
 import org.eclipse.cdt.core.dom.ast.IFunctionType;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.core.dom.ast.IProblemBinding;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.IVariable;
@@ -1120,6 +1122,11 @@ public class CHandler {
 				// this happens if the parent is actually a cast
 				funcType =
 						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
+			} else if (binding instanceof IProblemBinding) {
+				// this happens if CDT detects a parse issue at this position
+				mLogger.warn("Detected problem " + ((IProblemBinding) binding).getMessage() + " at " + loc);
+				funcType =
+						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
 			} else if (binding instanceof IFunction) {
 				final IFunction funBinding = (IFunction) binding;
 				funcType = new CFunction(false, funBinding.isInline(), false, false, funBinding.isExtern(),
@@ -1210,12 +1217,21 @@ public class CHandler {
 	private static CFunction extractFunctionType(final TypesResult resType, final CDeclaration[] paramsParsed,
 			final IVariable varBinding) {
 		IType varType = varBinding.getType();
-		final IPointerType initialPointer;
 		if (varType instanceof IPointerType) {
-			initialPointer = (IPointerType) varType;
+			// the initial type is already the pointer type
+		} else if (varType instanceof IArrayType) {
+			// its an array of function pointers -- find the value type
+			while (varType instanceof IArrayType) {
+				varType = ((IArrayType) varType).getType();
+			}
+			if (!(varType instanceof IPointerType)) {
+				throw new UnsupportedOperationException(
+						"Cannot extract function type from array of non-pointers " + varType);
+			}
 		} else {
 			throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
 		}
+		final IPointerType initialPointer = (IPointerType) varType;
 		while (varType instanceof IPointerType) {
 			varType = ((IPointerType) varType).getType();
 		}
