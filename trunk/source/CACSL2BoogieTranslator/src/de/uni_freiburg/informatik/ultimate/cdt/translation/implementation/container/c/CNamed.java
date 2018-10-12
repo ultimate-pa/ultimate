@@ -57,7 +57,7 @@ public class CNamed extends CType {
 	 */
 	public CNamed(final String name, final CType mappedType) {
 		// FIXME: integrate those flags
-		super(false, false, false, false);
+		super(false, false, false, false, false);
 		mName = name;
 		mMappedType = mappedType;
 	}

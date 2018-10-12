@@ -132,7 +132,8 @@ public class CPrimitive extends CType {
 	private final CPrimitiveCategory mGeneralType;
 
 	public CPrimitive(final CPrimitives type) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		// FIXME: integrate those flags
+		super(false, false, false, false, false);
 		mType = type;
 		mGeneralType = getGeneralType(type);
 	}
@@ -183,7 +184,8 @@ public class CPrimitive extends CType {
 	 *            the C declaration specifier.
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		// FIXME: integrate those flags
+		super(false, false, false, false, false);
 		if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
 			final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
 			switch (sds.getType()) {

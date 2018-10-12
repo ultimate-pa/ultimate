@@ -39,10 +39,22 @@ public class CFunction extends CType {
 	private final boolean mTakesVarArgs;
 
 	public CFunction(final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs) {
-		super(false, false, false, false); // FIXME: integrate those flags
+		// FIXME: integrate those flags
+		this(false, false, false, false, false, resultType, paramTypes, takesVarArgs);
+	}
+
+	public CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
+			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes,
+			final boolean takesVarArgs) {
+		super(isConst, isInline, isRestrict, isVolatile, isExtern);
 		mResultType = resultType;
 		mParamTypes = paramTypes;
 		mTakesVarArgs = takesVarArgs;
+	}
+
+	public CFunction newDeclaration(final CDeclaration[] newParamTypes) {
+		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
+				newParamTypes, takesVarArgs());
 	}
 
 	public CType getResultType() {

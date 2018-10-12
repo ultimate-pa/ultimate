@@ -42,16 +42,25 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public abstract class CType {
 
 	/* C type modifiers */
-	protected boolean mIsConst, mIsInline, mIsRestrict, mIsVolatile;
+	private final boolean mIsConst;
+	private final boolean mIsInline;
+	private final boolean mIsRestrict;
+	private final boolean mIsVolatile;
+
+	private final boolean mIsExtern;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param isExtern
 	 */
-	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile) {
+	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
+			final boolean isExtern) {
 		mIsConst = isConst;
 		mIsInline = isInline;
 		mIsRestrict = isRestrict;
 		mIsVolatile = isVolatile;
+		mIsExtern = isExtern;
 	}
 
 	public boolean isConst() {
@@ -68,6 +77,10 @@ public abstract class CType {
 
 	public boolean isVolatile() {
 		return mIsVolatile;
+	}
+
+	public boolean isExtern() {
+		return mIsExtern;
 	}
 
 	public abstract boolean isIncomplete();

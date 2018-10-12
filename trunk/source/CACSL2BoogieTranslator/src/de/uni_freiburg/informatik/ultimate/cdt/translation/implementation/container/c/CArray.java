@@ -55,117 +55,115 @@ public class CArray extends CType {
 	 */
 	public static final int INCOMPLETE_ARRY_MAGIC_NUMBER = -1234567;
 
-    /**
-     * Array bound. Note that we use nesting of array types for multidimensional array types
-     */
-    private final RValue mBound;
+	/**
+	 * Array bound. Note that we use nesting of array types for multidimensional array types
+	 */
+	private final RValue mBound;
 
-    private final CType mValueType;
+	private final CType mValueType;
 
-    /**
-     * Constructor.
-     *
-     * @param dimensions
-     *            the dimensions of this array.
-     * @param valueType
-     *            the type of the array.
-     * @param cDeclSpec
-     *            the C declaration used.
-     */
-    public CArray(final RValue bound,
-            final CType valueType) {
-        super(false, false, false, false); //FIXME: integrate those flags
-        mBound = bound;
-        mValueType = valueType;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param dimensions
+	 *            the dimensions of this array.
+	 * @param valueType
+	 *            the type of the array.
+	 * @param cDeclSpec
+	 *            the C declaration used.
+	 */
+	public CArray(final RValue bound, final CType valueType) {
+		// FIXME: integrate those flags
+		super(false, false, false, false, false);
+		mBound = bound;
+		mValueType = valueType;
+	}
 
-    /**
-     * @return the dimensions
-     */
-    public RValue getBound() {
-        return mBound;
-    }
+	/**
+	 * @return the dimensions
+	 */
+	public RValue getBound() {
+		return mBound;
+	}
 
-    /**
-     * @return the valueType
-     */
-    public CType getValueType() {
-        return mValueType;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder id = new StringBuilder("ARRAY#");
-        final StringBuilder dimString = new StringBuilder("_");
-
-        final Expression dim = mBound.getValue();
-        if (dim instanceof BinaryExpression ||
-        		dim instanceof UnaryExpression) {
-        	// 2015-11-08 Matthias: Use C representation or introduce a factory
-        	// for types.
-        	dimString.append(dim.toString());
-        	//                dim = getArithmeticResultAsIntegerLiteral(dim);
-        }
-        if (dim instanceof IntegerLiteral) {
-        	dimString.append(((IntegerLiteral) dim).getValue());
-        	dimString.append("_");
-        } else if (dim instanceof IdentifierExpression) {
-        	dimString.append(((IdentifierExpression) dim).getIdentifier());
-        	dimString.append("_");
-        } else {
-        	dimString.append("unrecognizedDimensions");
-        	dimString.append("_");
-        }
-
-        id.append(dimString.toString());
-        id.append("~");
-        id.append(mValueType.toString());
-        id.append("#");
-        return id.toString();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (!(o instanceof CType)) {
-            return false;
-        }
-        final CType oType = ((CType)o).getUnderlyingType();
-        if (!(oType instanceof CArray)) {
-            return false;
-        }
-
-        final CArray oArr = (CArray)oType;
-        if (!(mValueType.equals(oArr.mValueType))) {
-            return false;
-        }
-        if (!(mBound.equals(oArr.mBound))) {
-            return false;
-        }
-
-        return true;
-    }
+	/**
+	 * @return the valueType
+	 */
+	public CType getValueType() {
+		return mValueType;
+	}
 
 	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == CPrimitives.VOID) {
-			return true;
+	public String toString() {
+		final StringBuilder id = new StringBuilder("ARRAY#");
+		final StringBuilder dimString = new StringBuilder("_");
+
+		final Expression dim = mBound.getValue();
+		if (dim instanceof BinaryExpression || dim instanceof UnaryExpression) {
+			// 2015-11-08 Matthias: Use C representation or introduce a factory
+			// for types.
+			dimString.append(dim.toString());
+			// dim = getArithmeticResultAsIntegerLiteral(dim);
+		}
+		if (dim instanceof IntegerLiteral) {
+			dimString.append(((IntegerLiteral) dim).getValue());
+			dimString.append("_");
+		} else if (dim instanceof IdentifierExpression) {
+			dimString.append(((IdentifierExpression) dim).getIdentifier());
+			dimString.append("_");
+		} else {
+			dimString.append("unrecognizedDimensions");
+			dimString.append("_");
 		}
 
-        final CType oType = o.getUnderlyingType();
-        if (!(oType instanceof CArray)) {
+		id.append(dimString.toString());
+		id.append("~");
+		id.append(mValueType.toString());
+		id.append("#");
+		return id.toString();
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (!(oType instanceof CArray)) {
 			return false;
 		}
 
-        final CArray oArr = (CArray) oType;
-        if (!(mValueType.isCompatibleWith(oArr.mValueType))) {
-            return false;
-        }
-        if (!(mBound.equals(oArr.mBound))) {
-            return false;
-        }
+		final CArray oArr = (CArray) oType;
+		if (!(mValueType.equals(oArr.mValueType))) {
+			return false;
+		}
+		if (!(mBound.equals(oArr.mBound))) {
+			return false;
+		}
 
-        return true;
+		return true;
+	}
+
+	@Override
+	public boolean isCompatibleWith(final CType o) {
+		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
+			return true;
+		}
+
+		final CType oType = o.getUnderlyingType();
+		if (!(oType instanceof CArray)) {
+			return false;
+		}
+
+		final CArray oArr = (CArray) oType;
+		if (!(mValueType.isCompatibleWith(oArr.mValueType))) {
+			return false;
+		}
+		if (!(mBound.equals(oArr.mBound))) {
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override

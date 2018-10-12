@@ -76,7 +76,7 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 	 */
 	public CStruct(final String name, final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags
-		super(false, false, false, false);
+		super(false, false, false, false, false);
 		assert name != null;
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
@@ -87,7 +87,7 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 
 	public CStruct(final String name) {
 		// FIXME: integrate those flags
-		super(false, false, false, false);
+		super(false, false, false, false, false);
 		assert name != null && !name.isEmpty();
 		mFieldNames = new String[0];
 		mFieldTypes = new CType[0];

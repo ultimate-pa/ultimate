@@ -53,7 +53,7 @@ public class CPointer extends CType {
 	 */
 	public CPointer(final CType pointsToType) {
 		// FIXME: integrate those flags
-		super(false, false, false, false);
+		super(false, false, false, false, false);
 		mPointsToType = pointsToType;
 	}
 
