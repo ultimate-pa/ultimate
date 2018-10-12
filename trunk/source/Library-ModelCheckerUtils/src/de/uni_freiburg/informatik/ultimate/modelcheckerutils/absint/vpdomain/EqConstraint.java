@@ -73,7 +73,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
-//	private boolean mIsInconsistent;
 
 	private final int mId;
 
@@ -87,19 +86,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeqCc = cClosure;
 	}
 
-//	private void freezeAndClose() {
-//		assert !isInconsistent() : "use EqBottomConstraint instead!!";
-////		assert mWeqCc.isFrozen();
-//		assert sanityCheck();
-//		assert !mIsFrozen;
-////		mWeqCc.freezeAndClose();
-//		mWeqCc.freezeIfNecessary(true);
-//		mIsFrozen = true;
-//	}
-//
 	private void freezeAndDontClose() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
-//		assert mWeqCc.isFrozen();
 		assert sanityCheck();
 		assert !mIsFrozen;
 		mWeqCc.freezeOmitPropagations();
@@ -226,10 +214,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return mTerm;
 		}
 
-//		final Term result = mPartialArrangement.getTerm(script);
 		final Term result = WeqCcManager.weqCcToTerm(script, mWeqCc,
 				mFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary());
-//				mFactory.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 		if (mIsFrozen) {
 			mTerm = result;
 		}
@@ -331,13 +317,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mFactory.getWeqCcManager().isStrongerThan(mWeqCc, other.mWeqCc);
 	}
 
-//	public void projectAway(final NODE elemToHavoc) {
-//		mFactory.getWeqCcManager().projectAway(mWeqCc, elemToHavoc);
-//
-//		assert mWeqCc.assertSingleElementIsFullyRemoved(elemToHavoc);
-//		assert mWeqCc.sanityCheck();
-//	}
-
 	/**
 	 *
 	 * @return
@@ -345,8 +324,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	public Collection<TermVariable> getAllTermVariables() {
 		final Set<TermVariable> allTvs = new HashSet<>();
-//		mWeqCc.getAllElements().stream()
-//				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 		for (final NODE node : mWeqCc.getAllElements()) {
 			if (node.isMixFunction()) {
 				if (node.getMixFunction1() instanceof TermVariable) {
@@ -393,10 +370,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	@Override
 	public int hashCode() {
 		return mId;
-		// final int prime = 31;
-		// int result = 1;
-		// result = prime * result + mId;
-		// return result;
 	}
 
 	@Override
@@ -450,7 +423,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		unfrozen.addElement(exp, false);
 
 		final CCLiteralSetConstraints<NODE> lsc = unfrozen.getCongruenceClosure().getLiteralSetConstraints();
-//		final SetConstraintConjunction<NODE> c = lsc.getContainsConstraint(exp);
 		final Set<SetConstraint<NODE>> c = lsc.getContainsConstraint(exp);
 
 		final Optional<SetConstraint<NODE>> cLits = c.stream().filter(sc -> sc.hasOnlyLiterals()).findFirst();
@@ -464,10 +436,5 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		assert result.hasOnlyLiterals();
 		return result.getLiterals();
-
-//		if (!c.hasOnlyLiterals()) {
-//			throw new AssertionError();
-//		}
-//		return c.getLiterals();
 	}
 }
