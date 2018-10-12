@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
@@ -43,11 +43,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * Transform a Term into an AffineTerm. Result is an auxiliary error term if the
- * input was not affine.
- * 
+ * Transform a Term into an AffineTerm. Result is an auxiliary error term if the input was not affine.
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public class AffineTermTransformer extends TermTransformer {
 	private final Script mScript;
@@ -86,69 +85,67 @@ public class AffineTermTransformer extends TermTransformer {
 				resultIsNotAffine();
 				return;
 			}
-//			} else if (funName.equals("to_real")) {
-//				final AffineTerm result = convertToReal(appTerm);
-//				setResult(result);
-//				return;
-//			} else if (funName.equals("select")) {
-//				final AffineTerm result = new AffineTerm(appTerm);
-//				setResult(result);
-//				return;
-//			} else if (funName.equals("mod")) {
-//				final AffineTerm result;
-//				final Term simplified = SmtUtils.termWithLocalSimplification(
-//						mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
-//				if (simplified instanceof ApplicationTerm) {
-//					result = new AffineTerm((ApplicationTerm) simplified);
-//				} else if (simplified instanceof ConstantTerm) {
-//					result = new AffineTerm(simplified.getSort(), 
-//							SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
-//				} else {
-//					throw new AssertionError(
-//							"should be either ApplicationTerm or ConstantTerm " + simplified);
-//				}
-//				setResult(result);
-//				return;
-//			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
-//				// appTerm is a constant (0-ary function)
-//				final AffineTerm result = new AffineTerm(appTerm);
-//				setResult(result);
-//				return;
-//			} else {
-//				resultIsNotAffine();
-//				return;
-//			}
+			// } else if (funName.equals("to_real")) {
+			// final AffineTerm result = convertToReal(appTerm);
+			// setResult(result);
+			// return;
+			// } else if (funName.equals("select")) {
+			// final AffineTerm result = new AffineTerm(appTerm);
+			// setResult(result);
+			// return;
+			// } else if (funName.equals("mod")) {
+			// final AffineTerm result;
+			// final Term simplified = SmtUtils.termWithLocalSimplification(
+			// mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
+			// if (simplified instanceof ApplicationTerm) {
+			// result = new AffineTerm((ApplicationTerm) simplified);
+			// } else if (simplified instanceof ConstantTerm) {
+			// result = new AffineTerm(simplified.getSort(),
+			// SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
+			// } else {
+			// throw new AssertionError(
+			// "should be either ApplicationTerm or ConstantTerm " + simplified);
+			// }
+			// setResult(result);
+			// return;
+			// } else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
+			// // appTerm is a constant (0-ary function)
+			// final AffineTerm result = new AffineTerm(appTerm);
+			// setResult(result);
+			// return;
+			// } else {
+			// resultIsNotAffine();
+			// return;
+			// }
 		} else if (term instanceof ConstantTerm) {
 			final ConstantTerm constTerm = (ConstantTerm) term;
 			if (constTerm.getSort().isNumericSort()) {
 				final AffineTerm result = convertConstantNumericTerm(constTerm);
 				setResult(result);
 				return;
-			} else {
-				final AffineTerm errorTerm = new AffineTerm(); 
-				setResult(errorTerm);
-				return;
 			}
+			final AffineTerm errorTerm = new AffineTerm();
+			setResult(errorTerm);
+			return;
 		}
 		super.convert(term);
 	}
 
 	/**
 	 * Convert ConstantTerm with numericSort to AffineTerm
-	 * 
+	 *
 	 */
-	private AffineTerm convertConstantNumericTerm(final ConstantTerm constTerm) {
+	private static AffineTerm convertConstantNumericTerm(final ConstantTerm constTerm) {
 		final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
 		final AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
 		return result;
 	}
 
 	/**
-	 * Convert input term of the form "to_real(param)" to affine term.
-	 * If the input term is an integer literal we convert it to a real literal,
-	 * otherwise we consider the "to_real" term as a variable of an affine term.
+	 * Convert input term of the form "to_real(param)" to affine term. If the input term is an integer literal we
+	 * convert it to a real literal, otherwise we consider the "to_real" term as a variable of an affine term.
 	 */
-	private AffineTerm convertToReal(final ApplicationTerm term) {
+	private static AffineTerm convertToReal(final ApplicationTerm term) {
 		if (!term.getFunction().getName().equals("to_real")) {
 			throw new IllegalArgumentException("no to_real term");
 		}
@@ -162,18 +159,17 @@ public class AffineTermTransformer extends TermTransformer {
 			final ConstantTerm constant = (ConstantTerm) param;
 			if (!SmtSortUtils.isIntSort(constant.getSort())) {
 				throw new UnsupportedOperationException();
-			} else {
-				final AffineTerm intTerm = convertConstantNumericTerm(constant);
-				final AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
-				result = realTerm;
 			}
+			final AffineTerm intTerm = convertConstantNumericTerm(constant);
+			final AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
+			result = realTerm;
 		} else {
 			result = new AffineTerm(term);
 		}
 		return result;
 	}
 
-	private boolean isAffineSymbol(final String funName) {
+	private static boolean isAffineSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
 	}
@@ -194,10 +190,6 @@ public class AffineTermTransformer extends TermTransformer {
 			}
 		}
 
-		// if (!appTerm.getSort().isNumericSort()) {
-		// resultIsNotAffine();
-		// return;
-		// }
 		if (appTerm.getParameters().length == 0) {
 			final AffineTerm result = new AffineTerm(appTerm);
 			setResult(result);
