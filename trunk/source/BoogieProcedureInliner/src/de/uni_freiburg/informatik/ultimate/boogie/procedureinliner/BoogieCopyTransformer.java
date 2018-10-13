@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -134,12 +135,22 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gs = (GotoStatement) stat;
 			newStat = new GotoStatement(gs.getLocation(), gs.getLabels());
-		} else if (stat instanceof ForkStatement) {
-			// TODO process expressions (threadID and args) inside the fork statement
-			final ForkStatement fs = (ForkStatement) stat;
-			newStat = new ForkStatement(fs.getLoc(), fs.getThreadID(), fs.getProcedureName(), fs.getArguments());
+		}  else if (stat instanceof ForkStatement) {
+			final ForkStatement forkstmt = (ForkStatement) stat;
+			final Expression[] threadId = forkstmt.getThreadID();
+			final String procName = forkstmt.getProcedureName();
+			final Expression[] arguments = forkstmt.getArguments();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final Expression[] newArguments = processExpressions(arguments);
+			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
+		}  else if (stat instanceof JoinStatement) {
+			final JoinStatement joinstmt = (JoinStatement) stat;
+			final Expression[] threadId = joinstmt.getThreadID();
+			final VariableLHS[] lhs = joinstmt.getLhs();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final VariableLHS[] newLhs = processVariableLHSs(lhs);
+			newStat = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
 		} else {
-			// TODO add case to process JoinStatement
 			throw new UnsupportedOperationException("Cannot process unknown expression: " + stat.getClass().getName());
 		}
 		ModelUtils.copyAnnotations(stat, newStat);
