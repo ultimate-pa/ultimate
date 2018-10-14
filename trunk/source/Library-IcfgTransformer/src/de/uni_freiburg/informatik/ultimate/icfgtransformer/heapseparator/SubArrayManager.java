@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -59,7 +59,7 @@ public class SubArrayManager {
 	/**
 	 * used for caching the sub arrays that this class manages
 	 */
-	private final NestedMap2<IProgramVarOrConst, List<LocationBlock>, IProgramVarOrConst>
+	private final NestedMap2<IProgramVarOrConst, List<StoreLocationBlock>, IProgramVarOrConst>
 		mArrayToLocationBlockListToSubArray;
 
 	Set<IProgramVarOrConst> mAllSubArrays;
@@ -91,7 +91,7 @@ public class SubArrayManager {
 		return "NewArrayIdProvider";// + mArrayToPartitionInformation.toString();
 	}
 
-	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<LocationBlock> projectList) {
+	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<StoreLocationBlock> projectList) {
 		final ArrayGroup arrayGroup = mCsiag.getArrayGroupForArrayPvoc(programVar);
 		assert Objects.nonNull(arrayGroup);
 		if (projectList.size() != arrayGroup.getDimensionality()) {
@@ -120,7 +120,7 @@ public class SubArrayManager {
 	 * @return
 	 */
 	private IProgramVarOrConst constructFreshProgramVarsForIndexPartition(final IProgramVarOrConst arrayPv,
-			final List<LocationBlock> projectList) {
+			final List<StoreLocationBlock> projectList) {
 
 		IProgramVarOrConst freshVar = null;
 		if (arrayPv instanceof LocalBoogieVar) {
@@ -180,10 +180,10 @@ public class SubArrayManager {
 		}
 	}
 
-	private String constructIndexName(final List<LocationBlock> projectList) {
+	private String constructIndexName(final List<StoreLocationBlock> projectList) {
 		final StringBuilder sb = new StringBuilder();
 		String sep = "";
-		for (final LocationBlock lb : projectList) {
+		for (final StoreLocationBlock lb : projectList) {
 			sb.append(sep);
 			sb.append(lb.toString());
 			sep = "_";

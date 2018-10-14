@@ -40,8 +40,7 @@ import java.util.Set;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class LocationBlock {
-//	Set<IProgramVarOrConst> mAssociatedArrayGroup;
+public class StoreLocationBlock {
 
 	/**
 	 * This LocationBlock considers writes only to arrays in mArrayGroup
@@ -53,36 +52,25 @@ public class LocationBlock {
 	 */
 	private final int mDimension;
 
-	private final Set<StoreInfo> mStoreIndexInfos;
+	private final Set<StoreInfo> mStoreInfos;
 
-//	private final Set<Integer> mArrayAccessDimensions;
-
-	public LocationBlock(final Set<StoreInfo> eqc, final ArrayGroup associatedArrayGroup, final int dimension) {
-		mStoreIndexInfos = Collections.unmodifiableSet(eqc);
+	public StoreLocationBlock(final Set<StoreInfo> eqc, final ArrayGroup associatedArrayGroup, final int dimension) {
+		mStoreInfos = Collections.unmodifiableSet(eqc);
 		mArrayGroup = associatedArrayGroup;
 		mDimension = dimension;
-
-//		mArrayAccessDimensions = new HashSet<>();
-//		for (final StoreIndexInfo sii : eqc) {
-//			mArrayAccessDimensions.addAll(sii.getAccessDimensions());
-//		}
 	}
 
 	public boolean contains(final StoreInfo sii) {
-		return mStoreIndexInfos.contains(sii);
+		return mStoreInfos.contains(sii);
 	}
-
-//	public Set<Integer> getAccessDimensions() {
-//		return Collections.unmodifiableSet(mArrayAccessDimensions);
-//	}
 
 	@Override
 	public String toString() {
-		return "locs_" + (mStoreIndexInfos.hashCode() % 100);
+		return "locs_" + (mStoreInfos.hashCode() % 100);
 	}
 
 	public Set<StoreInfo> getLocations() {
-		return mStoreIndexInfos;
+		return mStoreInfos;
 	}
 
 	public ArrayGroup getArrayGroup() {
@@ -99,7 +87,7 @@ public class LocationBlock {
 		int result = 1;
 		result = prime * result + ((mArrayGroup == null) ? 0 : mArrayGroup.hashCode());
 		result = prime * result + mDimension;
-		result = prime * result + ((mStoreIndexInfos == null) ? 0 : mStoreIndexInfos.hashCode());
+		result = prime * result + ((mStoreInfos == null) ? 0 : mStoreInfos.hashCode());
 		return result;
 	}
 
@@ -114,7 +102,7 @@ public class LocationBlock {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final LocationBlock other = (LocationBlock) obj;
+		final StoreLocationBlock other = (StoreLocationBlock) obj;
 		if (mArrayGroup == null) {
 			if (other.mArrayGroup != null) {
 				return false;
@@ -125,15 +113,13 @@ public class LocationBlock {
 		if (mDimension != other.mDimension) {
 			return false;
 		}
-		if (mStoreIndexInfos == null) {
-			if (other.mStoreIndexInfos != null) {
+		if (mStoreInfos == null) {
+			if (other.mStoreInfos != null) {
 				return false;
 			}
-		} else if (!mStoreIndexInfos.equals(other.mStoreIndexInfos)) {
+		} else if (!mStoreInfos.equals(other.mStoreInfos)) {
 			return false;
 		}
 		return true;
 	}
-
-
 }

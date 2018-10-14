@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.SubArra
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayCellAccess;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -83,7 +83,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 */
 	private final SubArrayManager mSubArrayManager;
 
-	private final HashRelation3<ArrayGroup, Integer, LocationBlock> mArrayGroupToDimensionToLocationBlocks;
+	private final HashRelation3<ArrayGroup, Integer, StoreLocationBlock> mArrayGroupToDimensionToLocationBlocks;
 
 //	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
 //	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
@@ -93,7 +93,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	/**
 	 * Map holding the partitioning information.
 	 */
-	private final NestedMap3<EdgeInfo, ArrayCellAccess, Integer, LocationBlock>
+	private final NestedMap3<EdgeInfo, ArrayCellAccess, Integer, StoreLocationBlock>
 		mEdgeInfoToArrayCellAccessToDimensionToLocationBlock;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
@@ -130,7 +130,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 * @param statistics
 	 */
 	public PartitionProjectionTransitionTransformer(final ILogger logger,
-			final NestedMap2<SelectInfo, Integer, LocationBlock> selectInfoToDimensionToLocationBlock,
+			final NestedMap2<SelectInfo, Integer, StoreLocationBlock> selectInfoToDimensionToLocationBlock,
 //			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
 //			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final ComputeStoreInfosAndArrayGroups<?> csiag,
@@ -158,7 +158,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		 */
 		mEdgeInfoToArrayCellAccessToDimensionToLocationBlock = new NestedMap3<>();
 		mArrayGroupToDimensionToLocationBlocks = new HashRelation3<>();
-		for (final Triple<SelectInfo, Integer, LocationBlock> triple
+		for (final Triple<SelectInfo, Integer, StoreLocationBlock> triple
 				: selectInfoToDimensionToLocationBlock.entrySet()) {
 			mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.put(triple.getFirst().getEdgeInfo(),
 					triple.getFirst().getArrayCellAccess(), triple.getSecond(), triple.getThird());
@@ -188,7 +188,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
-		final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock =
+		final NestedMap2<ArrayCellAccess, Integer, StoreLocationBlock> arrayCellAccessToDimensionToLocationBlock =
 				mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.get(edgeInfo);
 
 		final Term transformedFormula;

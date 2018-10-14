@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.LocationBlock;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class HeapPartitionManager {
 
 	// output
-	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
+	private final NestedMap2<SelectInfo, Integer, StoreLocationBlock> mSelectInfoToDimensionToLocationBlock;
 
 	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreInfo>>
 		mArrayGroupToDimensionToStoreIndexInfoPartition;
@@ -69,7 +69,7 @@ public class HeapPartitionManager {
 	/**
 	 * map for caching/unifying LocationBlocks
 	 */
-	private final NestedMap3<Set<StoreInfo>, ArrayGroup, Integer, LocationBlock>
+	private final NestedMap3<Set<StoreInfo>, ArrayGroup, Integer, StoreLocationBlock>
 		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
 
 	private final HeapSeparatorBenchmark mStatistics;
@@ -220,7 +220,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 			final Set<StoreInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
 
-			final LocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
+			final StoreLocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
 			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, locationBlock);
 			mLogger.debug("adding LocationBlock " + locationBlock);
 			mLogger.debug("\t at dimension " + dim + " for " + selectInfo);
@@ -265,11 +265,11 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		assert sanityCheck();
 	}
 
-	private LocationBlock getOrConstructLocationBlock(final Set<StoreInfo> eqc, final ArrayGroup arrayGroup,
+	private StoreLocationBlock getOrConstructLocationBlock(final Set<StoreInfo> eqc, final ArrayGroup arrayGroup,
 			final Integer dim) {
-		LocationBlock result = mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.get(eqc, arrayGroup, dim);
+		StoreLocationBlock result = mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.get(eqc, arrayGroup, dim);
 		if (result == null) {
-			result = new LocationBlock(eqc, arrayGroup, dim);
+			result = new StoreLocationBlock(eqc, arrayGroup, dim);
 			mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.put(eqc, arrayGroup, dim, result);
 
 			mLogger.debug("creating LocationBlock " + result);
@@ -285,14 +285,14 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		return true;
 	}
 
-	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
+	public NestedMap2<SelectInfo, Integer, StoreLocationBlock> getSelectInfoToDimensionToLocationBlock() {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}
 		return mSelectInfoToDimensionToLocationBlock;
 	}
 
-	public LocationBlock getLocationBlock(final SelectInfo si, final Integer dim) {
+	public StoreLocationBlock getLocationBlock(final SelectInfo si, final Integer dim) {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}

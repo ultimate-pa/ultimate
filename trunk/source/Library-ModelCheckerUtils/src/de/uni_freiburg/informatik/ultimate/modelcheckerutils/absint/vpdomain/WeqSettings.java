@@ -74,7 +74,7 @@ public class WeqSettings {
 	/**
 	 * See {@link #closeAfterInplaceMeet()}.
 	 */
-	private final boolean mCloseAfterInplaceMeet = !false;
+	private final boolean mCloseAfterInplaceMeet = false;
 
 	private final boolean mCloseBeforeIsInconsistentCheck = false;
 
