@@ -197,6 +197,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -2619,6 +2620,10 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
+			if (cDec.getType().getUnderlyingType().isIncomplete()) {
+				mTypeHandler.registerNamedIncompleteType(
+						(ICPossibleIncompleteType<?>) cDec.getType().getUnderlyingType(), cDec.getName());
+			}
 			// TODO: add a sizeof-constant for the type??
 			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);

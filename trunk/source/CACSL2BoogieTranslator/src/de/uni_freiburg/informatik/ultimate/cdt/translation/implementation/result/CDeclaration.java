@@ -141,4 +141,10 @@ public class CDeclaration {
 		return mBitfieldSize;
 	}
 
+	public CStorageClass getStorageClass() {
+		return mStorageClass;
+	}
+
+
+
 }

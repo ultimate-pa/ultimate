@@ -35,6 +35,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -86,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -102,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
@@ -146,6 +150,12 @@ public class TypeHandler implements ITypeHandler {
 	private final TranslationSettings mTranslationSettings;
 	private final LocationFactory mLocationFactory;
 	private final StaticObjectsHandler mStaticObjectsHandler;
+
+	/**
+	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form
+	 * typedef X Y, then the pair (X,Y) is in this relation.
+	 */
+	private final HashRelation<ICPossibleIncompleteType<?>, String> mNamedIncompleteTypes = new HashRelation<>();
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -474,12 +484,53 @@ public class TypeHandler implements ITypeHandler {
 
 			final CStruct completeStruct = incompleteStruct.complete(cvar);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
+			if (mNamedIncompleteTypes.getDomain().contains(incompleteStruct)) {
+				redirectNamedType(mNamedIncompleteTypes.getImage(incompleteStruct), completeStruct, node.getParent());
+			}
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
 			mDefinedTypes.put(rslvName, result);
 		}
 		return result;
+	}
+
+	private void redirectNamedType(final Set<String> names, final CStruct completeStruct, final IASTNode hook) {
+		final Set<String> alreadyRedirected = new HashSet<>();
+		for (final String name : names) {
+			constructUpdatedCNamedAndAddToSymbolTable(name, completeStruct, alreadyRedirected, hook);
+		}
+	}
+
+	private CType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStruct completeStruct,
+			final Set<String> alreadyRedirected, final IASTNode hook) {
+		if (alreadyRedirected.contains(name)) {
+			return null;
+		} else {
+			final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
+
+			CType newDefiningType;
+			if ((oldStv.getCType() instanceof CNamed)) {
+				// end of chain not yet reached
+				final CNamed oldDefiningType = (CNamed) oldStv.getCType();
+				final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
+						((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
+				newDefiningType = new CNamed(name, definingTypeOfDefiningType);
+			} else {
+				newDefiningType = completeStruct;
+			}
+
+			final CDeclaration oldCDecl = oldStv.getCDecl();
+			final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
+					oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
+					oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
+			final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
+					newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
+					oldStv.isIntFromPointer());
+			mSymboltable.storeCSymbol(hook, name, val);
+			alreadyRedirected.add(name);
+			return newDefiningType;
+		}
 	}
 
 	@Override
@@ -497,7 +548,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Set<String> getUndefinedTypes() {
-		return mIncompleteType;
+		return Collections.unmodifiableSet(mIncompleteType);
 	}
 
 	@Override
@@ -1026,5 +1077,10 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public void registerNamedIncompleteType(final ICPossibleIncompleteType<?> incompleteType, final String named) {
+		mNamedIncompleteTypes.addPair(incompleteType, named);
 	}
 }
