@@ -32,6 +32,7 @@ known_exceptions = {
 	"SMTLIBException: Cannot handle literal (exists" : True,
 	"IllegalArgumentException: cannot bring into simultaneous update form" : True,
 	"No Boogie because C type is incomplete" : True,
+	"AssertionError: Invalid Procedure" : True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
