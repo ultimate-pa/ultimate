@@ -118,6 +118,7 @@ public final class SmtUtils {
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
 	private static final boolean LOG_SIMPLIFICATION_CALL_ORIGIN = false;
+	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -221,7 +222,7 @@ public final class SmtUtils {
 
 	/**
 	 * Converts a term in CNF and produces an array of conjuncts.
-	 * 
+	 *
 	 * @param mgnScript
 	 * @param services
 	 * @param splitNumericEqualities
@@ -1197,55 +1198,69 @@ public final class SmtUtils {
 	 */
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
+		final Term result;
 		switch (funcname) {
 		case "and":
-			return SmtUtils.and(script, params);
+			result =  SmtUtils.and(script, params);
+			break;
 		case "or":
-			return SmtUtils.or(script, params);
+			result =  SmtUtils.or(script, params);
+			break;
 		case "not":
 			if (params.length != 1) {
 				throw new IllegalArgumentException("no not term");
 			}
-			return SmtUtils.not(script, params[0]);
+			result = SmtUtils.not(script, params[0]);
+			break;
 		case "=":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			return binaryEquality(script, params[0], params[1]);
+			result = binaryEquality(script, params[0], params[1]);
+			break;
 		case "distinct":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			return SmtUtils.distinct(script, params[0], params[1]);
+			result = SmtUtils.distinct(script, params[0], params[1]);
+			break;
 		case "=>":
-			return Util.implies(script, params);
+			result = Util.implies(script, params);
+			break;
 		case "ite":
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
 			}
-			return Util.ite(script, params[0], params[1], params[2]);
+			result = Util.ite(script, params[0], params[1], params[2]);
+			break;
 		case "+":
 		case "bvadd":
-			return SmtUtils.sum(script, funcname, params);
+			result = SmtUtils.sum(script, funcname, params);
+			break;
 		case "-":
 		case "bvminus":
 			if (params.length == 1) {
-				return SmtUtils.neg(script, params[0]);
+				result = SmtUtils.neg(script, params[0]);
+			} else {
+				result = SmtUtils.minus(script, params);
 			}
-			return SmtUtils.minus(script, params);
+			break;
 		case "*":
 		case "bvmul":
-			return SmtUtils.mul(script, funcname, params);
+			result = SmtUtils.mul(script, funcname, params);
+			break;
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
 			}
-			return div(script, params[0], params[1]);
+			result = div(script, params[0], params[1]);
+			break;
 		case "mod":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no mod");
 			}
-			return mod(script, params[0], params[1]);
+			result = mod(script, params[0], params[1]);
+			break;
 		case ">=":
 		case "<=":
 		case ">":
@@ -1253,11 +1268,14 @@ public final class SmtUtils {
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no comparison");
 			}
-			return comparison(script, funcname, params[0], params[1]);
+			result = comparison(script, funcname, params[0], params[1]);
+			break;
 		case "store":
-			return store(script, params[0], params[1], params[2]);
+			result = store(script, params[0], params[1], params[2]);
+			break;
 		case "select":
-			return select(script, params[0], params[1]);
+			result = select(script, params[0], params[1]);
+			break;
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
@@ -1282,10 +1300,15 @@ public final class SmtUtils {
 		case "bvsle":
 		case "bvsgt":
 		case "bvsge":
-			return BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			break;
 		default:
-			return script.term(funcname, indices, null, params);
+			result = script.term(funcname, indices, null, params);
+			break;
 		}
+		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
+				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+		return result;
 	}
 
 	public static Term select(final Script script, final Term array, final Term index) {
