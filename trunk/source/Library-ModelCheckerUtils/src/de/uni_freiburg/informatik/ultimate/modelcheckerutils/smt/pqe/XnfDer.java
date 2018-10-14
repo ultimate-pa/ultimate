@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -126,9 +127,11 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
+				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i]) : "Term not in UltimateNormalForm";
 			}
 			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
 				resultAtoms[i - 1] = substituteAndNormalize(substitution, inputAtoms[i]);
+				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i - 1]) : "Term not in UltimateNormalForm";
 			}
 		}
 		return resultAtoms;
