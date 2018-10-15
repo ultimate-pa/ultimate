@@ -360,6 +360,10 @@ public class TypeSizes {
 				final BigInteger leftValue = extractIntegerValue(((BinaryExpression) expr).getLeft(), cType, hook);
 				final BigInteger rightValue = extractIntegerValue(((BinaryExpression) expr).getRight(), cType, hook);
 
+				if (leftValue == null || rightValue == null) {
+					return null;
+				}
+
 				switch (((BinaryExpression) expr).getOperator()) {
 				case ARITHDIV:
 					return leftValue.divide(rightValue);
