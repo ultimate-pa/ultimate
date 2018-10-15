@@ -82,6 +82,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 		VALIDATORS.put(Body.class, funArrayAllNonNullElementsValidator);
 		VALIDATORS.put(WhileStatement.class, funArrayAllNonNullElementsValidator);
+		VALIDATORS.put(VarList.class, a -> ((VarList) a).getType() != null);
 	}
 
 	public BoogieASTNode(final ILocation location) {

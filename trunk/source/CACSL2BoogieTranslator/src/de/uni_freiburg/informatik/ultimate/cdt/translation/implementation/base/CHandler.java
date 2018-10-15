@@ -2709,6 +2709,7 @@ public class CHandler {
 				// definition, we also need the Declarations as a result
 				result = new DeclarationResult(cDec);
 			}
+			assert translatedType != null : "Variable lists need to have a type";
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
 		}
