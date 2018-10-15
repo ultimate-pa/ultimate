@@ -174,6 +174,10 @@ public class CArray extends CType {
 	@Override
 	public boolean isIncomplete() {
 		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
-		return boundValue.equals(BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER));
+		if (boundValue == null) {
+			return true;
+		} else {
+			return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
+		}
 	}
 }
