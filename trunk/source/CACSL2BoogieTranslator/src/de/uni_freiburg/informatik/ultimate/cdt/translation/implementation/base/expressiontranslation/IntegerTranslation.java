@@ -175,23 +175,21 @@ public class IntegerTranslation extends ExpressionTranslation {
 			funcname = "bitwiseXor";
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftLeftAssign: {
-			final BigInteger integerLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-			if (integerLiteralValue != null) {
-				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
+		case IASTBinaryExpression.op_shiftLeftAssign:
+			final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+			if (shiftLeftLiteralValue != null) {
+				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
 						Operator.ARITHMUL);
 			}
-		}
 			funcname = "shiftLeft";
 			break;
 		case IASTBinaryExpression.op_shiftRight:
-		case IASTBinaryExpression.op_shiftRightAssign: {
-			final BigInteger integerLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-			if (integerLiteralValue != null) {
-				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
+		case IASTBinaryExpression.op_shiftRightAssign:
+			final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+			if (shiftRightLiteralValue != null) {
+				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
 						Operator.ARITHDIV);
 			}
-		}
 			funcname = "shiftRight";
 			break;
 		default:
@@ -499,9 +497,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 				chk1.annotate(assertGeq0);
 				erb.addStatement(assertGeq0);
 
-				final AssertStatement assertLtMax = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, oldWrappedIfNeeded,
-								ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
+				final AssertStatement assertLtMax =
+						new AssertStatement(loc,
+								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+										oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc,
+												maxValuePlusOne.toString())));
 				final Check chk2 = new Check(Spec.UINT_OVERFLOW);
 				chk2.annotate(assertLtMax);
 				erb.addStatement(assertLtMax);
