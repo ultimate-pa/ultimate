@@ -35,6 +35,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -407,6 +408,28 @@ public class TypeSizes {
 				if (stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
+			} else if (expr instanceof FunctionApplication) {
+				final BigInteger leftValue =
+						extractIntegerValue(((FunctionApplication) expr).getArguments()[0], cType, hook);
+				final BigInteger rightValue =
+						extractIntegerValue(((FunctionApplication) expr).getArguments()[1], cType, hook);
+
+				if (leftValue == null || rightValue == null) {
+					return null;
+				}
+
+				if (((FunctionApplication) expr).getIdentifier().contains("bvadd")) {
+					return leftValue.add(rightValue);
+				} else if (((FunctionApplication) expr).getIdentifier().contains("bvmul")) {
+					return leftValue.multiply(rightValue);
+				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsub")) {
+					return leftValue.subtract(rightValue);
+				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsdiv")) {
+					return leftValue.divide(rightValue);
+				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsrem")) {
+					return leftValue.remainder(rightValue);
+				}
+				return null;
 			}
 			return null;
 		}
