@@ -408,14 +408,14 @@ public class FunctionHandler {
 	 *
 	 * @param loc
 	 * @param main
-	 * @param functionName
+	 * @param functionPointer
 	 * @param arguments
 	 * @return
 	 */
 	private Result handleFunctionPointerCall(final ILocation loc, final IDispatcher main,
-			final IASTExpression functionName, final IASTInitializerClause[] arguments) {
-		assert functionName != null : "functionName is null";
-		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
+			final IASTExpression functionPointer, final IASTInitializerClause[] arguments) {
+		assert functionPointer != null : "functionName is null";
+		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionPointer);
 
 		CType calledFuncType = funcNameRex.getLrValue().getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction) && calledFuncType instanceof CPointer) {
@@ -449,13 +449,13 @@ public class FunctionHandler {
 
 		final CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
-		registerFunctionDeclaration(main, loc, null, procName, cFuncWithFP, functionName);
+		registerFunctionDeclaration(main, loc, null, procName, cFuncWithFP, functionPointer);
 
 		final IASTInitializerClause[] newArgs = new IASTInitializerClause[arguments.length + 1];
 		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
-		newArgs[newArgs.length - 1] = functionName;
+		newArgs[newArgs.length - 1] = functionPointer;
 
-		return handleFunctionCallGivenNameAndArguments(main, loc, procName, newArgs, functionName);
+		return handleFunctionCallGivenNameAndArguments(main, loc, procName, newArgs, functionPointer);
 	}
 
 	/**
