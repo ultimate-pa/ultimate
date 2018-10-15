@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -54,7 +56,7 @@ public class ProcedureSignature {
 		for (int i = 0; i < mInParams.size(); i++) {
 			sb.append(times);
 			final ASTType inParam = mInParams.get(i);
-			sb.append(BoogiePrettyPrinter.print(inParam));
+			flattenASTTypeName(inParam, sb);
 			times = "~X~";
 		}
 		if (mTakesVarArgs) {
@@ -65,32 +67,29 @@ public class ProcedureSignature {
 		return sb.toString();
 	}
 
+	private StringBuilder flattenASTTypeName(final ASTType type, final StringBuilder sb) {
+		if (type instanceof StructType) {
+			final StructType structType = (StructType) type;
+			final VarList[] fields = structType.getFields();
+			for (final VarList field : fields) {
+				final StringBuilder flatFieldType = flattenASTTypeName(field.getType(), new StringBuilder());
+				for (int i = 0; i < field.getIdentifiers().length; ++i) {
+					sb.append(flatFieldType);
+				}
+			}
+		} else {
+			sb.append(BoogiePrettyPrinter.print(type));
+		}
+		return sb;
+	}
+
 	@Override
 	public boolean equals(final Object o) {
-		// if (!(o instanceof ProcedureSignature)) {
-		// return false;
-		// }
-		// ProcedureSignature other = (ProcedureSignature) o;
-		// if (this.inParams.size() != other.inParams.size())
-		// return false;
-		// boolean result = true;
-		// result &= (this.returnType != null && this.returnType.equals(other.returnType)) || (this.returnType == null
-		// || other.returnType == null);
-		//
-		// for (int i = 0; i < inParams.size(); i++)
-		// result &= this.inParams.get(i).equals(other.inParams.get(i));
-		// result &= this.takesVarArgs == other.takesVarArgs;
-		// return result;
 		return toString().equals(o.toString());
 	}
 
 	@Override
 	public int hashCode() {
-		// int result = returnType != null ? HashUtils.hashJenkins(31, returnType) : 31;
-		// for (int i = 0; i < inParams.size(); i++)
-		// result += HashUtils.hashJenkins(result, inParams.get(i));
-		// result = HashUtils.hashJenkins(result, takesVarArgs);
-		// return result;
 		return mStringRepresentation.hashCode();
 	}
 }
