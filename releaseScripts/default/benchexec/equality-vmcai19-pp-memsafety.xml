@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="600" cpuCores="2">
+    <option name="--generate-csv" />
+    <option name="--csv-dir">csv</option>
+    
+    <rundefinition name="Automizer">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerBpl.xml</option>
+        <option name="-s">../../../trunk/examples/settings/heapseparator/heapsep-2018-09-18.epf</option>
+    </rundefinition>
+
+    <rundefinition name="HeapSeparator">
+        <option name="-tc">../../../trunk/examples/toolchains/IcfgTransformer.xml</option>
+        <option name="-s">../../../trunk/examples/settings/heapseparator/heapsep-2018-09-18.epf</option>
+    </rundefinition>
+
+    <rundefinition name="Automizer+HeapSeparator">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/heapseparator/heapsep-2018-09-18.epf</option>
+    </rundefinition>
+    
+    <tasks name="Pathprograms">
+        <includesfile>../../../trunk/examples/bench-equality-pp-memsafety.set</includesfile>
+    </tasks>
+
+</benchmark>
