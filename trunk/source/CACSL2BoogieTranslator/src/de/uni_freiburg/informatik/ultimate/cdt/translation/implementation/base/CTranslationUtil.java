@@ -169,6 +169,10 @@ public class CTranslationUtil {
 		}
 	}
 
+	/**
+	 * According to 6.2.5.21 of C11 the structure types and the array types (but not
+	 * the union types) are called aggregate types.
+	 */
 	public static boolean isAggregateType(final CType valueType) {
 		return (valueType instanceof CStruct && !(valueType instanceof CUnion)) || valueType instanceof CArray;
 	}
