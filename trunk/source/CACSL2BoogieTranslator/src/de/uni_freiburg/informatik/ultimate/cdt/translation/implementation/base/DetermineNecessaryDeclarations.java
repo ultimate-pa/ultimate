@@ -161,7 +161,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			final IASTDeclaration decOfName = mLocalSymbolTable.get(name);
 			if (decOfName != null) {
 				// if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
-				// addDependency(currentFunOrStructDef.peek(), decOfName);
 				addDependency(funcDec, decOfName);
 			}
 		} else if (declSpec instanceof IASTNamedTypeSpecifier) {
@@ -186,7 +185,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		} else if (typeId.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
 			final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier();
 			symbolName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
-			// } else if (typeId.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
 		}
 
 		if (symbolName.isEmpty()) {
@@ -231,10 +229,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		final IASTExpression funNameEx = expression.getFunctionNameExpression();
 		if (funNameEx instanceof IASTIdExpression) {
 			final IASTIdExpression idEx = (IASTIdExpression) funNameEx;
-			// IASTFunctionDefinition funcTableEntry = functionTable.get(idEx.getName().toString());
 			final IASTDeclaration decFromFuncTableEntry =
 					getDeclarationFromFuncDefinitionOrFuncDeclarator(mFunctionTable.get(idEx.getName().toString()));
-			// if (funcTableEntry != null)
 			if (decFromFuncTableEntry != null) {
 				addDependency(mCurrentDeclarationStack.peek(), decFromFuncTableEntry);
 			}
@@ -338,12 +334,14 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
 					final String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 					final IASTDeclaration decOfName = mLocalSymbolTable.get(name);
-					if (decOfName != null) { // if it is null, it must reference to a local declaration (of the same
-												// scope..) that we keep anyway
+					if (decOfName != null) {
+						// if it is null, it must reference to a local declaration (of the same
+						// scope..) that we keep anyway
 						addDependency(mCurrentDeclarationStack.peek(), decOfName);
-					} else { // .. or it may reference a global declaration that we haven't seen yet (this may
-								// overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely
-								// clear..
+					} else {
+						// .. or it may reference a global declaration that we haven't seen yet (this may
+						// overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely
+						// clear..
 						mDependencyGraphPreliminaryInverse.put(name, mCurrentDeclarationStack.peek());
 					}
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
@@ -363,9 +361,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 						 */
 						mDependencyGraphPreliminaryInverse.put(name, mCurrentDeclarationStack.peek());
 					}
-					// } else if (declSpec instanceof IASTCompositeTypeSpecifier) {
-					// // declaration is no global declaration but it may contain declarations that are global..
-					// addDependency(mCurrentFunOrStructOrEnumDefOrInitializer.peek(), declaration);
 				} else {
 					addDependency(mCurrentDeclarationStack.peek(), declaration);
 				}
@@ -373,17 +368,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			/*
 			 * things we do for both global or local declarations
 			 */
-
-			// (alex, Dec 17:) not sure what the following code block was supposed to do, removing it for now
-			// for (final IASTDeclarator declarator : cSimpleDecl.getDeclarators()) {
-			// /*
-			// * "typedef declSpec declarators" introduces a dependency from each declarator to
-			// * - the declspec itself if it is a compositeType
-			// * - the declspec's sT entry otherwise
-			// * if (declSpec.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
-			// * case: the declSpecifier references a declaration we have to add to the dependencyGraph
-			// *
-			// */
 
 			String declSpecName = "";
 			if (declSpec instanceof IASTSimpleDeclSpecifier) {
@@ -418,12 +402,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
 			final IASTFunctionDefinition funDef = (IASTFunctionDefinition) declaration;
-			// IASTDeclarator possiblyNestedDeclarator = funDef.getDeclarator();
-			// while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
-			// possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
-			// }
-			// String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
-			// functionTable.put(nameOfInnermostDeclarator, funDef);
 
 			final IASTDeclSpecifier declSpec = funDef.getDeclSpecifier();
 			if (declSpec instanceof IASTNamedTypeSpecifier) {
@@ -671,11 +649,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		final LinkedHashSet<String> entryPoints = new LinkedHashSet<>();// TODO: replace with input from settings
 		if (!mCheckedMethod.equals(SFO.EMPTY) && mFunctionTable.containsKey(mCheckedMethod)) {
 			entryPoints.add(mCheckedMethod);
-			// } else {
-			// throw new IncorrectSyntaxException(new CACSLLocation(translationUnit), "Settings say to check starting
-			// from method "
-			// + checkedMethod + " but no such method is present in the program");
-			// }
 		} else {
 			if (!mCheckedMethod.equals(SFO.EMPTY) && !mFunctionTable.containsKey(mCheckedMethod)) {
 				final String msg = "You specified the starting procedure: " + mCheckedMethod
