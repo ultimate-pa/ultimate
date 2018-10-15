@@ -134,10 +134,10 @@ public class CArray extends CType {
 		}
 
 		final CArray oArr = (CArray) oType;
-		if (!(mValueType.equals(oArr.mValueType))) {
+		if (!mValueType.equals(oArr.mValueType)) {
 			return false;
 		}
-		if (!(mBound.equals(oArr.mBound))) {
+		if (!mBound.equals(oArr.mBound)) {
 			return false;
 		}
 
@@ -156,10 +156,10 @@ public class CArray extends CType {
 		}
 
 		final CArray oArr = (CArray) oType;
-		if (!(mValueType.isCompatibleWith(oArr.mValueType))) {
+		if (!mValueType.isCompatibleWith(oArr.mValueType)) {
 			return false;
 		}
-		if (!(mBound.equals(oArr.mBound))) {
+		if (!mBound.equals(oArr.mBound)) {
 			return false;
 		}
 
@@ -176,8 +176,7 @@ public class CArray extends CType {
 		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
 		if (boundValue == null) {
 			return true;
-		} else {
-			return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
 		}
+		return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
 	}
 }
