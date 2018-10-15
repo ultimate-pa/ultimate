@@ -153,7 +153,6 @@ public class FlatSymbolTable {
 	 */
 	private SymbolTableValue tableFind(final IASTNode hook, final String id, final boolean onlyInnermost) {
 		IASTNode cursor = mCHookSkip.apply(hook);
-		SymbolTableValue result = null;
 		while (cursor != null) {
 			Map<String, SymbolTableValue> scope = null;
 			if (cursor instanceof IASTTranslationUnit) {
@@ -167,10 +166,10 @@ public class FlatSymbolTable {
 				}
 			}
 			if (scope != null) {
-				if (scope.containsKey(id)) {
+				final SymbolTableValue resultCandidate = scope.get(id);
+				if (resultCandidate != null) {
 					// This scope shadows all outer (=upper) scopes
-					result = scope.get(id);
-					break;
+					return resultCandidate;
 				}
 
 				if (onlyInnermost) {
@@ -182,7 +181,8 @@ public class FlatSymbolTable {
 			cursor = cursor.getParent();
 			cursor = mCHookSkip.apply(cursor);
 		}
-		return result;
+		// we did not find the value
+		return null;
 	}
 
 	/**
@@ -201,15 +201,6 @@ public class FlatSymbolTable {
 	 */
 	public boolean containsCSymbol(final IASTNode hook, final String id) {
 		return findCSymbol(hook, id) != null;
-	}
-
-	/**
-	 * Checks whether the entry with the given ID exists (or is shadowed) in the innermost scope
-	 *
-	 * @see FlatSymbolTable#containsCSymbol(IASTNode, String)
-	 */
-	public boolean containsCSymbolInInnermostScope(final IASTNode hook, final String id) {
-		return tableFind(hook, id, true) != null;
 	}
 
 	/**
