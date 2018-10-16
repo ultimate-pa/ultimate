@@ -152,8 +152,8 @@ public class TypeHandler implements ITypeHandler {
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
 	/**
-	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form
-	 * typedef X Y, then the pair (X,Y) is in this relation.
+	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form typedef X
+	 * Y, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<ICPossibleIncompleteType<?>, String> mNamedIncompleteTypes = new HashRelation<>();
 
@@ -505,31 +505,28 @@ public class TypeHandler implements ITypeHandler {
 			final Set<String> alreadyRedirected, final IASTNode hook) {
 		if (alreadyRedirected.contains(name)) {
 			return null;
-		} else {
-			final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
-
-			CType newDefiningType;
-			if ((oldStv.getCType() instanceof CNamed)) {
-				// end of chain not yet reached
-				final CNamed oldDefiningType = (CNamed) oldStv.getCType();
-				final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
-						((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
-				newDefiningType = new CNamed(name, definingTypeOfDefiningType);
-			} else {
-				newDefiningType = completeStruct;
-			}
-
-			final CDeclaration oldCDecl = oldStv.getCDecl();
-			final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
-					oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
-					oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-			final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
-					newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
-					oldStv.isIntFromPointer());
-			mSymboltable.storeCSymbol(hook, name, val);
-			alreadyRedirected.add(name);
-			return newDefiningType;
 		}
+		final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
+
+		CType newDefiningType;
+		if ((oldStv.getCType() instanceof CNamed)) {
+			// end of chain not yet reached
+			final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
+					((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
+			newDefiningType = new CNamed(name, definingTypeOfDefiningType);
+		} else {
+			newDefiningType = completeStruct;
+		}
+
+		final CDeclaration oldCDecl = oldStv.getCDecl();
+		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
+				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
+				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
+		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), newCDecl,
+				oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
+		mSymboltable.storeCSymbol(hook, name, val);
+		alreadyRedirected.add(name);
+		return newDefiningType;
 	}
 
 	@Override
