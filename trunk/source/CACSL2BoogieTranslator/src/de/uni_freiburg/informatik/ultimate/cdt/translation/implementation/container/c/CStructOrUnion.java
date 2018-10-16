@@ -169,7 +169,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	@Override
 	public String toString() {
-		final String structOrUnionPrefix = getPrefix();
+		final String structOrUnionPrefix = getPrefix(mIsStructOrUnion);
 
 		if (isIncomplete()) {
 			return structOrUnionPrefix + "~incomplete~" + getName();
@@ -186,18 +186,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		}
 		sb.append("#");
 		return sb.toString();
-	}
-
-	protected String getPrefix() {
-		switch (mIsStructOrUnion) {
-		case STRUCT:
-			return "STRUCT#";
-		case UNION:
-			return "UNION#";
-		default:
-			throw new AssertionError();
-		}
-
 	}
 
 	@Override
@@ -309,6 +297,18 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 			return ((CStructOrUnion) cType).isStructOrUnion() == StructOrUnion.UNION;
 		} else {
 			return false;
+		}
+	}
+
+
+	public static String getPrefix(final StructOrUnion structOrUnion) {
+		switch (structOrUnion) {
+		case STRUCT:
+			return "STRUCT~";
+		case UNION:
+			return "UNION~";
+		default:
+			throw new AssertionError();
 		}
 	}
 
