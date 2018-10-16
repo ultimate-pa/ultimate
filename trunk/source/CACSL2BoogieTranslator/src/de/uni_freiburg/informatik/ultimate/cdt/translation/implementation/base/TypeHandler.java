@@ -423,8 +423,6 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final IDispatcher main, final IASTCompositeTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		// 2016-12-08 Matthias: it seems like field is never used.
-		final ArrayList<VarList> fields = new ArrayList<>();
 		// TODO : include inactives? what are inactives?
 		final ArrayList<String> fNames = new ArrayList<>();
 		final ArrayList<CType> fTypes = new ArrayList<>();
@@ -436,8 +434,6 @@ public class TypeHandler implements ITypeHandler {
 				for (final CDeclaration declaration : rdec.getDeclarations()) {
 					fNames.add(declaration.getName());
 					fTypes.add(declaration.getType());
-					fields.add(new VarList(loc, new String[] { declaration.getName() },
-							cType2AstType(loc, declaration.getType())));
 					if (mTranslationSettings.useBitpreciseBitfields()) {
 						if (declaration.getBitfieldSize() != -1) {
 							final String msg = "bitfield implementation not yet bitprecise (soundness first)";
