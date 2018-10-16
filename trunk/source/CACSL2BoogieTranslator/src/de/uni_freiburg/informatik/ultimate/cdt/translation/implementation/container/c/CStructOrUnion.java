@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -46,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CStructOrUnion> {
 
 	public enum StructOrUnion {
-		STRUCT,
-		UNION,
+		STRUCT, UNION,
 	}
 
 	private final StructOrUnion mIsStructOrUnion;
@@ -81,9 +79,9 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
-	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames, final CType[] fTypes,
-			final List<Integer> bitFieldWidths) {
-		// FIXME: integrate those flags
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
+			final CType[] fTypes, final List<Integer> bitFieldWidths) {
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		assert name != null;
 		mIsStructOrUnion = isStructOrUnion;
@@ -95,7 +93,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
@@ -161,8 +159,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		return mStructName;
 	}
 
-
-
 	public StructOrUnion isStructOrUnion() {
 		return mIsStructOrUnion;
 	}
@@ -186,45 +182,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		}
 		sb.append("#");
 		return sb.toString();
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		if (o == null) {
-			return false;
-		}
-		if (o == this) {
-			return true;
-		}
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CStructOrUnion)) {
-			return false;
-		}
-
-		final CStructOrUnion oStruct = (CStructOrUnion) oType;
-		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
-			return false;
-		}
-		if (mFieldNames.length != oStruct.mFieldNames.length) {
-			return false;
-		}
-		for (int i = mFieldNames.length - 1; i >= 0; --i) {
-			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
-				return false;
-			}
-		}
-		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
-			return false;
-		}
-		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
-			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	@Override
@@ -267,11 +224,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		return true;
 	}
 
-	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, mFieldNames, mFieldTypes, mStructName);
-	}
-
 	public List<Integer> getBitFieldWidths() {
 		return mBitFieldWidths;
 	}
@@ -295,9 +247,60 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	public static boolean isUnion(final CType cType) {
 		if (cType instanceof CStructOrUnion) {
 			return ((CStructOrUnion) cType).isStructOrUnion() == StructOrUnion.UNION;
-		} else {
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mBitFieldWidths == null) ? 0 : mBitFieldWidths.hashCode());
+		result = prime * result + Arrays.hashCode(mFieldNames);
+		result = prime * result + Arrays.hashCode(mFieldTypes);
+		result = prime * result + (mIsComplete ? 1231 : 1237);
+		result = prime * result + ((mIsStructOrUnion == null) ? 0 : mIsStructOrUnion.hashCode());
+		result = prime * result + ((mStructName == null) ? 0 : mStructName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (o == null) {
 			return false;
 		}
+		if (o == this) {
+			return true;
+		}
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (!(oType instanceof CStructOrUnion)) {
+			return false;
+		}
+
+		final CStructOrUnion oStruct = (CStructOrUnion) oType;
+		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
+			return false;
+		}
+		if (mFieldNames.length != oStruct.mFieldNames.length) {
+			return false;
+		}
+		for (int i = mFieldNames.length - 1; i >= 0; --i) {
+			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
+				return false;
+			}
+		}
+		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
+			return false;
+		}
+		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
+			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 

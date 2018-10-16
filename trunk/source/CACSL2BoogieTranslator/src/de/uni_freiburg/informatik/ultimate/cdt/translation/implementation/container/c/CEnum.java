@@ -36,7 +36,6 @@ import java.util.Arrays;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -72,7 +71,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 *            this enums identifier.
 	 */
 	public CEnum(final String id, final String[] fNames, final Expression[] fValues) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 
 		assert fNames.length == fValues.length;
@@ -84,7 +83,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	}
 
 	public CEnum(final String id) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 
 		mIdentifier = id;
@@ -142,31 +141,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CEnum)) {
-			return false;
-		}
-
-		final CEnum oEnum = (CEnum) oType;
-		if (!(mIdentifier.equals(oEnum.mIdentifier))) {
-			return false;
-		}
-		if (mNames.length != oEnum.mNames.length) {
-			return false;
-		}
-		for (int i = mNames.length - 1; i >= 0; --i) {
-			if (!(mNames[i].equals(oEnum.mNames[i]))) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		return !mIsComplete;
 	}
@@ -203,11 +177,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 		return true;
 	}
 
-	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, mNames, mValues, mIdentifier);
-	}
-
 	/**
 	 * Replace CEnum types by signed int, other types are untouched. According to C11 6.4.4.3.2 an identifier declared
 	 * as an enumeration constant has type int.
@@ -218,5 +187,41 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 			return new CPrimitive(CPrimitives.INT);
 		}
 		return cType;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
+		result = prime * result + (mIsComplete ? 1231 : 1237);
+		result = prime * result + Arrays.hashCode(mNames);
+		result = prime * result + Arrays.hashCode(mValues);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (!(oType instanceof CEnum)) {
+			return false;
+		}
+
+		final CEnum oEnum = (CEnum) oType;
+		if (!(mIdentifier.equals(oEnum.mIdentifier))) {
+			return false;
+		}
+		if (mNames.length != oEnum.mNames.length) {
+			return false;
+		}
+		for (int i = mNames.length - 1; i >= 0; --i) {
+			if (!(mNames[i].equals(oEnum.mNames[i]))) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

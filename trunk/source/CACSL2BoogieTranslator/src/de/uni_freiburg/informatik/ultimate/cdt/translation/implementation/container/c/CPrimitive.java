@@ -33,8 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-
 /**
  * @author Markus Lindenmann
  * @date 13.07.2012
@@ -132,49 +130,10 @@ public class CPrimitive extends CType {
 	private final CPrimitiveCategory mGeneralType;
 
 	public CPrimitive(final CPrimitives type) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		mType = type;
 		mGeneralType = getGeneralType(type);
-	}
-
-	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
-		final CPrimitiveCategory generalType;
-		switch (type) {
-		case COMPLEX_FLOAT:
-		case COMPLEX_DOUBLE:
-		case COMPLEX_LONGDOUBLE:
-		case FLOAT:
-		case DOUBLE:
-		case LONGDOUBLE:
-			generalType = CPrimitiveCategory.FLOATTYPE;
-			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
-			// floats");
-			break;
-		case BOOL:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-		case CHAR:
-			// case CHAR16:
-			// case CHAR32:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-			// case WCHAR:
-			generalType = CPrimitiveCategory.INTTYPE;
-			break;
-		case VOID:
-			generalType = CPrimitiveCategory.VOID;
-			break;
-		default:
-			throw new AssertionError("case missing");
-		}
-		return generalType;
 	}
 
 	/**
@@ -184,7 +143,7 @@ public class CPrimitive extends CType {
 	 *            the C declaration specifier.
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
 			final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
@@ -286,6 +245,45 @@ public class CPrimitive extends CType {
 		mGeneralType = getGeneralType(mType);
 	}
 
+	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
+		final CPrimitiveCategory generalType;
+		switch (type) {
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+		case FLOAT:
+		case DOUBLE:
+		case LONGDOUBLE:
+			generalType = CPrimitiveCategory.FLOATTYPE;
+			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
+			// floats");
+			break;
+		case BOOL:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case CHAR:
+			// case CHAR16:
+			// case CHAR32:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+			// case WCHAR:
+			generalType = CPrimitiveCategory.INTTYPE;
+			break;
+		case VOID:
+			generalType = CPrimitiveCategory.VOID;
+			break;
+		default:
+			throw new AssertionError("case missing");
+		}
+		return generalType;
+	}
+
 	public CPrimitives getType() {
 		return mType;
 	}
@@ -300,26 +298,7 @@ public class CPrimitive extends CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPrimitive) {
-			return mType == ((CPrimitive) oType).mType;
-		}
-		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, mType);
-	}
-
-	@Override
 	public boolean isCompatibleWith(final CType o) {
-		// if (this.type == PRIMITIVE.VOID)
-		// return true;
 		final CType oType = o.getUnderlyingType();
 
 		if (oType instanceof CEnum && mGeneralType == CPrimitiveCategory.INTTYPE) {
@@ -335,6 +314,27 @@ public class CPrimitive extends CType {
 	@Override
 	public boolean isIncomplete() {
 		return mType == CPrimitives.VOID;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mGeneralType == null) ? 0 : mGeneralType.hashCode());
+		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (oType instanceof CPrimitive) {
+			return mType == ((CPrimitive) oType).mType;
+		}
+		return false;
 	}
 
 }

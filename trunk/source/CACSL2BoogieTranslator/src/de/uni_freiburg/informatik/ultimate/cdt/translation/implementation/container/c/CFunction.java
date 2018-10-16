@@ -26,9 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CFunction extends CType {
 
@@ -110,24 +111,6 @@ public class CFunction extends CType {
 		return sb.toString();
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CFunction)) {
-			return false;
-		}
-		final CFunction other = (CFunction) o;
-		if (mParamTypes.length != other.mParamTypes.length) {
-			return false;
-		}
-		boolean result = true;
-		result &= mResultType.equals(other.mResultType);
-		for (int i = 0; i < mParamTypes.length; i++) {
-			result &= mParamTypes[i].getType().equals(other.mParamTypes[i].getType());
-		}
-		result &= mTakesVarArgs == other.mTakesVarArgs;
-		return result;
-	}
-
 	public String functionSignatureAsProcedureName() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
@@ -168,20 +151,49 @@ public class CFunction extends CType {
 	}
 
 	@Override
+	public boolean isIncomplete() {
+		// can a CFunction be incomplete? I never checked that carefully
+		return false;
+	}
+
+	@Override
 	public int hashCode() {
-		int result = HashUtils.hashJenkins(31, mResultType);
-		final CType[] pTypes = new CType[mParamTypes.length];
-		for (int i = 0; i < pTypes.length; i++) {
-			result = HashUtils.hashJenkins(result, mParamTypes[i].getType());
-		}
-		result = HashUtils.hashJenkins(result, mTakesVarArgs);
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(mParamTypes);
+		result = prime * result + ((mResultType == null) ? 0 : mResultType.hashCode());
+		result = prime * result + (mTakesVarArgs ? 1231 : 1237);
 		return result;
 	}
 
 	@Override
-	public boolean isIncomplete() {
-		// can a CFunction be incomplete? I never checked that carefully
-		return false;
+	public boolean equals(final Object o) {
+		if (!(o instanceof CFunction)) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
+
+		final CFunction other = (CFunction) o;
+		if (mParamTypes.length != other.mParamTypes.length) {
+			return false;
+		}
+
+		if (!mResultType.equals(other.mResultType)) {
+			return false;
+		}
+		if (mTakesVarArgs != other.mTakesVarArgs) {
+			return false;
+		}
+
+		for (int i = 0; i < mParamTypes.length; i++) {
+			if (!mParamTypes[i].getType().equals(other.mParamTypes[i].getType())) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 }

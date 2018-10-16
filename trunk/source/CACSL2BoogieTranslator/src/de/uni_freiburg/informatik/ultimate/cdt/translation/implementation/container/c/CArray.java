@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -73,7 +72,7 @@ public class CArray extends CType {
 	 *            the C declaration used.
 	 */
 	public CArray(final RValue bound, final CType valueType) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		mBound = bound;
 		mValueType = valueType;
@@ -124,27 +123,6 @@ public class CArray extends CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
-
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.equals(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	@Override
 	public boolean isCompatibleWith(final CType o) {
 		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
@@ -167,16 +145,41 @@ public class CArray extends CType {
 	}
 
 	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, mBound, mValueType);
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
 		if (boundValue == null) {
 			return true;
 		}
 		return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mBound == null) ? 0 : mBound.hashCode());
+		result = prime * result + ((mValueType == null) ? 0 : mValueType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (!(oType instanceof CArray)) {
+			return false;
+		}
+
+		final CArray oArr = (CArray) oType;
+		if (!mValueType.equals(oArr.mValueType)) {
+			return false;
+		}
+		if (!mBound.equals(oArr.mBound)) {
+			return false;
+		}
+
+		return true;
 	}
 }

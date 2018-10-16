@@ -30,8 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-
 /**
  * @author Markus Lindenmann
  * @date 01.11.2012
@@ -56,7 +54,7 @@ public class CNamed extends CType {
 	 *            the type this named type is referring to.
 	 */
 	public CNamed(final String name, final CType mappedType) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		mName = name;
 		mMappedType = mappedType;
@@ -102,17 +100,6 @@ public class CNamed extends CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		return getUnderlyingType().equals(o);
-	}
-
-	@Override
 	public boolean isCompatibleWith(final CType o) {
 		if (o == null) {
 			return false;
@@ -121,12 +108,27 @@ public class CNamed extends CType {
 	}
 
 	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, getUnderlyingType());
+	public boolean isIncomplete() {
+		return getUnderlyingType().isIncomplete();
 	}
 
 	@Override
-	public boolean isIncomplete() {
-		return getUnderlyingType().isIncomplete();
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mMappedType == null) ? 0 : mMappedType.hashCode());
+		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		return getUnderlyingType().equals(o);
 	}
 }

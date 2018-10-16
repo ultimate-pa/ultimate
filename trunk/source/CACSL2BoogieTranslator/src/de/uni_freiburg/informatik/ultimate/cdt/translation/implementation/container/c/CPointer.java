@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -52,49 +51,13 @@ public class CPointer extends CType {
 	 *            the type, this pointer points to.
 	 */
 	public CPointer(final CType pointsToType) {
-		// FIXME: integrate those flags
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		mPointsToType = pointsToType;
 	}
 
 	public CType getPointsToType() {
 		return mPointsToType;
-	}
-
-	@Override
-	public String toString() {
-		CPointer pointer = this;
-		CType pointsTo = null;
-		int i = 1;
-		while (true) {
-			pointsTo = pointer.getPointsToType();
-			if (pointsTo instanceof CPointer) {
-				pointer = (CPointer) pointsTo;
-				i++;
-			} else {
-				break;
-			}
-		}
-
-		if (pointsTo instanceof CStructOrUnion) {
-			return CoreUtil.repeat(i, "*") + ((CStructOrUnion) pointsTo).getName();
-		}
-		return CoreUtil.repeat(i, "*") + pointsTo.toString();
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPointer) {
-			return mPointsToType.equals(((CPointer) oType).mPointsToType);
-		}
-		return false;
 	}
 
 	@Override
@@ -119,13 +82,53 @@ public class CPointer extends CType {
 	}
 
 	@Override
-	public int hashCode() {
-		return HashUtils.hashJenkins(31, mPointsToType);
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		// pointer is never incomplete - even if it points to an incomplete type!
 		return false;
 	}
+
+	@Override
+	public String toString() {
+		CPointer pointer = this;
+		CType pointsTo = null;
+		int i = 1;
+		while (true) {
+			pointsTo = pointer.getPointsToType();
+			if (pointsTo instanceof CPointer) {
+				pointer = (CPointer) pointsTo;
+				i++;
+			} else {
+				break;
+			}
+		}
+
+		if (pointsTo instanceof CStructOrUnion) {
+			return CoreUtil.repeat(i, "*") + ((CStructOrUnion) pointsTo).getName();
+		}
+		return CoreUtil.repeat(i, "*") + pointsTo.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mPointsToType == null) ? 0 : mPointsToType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (oType instanceof CPointer) {
+			return mPointsToType.equals(((CPointer) oType).mPointsToType);
+		}
+		return false;
+	}
+
 }

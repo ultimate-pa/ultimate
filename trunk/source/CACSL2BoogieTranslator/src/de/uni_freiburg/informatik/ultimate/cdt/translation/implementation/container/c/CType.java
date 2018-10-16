@@ -186,4 +186,46 @@ public abstract class CType {
 	public boolean isVoidType() {
 		return getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (mIsConst ? 1231 : 1237);
+		result = prime * result + (mIsExtern ? 1231 : 1237);
+		result = prime * result + (mIsInline ? 1231 : 1237);
+		result = prime * result + (mIsRestrict ? 1231 : 1237);
+		result = prime * result + (mIsVolatile ? 1231 : 1237);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final CType other = (CType) obj;
+		if (mIsConst != other.mIsConst) {
+			return false;
+		}
+		if (mIsExtern != other.mIsExtern) {
+			return false;
+		}
+		if (mIsInline != other.mIsInline) {
+			return false;
+		}
+		if (mIsRestrict != other.mIsRestrict) {
+			return false;
+		}
+		if (mIsVolatile != other.mIsVolatile) {
+			return false;
+		}
+		return true;
+	}
 }
