@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -195,9 +195,9 @@ public class ExpressionResultTransformer {
 				result = new ExpressionResultBuilder().addAllExceptLrValue(old).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
-			} else if (underlyingType instanceof CStruct) {
+			} else if (underlyingType instanceof CStructOrUnion) {
 				final ExpressionResult rex =
-						readStructFromHeap(old, loc, hlv.getAddress(), (CStruct) underlyingType, hook);
+						readStructFromHeap(old, loc, hlv.getAddress(), (CStructOrUnion) underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
 				result = new ExpressionResultBuilder().addAllExceptLrValue(old, rex).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CNamed) {
@@ -232,7 +232,7 @@ public class ExpressionResultTransformer {
 	 *         items inside the StructConstructor correctly
 	 */
 	ExpressionResult readStructFromHeap(final ExpressionResult old, final ILocation loc,
-			final Expression structOnHeapAddress, final CStruct structType, final IASTNode hook) {
+			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook) {
 
 		final Expression startAddress = structOnHeapAddress;
 		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
@@ -294,7 +294,7 @@ public class ExpressionResultTransformer {
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
-			} else if (underlyingType instanceof CStruct) {
+			} else if (underlyingType instanceof CStructOrUnion) {
 
 				final Expression innerStructOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i, hook);
@@ -305,7 +305,7 @@ public class ExpressionResultTransformer {
 						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
 
 				final ExpressionResult fieldRead =
-						readStructFromHeap(old, loc, innerStructAddress, (CStruct) underlyingType, hook);
+						readStructFromHeap(old, loc, innerStructAddress, (CStructOrUnion) underlyingType, hook);
 
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
@@ -387,8 +387,8 @@ public class ExpressionResultTransformer {
 			final Expression readAddress =
 					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
 			final ExpressionResult readRex;
-			if (arrayValueType instanceof CStruct) {
-				readRex = readStructFromHeap(old, loc, readAddress, (CStruct) arrayValueType, hook);
+			if (arrayValueType instanceof CStructOrUnion) {
+				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook);
 			} else {
 				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType(), hook);
 			}
@@ -594,7 +594,7 @@ public class ExpressionResultTransformer {
 		if (newType instanceof CFunction) {
 			throw new AssertionError("cannot convert to CFunction");
 		}
-		if (newType instanceof CStruct) {
+		if (newType instanceof CStructOrUnion) {
 			throw new UnsupportedSyntaxException(loc, "conversion to CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
@@ -629,7 +629,7 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		}
-		if (oldType instanceof CStruct) {
+		if (oldType instanceof CStructOrUnion) {
 			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
@@ -673,7 +673,7 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		}
-		if (oldType instanceof CStruct) {
+		if (oldType instanceof CStructOrUnion) {
 			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
@@ -703,7 +703,7 @@ public class ExpressionResultTransformer {
 			throw new AssertionError("cannot convert from CArray");
 		} else if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
-		} else if (oldType instanceof CStruct) {
+		} else if (oldType instanceof CStructOrUnion) {
 			if (newType.getType() == CPrimitives.VOID) {
 				// ok: we just keep the old value but change the type
 				// alternative might be to set the value to null because it should never be used
@@ -748,7 +748,7 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		}
-		if (oldType instanceof CStruct) {
+		if (oldType instanceof CStructOrUnion) {
 			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);

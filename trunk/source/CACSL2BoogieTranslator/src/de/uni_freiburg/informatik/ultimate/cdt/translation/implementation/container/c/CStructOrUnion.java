@@ -43,7 +43,14 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> {
+public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CStructOrUnion> {
+
+	public enum StructOrUnion {
+		STRUCT,
+		UNION,
+	}
+
+	private final StructOrUnion mIsStructOrUnion;
 	/**
 	 * Field names.
 	 */
@@ -74,10 +81,12 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
-	public CStruct(final String name, final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames, final CType[] fTypes,
+			final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags
 		super(false, false, false, false, false);
 		assert name != null;
+		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
 		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
@@ -85,10 +94,11 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 		mIsComplete = true;
 	}
 
-	public CStruct(final String name) {
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
 		// FIXME: integrate those flags
 		super(false, false, false, false, false);
 		assert name != null && !name.isEmpty();
+		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = new String[0];
 		mFieldTypes = new CType[0];
 		mBitFieldWidths = Collections.emptyList();
@@ -151,6 +161,12 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 		return mStructName;
 	}
 
+
+
+	public StructOrUnion isStructOrUnion() {
+		return mIsStructOrUnion;
+	}
+
 	@Override
 	public String toString() {
 		final String structOrUnionPrefix = getPrefix();
@@ -173,7 +189,15 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 	}
 
 	protected String getPrefix() {
-		return "STRUCT#";
+		switch (mIsStructOrUnion) {
+		case STRUCT:
+			return "STRUCT#";
+		case UNION:
+			return "UNION#";
+		default:
+			throw new AssertionError();
+		}
+
 	}
 
 	@Override
@@ -188,11 +212,14 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 			return false;
 		}
 		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CStruct)) {
+		if (!(oType instanceof CStructOrUnion)) {
 			return false;
 		}
 
-		final CStruct oStruct = (CStruct) oType;
+		final CStructOrUnion oStruct = (CStructOrUnion) oType;
+		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
+			return false;
+		}
 		if (mFieldNames.length != oStruct.mFieldNames.length) {
 			return false;
 		}
@@ -213,11 +240,12 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 	}
 
 	@Override
-	public CStruct complete(final CStruct cvar) {
+	public CStructOrUnion complete(final CStructOrUnion cvar) {
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
-		return new CStruct(mStructName, cvar.mFieldNames, cvar.mFieldTypes, cvar.getBitFieldWidths());
+		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mFieldNames, cvar.mFieldTypes,
+				cvar.getBitFieldWidths());
 	}
 
 	@Override
@@ -232,11 +260,11 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 			return true;
 		}
 		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CStruct)) {
+		if (!(oType instanceof CStructOrUnion)) {
 			return false;
 		}
 
-		final CStruct oStruct = (CStruct) oType;
+		final CStructOrUnion oStruct = (CStructOrUnion) oType;
 		if (mFieldNames.length != oStruct.mFieldNames.length) {
 			return false;
 		}
@@ -274,6 +302,14 @@ public class CStruct extends CType implements ICPossibleIncompleteType<CStruct> 
 			return -1;
 		}
 		return getBitFieldWidths().get(idx);
+	}
+
+	public static boolean isUnion(final CType cType) {
+		if (cType instanceof CStructOrUnion) {
+			return ((CStructOrUnion) cType).isStructOrUnion() == StructOrUnion.UNION;
+		} else {
+			return false;
+		}
 	}
 
 }

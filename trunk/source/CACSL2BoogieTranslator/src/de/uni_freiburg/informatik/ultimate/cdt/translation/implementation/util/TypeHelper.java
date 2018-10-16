@@ -36,9 +36,9 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 
 /**
@@ -65,9 +65,12 @@ public class TypeHelper {
 			final IASTCompositeTypeSpecifier comp = (IASTCompositeTypeSpecifier) ds;
 			final String rslvName = fs.applyMultiparseRenaming(ds.getContainingFilename(), comp.getName().toString());
 			if (comp.getKey() == IASTCompositeTypeSpecifier.k_union) {
-				return new CUnion(rslvName);
+				return new CStructOrUnion(StructOrUnion.UNION, rslvName);
+			} else if (comp.getKey() == IASTCompositeTypeSpecifier.k_struct) {
+				return new CStructOrUnion(StructOrUnion.STRUCT, rslvName);
+			} else {
+				throw new AssertionError();
 			}
-			return new CStruct(rslvName);
 		} else if (ds instanceof IASTElaboratedTypeSpecifier) {
 			final IASTElaboratedTypeSpecifier elab = (IASTElaboratedTypeSpecifier) ds;
 			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct

@@ -55,13 +55,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -174,7 +171,8 @@ public class CTranslationUtil {
 	 * the union types) are called aggregate types.
 	 */
 	public static boolean isAggregateType(final CType valueType) {
-		return (valueType instanceof CStruct && !(valueType instanceof CUnion)) || valueType instanceof CArray;
+		return (valueType instanceof CStructOrUnion && (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
+				|| valueType instanceof CArray);
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes,
@@ -224,7 +222,7 @@ public class CTranslationUtil {
 		return newResult.build();
 	}
 
-	public static int findIndexOfStructField(final CStruct targetCType, final String rootDesignator) {
+	public static int findIndexOfStructField(final CStructOrUnion targetCType, final String rootDesignator) {
 		for (int i = 0; i < targetCType.getFieldCount(); i++) {
 			if (targetCType.getFieldIds()[i].equals(rootDesignator)) {
 				return i;
@@ -235,7 +233,7 @@ public class CTranslationUtil {
 
 	public static LocalLValue constructOffHeapStructAccessLhs(final ILocation loc,
 			final LocalLValue structBaseLhsToInitialize, final int i) {
-		final CStruct cStructType = (CStruct) structBaseLhsToInitialize.getCType().getUnderlyingType();
+		final CStructOrUnion cStructType = (CStructOrUnion) structBaseLhsToInitialize.getCType().getUnderlyingType();
 
 		final String fieldId = cStructType.getFieldIds()[i];
 

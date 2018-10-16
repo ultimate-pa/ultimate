@@ -194,9 +194,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -1864,7 +1863,7 @@ public class CHandler {
 			// are we in prerun mode?
 			if (mIsPrerun) {
 				// all unions should be on heap
-				if (cDec.getType().getUnderlyingType() instanceof CUnion && storageClass != CStorageClass.TYPEDEF) {
+				if (CStructOrUnion.isUnion(cDec.getType().getUnderlyingType()) && storageClass != CStorageClass.TYPEDEF) {
 					addToVariablesOnHeap(d);
 				}
 			}
@@ -2524,7 +2523,7 @@ public class CHandler {
 			}
 			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
 			final CType type = value.getCType().getUnderlyingType();
-			if (type instanceof CArray || type instanceof CStruct) {
+			if (type instanceof CArray || type instanceof CStructOrUnion) {
 				addToVariablesOnHeap(value.getDeclarationNode());
 			}
 		}

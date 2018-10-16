@@ -63,9 +63,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -220,9 +219,9 @@ public class InitializationHandler {
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, targetCType, initInfoIfAny, hook);
-		} else if (targetCType instanceof CStruct) {
+		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
-			return initCStruct(loc, lhsIfAny, (CStruct) targetCType, initInfoIfAny, onHeap, hook);
+			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap, hook);
 		} else if (targetCType instanceof CArray) {
 			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
 					determineIfSophisticatedArrayInit(initInfoIfAny), hook);
@@ -275,7 +274,7 @@ public class InitializationHandler {
 		return initializer.build();
 	}
 
-	private ExpressionResult initCStruct(final ILocation loc, final LRValue lhsIfAny, final CStruct cStructType,
+	private ExpressionResult initCStruct(final ILocation loc, final LRValue lhsIfAny, final CStructOrUnion cStructType,
 			final InitializerInfo initInfo, final boolean onHeap, final IASTNode hook) {
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
 
@@ -296,7 +295,7 @@ public class InitializationHandler {
 
 		for (int i = 0; i < cStructType.getFieldCount(); i++) {
 
-			if (cStructType instanceof CUnion && onHeap && !initInfo.hasInitInfoForIndex(i)) {
+			if (CStructOrUnion.isUnion(cStructType) && onHeap && !initInfo.hasInitInfoForIndex(i)) {
 				// in on-heap case: skip assignments to fields of unions except for the one that is really written
 				continue;
 			}
@@ -318,7 +317,7 @@ public class InitializationHandler {
 				final InitializerInfo currentFieldInitializerRawIfAny =
 						initInfo.hasInitInfoForIndex(i) ? initInfo.getInitInfoForIndex(i) : null;
 
-				if (cStructType instanceof CUnion && !initInfo.hasInitInfoForIndex(i)) {
+				if (CStructOrUnion.isUnion(cStructType) && !initInfo.hasInitInfoForIndex(i)) {
 					assert !onHeap;
 					currentFieldInitialization = makeDefaultOrNondetInitialization(loc, currentFieldLhs,
 							currentFieldUnderlyingType, onHeap, true, hook);
@@ -335,7 +334,7 @@ public class InitializationHandler {
 				fieldLrValues.add(currentFieldInitialization.getLrValue());
 			}
 
-			if (cStructType instanceof CUnion && onHeap && initInfo.hasInitInfoForIndex(i)) {
+			if (CStructOrUnion.isUnion(cStructType) && onHeap && initInfo.hasInitInfoForIndex(i)) {
 				// only the first field of a union is initialized
 				break;
 			}
@@ -502,8 +501,8 @@ public class InitializationHandler {
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList(), hook);
 			initialization.addStatements(defaultInit);
 			return initialization.build();
-		} else if (cType instanceof CStruct) {
-			final CStruct cStructType = (CStruct) cType;
+		} else if (cType instanceof CStructOrUnion) {
+			final CStructOrUnion cStructType = (CStructOrUnion) cType;
 
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
@@ -517,7 +516,7 @@ public class InitializationHandler {
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 
-				if (cType instanceof CUnion) {
+				if (CStructOrUnion.isUnion(cType)) {
 					// only the first field in the struct that we save for a union is initialized
 					break;
 				}
@@ -569,8 +568,8 @@ public class InitializationHandler {
 				initializer.setLrValue(initializationValue);
 			}
 			return initializer.build();
-		} else if (cType instanceof CStruct) {
-			final CStruct cStructType = (CStruct) cType;
+		} else if (cType instanceof CStructOrUnion) {
+			final CStructOrUnion cStructType = (CStructOrUnion) cType;
 
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
@@ -591,7 +590,7 @@ public class InitializationHandler {
 				}
 
 				final ExpressionResult fieldDefaultInit;
-				if (cType instanceof CUnion && i != 0) {
+				if (CStructOrUnion.isUnion(cType) && i != 0) {
 					/*
 					 * In case of a union, all fields not mentioned in the initializer are havocced, thus their default
 					 * initialization is a fresh auxiliary variable. However there is one exception: the first field is
@@ -925,7 +924,7 @@ public class InitializationHandler {
 
 	public HeapLValue constructAddressForStructField(final ILocation loc, final HeapLValue baseAddress,
 			final int fieldIndex, final IASTNode hook) {
-		final CStruct cStructType = (CStruct) baseAddress.getCType().getUnderlyingType();
+		final CStructOrUnion cStructType = (CStructOrUnion) baseAddress.getCType().getUnderlyingType();
 
 		final CPrimitive sizeT = mTypeSetAndOffsetComputer.getSizeT();
 
@@ -1025,7 +1024,7 @@ public class InitializationHandler {
 			}
 		}
 
-		if (targetCType instanceof CArray || targetCType instanceof CStruct) {
+		if (targetCType instanceof CArray || targetCType instanceof CStructOrUnion) {
 			// // aggregate or union type
 			return constructIndexToInitInfo(loc, initializerResult.getList(), targetCType, hook);
 			// } else if (targetCType instanceof CStruct) {
@@ -1061,7 +1060,7 @@ public class InitializationHandler {
 
 	private InitializerInfo constructIndexToInitInfo(final ILocation loc,
 			final List<InitializerResult> initializerResults, final CType targetCType, final IASTNode hook) {
-		assert targetCType instanceof CArray || targetCType instanceof CStruct;
+		assert targetCType instanceof CArray || targetCType instanceof CStructOrUnion;
 
 		final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
 
@@ -1077,7 +1076,7 @@ public class InitializationHandler {
 					throw new UnsupportedOperationException("varlenght not yet supported here");
 				}
 			} else {
-				bound = ((CStruct) targetCType).getFieldCount();
+				bound = ((CStructOrUnion) targetCType).getFieldCount();
 			}
 		}
 
@@ -1088,16 +1087,16 @@ public class InitializationHandler {
 		int currentCellIndex = -1;
 		while (currentCellIndex < bound - 1 && !rest.isEmpty()) {
 			if (rest.peekFirst().hasRootDesignator()) {
-				assert targetCType instanceof CStruct : "array designators not yet supported and should not (yet)"
+				assert targetCType instanceof CStructOrUnion : "array designators not yet supported and should not (yet)"
 						+ " show up here";
-				currentCellIndex = CTranslationUtil.findIndexOfStructField((CStruct) targetCType,
+				currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
 						rest.peekFirst().getRootDesignator());
 			} else {
 				currentCellIndex++;
 			}
 
-			if (targetCType instanceof CStruct) {
-				cellType = ((CStruct) targetCType).getFieldTypes()[currentCellIndex];
+			if (targetCType instanceof CStructOrUnion) {
+				cellType = ((CStructOrUnion) targetCType).getFieldTypes()[currentCellIndex];
 			}
 
 			/*

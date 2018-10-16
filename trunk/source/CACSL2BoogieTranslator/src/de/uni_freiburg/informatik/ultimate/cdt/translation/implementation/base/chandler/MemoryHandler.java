@@ -104,7 +104,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -672,8 +672,8 @@ public class MemoryHandler {
 			return getWriteCallEnum(loc, hlv, value, hook);
 		} else if (realValueType instanceof CPointer) {
 			return getWriteCallPointer(loc, hlv, value, hook);
-		} else if (realValueType instanceof CStruct) {
-			return getWriteCallStruct(loc, hlv, value, (CStruct) realValueType, isStaticInitialization, hook);
+		} else if (realValueType instanceof CStructOrUnion) {
+			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, isStaticInitialization, hook);
 		} else if (realValueType instanceof CArray) {
 			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, isStaticInitialization, hook);
 		} else {
@@ -2316,7 +2316,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallStruct(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CStruct valueType, final boolean isStaticInitialization, final IASTNode hook) {
+			final CStructOrUnion valueType, final boolean isStaticInitialization, final IASTNode hook) {
 		final List<Statement> stmt = new ArrayList<>();
 		for (final String fieldId : valueType.getFieldIds()) {
 			final Expression startAddress = hlv.getAddress();

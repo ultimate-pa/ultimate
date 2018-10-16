@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
@@ -70,7 +70,7 @@ public class AuxVarInfoBuilder {
 		final AUXVAR auxVarType;
 		if (cType instanceof CArray) {
 			auxVarType = SFO.AUXVAR.ARRAYINIT;
-		} else if (cType instanceof CStruct) {
+		} else if (cType instanceof CStructOrUnion) {
 			auxVarType = SFO.AUXVAR.STRUCTINIT;
 		} else {
 			throw new UnsupportedOperationException();

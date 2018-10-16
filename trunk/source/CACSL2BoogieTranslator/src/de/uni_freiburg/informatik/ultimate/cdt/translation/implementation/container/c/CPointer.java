@@ -76,8 +76,8 @@ public class CPointer extends CType {
 			}
 		}
 
-		if (pointsTo instanceof CStruct) {
-			return CoreUtil.repeat(i, "*") + ((CStruct) pointsTo).getName();
+		if (pointsTo instanceof CStructOrUnion) {
+			return CoreUtil.repeat(i, "*") + ((CStructOrUnion) pointsTo).getName();
 		}
 		return CoreUtil.repeat(i, "*") + pointsTo.toString();
 	}

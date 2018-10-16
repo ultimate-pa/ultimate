@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.BitfieldInformation;
@@ -117,7 +117,7 @@ public class StructHandler {
 				? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
 				: fieldOwner.getLrValue().getUnderlyingType());
 
-		final CStruct cStructType = (CStruct) foType.getUnderlyingType();
+		final CStructOrUnion cStructType = (CStructOrUnion) foType.getUnderlyingType();
 		final CType cFieldType = cStructType.getFieldType(field);
 		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
 
@@ -150,9 +150,9 @@ public class StructHandler {
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
 
-			if (cStructType instanceof CUnion) {
+			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
 				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
-						(CUnion) cStructType, fieldOwnerHlv, node));
+						cStructType, fieldOwnerHlv, node));
 			}
 		} else if (fieldOwner.getLrValue() instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.getLrValue();
@@ -165,9 +165,9 @@ public class StructHandler {
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = new LocalLValue(slhs, cFieldType, bi);
 
-			if (cStructType instanceof CUnion) {
+			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
 				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
-						(CUnion) cStructType, lVal, node));
+						cStructType, lVal, node));
 			}
 		}
 
@@ -183,8 +183,9 @@ public class StructHandler {
 	}
 
 	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final IDispatcher main, final ILocation loc,
-			final String field, final List<ExpressionResult> unionFieldToCType, final CUnion foType,
+			final String field, final List<ExpressionResult> unionFieldToCType, final CStructOrUnion foType,
 			final LRValue fieldOwner, final IASTNode hook) {
+		assert foType.isStructOrUnion() == StructOrUnion.UNION;
 
 		List<ExpressionResult> result;
 		if (unionFieldToCType == null) {
@@ -227,7 +228,7 @@ public class StructHandler {
 	}
 
 	public Result readFieldInTheStructAtAddress(final ILocation loc, final int fieldIndex,
-			final Expression structAddress, final CStruct structType, final IASTNode hook) {
+			final Expression structAddress, final CStructOrUnion structType, final IASTNode hook) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 
@@ -252,7 +253,7 @@ public class StructHandler {
 	}
 
 	Expression computeStructFieldOffset(final MemoryHandler memoryHandler, final ILocation loc, final int fieldIndex,
-			final Expression addressOffsetOfFieldOwner, final CStruct structType, final IASTNode hook) {
+			final Expression addressOffsetOfFieldOwner, final CStructOrUnion structType, final IASTNode hook) {
 		if (structType == null) {
 			throw new IncorrectSyntaxException(loc, "Incorrect or unexpected field owner!");
 		}

@@ -54,9 +54,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -80,7 +80,7 @@ public class TypeSizeAndOffsetComputer {
 	private final LinkedHashSet<Axiom> mAxioms;
 
 	private final HashMap<CType, SizeTValue> mTypeSizeCache;
-	private final HashMap<CStruct, Expression[]> mStructOffsets;
+	private final HashMap<CStructOrUnion, Expression[]> mStructOffsets;
 	private final ITypeHandler mTypeHandler;
 
 	private final TypeSizes mTypeSizes;
@@ -125,7 +125,7 @@ public class TypeSizeAndOffsetComputer {
 	 * @return An Expression that represents the offset (in bytes) at which a certain field of a stuct is stored (on the
 	 *         heap).
 	 */
-	public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final int fieldIndex,
+	public Expression constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex,
 			final IASTNode hook) {
 		if (!mTypeSizeCache.containsKey(cStruct)) {
 			assert !mStructOffsets.containsKey(cStruct) : "both or none";
@@ -136,7 +136,7 @@ public class TypeSizeAndOffsetComputer {
 		return offsets[fieldIndex];
 	}
 
-	public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final String fieldId,
+	public Expression constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final String fieldId,
 			final IASTNode hook) {
 		final int fieldIndex = Arrays.asList(cStruct.getFieldIds()).indexOf(fieldId);
 		return constructOffsetForField(loc, cStruct, fieldIndex, hook);
@@ -163,7 +163,7 @@ public class TypeSizeAndOffsetComputer {
 	/**
 	 * Construct Expression that represents the field of a struct or union.
 	 */
-	private Expression constructTypeSizeConstantForStructField(final ILocation loc, final CStruct cStruct,
+	private Expression constructTypeSizeConstantForStructField(final ILocation loc, final CStructOrUnion cStruct,
 			final int fieldNumber) {
 		final String fieldId = cStruct.getFieldIds()[fieldNumber];
 		final String resultId = SFO.OFFSET + cStruct.toString() + "~" + fieldId;
@@ -198,8 +198,8 @@ public class TypeSizeAndOffsetComputer {
 					sizeTValue = constructSizeTValue_Primitive(loc, (CPrimitive) underlyingType);
 				} else if (underlyingType instanceof CArray) {
 					sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType, hook);
-				} else if (underlyingType instanceof CStruct) {
-					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStruct) underlyingType, hook);
+				} else if (underlyingType instanceof CStructOrUnion) {
+					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStructOrUnion) underlyingType, hook);
 				} else {
 					throw new UnsupportedOperationException("Unsupported type" + underlyingType);
 				}
@@ -244,7 +244,7 @@ public class TypeSizeAndOffsetComputer {
 		return result;
 	}
 
-	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStruct cStruct,
+	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStructOrUnion cStruct,
 			final IASTNode hook) {
 		if (cStruct.isIncomplete()) {
 			// according to C11 6.5.3.4.1
@@ -260,7 +260,7 @@ public class TypeSizeAndOffsetComputer {
 			final CType fieldType = cStruct.getFieldTypes()[i];
 
 			final Expression offset;
-			if (cStruct instanceof CUnion) {
+			if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
 				offset = mTypeSizes.constructLiteralForIntegerType(loc, getSizeT(), BigInteger.ZERO);
 			} else {
 				final SizeTValue sumOfPreceedingFields =
@@ -283,7 +283,7 @@ public class TypeSizeAndOffsetComputer {
 		}
 
 		final SizeTValueAggregator aggregator;
-		if (cStruct instanceof CUnion) {
+		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
 			aggregator = new SizeTValueAggregator_Max();
 		} else {
 			aggregator = new SizeTValueAggregator_Add();
