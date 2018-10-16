@@ -456,26 +456,25 @@ public class TypeHandler implements ITypeHandler {
 		final String cId = node.getName().toString();
 		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 
-		CStructOrUnion cvar;
-		String name = null;
+		final StructOrUnion structOrUnion;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
-			name = "STRUCT~" + rslvName;
-			cvar = new CStructOrUnion(StructOrUnion.STRUCT, rslvName, fNames.toArray(new String[fNames.size()]),
-					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+			structOrUnion = StructOrUnion.STRUCT;
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			name = "UNION~" + rslvName;
-			cvar = new CStructOrUnion(StructOrUnion.UNION, rslvName, fNames.toArray(new String[fNames.size()]),
-					fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+			structOrUnion = StructOrUnion.UNION;
 		} else {
 			throw new UnsupportedOperationException();
 		}
 
+		final String identifier = CStructOrUnion.getPrefix(structOrUnion) + rslvName;
+		final CStructOrUnion cvar = new CStructOrUnion(structOrUnion, rslvName, fNames.toArray(new String[fNames.size()]),
+				fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+
 		// TODO : boogie type
-		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, name, new ASTType[0]);
+		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
 		final ASTType type = namedType;
 		final TypesResult result = new TypesResult(type, false, false, cvar);
 
-		if (mIncompleteType.remove(name)) {
+		if (mIncompleteType.remove(identifier)) {
 			final TypesResult typeResult = mDefinedTypes.get(rslvName);
 			final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
