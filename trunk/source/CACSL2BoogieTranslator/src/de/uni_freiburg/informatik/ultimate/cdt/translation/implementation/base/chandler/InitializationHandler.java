@@ -1105,10 +1105,10 @@ public class InitializationHandler {
 			 * union type. In the latter case, the initial value of the object, including unnamed members, is that of
 			 * the expression.
 			 */
-			if (rest.peekFirst().isInitializerList() ||
+			if (rest.peekFirst().isInitializerList() || (
 			// TODO: make a more general compatibility check, for example for array and pointer
-					TypeHandler.isCompatibleType(cellType,
-							rest.peekFirst().getRootExpressionResult().getLrValue().getCType())) {
+			rest.peekFirst().hasRootExpressionResult() && TypeHandler.isCompatibleType(cellType,
+					rest.peekFirst().getRootExpressionResult().getLrValue().getCType()))) {
 				/*
 				 * case "{", i.e. one more brace opens Then the cell is initialized with the list belonging to that
 				 * brace (until the matching brace). No residue is taken over if too many elements are left.
