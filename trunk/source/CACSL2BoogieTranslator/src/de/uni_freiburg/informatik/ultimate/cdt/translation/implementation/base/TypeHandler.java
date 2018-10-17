@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -127,6 +126,9 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	private final LinkedHashSet<String> mIncompleteType;
 
+	private final HashRelation<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashRelation<>();
+	private final HashRelation<String, CEnum> mIncompleteCEnumObjects = new HashRelation<>();
+
 	/**
 	 * States if an ASTNode for the pointer type was constructed and hence this type has to be declared.
 	 */
@@ -155,7 +157,7 @@ public class TypeHandler implements ITypeHandler {
 	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form typedef X
 	 * Y, then the pair (X,Y) is in this relation.
 	 */
-	private final HashRelation<ICPossibleIncompleteType<?>, String> mNamedIncompleteTypes = new HashRelation<>();
+	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -361,7 +363,7 @@ public class TypeHandler implements ITypeHandler {
 			final CEnum incompleteEnum = (CEnum) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
-			mStaticObjectsHandler.completeTypeDeclaration(incompleteEnum, cEnum, this);
+			mStaticObjectsHandler.completeTypeDeclaration(cEnum.getName(), cEnum, this);
 			final CEnum completeEnum = incompleteEnum.complete(cEnum);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeEnum));
 		}
@@ -404,10 +406,13 @@ public class TypeHandler implements ITypeHandler {
 			CType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStructOrUnion(StructOrUnion.STRUCT, type);
+				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
 			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 				ctype = new CStructOrUnion(StructOrUnion.UNION, type);
+				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
 			} else {
 				ctype = new CEnum(type);
+				mIncompleteCEnumObjects.addPair(rslvName, (CEnum) ctype);
 			}
 			final TypesResult r = new TypesResult(
 					new NamedType(loc, BoogieType.TYPE_ERROR, incompleteTypeName, new ASTType[0]), false, false, ctype);
@@ -451,18 +456,34 @@ public class TypeHandler implements ITypeHandler {
 
 		final String cId = node.getName().toString();
 		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-
-		final StructOrUnion structOrUnion;
+		final StructOrUnion isStructOrUnion;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
-			structOrUnion = StructOrUnion.STRUCT;
+			isStructOrUnion = StructOrUnion.STRUCT;
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			structOrUnion = StructOrUnion.UNION;
+			isStructOrUnion = StructOrUnion.UNION;
 		} else {
 			throw new UnsupportedOperationException();
 		}
 
-		final String identifier = CStructOrUnion.getPrefix(structOrUnion) + rslvName;
-		final CStructOrUnion cvar = new CStructOrUnion(structOrUnion, rslvName, fNames.toArray(new String[fNames.size()]),
+		final String identifier = CStructOrUnion.getPrefix(isStructOrUnion) + rslvName;
+
+		if (mIncompleteCStructOrUnionObjects.getDomain().contains(rslvName)) {
+			final Set<CStructOrUnion> objects = mIncompleteCStructOrUnionObjects.getImage(rslvName);
+			assert objects.size() == 1 : "too many types";
+			for (final CStructOrUnion structOrUnion : objects) {
+				structOrUnion.complete(fNames.toArray(new String[fNames.size()]),
+						fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+				mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
+				final TypesResult typeResult = mDefinedTypes.get(rslvName);
+				mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
+				if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
+					redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion, node.getParent());
+				}
+			}
+			mIncompleteCStructOrUnionObjects.removeDomainElement(rslvName);
+		}
+
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames.toArray(new String[fNames.size()]),
 				fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 
 		// TODO : boogie type
@@ -475,13 +496,13 @@ public class TypeHandler implements ITypeHandler {
 			final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
-			mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
+//			mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
 
-			final CStructOrUnion completeStruct = incompleteStruct.complete(cvar);
-			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
-			if (mNamedIncompleteTypes.getDomain().contains(incompleteStruct)) {
-				redirectNamedType(mNamedIncompleteTypes.getImage(incompleteStruct), completeStruct, node.getParent());
-			}
+//			final CStructOrUnion completeStruct = incompleteStruct.complete(cvar);
+//			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
+//			if (mNamedIncompleteTypes.getDomain().contains(incompleteStruct)) {
+//				redirectNamedType(mNamedIncompleteTypes.getImage(incompleteStruct), completeStruct, node.getParent());
+//			}
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
@@ -563,13 +584,13 @@ public class TypeHandler implements ITypeHandler {
 			return new ArrayType(loc, boogieType, new String[0], new ASTType[] { indexType }, valueType);
 		} else if (cType instanceof CStructOrUnion) {
 			final CStructOrUnion cstruct = (CStructOrUnion) cType;
-			if (cstruct.isIncomplete()) {
-				// TODO 2018-09-10: before I added this UnsupportedOperation
-				// Exception we just returned null which is probably a bad
-				// solution. Maybe callers should check for this case in advance.
-				// return null;
-				throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
-			}
+//			if (cstruct.isIncomplete()) {
+//				// TODO 2018-09-10: before I added this UnsupportedOperation
+//				// Exception we just returned null which is probably a bad
+//				// solution. Maybe callers should check for this case in advance.
+//				// return null;
+//				throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
+//			}
 			final VarList[] fields = new VarList[cstruct.getFieldCount()];
 			final String[] fieldNames = new String[cstruct.getFieldCount()];
 			final BoogieType[] fieldBoogieTypes = new BoogieType[cstruct.getFieldCount()];
@@ -1070,7 +1091,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public void registerNamedIncompleteType(final ICPossibleIncompleteType<?> incompleteType, final String named) {
+	public void registerNamedIncompleteType(final String incompleteType, final String named) {
 		mNamedIncompleteTypes.addPair(incompleteType, named);
 	}
 }

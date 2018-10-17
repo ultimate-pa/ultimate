@@ -52,11 +52,11 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	/**
 	 * Field names.
 	 */
-	private final String[] mFieldNames;
+	private String[] mFieldNames;
 	/**
 	 * Field types.
 	 */
-	private final CType[] mFieldTypes;
+	private CType[] mFieldTypes;
 
 	/**
 	 * Indicates if this represents an incomplete type. If 'this' is complete, this String is empty, otherwise it holds
@@ -64,9 +64,9 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 */
 	private final String mStructName;
 
-	private final List<Integer> mBitFieldWidths;
+	private List<Integer> mBitFieldWidths;
 
-	private final boolean mIsComplete;
+	private boolean mIsComplete;
 
 	/**
 	 * Constructor.
@@ -193,6 +193,13 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 				cvar.getBitFieldWidths());
 	}
 
+	public void complete(final String[] memberNames, final CType[] memberTypes, final List<Integer> bitfieldWidth) {
+		mFieldNames = memberNames;
+		mFieldTypes = memberTypes;
+		mBitFieldWidths = bitfieldWidth;
+		mIsComplete = true;
+	}
+
 	@Override
 	public boolean isCompatibleWith(final CType o) {
 		if (o == null) {
@@ -253,55 +260,57 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mBitFieldWidths == null) ? 0 : mBitFieldWidths.hashCode());
-		result = prime * result + Arrays.hashCode(mFieldNames);
-		result = prime * result + Arrays.hashCode(mFieldTypes);
-		result = prime * result + (mIsComplete ? 1231 : 1237);
-		result = prime * result + ((mIsStructOrUnion == null) ? 0 : mIsStructOrUnion.hashCode());
-		result = prime * result + ((mStructName == null) ? 0 : mStructName.hashCode());
-		return result;
+		// reproducible hash codes, but object equality
+		return mStructName.hashCode();
+//		final int prime = 31;
+//		int result = super.hashCode();
+//		result = prime * result + ((mBitFieldWidths == null) ? 0 : mBitFieldWidths.hashCode());
+//		result = prime * result + Arrays.hashCode(mFieldNames);
+//		result = prime * result + Arrays.hashCode(mFieldTypes);
+//		result = prime * result + (mIsComplete ? 1231 : 1237);
+//		result = prime * result + ((mIsStructOrUnion == null) ? 0 : mIsStructOrUnion.hashCode());
+//		result = prime * result + ((mStructName == null) ? 0 : mStructName.hashCode());
+//		return result;
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		if (o == null) {
-			return false;
-		}
-		if (o == this) {
-			return true;
-		}
-		if (!(o instanceof CType)) {
-			return false;
-		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CStructOrUnion)) {
-			return false;
-		}
-
-		final CStructOrUnion oStruct = (CStructOrUnion) oType;
-		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
-			return false;
-		}
-		if (mFieldNames.length != oStruct.mFieldNames.length) {
-			return false;
-		}
-		for (int i = mFieldNames.length - 1; i >= 0; --i) {
-			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
-				return false;
-			}
-		}
-		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
-			return false;
-		}
-		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
-			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	@Override
+//	public boolean equals(final Object o) {
+//		if (o == null) {
+//			return false;
+//		}
+//		if (o == this) {
+//			return true;
+//		}
+//		if (!(o instanceof CType)) {
+//			return false;
+//		}
+//		final CType oType = ((CType) o).getUnderlyingType();
+//		if (!(oType instanceof CStructOrUnion)) {
+//			return false;
+//		}
+//
+//		final CStructOrUnion oStruct = (CStructOrUnion) oType;
+//		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
+//			return false;
+//		}
+//		if (mFieldNames.length != oStruct.mFieldNames.length) {
+//			return false;
+//		}
+//		for (int i = mFieldNames.length - 1; i >= 0; --i) {
+//			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
+//				return false;
+//			}
+//		}
+//		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
+//			return false;
+//		}
+//		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
+//			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {

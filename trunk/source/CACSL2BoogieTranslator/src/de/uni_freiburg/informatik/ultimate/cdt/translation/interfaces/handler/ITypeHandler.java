@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -178,5 +177,5 @@ public interface ITypeHandler extends IHandler {
 
 	boolean areFloatingTypesNeeded();
 
-	void registerNamedIncompleteType(ICPossibleIncompleteType<?> incompleteType, String named);
+	void registerNamedIncompleteType(String incompleteType, String named);
 }

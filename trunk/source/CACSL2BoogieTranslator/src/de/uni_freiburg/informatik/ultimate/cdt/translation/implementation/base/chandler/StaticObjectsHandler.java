@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICPossibleIncompleteType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -68,7 +69,7 @@ public class StaticObjectsHandler {
 	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
 
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
-	private final Map<ICPossibleIncompleteType<?>, TypeDeclaration> mIncompleteType2TypeDecl;
+	private final Map<String, TypeDeclaration> mIncompleteType2TypeDecl;
 
 	private final ILogger mLogger;
 
@@ -107,9 +108,13 @@ public class StaticObjectsHandler {
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
 		if (cType.isIncomplete()) {
-			assert cType instanceof ICPossibleIncompleteType<?>;
-			final ICPossibleIncompleteType<?> incompleteType = (ICPossibleIncompleteType<?>) cType;
-			mIncompleteType2TypeDecl.put(incompleteType, boogieDec);
+			if (cType instanceof CStructOrUnion) {
+				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
+			} else if (cType instanceof CEnum) {
+				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			} else {
+				throw new AssertionError("missing support for global incomplete " + cType);
+			}
 		}
 	}
 
@@ -133,12 +138,12 @@ public class StaticObjectsHandler {
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-	public void completeTypeDeclaration(final ICPossibleIncompleteType<?> incompleteType, final CType completedType,
+	public void completeTypeDeclaration(final String incompleteType, final CType completedType,
 			final ITypeHandler typeHandler) {
-		assert incompleteType.isIncomplete();
 		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
 		if (oldBoogieDec == null) {
 			// already completed
+//			throw new AssertionError("can only complete incomplete types: " + incompleteType);
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
