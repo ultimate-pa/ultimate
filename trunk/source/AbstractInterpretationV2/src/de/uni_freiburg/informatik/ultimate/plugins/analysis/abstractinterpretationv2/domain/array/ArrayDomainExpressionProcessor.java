@@ -140,7 +140,6 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 					segmentationMap.put(rightVar, intersectionResult.getFirst());
 					return intersectionResult.getSecond().updateState(segmentationMap);
 				}
-				// TODO: Refine this?
 				return state;
 			}
 		}

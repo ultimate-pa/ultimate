@@ -56,12 +56,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class SegmentationMap {
-	private final UnionFind<IProgramVarOrConst> mEqualArrays;
+	private final UnionFind<IProgramVarOrConst> mArrayEqualities;
 	private final Map<IProgramVarOrConst, Segmentation> mRepresentiveSegmentations;
 
-	private SegmentationMap(final UnionFind<IProgramVarOrConst> equalArrays,
+	private SegmentationMap(final UnionFind<IProgramVarOrConst> arrayEqualities,
 			final Map<IProgramVarOrConst, Segmentation> representiveSegmentations) {
-		mEqualArrays = equalArrays;
+		mArrayEqualities = arrayEqualities;
 		mRepresentiveSegmentations = representiveSegmentations;
 	}
 
@@ -70,11 +70,11 @@ public class SegmentationMap {
 	}
 
 	public SegmentationMap(final SegmentationMap map) {
-		this(map.mEqualArrays.clone(), new HashMap<>(map.mRepresentiveSegmentations));
+		this(map.mArrayEqualities.clone(), new HashMap<>(map.mRepresentiveSegmentations));
 	}
 
 	public Set<IProgramVarOrConst> getArrays() {
-		return mEqualArrays.getAllElements();
+		return mArrayEqualities.getAllElements();
 	}
 
 	public Set<IProgramVar> getValueVars() {
@@ -101,63 +101,63 @@ public class SegmentationMap {
 	}
 
 	public void add(final IProgramVarOrConst variable, final Segmentation segmentation) {
-		mEqualArrays.makeEquivalenceClass(variable);
+		mArrayEqualities.makeEquivalenceClass(variable);
 		mRepresentiveSegmentations.put(variable, segmentation);
 	}
 
 	public void addEquivalenceClass(final Set<IProgramVarOrConst> variables, final Segmentation segmentation) {
-		mEqualArrays.addEquivalenceClass(variables);
+		mArrayEqualities.addEquivalenceClass(variables);
 		final IProgramVarOrConst var = variables.iterator().next();
-		mRepresentiveSegmentations.put(mEqualArrays.find(var), segmentation);
+		mRepresentiveSegmentations.put(mArrayEqualities.find(var), segmentation);
 	}
 
 	public void addAll(final SegmentationMap other) {
-		for (final IProgramVarOrConst rep : other.mEqualArrays.getAllRepresentatives()) {
-			mEqualArrays.addEquivalenceClass(other.getEquivalenceClass(rep), rep);
+		for (final IProgramVarOrConst rep : other.mArrayEqualities.getAllRepresentatives()) {
+			mArrayEqualities.addEquivalenceClass(other.getEquivalenceClass(rep), rep);
 			mRepresentiveSegmentations.put(rep, other.getSegmentation(rep));
 		}
 	}
 
 	public void renameArray(final IProgramVarOrConst oldVar, final IProgramVarOrConst newVar) {
-		final IProgramVarOrConst rep = mEqualArrays.find(oldVar);
-		final boolean isSingleton = mEqualArrays.getEquivalenceClassMembers(oldVar).size() == 1;
-		mEqualArrays.remove(oldVar);
-		mEqualArrays.makeEquivalenceClass(newVar);
+		final IProgramVarOrConst rep = mArrayEqualities.find(oldVar);
+		final boolean isSingleton = mArrayEqualities.getEquivalenceClassMembers(oldVar).size() == 1;
+		mArrayEqualities.remove(oldVar);
+		mArrayEqualities.makeEquivalenceClass(newVar);
 		final Segmentation segmentation = mRepresentiveSegmentations.get(oldVar);
 		if (segmentation == null) {
-			mEqualArrays.union(newVar, rep);
+			mArrayEqualities.union(newVar, rep);
 		} else {
 			mRepresentiveSegmentations.remove(oldVar);
 			if (!isSingleton) {
-				mEqualArrays.union(newVar, rep);
+				mArrayEqualities.union(newVar, rep);
 			}
-			mRepresentiveSegmentations.put(mEqualArrays.find(newVar), segmentation);
+			mRepresentiveSegmentations.put(mArrayEqualities.find(newVar), segmentation);
 		}
 	}
 
 	public void put(final IProgramVarOrConst variable, final Segmentation newSegmentation) {
-		final IProgramVarOrConst rep = mEqualArrays.find(variable);
+		final IProgramVarOrConst rep = mArrayEqualities.find(variable);
 		mRepresentiveSegmentations.put(rep, newSegmentation);
 	}
 
 	public void remove(final IProgramVarOrConst variable) {
-		mEqualArrays.remove(variable);
+		mArrayEqualities.remove(variable);
 		mRepresentiveSegmentations.remove(variable);
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {
-		if (mEqualArrays.find(variable) != null) {
+		if (mArrayEqualities.find(variable) != null) {
 			remove(variable);
 		}
-		mEqualArrays.makeEquivalenceClass(variable);
-		mEqualArrays.union(variable, target);
+		mArrayEqualities.makeEquivalenceClass(variable);
+		mArrayEqualities.union(variable, target);
 	}
 
 	public void union(final IProgramVarOrConst var1, final IProgramVarOrConst var2, final Segmentation segmentation) {
-		mRepresentiveSegmentations.remove(mEqualArrays.find(var1));
-		mRepresentiveSegmentations.remove(mEqualArrays.find(var2));
-		mEqualArrays.union(var1, var2);
-		mRepresentiveSegmentations.put(mEqualArrays.find(var1), segmentation);
+		mRepresentiveSegmentations.remove(mArrayEqualities.find(var1));
+		mRepresentiveSegmentations.remove(mArrayEqualities.find(var2));
+		mArrayEqualities.union(var1, var2);
+		mRepresentiveSegmentations.put(mArrayEqualities.find(var1), segmentation);
 	}
 
 	@Override
@@ -165,7 +165,7 @@ public class SegmentationMap {
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append('{');
 		for (final IProgramVarOrConst rep : sortProgramVars(getAllRepresentatives())) {
-			stringBuilder.append(sortProgramVars(mEqualArrays.getEquivalenceClassMembers(rep)));
+			stringBuilder.append(sortProgramVars(mArrayEqualities.getEquivalenceClassMembers(rep)));
 			stringBuilder.append(" -> ").append(mRepresentiveSegmentations.get(rep)).append(", ");
 		}
 		stringBuilder.append('}');
@@ -177,15 +177,15 @@ public class SegmentationMap {
 	}
 
 	public Segmentation getSegmentation(final IProgramVarOrConst variable) {
-		return mRepresentiveSegmentations.get(mEqualArrays.find(variable));
+		return mRepresentiveSegmentations.get(mArrayEqualities.find(variable));
 	}
 
 	public Set<IProgramVarOrConst> getEquivalenceClass(final IProgramVarOrConst variable) {
-		return mEqualArrays.getEquivalenceClassMembers(variable);
+		return mArrayEqualities.getEquivalenceClassMembers(variable);
 	}
 
 	public Collection<IProgramVarOrConst> getAllRepresentatives() {
-		return mEqualArrays.getAllRepresentatives();
+		return mArrayEqualities.getAllRepresentatives();
 	}
 
 	// TODO: Different segmentations can share value-variables, how to handle this?
