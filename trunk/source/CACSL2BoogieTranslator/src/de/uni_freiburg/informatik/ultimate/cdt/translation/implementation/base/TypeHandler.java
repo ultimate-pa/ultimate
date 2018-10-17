@@ -477,14 +477,15 @@ public class TypeHandler implements ITypeHandler {
 				final TypesResult typeResult = mDefinedTypes.get(rslvName);
 				mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
 				if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
-					redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion, node.getParent());
+					redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion,
+							node.getParent());
 				}
 			}
 			mIncompleteCStructOrUnionObjects.removeDomainElement(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames.toArray(new String[fNames.size()]),
-				fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName,
+				fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
@@ -496,13 +497,13 @@ public class TypeHandler implements ITypeHandler {
 			final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
-//			mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
+			// mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);
 
-//			final CStructOrUnion completeStruct = incompleteStruct.complete(cvar);
-//			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
-//			if (mNamedIncompleteTypes.getDomain().contains(incompleteStruct)) {
-//				redirectNamedType(mNamedIncompleteTypes.getImage(incompleteStruct), completeStruct, node.getParent());
-//			}
+			// final CStructOrUnion completeStruct = incompleteStruct.complete(cvar);
+			// mDefinedTypes.put(rslvName, TypesResult.create(typeResult, completeStruct));
+			// if (mNamedIncompleteTypes.getDomain().contains(incompleteStruct)) {
+			// redirectNamedType(mNamedIncompleteTypes.getImage(incompleteStruct), completeStruct, node.getParent());
+			// }
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
@@ -584,13 +585,13 @@ public class TypeHandler implements ITypeHandler {
 			return new ArrayType(loc, boogieType, new String[0], new ASTType[] { indexType }, valueType);
 		} else if (cType instanceof CStructOrUnion) {
 			final CStructOrUnion cstruct = (CStructOrUnion) cType;
-//			if (cstruct.isIncomplete()) {
-//				// TODO 2018-09-10: before I added this UnsupportedOperation
-//				// Exception we just returned null which is probably a bad
-//				// solution. Maybe callers should check for this case in advance.
-//				// return null;
-//				throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
-//			}
+			// if (cstruct.isIncomplete()) {
+			// // TODO 2018-09-10: before I added this UnsupportedOperation
+			// // Exception we just returned null which is probably a bad
+			// // solution. Maybe callers should check for this case in advance.
+			// // return null;
+			// throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
+			// }
 			final VarList[] fields = new VarList[cstruct.getFieldCount()];
 			final String[] fieldNames = new String[cstruct.getFieldCount()];
 			final BoogieType[] fieldBoogieTypes = new BoogieType[cstruct.getFieldCount()];
@@ -998,10 +999,11 @@ public class TypeHandler implements ITypeHandler {
 		if (!(type1.getName().equals(type2.getName()))) {
 			return false;
 		}
-		if (type1.getFieldIds().length != type2.getFieldIds().length) {
+
+		if (type1.getFieldCount() != type2.getFieldCount()) {
 			return false;
 		}
-		for (int i = 0; i < type1.getFieldIds().length; i++) {
+		for (int i = 0; i < type1.getFieldCount(); i++) {
 			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
 				return false;
 			}

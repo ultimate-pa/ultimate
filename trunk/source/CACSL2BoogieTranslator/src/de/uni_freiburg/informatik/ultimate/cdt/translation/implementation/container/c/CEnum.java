@@ -98,6 +98,9 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 * @return the number of fields.
 	 */
 	public int getFieldCount() {
+		if (mNames == null) {
+			return 0;
+		}
 		return mNames.length;
 	}
 
