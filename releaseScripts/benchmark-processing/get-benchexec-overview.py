@@ -9,7 +9,10 @@ import sys
 from functools import reduce
 
 """
-(k,v) where k = the string we search, v iff this line is important, !v iff we should use the next 
+(k,v) where 
+  k is the string we search, 
+  v iff the log line where we found the string is the one we want to show, 
+  !v iff the following log line is the one we want to show   
 """
 known_exceptions = {
     "Argument of \"settings\" has invalid value": True,
@@ -29,11 +32,11 @@ known_exceptions = {
     "TypeErrorResult": False,
     "SyntaxErrorResult": False,
     "TypeCheckException": True,
-    "SMTLIBException: Cannot handle literal (exists" : True,
-    "IllegalArgumentException: cannot bring into simultaneous update form" : True,
-    "No Boogie because C type is incomplete" : True,
-    "AssertionError: Invalid VarList" : True,
-    "AssertionError: Invalid Procedure" : True,
+    "SMTLIBException: Cannot handle literal (exists": True,
+    "IllegalArgumentException: cannot bring into simultaneous update form": True,
+    "No Boogie because C type is incomplete": True,
+    "AssertionError: Invalid VarList": True,
+    "AssertionError: Invalid Procedure": True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
@@ -59,8 +62,12 @@ known_unknown = {
     "UnprovableResult": True,
 }
 
+known_wrapper_errors = {
+    "Ultimate.py: error: argument --validate: File": True
+}
+
 version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
-order = [known_exceptions, known_timeouts, known_unsafe, known_unknown, known_safe]
+order = [known_exceptions, known_timeouts, known_unsafe, known_unknown, known_safe, known_wrapper_errors]
 interesting_strings = reduce(lambda x, y: dict(x, **y), order)
 
 enable_debug = False
@@ -83,6 +90,8 @@ class Result:
 
 
 def signal_handler(sig, frame):
+    if sig == signal.SIGTERM:
+        print('Killed by {}'.format(sig))
     print('Abort by user: you pressed Ctrl+C!')
     sys.exit(2)
 
@@ -124,6 +133,7 @@ def scan_line(line, result, line_iter):
                 new_result = exc, line
             else:
                 new_result = exc, line_iter.__next__()
+            debug('Found result {} with line {}'.format(exc, line))
             break
 
     if not result and new_result:
@@ -137,10 +147,13 @@ def scan_line(line, result, line_iter):
     old_class = class_idx(result)
     if new_class < old_class:
         return new_result
+    debug('Keeping old result because new one has lower priority')
     return result
 
 
 def process_wrapper_script_log(file):
+    regex_file_does_not_exist = re.compile(".*File.*does not exist")
+
     results = []
     default = True
     wrapper_preamble = True
@@ -173,6 +186,11 @@ def process_wrapper_script_log(file):
                         call += [line]
                 elif '--- Real Ultimate output ---' in line:
                     wrapper_preamble = False
+                elif 'Ultimate.py: error: argument' in line:
+                    # some wrapper argument failed, we directly abort this file
+                    if '--validate' in line and regex_file_does_not_exist.match(line):
+                        return [Result(scan_line(line, None, lines), None, None)]
+                    return [Result(None, None, None)]
             else:
                 if line.startswith("This is Ultimate"):
                     new_version = version_matcher.findall(line)[0]
@@ -191,6 +209,17 @@ def process_wrapper_script_log(file):
         if bitvec_call:
             debug('Found bitvec result: {}'.format(result))
             results += [Result(result, bitvec_call, version)]
+        if not results:
+            if result and default_call:
+                # case where the bitvector run did not start, e.g., termination
+                return [Result(result, default_call, version)]
+            debug('No results for file {}'.format(file))
+            if default_call:
+                return [Result(None, default_call, version)]
+            elif bitvec_call:
+                return [Result(None, bitvec_call, version)]
+            else:
+                return [Result(None, None, version)]
         return results
 
 
@@ -220,7 +249,7 @@ def process_log_file(file):
                 return process_wrapper_script_log(file)
             elif 'This is Ultimate' in line:
                 return process_direct_call_log(file)
-        return []
+    raise ValueError('Encountered unrecognized file (not an Ultimate log file): {}'.format(file))
 
 
 def print_results(results):
@@ -267,22 +296,29 @@ def main():
     input = args.input[0]
 
     results = []
+    i = 0
     if os.path.isfile(input):
         results += set_unknowns(process_log_file(input), input)
+        i = 1
     else:
         for dirpath, dirnames, files in os.walk(input):
             for file in files:
                 if not file.endswith('.log'):
                     continue
+                i = i + 1
                 path = os.path.join(dirpath, file)
                 debug('Processing {}'.format(path))
                 results += set_unknowns(process_log_file(path), path)
-
+    if i > len(results):
+        print('We processed {} .log files but collected only {} results, something is wrong!'.format(i, len(results)))
+    else:
+        print('Overview of {} results from {} .log files'.format(len(results), i))
     print_results(results)
 
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     # just ignore pipe exceptions
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     main()
