@@ -6,6 +6,7 @@ import argparse
 import fnmatch
 import os
 import re
+import signal
 import subprocess
 import sys
 from stat import ST_MODE
@@ -146,7 +147,7 @@ class _CallFailed(Exception):
 class _ExitCode:
     _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
                    "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND",
-                   "FAIL_ULTIMATE_ERROR"]
+                   "FAIL_ULTIMATE_ERROR", "FAIL_SIGNAL"]
 
     def __init__(self):
         pass
@@ -181,7 +182,7 @@ def get_binary():
 
     ultimate_bin = ultimate_bin + [
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
-        '-data', '@noDefault', 
+        '-data', '@noDefault',
         '-ultimatedata', datadir
     ]
 
@@ -710,5 +711,14 @@ def main():
     sys.exit(ExitCode.SUCCESS)
 
 
+def signal_handler(sig, frame):
+    print('Killed by {}'.format(sig))
+    sys.exit(ExitCode.FAIL_SIGNAL)
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    # just ignore pipe exceptions
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     main()
