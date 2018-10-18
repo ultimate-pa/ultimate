@@ -7,7 +7,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
@@ -16,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -25,11 +23,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 
 
 public class CddToSmt{ 
@@ -53,6 +46,11 @@ public class CddToSmt{
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mBoogieSymboltable = symboltable;
 	}
+	
+	public Term toSmt(final Expression expr) {
+		final SingleTermResult result = mBoogieToSmt.getExpression2Term().translateToTerm(mIdentifierTranslators, expr);
+		return result.getTerm();
+	}
 
 	public Term toSmt(final CDD cdd) {
 		if (cdd == CDD.TRUE) {
@@ -70,7 +68,7 @@ public class CddToSmt{
 		}
 		final CDD[] childs = simplifiedCdd.getChilds();
 		final Decision<?> decision = simplifiedCdd.getDecision();
-	
+
 		Term rtr = null;
 		for (int i = 0; i < childs.length; i++) {
 			if (childs[i] == CDD.FALSE) {
@@ -79,7 +77,7 @@ public class CddToSmt{
 			Term childTerm = toSmt(childs[i]);
 			if (!simplifiedCdd.childDominates(i)) {
 				Term decisionTerm;
-	
+
 				if (decision instanceof RangeDecision) {
 					// TODO: I added negation by restructuring, is this wrong?
 					decisionTerm = toSmtForRange(i, decision.getVar(), ((RangeDecision) decision).getLimits());
@@ -97,12 +95,12 @@ public class CddToSmt{
 				} else {
 					throw new UnsupportedOperationException("Unknown decision type: " + decision.getClass());
 				}
-	
+
 				if (i == 1 && !(decision instanceof RangeDecision)) {
 					// negate if right child
 					decisionTerm = SmtUtils.not(mScript, decisionTerm);
 				}
-	
+
 				if (childTerm == mTrue) {
 					childTerm = decisionTerm;
 				} else {
@@ -115,7 +113,7 @@ public class CddToSmt{
 				rtr = SmtUtils.or(mScript, childTerm, rtr);
 			}
 		}
-	
+
 		if (rtr == null) {
 			return mFalse;
 		}
@@ -146,7 +144,7 @@ public class CddToSmt{
 			return SmtUtils.geq(mScript, var, rhs);
 		}
 
-		if ((limits[childIdx - 1] / 2) == (limits[childIdx] / 2)) {
+		if (limits[childIdx - 1] / 2 == limits[childIdx] / 2) {
 			// we have upper and lower, but they are identical, so its EQ
 			// and they differ in the first bit because first bit encoding and sortedness
 			final Term rhs = mScript.decimal(Double.toString(limits[childIdx] / 2));
@@ -174,23 +172,20 @@ public class CddToSmt{
 		}
 		return SmtUtils.and(mScript, lbTerm, ubTerm);
 	}
-	
-	public Term getTermVarTerm(final String name) {
-		final IProgramNonOldVar termVar = mVars.get(name);
-		return termVar.getTerm();
-	}
-	
-	private Term toSmt(final Expression expr) {
-		final SingleTermResult result = mBoogieToSmt.getExpression2Term().translateToTerm(mIdentifierTranslators, expr);
-		return result.getTerm();
-	}
-	
+
+
+
 	private Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 			final BoogieASTNode boogieASTNode) {
 		if (isOldContext || declInfo != DeclarationInformation.DECLARATIONINFO_GLOBAL) {
 			throw new UnsupportedOperationException();
 		}
 		return getTermVarTerm(id);
+	}
+	
+	public Term getTermVarTerm(final String name) {
+		final IProgramNonOldVar termVar = mVars.get(name);
+		return termVar.getTerm();
 	}
 	
 	

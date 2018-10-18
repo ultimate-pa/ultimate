@@ -43,22 +43,14 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -70,8 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -84,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -115,8 +106,8 @@ public class RtInconcistencyConditionGenerator {
 	private final Map<String, IProgramNonOldVar> mVars;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final boolean mSeparateInvariantHandling;
+	private final CddToSmt mCddToSmt;
 
 	private final Map<Term, Term> mProjectionCache;
 
@@ -144,7 +135,6 @@ public class RtInconcistencyConditionGenerator {
 		mBoogie2Smt =
 				new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
-		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mSeparateInvariantHandling = separateInvariantHandling;
 		mPhaseTermCache = new HashMap<>();
 		mProjectionCache = new HashMap<>();
@@ -156,6 +146,8 @@ public class RtInconcistencyConditionGenerator {
 		mGeneratedChecks = 0;
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
+		mCddToSmt = new CddToSmt(services, storage, mScript, mBoogie2Smt,
+				boogieDeclarations, mBoogieSymboltable);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -193,7 +185,7 @@ public class RtInconcistencyConditionGenerator {
 			return false;
 		}
 		assert phases.length == 1;
-		final Term stateInv = toSmt(phases[0].getStateInvariant());
+		final Term stateInv = mCddToSmt.toSmt(phases[0].getStateInvariant());
 		if (SmtUtils.getDisjuncts(stateInv).length != 1) {
 			// this is an invariant with a top-level disjunction, take it
 			return true;
@@ -329,10 +321,10 @@ public class RtInconcistencyConditionGenerator {
 	private Term generatePhaseLeaveTerm(final Phase phase) {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
-			final Term guardTerm = toSmt(trans.getGuard());
-			final Term primedStInv = toSmt(trans.getDest().getStateInvariant().prime());
+			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
+			final Term primedStInv = mCddToSmt.toSmt(trans.getDest().getStateInvariant().prime());
 			final Term strictInv =
-					toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
+					mCddToSmt.toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
 			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
 		}
 		return SmtUtils.or(mScript, inner);
@@ -370,11 +362,11 @@ public class RtInconcistencyConditionGenerator {
 			return mTrue;
 		} else if (primedStateInvariants.size() == 1) {
 			final Entry<PatternType, CDD> entry = primedStateInvariants.entrySet().iterator().next();
-			result = toSmt(entry.getValue());
+			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
 		} else {
 			terms = primedStateInvariants.entrySet().stream()
-					.collect(Collectors.toMap(Entry::getKey, a -> toSmt(a.getValue())));
+					.collect(Collectors.toMap(Entry::getKey, a -> mCddToSmt.toSmt(a.getValue())));
 			result = SmtUtils.and(mScript, terms.values());
 		}
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
@@ -405,139 +397,9 @@ public class RtInconcistencyConditionGenerator {
 		throw new InvariantInfeasibleException(responsibleRequirements);
 	}
 
-	private Term toSmt(final CDD cdd) {
-		if (cdd == CDD.TRUE) {
-			return mTrue;
-		}
-		if (cdd == CDD.FALSE) {
-			return mFalse;
-		}
-		final CDD simplifiedCdd = cdd.getDecision().simplify(cdd.getChilds());
-		if (simplifiedCdd == CDD.TRUE) {
-			return mTrue;
-		}
-		if (simplifiedCdd == CDD.FALSE) {
-			return mFalse;
-		}
-		final CDD[] childs = simplifiedCdd.getChilds();
-		final Decision<?> decision = simplifiedCdd.getDecision();
 
-		Term rtr = null;
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
-				continue;
-			}
-			Term childTerm = toSmt(childs[i]);
-			if (!simplifiedCdd.childDominates(i)) {
-				Term decisionTerm;
 
-				if (decision instanceof RangeDecision) {
-					// TODO: I added negation by restructuring, is this wrong?
-					decisionTerm = toSmtForRange(i, decision.getVar(), ((RangeDecision) decision).getLimits());
-				} else if (decision instanceof BoogieBooleanExpressionDecision) {
-					// rewrite expression s.t. identifier expressions have declarations
-					final Expression expr = ((BoogieBooleanExpressionDecision) decision).getExpression();
-					final AddDeclarationInformationToIdentifiers visitor = new AddDeclarationInformationToIdentifiers();
-					final Expression transformedExpr = expr.accept(visitor);
-					decisionTerm = toSmt(transformedExpr);
-				} else if (decision instanceof BooleanDecision) {
-					// TODO: This also covers RelationDecisions, is this intended?
-					decisionTerm = getTermVarTerm(((BooleanDecision) decision).getVar());
-				} else if (decision instanceof EventDecision) {
-					decisionTerm = getTermVarTerm(((EventDecision) decision).getVar());
-				} else {
-					throw new UnsupportedOperationException("Unknown decision type: " + decision.getClass());
-				}
 
-				if (i == 1 && !(decision instanceof RangeDecision)) {
-					// negate if right child
-					decisionTerm = SmtUtils.not(mScript, decisionTerm);
-				}
-
-				if (childTerm == mTrue) {
-					childTerm = decisionTerm;
-				} else {
-					childTerm = SmtUtils.and(mScript, decisionTerm, childTerm);
-				}
-			}
-			if (rtr == null) {
-				rtr = childTerm;
-			} else {
-				rtr = SmtUtils.or(mScript, childTerm, rtr);
-			}
-		}
-
-		if (rtr == null) {
-			return mFalse;
-		}
-		return rtr;
-	}
-
-	private Term toSmt(final Expression expr) {
-		final SingleTermResult result = mBoogie2Smt.getExpression2Term().translateToTerm(mIdentifierTranslators, expr);
-		return result.getTerm();
-	}
-
-	private Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
-			final BoogieASTNode boogieASTNode) {
-		if (isOldContext || declInfo != DeclarationInformation.DECLARATIONINFO_GLOBAL) {
-			throw new UnsupportedOperationException();
-		}
-		return getTermVarTerm(id);
-	}
-
-	private Term toSmtForRange(final int childIdx, final String varname, final int[] limits) {
-		final Term var = getTermVarTerm(varname);
-
-		if (childIdx == 0) {
-			// only upper bound
-			final Term rhs = mScript.decimal(Double.toString(limits[0] / 2));
-			if ((limits[0] & 1) == 0) {
-				// strict because of first bit encoding
-				return SmtUtils.less(mScript, var, rhs);
-			}
-			// not strict
-			return SmtUtils.leq(mScript, var, rhs);
-		}
-
-		// TODO: Why can the limit be one larger than the array?
-		if (childIdx == limits.length) {
-			// only lower bound
-			final Term rhs = mScript.decimal(Double.toString(limits[limits.length - 1] / 2));
-			if ((limits[limits.length - 1] & 1) == 1) {
-				return SmtUtils.greater(mScript, var, rhs);
-			}
-			return SmtUtils.geq(mScript, var, rhs);
-		}
-
-		if (limits[childIdx - 1] / 2 == limits[childIdx] / 2) {
-			// we have upper and lower, but they are identical, so its EQ
-			// and they differ in the first bit because first bit encoding and sortedness
-			final Term rhs = mScript.decimal(Double.toString(limits[childIdx] / 2));
-			return SmtUtils.binaryEquality(mScript, var, rhs);
-		}
-
-		// we have upper and lower bounds
-		final Term lb = mScript.decimal(Double.toString(limits[childIdx - 1] / 2));
-		final Term ub = mScript.decimal(Double.toString(limits[childIdx] / 2));
-
-		final Term lbTerm;
-		final Term ubTerm;
-		if ((limits[childIdx - 1] & 1) == 1) {
-			// strict lb
-			lbTerm = SmtUtils.less(mScript, lb, var);
-		} else {
-			lbTerm = SmtUtils.leq(mScript, lb, var);
-		}
-
-		if ((limits[childIdx] & 1) == 0) {
-			// strict ub
-			ubTerm = SmtUtils.less(mScript, var, ub);
-		} else {
-			ubTerm = SmtUtils.leq(mScript, var, ub);
-		}
-		return SmtUtils.and(mScript, lbTerm, ubTerm);
-	}
 
 	private Term getTermVarTerm(final String name) {
 		final IProgramNonOldVar termVar = mVars.get(name);
@@ -645,15 +507,6 @@ public class RtInconcistencyConditionGenerator {
 
 	private static String str(final Stream<Term> terms) {
 		return terms.map(RtInconcistencyConditionGenerator::str).collect(Collectors.joining(","));
-	}
-
-	private final class AddDeclarationInformationToIdentifiers extends GeneratedBoogieAstTransformer {
-
-		@Override
-		public Expression transform(final IdentifierExpression node) {
-			return mBoogieSymboltable.getIdentifierExpression(node.getIdentifier());
-		}
-
 	}
 
 	public static final class InvariantInfeasibleException extends Exception {
