@@ -409,24 +409,25 @@ public class TypeSizes {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof FunctionApplication) {
+				FunctionApplication funApp = (FunctionApplication) expr;
 				final BigInteger leftValue =
-						extractIntegerValue(((FunctionApplication) expr).getArguments()[0], cType, hook);
+						extractIntegerValue(funApp.getArguments()[0], cType, hook);
 				final BigInteger rightValue =
-						extractIntegerValue(((FunctionApplication) expr).getArguments()[1], cType, hook);
+						extractIntegerValue(funApp.getArguments()[1], cType, hook);
 
 				if (leftValue == null || rightValue == null) {
 					return null;
 				}
 
-				if (((FunctionApplication) expr).getIdentifier().contains("bvadd")) {
+				if (funApp.getIdentifier().contains("bvadd")) {
 					return leftValue.add(rightValue);
-				} else if (((FunctionApplication) expr).getIdentifier().contains("bvmul")) {
+				} else if (funApp.getIdentifier().contains("bvmul")) {
 					return leftValue.multiply(rightValue);
-				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsub")) {
+				} else if (funApp.getIdentifier().contains("bvsub")) {
 					return leftValue.subtract(rightValue);
-				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsdiv")) {
+				} else if (funApp.getIdentifier().contains("bvsdiv")) {
 					return leftValue.divide(rightValue);
-				} else if (((FunctionApplication) expr).getIdentifier().contains("bvsrem")) {
+				} else if (funApp.getIdentifier().contains("bvsrem")) {
 					return leftValue.remainder(rightValue);
 				}
 				return null;

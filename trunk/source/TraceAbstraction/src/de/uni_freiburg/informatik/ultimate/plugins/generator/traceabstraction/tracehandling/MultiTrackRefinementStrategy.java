@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
@@ -156,7 +155,6 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	protected final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
-
 	/**
 	 * @param prefs
 	 *            Preferences. pending contexts
@@ -184,9 +182,9 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
 		mServices = services;
 		mLogger = logger;
@@ -290,8 +288,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = new StraightLineInterpolantAutomatonBuilder<>(mServices,
 					mCounterexample.getWord(), NestedWordAutomataUtils.getVpAlphabet(mAbstraction), allIpps,
-					mEmptyStackFactory,
-					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
+					mEmptyStackFactory, InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		}
 		return mInterpolantAutomatonBuilder;
 	}
