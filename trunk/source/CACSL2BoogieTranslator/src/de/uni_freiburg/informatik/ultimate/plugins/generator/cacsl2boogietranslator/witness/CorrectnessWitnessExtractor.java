@@ -688,7 +688,8 @@ public class CorrectnessWitnessExtractor {
 			if (mAnnotation == null) {
 				return false;
 			}
-			return mAnnotation.getEnterLoopHead();
+			final Boolean val = mAnnotation.getEnterLoopHead();
+			return val != null && val;
 		}
 
 		@Override
