@@ -107,7 +107,7 @@ public class StaticObjectsHandler {
 		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
-		if (cType.isIncomplete()) {
+		if (cType.isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
 			if (cType instanceof CStructOrUnion) {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
 			} else if (cType instanceof CEnum) {

@@ -2614,7 +2614,7 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
-			if (cDec.getType().getUnderlyingType().isIncomplete()) {
+			if (cDec.getType().getUnderlyingType().isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
 				final String identifier;
 				if (cDec.getType().getUnderlyingType() instanceof CStructOrUnion) {
 					identifier = ((CStructOrUnion) cDec.getType().getUnderlyingType()).getName();
