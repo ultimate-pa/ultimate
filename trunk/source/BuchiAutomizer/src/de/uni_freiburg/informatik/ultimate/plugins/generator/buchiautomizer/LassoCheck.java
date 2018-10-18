@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.Task
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
@@ -202,6 +203,10 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	// TODO: Do not add statistics but do provide statistics
 	private final BuchiCegarLoopBenchmarkGenerator mCegarStatistics;
 
+	private final PredicateFactory mPredicateFactory;
+
+	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
+
 	public LassoCheck(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
@@ -235,6 +240,13 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mCegarStatistics = cegarStatistics;
+
+		mPredicateFactory = predicateFactory;
+		// TODO: I am unsure about the following flag
+		final boolean computeHoareAnnotation = false;
+		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
+				mPredicateFactory, computeHoareAnnotation);
+
 		mLassoCheckResult = new LassoCheckResult();
 		assert mLassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
 		assert (mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED)
@@ -908,7 +920,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
 			final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(run, mAbstraction,
-					taskIdentifier, null, IPreconditionProvider.constructDefaultPreconditionProvider());
+					taskIdentifier, mStateFactoryForInterpolantAutomaton,
+					IPreconditionProvider.constructDefaultPreconditionProvider());
 
 			final TraceAbstractionRefinementEngine<LETTER> result;
 			try {
