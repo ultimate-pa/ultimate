@@ -4033,13 +4033,13 @@ public class CHandler {
 
 			if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				// convert the "0" to a pointer
-				mExpressionTranslation.convertIntToPointer(loc, opPositive,
+				opPositive = mExpressionTranslation.convertIntToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
 			} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 				opNegative = decayArrayToPointer(opNegative, loc, hook);
-				mExpressionTranslation.convertIntToPointer(loc, opPositive,
+				opPositive = mExpressionTranslation.convertIntToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
 			} else {
@@ -4051,13 +4051,13 @@ public class CHandler {
 
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				// convert the "0" to a pointer
-				mExpressionTranslation.convertIntToPointer(loc, opNegative,
+				opNegative = mExpressionTranslation.convertIntToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 				opPositive = decayArrayToPointer(opPositive, loc, hook);
-				mExpressionTranslation.convertIntToPointer(loc, opNegative,
+				opNegative = mExpressionTranslation.convertIntToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else {
