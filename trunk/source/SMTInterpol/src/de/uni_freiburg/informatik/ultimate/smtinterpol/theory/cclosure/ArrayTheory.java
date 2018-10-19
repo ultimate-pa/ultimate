@@ -67,49 +67,44 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 public class ArrayTheory implements ITheory {
 
 	/**
-	 * <p>The core data structure used by the array theory solver.  For every
-	 * strong term equivalence class of an array sort, we create an ArrayNode
-	 * representing this array.  The ArrayNodes are connected by store edges,
-	 * which form a spanning tree of the weak equivalence class pointing to
-	 * the weak representative.  The store edges always combine the ArrayNode
-	 * representing the store with the ArrayNode representing the array of the
-	 * store.  The direction of the edge may be inverted, though.</p>
-	 * 
 	 * <p>
-	 * In addition there are so called select edges that are induced by another
-	 * store (mSelectReason) on a different index than the store that induces
-	 * the store edge.  For a given index, the weak equivalence graph would
-	 * fall into some smaller equivalence classes, if the store edges with 
-	 * that index are removed.  The roots of the smaller equivalence classes
-	 * are the original root and the array nodes whose mStoreEdge is on the 
-	 * index.  We now combine these smaller equivalence classes by adding
-	 * select edges from the root of one small equivalence class to an 
-	 * arbitrary node in the other equivalence class, building a new weak-i
-	 * equivalence class, which is a subclass of the original one.  The original
-	 * root is also a weak-i equivalence root for every index, but there may
-	 * be others that are characterized by mSelectEdge being null.
-	 * The store and array of the selectReason are guaranteed to be reachable
-	 * from the origin and destination of the select edge by using only store
-	 * edges on a different index.
+	 * The core data structure used by the array theory solver. For every strong term equivalence class of an array
+	 * sort, we create an ArrayNode representing this array. The ArrayNodes are connected by primary store edges, which
+	 * form a spanning tree of the weak equivalence class pointing to the weak representative. The primary edges always
+	 * combine the ArrayNode representing the store with the ArrayNode representing the array of the store. The
+	 * direction of the edge may be inverted, though.
 	 * </p>
 	 * 
-	 * <p>The store and select edges induce for every index and every pair
-	 * of arrays in the same weak-i equivalence class for that index a 
-	 * unique path that connects the arrays only by stores on a different
-	 * index.</p>
+	 * <p>
+	 * In addition there are so called secondary edges that are induced by another store (mSecondaryStore) on a
+	 * different index than the store that induces the store edge. For a given index, if we would remove all primary
+	 * edges on that index, the weak equivalence graph would fall into some smaller equivalence classes. The roots of
+	 * the smaller equivalence classes are the original root and the array nodes whose mStoreEdge is on the index. We
+	 * now combine these smaller equivalence classes by adding secondary edges from the root of one small equivalence
+	 * class to an arbitrary node in the other equivalence class, building a new weak-i equivalence class, which is a
+	 * subset of the whole weak equivalence class. The original root is the root of its weak-i equivalence class for
+	 * every index, but there may be others weak-i equivalence class roots that are characterized by having a primary
+	 * but no secondary edge. The store and array of the secondary edge are guaranteed to be reachable from the origin
+	 * and destination of the select edge by using only primary edges on a different index. A single store can cause
+	 * several secondary edges for different i's (all different from the index of the store) so different array nodes
+	 * may have the same secondary store.
+	 * </p>
 	 * 
-	 * <p>For every index, you have three finer and finer equivalence classes
-	 * that together form up the weak-i equivalence class for that index.  The
-	 * finest is the strong equivalence class on equalities, represented by
-	 * the ccterm data structure.  The next is the indexed weak equivalence 
-	 * class induced by the storeEdges if you remove all the stores on that 
-	 * index. The store edges combine the ccterms and it is guaranteed that 
-	 * their endpoints lie in the ccterm equivalence class they combine.  These 
-	 * indexed weak equivalence classes are then combined by the select edges.
-	 * Again the endpoints of the select edge lie in the same underlying 
-	 * equivalence class in this case the indexed weak equivalence class.</p>
+	 * <p>
+	 * The primary and secondary edges induce for every index and every pair of arrays in the same weak-i equivalence
+	 * class for that index a unique path that connects the arrays only by stores on a different index.
+	 * </p>
 	 * 
-	 * @author hoenicke
+	 * <p>
+	 * There is exactly only one ArrayNode for each strong equivalence class with array sort, and the CCTerm data
+	 * structure is used to find the representative of the strong equivalence class. To find the representative of the
+	 * weak equivalence class, the primary edges can be followed. The representative of a weak equivalence class for an
+	 * index i is found by following the primary edges if the primary store index is different from i, and following the
+	 * secondary edge otherwise. If there is no secondary edge and the primary index equals i, or there is no primary
+	 * edge, then the weak-i representative has been found.
+	 * </p>
+	 * 
+	 * @author Jochen Hoenicke
 	 *
 	 */
 	class ArrayNode {
@@ -121,35 +116,37 @@ public class ArrayTheory implements ITheory {
 		CCTerm mTerm;
 		
 		/**
-		 * The destination node of the store edge.
+		 * The destination node of the primary edge.
 		 */
-		ArrayNode mStoreEdge;
+		ArrayNode mPrimaryEdge;
 		
 		/**
-		 * The store corresponding to the store edge.
-		 * This must be either an element of mTerm.mMembers or
-		 * of mStoreEdge.mTerm.mMembers.  Also this must be a
-		 * CCAppTerm of a store.
+		 * The store corresponding to the primary edge. This must be a CCAppTerm of a store. Also the both the store
+		 * term and the array parameter of the store must be elements of mTerm.mMembers resp.
+		 * mPrimaryEdge.mTerm.mMembers. It is not guaranteed which of these two terms belongs to which equivalence
+		 * class, because we want to be able to reverse edges.
 		 */
-		CCAppTerm mStoreReason;
+		CCAppTerm mPrimaryStore;
 		
 		/**
-		 * The alternative edge pointing towards the representative in the
-		 * weak-i equivalence group, where <code>i</code> is the index
-		 * of mStoreTerm.  The mSelectEdges may also form a tree, where the
-		 * root is the representative and the arrows point towards the root
-		 * node. This must always be a member of the weak-equivalence group.
+		 * The secondary edge pointing towards the representative in the weak-i equivalence group, where <code>i</code>
+		 * is the index of primary store term. The secondary edges are used to find the weak-i representative, if the
+		 * primary reason involves the index i. If it does not, the primary edge should be followed.
 		 * 
-		 * This is null for the weak representative (mStoreEdge == null).
+		 * This is null for the weak-i representative. The weak representative is also a weak-i representative for all
+		 * indices.
 		 */
-		ArrayNode mSelectEdge;
+		ArrayNode mSecondaryEdge;
 		
 		/**
-		 * The reason for the select edge.  This is either null, if the select
-		 * edge was caused by an equality in the outside, or it is a store 
-		 * on a different index.
+		 * The store corresponding to the primary edge. If secondary edge is set, this must be a CCAppTerm of a store.
+		 * The index must be different from the primary store index. Again it is not guaranteed if the store corresponds
+		 * to the source or the destination of the secondary edge. The term that corresponds to this array node is not
+		 * necessarily in mTerm.mMembers, but it is guaranteed that it is in some {@code node.mTerm.mMembers}, such that
+		 * this is reachable from node using only primary edges and the primary store indices differ from this primary
+		 * store index.
 		 */
-		CCAppTerm mSelectReason;
+		CCAppTerm mSecondaryStore;
 		
 		/**
 		 * The array nodes in the same weak equivalence class form a cyclic 
@@ -158,19 +155,15 @@ public class ArrayTheory implements ITheory {
 		ArrayNode mNext;
 		
 		/**
-		 * A map from index to the selects that exists for this weak-i 
-		 * equivalence class.  Used to quickly merge weak-i classes and to
-		 * quickly compute new equivalences.
-		 * We only have to remember one of the select terms, since the
-		 * other are supposed to be equal.
+		 * A map from index to the selects that exists for this weak-i equivalence class. Used to quickly merge weak-i
+		 * classes and to quickly compute new equivalences. We only have to remember one of the select terms for each
+		 * index, since the other are supposed to be equal.
 		 * 
-		 * The key is always the representative of the index of the 
-		 * corresponding select.
+		 * The key is always the representative of the index of the corresponding select.
 		 * 
-		 * This is an arbitrary map for weak representative (mStoreEdge==null),
-		 * should be a singleton for weak-i representatives 
-		 * (mSelectEdge == null && mStoreEdge != null) and empty for all
-		 * other nodes (mSelectEdge != null)
+		 * This is an arbitrary map for weak representative (no primary edge), should be a singleton for weak-i
+		 * representatives (primary edge exists, but no seconddary edge) and empty for all other nodes (where both edges
+		 * exist).
 		 */
 		Map<CCTerm, CCAppTerm> mSelects;
 
@@ -185,142 +178,167 @@ public class ArrayTheory implements ITheory {
 			assert ccterm.isRepresentative();
 			mTerm = ccterm;
 			mNext = this;
-			mStoreEdge = mSelectEdge = null;
-			mStoreReason = null;
+			mPrimaryEdge = mSecondaryEdge = null;
+			mPrimaryStore = null;
 		}
 
 		/**
-		 * Get the representative of the weak equivalence class.  This
-		 * is the root of the tree formed by mStoreEdge.
+		 * Fill the select information for the current node. This needs to be called when a new array node is created.
+		 * It finds all select applications using the ccterm information and adds them to the mSelects hash map.
+		 * 
+		 * @param mSelectFunNum
+		 *            the index of the first argument of the builtin select function in the parent info datastructure in
+		 *            ccterm.
+		 */
+		public void computeSelects(int mSelectFunNum) {
+			mSelects = new HashMap<CCTerm, CCAppTerm>();
+			final CCParentInfo info = mTerm.mCCPars.getExistingParentInfo(mSelectFunNum);
+			if (info != null) {
+				for (final CCAppTerm.Parent pa : info.mCCParents) {
+					final CCParentInfo selectas = pa.getData().getRepresentative().mCCPars.getExistingParentInfo(0);
+					for (final CCAppTerm.Parent spa : selectas.mCCParents) {
+						final CCAppTerm select = spa.getData();
+						assert (getArrayFromSelect(select).getRepresentative() == mTerm);
+						assert (select != null);
+						mSelects.put(select.mArg.getRepresentative(), select);
+					}
+				}
+			}
+		}
+
+		/**
+		 * Get the representative of the weak equivalence class. This is the root of the tree formed by mStoreEdge.
+		 * 
 		 * @return the representative array node.
 		 */
 		public ArrayNode getWeakRepresentative() {
 			ArrayNode node = this;
-			while (node.mStoreEdge != null) {
-				node = node.mStoreEdge;
+			while (node.mPrimaryEdge != null) {
+				node = node.mPrimaryEdge;
 			}
 			return node;
 		}
-		
+
 		/**
-		 * Get the representative of the weak-i equivalence class.  This
-		 * is an ArrayNode that yields the same value for a select on the
-		 * given index.
-		 * @param index the index i for which determines the weak-i 
-		 *        equivalence class.
+		 * Get the representative of the weak-i equivalence class. This is an ArrayNode that is connected by a sequence
+		 * of stores on indices different from the given index. Thus it stores the same value for a select on the given
+		 * index.
+		 * 
+		 * @param index
+		 *            the index i for which the weak-i equivalence class representative should be returned.
 		 * @return the representative array node.
 		 */
 		public ArrayNode getWeakIRepresentative(CCTerm index) {
 			index = index.getRepresentative();
 			ArrayNode node = this;
-			while (node.mStoreEdge != null) {
-				if (getIndexFromStore(node.mStoreReason)
-						.getRepresentative() == index) {
-					if (node.mSelectEdge == null) {
+			while (node.mPrimaryEdge != null) {
+				if (getIndexFromStore(node.mPrimaryStore).getRepresentative() == index) {
+					if (node.mSecondaryEdge == null) {
 						break;
 					}
-					node = node.mSelectEdge;
+					node = node.mSecondaryEdge;
 				} else {
-					node = node.mStoreEdge;
+					node = node.mPrimaryEdge;
 				}
 			}
 			return node;
 		}
-		
-		/** 
-		 * Make this node its weak-i representative, by inverting all 
-		 * select edges pointing outwards.  This assumes, that the node
-		 * is a weak-i representative, that is not the weak representative,
-		 * and that the weak representative is not in the same weak-i
-		 * equivalence class, i.e., the outward pointing edges do not point
-		 * to the weak representative. 
+
+		/**
+		 * Make this node its weak-i representative, by inverting all select edges pointing outwards. This assumes, that
+		 * the node is not yet a weak-i representative (and thus not the weak representative), and that the weak
+		 * representative is not in the same weak-i equivalence class, i.e., the weak-i representative is not the
+		 * current weak representative.
 		 */
-		public void invertSelectEdges() {
-			assert mStoreEdge != null;
-			assert mSelectEdge != null;
-			final CCTerm index = getIndexFromStore(mStoreReason).getRepresentative();
+		public void makeWeakIRepresentative() {
+			assert mPrimaryEdge != null;
+			assert mSecondaryEdge != null;
+			final CCTerm index = getIndexFromStore(mPrimaryStore).getRepresentative();
 			assert getWeakIRepresentative(index) != getWeakRepresentative();
 			ArrayNode prev = this;
-			ArrayNode next = prev.mSelectEdge;
-			CCAppTerm prevReason = prev.mSelectReason;
+			ArrayNode next = prev.mSecondaryEdge;
+			CCAppTerm prevReason = prev.mSecondaryStore;
 			while (next != null) {
-				// first follow the store edges until we find a good store.
-				next = next.findSelectNode(index);
-				
+				// first follow the primary edges until we find the a store on the index.
+				next = next.findSecondaryNode(index);
+
 				// now copy the new edge information
-				final ArrayNode nextEdge = next.mSelectEdge;
-				final CCAppTerm nextReason = next.mSelectReason;
+				final ArrayNode nextEdge = next.mSecondaryEdge;
+				final CCAppTerm nextReason = next.mSecondaryStore;
 				// invert the previous edge
-				next.mSelectEdge = prev;
-				next.mSelectReason = prevReason;
+				next.mSecondaryEdge = prev;
+				next.mSecondaryStore = prevReason;
 				// continue inverting
 				prev = next;
 				prevReason = nextReason;
 				next = nextEdge;
 			}
-			mSelectEdge = null;
-			mSelectReason = null;
+			mSecondaryEdge = null;
+			mSecondaryStore = null;
 			mSelects = prev.mSelects;
 			prev.mSelects = Collections.emptyMap();
 		}
-		
+
 		/**
 		 * Make this array node the representative of its weak equivalence
 		 * group by inverting all the store edges.
 		 */
 		public void makeWeakRepresentative() {
-			if (mStoreEdge == null) {
+			if (mPrimaryEdge == null) {
 				return;
 			}
-			final HashMap<CCTerm,ArrayNode> seenStores = 
-					new HashMap<CCTerm, ArrayNode>();
-			final HashMap<CCTerm,ArrayNode> todoSelects = 
-					new HashMap<CCTerm, ArrayNode>();
-			final HashMap<CCTerm,CCAppTerm> todoReasons = 
-					new HashMap<CCTerm, CCAppTerm>();
-			final HashMap<CCTerm,CCAppTerm> newSelectMap = 
-					new HashMap<CCTerm, CCAppTerm>();
+			// hash map from store indices we have seen on the primary path to the previous destination/new source of
+			// the primary edge (or in other words, to the new candidate for weak-i equivalence class).
+			final HashMap<CCTerm, ArrayNode> seenStores = new HashMap<CCTerm, ArrayNode>();
+			// for each index, the information about secondary edge that we later need to invert.
+			final HashMap<CCTerm, ArrayNode> todoSecondary = new HashMap<CCTerm, ArrayNode>();
+			final HashMap<CCTerm, CCAppTerm> todoSecondaryStores = new HashMap<CCTerm, CCAppTerm>();
+			// the select information for the new root node.
+			final HashMap<CCTerm, CCAppTerm> newSelectMap = new HashMap<CCTerm, CCAppTerm>();
 			ArrayNode node = this;
 			ArrayNode prev = null;
 			CCAppTerm prevStore = null;
-			while (node.mStoreEdge != null) {
-				final ArrayNode next = node.mStoreEdge;
-				final CCAppTerm nextStore = node.mStoreReason;
-				node.mStoreEdge = prev;
-				node.mStoreReason = prevStore;
-				
+			while (node.mPrimaryEdge != null) {
+				// invert the last primary edge
+				final ArrayNode next = node.mPrimaryEdge;
+				final CCAppTerm nextStore = node.mPrimaryStore;
+				node.mPrimaryEdge = prev;
+				node.mPrimaryStore = prevStore;
+
 				final CCTerm index = getIndexFromStore(nextStore).getRepresentative();
 				final ArrayNode old = seenStores.put(index, next);
 				if (old == node) {
-					// the node is in the middle of two stores on the same
-					// index.  There is no need to move the select-information
+					// the node is in the middle of two consecutive stores on the same
+					// index. There is no need to move the secondary information
 					// around.
 					//
 					// This branch is intentionally left empty!
-				} else if (node.mSelectEdge != null) { //NOPMD
+				} else if (node.mSecondaryEdge != null) { //NOPMD
 					if (old == null) {
-						// we have to invert the select edge in the end, but
-						// we should wait until the inversion of the store edges
+						// we have to invert the secondary edge in the end, but
+						// we should wait until the inversion of the primary edges
 						// is completed.
-						todoSelects.put(index, node.mSelectEdge);
-						todoReasons.put(index, node.mSelectReason);
+						todoSecondary.put(index, node.mSecondaryEdge);
+						todoSecondaryStores.put(index, node.mSecondaryStore);
 					} else {
-						// insert the select edge into old node.
-						assert (getIndexFromStore(old.mStoreReason)
-								.getRepresentative() == index);
-						assert (old.mSelectEdge == null);
-						old.mSelectEdge = node.mSelectEdge;
-						old.mSelectReason = node.mSelectReason;
+						// insert the secondary edge of node into old node. The reasoning is that
+						// the old node is connected using only primary edges on different indices, so it has
+						// the same weak-i representative as node.
+						assert (getIndexFromStore(old.mPrimaryStore).getRepresentative() == index);
+						assert (old.mSecondaryEdge == null);
+						old.mSecondaryEdge = node.mSecondaryEdge;
+						old.mSecondaryStore = node.mSecondaryStore;
 					}
-					node.mSelectEdge = null;
-					node.mSelectReason = null;
+					node.mSecondaryEdge = null;
+					node.mSecondaryStore = null;
 				} else if (!node.mSelects.isEmpty()) {
-					// we need to move the select information.
 					if (old == null) {
+						// assertion holds, because index was not in seenStores.
 						assert node.mSelects.get(index) != null;
+						// we need to move the select information into the new root node.
 						newSelectMap.put(index, node.mSelects.get(index)); 
 					} else {
-						// old is the new weak i representative
+						// old is weak-i equivalent to node and can be used as new weak-i representative.
 						old.mSelects = node.mSelects;
 					}
 					node.mSelects = Collections.emptyMap();
@@ -330,15 +348,14 @@ public class ArrayTheory implements ITheory {
 				node = next;
 				prevStore = nextStore;
 			}
-			node.mStoreEdge = prev;
-			node.mStoreReason = prevStore;
+			node.mPrimaryEdge = prev;
+			node.mPrimaryStore = prevStore;
 			mConstTerm = node.mConstTerm;
 			node.mConstTerm = null;
 			final Map<CCTerm, CCAppTerm> rootSelects = node.mSelects;
 			node.mSelects = Collections.emptyMap();
 			for (final Entry<CCTerm, ArrayNode> entry : seenStores.entrySet()) {
-				// The seen stores get the new representatives of their weak-i
-				// equivalence groups
+				// The seen stores get the new representatives of their weak-i equivalence groups
 				final CCTerm index = entry.getKey();
 				final CCAppTerm select = rootSelects.remove(index);
 				if (select != null) {
@@ -346,15 +363,16 @@ public class ArrayTheory implements ITheory {
 						Collections.singletonMap(index, select);
 				}
 			}
-			for (final Entry<CCTerm, ArrayNode> entry: todoSelects.entrySet()) {
+			// Now invert the secondary edges
+			for (final Entry<CCTerm, ArrayNode> entry : todoSecondary.entrySet()) {
 				final CCTerm index = entry.getKey();
 				ArrayNode dest = entry.getValue();
-				dest = dest.findSelectNode(index);
-				if (dest.mSelectEdge != null) {
-					dest.invertSelectEdges();
+				dest = dest.findSecondaryNode(index);
+				if (dest.mSecondaryEdge != null) {
+					dest.makeWeakIRepresentative();
 				}
-				dest.mSelectEdge = this;
-				dest.mSelectReason = todoReasons.get(index);
+				dest.mSecondaryEdge = this;
+				dest.mSecondaryStore = todoSecondaryStores.get(index);
 				newSelectMap.putAll(dest.mSelects);
 				dest.mSelects = Collections.emptyMap();
 			}
@@ -370,20 +388,19 @@ public class ArrayTheory implements ITheory {
 		 *            The destination node
 		 * @param store
 		 *            The store term that caused this edge
-		 * @param propEqualities
+		 * @param propLemmas
 		 *            A collection where propagated array lemmas are added to by this method.
 		 */
-		public void mergeWith(ArrayNode storeNode, CCAppTerm store,
-				Collection<ArrayLemma> propEqualities) {
-			assert getWeakRepresentative() != storeNode.getWeakRepresentative();
-			mStoreEdge = storeNode;
-			mStoreReason = store;
-			
+		public void mergeWith(ArrayNode storeNode, CCAppTerm store, Collection<ArrayLemma> propLemmas) {
+			assert mPrimaryEdge == null && storeNode.mPrimaryEdge == null;
+			mPrimaryEdge = storeNode;
+			mPrimaryStore = store;
+
 			// merge next linkage
 			final ArrayNode next = mNext;
 			mNext = storeNode.mNext;
 			storeNode.mNext = next;
-			
+
 			// merge the consts;
 			// this map collects all selects in the other class, that may need to be merge with the const.
 			Map<CCTerm, CCAppTerm> mergeConstSelects = new HashMap<>();
@@ -396,7 +413,7 @@ public class ArrayTheory implements ITheory {
 					CCTerm const1 = getValueFromConst(mConstTerm);
 					CCTerm const2 = getValueFromConst(storeNode.mConstTerm);
 					if (const1.getRepresentative() != const2.getRepresentative()) {
-						propEqualities.add(new ArrayLemma(RuleKind.CONST_WEAKEQ, const1, const2));
+						propLemmas.add(new ArrayLemma(RuleKind.CONST_WEAKEQ, const1, const2));
 					}
 				}
 			} else if (storeNode.mConstTerm != null) {
@@ -421,7 +438,7 @@ public class ArrayTheory implements ITheory {
 						mergeConstSelects.remove(index);
 						if (select.getRepresentative() != otherSelect.getRepresentative()) {
 							// add propagated equality
-							propEqualities.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
+							propLemmas.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
 						}
 					}
 				}
@@ -438,36 +455,18 @@ public class ArrayTheory implements ITheory {
 						// do not keep select, we will merge it with the constant value
 						storeNode.mSelects.remove(index);
 						if (select.getRepresentative() != const1.getRepresentative()) {
-							propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
+							propLemmas.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
 						}
 					}
 				}
 			}
 		}
 
-		public void computeSelects(int mSelectFunNum) {
-			mSelects = new HashMap<CCTerm, CCAppTerm>();
-			final CCParentInfo info = 
-					mTerm.mCCPars.getExistingParentInfo(mSelectFunNum);
-			if (info != null) {
-				for (final CCAppTerm.Parent pa : info.mCCParents) {
-					final CCParentInfo selectas = pa.getData().getRepresentative()
-							.mCCPars.getExistingParentInfo(0);
-					for (final CCAppTerm.Parent spa : selectas.mCCParents) {
-						final CCAppTerm select = spa.getData();
-						assert (getArrayFromSelect(select).getRepresentative() 
-								== mTerm);
-						assert (select != null);
-						mSelects.put(select.mArg.getRepresentative(), select);
-					}
-				}
-			}
-		}
-
 		/**
-		 * Add a secondary edge from current node to storeNode. The storeNode should be the weak equivalent root when
-		 * this is called.
-		 * 
+		 * Add secondary edge from this node to storeNode. The storeNode should be the weak equivalent root. This node
+		 * should be weak-i equivalent to the array in the store term where i is the index of the primary store. And the
+		 * store should also be on a different index.
+		 *
 		 * @param storeNode
 		 *            The destination node
 		 * @param store
@@ -475,18 +474,17 @@ public class ArrayTheory implements ITheory {
 		 * @param propEqualities
 		 *            A collection where propagated array lemmas are added to by this method.
 		 */
-		public void mergeSelect(ArrayNode storeNode, CCAppTerm store,
-				Collection<ArrayLemma> propEqualities) {
-			assert storeNode.mStoreEdge == null;
-			assert mStoreEdge != null;
-			assert getIndexFromStore(mStoreReason).getRepresentative()
+		public void mergeSecondary(ArrayNode storeNode, CCAppTerm store, Collection<ArrayLemma> propEqualities) {
+			assert storeNode.mPrimaryEdge == null;
+			assert mPrimaryEdge != null;
+			assert getIndexFromStore(mPrimaryStore).getRepresentative()
 					!= getIndexFromStore(store).getRepresentative();
-			if (mSelectEdge != null) {
-				invertSelectEdges();
+			if (mSecondaryEdge != null) {
+				makeWeakIRepresentative();
 			}
-			mSelectEdge = storeNode;
-			mSelectReason = store;
-			final CCTerm storeIndex = getIndexFromStore(mStoreReason).getRepresentative();
+			mSecondaryEdge = storeNode;
+			mSecondaryStore = store;
+			final CCTerm storeIndex = getIndexFromStore(mPrimaryStore).getRepresentative();
 			if (!mSelects.isEmpty()) {
 				final CCAppTerm select = mSelects.get(storeIndex);
 				assert (select != null);
@@ -494,69 +492,79 @@ public class ArrayTheory implements ITheory {
 				if (otherSelect == null) {
 					storeNode.mSelects.put(storeIndex, select);
 				} else {
-					if (select.getRepresentative()
-							!= otherSelect.getRepresentative()) {
+					if (select.getRepresentative() != otherSelect.getRepresentative()) {
 						propEqualities.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
 					}
 				}
 				mSelects = Collections.emptyMap();
 			}
 			if (storeNode.mConstTerm != null) {
-				// We only need to merge a select and const, if it was caused by the new secondary edge.
-				CCTerm const1 = getValueFromConst(storeNode.mConstTerm);
+				// We only need to merge a select and const, if the const term is now weak-i equivalent to the store
+				// node.
 				ArrayNode constNode = mCongRoots.get(storeNode.mConstTerm.getRepresentative());
-				CCAppTerm select = storeNode.mSelects.get(storeIndex);
-				// check if select exists and is weakly equal to the constant array in the congruence class.
-				if (select != null && constNode.getWeakIRepresentative(storeIndex) == storeNode) {
+				if (constNode.getWeakIRepresentative(storeIndex) == storeNode) {
 					// do not keep select, we will merge it with the constant value
-					storeNode.mSelects.remove(storeIndex);
-					if (select.getRepresentative() != const1.getRepresentative()) {
+					CCAppTerm select = storeNode.mSelects.remove(storeIndex);
+					CCTerm const1 = getValueFromConst(storeNode.mConstTerm);
+					if (select != null && select.getRepresentative() != const1.getRepresentative()) {
 						propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
 					}
 				}
 			}
 		}
 
-		public int countSelectEdges(CCTerm index) {
+		/**
+		 * Count the number of secondary edges to the weak-i equivalence class representative.
+		 *
+		 * @param index
+		 *            the index i.
+		 * @return the number of secondary edges from this to the weak-i root.
+		 */
+		public int countSecondaryEdges(CCTerm index) {
 			assert index.isRepresentative();
 			int count = 0;
 			ArrayNode node = this;
-			while (node.mStoreEdge != null) {
-				if (getIndexFromStore(node.mStoreReason).getRepresentative()
-						== index) {
-					if (node.mSelectEdge == null) {
+			while (node.mPrimaryEdge != null) {
+				if (getIndexFromStore(node.mPrimaryStore).getRepresentative() == index) {
+					if (node.mSecondaryEdge == null) {
 						break;
 					}
-					node = node.mSelectEdge;
+					node = node.mSecondaryEdge;
 					count++;
 				} else {
-					node = node.mStoreEdge;
+					node = node.mPrimaryEdge;
 				}
 			}
 			return count;
 		}
 
-		public ArrayNode findSelectNode(CCTerm index) {
+		/**
+		 * Find the next node on the primary chain where the primary edge uses the given index.
+		 */
+		public ArrayNode findSecondaryNode(CCTerm index) {
 			assert index.isRepresentative();
 			ArrayNode node = this;
-			while (node.mStoreEdge != null
-					&& getIndexFromStore(node.mStoreReason).getRepresentative() 
-					!= index) {
-				node = node.mStoreEdge;
+			while (node.mPrimaryEdge != null && getIndexFromStore(node.mPrimaryStore).getRepresentative() != index) {
+				node = node.mPrimaryEdge;
 			}
 			return node;
 		}
 
-		public int countStoreEdges() {
+		/**
+		 * Count the number of primary edges to the weak equivalence class representative.
+		 *
+		 * @return the number of primary edges from this to the root.
+		 */
+		public int countPrimaryEdges() {
 			int count = 0;
 			ArrayNode node = this;
-			while (node.mStoreEdge != null) {
-				node = node.mStoreEdge;
+			while (node.mPrimaryEdge != null) {
+				node = node.mPrimaryEdge;
 				count++;
 			}
 			return count;
 		}
-		
+
 		/**
 		 * Returns the hash code.  This equals the hash code of the underlying
 		 * ccterm.  Note that our algorithm guarantees that there is at most
@@ -566,13 +574,13 @@ public class ArrayTheory implements ITheory {
 		public int hashCode() {
 			return mTerm.hashCode();
 		}
-		
+
 		@Override
 		public String toString() {
 			return "ArrayNode[" + mTerm + "]";
 		}
 	}
-	
+
 	private static class ArrayLemma {
 		RuleKind mRule;
 		SymmetricPair<CCTerm> mPropagatedEq;
@@ -1101,9 +1109,9 @@ public class ArrayTheory implements ITheory {
 		arrayNode.makeWeakRepresentative();
 		storeNode.makeWeakRepresentative();
 
-		if (arrayNode.mStoreEdge == null) {
+		if (arrayNode.mPrimaryEdge == null) {
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("  StoreEdge");
+				mLogger.debug("  PrimaryEdge");
 			}
 			// Combine the arrayNode and storeNode.
 			arrayNode.mergeWith(storeNode, store, mPropClauses);
@@ -1116,8 +1124,8 @@ public class ArrayTheory implements ITheory {
 			final CCTerm storeIndex = getIndexFromStore(store).getRepresentative();
 			seenIndices.add(storeIndex);
 			ArrayNode node = arrayNode;
-			while (node.mStoreEdge != null) {
-				final CCTerm index = getIndexFromStore(node.mStoreReason)
+			while (node.mPrimaryEdge != null) {
+				final CCTerm index = getIndexFromStore(node.mPrimaryStore)
 						.getRepresentative();
 				/* add the index to the seen indices and merge weak-i
 				 * equivalence classes if index was not seen before and they
@@ -1127,13 +1135,13 @@ public class ArrayTheory implements ITheory {
 						&& node.getWeakIRepresentative(index) != storeNode) {
 					mNumModuloEdges++;
 					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("  SelectEdge: ["
+						mLogger.debug("  SecondaryEdge: ["
 								+ index + "] "
 								+ node + " to " + storeNode);
 					}
-					node.mergeSelect(storeNode, store, mPropClauses);
+					node.mergeSecondary(storeNode, store, mPropClauses);
 				}
-				node = node.mStoreEdge;
+				node = node.mPrimaryEdge;
 			}
 		}
 	}
@@ -1167,46 +1175,60 @@ public class ArrayTheory implements ITheory {
 		}
 		
 		/**
-		 * Collect the store indices from this to dest over their
-		 * common root using only the store edges.  The arrays must be
-		 * weakly equivalent.
-		 * @param array1 the first array.
-		 * @param array2 the second array.
-		 * @param storeIndices a map where the store indices are collected to.
+		 * Collect the store indices from this to destNode over their common root using only the primary edges. The
+		 * arrays must be weakly equivalent.
+		 * 
+		 * @param destNode
+		 *            the second array.
+		 * @param storeIndices
+		 *            a map where the store indices are collected to.
 		 */
-		public void collectOverStores(ArrayNode destNode, Set<CCTerm> storeIndices) {
-			int steps1 = mNode.countStoreEdges();
-			int steps2 = destNode.countStoreEdges();
+		public void collectOverPrimaries(ArrayNode destNode, Set<CCTerm> storeIndices) {
+			// compute the steps to the common root
+			int steps1 = mNode.countPrimaryEdges();
+			int steps2 = destNode.countPrimaryEdges();
+			// if one needs more step than the other, follow the primary edges until the steps equal
 			while (steps1 > steps2) {
-				storeIndices.add(getIndexFromStore(mNode.mStoreReason));
-				mNode = mNode.mStoreEdge;
+				storeIndices.add(getIndexFromStore(mNode.mPrimaryStore));
+				mNode = mNode.mPrimaryEdge;
 				steps1--;
 			}
 			while (steps2 > steps1) {
-				storeIndices.add(getIndexFromStore(destNode.mStoreReason));
-				destNode = destNode.mStoreEdge;
+				storeIndices.add(getIndexFromStore(destNode.mPrimaryStore));
+				destNode = destNode.mPrimaryEdge;
 				steps2--;
 			}
+			// now follow the primary edge from both nodes until the common ancestor is found
 			while (mNode != destNode) {
-				storeIndices.add(getIndexFromStore(mNode.mStoreReason));
-				storeIndices.add(getIndexFromStore(destNode.mStoreReason));
-				mNode = mNode.mStoreEdge;
-				destNode = destNode.mStoreEdge;
+				storeIndices.add(getIndexFromStore(mNode.mPrimaryStore));
+				storeIndices.add(getIndexFromStore(destNode.mPrimaryStore));
+				mNode = mNode.mPrimaryEdge;
+				destNode = destNode.mPrimaryEdge;
 			}
 		}
-		
-		public void collectOneSelect(CCTerm index, Set<CCTerm> storeIndices) {
-			final ArrayNode selectNode = mNode.findSelectNode(index);
-			final CCAppTerm store = selectNode.mSelectReason;
+
+		/**
+		 * Collect the store indices on the path from this its weak representative on index using exactly one secondary
+		 * edge. It first determines the next secondary edge, collects the primary stores that are needed to reach one
+		 * side of it and then the secondary store.
+		 * 
+		 * @param index
+		 *            the select index of the selects whose equality is propagated.
+		 * @param storeIndices
+		 *            All store indices are added to this map as side-effect.
+		 */
+		private void collectOneSecondary(CCTerm index, Set<CCTerm> storeIndices) {
+			final ArrayNode selectNode = mNode.findSecondaryNode(index);
+			final CCAppTerm store = selectNode.mSecondaryStore;
 			final CCTerm array = getArrayFromStore(store);
 			final ArrayNode arrayNode = mCongRoots.get(array.getRepresentative());
 			final ArrayNode storeNode = mCongRoots.get(store.getRepresentative());
-			if (arrayNode.findSelectNode(index) == selectNode) {
-				collectOverStores(arrayNode, storeIndices);
+			if (arrayNode.findSecondaryNode(index) == selectNode) {
+				collectOverPrimaries(arrayNode, storeIndices);
 				mNode = storeNode;
 			} else {
-				assert storeNode.findSelectNode(index) == selectNode;
-				collectOverStores(storeNode, storeIndices);
+				assert storeNode.findSecondaryNode(index) == selectNode;
+				collectOverPrimaries(storeNode, storeIndices);
 				mNode = arrayNode;
 			}
 			storeIndices.add(getIndexFromStore(store));
@@ -1221,22 +1243,21 @@ public class ArrayTheory implements ITheory {
 		 * to this map as side-effect.
 		 */
 		public void collect(CCTerm index, Cursor dest, Set<CCTerm> storeIndices) {
-			int steps1 = mNode.countSelectEdges(index);
-			int steps2 = dest.mNode.countSelectEdges(index);
+			int steps1 = mNode.countSecondaryEdges(index);
+			int steps2 = dest.mNode.countSecondaryEdges(index);
 			while (steps1 > steps2) {
-				collectOneSelect(index, storeIndices);
+				collectOneSecondary(index, storeIndices);
 				steps1--;
 			}
 			while (steps2 > steps1) {
-				dest.collectOneSelect(index, storeIndices);
+				dest.collectOneSecondary(index, storeIndices);
 				steps2--;
 			}
-			while (mNode.findSelectNode(index) 
-					!= dest.mNode.findSelectNode(index)) {
-				collectOneSelect(index, storeIndices);
-				dest.collectOneSelect(index, storeIndices);
+			while (mNode.findSecondaryNode(index) != dest.mNode.findSecondaryNode(index)) {
+				collectOneSecondary(index, storeIndices);
+				dest.collectOneSecondary(index, storeIndices);
 			}
-			collectOverStores(dest.mNode, storeIndices);
+			collectOverPrimaries(dest.mNode, storeIndices);
 		}
 	}
 
@@ -1384,7 +1405,8 @@ public class ArrayTheory implements ITheory {
 
 		/*
 		 * makeConstReps ensures that in each weak equivalence class, the const term is the weak representative. So if
-		 * mConstTerm != null then mStoreEdge == null and all mSelects must have a value equal to the constant.
+		 * mConstTerm != null then primary edge is null and all mSelects must have a value equal to the constant (in
+		 * fact mSelects is empty since we removed them).
 		 */
 		mArrayModels = new HashMap<ArrayNode, Map<CCTerm,Object>>();
 		final HashMap<Map<CCTerm,Object>,ArrayNode> inverse = 
@@ -1399,9 +1421,8 @@ public class ArrayTheory implements ITheory {
 				todoQueue.removeFirst();
 				continue;
 			}
-			if (node.mStoreEdge != null
-				&& !mArrayModels.containsKey(node.mStoreEdge)) {
-				todoQueue.addFirst(node.mStoreEdge);
+			if (node.mPrimaryEdge != null && !mArrayModels.containsKey(node.mPrimaryEdge)) {
+				todoQueue.addFirst(node.mPrimaryEdge);
 				continue;
 			}
 			todoQueue.removeFirst();
@@ -1422,9 +1443,9 @@ public class ArrayTheory implements ITheory {
 					}
 				}
 			} else {
-				final CCTerm storeIndex = getIndexFromStore(node.mStoreReason)
+				final CCTerm storeIndex = getIndexFromStore(node.mPrimaryStore)
 						.getRepresentative();
-				nodeMapping.putAll(mArrayModels.get(node.mStoreEdge));
+				nodeMapping.putAll(mArrayModels.get(node.mPrimaryEdge));
 				nodeMapping.remove(storeIndex);
 				final ArrayNode weakiRep = node.getWeakIRepresentative(storeIndex);
 				final CCTerm value = weakiRep.mSelects.get(storeIndex);
