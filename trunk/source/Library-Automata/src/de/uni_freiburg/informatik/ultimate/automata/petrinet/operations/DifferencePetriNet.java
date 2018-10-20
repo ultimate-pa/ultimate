@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.ArrayList;
@@ -26,6 +52,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ * Petri net for on-demand construction of difference.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
 public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
 
 	private static final String EXACTLY_ONE_STATE_OF_SUBTRAHEND = "query for successors must contain exactly one state of subtrahend";
@@ -33,7 +64,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private final AutomataLibraryServices mServices;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinued;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
-	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old = new HashMap<ITransition<LETTER,PLACE>, ITransition<LETTER,PLACE>>();
+	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old = new HashMap<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>>();
 	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOld2New = new HashRelation<>();
 	private final Map<ITransition<LETTER, PLACE>, PLACE> mNewTransition2AutomatonPredecessorState = new HashMap<>();
 	private final Set<PLACE> mMinuendPlaces = new HashSet<>();
@@ -42,10 +73,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private int mNumberOfConstructedTransitions = 0;
 	private final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitions = new HashMap<>();
 
-
-
-
-	public DifferencePetriNet(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
+	public DifferencePetriNet(final AutomataLibraryServices services,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahend) {
 		super();
 		mServices = services;
@@ -58,8 +87,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		final Set<PLACE> result = new HashSet<>(mMinued.getInitialPlaces());
 		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
 		if (!it.hasNext()) {
-			throw new UnsupportedOperationException(
-					EMPTY_INITIAL_ERROR_MESSAGE);
+			throw new UnsupportedOperationException(EMPTY_INITIAL_ERROR_MESSAGE);
 		}
 		final PLACE automatonInitialState = it.next();
 		result.add(automatonInitialState);
@@ -96,10 +124,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 	}
 
-
 	/**
 	 * @param places
-	 *            Set of places where exactly one is a state of the subtrahend and the others are places of the minuend.
+	 *            Set of places where exactly one is a state of the subtrahend and
+	 *            the others are places of the minuend.
 	 */
 	@Override
 	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
@@ -126,7 +154,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		// do use transitions of *all* yet known places because the subtrahend
 		// predecessor could potentially have a transition with all of them.
-		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
+		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued
+				.getSuccessorTransitionProviders(mMinuendPlaces);
 		for (final ISuccessorTransitionProvider<LETTER, PLACE> pred : preds) {
 			result.add(new DifferenceSuccessorTransitionProvider(pred, automatonPredecessor));
 		}
@@ -169,7 +198,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public Collection<ITransition<LETTER, PLACE>> getTransitions() {
 			final List<ITransition<LETTER, PLACE>> result = new ArrayList<>();
 			for (final ITransition<LETTER, PLACE> inputTransition : mPetriNetPredecessors.getTransitions()) {
-				final ITransition<LETTER, PLACE> outputTransition = getOrConstructTransition(inputTransition, mAutomatonPredecessor);
+				final ITransition<LETTER, PLACE> outputTransition = getOrConstructTransition(inputTransition,
+						mAutomatonPredecessor);
 				if (outputTransition != null) {
 					result.add(outputTransition);
 				}
@@ -184,11 +214,13 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		 */
 		private ITransition<LETTER, PLACE> getOrConstructTransition(final ITransition<LETTER, PLACE> inputTransition,
 				final PLACE automatonPredecessor) {
-			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, automatonPredecessor);
+			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition,
+					automatonPredecessor);
 			if (result == null) {
 				OutgoingInternalTransition<LETTER, PLACE> subtrahendSucc;
 				{
-					final Iterable<OutgoingInternalTransition<LETTER, PLACE>> subtrahendSuccs = mSubtrahend.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
+					final Iterable<OutgoingInternalTransition<LETTER, PLACE>> subtrahendSuccs = mSubtrahend
+							.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
 					final Iterator<OutgoingInternalTransition<LETTER, PLACE>> it = subtrahendSuccs.iterator();
 					if (!it.hasNext()) {
 						throw new IllegalArgumentException("Subtrahend not total.");
@@ -210,11 +242,11 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					mSubtrahendStates.add(subtrahendSucc.getSucc());
 					successors.add(subtrahendSucc.getSucc());
 
-				final int totalOrderId = mNumberOfConstructedTransitions;
-				mNumberOfConstructedTransitions++;
-				result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
-				mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
-				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+					final int totalOrderId = mNumberOfConstructedTransitions;
+					mNumberOfConstructedTransitions++;
+					result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
+					mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
+					mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 				}
 			}
 			return result;
@@ -230,7 +262,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			result.addPlace(place, mSubtrahend.isInitial(place), false);
 		}
 		for (final Entry<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> entry : mTransitions.entrySet()) {
-			result.addTransition(entry.getValue().getSymbol(), entry.getValue().getPredecessors(), entry.getValue().getSuccessors());
+			result.addTransition(entry.getValue().getSymbol(), entry.getValue().getPredecessors(),
+					entry.getValue().getSuccessors());
 		}
 		return result;
 
