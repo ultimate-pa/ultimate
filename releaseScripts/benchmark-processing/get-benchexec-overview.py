@@ -46,6 +46,7 @@ known_timeouts = {
     "Toolchain execution was canceled (user or tool) before executing": True,
     "TimeoutResultAtElement": True,
     "TimeoutResult": True,
+    "Killed by 15": True,
 }
 
 known_safe = {
@@ -126,6 +127,7 @@ def parse_args():
 
 def scan_line(line, result, line_iter):
     new_result = None
+    debug('Looking at line {}'.format(line))
 
     for exc, v in interesting_strings.items():
         if exc in line:
@@ -174,8 +176,10 @@ def process_wrapper_script_log(file):
                     call = [line]
                     collect_call = True
                 elif collect_call:
-                    if 'Execution finished normally' in line:
+                    if 'Execution finished normally' in line or 'Killed by 15' in line:
                         collect_call = False
+                        if 'Killed by 15' in line:
+                            return [Result(scan_line(line, result, lines),call[:-1],None)]
                         if default:
                             default_call = call[:-1]
                             debug('Found default call {}'.format(default_call))
