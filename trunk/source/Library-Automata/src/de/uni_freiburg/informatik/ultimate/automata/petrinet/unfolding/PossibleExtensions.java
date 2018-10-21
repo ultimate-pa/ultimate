@@ -72,6 +72,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	public void update(final Event<LETTER, PLACE> event) {
 		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
 		for (final Candidate<LETTER, PLACE> candidate : candidates) {
+			if (candidate.getInstantiated().isEmpty()) {
+				throw new AssertionError("at least one place has to be instantiated");
+			}
 			evolveCandidate(candidate);
 		}
 	}
