@@ -37,9 +37,11 @@ known_exceptions = {
     "No Boogie because C type is incomplete": True,
     "AssertionError: Invalid VarList": True,
     "AssertionError: Invalid Procedure": True,
-    "Wrong parameter type at index":True,
-    "Undeclared identifier ":True,
-    "Modifies not transitive":True,
+    "Wrong parameter type at index": True,
+    "Undeclared identifier ": True,
+    "Modifies not transitive": True,
+    "No suitable toolchain file found": True,
+    "No suitable file found in config dir": True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
@@ -156,9 +158,34 @@ def scan_line(line, result, line_iter):
     return result
 
 
-def process_wrapper_script_log(file):
+def rescan_wrapper_preamble(lines, call, version):
+    '''
+    If there was no result in the wrapper script log so far, we rescan it and search for errors reported directly by
+    the wrapper script
+    :param lines: Iterator over the lines
+    :param call: A call if any was found
+    :param version: A version if any was found
+    :return:
+    '''
+    debug("Rescanning wrapper preamble")
     regex_file_does_not_exist = re.compile(".*File.*does not exist")
+    result = None
+    for line in lines:
+        if not line:
+            continue
+        if 'Ultimate.py: error: argument' in line:
+            debug("Found argument error")
+            # hacky special case
+            if '--validate' in line and regex_file_does_not_exist.match(line):
+                return [Result(scan_line(line, None, lines), None, None)]
+            return [Result(None, None, None)]
+        else:
+            result = scan_line(line, result, lines)
 
+    return [Result(result, call, version)]
+
+
+def process_wrapper_script_log(file):
     results = []
     default = True
     wrapper_preamble = True
@@ -179,10 +206,8 @@ def process_wrapper_script_log(file):
                     call = [line]
                     collect_call = True
                 elif collect_call:
-                    if 'Execution finished normally' in line or 'Killed by 15' in line:
+                    if 'Execution finished normally' in line:
                         collect_call = False
-                        if 'Killed by 15' in line:
-                            return [Result(scan_line(line, result, lines),call[:-1],None)]
                         if default:
                             default_call = call[:-1]
                             debug('Found default call {}'.format(default_call))
@@ -193,11 +218,6 @@ def process_wrapper_script_log(file):
                         call += [line]
                 elif '--- Real Ultimate output ---' in line:
                     wrapper_preamble = False
-                elif 'Ultimate.py: error: argument' in line:
-                    # some wrapper argument failed, we directly abort this file
-                    if '--validate' in line and regex_file_does_not_exist.match(line):
-                        return [Result(scan_line(line, None, lines), None, None)]
-                    return [Result(None, None, None)]
             else:
                 if line.startswith("This is Ultimate"):
                     new_version = version_matcher.findall(line)[0]
@@ -213,21 +233,21 @@ def process_wrapper_script_log(file):
                     result = None
                 else:
                     result = scan_line(line, result, lines)
-        if bitvec_call:
-            debug('Found bitvec result: {}'.format(result))
-            results += [Result(result, bitvec_call, version)]
-        if not results:
-            if result and default_call:
-                # case where the bitvector run did not start, e.g., termination
-                return [Result(result, default_call, version)]
-            debug('No results for file {}'.format(file))
-            if default_call:
-                return [Result(None, default_call, version)]
-            elif bitvec_call:
-                return [Result(None, bitvec_call, version)]
-            else:
-                return [Result(None, None, version)]
-        return results
+    if bitvec_call:
+        debug('Found bitvec result: {}'.format(result))
+        results += [Result(result, bitvec_call, version)]
+    if not results:
+        if result and default_call:
+            # case where the bitvector run did not start, e.g., termination
+            debug('Using default result: {}'.format(result))
+            return [Result(result, default_call, version)]
+        debug('No results for file {}'.format(file))
+        with open(file) as f:
+            lines = [line.rstrip('\n') for line in f].__iter__()
+            return rescan_wrapper_preamble(lines,
+                                           default_call if default_call else (bitvec_call if bitvec_call else None),
+                                           version)
+    return results
 
 
 def process_direct_call_log(file):
@@ -253,8 +273,10 @@ def process_log_file(file):
         lines = [line.rstrip('\n') for line in f]
         for line in lines:
             if 'Ultimate.py' in line:
+                debug("Wrapper script detected")
                 return process_wrapper_script_log(file)
             elif 'This is Ultimate' in line:
+                debug("No wrapper script detected")
                 return process_direct_call_log(file)
     raise ValueError('Encountered unrecognized file (not an Ultimate log file): {}'.format(file))
 
