@@ -37,6 +37,9 @@ known_exceptions = {
     "No Boogie because C type is incomplete": True,
     "AssertionError: Invalid VarList": True,
     "AssertionError: Invalid Procedure": True,
+    "Wrong parameter type at index":True,
+    "Undeclared identifier ":True,
+    "Modifies not transitive":True,
     "ExceptionOrErrorResult": False,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
