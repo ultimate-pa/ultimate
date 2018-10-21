@@ -1017,7 +1017,7 @@ public class CHandler {
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		final boolean isOnHeap = pendingResType.isOnHeap() || (mIsPrerun ? false : mVariablesOnHeap.contains(node));
+		final boolean isOnHeap = (mIsPrerun ? false : mVariablesOnHeap.contains(node));
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
