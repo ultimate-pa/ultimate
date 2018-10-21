@@ -154,6 +154,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		// do use transitions of *all* yet known places because the subtrahend
 		// predecessor could potentially have a transition with all of them.
+		// TODO 2018-10-21 Matthias: Optimization: Overapproximate candidates
+		// in Unfolding. Do not take all minuend places but only these where at
+		// least one corresponding place is in co-relation with automaton
+		// successor
 		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued
 				.getSuccessorTransitionProviders(mMinuendPlaces);
 		for (final ISuccessorTransitionProvider<LETTER, PLACE> pred : preds) {
