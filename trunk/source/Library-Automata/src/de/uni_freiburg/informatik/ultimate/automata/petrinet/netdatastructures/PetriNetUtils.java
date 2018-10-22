@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -51,7 +52,7 @@ public final class PetriNetUtils {
 	}
 
 	public static <LETTER, PLACE> boolean similarPredecessorPlaces(
-			final Collection<ITransition<LETTER, PLACE>> transitions, final IPetriNet<LETTER, PLACE> net) {
+			final Collection<ITransition<LETTER, PLACE>> transitions, final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		if (transitions.isEmpty()) {
 			return true;
 		} else {
@@ -70,8 +71,8 @@ public final class PetriNetUtils {
 	 * Checks equivalent of two Petri nets.
 	 * Two Petri nets are equivalent iff they accept the same language.
 	 * <p>
-	 * This is a naive implementation and may be very slow. 
-	 * 
+	 * This is a naive implementation and may be very slow.
+	 *
 	 * @param net1 Petri net
 	 * @param net2 Petri net
 	 * @return net1 and net2 accept the same language
@@ -86,7 +87,7 @@ public final class PetriNetUtils {
 	}
 
 	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>>
-			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(AutomataLibraryServices mServices,
+			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(final AutomataLibraryServices mServices,
 			final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net) {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
