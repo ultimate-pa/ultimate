@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
@@ -41,12 +41,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.IInlineSelect
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.ILabeledEdgesFilter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter.ILabeledEdgesFilter;
 
 /**
  * Selector using the preferences from the BoogieProcedureInliner.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class PreferencesInlineSelector implements IInlineSelector {
@@ -75,7 +75,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 
 	/**
 	 * Creates a new InlineSelector using the currently set preferences of the BoogieProcedureInliner.
-	 * 
+	 *
 	 * @param services
 	 *            The current {@link IUltimateServiceProvider} instance that is used to retrieve valid preferences.
 	 */
@@ -87,8 +87,8 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		mIgnoreCallForAll = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.getName());
 		mUserList = new HashSet<>(PreferenceItem.USER_LIST.getStringValueTokens(services));
-		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(PreferenceItem.USER_LIST_TYPE.getName(),
-				UserListType.class);
+		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(PreferenceItem.USER_LIST_TYPE.getName(), UserListType.class);
 		mIgnoreRecursive = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceItem.IGNORE_RECURSIVE.getName());
 		mIgnoreWithFreeRequires = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -102,7 +102,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	}
 
 	@Override
-	public void setInlineFlags(Map<String, CallGraphNode> callGraph) {
+	public void setInlineFlags(final Map<String, CallGraphNode> callGraph) {
 		mLastInlinedCall = new HashMap<>();
 		final List<ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
 		if (!mUserListType.isOnly()) {
@@ -113,8 +113,8 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		}
 		for (final ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> filter : updaterQueue) {
 			for (final CallGraphNode caller : callGraph.values()) {
-				final Iterator<CallGraphEdgeLabel> outgoingEdgeLabelsIterator = caller.getOutgoingEdgeLabels()
-						.iterator();
+				final Iterator<CallGraphEdgeLabel> outgoingEdgeLabelsIterator =
+						caller.getOutgoingEdgeLabels().iterator();
 				final Iterator<CallGraphNode> outgoingNodesIterator = caller.getOutgoingNodes().iterator();
 				while (outgoingEdgeLabelsIterator.hasNext() && outgoingNodesIterator.hasNext()) {
 					final CallGraphEdgeLabel callLabel = outgoingEdgeLabelsIterator.next();
@@ -153,8 +153,8 @@ public class PreferencesInlineSelector implements IInlineSelector {
 
 	private final class GeneralSettingsFilter implements ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> {
 		@Override
-		public boolean accept(final CallGraphNode caller,
-				final CallGraphEdgeLabel callLabel, final CallGraphNode callee) {
+		public boolean accept(final CallGraphNode caller, final CallGraphEdgeLabel callLabel,
+				final CallGraphNode callee) {
 			if (mIgnoreWithFreeRequires && hasFreeRequiresSpecification(callee)) {
 				return false;
 			} else if (mIgnorePolymorphic && (caller.isPolymorphic() || callee.isPolymorphic())) {
@@ -173,8 +173,8 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		private boolean acceptNormalCall(final CallGraphEdgeLabel callLabel, final CallGraphNode callee) {
 			// Assume that all procedures are called only once (can be undone later)
 			final boolean isImplemented = callee.isImplemented();
-			final boolean inlineIfSingleCall = (mInlineImplemented && isImplemented)
-					|| (mInlineUnimplemented && !isImplemented);
+			final boolean inlineIfSingleCall =
+					(mInlineImplemented && isImplemented) || (mInlineUnimplemented && !isImplemented);
 			if (!inlineIfSingleCall || !mIgnoreMultipleCalled) {
 				return inlineIfSingleCall;
 			}
@@ -187,7 +187,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 			return true;
 		}
 
-		private boolean hasFreeRequiresSpecification(CallGraphNode procNode) {
+		private boolean hasFreeRequiresSpecification(final CallGraphNode procNode) {
 			for (final Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
 				if (spec instanceof RequiresSpecification && spec.isFree()) {
 					return true;

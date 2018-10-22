@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -131,5 +131,33 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 	private void markPermanently(final N temporarilyMarkedNode) {
 		mTemporarilyMarkedNodes.remove(temporarilyMarkedNode);
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
+	}
+
+	/**
+	 * Filter for labeled edges. This can be used inside graph algorithms to ignore unwanted edges without having to
+	 * build a modified copy of the graph.
+	 *
+	 * @author schaetzc@informatik.uni-freiburg.de
+	 *
+	 * @param <V>
+	 *            Type of the graph nodes.
+	 * @param <L>
+	 *            Type of the graph edge labels.
+	 */
+	@FunctionalInterface
+	public interface ILabeledEdgesFilter<V extends ILabeledEdgesMultigraph<V, L, ?>, L> {
+
+		/**
+		 * Determines whether to use an outgoing edge or not.
+		 *
+		 * @param source
+		 *            Source node of the edge.
+		 * @param outgoingEdgeLabel
+		 *            Label of the edge.
+		 * @param target
+		 *            Target node of the edge.
+		 * @return The edge should be used.
+		 */
+		public boolean accept(V source, L outgoingEdgeLabel, V target);
 	}
 }
