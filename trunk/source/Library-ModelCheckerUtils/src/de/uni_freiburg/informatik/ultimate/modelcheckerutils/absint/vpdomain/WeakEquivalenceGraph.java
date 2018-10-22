@@ -1462,7 +1462,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 			boolean isStrongerOrEqual(final WeakEquivalenceEdgeLabel<NODE> label1,
 					final WeakEquivalenceEdgeLabel<NODE> label2) {
-				return mWeqCcManager.isStrongerThan(label1, label2, mCcPoCache::lowerEqual);
+				return mWeqCcManager.isStrongerThan(label1, label2, mCcPoCache::isSmallerOrEqual);
 			}
 
 			WeakEquivalenceEdgeLabel<NODE> union(final WeakEquivalenceEdgeLabel<NODE> label1,

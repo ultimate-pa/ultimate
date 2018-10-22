@@ -26,14 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter.ILabeledEdgesFilter;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter.IRelationFilter;
 
 /**
  * Call graph edge filter, accepting only non-recursive, normal calls.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class SimpleCallFilter implements ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> {
+public class SimpleCallFilter implements IRelationFilter<CallGraphNode, CallGraphEdgeLabel> {
 
 	@Override
 	public boolean accept(final CallGraphNode source, final CallGraphEdgeLabel outgoingEdgeLabel,

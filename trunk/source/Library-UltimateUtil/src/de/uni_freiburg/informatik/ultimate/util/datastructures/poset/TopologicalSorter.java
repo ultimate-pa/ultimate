@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2018 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
  *
@@ -31,51 +32,59 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
-
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILabeledEdgesMultigraph;
+import java.util.function.Function;
 
 /**
  * Utility class for topological sorting of DAGs.
  *
- * @author schaetzc@informatik.uni-freiburg.de
- *
- * @param <N>
+ * @param <V>
  *            Type of the graph's nodes.
  * @param <L>
  *            Type of the graph's edge labels.
+ *
+ * @author schaetzc@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
+public class TopologicalSorter<V, L> {
 
-	private static class GraphCycleException extends Exception {
-		private static final long serialVersionUID = -7189895863479876025L;
-	}
+	private Set<V> mUnmarkedNodes;
+	private Set<V> mTemporarilyMarkedNodes;
+	private Set<V> mPermanentlyMarkedNodes;
+	private List<V> mTopolicalSorting;
 
-	private ILabeledEdgesFilter<N, L> mOutgoingEdgesFilter;
+	private final Function<V, Collection<Entry<V, L>>> mFunSuccesor;
+	private final IRelationFilter<V, L> mOutgoingEdgesFilter;
 
-	private Set<N> mUnmarkedNodes;
-	private Set<N> mTemporarilyMarkedNodes;
-	private Set<N> mPermanentlyMarkedNodes;
-	private List<N> mTopolicalSorting;
-
-	public TopologicalSorter() {
-		this((source, outgoingEdgeLabel, target) -> true);
+	/**
+	 * Create a sorter for a given DAG.
+	 *
+	 * @param funSuccesor
+	 *            A function that provides all successors and their respective edge labels for a vertex.
+	 */
+	public TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor) {
+		this(funSuccesor, (source, outgoingEdgeLabel, target) -> true);
 	}
 
 	/**
-	 * Creates a sorter, that ignores some of the graphs edges. This can be used to sort an graph with cycles, if the
-	 * cycle building edges aren't accepted by the filter.
+	 * Create a sorter that ignores some of the graphs edges. This can be used to sort an graph with cycles, if the
+	 * cycle building edges are rejected by the filter.
 	 *
+	 * @param funSuccesor
+	 *            A function that provides all successors and their respective edge labels for a vertex.
 	 * @param outgoingEdgesFilter
-	 *            Filter to be applied on outgoing edges -- only accepted edges will be used.
+	 *            Filter to be applied on successor edges -- only accepted edges will be used.
 	 */
-	public TopologicalSorter(final ILabeledEdgesFilter<N, L> outgoingEdgesFilter) {
+	public TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor,
+			final IRelationFilter<V, L> outgoingEdgesFilter) {
 		mOutgoingEdgesFilter = outgoingEdgesFilter;
+		mFunSuccesor = funSuccesor;
 	}
 
 	/** @see #reversedTopologicalOrdering(Collection) */
-	public List<N> topologicalOrdering(final Collection<N> graph) {
-		final List<N> ordering = reversedTopologicalOrdering(graph);
+	public List<V> topologicalOrdering(final Collection<V> graph) {
+		final List<V> ordering = reversedTopologicalOrdering(graph);
 		if (ordering != null) {
 			Collections.reverse(ordering);
 		}
@@ -91,7 +100,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 	 *            All nodes of the graph to be sorted. Duplicates will be ignored.
 	 * @return Topological ordering of the nodes. null iff the graph contained a circle.
 	 */
-	public List<N> reversedTopologicalOrdering(final Collection<N> graph) {
+	public List<V> reversedTopologicalOrdering(final Collection<V> graph) {
 		mUnmarkedNodes = new HashSet<>(graph);
 		mTemporarilyMarkedNodes = new HashSet<>();
 		mPermanentlyMarkedNodes = new HashSet<>();
@@ -107,15 +116,15 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 	}
 
 	// DFS-based algorithm from "http://en.wikipedia.org/wiki/Topological_sorting" (Tarjan, 1976)
-	private void visit(final N node) throws GraphCycleException {
+	private void visit(final V node) throws GraphCycleException {
 		if (mTemporarilyMarkedNodes.contains(node)) {
 			throw new GraphCycleException();
 		} else if (mUnmarkedNodes.contains(node)) {
 			markTemporarily(node);
-			for (final N outgoingNode : node.getOutgoingNodes()) {
-				// using "getOutgoingLabel" is not efficient, but the only way without using a less-generic graph type.
-				if (mOutgoingEdgesFilter.accept(node, node.getOutgoingEdgeLabel(outgoingNode), outgoingNode)) {
-					visit(outgoingNode);
+
+			for (final Entry<V, L> outgoingNode : mFunSuccesor.apply(node)) {
+				if (mOutgoingEdgesFilter.accept(node, outgoingNode.getValue(), outgoingNode.getKey())) {
+					visit(outgoingNode.getKey());
 				}
 			}
 			markPermanently(node);
@@ -123,19 +132,23 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 		}
 	}
 
-	private void markTemporarily(final N unmarkedNode) {
+	private void markTemporarily(final V unmarkedNode) {
 		mUnmarkedNodes.remove(unmarkedNode);
 		mTemporarilyMarkedNodes.add(unmarkedNode);
 	}
 
-	private void markPermanently(final N temporarilyMarkedNode) {
+	private void markPermanently(final V temporarilyMarkedNode) {
 		mTemporarilyMarkedNodes.remove(temporarilyMarkedNode);
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
 	}
 
+	private static class GraphCycleException extends Exception {
+		private static final long serialVersionUID = -7189895863479876025L;
+	}
+
 	/**
-	 * Filter for labeled edges. This can be used inside graph algorithms to ignore unwanted edges without having to
-	 * build a modified copy of the graph.
+	 * Filter for, e.g., labeled edges. This can be used inside graph algorithms to ignore unwanted edges without having
+	 * to build a modified copy of the graph.
 	 *
 	 * @author schaetzc@informatik.uni-freiburg.de
 	 *
@@ -145,7 +158,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 	 *            Type of the graph edge labels.
 	 */
 	@FunctionalInterface
-	public interface ILabeledEdgesFilter<V extends ILabeledEdgesMultigraph<V, L, ?>, L> {
+	public interface IRelationFilter<V, L> {
 
 		/**
 		 * Determines whether to use an outgoing edge or not.

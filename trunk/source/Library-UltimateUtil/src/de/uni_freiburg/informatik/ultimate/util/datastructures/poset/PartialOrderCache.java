@@ -39,20 +39,34 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class PartialOrderCache<E> {
 
+	private static enum PocBmNames {
+
+		ORDER_REQUESTS_MADE, ORDER_REQUESTS_ANSWERED, ELEMENTS_ADDED;
+
+		static String[] getNames() {
+			final String[] result = new String[values().length];
+			for (int i = 0; i < values().length; i++) {
+				result[i] = values()[i].name();
+			}
+			return result;
+		}
+	}
+
+	private static final boolean BENCHMARK = true;
+
 	private final IPartialComparator<E> mComparator;
-
 	private final HashRelation<E, E> mStrictlySmaller;
-
 	private final HashRelation<E, E> mNotStrictlySmaller;
-
 	private final UnionFind<E> mEquivalences;
-
 	private final Set<E> mMaximalElements;
-
-	private final boolean mBenchmarkMode;
-	private BenchmarkWithCounters mBenchmark;
+	private final BenchmarkWithCounters mBenchmark;
 
 	public PartialOrderCache(final IPartialComparator<E> comparator) {
 		mComparator = comparator;
@@ -61,14 +75,12 @@ public class PartialOrderCache<E> {
 		mEquivalences = new UnionFind<>();
 		mMaximalElements = new HashSet<>();
 
-		mBenchmarkMode = true;
-		if (mBenchmarkMode) {
+		if (BENCHMARK) {
 			mBenchmark = new BenchmarkWithCounters();
 			mBenchmark.registerCountersAndWatches(PocBmNames.getNames());
 		} else {
 			mBenchmark = null;
 		}
-
 	}
 
 	public E addElement(final E elemToAdd) {
@@ -108,7 +120,7 @@ public class PartialOrderCache<E> {
 					mStrictlySmaller.replaceDomainElement(rep, newRep);
 					mStrictlySmaller.replaceRangeElement(rep, newRep);
 				}
-				assert sanityCheck();
+				assert assertInvariants();
 				bmEnd(PocBmNames.ELEMENTS_ADDED);
 				return newRep;
 			case STRICTLY_SMALLER:
@@ -125,7 +137,7 @@ public class PartialOrderCache<E> {
 		}
 
 		bmEnd(PocBmNames.ELEMENTS_ADDED);
-		assert sanityCheck();
+		assert assertInvariants();
 		return rep;
 	}
 
@@ -142,15 +154,15 @@ public class PartialOrderCache<E> {
 
 		mMaximalElements.remove(smallerRep);
 
-		assert sanityCheck();
+		assert assertInvariants();
 	}
 
-	public boolean lowerEqual(final E elem1, final E elem2) {
+	public boolean isSmallerOrEqual(final E elem1, final E elem2) {
 		bmStart(PocBmNames.ORDER_REQUESTS_ANSWERED);
 		if (elem1 == elem2) {
 			return true;
 		}
-		assert sanityCheck();
+		assert assertInvariants();
 		final E rep1 = addElement(elem1);
 		final E rep2 = addElement(elem2);
 		if (rep1 == rep2) {
@@ -158,16 +170,14 @@ public class PartialOrderCache<E> {
 			bmEnd(PocBmNames.ORDER_REQUESTS_ANSWERED);
 			return true;
 		}
-		/*
-		 * elements are not equal
-		 * We need to test if there is a path through the graph mStrictlySmaller from rep1 to rep2.
-		 */
-		final boolean result = strictlySmaller(rep1, rep2);
+		// elements are not equal
+		// We need to test if there is a path through the graph mStrictlySmaller from rep1 to rep2.
+		final boolean result = isStrictlySmaller(rep1, rep2);
 		bmEnd(PocBmNames.ORDER_REQUESTS_ANSWERED);
 		return result;
 	}
 
-	protected boolean strictlySmaller(final E rep1, final E rep2) {
+	private boolean isStrictlySmaller(final E rep1, final E rep2) {
 		if (mStrictlySmaller.containsPair(rep1, rep2)) {
 			return true;
 		}
@@ -180,14 +190,10 @@ public class PartialOrderCache<E> {
 			final E current = worklist.pop();
 
 			if (current == rep2 && current != rep1) {
-				/*
-				 * found a path
-				 * update the map (caching the transitive closure information)
-				 * return true
-				 */
+				// found a path: update the map (caching the transitive closure information) and return true
 				mStrictlySmaller.addPair(rep1, rep2);
 				assert assertStrictlySmaller(rep1, rep2);
-				assert sanityCheck();
+				assert assertInvariants();
 				return true;
 			}
 			worklist.addAll(mStrictlySmaller.getImage(current));
@@ -196,10 +202,6 @@ public class PartialOrderCache<E> {
 		mNotStrictlySmaller.addPair(rep1, rep2);
 		return false;
 	}
-
-//	public boolean greaterEqual(final E elem1, final E elem2) {
-//		throw new UnsupportedOperationException("not yet implemented");
-//	}
 
 	/**
 	 * Get the maximal elements from to the given list (or elements equivalent to those)
@@ -217,7 +219,7 @@ public class PartialOrderCache<E> {
 
 		for (final E rep1 : reps) {
 			for (final E rep2 : reps) {
-				if (strictlySmaller(rep1, rep2)) {
+				if (isStrictlySmaller(rep1, rep2)) {
 					result.remove(rep1);
 				}
 			}
@@ -228,30 +230,26 @@ public class PartialOrderCache<E> {
 
 	/**
 	 * Get overall maximal elements in the map (modulo being equal/only representatives)
-	 *
-	 * @return
 	 */
 	public Set<E> getMaximalRepresentatives() {
 		return mMaximalElements;
 	}
 
-	boolean assertStrictlySmaller(final E elem1, final E elem2) {
+	private boolean assertStrictlySmaller(final E elem1, final E elem2) {
 		// order must be correct
-		if (mComparator.compare(elem1, elem2) != ComparisonResult.STRICTLY_SMALLER) {
-			final ComparisonResult compres = mComparator.compare(elem1, elem2);
+		final ComparisonResult compres = mComparator.compare(elem1, elem2);
+		if (compres != ComparisonResult.STRICTLY_SMALLER) {
 			assert false;
 			return false;
 		}
 		return true;
 	}
 
-	boolean sanityCheck() {
-		/*
-		 * the sets mMinimalElemnts and mMaximalElements may only contain representatives
-		 */
+	private boolean assertInvariants() {
+		// the sets mMinimalElemnts and mMaximalElements may only contain representatives
 		for (final E e : mMaximalElements) {
-			if (mEquivalences.find(e) != e) {
-				final E find = mEquivalences.find(e);
+			final E find = mEquivalences.find(e);
+			if (e != find) {
 				assert false;
 				return false;
 			}
@@ -259,14 +257,14 @@ public class PartialOrderCache<E> {
 
 		for (final Entry<E, E> en : mStrictlySmaller) {
 			// key must be a representative
-			if (mEquivalences.find(en.getKey()) != en.getKey()) {
-				final E find = mEquivalences.find(en.getKey());
+			final E findKey = mEquivalences.find(en.getKey());
+			if (findKey != en.getKey()) {
 				assert false;
 				return false;
 			}
 			// value must be a representative
-			if (mEquivalences.find(en.getValue()) != en.getValue()) {
-				final E find = mEquivalences.find(en.getValue());
+			final E findValue = mEquivalences.find(en.getValue());
+			if (findValue != en.getValue()) {
 				assert false;
 				return false;
 			}
@@ -275,25 +273,12 @@ public class PartialOrderCache<E> {
 		return true;
 	}
 
-	public boolean knowsElement(final E elem) {
+	public boolean hasElement(final E elem) {
 		return mEquivalences.find(elem) != null;
 	}
 
-	private static enum PocBmNames {
-
-		ORDER_REQUESTS_MADE, ORDER_REQUESTS_ANSWERED, ELEMENTS_ADDED;
-
-		static String[] getNames() {
-			final String[] result = new String[values().length];
-			for (int i = 0; i < values().length; i++) {
-				result[i] = values()[i].name();
-			}
-			return result;
-		}
-	}
-
 	public boolean hasBenchmark() {
-		return mBenchmarkMode;
+		return BENCHMARK;
 	}
 
 	public BenchmarkWithCounters getBenchmark() {
@@ -304,19 +289,17 @@ public class PartialOrderCache<E> {
 	}
 
 	private void bmStart(final PocBmNames watch) {
-		if (!mBenchmarkMode) {
+		if (!BENCHMARK) {
 			return;
 		}
-//		bmStartOverall();
 		mBenchmark.incrementCounter(watch.name());
 		mBenchmark.unpauseWatch(watch.name());
 	}
 
 	private void bmEnd(final PocBmNames watch) {
-		if (!mBenchmarkMode) {
+		if (!BENCHMARK) {
 			return;
 		}
-//		bmEndOverall();
 		mBenchmark.pauseWatch(watch.name());
 	}
 

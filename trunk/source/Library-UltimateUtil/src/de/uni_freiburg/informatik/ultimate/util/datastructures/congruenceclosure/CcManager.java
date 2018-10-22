@@ -660,7 +660,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			bmStart(CcBmNames.IS_STRONGER_THAN_W_CACHING);
 			final CongruenceClosure<ELEM> cc1Cached = addToPartialOrderCache(cc1);
 			final CongruenceClosure<ELEM> cc2Cached = addToPartialOrderCache(cc2);
-			final boolean result = mPartialOrderCache.lowerEqual(cc1Cached, cc2Cached);
+			final boolean result = mPartialOrderCache.isSmallerOrEqual(cc1Cached, cc2Cached);
 			bmEnd(CcBmNames.IS_STRONGER_THAN_W_CACHING);
 			return result;
 		}
