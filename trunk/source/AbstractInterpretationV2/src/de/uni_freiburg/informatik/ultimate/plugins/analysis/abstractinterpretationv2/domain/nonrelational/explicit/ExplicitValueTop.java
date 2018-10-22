@@ -239,4 +239,9 @@ public class ExplicitValueTop extends BaseExplicitValueValue {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return "TOP";
+	}
+
 }

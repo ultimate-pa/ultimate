@@ -210,4 +210,9 @@ public class ExplicitValueBottom extends BaseExplicitValueValue {
 		return script.term("false");
 	}
 
+	@Override
+	public String toString() {
+		return "BOT";
+	}
+
 }
