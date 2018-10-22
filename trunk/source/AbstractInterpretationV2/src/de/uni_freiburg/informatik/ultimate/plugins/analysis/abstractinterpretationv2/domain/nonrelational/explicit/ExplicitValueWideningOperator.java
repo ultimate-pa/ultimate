@@ -6,13 +6,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class ExplicitValueWideningOperator implements IAbstractStateBinaryOperator<ExplicitValueState> {
 
 	public ExplicitValueWideningOperator(final LiteralCollection mLiteralCollection) {
-		// TODO Auto-generated constructor stub
+		// not necessary
 	}
 
 	@Override
 	public ExplicitValueState apply(final ExplicitValueState first, final ExplicitValueState second) {
-		// TODO Auto-generated method stub
-		return null;
+		return first.union(second);
 	}
 
 }
