@@ -85,8 +85,8 @@ public class ExplicitValueState extends NonrelationalState<ExplicitValueState, B
 	}
 
 	@Override
-	protected ExplicitValueValue[] getArray(final int size) {
-		return new ExplicitValueValue[size];
+	protected BaseExplicitValueValue[] getArray(final int size) {
+		return new BaseExplicitValueValue[size];
 	}
 
 	@Override
