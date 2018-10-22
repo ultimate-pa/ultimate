@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 
 /**
@@ -40,11 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISuccessorTransitionProvider<LETTER, PLACE> {
 
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
-	private final IPetriNet<LETTER, PLACE> mNet;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
 	public SimpleSuccessorTransitionProvider(final Collection<ITransition<LETTER, PLACE>> transitions,
-			final IPetriNet<LETTER, PLACE> net) {
+			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		super();
+		if (transitions.isEmpty()) {
+			throw new IllegalArgumentException("need at least one transition");
+		}
 		mTransitions = transitions;
 		mNet = net;
 		assert PetriNetUtils.similarPredecessorPlaces(transitions,
