@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -61,9 +62,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Modifies a given {@link IIcfg} by adding copies of existing procedures.
+ * <br>
+ * Copies are constructed according to the {@link HashRelation} argument
+ * "copyDirectives". If the relation contains the pair (foo, bar) we
+ * construct a copy of the procedure "foo" and the identifier of the
+ * copy is "bar".
+ * <br>
+ * This code replaces also all local variables accordingly and replaces
+ * the {@link CfgSmtToolkit}.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
-
 public class ProcedureMultiplier {
 
 	public ProcedureMultiplier(final IUltimateServiceProvider services, final BasicIcfg<IcfgLocation> icfg,
