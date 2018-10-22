@@ -226,6 +226,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @return The normalized expression or the old expression, if nothing had to be changed.
 	 */
 	protected Expression normalizeExpression(final Expression expr) {
+		assert expr.getType() != null;
 		return expr;
 	}
 
@@ -493,8 +494,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case
-		final UnaryExpression newUnary =
-				new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG, expr.getCondition());
+		final UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), expr.getCondition().getType(),
+				UnaryExpression.Operator.LOGICNEG, expr.getCondition());
 
 		// This expression should be added first to the evaluator inside the handling of processExpression.
 		processExpression(newUnary);
