@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimatetaipan" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+	<rundefinition name="sv-comp19-reach-loops"></rundefinition>
+  	<option name="--full-output"/>
+<!--    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>-->
+
+	<tasks name="Loops">
+		<includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+		<option name="--architecture">32bit</option>
+	</tasks>
+
+</benchmark>
