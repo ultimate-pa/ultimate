@@ -49,31 +49,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  */
 public class TypesResult extends Result {
 
-	/**
-	 * We need this flag to determine, if this declaration is a constant or not.
-	 */
 	private final boolean mIsConst;
-	/**
-	 * Whether the type is void, which is not directly representable in Boogie.
-	 */
 	private final boolean mIsVoid;
-	/**
-	 * C variable description.
-	 */
 	private final CType mCType;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param node
-	 *            the BoogieASTNode to hold.
-	 * @param isConst
-	 *            boolean flag to determine constant.
-	 * @param isVoid
-	 *            boolean flag to determine void.
-	 * @param cvar
-	 *            a description of the C variable.
-	 */
 	public TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final CType cvar) {
 		super(node);
 		mIsConst = isConst;
