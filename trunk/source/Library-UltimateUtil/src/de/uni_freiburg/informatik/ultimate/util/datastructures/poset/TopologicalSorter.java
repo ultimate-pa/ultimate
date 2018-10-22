@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility class for topological sorting of DAGs.
@@ -58,13 +61,22 @@ public class TopologicalSorter<V, L> {
 	private final IRelationFilter<V, L> mOutgoingEdgesFilter;
 
 	/**
+	 * see {@link #create(Function, IRelationFilter)}
+	 */
+	private TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor,
+			final IRelationFilter<V, L> outgoingEdgesFilter) {
+		mOutgoingEdgesFilter = outgoingEdgesFilter;
+		mFunSuccesor = funSuccesor;
+	}
+
+	/**
 	 * Create a sorter for a given DAG.
 	 *
 	 * @param funSuccesor
 	 *            A function that provides all successors and their respective edge labels for a vertex.
 	 */
-	public TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor) {
-		this(funSuccesor, (source, outgoingEdgeLabel, target) -> true);
+	public static <V> TopologicalSorter<V, ?> create(final Function<V, Collection<V>> funSuccesor) {
+		return new TopologicalSorter<>(createNoLabelFunction(funSuccesor), (source, outgoingEdgeLabel, target) -> true);
 	}
 
 	/**
@@ -76,10 +88,9 @@ public class TopologicalSorter<V, L> {
 	 * @param outgoingEdgesFilter
 	 *            Filter to be applied on successor edges -- only accepted edges will be used.
 	 */
-	public TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor,
+	public static <V, L> TopologicalSorter<V, L> create(final Function<V, Collection<Entry<V, L>>> funSuccesor,
 			final IRelationFilter<V, L> outgoingEdgesFilter) {
-		mOutgoingEdgesFilter = outgoingEdgesFilter;
-		mFunSuccesor = funSuccesor;
+		return new TopologicalSorter<>(funSuccesor, outgoingEdgesFilter);
 	}
 
 	/** @see #reversedTopologicalOrdering(Collection) */
@@ -140,6 +151,15 @@ public class TopologicalSorter<V, L> {
 	private void markPermanently(final V temporarilyMarkedNode) {
 		mTemporarilyMarkedNodes.remove(temporarilyMarkedNode);
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
+	}
+
+	private static <V, L> Function<V, Collection<Entry<V, L>>>
+			createNoLabelFunction(final Function<V, Collection<V>> fun) {
+		final Object label = new Object();
+		@SuppressWarnings("unchecked")
+		final Function<V, Collection<Entry<V, L>>> rtr =
+				a -> fun.apply(a).stream().map(l -> (Entry<V, L>) new Pair<>(l, label)).collect(Collectors.toList());
+		return rtr;
 	}
 
 	private static class GraphCycleException extends Exception {

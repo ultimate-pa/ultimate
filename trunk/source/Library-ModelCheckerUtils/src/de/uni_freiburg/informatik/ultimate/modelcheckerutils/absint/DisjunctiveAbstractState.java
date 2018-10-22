@@ -32,7 +32,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -42,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * An {@link DisjunctiveAbstractState} is an abstract state that consists of many abstract states of the same type. It
@@ -82,6 +87,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		assert haveSameVars(states);
 		assert states.stream().allMatch(
 				a -> !(a instanceof DisjunctiveAbstractState<?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
+		assert states.size() <= maxSize : "Set too large";
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
@@ -370,111 +376,24 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 
 	public DisjunctiveAbstractState<STATE> widen(final IAbstractStateBinaryOperator<STATE> op,
 			final DisjunctiveAbstractState<STATE> other) {
-		return crossProduct(op::apply, other, mMaxSize);
-	}
-
-	@Override
-	public String toString() {
-		return toLogString();
-	}
-
-	public Set<STATE> getStates() {
-		return Collections.unmodifiableSet(mStates);
-	}
-
-	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
-		return mStates.stream().reduce(mergeOp::apply).orElse(null);
-	}
-
-	/**
-	 * Create a new {@link DisjunctiveAbstractState} by applying some function to each pair of states from this
-	 * {@link DisjunctiveAbstractState} and some other {@link DisjunctiveAbstractState} (i.e., the first argument is a
-	 * state from this instance). If the resulting set of states does not differ from this state, return this state. If
-	 * it differs, create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code>
-	 * disjunctive states.
-	 */
-	private DisjunctiveAbstractState<STATE> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
-			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
-		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
-		for (final STATE localState : mStates) {
-			for (final STATE otherState : otherMultiState.mStates) {
-				newSet.add(funCreateState.apply(localState, otherState));
-			}
+		// custom cross-product: first, merge the second operand to one state, then perform the default cross product
+		final Set<STATE> others;
+		if (other.mStates.size() > 1) {
+			others = reduceByOrderedMerge(other.mStates, 1);
+		} else {
+			others = other.mStates;
 		}
-		if (newSet.equals(mStates)) {
-			return this;
-		}
-		return new DisjunctiveAbstractState<>(maxSize, getMaximalElements(newSet));
-	}
-
-	/**
-	 * Same as {@link #crossProduct(BiFunction, DisjunctiveAbstractState, int)}, but the function creates a collection
-	 * of states.
-	 */
-	private DisjunctiveAbstractState<STATE> crossProductCollection(
-			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,
-			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
-		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
-		for (final STATE localState : mStates) {
-			for (final STATE otherState : otherMultiState.mStates) {
-				newSet.addAll(funCreateState.apply(localState, otherState));
-			}
-		}
-		if (newSet.equals(mStates)) {
-			return this;
-		}
-		return new DisjunctiveAbstractState<>(maxSize, getMaximalElements(newSet));
-	}
-
-	private DisjunctiveAbstractState<STATE> map(final Function<STATE, STATE> func) {
 		final Set<STATE> newSet = newSet(mStates.size());
-		for (final STATE state : mStates) {
-			newSet.add(func.apply(state));
+		for (final STATE localState : mStates) {
+			for (final STATE otherState : others) {
+				newSet.add(op.apply(localState, otherState));
+			}
 		}
-		if (mStates.equals(newSet)) {
+		if (newSet.equals(mStates)) {
 			return this;
 		}
-		return new DisjunctiveAbstractState<>(mMaxSize, newSet);
-	}
 
-	private DisjunctiveAbstractState<STATE> mapCollection(final Function<STATE, Collection<STATE>> func) {
-		final Set<STATE> newSet = newSet();
-		for (final STATE state : mStates) {
-			newSet.addAll(func.apply(state));
-		}
-		return new DisjunctiveAbstractState<>(mMaxSize, getMaximalElements(newSet));
-	}
-
-	private Set<STATE> newSet() {
-		return newSet(mMaxSize);
-	}
-
-	private static <STATE> Set<STATE> newSet(final int maxSize) {
-		return new LinkedHashSet<>(maxSize, 1.0F);
-	}
-
-	@SafeVarargs
-	private final Set<STATE> newSet(final Set<STATE>... sets) {
-		if (sets == null || sets.length == 0) {
-			return newSet();
-		}
-		final int elems = Arrays.stream(sets).map(a -> a.size()).reduce((a, b) -> a + b).get();
-		final Set<STATE> set = newSet(elems);
-		Arrays.stream(sets).forEach(set::addAll);
-		return set;
-	}
-
-	private Set<STATE> reduce(final Set<STATE> states) {
-		final Set<STATE> maximalElements = getMaximalElements(states);
-		if (maximalElements.size() <= mMaxSize) {
-			return maximalElements;
-		}
-		return reduceByOrderedMerge(maximalElements);
-	}
-
-	private Set<STATE> reduceByOrderedMerge(final Set<STATE> states) {
-		final STATE first = states.iterator().next();
-		return first.union(states, mMaxSize);
+		return new DisjunctiveAbstractState<>(mMaxSize, reduceByTopologicalOrder(newSet, mMaxSize));
 	}
 
 	/**
@@ -506,7 +425,115 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 				disjuncts.add(state);
 			}
 		}
-		return new DisjunctiveAbstractState<>(reduce(disjuncts, maxSize));
+		return new DisjunctiveAbstractState<>(maxSize, reduce(disjuncts, maxSize));
+	}
+
+	@Override
+	public String toString() {
+		return toLogString();
+	}
+
+	public Set<STATE> getStates() {
+		return Collections.unmodifiableSet(mStates);
+	}
+
+	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
+		return mStates.stream().reduce(mergeOp::apply).orElse(null);
+	}
+
+	/**
+	 * Create a new {@link DisjunctiveAbstractState} by applying some function to each pair of states from this
+	 * {@link DisjunctiveAbstractState} and some other {@link DisjunctiveAbstractState} (i.e., the first argument is a
+	 * state from this instance). If the resulting set of states does not differ from this state, return this state. If
+	 * it differs, create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code>
+	 * disjunctive states.
+	 */
+	private DisjunctiveAbstractState<STATE> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
+			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize,
+			final IReduceUntil<STATE> funReduceToSize) {
+		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
+		for (final STATE localState : mStates) {
+			for (final STATE otherState : otherMultiState.mStates) {
+				newSet.add(funCreateState.apply(localState, otherState));
+			}
+		}
+		if (newSet.equals(mStates)) {
+			return this;
+		}
+		return new DisjunctiveAbstractState<>(maxSize, funReduceToSize.reduce(newSet, maxSize));
+	}
+
+	/**
+	 * Create a new {@link DisjunctiveAbstractState} by applying some function to each pair of states from this
+	 * {@link DisjunctiveAbstractState} and some other {@link DisjunctiveAbstractState} (i.e., the first argument is a
+	 * state from this instance). If the resulting set of states does not differ from this state, return this state. If
+	 * it differs, create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code>
+	 * disjunctive states.
+	 */
+	private DisjunctiveAbstractState<STATE> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
+			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
+		return crossProduct(funCreateState, otherMultiState, maxSize, DisjunctiveAbstractState::reduce);
+	}
+
+	/**
+	 * Same as {@link #crossProduct(BiFunction, DisjunctiveAbstractState, int)}, but the function creates a collection
+	 * of states.
+	 */
+	private DisjunctiveAbstractState<STATE> crossProductCollection(
+			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,
+			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
+		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
+		for (final STATE localState : mStates) {
+			for (final STATE otherState : otherMultiState.mStates) {
+				newSet.addAll(funCreateState.apply(localState, otherState));
+			}
+		}
+		if (newSet.equals(mStates)) {
+			return this;
+		}
+		return new DisjunctiveAbstractState<>(maxSize, reduce(newSet));
+	}
+
+	private DisjunctiveAbstractState<STATE> map(final Function<STATE, STATE> func) {
+		final Set<STATE> newSet = newSet(mStates.size());
+		for (final STATE state : mStates) {
+			newSet.add(func.apply(state));
+		}
+		if (mStates.equals(newSet)) {
+			return this;
+		}
+		return new DisjunctiveAbstractState<>(mMaxSize, newSet);
+	}
+
+	private DisjunctiveAbstractState<STATE> mapCollection(final Function<STATE, Collection<STATE>> func) {
+		final Set<STATE> newSet = newSet();
+		for (final STATE state : mStates) {
+			newSet.addAll(func.apply(state));
+		}
+		return new DisjunctiveAbstractState<>(mMaxSize, reduce(newSet, mMaxSize));
+	}
+
+	private Set<STATE> newSet() {
+		return newSet(mMaxSize);
+	}
+
+	private static <STATE> Set<STATE> newSet(final int maxSize) {
+		return new LinkedHashSet<>(maxSize, 1.0F);
+	}
+
+	@SafeVarargs
+	private final Set<STATE> newSet(final Set<STATE>... sets) {
+		if (sets == null || sets.length == 0) {
+			return newSet();
+		}
+		final int elems = Arrays.stream(sets).map(a -> a.size()).reduce((a, b) -> a + b).get();
+		final Set<STATE> set = newSet(elems);
+		Arrays.stream(sets).forEach(set::addAll);
+		return set;
+	}
+
+	private Set<STATE> reduce(final Set<STATE> states) {
+		return reduce(states, mMaxSize);
 	}
 
 	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduce(final Set<STATE> states, final int maxsize) {
@@ -518,23 +545,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	}
 
 	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduceByOrderedMerge(final Set<STATE> states,
-			final int maxsize) {
-		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
-		int numberOfMerges = states.size() - maxsize;
-		while (numberOfMerges > 0) {
-			final Iterator<STATE> iter = reducibleSet.iterator();
-			final STATE first = iter.next();
-			iter.remove();
-			final STATE second = iter.next();
-			iter.remove();
-			if (reducibleSet.add(first.union(second))) {
-				--numberOfMerges;
-			} else {
-				numberOfMerges -= 2;
-			}
-		}
-		assert reducibleSet.size() <= maxsize;
-		return reducibleSet;
+			final int maxSize) {
+		final STATE first = states.iterator().next();
+		return first.union(states, maxSize);
 	}
 
 	private static <STATE extends IAbstractState<STATE>> Set<STATE> getMaximalElements(final Set<STATE> states) {
@@ -566,6 +579,131 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		}
 		assert maximalElements.stream().filter(STATE::isBottom).count() <= 1 : "There can be only one bottom element";
 		return maximalElements;
+	}
+
+	/**
+	 * Compute a {@link HashRelation} that represents the partial order on this set of states. An element (a,b) in the
+	 * relation states that a is a subset of b. We always add artificial top or bottom elements which are represented by
+	 * null.
+	 *
+	 * In (null,b), the null value represents the bottom element. In (a, null), the null value represents the top
+	 * element.
+	 *
+	 */
+	private static <STATE extends IAbstractState<STATE>> List<STATE> getTopologicalOrder(final Set<STATE> states) {
+		final IPartialComparator<STATE> comparator = new IPartialComparator<STATE>() {
+
+			@Override
+			public ComparisonResult compare(final STATE first, final STATE second) {
+				final SubsetResult firstIsCoveredSecond = first.isSubsetOf(second);
+				switch (firstIsCoveredSecond) {
+				case EQUAL:
+					return ComparisonResult.EQUAL;
+				case STRICT:
+					return ComparisonResult.STRICTLY_SMALLER;
+				case NONE:
+				case NON_STRICT:
+				default:
+					break;
+				}
+
+				final SubsetResult secondIsCoveredfirst = second.isSubsetOf(first);
+				switch (secondIsCoveredfirst) {
+				case EQUAL:
+					throw new AssertionError("Equal is symmetric");
+				case STRICT:
+					return ComparisonResult.STRICTLY_GREATER;
+				case NONE:
+				case NON_STRICT:
+				default:
+					return ComparisonResult.INCOMPARABLE;
+				}
+			}
+		};
+		final PartialOrderCache<STATE> poCache = new PartialOrderCache<>(comparator);
+		states.forEach(poCache::addElement);
+		final List<STATE> result = poCache.getTopologicalOrdering();
+		assert hasDescendingOrder(result);
+		return result;
+	}
+
+	private static <STATE extends IAbstractState<STATE>> boolean hasDescendingOrder(final List<STATE> result) {
+		final Iterator<STATE> iterator = result.iterator();
+		STATE current = null;
+		STATE last = null;
+		while (iterator.hasNext()) {
+			last = current;
+			current = iterator.next();
+			if (last == null || current == null) {
+				continue;
+			}
+			final SubsetResult covering = current.isSubsetOf(last);
+			switch (covering) {
+			case EQUAL:
+				return false;
+			case NONE:
+				break;
+			case NON_STRICT:
+			case STRICT:
+			default:
+				continue;
+			}
+
+			final SubsetResult isCovered = last.isSubsetOf(current);
+			switch (isCovered) {
+			case EQUAL:
+			case NON_STRICT:
+			case STRICT:
+				return false;
+			case NONE:
+			default:
+				continue;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Reduce the supplied set of states s.t. only maxSize elements remain. Use topological order on the supplied states
+	 * to determine which states have to be merged. Merge the smallest states.
+	 *
+	 * @param states
+	 * @param maxSize
+	 * @return
+	 */
+	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduceByTopologicalOrder(final Set<STATE> states,
+			final int maxSize) {
+		if (states.size() <= maxSize) {
+			return states;
+		}
+		final List<STATE> ordered = getTopologicalOrder(states);
+		final Set<STATE> rtr = newSet(maxSize);
+		final Iterator<STATE> iter = ordered.iterator();
+		int i = 0;
+		while (iter.hasNext()) {
+			++i;
+			final STATE current = iter.next();
+			if (i < maxSize) {
+				rtr.add(current);
+				continue;
+			}
+			break;
+		}
+		final Set<STATE> mergeDown = new HashSet<>();
+		iter.forEachRemaining(mergeDown::add);
+		final Optional<STATE> lastElem = reduce(mergeDown, 1).stream().findAny();
+		assert lastElem.isPresent();
+		rtr.add(lastElem.get());
+		assert rtr.size() <= maxSize;
+		return rtr;
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	private interface IReduceUntil<STATE> {
+		Set<STATE> reduce(Set<STATE> states, int maxSize);
 	}
 
 }

@@ -31,8 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -177,6 +179,9 @@ public class PartialOrderCache<E> {
 		return result;
 	}
 
+	/**
+	 * @return true if rep1 is strictly smaller than rep2
+	 */
 	private boolean isStrictlySmaller(final E rep1, final E rep2) {
 		if (mStrictlySmaller.containsPair(rep1, rep2)) {
 			return true;
@@ -233,6 +238,21 @@ public class PartialOrderCache<E> {
 	 */
 	public Set<E> getMaximalRepresentatives() {
 		return mMaximalElements;
+	}
+
+	public List<E> getTopologicalOrdering() {
+		final TopologicalSorter<E, ?> sorter = TopologicalSorter.create(this::successor);
+		final List<E> result = sorter.topologicalOrdering(mMaximalElements);
+		assert result != null : "Cycle in partial order";
+		return result;
+	}
+
+	/**
+	 * Return all elements that are strictly smaller than the element.
+	 */
+	private Collection<E> successor(final E elem) {
+		return mEquivalences.getAllElements().stream().filter(a -> isStrictlySmaller(elem, a))
+				.collect(Collectors.toList());
 	}
 
 	private boolean assertStrictlySmaller(final E elem1, final E elem2) {
