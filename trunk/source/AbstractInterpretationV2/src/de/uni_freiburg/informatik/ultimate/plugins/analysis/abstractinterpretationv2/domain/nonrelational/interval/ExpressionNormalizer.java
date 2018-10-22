@@ -53,7 +53,7 @@ public class ExpressionNormalizer extends BoogieTransformer {
 
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
-	ExpressionNormalizer() {
+	public ExpressionNormalizer() {
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 	}
 

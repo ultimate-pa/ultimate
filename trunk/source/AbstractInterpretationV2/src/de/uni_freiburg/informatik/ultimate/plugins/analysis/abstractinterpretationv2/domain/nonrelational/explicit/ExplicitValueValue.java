@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
@@ -141,7 +142,18 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue modulo(final BaseExplicitValueValue other) {
-		throw new UnsupportedOperationException("Rational needs modulo support");
+		if (other.isTop()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return other;
+		}
+		final ExplicitValueValue evv = (ExplicitValueValue) other;
+		if (mValue.isIntegral() && evv.mValue.isIntegral()) {
+			return new ExplicitValueValue(
+					Rational.valueOf(mValue.numerator().mod(evv.mValue.numerator()), BigInteger.ONE));
+		}
+		throw new UnsupportedOperationException("Modulo on reals");
 	}
 
 	@Override
