@@ -33,10 +33,13 @@ import java.util.LinkedHashMap;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -361,14 +364,15 @@ public class TypeSizes {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof BinaryExpression) {
-				final BigInteger leftValue = extractIntegerValue(((BinaryExpression) expr).getLeft(), cType, hook);
-				final BigInteger rightValue = extractIntegerValue(((BinaryExpression) expr).getRight(), cType, hook);
+				final BinaryExpression binExpr = (BinaryExpression) expr;
+				final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
+				final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
 
 				if (leftValue == null || rightValue == null) {
 					return null;
 				}
 
-				switch (((BinaryExpression) expr).getOperator()) {
+				switch (binExpr.getOperator()) {
 				case ARITHDIV:
 					return leftValue.divide(rightValue);
 				case ARITHMINUS:
@@ -382,8 +386,55 @@ public class TypeSizes {
 				default:
 					return null;
 				}
+			} else if (expr instanceof IfThenElseExpression) {
+				final IfThenElseExpression ifThenElseExpr = (IfThenElseExpression) expr;
+				if (extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook)) {
+					return extractIntegerValue(ifThenElseExpr.getThenPart(), cType, hook);
+				}
+				return extractIntegerValue(ifThenElseExpr.getElsePart(), cType, hook);
 			}
 			return null;
+		}
+		return null;
+	}
+
+	/**
+	 * Takes an expression and returns its boolean value, if possible. Returns null otherwise.
+	 */
+	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
+		if (expr instanceof BooleanLiteral) {
+			return new Boolean(((BooleanLiteral) expr).getValue());
+		}
+
+		if (expr instanceof BinaryExpression) {
+			final BinaryExpression binExpr = (BinaryExpression) expr;
+			if (binExpr.getOperator() == Operator.LOGICAND || binExpr.getOperator() == Operator.LOGICOR) {
+				final Boolean leftValue = extractBooleanValue(binExpr.getLeft(), cType, hook);
+				final Boolean rightValue = extractBooleanValue(binExpr.getRight(), cType, hook);
+				if (binExpr.getOperator() == Operator.LOGICAND) {
+					return leftValue && rightValue;
+				}
+				return leftValue || rightValue;
+			}
+
+			final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
+			final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
+			switch (binExpr.getOperator()) {
+			case COMPEQ:
+				return leftValue.compareTo(rightValue) == 0;
+			case COMPNEQ:
+				return leftValue.compareTo(rightValue) != 0;
+			case COMPLT:
+				return leftValue.compareTo(rightValue) < 0;
+			case COMPGT:
+				return leftValue.compareTo(rightValue) > 0;
+			case COMPLEQ:
+				return leftValue.compareTo(rightValue) <= 0;
+			case COMPGEQ:
+				return leftValue.compareTo(rightValue) >= 0;
+			default:
+				return null;
+			}
 		}
 		return null;
 	}
@@ -409,11 +460,9 @@ public class TypeSizes {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof FunctionApplication) {
-				FunctionApplication funApp = (FunctionApplication) expr;
-				final BigInteger leftValue =
-						extractIntegerValue(funApp.getArguments()[0], cType, hook);
-				final BigInteger rightValue =
-						extractIntegerValue(funApp.getArguments()[1], cType, hook);
+				final FunctionApplication funApp = (FunctionApplication) expr;
+				final BigInteger leftValue = extractIntegerValue(funApp.getArguments()[0], cType, hook);
+				final BigInteger rightValue = extractIntegerValue(funApp.getArguments()[1], cType, hook);
 
 				if (leftValue == null || rightValue == null) {
 					return null;
