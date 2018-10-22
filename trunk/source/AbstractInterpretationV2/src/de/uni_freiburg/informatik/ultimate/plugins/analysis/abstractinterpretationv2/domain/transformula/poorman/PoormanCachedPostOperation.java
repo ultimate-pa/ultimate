@@ -189,7 +189,7 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 
 	/**
 	 * Fills for a given transformula the given maps and sets with sensible values, depending on the variables in the
-	 * transformula. See its usage in, e.g., the {@link #apply(PoormanAbstractState, IcfgEdge)} function.
+	 * transformula. See its usage in, e.g., the {@link #widen(PoormanAbstractState, IcfgEdge)} function.
 	 *
 	 * @param outVarRenaming
 	 *            Is filled with the mapping of program variables to outVars of the transformula to be able to rename

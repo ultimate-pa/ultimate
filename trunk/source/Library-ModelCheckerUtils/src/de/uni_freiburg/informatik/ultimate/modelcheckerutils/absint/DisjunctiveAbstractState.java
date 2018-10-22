@@ -368,7 +368,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		return crossProductCollection((a, b) -> postOp.apply(b, a, transition), multiStateBeforeLeaving, mMaxSize);
 	}
 
-	public DisjunctiveAbstractState<STATE> apply(final IAbstractStateBinaryOperator<STATE> op,
+	public DisjunctiveAbstractState<STATE> widen(final IAbstractStateBinaryOperator<STATE> op,
 			final DisjunctiveAbstractState<STATE> other) {
 		return crossProduct(op::apply, other, mMaxSize);
 	}

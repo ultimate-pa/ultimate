@@ -439,7 +439,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op1: " + LoggingHelper.getStateString(oldState));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op2: " + LoggingHelper.getStateString(postState));
 		}
-		final DisjunctiveAbstractState<STATE> postStateAfterWidening = oldState.apply(wideningOp, postState);
+		final DisjunctiveAbstractState<STATE> postStateAfterWidening = oldState.widen(wideningOp, postState);
 		if (isFixpoint(oldState, postStateAfterWidening)) {
 			if (scopeWidening) {
 				// if we found a fixpoint during scope widening, it means that we will not continue into this scope but

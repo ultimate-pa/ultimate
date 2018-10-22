@@ -299,7 +299,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op1: " + LoggingHelper.getStateString(oldState));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op2: " + LoggingHelper.getStateString(preState));
 		}
-		final DisjunctiveAbstractState<STATE> preStateAfterWidening = oldState.apply(wideningOp, preState);
+		final DisjunctiveAbstractState<STATE> preStateAfterWidening = oldState.widen(wideningOp, preState);
 		if (isFixpoint(oldState, preStateAfterWidening)) {
 			if (scopeWidening) {
 				// if we found a fixpoint during scope widening, it means that we will not continue into this scope but
