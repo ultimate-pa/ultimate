@@ -27,19 +27,21 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * A Result node holding a some stuff for a type.
- */
+
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.Collections;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
 /**
+ * Result that is returned whenever we dispatch a type specifier.
+ *
+ * TODO 2018-10-22 Matthias: It seems that this kind of result is
+ * (sometimes) also returned when we dispatch a type declaration.
+ * I think this is not desired any more and happens only for
+ * historical reasons.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
@@ -56,19 +58,9 @@ public class TypesResult extends Result {
 	 */
 	private final boolean mIsVoid;
 	/**
-	 * A list of type declarations.
-	 */
-	private final List<TypeDeclaration> mTypeDeclarations;
-	/**
 	 * C variable description.
 	 */
 	private final CType mCType;
-
-	/**
-	 * Flag describing whether the Boogie variable that is declared according to the declarator that this ResultTypes is
-	 * generated from should be stored on the heap (bc it is addressoffed later) or not.
-	 */
-	private final boolean mIsOnHeap;
 
 	/**
 	 * Constructor.
@@ -83,17 +75,10 @@ public class TypesResult extends Result {
 	 *            a description of the C variable.
 	 */
 	public TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final CType cvar) {
-		this(node, isConst, isVoid, false, cvar, Collections.emptyList());
-	}
-
-	private TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final boolean isOnHeap,
-			final CType cvar, final List<TypeDeclaration> typeDecls) {
 		super(node);
 		mIsConst = isConst;
 		mIsVoid = isVoid;
 		mCType = cvar;
-		mIsOnHeap = isOnHeap;
-		mTypeDeclarations = Collections.unmodifiableList(typeDecls);
 	}
 
 	public ASTType getAstType() {
@@ -108,16 +93,8 @@ public class TypesResult extends Result {
 		return mIsVoid;
 	}
 
-	public List<TypeDeclaration> getTypeDeclarations() {
-		return mTypeDeclarations;
-	}
-
 	public CType getCType() {
 		return mCType;
-	}
-
-	public boolean isOnHeap() {
-		return mIsOnHeap;
 	}
 
 	@Override
@@ -125,18 +102,8 @@ public class TypesResult extends Result {
 		return "ResultTypes: " + mCType;
 	}
 
-	public static TypesResult create(final TypesResult resType, final boolean isOnHeap, final CType cType) {
-		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), isOnHeap, cType,
-				resType.getTypeDeclarations());
-	}
-
 	public static TypesResult create(final TypesResult resType, final CType cType) {
-		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), resType.isOnHeap(), cType,
-				resType.getTypeDeclarations());
+		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), cType);
 	}
 
-	public static TypesResult create(final TypesResult resType, final boolean isOnHeap) {
-		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), isOnHeap, resType.getCType(),
-				resType.getTypeDeclarations());
-	}
 }

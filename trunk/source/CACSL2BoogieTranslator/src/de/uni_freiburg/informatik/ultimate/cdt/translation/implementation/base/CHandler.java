@@ -1021,7 +1021,7 @@ public class CHandler {
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
-		final TypesResult resType = TypesResult.create(pendingResType, isOnHeap, nestedPointerType);
+		final TypesResult resType = TypesResult.create(pendingResType, nestedPointerType);
 
 		// Adapt the name for multiparse input
 		final String declName;
@@ -1174,7 +1174,7 @@ public class CHandler {
 		}
 
 		if (node.getNestedDeclarator() != null) {
-			mCurrentDeclaredTypes.push(TypesResult.create(resType, isOnHeap, cType));
+			mCurrentDeclaredTypes.push(TypesResult.create(resType, cType));
 			DeclaratorResult result = (DeclaratorResult) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
