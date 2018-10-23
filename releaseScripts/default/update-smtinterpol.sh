@@ -78,7 +78,7 @@ pushd "$dir_ultimate" > /dev/null
 echo "Applying patch..."
 ## first check, if nothing can be applied, do not update version
 if git apply --check --directory=trunk/source/ "$dir_smtinterpol/smtinterpol.diff"; then 
-	git apply --directory=trunk/source/ "$dir_smtinterpol/smtinterpol.diff"
+	git apply --whitespace=nowarn --directory=trunk/source/ "$dir_smtinterpol/smtinterpol.diff"
 	echo "Updating version"
 	cp "$dir_smtinterpol"/SMTInterpol/release/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties "$dir_ultimate"/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
 	git commit -a -m"Updated SMTInterpol to $smtinterpol_cur"
