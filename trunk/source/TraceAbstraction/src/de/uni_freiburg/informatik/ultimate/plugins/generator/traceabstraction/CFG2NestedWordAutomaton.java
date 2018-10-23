@@ -287,9 +287,13 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 										.getCorrespondingIIcfgJoinTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getSource();
 						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
-						net.addTransition((LETTER) edge,
+						// if predCurrentThread is null, the position of the join in the calling
+						// thread is not reachable
+						if (predCurrentThread != null) {
+							net.addTransition((LETTER) edge,
 								new HashSet<>(Arrays.asList(new IPredicate[] { predCurrentThread, state })),
 								Collections.singleton(succState));
+						}
 					} else if (edge instanceof IIcfgCallTransition<?>) {
 						throw new UnsupportedOperationException(
 								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
