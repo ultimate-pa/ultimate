@@ -18,14 +18,23 @@ public class IRAWrapperFactory {
 	final UnifyHash<FunctionSymbol> mInstances = new UnifyHash<>();
 
 	/**
-	 * Create an IRA wrapper function for fsym for the given parameter sorts. This is a new function symbol whose
+	 * Create an IRA wrapper function for name for the given parameter sorts. This is a new function symbol whose
 	 * definition casts all integer parameters to real parameters using the {@code to_real} function. If the parameter
 	 * count does not match, or if not all parameters are real or integer this returns null.
 	 *
-	 * @param fsym
-	 *            the unwrapped function symbol. It is assumed that it takes two real parameters.
+	 * For associative functions this creates a wrapper for every used sequence of sorts. E.g., it may create the
+	 * function {@code (define-fun + ((Real a) (Int b) (Real c)) (+ a (to_real b) c))}.
+	 *
+	 * @param theory
+	 *            the underlying theory.
+	 * @param name
+	 *            the unwrapped function symbol. It is assumed that it takes two real parameters except for "ite".
+	 * @param indices
+	 *            optional indices, null for no indices.
 	 * @param paramSorts
 	 *            the parameter sorts for the wrapper function.
+	 * @param resultType
+	 *            the result type specified by SMTLIB {@code (as ..)}; null if no result type specified.
 	 * @return null if an error occured, otherwise the wrapping function symbol.
 	 */
 	public FunctionSymbol createWrapper(Theory theory, String name, final BigInteger[] indices, Sort[] paramSorts,

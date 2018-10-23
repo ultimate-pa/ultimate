@@ -260,7 +260,7 @@ public class CCProofGenerator {
 					storeTerm = secondTerm;
 				}
 				if (storeTerm != null) {
-					// In the main path of weakeq-ext, no index disequality is needed
+					// In the main path of weakeq-ext or const-weakeq, no index disequality is needed
 					if (pathIndex == null) {
 						continue;
 					}
@@ -734,9 +734,10 @@ public class CCProofGenerator {
 	/**
 	 * Check if the equality sel1 == sel2 explains the weak step on weakpathindex for termPair.
 	 */
-	private boolean isGoodSelectStep(CCTerm sel1, CCTerm sel2, SymmetricPair<CCTerm> termPair, final CCTerm weakpathindex) {
+	private boolean isGoodSelectStep(CCTerm sel1, CCTerm sel2, SymmetricPair<CCTerm> termPair,
+			final CCTerm weakpathindex) {
 		return (isSelect(sel1, termPair.getFirst(), weakpathindex) || isConst(termPair.getFirst(), sel1))
-			&& (isSelect(sel2, termPair.getSecond(), weakpathindex) || isConst(termPair.getSecond(), sel2));
+				&& (isSelect(sel2, termPair.getSecond(), weakpathindex) || isConst(termPair.getSecond(), sel2));
 	}
 
 	/**

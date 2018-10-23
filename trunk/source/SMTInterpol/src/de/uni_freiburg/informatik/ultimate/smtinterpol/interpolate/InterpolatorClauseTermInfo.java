@@ -209,10 +209,11 @@ public class InterpolatorClauseTermInfo {
 			if (lemmaType.equals(":EQ")) {
 				computeEQLemmaInfo(leafTerm);
 			} else if (lemmaType.equals(":CC") || lemmaType.equals(":weakeq-ext")
-					|| lemmaType.equals(":read-over-weakeq")) {
-				computeCCLemmaInfo(leafTerm);
+					|| lemmaType.equals(":read-over-weakeq") || lemmaType.equals(":const-weakeq")
+					|| lemmaType.equals(":read-const-weakeq")) {
+				computeCCLemmaInfo(leafTerm); // TODO This recomputes the lemma type.
 			} else if (lemmaType.equals(":LA") || lemmaType.equals(":trichotomy")) {
-				computeLALemmaInfo(leafTerm);
+				computeLALemmaInfo(leafTerm); // TODO This recomputes the lemma type.
 			} else {
 				throw new IllegalArgumentException("Unknown lemma type!");
 			}

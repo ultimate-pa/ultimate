@@ -784,6 +784,8 @@ public class Clausifier {
 					}
 				}
 				mCollector.addLiteral(positive ? atom : atom.negate(), rewrite);
+			} else if (idx instanceof QuantifiedFormula) {
+				throw new UnsupportedOperationException("Quantified formula not supported");
 			} else {
 				throw new SMTLIBException("Cannot handle literal " + mTerm);
 			}
@@ -1195,7 +1197,6 @@ public class Clausifier {
 	 * @return The positive of this term.
 	 */
 	private static Term toPositive(final Term t) {
-		assert t instanceof ApplicationTerm;
 		if (isNotTerm(t)) {
 			return ((ApplicationTerm) t).getParameters()[0];
 		}
@@ -1527,10 +1528,6 @@ public class Clausifier {
 	}
 
 	public void setLogic(final Logics logic) {
-		if (logic.isBitVector() || logic.isQuantified() || logic.isNonLinearArithmetic()) {
-			throw new UnsupportedOperationException("Logic " + logic.toString() + " unsupported");
-		}
-
 		if (logic.isUF() || logic.isArray()) {
 			setupCClosure();
 		}

@@ -289,7 +289,9 @@ public class Interpolator extends NonRecursive {
 				interpolants = ipolator.computeInterpolants(leaf);
 			} else if ((Boolean) mSmtSolver.getOption(SolverOptions.ARRAY_INTERPOLATION)
 					&& (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
-							|| leafTermInfo.getLemmaType().equals(":weakeq-ext"))) {
+							|| leafTermInfo.getLemmaType().equals(":weakeq-ext")
+							|| leafTermInfo.getLemmaType().equals(":const-weakeq")
+							|| leafTermInfo.getLemmaType().equals(":read-const-weakeq"))) {
 				final ArrayInterpolator ipolator = new ArrayInterpolator(this);
 				final Term[] interpolantTerms = ipolator.computeInterpolants(leaf);
 				for (int j = 0; j < mNumInterpolants; j++) {

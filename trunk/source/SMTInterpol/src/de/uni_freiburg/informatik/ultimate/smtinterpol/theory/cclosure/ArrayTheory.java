@@ -1318,11 +1318,11 @@ public class ArrayTheory implements ITheory {
 			case CONST_WEAKEQ: {
 				final CCEquality lit = createEquality(lhs, rhs);
 				assert lit == null || lit.getDecideStatus() != lit;
+				final Set<CCEquality> propClause = new HashSet<CCEquality>();
 				if (lit != null && lit.getDecideStatus() == null) {
-					lemma.mUndecidedLits = Collections.singleton(lit);
-				} else {
-					lemma.mUndecidedLits = Collections.emptySet();
+					propClause.add(lit);
 				}
+				lemma.mUndecidedLits = propClause;
 				break;
 			}
 			case READ_CONST_WEAKEQ: {

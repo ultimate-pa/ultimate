@@ -95,6 +95,19 @@ public class TermCompiler extends TermTransformer {
 
 	@Override
 	public void convert(final Term term) {
+		if (term.getSort().isInternal()) {
+			/* check if we support the internal sort */
+			switch (term.getSort().getName()) {
+			case "Bool":
+			case "Int":
+			case "Real":
+			case "Array":
+				/* okay */
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported internal sort: " + term.getSort());
+			}
+		}
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol fsym = appTerm.getFunction();
@@ -536,7 +549,18 @@ public class TermCompiler extends TermTransformer {
 					 */
 					throw new SMTLIBException("Const is only supported for inifinite index sort");
 				}
+				break;
 			}
+			case "true":
+			case "false":
+			case "@diff":
+			case "@/0":
+			case "@div0":
+			case "@mod0":
+				/* nothing to do */
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported internal function " + fsym.getName());
 			}
 		}
 		setResult(convertedApp);
@@ -578,8 +602,13 @@ public class TermCompiler extends TermTransformer {
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
+		if (true) {
+			// TODO: remove once we support quantifier.
+			throw new UnsupportedOperationException("Quantifier not supported.");
+		}
 		if (old.getQuantifier() == QuantifiedFormula.EXISTS) {
 			setResult(mTracker.exists(old, newBody));
 		} else {
