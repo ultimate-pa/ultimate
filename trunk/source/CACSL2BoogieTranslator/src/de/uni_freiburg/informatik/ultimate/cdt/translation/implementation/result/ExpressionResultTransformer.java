@@ -112,7 +112,7 @@ public class ExpressionResultTransformer {
 			final IASTInitializerClause initClause) {
 		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
 		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
-		return switchToRValueIfNecessary(converted, loc, initClause);
+		return switchToRValueAndRexBoolToIntIfNecessary(converted, loc, initClause);
 	}
 
 	/**
