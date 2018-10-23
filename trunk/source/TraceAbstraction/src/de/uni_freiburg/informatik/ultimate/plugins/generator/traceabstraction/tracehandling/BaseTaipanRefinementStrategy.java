@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
@@ -108,8 +107,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
-
-
 	/**
 	 * @param logger
 	 *            Logger.
@@ -136,8 +133,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, emptyStackFactory);
 		mServices = services;
@@ -204,10 +201,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mTcConstructor = null;
 	}
 
-	/**
-	 *
-	 * @return
-	 */
 	protected abstract Mode getNextInterpolantGenerator();
 
 	protected Mode getCurrentMode() {

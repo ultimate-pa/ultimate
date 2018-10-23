@@ -117,13 +117,15 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		case MAMMOTH_NO_AM:
 		case WARTHOG_NO_AM:
 			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY);
+		case TAIPAN:
+			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST);
 		case CAMEL:
 		case FIXED_PREFERENCES:
 		case LAZY_TAIPAN:
 		case PENGUIN:
 		case RUBBER_TAIPAN:
 		case SMTINTERPOL:
-		case TAIPAN:
 		case TOOTHLESS_TAIPAN:
 		case WALRUS:
 		case WARTHOG:

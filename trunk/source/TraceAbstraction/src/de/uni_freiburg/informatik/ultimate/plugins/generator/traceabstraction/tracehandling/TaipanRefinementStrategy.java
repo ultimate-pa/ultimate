@@ -68,8 +68,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
 				assertionOrderModulation, counterexample, precondition, abstraction, taskIdentifier, emptyStackFactory);
@@ -79,8 +79,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	public boolean hasNextTraceCheck() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
-		case Z3_NO_IG:
 			return true;
+		case Z3_NO_IG:
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
 		case Z3_IG:
@@ -96,8 +96,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 		case ABSTRACT_INTERPRETATION:
-		case Z3_IG:
 			return true;
+		case Z3_IG:
 		case CVC4_IG:
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
@@ -118,8 +118,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		case SMTINTERPOL:
 			return Mode.Z3_NO_IG;
 		case Z3_NO_IG:
-			mZ3TraceCheckUnsuccessful = true;
-			return Mode.CVC4_NO_IG;
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
 		case Z3_IG:
@@ -133,21 +131,13 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 
 	@Override
 	protected Mode getNextInterpolantGenerator() {
-		final boolean resetTraceCheck;
-		Mode nextMode;
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
-			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			resetTraceCheck = false;
-			break;
+			return Mode.ABSTRACT_INTERPRETATION;
 		case ABSTRACT_INTERPRETATION:
-			nextMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
-			resetTraceCheck = true;
-			break;
+			resetTraceCheck();
+			return Mode.Z3_IG;
 		case Z3_IG:
-			nextMode = Mode.CVC4_IG;
-			resetTraceCheck = true;
-			break;
 		case CVC4_IG:
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
@@ -156,11 +146,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-
-		if (resetTraceCheck) {
-			resetTraceCheck();
-		}
-		return nextMode;
 	}
 
 	@Override
