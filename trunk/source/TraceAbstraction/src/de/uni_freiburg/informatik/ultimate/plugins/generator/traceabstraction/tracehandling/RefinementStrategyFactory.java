@@ -119,7 +119,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY);
 		case TAIPAN:
 			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST);
+					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST);
 		case CAMEL:
 		case FIXED_PREFERENCES:
 		case LAZY_TAIPAN:
