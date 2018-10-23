@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -103,8 +104,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
-		final Set<IcfgLocation> threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap()
-				.entrySet().stream().map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
+		final Set<IcfgLocation> threadErrorLocations;
+		if (csToolkit.getConcurrencyInformation() == null) {
+			// no fork or join
+			threadErrorLocations = Collections.emptySet();
+		} else {
+			threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap().entrySet().stream()
+					.map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
+		}
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
