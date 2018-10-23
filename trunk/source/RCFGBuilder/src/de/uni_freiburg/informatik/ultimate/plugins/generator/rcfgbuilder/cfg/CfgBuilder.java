@@ -361,20 +361,20 @@ public class CfgBuilder {
 					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
 							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2 =
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
 					adder.constructTreadInstances(result, forkCurrentThreads);
 			final CfgSmtToolkit cfgSmtToolkit =
-					adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap2);
+					adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
 			final HashRelation<String, String> copyDirectives =
-					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap2.values());
-			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator);
-			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap2.values());
+					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
+			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator, threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
+			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
 
 			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
-					threadInstanceMap2, backtranslator);
+					threadInstanceMap, backtranslator);
 
-			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap2.values());
+			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
 			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
 
 			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);

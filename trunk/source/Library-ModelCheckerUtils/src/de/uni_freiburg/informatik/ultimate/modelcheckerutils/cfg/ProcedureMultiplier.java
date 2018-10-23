@@ -28,14 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -43,10 +46,15 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -63,21 +71,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Modifies a given {@link IIcfg} by adding copies of existing procedures.
- * <br>
+ * <p>
  * Copies are constructed according to the {@link HashRelation} argument
- * "copyDirectives". If the relation contains the pair (foo, bar) we
- * construct a copy of the procedure "foo" and the identifier of the
- * copy is "bar".
- * <br>
- * This code replaces also all local variables accordingly and replaces
- * the {@link CfgSmtToolkit}.
+ * "copyDirectives". If the relation contains the pair (foo, bar) we construct a
+ * copy of the procedure "foo" and the identifier of the copy is "bar".
+ * <p />
+ * <p>
+ * A {@link ProcedureMultiplier} replaces also all local variables accordingly
+ * and replaces the {@link CfgSmtToolkit}.
+ * <p />
+ * <p>
+ * For every copy e_copy of an edge e, the map entry (e_copy,e) is added to the
+ * given {@link BlockEncodingBacktranslator}.
+ * <p />
  *
- * @author heizmann@informatik.uni-freiburg.de
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ProcedureMultiplier {
 
 	public ProcedureMultiplier(final IUltimateServiceProvider services, final BasicIcfg<IcfgLocation> icfg,
-			final HashRelation<String, String> copyDirectives, final BlockEncodingBacktranslator backtranslator) {
+			final HashRelation<String, String> copyDirectives, final BlockEncodingBacktranslator backtranslator,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
 		super();
 		final IcfgEdgeFactory icfgEdgeFactory = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		final Map<String, List<ILocalProgramVar>> inParams = new HashMap<>(icfg.getCfgSmtToolkit().getInParams());
@@ -171,19 +188,41 @@ public class ProcedureMultiplier {
 				for (final IcfgLocation oldLoc : procLocs) {
 					for (final IcfgEdge outEdge : oldLoc.getOutgoingEdges()) {
 						if (outEdge instanceof IcfgInternalTransition) {
-							final IcfgInternalTransition oldInternalOutEdge = (IcfgInternalTransition) outEdge;
-							final IcfgLocation source = procOldLoc2NewLoc.get(oldInternalOutEdge.getSource());
-							final IcfgLocation target = procOldLoc2NewLoc.get(oldInternalOutEdge.getTarget());
+							final IcfgInternalTransition oldInternalEdge = (IcfgInternalTransition) outEdge;
+							final IcfgLocation source = procOldLoc2NewLoc.get(oldInternalEdge.getSource());
+							final IcfgLocation target = procOldLoc2NewLoc.get(oldInternalEdge.getTarget());
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
 									managedScript, outEdge.getTransformula(),
 									oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransition newInternalOutEdge = icfgEdgeFactory
+							final IcfgInternalTransition newInternalEdge = icfgEdgeFactory
 									.createInternalTransition(source, target, payload, transFormula);
-							backtranslator.mapEdges(newInternalOutEdge, oldInternalOutEdge);
-							source.addOutgoing(newInternalOutEdge);
-							target.addIncoming(newInternalOutEdge);
-
+							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
+							source.addOutgoing(newInternalEdge);
+							target.addIncoming(newInternalEdge);
+						} else if (outEdge instanceof IcfgForkThreadCurrentTransition) {
+							// mainly copy and paste form IcfgInternalTransition
+							final IcfgForkThreadCurrentTransition oldForkEdge = (IcfgForkThreadCurrentTransition) outEdge;
+							final IcfgLocation source = procOldLoc2NewLoc.get(oldForkEdge.getSource());
+							final IcfgLocation target = procOldLoc2NewLoc.get(oldForkEdge.getTarget());
+							final IPayload payload = null;
+							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
+									managedScript, outEdge.getTransformula(),
+									oldVar2newVar.get(copyIdentifier));
+							final ForkSmtArguments newForkSmtArguments = copyForkSmtArguments(
+									oldForkEdge.getForkSmtArguments(), oldVar2newVar.get(copyIdentifier),
+									managedScript);
+							final IcfgForkThreadCurrentTransition newForkEdge = icfgEdgeFactory
+									.createForkThreadCurrentTransition(source, target, payload, transFormula,
+											newForkSmtArguments, oldForkEdge.getNameOfForkedProcedure());
+							backtranslator.mapEdges(newForkEdge, oldForkEdge);
+							source.addOutgoing(newForkEdge);
+							target.addIncoming(newForkEdge);
+							// add to thread instance mapping
+							forkCurrentThreads.add(newForkEdge);
+							final ThreadInstance threadInstance = threadInstanceMap.get(oldForkEdge);
+							assert threadInstance != null;
+							threadInstanceMap.put(newForkEdge, threadInstance);
 						} else {
 							throw new UnsupportedOperationException();
 						}
@@ -192,6 +231,35 @@ public class ProcedureMultiplier {
 			}
 		}
 		icfg.setCfgSmtToolkit(newCfgSmtToolkit);
+	}
+
+	private ForkSmtArguments copyForkSmtArguments(final ForkSmtArguments forkSmtArguments,
+			final Map<ILocalProgramVar, ILocalProgramVar> map, final ManagedScript managedScript) {
+		final Map<Term, Term> defaultVariableMapping = constructDefaultVariableMapping(map);
+		final MultiTermResult newThreadIdArguments = copyMultiTermResult(forkSmtArguments.getThreadIdArguments(),
+				defaultVariableMapping, managedScript);
+		final MultiTermResult newProcedureArguments = copyMultiTermResult(forkSmtArguments.getProcedureArguments(),
+				defaultVariableMapping, managedScript);
+		return new ForkSmtArguments(newThreadIdArguments, newProcedureArguments);
+	}
+
+	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
+			final Map<Term, Term> defaultVariableMadefaultVariableMappingpping2, final ManagedScript managedScript) {
+		final Term[] terms = new Substitution(managedScript, defaultVariableMadefaultVariableMappingpping2)
+				.transform(Arrays.asList(oldProcedureArguments.getTerms()))
+				.toArray(new Term[oldProcedureArguments.getTerms().length]);
+		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();
+		final Map<String, ILocation> overapproximations = oldProcedureArguments.getOverappoximations();
+		final MultiTermResult copy = new MultiTermResult(overapproximations, auxiliaryVars, terms);
+		return copy;
+	}
+
+	private Map<Term, Term> constructDefaultVariableMapping(final Map<ILocalProgramVar, ILocalProgramVar> map) {
+		final Map<Term, Term> result = new HashMap<>();
+		for (final Entry<ILocalProgramVar, ILocalProgramVar> entry : map.entrySet()) {
+			result.put(entry.getKey().getTermVariable(), entry.getValue().getTermVariable());
+		}
+		return result;
 	}
 
 	private static IcfgLocation constructCopy(final IcfgLocation oldLoc, final String copy,
