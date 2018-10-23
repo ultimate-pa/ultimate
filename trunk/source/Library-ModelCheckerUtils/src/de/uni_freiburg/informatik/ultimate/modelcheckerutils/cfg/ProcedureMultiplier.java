@@ -52,10 +52,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IFork
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -63,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -223,6 +226,26 @@ public class ProcedureMultiplier {
 							final ThreadInstance threadInstance = threadInstanceMap.get(oldForkEdge);
 							assert threadInstance != null;
 							threadInstanceMap.put(newForkEdge, threadInstance);
+						} else if (outEdge instanceof IcfgJoinThreadCurrentTransition) {
+							// mainly copy and paste form IcfgInternalTransition
+							final IcfgJoinThreadCurrentTransition oldJoinEdge = (IcfgJoinThreadCurrentTransition) outEdge;
+							final IcfgLocation source = procOldLoc2NewLoc.get(oldJoinEdge.getSource());
+							final IcfgLocation target = procOldLoc2NewLoc.get(oldJoinEdge.getTarget());
+							final IPayload payload = null;
+							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
+									managedScript, outEdge.getTransformula(),
+									oldVar2newVar.get(copyIdentifier));
+							final JoinSmtArguments newForkSmtArguments = copyJoinSmtArguments(
+									oldJoinEdge.getJoinSmtArguments(), oldVar2newVar.get(copyIdentifier),
+									managedScript);
+							final IcfgJoinThreadCurrentTransition newJoinEdge = icfgEdgeFactory
+									.createJoinThreadCurrentTransition(source, target, payload, transFormula,
+											newForkSmtArguments);
+							backtranslator.mapEdges(newJoinEdge, oldJoinEdge);
+							source.addOutgoing(newJoinEdge);
+							target.addIncoming(newJoinEdge);
+							// add to join list
+							joinCurrentThreads.add(newJoinEdge);
 						} else {
 							throw new UnsupportedOperationException();
 						}
@@ -241,6 +264,16 @@ public class ProcedureMultiplier {
 		final MultiTermResult newProcedureArguments = copyMultiTermResult(forkSmtArguments.getProcedureArguments(),
 				defaultVariableMapping, managedScript);
 		return new ForkSmtArguments(newThreadIdArguments, newProcedureArguments);
+	}
+
+	private JoinSmtArguments copyJoinSmtArguments(final JoinSmtArguments joinSmtArguments,
+			final Map<ILocalProgramVar, ILocalProgramVar> map, final ManagedScript managedScript) {
+		final Map<Term, Term> defaultVariableMapping = constructDefaultVariableMapping(map);
+		final MultiTermResult newThreadIdArguments = copyMultiTermResult(joinSmtArguments.getThreadIdArguments(),
+				defaultVariableMapping, managedScript);
+		final List<IProgramVar> newAssignmentLhs = joinSmtArguments.getAssignmentLhs().stream().map(map::get)
+				.collect(Collectors.toList());
+		return new JoinSmtArguments(newThreadIdArguments, newAssignmentLhs);
 	}
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
