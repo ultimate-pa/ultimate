@@ -857,12 +857,13 @@ public class BoogieOutput {
 			sb.append(");");
 		} else if (s instanceof ForkStatement) {
 			final ForkStatement fork = (ForkStatement) s;
-			String comma;
+			String comma = "";
 			sb.append("fork ");
 			for (final Expression threadId : fork.getThreadID()) {
+				sb.append(comma);
 				sb.append(BoogiePrettyPrinter.print(threadId));
-				sb.append(", ");
-			}			
+				comma = ", ";
+			}
 			sb.append(" ").append(fork.getProcedureName());
 			sb.append("(");
 			comma = "";
@@ -952,7 +953,7 @@ public class BoogieOutput {
 	}
 
 	/*
-	
+
 	 * Print statement.
 	 *
 	 * @param s
