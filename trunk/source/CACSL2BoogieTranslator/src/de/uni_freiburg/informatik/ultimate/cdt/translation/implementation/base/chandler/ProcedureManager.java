@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -460,6 +461,13 @@ public class ProcedureManager {
 		registerCall(caller, callee);
 	}
 
+	public void registerForkStatement(final ForkStatement fs) {
+		final String currentProcedure = getCurrentProcedureID();
+		final BoogieProcedureInfo procInfoOfCurrentProcedure = getProcedureInfo(currentProcedure);
+		final BoogieProcedureInfo procInfoOfForkedProcedure = getProcedureInfo(fs.getProcedureName());
+		registerCall(procInfoOfCurrentProcedure, procInfoOfForkedProcedure);
+	}
+
 	/**
 	 * Essentially this method is to remind the programmer that he or she has to give modified globals for an ensures
 	 * specification manually.
@@ -703,5 +711,7 @@ public class ProcedureManager {
 		}
 
 	}
+
+
 
 }

@@ -671,7 +671,7 @@ public class StandardFunctionHandler {
 		final Expression[] forkArguments = { startRoutineArguments.getLrValue().getValue() };
 		final ForkStatement fs = new ForkStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
 				methodName, forkArguments);
-
+		mProcedureManager.registerForkStatement(fs);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
