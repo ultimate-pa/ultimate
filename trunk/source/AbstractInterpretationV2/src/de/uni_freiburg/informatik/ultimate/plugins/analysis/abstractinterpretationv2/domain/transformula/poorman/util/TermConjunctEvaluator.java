@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +67,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	private final Set<TermVariable> mVariableRetainmentSet;
 	private final Map<TermVariable, String> mAlternateOldNames;
 	private final CodeBlockFactory mCodeBlockFactory;
-	private final Function<List<STATE>, List<STATE>> mPostFunction;
+	private final Function<Collection<STATE>, Collection<STATE>> mPostFunction;
 	private final Script mScript;
 	private final Map<Term[], CodeBlock> mCachedCodeBlocks;
 
@@ -84,14 +86,14 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		mPostFunction = visit(term);
 	}
 
-	public List<STATE> computePost(final PoormanAbstractState<STATE> prestate) {
+	public Collection<STATE> computePost(final PoormanAbstractState<STATE> prestate) {
 		if (mPostFunction == null) {
 			throw new UnsupportedOperationException("No result produced.");
 		}
 		return mPostFunction.apply(Collections.singletonList(prestate.getBackingState()));
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final Term term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return visit((ApplicationTerm) term);
 		} else if (term instanceof AnnotatedTerm) {
@@ -107,25 +109,25 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		}
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final TermVariable term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final TermVariable term) {
 		return (prestate) -> {
 			return applyPost(prestate, term);
 		};
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final QuantifiedFormula term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final QuantifiedFormula term) {
 		throw new UnsupportedOperationException("Quantified formulas cannot be handled right now.");
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final LetTerm term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final LetTerm term) {
 		throw new UnsupportedOperationException("LetTerm formulas cannot be handled right now.");
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final AnnotatedTerm term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final AnnotatedTerm term) {
 		throw new UnsupportedOperationException("AnnotatedTerm formulas cannot be handled right now.");
 	}
 
-	private Function<List<STATE>, List<STATE>> visit(final ApplicationTerm term) {
+	private Function<Collection<STATE>, Collection<STATE>> visit(final ApplicationTerm term) {
 		final String functionName = term.getFunction().getName();
 
 		if (functionName.equals("and")) {
@@ -143,13 +145,13 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 					mLogger.debug("Abstractables:     " + abstractables);
 					mLogger.debug("Non-Abstractables: " + nonAbstractables);
 				}
-				final List<STATE> preStatesAfterAbstractables =
+				final Collection<STATE> preStatesAfterAbstractables =
 						applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
 				return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
 			};
 		} else if (functionName.equals("or")) {
 			return (prestates) -> {
-				final List<STATE> returnStates = new ArrayList<>();
+				final Set<STATE> returnStates = new HashSet<>();
 				for (final Term param : term.getParameters()) {
 					returnStates.addAll(visit(param).apply(prestates));
 				}
@@ -177,30 +179,41 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		};
 	}
 
-	private List<STATE> computeFixpoint(final List<Term> nonAbstractables, final List<STATE> preStates) {
+	private Collection<STATE> computeFixpoint(final Collection<Term> nonAbstractables,
+			final Collection<STATE> preStates) {
 		if (nonAbstractables.isEmpty()) {
 			return preStates;
 		}
 
 		DisjunctiveAbstractState<STATE> pres = DisjunctiveAbstractState.createDisjunction(preStates);
+		int i = 0;
+		Set<STATE> result;
 		while (true) {
-			mLogger.debug("Beginning new fixpoint iteration of assumes...");
+			++i;
 			// Compute everything for the prestate
 			DisjunctiveAbstractState<STATE> abstractableResult = pres;
+
 			for (final Term nonAbstractable : nonAbstractables) {
-				abstractableResult = DisjunctiveAbstractState.createDisjunction(visit(nonAbstractable)
-						.apply(abstractableResult.getStates().stream().collect(Collectors.toList())), 2);
+				abstractableResult = DisjunctiveAbstractState
+						.createDisjunction(visit(nonAbstractable).apply(abstractableResult.getStates()));
 				if (abstractableResult.isBottom()) {
-					return abstractableResult.getStates().stream().collect(Collectors.toList());
+					result = Collections.emptySet();
+					break;
 				}
 			}
 
 			final DisjunctiveAbstractState<STATE> previousPres = pres;
 			if (abstractableResult.isSubsetOf(previousPres) != SubsetResult.NONE) {
-				return abstractableResult.getStates().stream().collect(Collectors.toList());
+				result = abstractableResult.getStates();
+				break;
 			}
 			pres = abstractableResult;
 		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Computed fixpoint for " + nonAbstractables.size() + " terms and " + preStates.size()
+					+ " states in " + i + " iterations, resulting in " + result.size() + " states");
+		}
+		return result;
 	}
 
 	private Term negateTerm(final ApplicationTerm term) {
@@ -248,13 +261,12 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	}
 
 	private CodeBlock getCachedCodeBlock(final Term... term) {
-		if (mCachedCodeBlocks.containsKey(term)) {
-			return mCachedCodeBlocks.get(term);
-		}
-
 		if (term.length == 0) {
-			mCachedCodeBlocks.put(term, null);
 			return null;
+		}
+		final CodeBlock cachedBlock = mCachedCodeBlocks.get(term);
+		if (cachedBlock != null) {
+			return cachedBlock;
 		}
 
 		final AssumeStatement[] assume = AssumptionBuilder.constructBoogieAssumeStatement(mLogger,
@@ -266,8 +278,8 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		return codeBlock;
 	}
 
-	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
-		final List<STATE> returnStates = new ArrayList<>();
+	private Collection<STATE> applyPost(final Collection<STATE> preStates, final Term... term) {
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("PreStates: " + preStates);
 		}
@@ -284,6 +296,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		if (codeBlock == null) {
 			return preStates;
 		}
+		final Set<STATE> returnStates = new HashSet<>();
 		for (final STATE state : preStates) {
 			// Skip bottom states
 			if (state.isBottom()) {

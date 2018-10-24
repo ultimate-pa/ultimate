@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -72,7 +73,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *            The state on which the inverseEvaluation should be applied.
 	 * @return The result of the inverse application of the evaluate function.
 	 */
-	List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state);
+	Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.

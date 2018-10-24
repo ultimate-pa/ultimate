@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -176,11 +177,10 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	private IProgramVar getCachedFreshProgramVar(final TermVariable var, final String alternateName) {
 		if (mFreshVarsCache.containsKey(alternateName)) {
 			return mFreshVarsCache.get(alternateName);
-		} else {
-			final IProgramVar freshProgramVar = new MockupProgramVar(var, alternateName, mManagedScript);
-			mFreshVarsCache.put(alternateName, freshProgramVar);
-			return freshProgramVar;
 		}
+		final IProgramVar freshProgramVar = new MockupProgramVar(var, alternateName, mManagedScript);
+		mFreshVarsCache.put(alternateName, freshProgramVar);
+		return freshProgramVar;
 	}
 
 	protected Set<TermVariable> getVariableRetainmentSet() {
@@ -304,12 +304,13 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 		return input.renameVariables(mRenamedInVars).addVariables(mAddedVariables);
 	}
 
-	protected List<BACKING> applyPost(final PoormanAbstractState<BACKING> preState) {
+	protected Collection<BACKING> applyPost(final PoormanAbstractState<BACKING> preState) {
 		return mEvaluator.computePost(preState);
 	}
 
-	protected List<PoormanAbstractState<BACKING>> restoreOriginalStateVaraibles(final List<BACKING> states) {
-		List<BACKING> postPostStates = new ArrayList<>();
+	protected Collection<PoormanAbstractState<BACKING>>
+			restoreOriginalStateVariables(final Collection<BACKING> states) {
+		Collection<BACKING> postPostStates = new HashSet<>();
 		if (mHavocPostCodeBlock != null) {
 			for (final BACKING postState : states) {
 				if (postState.isBottom()) {
@@ -317,7 +318,7 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 				}
 
 				// TODO: Move application of havoc to application of POST!
-				final List<BACKING> havocedPostStates =
+				final Collection<BACKING> havocedPostStates =
 						mBackingDomain.getPostOperator().apply(postState, mHavocPostCodeBlock);
 
 				mLogger.debug("Post-havoc states: " + havocedPostStates);

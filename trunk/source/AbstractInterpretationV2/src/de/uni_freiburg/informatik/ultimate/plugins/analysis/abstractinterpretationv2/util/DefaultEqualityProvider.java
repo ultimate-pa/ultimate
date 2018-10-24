@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -93,10 +93,10 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE>>
 		final CodeBlock assumeCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null,
 				new ArrayList<>(Arrays.asList(assumeStatement)), Origin.IMPLEMENTATION);
 
-		final List<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
+		final Collection<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
 		assert postReturn.size() == 1;
 
-		return postReturn.get(0).isBottom();
+		return postReturn.iterator().next().isBottom();
 	}
 
 }

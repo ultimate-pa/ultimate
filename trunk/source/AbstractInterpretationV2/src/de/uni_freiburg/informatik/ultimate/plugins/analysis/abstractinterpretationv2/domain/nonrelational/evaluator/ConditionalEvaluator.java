@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,7 +79,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
-			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
@@ -102,7 +103,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		}
 
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
-			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
@@ -144,7 +145,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
-			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
@@ -153,7 +154,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> t : trueResult) {
-						final List<STATE> ifStates = mIfEvaluator.inverseEvaluate(t, conditionState);
+						final Collection<STATE> ifStates = mIfEvaluator.inverseEvaluate(t, conditionState);
 
 						for (final STATE ifState : ifStates) {
 							if (!ifState.isBottom()) {
@@ -170,7 +171,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		}
 
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
-			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
@@ -179,7 +180,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> f : falseResult) {
-						final List<STATE> elseStates = mElseEvaluator.inverseEvaluate(f, conditionState);
+						final Collection<STATE> elseStates = mElseEvaluator.inverseEvaluate(f, conditionState);
 
 						for (final STATE elseState : elseStates) {
 							if (!elseState.isBottom()) {

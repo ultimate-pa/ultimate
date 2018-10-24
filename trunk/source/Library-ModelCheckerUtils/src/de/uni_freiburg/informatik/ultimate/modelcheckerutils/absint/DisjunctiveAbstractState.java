@@ -428,6 +428,32 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		return new DisjunctiveAbstractState<>(maxSize, reduce(disjuncts, maxSize));
 	}
 
+	/**
+	 * Compute the union of a collection of states using ordered merge. If states is empty or null this returns null.
+	 */
+	public static <STATE extends IAbstractState<STATE>> STATE union(final Collection<STATE> states) {
+		if (states == null || states.isEmpty()) {
+			return null;
+		}
+		if (states.size() == 1) {
+			return states.iterator().next();
+		}
+		final Set<STATE> disjuncts = new HashSet<>(states.size());
+		for (final STATE state : states) {
+			if (state instanceof DisjunctiveAbstractState<?>) {
+				disjuncts.addAll(((DisjunctiveAbstractState<STATE>) state).getStates());
+			} else {
+				disjuncts.add(state);
+			}
+		}
+		final Set<STATE> result = reduce(disjuncts, 1);
+		if (result.isEmpty()) {
+			return null;
+		}
+		assert result.size() == 1;
+		return result.iterator().next();
+	}
+
 	@Override
 	public String toString() {
 		return toLogString();

@@ -184,7 +184,12 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 
 	@Override
 	public boolean isBottom() {
-		return mAbstractStates.stream().parallel().anyMatch(IAbstractState::isBottom);
+		for (final IAbstractState<?> state : mAbstractStates) {
+			if (state.isBottom()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

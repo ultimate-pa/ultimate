@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -125,21 +127,16 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final IAbstractState<?> currentPreState = states.get(i);
 			final IcfgEdge currentTrans = transitionList.get(i);
 
-			final List<IAbstractState> result =
+			final Collection<IAbstractState> result =
 					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans);
 
 			if (result.isEmpty()) {
 				return Collections.emptyList();
 			}
-			IAbstractState state = result.get(0);
-			for (int j = 1; j < result.size(); j++) {
-				state = applyMergeInternally(state, result.get(j));
-			}
-
-			if (state.isBottom()) {
+			final IAbstractState state = DisjunctiveAbstractState.union(result);
+			if (state == null || state.isBottom()) {
 				return Collections.emptyList();
 			}
-
 			resultingStates.add(state);
 		}
 
@@ -304,7 +301,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return returnStates;
 	}
 
-	private static List<IAbstractState> applyInternally(final IAbstractState<?> currentState,
+	private static Collection<IAbstractState> applyInternally(final IAbstractState<?> currentState,
 			final IAbstractPostOperator postOperator, final IcfgEdge transition) {
 		return postOperator.apply(currentState, transition);
 	}

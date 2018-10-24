@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,21 +16,22 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -83,8 +84,8 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), managedScript);
 		mVariableProvider = variableProvider;
 		mCreatedVars = new HashSet<>();
-		mMinBound = createVariable("-inf", BoogiePrimitiveType.TYPE_INT);
-		mMaxBound = createVariable("inf", BoogiePrimitiveType.TYPE_INT);
+		mMinBound = createVariable("-inf", BoogieType.TYPE_INT);
+		mMaxBound = createVariable("inf", BoogieType.TYPE_INT);
 		mServices = services;
 	}
 
@@ -149,15 +150,11 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		}
 		final CodeBlock codeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, statement, Origin.IMPLEMENTATION);
-		final List<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
+		final Collection<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
 		if (newStates.isEmpty()) {
 			return mSubDomain.createBottomState();
 		}
-		STATE result = newStates.get(0);
-		for (int i = 1; i < newStates.size(); i++) {
-			result = result.union(newStates.get(i));
-		}
-		return result;
+		return DisjunctiveAbstractState.union(newStates);
 	}
 
 	public Expression getExpression(final Term term) {

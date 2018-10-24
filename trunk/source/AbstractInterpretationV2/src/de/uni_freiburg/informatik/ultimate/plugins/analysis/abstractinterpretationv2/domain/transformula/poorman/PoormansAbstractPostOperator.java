@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	}
 
 	@Override
-	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> oldstate,
+	public Collection<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> oldstate,
 			final IcfgEdge transition) {
 		if (mUseStrongman) {
 			return applySPPost(oldstate, transition);
@@ -118,7 +119,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		return applyPost(oldstate, transition.getTransformula());
 	}
 
-	private List<PoormanAbstractState<BACKING>> applySPPost(final PoormanAbstractState<BACKING> oldstate,
+	private Collection<PoormanAbstractState<BACKING>> applySPPost(final PoormanAbstractState<BACKING> oldstate,
 			final IcfgEdge transition) {
 		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
@@ -209,11 +210,11 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *            The transformula to apply.
 	 * @return A list of backing states as the result of the application of the transformula on the old state.
 	 */
-	private List<PoormanAbstractState<BACKING>> applyPost(final PoormanAbstractState<BACKING> oldstate,
+	private Collection<PoormanAbstractState<BACKING>> applyPost(final PoormanAbstractState<BACKING> oldstate,
 			final UnmodifiableTransFormula transformula) {
 		final PoormanCachedPostOperation<BACKING> cachedOperation = getCachedOperation(transformula);
 		final PoormanAbstractState<BACKING> preState = cachedOperation.prepareState(oldstate);
-		return cachedOperation.restoreOriginalStateVaraibles(cachedOperation.applyPost(preState));
+		return cachedOperation.restoreOriginalStateVariables(cachedOperation.applyPost(preState));
 	}
 
 	/**

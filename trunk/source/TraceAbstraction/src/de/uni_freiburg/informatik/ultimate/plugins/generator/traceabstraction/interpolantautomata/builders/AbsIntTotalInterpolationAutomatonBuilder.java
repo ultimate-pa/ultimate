@@ -27,9 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -313,7 +313,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 
 						allIncompatible = false;
 
-						final List<IAbstractState> currentPost =
+						final Collection<IAbstractState> currentPost =
 								applyPostInternally(currentState, postOperator, currentLetter);
 
 						boolean subsetFound = false;
@@ -376,7 +376,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		return mResult;
 	}
 
-	private List<IAbstractState> applyPostInternally(final IAbstractState<?> currentState,
+	private Collection<IAbstractState> applyPostInternally(final IAbstractState<?> currentState,
 			final IAbstractPostOperator postOperator, final LETTER transition) {
 		return postOperator.apply(currentState, transition);
 	}

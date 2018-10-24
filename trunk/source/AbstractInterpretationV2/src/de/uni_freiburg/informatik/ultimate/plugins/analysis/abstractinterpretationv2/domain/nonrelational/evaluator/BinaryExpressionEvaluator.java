@@ -211,7 +211,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
-					? BooleanValue.TRUE : BooleanValue.BOTTOM;
+					? BooleanValue.TRUE
+					: BooleanValue.BOTTOM;
 		}
 
 		final VALUE returnValue = first.getValue().intersect(second.getValue());
@@ -226,9 +227,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState) {
 
-		final List<STATE> returnList = new ArrayList<>();
+		final Set<STATE> rtr = new HashSet<>();
 
 		final VALUE evalResultValue = evalResult.getValue();
 		final BooleanValue evalResultBool = evalResult.getBooleanValue();
@@ -238,7 +239,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 		for (final IEvaluationResult<VALUE> leftOp : leftValues) {
 			for (final IEvaluationResult<VALUE> rightOp : rightValues) {
-				final List<STATE> returnStates = new ArrayList<>();
 				final VALUE leftOpValue = leftOp.getValue();
 				final VALUE rightOpValue = rightOp.getValue();
 
@@ -253,13 +253,14 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 				switch (mOperator) {
 				case LOGICAND:
-					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState);
-					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState);
-					returnStates.addAll(crossIntersect(leftAnd, rightAnd));
+					final Collection<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState);
+					final Collection<STATE> rightAnd =
+							mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState);
+					rtr.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState).forEach(returnStates::add);
-					mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState).forEach(returnStates::add);
+					mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState).forEach(rtr::add);
+					mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState).forEach(rtr::add);
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
@@ -271,7 +272,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final BooleanValue intersectBool = leftOp.getBooleanValue().intersect(rightOp.getBooleanValue());
 					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
 							&& (intersectBool == BooleanValue.TOP)) {
-						returnStates.add(oldState);
+						rtr.add(oldState);
 						break;
 					}
 
@@ -283,9 +284,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final NonrelationalEvaluationResult<VALUE> rightEvalResult =
 							new NonrelationalEvaluationResult<>(inverseRight, leftOp.getBooleanValue());
 
-					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalResult, oldState);
-					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalResult, oldState);
-					returnStates.addAll(crossIntersect(leftEq, rightEq));
+					final Collection<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalResult, oldState);
+					final Collection<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalResult, oldState);
+					rtr.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
@@ -311,35 +312,36 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
 							new NonrelationalEvaluationResult<>(newValueRight, evalResultBool);
 
-					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState);
-					final List<STATE> rightInverseArith =
+					final Collection<STATE> leftInverseArith =
+							mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState);
+					final Collection<STATE> rightInverseArith =
 							mRightSubEvaluator.inverseEvaluate(inverseResultRight, oldState);
 
-					returnStates.addAll(crossIntersect(leftInverseArith, rightInverseArith));
+					rtr.addAll(crossIntersect(leftInverseArith, rightInverseArith));
 					break;
 				default:
 					mLogger.warnUnknownOperator(mOperator);
-					returnStates.add(oldState);
+					rtr.add(oldState);
 					break;
 				}
 
-				if (returnStates.isEmpty()) {
-					returnStates.add(oldState);
+				if (rtr.isEmpty()) {
+					rtr.add(oldState);
 				}
-				mLogger.logInverseEvaluation(mOperator, returnStates, evalResult, oldState);
-				returnList.addAll(returnStates);
+				// mLogger.logInverseEvaluation(mOperator, returnStates, evalResult, oldState);
+
 			}
 		}
 
-		assert !returnList.isEmpty();
-		return returnList;
+		assert !rtr.isEmpty();
+		return rtr;
 	}
 
 	/**
 	 * Intersect all the states of <code>left</code> with all the states of <code>right</code> and return the result.
 	 */
-	private List<STATE> crossIntersect(final List<STATE> left, final List<STATE> right) {
-		final List<STATE> rtr = new ArrayList<>(left.size() * right.size());
+	private Collection<STATE> crossIntersect(final Collection<STATE> left, final Collection<STATE> right) {
+		final Set<STATE> rtr = new HashSet<>(left.size() * right.size());
 		for (final STATE le : left) {
 			for (final STATE ri : right) {
 				rtr.add(le.intersect(ri));

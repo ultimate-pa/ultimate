@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -351,9 +352,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		}
 
 		// Caching of expression evaluators
-		if (mEvaluatorCache.containsKey(formula)) {
-			mExpressionEvaluator = mEvaluatorCache.get(formula);
-		} else {
+		mExpressionEvaluator = mEvaluatorCache.get(formula);
+		if (mExpressionEvaluator == null) {
 			mExpressionEvaluator = new ExpressionEvaluator<>();
 			processExpression(formula);
 			assert mExpressionEvaluator.isFinished();
@@ -371,7 +371,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			} else {
 				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
 				// states. Otherwise, the return state will be bottom.
-				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
+				final Collection<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
 						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
 				mReturnState.addAll(
 						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));

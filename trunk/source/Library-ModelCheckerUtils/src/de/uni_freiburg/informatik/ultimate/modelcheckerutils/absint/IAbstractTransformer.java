@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * {@link IAbstractTransformer} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
@@ -49,6 +49,6 @@ public interface IAbstractTransformer<STATE extends IAbstractState<STATE>, ACTIO
 	 *            The transition that is taken.
 	 * @return A new list of STATEs that is the result of applying the abstract post.
 	 */
-	List<STATE> apply(STATE oldstate, ACTION transition);
+	Collection<STATE> apply(STATE oldstate, ACTION transition);
 
 }
