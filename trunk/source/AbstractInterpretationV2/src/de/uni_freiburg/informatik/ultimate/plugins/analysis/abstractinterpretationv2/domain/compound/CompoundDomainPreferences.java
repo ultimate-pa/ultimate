@@ -51,6 +51,8 @@ public class CompoundDomainPreferences {
 	public static final String LABEL_USE_CONGRUENCE_DOMAIN = "Congruence Domain";
 	public static final String LABEL_USE_INTERVAL_DOMAIN = "Interval Domain";
 	public static final String LABEL_USE_OCTAGON_DOMAIN = "Octagon Domain";
+	public static final String LABEL_USE_EXP_DOMAIN = "Explicit value domain";
+	private static final boolean DEF_USE_EXP_DOMAIN = false;
 
 	public static final boolean DEF_USE_EMPTY_DOMAIN = false;
 	public static final boolean DEF_USE_SIGN_DOMAIN = false;
@@ -101,7 +103,8 @@ public class CompoundDomainPreferences {
 				PreferenceType.Boolean));
 		abstractDomains.add(
 				new UltimatePreferenceItem<>(LABEL_USE_OCTAGON_DOMAIN, DEF_USE_OCTAGON_DOMAIN, PreferenceType.Boolean));
-
+		abstractDomains
+				.add(new UltimatePreferenceItem<>(LABEL_USE_EXP_DOMAIN, DEF_USE_EXP_DOMAIN, PreferenceType.Boolean));
 		return abstractDomains;
 	}
 }

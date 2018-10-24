@@ -176,6 +176,9 @@ public class FixpointEngineParameterFactory {
 		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
 			domainNames.add(OctagonDomain.class.getSimpleName());
 		}
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_EXP_DOMAIN)) {
+			domainNames.add(ExplicitValueDomain.class.getSimpleName());
+		}
 		return new CompoundDomain(mServices,
 				domainNames.stream().map(a -> getFlatDomainOrFail(a, logger)).collect(Collectors.toList()),
 				mBoogieIcfg);
