@@ -273,10 +273,13 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 					"The transition has an unsupported type: " + transition.getClass().getSimpleName());
 		}
 
-		if (validity == Validity.VALID) {
+		if (validity == Validity.VALID || validity == Validity.UNKNOWN) {
 			return true;
 		}
-
+		mLogger.fatal("Prestate and poststate are not inductive under the current transition; result is " + validity);
+		mLogger.fatal("Prestate:   " + preState.toString());
+		mLogger.fatal("Transition: " + transition);
+		mLogger.fatal("Poststate:  " + postState.toString());
 		return false;
 	}
 
