@@ -681,7 +681,9 @@ public class StandardFunctionHandler {
 		final ForkStatement fs = new ForkStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
 				methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
+
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(argThreadId, argThreadAttributes, argStartRoutine, startRoutineArguments);
 
 		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
