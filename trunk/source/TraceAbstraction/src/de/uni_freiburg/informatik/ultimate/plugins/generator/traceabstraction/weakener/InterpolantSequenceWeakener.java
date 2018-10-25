@@ -45,10 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -170,9 +168,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			final P currentPreState = currentStateTriple.getFirstState();
 			final LETTER transition = currentStateTriple.getTransition();
 
-			assert checkIfInductive(currentPreState, transition, currentPostState, mHtc,
-					tracePosition) : "Prestate and poststate are not inductive under the current transition.";
-
 			// If the currentPreState corresponds to the precondition, we arrived at the top, therefore break.
 			if (currentPreState == mPrecondition) {
 				break;
@@ -233,54 +228,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 					String.format("Weakened %s states. On average, predicates are now at %s%% of their original sizes.",
 							mSuccessfulWeakenings, df.format(rounded)));
 		}
-	}
-
-	/**
-	 * Checks whether a prestate and a post state are inductive under some transition. This method is only for debugging
-	 * purposes (with enabled assertions) as inductivity should also be checked outside of this class.
-	 *
-	 * @param preState
-	 *            The prestate.
-	 * @param transition
-	 *            The transition.
-	 * @param postState
-	 *            The poststate.
-	 * @return <code>true</code> iff inductive, <code>false</code> otherwise.
-	 *
-	 * @deprecated For debugging purposes only.
-	 */
-	@Deprecated
-	protected final boolean checkIfInductive(final P preState, final LETTER transition, final P postState,
-			final IHoareTripleChecker htc, final int tracePosition) {
-		assert preState != null;
-		assert transition != null;
-		assert postState != null;
-		assert htc != null;
-
-		final Validity validity;
-
-		if (transition instanceof IInternalAction) {
-			validity = mHtc.checkInternal(preState, (IInternalAction) transition, postState);
-		} else if (transition instanceof ICallAction) {
-			validity = mHtc.checkCall(preState, (ICallAction) transition, postState);
-		} else if (transition instanceof IReturnAction) {
-			final P hierState = mHierarchicalPreStates.get(tracePosition);
-			assert hierState != null;
-			final IReturnAction returnTransition = (IReturnAction) transition;
-			validity = mHtc.checkReturn(preState, hierState, returnTransition, postState);
-		} else {
-			throw new IllegalStateException(
-					"The transition has an unsupported type: " + transition.getClass().getSimpleName());
-		}
-
-		if (validity == Validity.VALID || validity == Validity.UNKNOWN) {
-			return true;
-		}
-		mLogger.fatal("Prestate and poststate are not inductive under the current transition; result is " + validity);
-		mLogger.fatal("Prestate:   " + preState.toString());
-		mLogger.fatal("Transition: " + transition);
-		mLogger.fatal("Poststate:  " + postState.toString());
-		return false;
 	}
 
 	/**

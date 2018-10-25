@@ -125,15 +125,15 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 	@Override
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates) {
 		final Set<STATE> states = mRootStorage.computeContextSensitiveAbstractPostStates(callStack, symbol);
-		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
-			// TODO: this has to be disabled until summary calculation works correctly
-			// because this is a call, it could also be somewhere in the summary map
-			// final AbstractMultiState<STATE> summaryState =
-			// mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
-			// if (summaryState != null) {
-			// states.addAll(summaryState.getStates());
-			// }
-		}
+		// TODO: this has to be disabled until summary calculation works correctly
+		// because this is a call, it could also be somewhere in the summary map
+		// if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
+		// final AbstractMultiState<STATE> summaryState =
+		// mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
+		// if (summaryState != null) {
+		// states.addAll(summaryState.getStates());
+		// }
+		// }
 		return states;
 	}
 
@@ -206,6 +206,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 		return !mCounterexamples.isEmpty();
 	}
 
+	@Override
 	public AbsIntBenchmark<ACTION, LOCATION> getBenchmark() {
 		return mBenchmark;
 	}

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -183,6 +184,28 @@ public final class AbsIntUtil {
 		return quotient;
 	}
 
+	public static Rational euclideanDivision(final Rational a, final Rational b) {
+		Rational quotient = a.div(b);
+		if (quotient.signum() == -1) {
+			quotient = quotient.ceil();
+		} else {
+			quotient = quotient.floor();
+		}
+		final Rational remainder = a.sub(quotient.mul(b));
+
+		if (remainder.signum() != 0 && a.signum() < 0) {
+			// sig(a) != 0, since "remainder != 0"
+			if (b.signum() < 0) {
+				// sig(b) != 0, since "a / 0" throws an exception
+				quotient = quotient.add(Rational.ONE);
+			} else {
+				quotient = quotient.sub(Rational.ONE);
+			}
+		}
+		return quotient;
+
+	}
+
 	/**
 	 * Calculates {@code a / b} only if {@code b} is a divisor of {@code a}.
 	 *
@@ -200,7 +223,15 @@ public final class AbsIntUtil {
 		if (quotientAndRemainder[1].signum() == 0) {
 			return quotientAndRemainder[0];
 		}
-		throw new ArithmeticException("Divison not exact.");
+		throw new ArithmeticException("Divison not exact for " + a + " / " + b);
+	}
+
+	public static Rational exactDivision(final Rational a, final Rational b) {
+		final Rational divisionResult = a.div(b);
+		if (divisionResult.isIntegral()) {
+			return divisionResult;
+		}
+		throw new ArithmeticException("Divison not exact for " + a + " / " + b);
 	}
 
 	/**
@@ -241,6 +272,31 @@ public final class AbsIntUtil {
 			r = r.add(b.abs());
 		}
 		return r;
+	}
+
+	/**
+	 * As {@link AbsIntUtil#euclideanModulo(BigDecimal, BigDecimal)}, but for {@link BigInteger}
+	 */
+	public static BigInteger euclideanModulo(final BigInteger a, final BigInteger b) {
+		BigInteger r = a.remainder(b);
+		if (r.signum() < 0) {
+			r = r.add(b.abs());
+		}
+		return r;
+	}
+
+	public static Rational euclideanModulo(final Rational a, final Rational b) {
+		final Rational divisionResult = a.div(b);
+		final Rational floor = divisionResult.floor();
+		final Rational remainder = a.sub(floor.mul(b));
+		if (remainder.isNegative()) {
+			return remainder.add(b.abs());
+		}
+		return remainder;
+	}
+
+	public static Rational convert(final BigDecimal value) {
+		return SmtUtils.decimalToRational(value);
 	}
 
 	/**
@@ -362,8 +418,8 @@ public final class AbsIntUtil {
 		throw new IllegalArgumentException("Cannot extract BoogieIcfgContainer from IICFG");
 	}
 
-	public static <STATE extends IAbstractState<STATE>> STATE
-			synchronizeVariables(final STATE template, final STATE toSynchronize) {
+	public static <STATE extends IAbstractState<STATE>> STATE synchronizeVariables(final STATE template,
+			final STATE toSynchronize) {
 		if (toSynchronize == null) {
 			return null;
 		}
@@ -375,8 +431,7 @@ public final class AbsIntUtil {
 		return rtr;
 	}
 
-	public static <STATE extends IAbstractState<STATE>> Set<STATE>
-			synchronizeVariables(final Set<STATE> states) {
+	public static <STATE extends IAbstractState<STATE>> Set<STATE> synchronizeVariables(final Set<STATE> states) {
 		if (states == null) {
 			return null;
 		}
@@ -388,8 +443,8 @@ public final class AbsIntUtil {
 		return states.stream().map(a -> synchronizeVariables(a, allVars)).collect(Collectors.toSet());
 	}
 
-	public static <STATE extends IAbstractState<STATE>> STATE
-			synchronizeVariables(final STATE state, final Set<IProgramVarOrConst> shouldVars) {
+	public static <STATE extends IAbstractState<STATE>> STATE synchronizeVariables(final STATE state,
+			final Set<IProgramVarOrConst> shouldVars) {
 
 		final Set<IProgramVarOrConst> definedVariables = state.getVariables();
 
@@ -411,4 +466,5 @@ public final class AbsIntUtil {
 		assert !state.isBottom() || rtr.isBottom() : "Bottom lost during synchronization";
 		return rtr;
 	}
+
 }

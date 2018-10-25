@@ -217,7 +217,7 @@ public class ExplicitValueTop extends BaseExplicitValueValue {
 		return script.term("true");
 	}
 
-	private BooleanValue bottomOrThisBoolean(final BaseExplicitValueValue other) {
+	private static BooleanValue bottomOrThisBoolean(final BaseExplicitValueValue other) {
 		if (other.isBottom()) {
 			return BooleanValue.BOTTOM;
 		}

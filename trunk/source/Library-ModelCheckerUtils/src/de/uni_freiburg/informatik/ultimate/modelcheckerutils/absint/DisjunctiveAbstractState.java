@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -431,6 +430,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	/**
 	 * Compute the union of a collection of states using ordered merge. If states is empty or null this returns null.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <STATE extends IAbstractState<STATE>> STATE union(final Collection<STATE> states) {
 		if (states == null || states.isEmpty()) {
 			return null;
@@ -717,9 +717,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		}
 		final Set<STATE> mergeDown = new HashSet<>();
 		iter.forEachRemaining(mergeDown::add);
-		final Optional<STATE> lastElem = reduce(mergeDown, 1).stream().findAny();
-		assert lastElem.isPresent();
-		rtr.add(lastElem.get());
+		rtr.add(reduce(mergeDown, 1).iterator().next());
 		assert rtr.size() <= maxSize;
 		return rtr;
 	}

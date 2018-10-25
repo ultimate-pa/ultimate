@@ -398,12 +398,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				mLogger.info("Generating AbsInt predicates");
 				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
 				final List<AbsIntPredicate<STATE>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
+				assert isInductive(ppTrace, nonUnifiedPredicates,
+						createHoareTripleChecker(true)) : "Sequence of interpolants not inductive (before weakening)!";
 
 				final List<AbsIntPredicate<STATE>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
 					final CachingHoareTripleCheckerMap absIntOnlyHtc = createHoareTripleChecker(true);
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
-					assert isInductive(mCex.getWord().asList(), weakenedPredicates,
+					assert isInductive(ppTrace, weakenedPredicates,
 							absIntOnlyHtc) : "Sequence of interpolants not inductive (after weakening)!";
 				} else {
 					weakenedPredicates = nonUnifiedPredicates;
@@ -417,8 +419,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
 						+ " but interpolant sequence has length " + interpolants.size();
-				assert isInductive(mCex.getWord().asList(), interpolants,
-						getHoareTripleChecker()) : "Sequence of interpolants not inductive!";
+				assert isInductive(ppTrace, interpolants,
+						getHoareTripleChecker()) : "Sequence of interpolants not inductive (after unification)";
 				mLogger.info("Finished generation of AbsInt predicates");
 				return new AbsIntInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
@@ -485,20 +487,22 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert trans != null;
 
 				final Validity result;
+				final IPredicate preHier;
 				if (trans instanceof IInternalAction) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("Checking {%s} %s {%s}", pre, trans, post));
 					}
+					preHier = null;
 					result = htc.checkInternal(pre, (IInternalAction) trans, post);
 				} else if (trans instanceof ICallAction) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("Checking {%s} %s {%s}", pre, trans, post));
 					}
 					preHierStates.addFirst(pre);
+					preHier = null;
 					result = htc.checkCall(pre, (ICallAction) trans, post);
-
 				} else if (trans instanceof IReturnAction) {
-					final IPredicate preHier = preHierStates.removeFirst();
+					preHier = preHierStates.removeFirst();
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("Checking {%s} {%s} %s {%s}", pre, preHier, trans, post));
 					}
@@ -508,8 +512,21 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 
 				if (result != Validity.VALID) {
-					// the absint htc must solve all queries from those interpolants
-					mLogger.fatal("HTC sequence inductivity check failed: result was " + result);
+					// the absint htc must solve all queries from those interpolants, therefore the result must be VALID
+					mLogger.fatal("Inductivity check failed! Result is " + result + " for "
+							+ trans.getClass().getSimpleName() + " transition");
+					mLogger.fatal("Prestate:       " + pre.toString());
+					if (preHier != null) {
+						mLogger.fatal("HierState:      " + preHier.toString());
+					}
+					if (trans instanceof IReturnAction) {
+						final IReturnAction rtrAction = (IReturnAction) trans;
+						mLogger.fatal("Transition(R) : " + rtrAction.getAssignmentOfReturn());
+						mLogger.fatal("Transition(LV): " + rtrAction.getLocalVarsAssignmentOfCall());
+					} else {
+						mLogger.fatal("Transition    : " + trans.getTransformula());
+					}
+					mLogger.fatal("Poststate:      " + post.toString());
 					return false;
 				}
 			}

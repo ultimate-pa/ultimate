@@ -188,7 +188,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		DisjunctiveAbstractState<STATE> pres = DisjunctiveAbstractState.createDisjunction(preStates);
 		int i = 0;
 		Set<STATE> result;
-		while (true) {
+		outerloop: while (true) {
 			++i;
 			// Compute everything for the prestate
 			DisjunctiveAbstractState<STATE> abstractableResult = pres;
@@ -197,8 +197,9 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 				abstractableResult = DisjunctiveAbstractState
 						.createDisjunction(visit(nonAbstractable).apply(abstractableResult.getStates()));
 				if (abstractableResult.isBottom()) {
+					// result = abstractableResult.getStates();
 					result = Collections.emptySet();
-					break;
+					break outerloop;
 				}
 			}
 

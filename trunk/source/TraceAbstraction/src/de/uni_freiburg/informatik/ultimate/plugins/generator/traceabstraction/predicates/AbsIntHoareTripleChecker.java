@@ -701,7 +701,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		}
 		if (subResult == SubsetResult.NONE) {
 			script.echo(buildQuoteEndIsSubsetOf());
-			mLogger.warn("isSubsetOf was not precise enough (may lost precision through disjunctions)");
 			return true;
 		}
 

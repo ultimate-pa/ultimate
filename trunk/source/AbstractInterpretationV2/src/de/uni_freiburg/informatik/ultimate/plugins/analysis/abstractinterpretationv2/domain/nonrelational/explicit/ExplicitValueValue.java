@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Representation of an explicit value in the {@link ExplicitValueDomain}
@@ -149,11 +149,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 			return other;
 		}
 		final ExplicitValueValue evv = (ExplicitValueValue) other;
-		if (mValue.isIntegral() && evv.mValue.isIntegral()) {
-			return new ExplicitValueValue(
-					Rational.valueOf(mValue.numerator().mod(evv.mValue.numerator()), BigInteger.ONE));
-		}
-		throw new UnsupportedOperationException("Modulo on reals");
+		return new ExplicitValueValue(AbsIntUtil.euclideanModulo(mValue, evv.mValue));
 	}
 
 	@Override
@@ -269,8 +265,9 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 		return distFun.apply(this);
 	}
 
-	private <T> T nonCommutativeOp(final BaseExplicitValueValue other, final Function<BaseExplicitValueValue, T> botFun,
-			final Function<BaseExplicitValueValue, T> topFun, final Function<ExplicitValueValue, T> fun) {
+	private static <T> T nonCommutativeOp(final BaseExplicitValueValue other,
+			final Function<BaseExplicitValueValue, T> botFun, final Function<BaseExplicitValueValue, T> topFun,
+			final Function<ExplicitValueValue, T> fun) {
 		if (other.isTop()) {
 			return topFun.apply(other);
 		}
@@ -281,7 +278,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 		return fun.apply(evv);
 	}
 
-	private BaseExplicitValueValue nonCommutativeOpCanonical(final BaseExplicitValueValue other,
+	private static BaseExplicitValueValue nonCommutativeOpCanonical(final BaseExplicitValueValue other,
 			final Function<ExplicitValueValue, BaseExplicitValueValue> fun) {
 		if (other.isTop()) {
 			return ExplicitValueTop.DEFAULT;
@@ -293,7 +290,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 		return fun.apply(evv);
 	}
 
-	private BooleanValue nonCommutativeOpCanonicalBoolean(final BaseExplicitValueValue other,
+	private static BooleanValue nonCommutativeOpCanonicalBoolean(final BaseExplicitValueValue other,
 			final Function<ExplicitValueValue, BooleanValue> fun) {
 		if (other.isTop()) {
 			return BooleanValue.TOP;
@@ -303,6 +300,11 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 		}
 		final ExplicitValueValue evv = (ExplicitValueValue) other;
 		return fun.apply(evv);
+	}
+
+	@Override
+	public String toString() {
+		return mValue.toString();
 	}
 
 }

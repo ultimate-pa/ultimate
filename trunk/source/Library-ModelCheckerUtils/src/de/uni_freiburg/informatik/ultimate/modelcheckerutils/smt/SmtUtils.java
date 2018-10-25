@@ -1150,7 +1150,7 @@ public final class SmtUtils {
 	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
 	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
 	 */
-	private static Rational decimalToRational(final BigDecimal d) {
+	public static Rational decimalToRational(final BigDecimal d) {
 		Rational rat;
 		if (d.scale() <= 0) {
 			final BigInteger num = d.toBigInteger();
@@ -1201,10 +1201,10 @@ public final class SmtUtils {
 		final Term result;
 		switch (funcname) {
 		case "and":
-			result =  SmtUtils.and(script, params);
+			result = SmtUtils.and(script, params);
 			break;
 		case "or":
-			result =  SmtUtils.or(script, params);
+			result = SmtUtils.or(script, params);
 			break;
 		case "not":
 			if (params.length != 1) {
