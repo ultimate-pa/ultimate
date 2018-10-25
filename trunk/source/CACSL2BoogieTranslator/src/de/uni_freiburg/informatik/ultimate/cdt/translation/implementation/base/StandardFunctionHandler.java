@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -702,15 +703,38 @@ public class StandardFunctionHandler {
 	private Result handleJoin(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		// // get arguments
-		// final IASTInitializerClause[] arguments = node.getArguments();
-		// checkArguments(loc, 2, name, arguments);
-		// final ExpressionResult argThreadId = dispatchAndConvertFunctionArgument(main, loc, arguments[0]);
-		// final ExpressionResult argAddressOfResultPointer = dispatchAndConvertFunctionArgument(main, loc,
-		// arguments[1]);
+		 // get arguments
+		 final IASTInitializerClause[] arguments = node.getArguments();
+		 checkArguments(loc, 2, name, arguments);
+			final ExpressionResult argThreadId;
+			{
+				final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+				// TODO 2018-10-25 Matthias: conversion not correct
+				// we do not have a void pointer but a pthread_t pointer
+				// but this incorrectness  will currently not have a
+				// negative effect
+				argThreadId = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			}
+		final ExpressionResult argAddressOfResultPointer;
+		{
+			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
+					arguments[1]);
+			argAddressOfResultPointer = mExprResultTransformer.convert(loc, tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)));
+		}
+
+		final JoinStatement js;
+		if (argAddressOfResultPointer.getLrValue().isNullPointerConstant()) {
+			 js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
+					new VariableLHS[0]);
+		} else {
+			throw new UnsupportedOperationException("we do not yet support join with return values");
+		}
 
 		// Object that will build our result
-		final ExpressionResultBuilder build = new ExpressionResultBuilder();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(argThreadId, argAddressOfResultPointer);
+		builder.addStatement(js);
 
 		// final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
 		// final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
@@ -722,7 +746,7 @@ public class StandardFunctionHandler {
 		// final MemoryHandler memoryHandler = main.mHandlerHandler.getMemoryHandler();
 		// memoryHandler.getWriteCall(main, loc, hlv, value, valueType, isStaticInitialization, hook)
 
-		return build.build();
+		return builder.build();
 	}
 
 	/**
