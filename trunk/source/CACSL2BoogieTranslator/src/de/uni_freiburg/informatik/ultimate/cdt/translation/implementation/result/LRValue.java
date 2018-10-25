@@ -27,10 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
@@ -112,11 +114,19 @@ public abstract class LRValue {
 		}
 		value = getValue();
 
-		if (value instanceof IntegerLiteral) {
-			return "0".equals(((IntegerLiteral) value).getValue());
+		final BigInteger integerValue = CTranslationUtil.extractIntegerValue(value);
+		if (BigInteger.ZERO.equals(integerValue)) {
+			return true;
 		}
-		if (value instanceof BitvecLiteral) {
-			return "0".equals(((BitvecLiteral) value).getValue());
+
+		if (value instanceof StructConstructor) {
+			final StructConstructor sc = (StructConstructor) value;
+			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE) &&
+					sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET) &&
+					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0])) &&
+					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
+				return true;
+			}
 		}
 		if (value instanceof IdentifierExpression) {
 			return SFO.NULL.equals(((IdentifierExpression) value).getIdentifier());
