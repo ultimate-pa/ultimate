@@ -98,7 +98,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	 * Do not enhance the interpolant automaton into a total automaton but construct the enhancement only on-demand and
 	 * add only transitions that will be needed for the difference.
 	 */
-	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
+	private final boolean mEnhanceInterpolantAutomatonOnDemand = !true;
 	/**
 	 * Remove unreachable nodes of mAbstraction in each iteration.
 	 */
