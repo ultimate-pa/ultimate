@@ -643,15 +643,24 @@ public class StandardFunctionHandler {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
-		final ExpressionResult argThreadId =
-				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult argThreadId;
+		{
+			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+			// TODO 2018-10-25 Matthias: conversion not correct
+			// we do not have a void pointer but a pthread_t pointer
+			// but this incorrectness  will currently not have a
+			// negative effect
+			argThreadId = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		}
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
 		final ExpressionResult argStartRoutine =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[2]);
-		final ExpressionResult startRoutineArguments =
-				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[3]);
-
+		final ExpressionResult startRoutineArguments;
+		{
+			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[3]);
+			startRoutineArguments = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		}
 		final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
 		final String rawProcName = castIdExpr.getName().toString();
 
