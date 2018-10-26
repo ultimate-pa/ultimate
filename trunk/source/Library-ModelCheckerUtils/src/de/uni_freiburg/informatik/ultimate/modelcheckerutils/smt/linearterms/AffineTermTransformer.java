@@ -216,7 +216,7 @@ public class AffineTermTransformer extends TermTransformer {
 					}
 				}
 			}
-			AffineTerm result;
+			final AffineTerm result;
 			if (affineTerm == null) {
 				result = new AffineTerm(sort, multiplier);
 			} else {
@@ -266,7 +266,7 @@ public class AffineTermTransformer extends TermTransformer {
 				}
 			}
 			final Sort sort = appTerm.getSort();
-			AffineTerm result;
+			final AffineTerm result;
 			if (affineTerm == null) {
 				result = new AffineTerm(sort, multiplier);
 			} else {
