@@ -106,6 +106,12 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public boolean isContainedIn(final BaseExplicitValueValue other) {
+		if (other.isTop()) {
+			return true;
+		}
+		if (other.isBottom()) {
+			return false;
+		}
 		return isEqualTo(other);
 	}
 
