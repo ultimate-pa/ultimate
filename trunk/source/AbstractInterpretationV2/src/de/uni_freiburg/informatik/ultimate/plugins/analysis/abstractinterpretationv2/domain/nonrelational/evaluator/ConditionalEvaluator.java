@@ -30,11 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -56,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
 		implements IEvaluator<VALUE, STATE> {
 
-	private final Set<IProgramVarOrConst> mVariables;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
 	private IEvaluator<VALUE, STATE> mConditionEvaluator;
@@ -65,7 +61,6 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 	private IEvaluator<VALUE, STATE> mElseEvaluator;
 
 	public ConditionalEvaluator(final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		mVariables = new HashSet<>();
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
 
@@ -94,7 +89,6 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 						}
 					}
 
-					mVariables.addAll(mIfEvaluator.getVarIdentifiers());
 					break;
 				default:
 					break;
@@ -118,7 +112,6 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 						}
 					}
 
-					mVariables.addAll(mElseEvaluator.getVarIdentifiers());
 					break;
 				default:
 					break;
@@ -216,11 +209,6 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		} else {
 			throw new UnsupportedOperationException("Cannot add futher sub evaluators to this conditional evaluator.");
 		}
-	}
-
-	@Override
-	public Set<IProgramVarOrConst> getVarIdentifiers() {
-		return mVariables;
 	}
 
 	@Override

@@ -38,7 +38,6 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
 		implements INAryEvaluator<VALUE, STATE> {
 
-	private final Set<IProgramVarOrConst> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
@@ -76,7 +74,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
-		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
 		mMaxParallelSates = maxParallelStates;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
@@ -91,9 +88,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 		final List<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
-
-		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
-		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
@@ -443,11 +437,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 
 		mRightSubEvaluator = evaluator;
-	}
-
-	@Override
-	public Set<IProgramVarOrConst> getVarIdentifiers() {
-		return mVariableSet;
 	}
 
 	@Override

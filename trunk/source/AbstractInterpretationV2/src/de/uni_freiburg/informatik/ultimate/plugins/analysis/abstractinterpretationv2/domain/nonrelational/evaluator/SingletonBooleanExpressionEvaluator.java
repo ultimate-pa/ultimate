@@ -30,10 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -78,11 +76,6 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Adding a subevaluator is not supported for singleton boolean expression evaluators.");
-	}
-
-	@Override
-	public Set<IProgramVarOrConst> getVarIdentifiers() {
-		return Collections.emptySet();
 	}
 
 	@Override

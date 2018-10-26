@@ -30,10 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
@@ -82,11 +80,6 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *            The evaluator to add.
 	 */
 	void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator);
-
-	/**
-	 * @return The set of all variable identifiers that occur in all sub evaluators.
-	 */
-	Set<IProgramVarOrConst> getVarIdentifiers();
 
 	/**
 	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.

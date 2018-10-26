@@ -29,9 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -57,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
 		implements IEvaluator<VALUE, STATE> {
 
-	private final Set<IProgramVarOrConst> mVariableSet;
 	private final IProgramVarOrConst mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
@@ -67,7 +64,6 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	public SingletonVariableExpressionEvaluator(final IProgramVarOrConst var,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVar = var;
-		mVariableSet = Collections.singleton(var);
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mType = EvaluatorUtils.getEvaluatorType(mVar);
 	}
@@ -127,11 +123,6 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a subevaluator to singleton variable expression evaluators.");
-	}
-
-	@Override
-	public Set<IProgramVarOrConst> getVarIdentifiers() {
-		return mVariableSet;
 	}
 
 	@Override
