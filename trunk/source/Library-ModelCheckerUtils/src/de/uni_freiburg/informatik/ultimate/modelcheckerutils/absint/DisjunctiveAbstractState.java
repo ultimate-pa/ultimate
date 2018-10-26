@@ -60,10 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		implements IAbstractState<DisjunctiveAbstractState<STATE>> {
 
-	private static int sNextFreeId;
 	private final Set<STATE> mStates;
 	private final int mMaxSize;
-	private final int mId;
 
 	public DisjunctiveAbstractState() {
 		this(Collections.emptySet());
@@ -89,8 +87,6 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		assert states.size() <= maxSize : "Set too large";
 		mMaxSize = maxSize;
 		mStates = states;
-		sNextFreeId++;
-		mId = sNextFreeId;
 	}
 
 	private boolean haveSameVars(final Set<STATE> states) {
@@ -261,36 +257,6 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	}
 
 	@Override
-	public int hashCode() {
-		return mId;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final DisjunctiveAbstractState<?> other = (DisjunctiveAbstractState<?>) obj;
-		if (mId != other.mId) {
-			return false;
-		}
-		if (mStates == null) {
-			if (other.mStates != null) {
-				return false;
-			}
-		} else if (!mStates.equals(other.mStates)) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
 	public DisjunctiveAbstractState<STATE> intersect(final DisjunctiveAbstractState<STATE> other) {
 		assert other != null && other.getVariables().equals(getVariables()) : "Cannot intersect incompatible states";
 		return crossProduct((a, b) -> a.intersect(b), other, mStates.size() * other.mStates.size());
@@ -457,6 +423,33 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	@Override
 	public String toString() {
 		return toLogString();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + mMaxSize;
+		result = prime * result + mStates.hashCode();
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final DisjunctiveAbstractState<?> other = (DisjunctiveAbstractState<?>) obj;
+		if (mMaxSize != other.mMaxSize) {
+			return false;
+		}
+		return mStates.equals(other.mStates);
 	}
 
 	public Set<STATE> getStates() {

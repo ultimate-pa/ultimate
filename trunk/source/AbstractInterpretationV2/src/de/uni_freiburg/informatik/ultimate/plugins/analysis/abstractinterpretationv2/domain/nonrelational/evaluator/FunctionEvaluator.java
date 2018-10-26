@@ -29,12 +29,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -87,11 +84,6 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 		} else {
 			throw new UnsupportedOperationException("No space left to add sub evaluators to this function evaluator.");
 		}
-	}
-
-	@Override
-	public Set<IProgramVarOrConst> getVarIdentifiers() {
-		return new HashSet<>();
 	}
 
 	@Override

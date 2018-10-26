@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.explicit;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,8 +62,8 @@ public class ExplicitValueState extends NonrelationalState<ExplicitValueState, B
 
 	@Override
 	protected ExplicitValueState createCopy() {
-		return new ExplicitValueState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), getBottomFlag());
+		return new ExplicitValueState(getLogger(), getVariables(), getVar2ValueNonrelational(), getVar2ValueBoolean(),
+				getBottomFlag());
 	}
 
 	@Override

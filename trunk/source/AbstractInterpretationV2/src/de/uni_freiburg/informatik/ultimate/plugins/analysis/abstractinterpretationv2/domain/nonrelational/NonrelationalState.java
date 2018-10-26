@@ -752,7 +752,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		if (!(obj instanceof NonrelationalState)) {
 			return false;
 		}
-		return obj == this;
+		return ((NonrelationalState<?, ?>) obj).mId == mId;
 	}
 
 	protected abstract STATE getThis();
@@ -785,17 +785,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return false;
 		}
 
-		if (other.mVariables.size() != mVariables.size()) {
-			return false;
-		}
-
-		for (final IProgramVarOrConst entry : mVariables) {
-			if (!other.mVariables.contains(entry)) {
-				return false;
-			}
-		}
-
-		return true;
+		return mVariables.equals(other.mVariables);
 	}
 
 	/**
