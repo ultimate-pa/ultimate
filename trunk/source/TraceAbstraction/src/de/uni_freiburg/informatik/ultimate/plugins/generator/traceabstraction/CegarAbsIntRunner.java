@@ -412,7 +412,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 				mLogger.info("Unifying AI predicates");
 				final List<AbsIntPredicate<STATE>> interpolants = unifyPredicates(weakenedPredicates);
-				mLogger.info("We have " + interpolants.size() + " unified AI predicates");
+				mLogger.info("We unified " + weakenedPredicates.size() + " AI predicates to " + interpolants.size());
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
