@@ -1,6 +1,5 @@
 #include <pthread.h>
 #include <stdio.h>
-#include <assert.h>
 
 typedef unsigned long int pthread_t;
 
@@ -19,9 +18,9 @@ int main() {
     void *ret;
 
     pthread_create(&thread_id, NULL, add, (void*)numbers);
-    pthread_join(thread_id, &ret);
+    pthread_join(thread_id, NULL);
 
-    assert((int)ret == 3);
+    //@ assert (int)ret == 3;
 
     return 0;
 }

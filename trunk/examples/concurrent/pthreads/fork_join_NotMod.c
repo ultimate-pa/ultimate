@@ -1,6 +1,5 @@
 #include <pthread.h>
 #include <stdio.h>
-#include <assert.h>
 
 typedef unsigned long int pthread_t;
 
@@ -24,11 +23,11 @@ int main() {
     pthread_t thread_id;
 
     pthread_create(&thread_id, NULL, increment, &globVar);
-    assert(globVar == 0);
-    assert(locVar == 7);
+    //@ assert globVar == 0;
+    //@ assert locVar == 7;
     pthread_join(thread_id, NULL);
-    assert(globVar == 0);
-    assert(locVar == 7);
+    //@ assert globVar == 0;
+    //@ assert locVar == 7;
 
     return 0;
 }

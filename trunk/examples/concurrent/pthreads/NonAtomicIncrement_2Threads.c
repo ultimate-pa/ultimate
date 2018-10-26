@@ -5,7 +5,6 @@
 
 #include <pthread.h>
 #include <stdio.h>
-#include <assert.h>
 #include <stdbool.h>
 
 typedef unsigned long int pthread_t;
@@ -35,7 +34,6 @@ void *secondIncrement() {
 int main() {
     pthread_t first_increment_id;
     pthread_t second_increment_id;
-    bool y;
     x = 0;
 
     pthread_create(&first_increment_id, NULL, firstIncrement, NULL);
@@ -44,6 +42,6 @@ int main() {
     pthread_join(first_increment_id, NULL);
     pthread_join(second_increment_id, NULL);
     
-    assert(x >= 2);
+    //@ assert x >= 2;
     return 0;
 }
