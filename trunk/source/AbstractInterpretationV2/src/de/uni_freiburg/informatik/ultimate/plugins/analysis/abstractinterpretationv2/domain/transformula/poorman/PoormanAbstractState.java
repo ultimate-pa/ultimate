@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -50,13 +51,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 		implements IAbstractState<PoormanAbstractState<BACKING>> {
 
-	private static int sId;
-
 	private final IUltimateServiceProvider mServices;
 	private final IAbstractDomain<BACKING, IcfgEdge> mBoogieVarBackingDomain;
-	private final int mId;
 
-	private BACKING mBackingState;
+	private final BACKING mBackingState;
 
 	public PoormanAbstractState(final IUltimateServiceProvider services,
 			final IAbstractDomain<BACKING, IcfgEdge> boogieVarBackingDomain) {
@@ -72,38 +70,35 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 
 	protected PoormanAbstractState(final IUltimateServiceProvider services,
 			final IAbstractDomain<BACKING, IcfgEdge> boogieVarBackingDomain, final BACKING backingState) {
-		mId = sId++;
 		mServices = services;
 		mBoogieVarBackingDomain = boogieVarBackingDomain;
-		mBackingState = backingState;
+		mBackingState = Objects.requireNonNull(backingState);
+	}
+
+	private PoormanAbstractState(final PoormanAbstractState<BACKING> oldState, final BACKING backingState) {
+		mServices = oldState.mServices;
+		mBoogieVarBackingDomain = oldState.mBoogieVarBackingDomain;
+		mBackingState = Objects.requireNonNull(backingState);
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> addVariable(final IProgramVarOrConst variable) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.addVariable(variable);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.addVariable(variable));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> removeVariable(final IProgramVarOrConst variable) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.removeVariable(variable);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.removeVariable(variable));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> addVariables(final Collection<IProgramVarOrConst> variables) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.addVariables(variables);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.addVariables(variables));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> removeVariables(final Collection<IProgramVarOrConst> variables) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.removeVariables(variables);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.removeVariables(variables));
 	}
 
 	@Override
@@ -119,30 +114,22 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 	@Override
 	public PoormanAbstractState<BACKING>
 			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.renameVariables(old2newVars);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.renameVariables(old2newVars));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> patch(final PoormanAbstractState<BACKING> dominator) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.patch(dominator.mBackingState);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.patch(dominator.mBackingState));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> intersect(final PoormanAbstractState<BACKING> other) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.intersect(other.mBackingState);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.intersect(other.mBackingState));
 	}
 
 	@Override
 	public PoormanAbstractState<BACKING> union(final PoormanAbstractState<BACKING> other) {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.union(other.mBackingState);
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.union(other.mBackingState));
 	}
 
 	@Override
@@ -167,26 +154,18 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 
 	@Override
 	public PoormanAbstractState<BACKING> compact() {
-		final PoormanAbstractState<BACKING> newState = new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain);
-		newState.mBackingState = mBackingState.compact();
-		return newState;
+		return new PoormanAbstractState<>(this, mBackingState.compact());
 	}
 
 	@Override
 	public Term getTerm(final Script script) {
-		if (isBottom()) {
-			return script.term("false");
-		}
-
 		return mBackingState.getTerm(script);
 	}
 
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
-
 		sb.append(this.getClass().getSimpleName()).append(": ").append(mBackingState.toLogString());
-
 		return sb.toString();
 	}
 
@@ -195,15 +174,30 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 		return toLogString();
 	}
 
-	@Override
-	public int hashCode() {
-		return mId;
-	}
-
 	/**
 	 * @return The backing state for Boogie ICFGs corresponding to this poor man's abstract state.
 	 */
 	public BACKING getBackingState() {
 		return mBackingState;
+	}
+
+	@Override
+	public int hashCode() {
+		return mBackingState.hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PoormanAbstractState<?> other = (PoormanAbstractState<?>) obj;
+		return mBackingState.equals(other.mBackingState);
 	}
 }
