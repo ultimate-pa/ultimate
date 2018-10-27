@@ -889,6 +889,7 @@ public class BoogieOutput {
 					comma = ", ";
 				}
 			}
+			sb.append(";");
 		} else if (s instanceof BreakStatement) {
 			final String label = ((BreakStatement) s).getLabel();
 			sb.append("break");
