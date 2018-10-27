@@ -644,14 +644,14 @@ public class StandardFunctionHandler {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
-		final ExpressionResult argThreadId;
+		final ExpressionResult argThreadIdPointer;
 		{
 			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 			// TODO 2018-10-25 Matthias: conversion not correct
 			// we do not have a void pointer but a pthread_t pointer
 			// but this incorrectness  will currently not have a
 			// negative effect
-			argThreadId = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			argThreadIdPointer = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		}
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
@@ -678,14 +678,20 @@ public class StandardFunctionHandler {
 			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
 		}
 		final String methodName = idExpr.getIdentifier().substring(9);
+
+
+		 final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(), new CPrimitive(CPrimitives.ULONG), node);
+
+
 		final Expression[] forkArguments = { startRoutineArguments.getLrValue().getValue() };
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
+		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId.getLrValue().getValue() },
 				methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadId, argThreadAttributes, argStartRoutine, startRoutineArguments);
+		builder.addAllExceptLrValue(argThreadIdPointer, threadId, argThreadAttributes, argStartRoutine, startRoutineArguments);
 
+		// auxvar for fork return value (status code)
 		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvarinfo.getVarDec());
@@ -707,14 +713,12 @@ public class StandardFunctionHandler {
 		 final IASTInitializerClause[] arguments = node.getArguments();
 		 checkArguments(loc, 2, name, arguments);
 			final ExpressionResult argThreadId;
-			{
-				final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
-				// TODO 2018-10-25 Matthias: conversion not correct
-				// we do not have a void pointer but a pthread_t pointer
-				// but this incorrectness  will currently not have a
-				// negative effect
-				argThreadId = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
-			}
+		{
+			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
+					arguments[0]);
+			// TODO 2018-10-26 Matthias: we presume that pthread_t is unsigned long
+			argThreadId = mExprResultTransformer.convert(loc, tmp, new CPrimitive(CPrimitives.ULONG));
+		}
 		final ExpressionResult argAddressOfResultPointer;
 		{
 			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
