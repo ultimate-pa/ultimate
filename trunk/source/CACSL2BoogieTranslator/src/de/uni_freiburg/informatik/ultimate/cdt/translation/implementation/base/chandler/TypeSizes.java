@@ -352,7 +352,8 @@ public class TypeSizes {
 					return value.mod(maxValuePlusOne);
 				}
 				return value;
-			} else if (expr instanceof IdentifierExpression) {
+			}
+			if (expr instanceof IdentifierExpression) {
 				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mSymboltable.getCIdForBoogieId(bId);
@@ -363,7 +364,8 @@ public class TypeSizes {
 				if (stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
-			} else if (expr instanceof BinaryExpression) {
+			}
+			if (expr instanceof BinaryExpression) {
 				final BinaryExpression binExpr = (BinaryExpression) expr;
 				final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
 				final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
@@ -386,12 +388,17 @@ public class TypeSizes {
 				default:
 					return null;
 				}
-			} else if (expr instanceof IfThenElseExpression) {
+			}
+			if (expr instanceof IfThenElseExpression) {
 				final IfThenElseExpression ifThenElseExpr = (IfThenElseExpression) expr;
-				if (extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook)) {
-					return extractIntegerValue(ifThenElseExpr.getThenPart(), cType, hook);
+				final Boolean condValue = extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook);
+				if (condValue != null) {
+					if (extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook)) {
+						return extractIntegerValue(ifThenElseExpr.getThenPart(), cType, hook);
+					}
+					return extractIntegerValue(ifThenElseExpr.getElsePart(), cType, hook);
 				}
-				return extractIntegerValue(ifThenElseExpr.getElsePart(), cType, hook);
+				return null;
 			}
 			return null;
 		}
@@ -419,6 +426,9 @@ public class TypeSizes {
 
 			final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
 			final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
+			if (leftValue == null || rightValue == null) {
+				return null;
+			}
 			switch (binExpr.getOperator()) {
 			case COMPEQ:
 				return leftValue.compareTo(rightValue) == 0;
