@@ -82,7 +82,7 @@ public class AuxVarInfoBuilder {
 		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 
-		return constructAuxVarHelper(loc, id, astType, false);
+		return constructAuxVarHelper(loc, id, astType, mProcedureManager.isGlobalScope());
 	}
 
 	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final CType cType, final ASTType astType,
