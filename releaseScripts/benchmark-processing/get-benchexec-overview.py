@@ -46,12 +46,15 @@ known_exceptions = {
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
+UNEXPECTED_EXTERNAL_KILL = 'Killed from outside'
+
 known_timeouts = {
     "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown": True,
     "Toolchain execution was canceled (user or tool) before executing": True,
     "TimeoutResultAtElement": True,
     "TimeoutResult": True,
     "Killed by 15": True,
+    UNEXPECTED_EXTERNAL_KILL: True,
 }
 
 known_safe = {
@@ -158,7 +161,7 @@ def scan_line(line, result, line_iter):
     return result
 
 
-def rescan_wrapper_preamble(lines, call, version):
+def rescan_wrapper_preamble(file, call, version):
     '''
     If there was no result in the wrapper script log so far, we rescan it and search for errors reported directly by
     the wrapper script
@@ -168,21 +171,34 @@ def rescan_wrapper_preamble(lines, call, version):
     :return:
     '''
     debug("Rescanning wrapper preamble")
-    regex_file_does_not_exist = re.compile(".*File.*does not exist")
-    result = None
-    for line in lines:
-        if not line:
-            continue
-        if 'Ultimate.py: error: argument' in line:
-            debug("Found argument error")
-            # hacky special case
-            if '--validate' in line and regex_file_does_not_exist.match(line):
-                return [Result(scan_line(line, None, lines), None, None)]
-            return [Result(None, None, None)]
+    with open(file, 'rb') as f:
+        # If the wrapper script was killed without any chance to print a message, the last elements are dots.
+        # In this case we group the result as timeout and return a hardcoded line
+        f.seek(-3, 2)
+        last_elems = f.read()
+        if b'...' == last_elems:
+            return [Result((UNEXPECTED_EXTERNAL_KILL, '...'), call, version)]
         else:
-            result = scan_line(line, result, lines)
+            debug('Last 3 elements of file are {}'.format(last_elems))
 
-    return [Result(result, call, version)]
+    with open(file) as f:
+        lines = [line.rstrip('\n') for line in f].__iter__()
+
+        regex_file_does_not_exist = re.compile(".*File.*does not exist")
+        result = None
+        for line in lines:
+            if not line:
+                continue
+            if 'Ultimate.py: error: argument' in line:
+                debug("Found argument error")
+                # hacky special case
+                if '--validate' in line and regex_file_does_not_exist.match(line):
+                    return [Result(scan_line(line, None, lines), None, None)]
+                return [Result(None, None, None)]
+            else:
+                result = scan_line(line, result, lines)
+
+        return [Result(result, call, version)]
 
 
 def process_wrapper_script_log(file):
@@ -242,11 +258,9 @@ def process_wrapper_script_log(file):
             debug('Using default result: {}'.format(result))
             return [Result(result, default_call, version)]
         debug('No results for file {}'.format(file))
-        with open(file) as f:
-            lines = [line.rstrip('\n') for line in f].__iter__()
-            return rescan_wrapper_preamble(lines,
-                                           default_call if default_call else (bitvec_call if bitvec_call else None),
-                                           version)
+        return rescan_wrapper_preamble(file,
+                                       default_call if default_call else (bitvec_call if bitvec_call else None),
+                                       version)
     return results
 
 
