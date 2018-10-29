@@ -418,6 +418,9 @@ public class TypeSizes {
 			if (binExpr.getOperator() == Operator.LOGICAND || binExpr.getOperator() == Operator.LOGICOR) {
 				final Boolean leftValue = extractBooleanValue(binExpr.getLeft(), cType, hook);
 				final Boolean rightValue = extractBooleanValue(binExpr.getRight(), cType, hook);
+				if (leftValue == null || rightValue == null) {
+					return null;
+				}
 				if (binExpr.getOperator() == Operator.LOGICAND) {
 					return leftValue && rightValue;
 				}
