@@ -648,14 +648,14 @@ public class ProofChecker extends NonRecursive {
 				reportError("No diseq, but main path is " + lastPath);
 			}
 		} else {
-			if (!foundDiseq) {
-				reportError("Did not find goal equality in CC lemma");
-			}
 			if (!isApplication("=", goalEquality)) {
 				reportError("Goal equality is not an equality in CC lemma");
 				return;
 			}
 			final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
+			if (!foundDiseq && !checkTrivialDisequality(sides[0], sides[1])) {
+				reportError("Did not find goal equality in CC lemma");
+			}
 			if (sides.length != 2) {
 				reportError("Expected binary equality in CC lemma");
 				return;

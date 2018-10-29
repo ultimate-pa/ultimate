@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 
 /**
  * This class converts CCTerm to Term (SMTLIB) non-recursively.
@@ -115,7 +114,7 @@ public class CCTermConverter extends NonRecursive {
 				FunctionSymbol func = (FunctionSymbol) symbol;
 				assert func.getTheory() == mTheory;
 				assert func.getParameterSorts().length == numArgs;
-				converted = Coercion.buildApp(func, args);
+				converted = mTheory.term(func, args);
 			} else if (symbol instanceof String) {
 				converted = mTheory.term((String) symbol, args);
 			} else {

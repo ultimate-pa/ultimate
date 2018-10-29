@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
@@ -380,15 +381,13 @@ public class CClosure implements ITheory {
 	}	
 
 	public Clause computeCycle(CCEquality eq) {
-		final CongruencePath congPath = 
-			new CongruencePath(this);
+		final CongruencePath congPath = new CongruencePath(this);
 		final Clause res = congPath.computeCycle(eq, mEngine.isProofGenerationEnabled());
 		assert(res.getSize() != 2 || res.getLiteral(0).negate() != res.getLiteral(1));
 		return res;
 	}
 	public Clause computeCycle(CCTerm lconstant,CCTerm rconstant) {
-		final CongruencePath congPath = 
-			new CongruencePath(this);
+		final CongruencePath congPath = new CongruencePath(this);
 		return congPath.computeCycle(lconstant,rconstant, mEngine.isProofGenerationEnabled());
 	}
 		
@@ -467,7 +466,21 @@ public class CClosure implements ITheory {
 		return mEngine.getSMTTheory().equals(convertTermToSMT(t1), 
 				convertTermToSMT(t2));
 	}
-	
+
+	public static CCEquality createEquality(CCTerm t1, CCTerm t2) {
+		final EqualityProxy ep = t1.getFlatTerm().createEquality(t2.getFlatTerm());
+		if (ep == EqualityProxy.getFalseProxy()) {
+			return null;
+		}
+		final Literal res = ep.getLiteral(null);
+		if (res instanceof CCEquality) {
+			final CCEquality eq = (CCEquality) res;
+			if ((eq.getLhs() == t1 && eq.getRhs() == t2) || (eq.getLhs() == t2 && eq.getRhs() == t1)) {
+				return eq;
+			}
+		}
+		return ep.createCCEquality(t1.getFlatTerm(), t2.getFlatTerm());
+	}
 
 	@Override
 	public void dumpModel(LogProxy logger) {

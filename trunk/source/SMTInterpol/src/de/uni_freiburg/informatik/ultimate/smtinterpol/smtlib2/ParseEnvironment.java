@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -116,10 +118,16 @@ public class ParseEnvironment {
 				}
 				mCwd = script.getParentFile();
 				try {
-					reader = new FileReader(script);
+					if (filename.endsWith(".gz")) {
+						reader = new InputStreamReader(new GZIPInputStream(new FileInputStream(script)));
+					} else {
+						reader = new FileReader(script);
+					}
 					closeReader = true;
 				} catch (final FileNotFoundException ex) {
-					throw new SMTLIBException("File not found: " + filename);
+					throw new SMTLIBException("File not found: " + filename, ex);
+				} catch (final IOException ex) {
+					throw new SMTLIBException("Cannot read file: " + filename, ex);
 				}
 			}
 			parseStream(reader, filename);

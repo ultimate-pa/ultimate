@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public final class SMTAffineTerm {
 
-	private Map<Term, Rational> mSummands;
+	private final Map<Term, Rational> mSummands;
 	private Rational mConstant;
 
 	public SMTAffineTerm(final Sort sort) {
@@ -243,7 +243,7 @@ public final class SMTAffineTerm {
 	 *
 	 * @pram sort the expected sort
 	 */
-	public Term toTerm(final Sort sort) {
+	public Term toTerm(final TermCompiler unifier, final Sort sort) {
 		assert sort.isNumericSort();
 		final Theory t = sort.getTheory();
 		int size = mSummands.size();
@@ -268,7 +268,7 @@ public final class SMTAffineTerm {
 		if (i < size) {
 			sum[i++] = mConstant.toTerm(sort);
 		}
-		return size == 1 ? sum[0] : t.term("+", sum);
+		return size == 1 ? sum[0] : unifier.unifySummation(t.term("+", sum));
 	}
 
 	@Override
@@ -294,17 +294,6 @@ public final class SMTAffineTerm {
 			sb.append(comma).append(mConstant);
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Normalize the order of the summands.
-	 *
-	 * @param compiler
-	 *            TermCompiler used to unify SMTAffineTerms
-	 * @return this or the singleton term corresponding to this.
-	 */
-	public void normalize(final TermCompiler compiler) {
-		mSummands = compiler.unify(mSummands);
 	}
 
 	public boolean isAllIntSummands() {

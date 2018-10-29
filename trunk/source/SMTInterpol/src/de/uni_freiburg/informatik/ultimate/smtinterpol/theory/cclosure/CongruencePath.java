@@ -112,8 +112,8 @@ public class CongruencePath {
 		mAllPaths = new ArrayDeque<SubPath>();
 	}
 	
-	private CCAnnotation createAnnotation(CCEquality diseq) {
-		return new CCAnnotation(diseq, mAllPaths);
+	private CCAnnotation createAnnotation(SymmetricPair<CCTerm> diseq) {
+		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CC);
 	}
 	
 	private int computeDepth(CCTerm t) {
@@ -281,6 +281,8 @@ public class CongruencePath {
 	}
 	
 	public Clause computeCycle(CCEquality eq, boolean produceProofs) {
+		final CCTerm lhs = eq.getLhs();
+		final CCTerm rhs = eq.getRhs();
 		final SubPath path = computePath(eq.getLhs(), eq.getRhs());
 		mAllPaths.addFirst(path);
 		final Literal[] cycle = new Literal[mAllLiterals.size() + 1];
@@ -291,7 +293,7 @@ public class CongruencePath {
 		}
 		final Clause c = new Clause(cycle);
 		if (produceProofs) {
-			c.setProof(new LeafNode(LeafNode.THEORY_CC, createAnnotation(eq)));
+			c.setProof(new LeafNode(LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<CCTerm>(lhs, rhs))));
 		}
 		return c;
 	}
@@ -308,7 +310,7 @@ public class CongruencePath {
 		final Clause c = new Clause(cycle);
 		if (produceProofs) {
 			c.setProof(new LeafNode(
-					LeafNode.THEORY_CC, createAnnotation(null)));
+					LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<CCTerm>(lconstant, rconstant))));
 		}
 		return c;
 	}

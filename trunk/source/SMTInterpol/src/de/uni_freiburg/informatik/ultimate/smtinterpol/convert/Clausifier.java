@@ -142,7 +142,7 @@ public class Clausifier {
 				final Term t = mShared.getTerm();
 				if (t.getSort().isArraySort()) {
 					final ApplicationTerm at = (ApplicationTerm) t;
-					String funcName = at.getFunction().getName();
+					final String funcName = at.getFunction().getName();
 					mArrayTheory.notifyArray(mShared.mCCterm, funcName.equals("store"), funcName.equals("const"));
 				}
 				if (t instanceof ApplicationTerm && ((ApplicationTerm) t).getFunction().getName().equals("@diff")) {
@@ -1269,11 +1269,11 @@ public class Clausifier {
 		diff.negate(); // -x
 		diff.add(divisor, divTerm); // -x + d * (div x d)
 		// (<= (+ (- x) (* d (div x d))) 0)
-		Term axiom = theory.term("<=", diff.toTerm(divTerm.getSort()), zero);
+		Term axiom = theory.term("<=", diff.toTerm(mCompiler, divTerm.getSort()), zero);
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_DIV_LOW), source);
 		// (not (<= (+ (- x) (* d (div x d) |d|)) 0))
 		diff.add(divisor.abs());
-		axiom = theory.term("not", theory.term("<=", diff.toTerm(divTerm.getSort()), zero));
+		axiom = theory.term("not", theory.term("<=", diff.toTerm(mCompiler, divTerm.getSort()), zero));
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_DIV_HIGH), source);
 	}
 
@@ -1289,11 +1289,11 @@ public class Clausifier {
 		diff.negate();
 		diff.add(Rational.ONE, toIntTerm);
 		// (<= (+ (to_real (to_int x)) (- x)) 0)
-		Term axiom = theory.term("<=", diff.toTerm(realTerm.getSort()), zero);
+		Term axiom = theory.term("<=", diff.toTerm(mCompiler, realTerm.getSort()), zero);
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_TO_INT_LOW), source);
 		// (not (<= (+ (to_real (to_int x)) (- x) 1) 0))
 		diff.add(Rational.ONE);
-		axiom = theory.term("not", theory.term("<=", diff.toTerm(realTerm.getSort()), zero));
+		axiom = theory.term("not", theory.term("<=", diff.toTerm(mCompiler, realTerm.getSort()), zero));
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_TO_INT_HIGH), source);
 	}
 

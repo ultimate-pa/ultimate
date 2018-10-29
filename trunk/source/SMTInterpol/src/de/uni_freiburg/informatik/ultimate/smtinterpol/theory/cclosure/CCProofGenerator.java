@@ -32,9 +32,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -304,17 +303,17 @@ public class CCProofGenerator {
 	}
 
 	final CCAnnotation mAnnot;
-	final ArrayAnnotation.RuleKind mRule;
+	final CCAnnotation.RuleKind mRule;
 	final IndexedPath[] mIndexedPaths;
 
 	private HashMap<SymmetricPair<CCTerm>, Literal> mEqualityLiterals;
 	private HashMap<SymmetricPair<CCTerm>, ProofInfo> mPathProofMap;
 	private HashSet<SymmetricPair<CCTerm>> mAllEqualities;
 
-	public CCProofGenerator(final ArrayAnnotation arrayAnnot) {
+	public CCProofGenerator(final CCAnnotation arrayAnnot) {
 		mAnnot = arrayAnnot;
 		mRule = arrayAnnot.mRule;
-		mIndexedPaths = new IndexedPath[arrayAnnot.mPaths.length];
+		mIndexedPaths = new IndexedPath[arrayAnnot.getPaths().length];
 		for (int i = 0; i < mIndexedPaths.length; i++) {
 			mIndexedPaths[i] = new IndexedPath(arrayAnnot.getWeakIndices()[i], arrayAnnot.getPaths()[i]);
 		}
@@ -341,15 +340,11 @@ public class CCProofGenerator {
 
 		// Collect the paths needed to prove the main disequality
 		final ProofInfo mainInfo = findMainPaths();
-		if (mAnnot.mDiseq != null) {
-			final SymmetricPair<CCTerm> mainDiseq = new SymmetricPair<>(mAnnot.mDiseq.getLhs(), mAnnot.mDiseq.getRhs());
-			assert isDisequalityLiteral(mainDiseq);
-			mainInfo.mLemmaDiseq = mainDiseq;
-			mPathProofMap.put(mainDiseq, mainInfo);
-		} else {
-			// FIXME
-			mPathProofMap.put(null, mainInfo);
-		}
+		assert mAnnot.mDiseq != null;
+		final SymmetricPair<CCTerm> mainDiseq = mAnnot.mDiseq;
+		assert isDisequalityLiteral(mainDiseq) || isTrivialDisequality(mainDiseq);
+		mainInfo.mLemmaDiseq = mainDiseq;
+		mPathProofMap.put(mainDiseq, mainInfo);
 
 		// set the parent counter, to facilitate topological order
 		determineAllNumParents(mainInfo);
@@ -410,6 +405,9 @@ public class CCProofGenerator {
 	private ProofInfo findMainPaths() {
 		final ProofInfo mainProof = new ProofInfo();
 		switch (mRule) {
+		case CC:
+			mainProof.collectStrongPath(mIndexedPaths[0]);
+			break;
 		case WEAKEQ_EXT:
 			assert mIndexedPaths[0].getIndex() == null;
 			mainProof.collectWeakPath(mIndexedPaths[0]);
@@ -478,6 +476,60 @@ public class CCProofGenerator {
 		return proofOrder;
 	}
 
+	private Term buildLemma(Theory theory, RuleKind rule, ProofInfo info, Term diseq, boolean isTrivialDiseq,
+			HashMap<SymmetricPair<CCTerm>, Term> auxLiterals) {
+		// Collect the new clause literals.
+		final Term[] args = new Term[info.getLiterals().size() + (isTrivialDiseq ? 0 : 1) + info.getSubProofs().size()];
+		int i = 0;
+		if (!isTrivialDiseq) {
+			// First the (positive) diseq literal
+			args[i++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
+		}
+		// then the other literals, there may also be other positive literals.
+		for (final Map.Entry<SymmetricPair<CCTerm>, Literal> entry : info.getLiterals().entrySet()) {
+			Term arg = entry.getValue().getAtom().getSMTFormula(theory, true);
+			if (entry.getValue().getSign() < 0) {
+				arg = theory.not(arg);
+			}
+			args[i++] = arg;
+		}
+		for (final Map.Entry<SymmetricPair<CCTerm>, ProofInfo> entry : info.getSubProofs().entrySet()) {
+			if (!auxLiterals.containsKey(entry.getKey())) {
+				final Term lhs = entry.getKey().getFirst().toSMTTerm(theory);
+				final Term rhs = entry.getKey().getSecond().toSMTTerm(theory);
+				auxLiterals.put(entry.getKey(), theory.term("=", lhs, rhs));
+			}
+			/* these are always negated equalities */
+			Term arg = theory.annotatedTerm(CCEquality.QUOTED_CC, auxLiterals.get(entry.getKey()));
+			arg = theory.not(arg);
+			args[i++] = arg;
+		}
+		// Create the clause.
+		final Term base = theory.or(args);
+
+		final HashSet<IndexedPath> paths = info.getPaths();
+		final Object[] subannots = new Object[2 * paths.size() + 1];
+		int k = 0;
+		subannots[k++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
+		for (final IndexedPath p : paths) {
+			final CCTerm index = p.getIndex();
+			final CCTerm[] path = p.getPath();
+			final Term[] subs = new Term[path.length];
+			for (int j = 0; j < path.length; ++j) {
+				subs[j] = path[j].toSMTTerm(theory);
+			}
+			if (index == null) {
+				subannots[k++] = ":subpath";
+				subannots[k++] = subs;
+			} else {
+				subannots[k++] = ":weakpath";
+				subannots[k++] = new Object[] { index.toSMTTerm(theory), subs };
+			}
+		}
+		final Annotation[] annots = new Annotation[] { new Annotation(rule.getKind(), subannots) };
+		return theory.term("@lemma", theory.annotatedTerm(annots, base));
+	}
+
 	/**
 	 * Build the proof term in the form of a resolution step of the main lemma resolved with the auxiliary lemmas in the
 	 * order determined by proofOrder.
@@ -494,80 +546,28 @@ public class CCProofGenerator {
 			// Build the lemma clause.
 			final ProofInfo info = proofOrder.get(lemmaNo);
 			Term diseq;
+			boolean isTrivialDiseq = false;
 			if (lemmaNo == 0) { // main lemma
-				if (mAnnot.mDiseq != null) {
-					diseq = mAnnot.mDiseq.getSMTFormula(theory);
+				CCTerm diseqLHS = mAnnot.getDiseq().getFirst();
+				CCTerm diseqRHS = mAnnot.getDiseq().getSecond();
+				CCEquality diseqAtom = CClosure.createEquality(diseqLHS, diseqRHS);
+				if (diseqAtom != null) {
+					diseq = diseqAtom.getSMTFormula(theory, false);
 				} else {
-					diseq = null;
+					diseq = theory.term("=", diseqLHS.toSMTTerm(theory), diseqRHS.toSMTTerm(theory));
+					isTrivialDiseq = true;
 				}
 			} else {
 				// auxLiteral should already have been created by the lemma that needs it.
 				assert auxLiterals.containsKey(info.getDiseq());
 				diseq = auxLiterals.get(info.getDiseq());
 			}
-			// Collect the new clause literals.
-			final Term[] args = new Term[info.getLiterals().size() + (diseq != null ? 1 : 0)
-					+ info.getSubProofs().size()];
-			final Annotation[] quote = new Annotation[] { new Annotation(":quotedCC", null) };
-			int i = 0;
-			if (diseq != null) {
-				// First the (positive) diseq literal
-				args[i++] = theory.annotatedTerm(quote, diseq);
-			}
-			// then the other literals, there may also be other positive literals.
-			for (final Map.Entry<SymmetricPair<CCTerm>, Literal> entry : info.getLiterals().entrySet()) {
-				Term arg = entry.getValue().getAtom().getSMTFormula(theory, true);
-				if (entry.getValue().getSign() < 0) {
-					arg = theory.not(arg);
-				}
-				args[i++] = arg;
-			}
-			for (final Map.Entry<SymmetricPair<CCTerm>, ProofInfo> entry : info.getSubProofs().entrySet()) {
-				if (!auxLiterals.containsKey(entry.getKey())) {
-					final Term lhs = entry.getKey().getFirst().toSMTTerm(theory);
-					final Term rhs = entry.getKey().getSecond().toSMTTerm(theory);
-					auxLiterals.put(entry.getKey(), Coercion.buildEq(lhs, rhs));
-				}
-				/* these are always negated equalities */
-				Term arg = theory.annotatedTerm(quote, auxLiterals.get(entry.getKey()));
-				arg = theory.not(arg);
-				args[i++] = arg;
-			}
-			// Create the clause.
-			final Term base = theory.or(args);
 
 			// Build lemma annotations.
-			String rule;
-			if (lemmaNo == 0) {
-				rule = mRule.getKind();
-			} else {
-				rule = ":CC";
-			}
-			final HashSet<IndexedPath> paths = info.getPaths();
-			final Object[] subannots = new Object[2 * paths.size() + (diseq != null ? 1 : 0)];
-			int k = 0;
-			if (diseq != null) {
-				subannots[k++] = theory.annotatedTerm(quote, diseq);
-			}
-			for (final IndexedPath p : paths) {
-				final CCTerm index = p.getIndex();
-				final CCTerm[] path = p.getPath();
-				final Term[] subs = new Term[path.length];
-				for (int j = 0; j < path.length; ++j) {
-					subs[j] = path[j].toSMTTerm(theory);
-				}
-				if (index == null) {
-					subannots[k++] = ":subpath";
-					subannots[k++] = subs;
-				} else {
-					subannots[k++] = ":weakpath";
-					subannots[k++] = new Object[] { index.toSMTTerm(theory), subs };
-				}
-			}
-			final Annotation[] annots = new Annotation[] { new Annotation(rule, subannots) };
-			Term lemma = theory.term("@lemma", theory.annotatedTerm(annots, base));
+			Term lemma = buildLemma(theory, lemmaNo == 0 ? mRule : RuleKind.CC, info, diseq, isTrivialDiseq,
+					auxLiterals);
 			if (lemmaNo != 0) {
-				final Term pivot = theory.annotatedTerm(quote, diseq);
+				final Term pivot = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
 				lemma = theory.annotatedTerm(new Annotation[] { new Annotation(":pivot", pivot) }, lemma);
 			}
 			allLemmas[lemmaNo] = lemma;

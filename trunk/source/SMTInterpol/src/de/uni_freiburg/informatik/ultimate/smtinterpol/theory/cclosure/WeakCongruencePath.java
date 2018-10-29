@@ -23,8 +23,9 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory.ArrayNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
  * Class to compute weak congruence paths and the extended select over store lemmas.
@@ -83,8 +84,6 @@ public class WeakCongruencePath extends CongruencePath {
 
 	public Clause computeSelectOverWeakEQ(CCAppTerm select1, CCAppTerm select2,
 			boolean produceProofs) {
-		final CCEquality eq = ArrayTheory.createEquality(select1, select2);
-
 		final CCTerm i1 = select1.getArg();
 		final CCTerm i2 = select2.getArg();
 		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
@@ -97,31 +96,29 @@ public class WeakCongruencePath extends CongruencePath {
 			mAllPaths.addFirst(indexPath);
 		}
 
-		return generateClause(eq, produceProofs, RuleKind.READ_OVER_WEAKEQ);
+		return generateClause(new SymmetricPair<CCTerm>(select1, select2), produceProofs, RuleKind.READ_OVER_WEAKEQ);
 	}
 
 	public Clause computeSelectConstOverWeakEQ(CCAppTerm select1, CCAppTerm const2, boolean produceProofs) {
 		final CCTerm value2 = const2.getArg();
-		final CCEquality eq = ArrayTheory.createEquality(select1, value2);
 
 		final CCTerm i1 = select1.getArg();
 		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
 		final WeakSubPath weakPath = computeWeakPath(a, const2, i1, produceProofs);
 		mAllPaths.addFirst(weakPath);
-		return generateClause(eq, produceProofs, RuleKind.READ_CONST_WEAKEQ);
+		return generateClause(new SymmetricPair<CCTerm>(select1, value2), produceProofs, RuleKind.READ_CONST_WEAKEQ);
 	}
 
 	public Clause computeConstOverWeakEQ(CCAppTerm const1, CCAppTerm const2, boolean produceProofs) {
 		final CCTerm value1 = const1.getArg();
 		final CCTerm value2 = const2.getArg();
-		final CCEquality eq = ArrayTheory.createEquality(value1, value2);
 
 		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
 		final Cursor start = new Cursor(const1, mArrayTheory.mCongRoots.get(const1.getRepresentative()));
 		final Cursor dest = new Cursor(const2, mArrayTheory.mCongRoots.get(const2.getRepresentative()));
 		final SubPath path = collectPathPrimary(start, dest, storeIndices, produceProofs);
 		mAllPaths.addFirst(path);
-		return generateClause(eq, produceProofs, RuleKind.CONST_WEAKEQ);
+		return generateClause(new SymmetricPair<CCTerm>(value1, value2), produceProofs, RuleKind.CONST_WEAKEQ);
 	}
 
 	/**
@@ -139,7 +136,6 @@ public class WeakCongruencePath extends CongruencePath {
 	 */
 	public Clause computeWeakeqExt(CCTerm a, CCTerm b, boolean produceProofs) {
 		assert a != b;
-		final CCEquality eq = ArrayTheory.createEquality(a, b);
 		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
 		final Cursor start = new Cursor(a, mArrayTheory.mCongRoots.get(a.getRepresentative()));
 		final Cursor dest = new Cursor(b, mArrayTheory.mCongRoots.get(b.getRepresentative()));
@@ -149,7 +145,7 @@ public class WeakCongruencePath extends CongruencePath {
 			mAllPaths.addFirst(weakpath);
 		}
 		mAllPaths.addFirst(path);
-		return generateClause(eq, produceProofs, RuleKind.WEAKEQ_EXT);
+		return generateClause(new SymmetricPair<CCTerm>(a, b), produceProofs, RuleKind.WEAKEQ_EXT);
 	}
 
 	/**
@@ -361,17 +357,20 @@ public class WeakCongruencePath extends CongruencePath {
 	 * @param idxFromStore The index of an edge in the weakeq graph.
 	 */
 	private void computeIndexDiseq(CCTerm idx, CCTerm idxFromStore) {
-		final CCEquality eqlit = ArrayTheory.createEquality(idx, idxFromStore);
+		final CCEquality eqlit = CClosure.createEquality(idx, idxFromStore);
 		if (eqlit != null) {
 			mAllLiterals.add(eqlit.negate());
 		}
 	}
 
-	private Clause generateClause(CCEquality diseq, boolean produceProofs, RuleKind rule) {
+	private Clause generateClause(SymmetricPair<CCTerm> diseq, boolean produceProofs, RuleKind rule) {
 		if (diseq != null) {
-			// Note that it can actually happen that diseq is already in
-			// the list of all literals (because it is an index assumption).
-			mAllLiterals.add(diseq.negate());
+			final CCEquality eq = CClosure.createEquality(diseq.getFirst(), diseq.getSecond());
+			if (eq != null) {
+				// Note that it can actually happen that diseq is already in
+				// the list of all literals (because it is an index assumption).
+				mAllLiterals.add(eq.negate());
+			}
 		}
 
 		final Literal[] lemma = new Literal[mAllLiterals.size()];
@@ -387,7 +386,7 @@ public class WeakCongruencePath extends CongruencePath {
 		return c;
 	}
 
-	private ArrayAnnotation createAnnotation(CCEquality diseq, RuleKind rule) {
-		return new ArrayAnnotation(diseq, mAllPaths, rule);
+	private CCAnnotation createAnnotation(SymmetricPair<CCTerm> diseq, RuleKind rule) {
+		return new CCAnnotation(diseq, mAllPaths, rule);
 	}
 }

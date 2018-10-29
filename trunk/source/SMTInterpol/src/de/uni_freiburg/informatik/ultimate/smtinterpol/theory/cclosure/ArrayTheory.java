@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpreta
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
@@ -1145,22 +1144,6 @@ public class ArrayTheory implements ITheory {
 			}
 		}
 	}
-	
-	static  CCEquality createEquality(CCTerm t1, CCTerm t2) {
-		final EqualityProxy ep = t1.getFlatTerm().createEquality(t2.getFlatTerm());
-		if (ep == EqualityProxy.getFalseProxy()) {
-			return null;
-		}
-		final Literal res = ep.getLiteral(null);
-		if (res instanceof CCEquality) {
-			final CCEquality eq = (CCEquality) res;
-			if ((eq.getLhs() == t1 && eq.getRhs() == t2)
-					|| (eq.getLhs() == t2 && eq.getRhs() == t1)) {
-				return eq;
-			}
-		}
-		return ep.createCCEquality(t1.getFlatTerm(), t2.getFlatTerm());
-	}
 
 	/**
 	 * Auxiliary class to find the path between two array nodes for
@@ -1297,7 +1280,7 @@ public class ArrayTheory implements ITheory {
 				final Set<CCEquality> propClause = new HashSet<CCEquality>();
 				for (final CCTerm idx : storeIndices) {
 					assert index1.getRepresentative() != idx.getRepresentative();
-					final CCEquality lit = createEquality(index1, idx);
+					final CCEquality lit = CClosure.createEquality(index1, idx);
 					if (lit != null) {
 						assert lit.getDecideStatus() != lit;
 						if (lit.getDecideStatus() == null) {
@@ -1305,7 +1288,7 @@ public class ArrayTheory implements ITheory {
 						}
 					}
 				}
-				final CCEquality lit = createEquality(select1, select2);
+				final CCEquality lit = CClosure.createEquality(select1, select2);
 				if (lit != null) {
 					assert lit.getDecideStatus() != lit;
 					if (lit.getDecideStatus() == null) {
@@ -1316,7 +1299,7 @@ public class ArrayTheory implements ITheory {
 				break;
 			}
 			case CONST_WEAKEQ: {
-				final CCEquality lit = createEquality(lhs, rhs);
+				final CCEquality lit = CClosure.createEquality(lhs, rhs);
 				assert lit == null || lit.getDecideStatus() != lit;
 				final Set<CCEquality> propClause = new HashSet<CCEquality>();
 				if (lit != null && lit.getDecideStatus() == null) {
@@ -1335,7 +1318,7 @@ public class ArrayTheory implements ITheory {
 				final Set<CCEquality> propClause = new HashSet<CCEquality>();
 				for (final CCTerm idx : storeIndices) {
 					assert index1.getRepresentative() != idx.getRepresentative();
-					final CCEquality lit = createEquality(index1, idx);
+					final CCEquality lit = CClosure.createEquality(index1, idx);
 					if (lit != null) {
 						assert lit.getDecideStatus() != lit;
 						if (lit.getDecideStatus() == null) {
@@ -1343,7 +1326,7 @@ public class ArrayTheory implements ITheory {
 						}
 					}
 				}
-				final CCEquality lit = createEquality(lhs, rhs);
+				final CCEquality lit = CClosure.createEquality(lhs, rhs);
 				if (lit != null) {
 					assert lit.getDecideStatus() != lit;
 					if (lit.getDecideStatus() == null) {
