@@ -679,9 +679,10 @@ public class CfgBuilder {
 										+ " (i.e. this is not the first Statemnt" + " of the block)";
 					}
 					if (mCurrent instanceof BoogieIcfgLocation) {
-						assert mLastStmt instanceof Label
-								|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
-										+ " first statement of a block or fist" + " statement after a call";
+						assert mLastStmt instanceof Label || mLastStmt instanceof CallStatement
+								|| mLastStmt instanceof ForkStatement
+								|| mLastStmt instanceof JoinStatement : "If mcurrent is LocNode, then st is first "
+										+ "statement of a block or fist statement after a call, fork, or join.";
 					}
 					processCallStatement((CallStatement) st);
 				}
