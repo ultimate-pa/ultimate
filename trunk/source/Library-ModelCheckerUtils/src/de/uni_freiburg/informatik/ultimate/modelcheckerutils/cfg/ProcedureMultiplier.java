@@ -147,6 +147,7 @@ public class ProcedureMultiplier {
 								icfg.getCfgSmtToolkit().getManagedScript(), this);
 						variableBacktranslationMapping.put(localVarCopy.getTermVariable(), localVar.getTermVariable());
 						symbolTable.add(localVarCopy);
+						procOldVar2NewVar.put(localVar, localVarCopy);
 					}
 				}
 				final List<IProgramNonOldVar> modifiableGlobals = new ArrayList<>();
