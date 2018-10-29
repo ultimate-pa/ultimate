@@ -82,7 +82,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -90,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
@@ -141,12 +144,15 @@ public class StandardFunctionHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
+	private final ITypeHandler mTypeHandler;
+
 	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ProcedureManager procedureManager, final CHandler cHandler, final CTranslationResultReporter reporter,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory) {
+			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
+			final ITypeHandler typeHandler) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
@@ -161,6 +167,7 @@ public class StandardFunctionHandler {
 		mSettings = settings;
 		mExprResultTransformer = expressionResultTransformer;
 		mLocationFactory = locationFactory;
+		mTypeHandler = typeHandler;
 
 		mFunctionModels = getFunctionModels();
 	}
@@ -698,6 +705,7 @@ public class StandardFunctionHandler {
 		builder.addAuxVar(auxvarinfo);
 		final Expression value = auxvarinfo.getExp();
 		final LRValue val = new RValue(value, cType);
+
 		builder.setLrValue(val);
 		builder.addStatement(fs);
 		return builder.build();
@@ -721,35 +729,41 @@ public class StandardFunctionHandler {
 		}
 		final ExpressionResult argAddressOfResultPointer;
 		{
-			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
-					arguments[1]);
+//			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
+//					arguments[1]);
+			final ExpressionResult tmp =  (ExpressionResult) main.dispatch(arguments[1]);
 			argAddressOfResultPointer = mExprResultTransformer.convert(loc, tmp,
 					new CPointer(new CPrimitive(CPrimitives.VOID)));
-		}
-
-		final JoinStatement js;
-		if (argAddressOfResultPointer.getLrValue().isNullPointerConstant()) {
-			 js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
-					new VariableLHS[0]);
-		} else {
-			throw new UnsupportedOperationException("we do not yet support join with return values");
 		}
 
 		// Object that will build our result
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue(argThreadId, argAddressOfResultPointer);
-		builder.addStatement(js);
 
-		// final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
-		// final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
-		// builder.addDeclaration(auxvarinfo.getVarDec());
-		// builder.addAuxVar(auxvarinfo);
-		// final Expression value = auxvarinfo.getExp();
-		//
-		//
-		// final MemoryHandler memoryHandler = main.mHandlerHandler.getMemoryHandler();
-		// memoryHandler.getWriteCall(main, loc, hlv, value, valueType, isStaticInitialization, hook)
-
+		final JoinStatement js;
+		if (argAddressOfResultPointer.getLrValue().isNullPointerConstant()) {
+			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() }, new VariableLHS[0]);
+			builder.addStatement(js);
+		} else {
+			// auxvar for joined procedure's return value
+			final CType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+			builder.addDeclaration(auxvarinfo.getVarDec());
+			builder.addAuxVar(auxvarinfo);
+			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
+					new VariableLHS[] { auxvarinfo.getLhs() });
+			builder.addStatement(js);
+			final HeapLValue heapLValue;
+			if (argAddressOfResultPointer.getLrValue() instanceof HeapLValue) {
+				heapLValue = (HeapLValue) argAddressOfResultPointer.getLrValue();
+			} else {
+				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
+						argAddressOfResultPointer.getLrValue().getValue(), cType, false, null);
+			}
+			final List<Statement> wc = mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false,
+					node);
+			builder.addStatements(wc);
+		}
 		return builder.build();
 	}
 

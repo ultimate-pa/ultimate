@@ -423,7 +423,7 @@ public class CHandler {
 				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 		mStandardFunctionHandler = new StandardFunctionHandler(functionTable, mAuxVarInfoBuilder, mNameHandler,
 				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, this, mReporter,
-				mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory);
+				mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler);
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -503,7 +503,7 @@ public class CHandler {
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 		mStandardFunctionHandler = new StandardFunctionHandler(prerunCHandler.mFunctionTable, mAuxVarInfoBuilder,
 				mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, procedureManager, this,
-				mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory);
+				mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler);
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
