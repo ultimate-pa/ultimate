@@ -27,7 +27,7 @@ modifies g;
 {
 	g := 2;
 	fork 23 pineappleThread();
-	assert g == 2 || g == 4;
+	assert g == 2 || g == 3;
 }
 
 procedure pineappleThread() returns ()
