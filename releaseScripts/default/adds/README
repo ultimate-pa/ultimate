@@ -18,7 +18,7 @@ This archive also contains binaries for different theorem provers:
    - Linux
      z3-4.8.1-master-5d06fa234 (2018-10-29)
    - Windows
-     master 450f3c9b459d128135abb5bbd4fa0508fe26bfae (2018-01-13) 
+     master 5d06fa23479d33fa81ba0751d4cd9e8aad94ea14 (2018-10-29)
  * CVC4 (http://cvc4.cs.nyu.edu/)
    cvcnyu is an old build, version 1.5-prerelease, subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
    cvcnyu.exe is an old build, version 1.5-prerelease, subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
