@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
@@ -870,7 +871,19 @@ public class TypeHandler implements ITypeHandler {
 		if (specifiedValue != null) {
 			// case where the value of the enumeration constant is explicitly defined by an
 			// integer constant expression
-			value = specifiedValue;
+			if (specifiedValue instanceof IntegerLiteral) {
+				value = specifiedValue;
+			} else {
+				final BigInteger expressionIntegerValue =
+						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers, node);
+				if (expressionIntegerValue == null) {
+					throw new AssertionError("not an integer constant: " + specifiedValue);
+				}
+				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						BigInteger.valueOf(expressionIntegerValue.intValue()));
+			}
+
+			// }
 		} else {
 			// case where the value of the enumeration constant is not explicitly defined by
 			// an integer constant expression and hence the value of the preceding
