@@ -145,9 +145,9 @@ public class ProcedureMultiplier {
 					if (!procOldVar2NewVar.containsKey(localVar)) {
 						final ILocalProgramVar localVarCopy = constructCopy(localVar, copyIdentifier,
 								icfg.getCfgSmtToolkit().getManagedScript(), this);
+						procOldVar2NewVar.put(localVar, localVarCopy);
 						variableBacktranslationMapping.put(localVarCopy.getTermVariable(), localVar.getTermVariable());
 						symbolTable.add(localVarCopy);
-						procOldVar2NewVar.put(localVar, localVarCopy);
 					}
 				}
 				final List<IProgramNonOldVar> modifiableGlobals = new ArrayList<>();
