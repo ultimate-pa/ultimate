@@ -195,7 +195,23 @@ public class InitializationHandler {
 			initializerInfo = null;
 		}
 
-		return initRec(loc, targetCTypeRaw, initializerInfo, onHeap, lhs, true, hook);
+		final ExpressionResultBuilder init = new ExpressionResultBuilder();
+		final boolean nondet = initializerInfo != null && initializerInfo.isMakeNondeterministicInitialization();
+		if (onHeap && !nondet && determineIfSophisticatedDefaultInit(targetCTypeRaw)) {
+			// in the "sophisticated" case: make a default initialization of all array cells first
+			final ExpressionResult defaultInit =
+					makeDefaultOrNondetInitialization(loc, lhs, targetCTypeRaw, onHeap, false, hook);
+			init.addAllExceptLrValue(defaultInit);
+		}
+
+
+		{
+			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap, lhs, true,
+					hook);
+			init.addAllExceptLrValue();
+			init.setLrValue(mainInitCode.getLrValue());
+		}
+		return init.build();
 	}
 
 	/**
@@ -205,15 +221,14 @@ public class InitializationHandler {
 	 * @param initInfoIfAny
 	 * @param onHeap
 	 * @param lhsIfAny
-	 * @param outermostArray see {@link #initCArray}, this flag is ignored, if targetCTypeRaw.getUnderlyingType is not
-	 *       CArray
+	 * @param outermostNestedArray see {@link #initCArray}, this flag is ignored, if targetCTypeRaw.getUnderlyingType
+	 *           is not CArray
 	 * @param hook
 	 * @return
 	 */
 	private ExpressionResult initRec(final ILocation loc, final CType targetCTypeRaw,
 			final InitializerInfo initInfoIfAny, final boolean onHeap, final LRValue lhsIfAny,
-			final boolean outermostArray,
-			final IASTNode hook) {
+			final boolean outermostNestedArray, final IASTNode hook) {
 		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
@@ -238,7 +253,7 @@ public class InitializationHandler {
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap, hook);
 		} else if (targetCType instanceof CArray) {
 			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
-					determineIfSophisticatedArrayInit(initInfoIfAny), outermostArray, hook);
+					determineIfSophisticatedArrayInit(initInfoIfAny), outermostNestedArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -389,6 +404,7 @@ public class InitializationHandler {
 	 *              (reason for this flag: if we have a nested array, e.g., <code>int a[2][3]</code>, then we do the
 	 *               default initialization in the "sophisticated initialization" case for the outermost array, in order
 	 *               to minimize the number of statements required for initialization)
+	 *               This is only relevant in the off-heap case.
 	 * @param hook
 	 * @return
 	 */
@@ -415,12 +431,15 @@ public class InitializationHandler {
 		 */
 		final LRValue arrayLhsToInitialize = obtainLhsToInitialize(loc, lhsIfAny, cArrayType, onHeap, initialization);
 
-		if (sophisticated && outermostInNestedArray) {
-			// in the "sophisticated" case: make a default initialization of all array cells first
+		/* Note: we had code for sophisticated default initialization here. This has been moved to initialize(..)
+		 * because it is only done once per variable  TODO: update this comment*/
+		if (!onHeap && sophisticated && outermostInNestedArray) {
+			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
 					makeDefaultOrNondetInitialization(loc, arrayLhsToInitialize, cArrayType, onHeap, false, hook);
 			initialization.addAllExceptLrValue(defaultInit);
 		}
+
 
 		/*
 		 * Iterate over all array indices and assign the corresponding array cell; In the sophisticated case, only cells
