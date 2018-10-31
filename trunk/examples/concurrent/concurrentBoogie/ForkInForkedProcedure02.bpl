@@ -25,11 +25,17 @@ procedure foo(n : int) returns(res : int)
 modifies g;
 {
 	fork 2 bar(n);
-	g := g + 1;
+	call increment();
 }
 
 
 procedure bar(n : int) returns(res : int)
+modifies g;
 {
 	assert n == 23;
+	call increment();
 }
+
+procedure increment() returns ();
+ensures g == old(g) + 1;
+modifies g;
