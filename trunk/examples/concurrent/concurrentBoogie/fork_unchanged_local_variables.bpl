@@ -13,6 +13,8 @@ implementation ULTIMATE.start()
     var x : int;
     var res : int;
     var sum : int;
+    sum := 0;
+    res := 0;
     x := 0;
 
     while (x < 3) {
@@ -20,7 +22,7 @@ implementation ULTIMATE.start()
         join 1 assign res;
         sum := sum + res;
         x := x + 1;
-    }    
+    }
     // Since the local variable of a procedure keeps its old value from the last time it became forked,
     // The sum will either be 15 or 3. So this program should always fail yet.
     assert sum > 3;
