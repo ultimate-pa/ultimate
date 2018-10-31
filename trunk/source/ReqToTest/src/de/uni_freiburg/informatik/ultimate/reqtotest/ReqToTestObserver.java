@@ -13,16 +13,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ThreeValuedAuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToInOut;
 import de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator.CounterExampleToTest;
 
 public class ReqToTestObserver extends BaseObserver{
@@ -59,10 +63,16 @@ public class ReqToTestObserver extends BaseObserver{
 
 		
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
-		final ReqSymbolTable symbolTable = 
-				new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		final ReqSymbolTable symbolTable =  new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
+		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
+		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
+		// TODO: option to either read in/out information from file or guess it
+		final ReqToInOut reqToInOut = new ReqToInOut(mLogger, symbolTable, cddToSmt);
+		reqToInOut.requirementToInOut(rawPatterns);
+		//HERE: boogie declarations make inoutinformation
 		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, symbolTable);
-		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, mServices, mStorage, symbolTable, threeValuedAuxVarGen, mScript, mManagedScript);
+		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, threeValuedAuxVarGen, mScript, cddToSmt);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
 		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, symbolTable, threeValuedAuxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();

@@ -30,28 +30,17 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ThreeValue
 public class ReqToGraph {
 	
 	private final ILogger mLogger;
-	private final ReqSymbolTable mReqSymbolTable;
-
-	private final Boogie2SMT mBoogie2Smt;
+	
 	private final CddToSmt mCddToSmt;
-	private final BoogieDeclarations mBoogieDeclarations;
-	
-	private final ManagedScript mManagedScript;
-	private final Script mScript;
+
 	private final ThreeValuedAuxVarGen mThreeValuedAuxVarGen;
+	private final Script mScript;
 	
-	public ReqToGraph(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final ReqSymbolTable reqSymbolExpressionTable, 
-			ThreeValuedAuxVarGen threeValuedAuxVarGen, Script scipt, ManagedScript managedScipt){
+	public ReqToGraph(final ILogger logger, ThreeValuedAuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt){
 		mLogger = logger;
-		mReqSymbolTable = reqSymbolExpressionTable;
-		mScript = scipt;
-		mManagedScript = managedScipt;
 		mThreeValuedAuxVarGen = threeValuedAuxVarGen;
-		mBoogieDeclarations = 	new BoogieDeclarations(reqSymbolExpressionTable.constructVariableDeclarations(), logger);
-		mBoogie2Smt = new Boogie2SMT(mManagedScript, mBoogieDeclarations, false, services, false);
-		mCddToSmt = new CddToSmt(services, storage, mScript, mBoogie2Smt,
-				mBoogieDeclarations, mReqSymbolTable);
+		mCddToSmt = cddToSmt;
+		mScript = script;
 		
 	}
 	
@@ -345,7 +334,7 @@ public class ReqToGraph {
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
-			//normal labels;
+			//normal labels
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
 			return q0;
 		} else {
@@ -364,7 +353,7 @@ public class ReqToGraph {
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
-			//normal labels;
+			//normal labels
 			final Term nS = SmtUtils.not(mScript, S);
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nS, dS)));
 			return q0;

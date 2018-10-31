@@ -90,6 +90,10 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return decls;
 	}
 	
+	public boolean isConstVar(String e) {
+		return mConstVars.contains(e);
+	}
+	
 	public boolean isInput(String e) {
 		return mInputVars.contains(e);
 	}
@@ -128,6 +132,24 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 	
 	public boolean isOutput(String ident) {
 		return mOutputVars.contains(ident);
+	}
+	
+	public void updateVariableCategoryInput(String name) {
+		mInputVars.add(name);
+		mOutputVars.remove(name);
+		mHiddenVars.remove(name);
+	}
+	
+	public void updateVariableCategoryOutput(String name) {
+		mInputVars.remove(name);
+		mOutputVars.add(name);
+		mHiddenVars.remove(name);
+	}
+	
+	public void updateVariableCategoryHidden(String name) {
+		mInputVars.remove(name);
+		mOutputVars.remove(name);
+		mHiddenVars.add(name);
 	}
 	
 	public void extractVariablesFromInit(final InitializationPattern init) {
