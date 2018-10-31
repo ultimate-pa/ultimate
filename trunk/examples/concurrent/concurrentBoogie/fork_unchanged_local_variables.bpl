@@ -11,8 +11,9 @@ procedure ULTIMATE.start();
 implementation ULTIMATE.start()
 {
     var x : int;
-    x := 0;
     var res : int;
+    var sum : int;
+    x := 0;
 
     while (x < 3) {
         fork 1 foo();
