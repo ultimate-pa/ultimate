@@ -67,10 +67,10 @@ public class ReqToTestObserver extends BaseObserver{
 		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
 		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
 		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
-		// TODO: option to either read in/out information from file or guess it
-		final ReqToInOut reqToInOut = new ReqToInOut(mLogger, symbolTable, cddToSmt);
-		reqToInOut.requirementToInOut(rawPatterns);
-		//HERE: boogie declarations make inoutinformation
+		if (symbolTable.getOutputVars().size() <= 0) {
+			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, symbolTable, cddToSmt);
+			reqToInOut.requirementToInOut(rawPatterns);
+		}
 		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, symbolTable);
 		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, threeValuedAuxVarGen, mScript, cddToSmt);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);

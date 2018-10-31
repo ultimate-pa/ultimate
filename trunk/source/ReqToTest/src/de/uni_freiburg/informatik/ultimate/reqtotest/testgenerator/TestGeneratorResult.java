@@ -31,17 +31,16 @@ public class TestGeneratorResult implements IResult  {
 
 	@Override
 	public String getLongDescription() {
-		// TODO Auto-generated method stub
-		return toString();
-	}
-	
-	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Test Vector:"+System.getProperty("line.separator"));
 		for(ProgramState<Expression> s : mTestStates) {
 			sb.append(s.toString() + System.getProperty("line.separator"));
 		}
 		return sb.toString();
+	}
+	
+	public String toString() {
+		return "Fount Test for oracle: " + mTestStates.get(mTestStates.size()-1).toOracleString() ;
 	}
 	
 }

@@ -24,6 +24,15 @@ public class SystemState extends ProgramState<Expression> {
 		return mInputVariables.contains(e);
 	}
 
+	public String toOracleString() {
+		StringBuilder sb = new StringBuilder();
+		for(Expression e: getVariables()) {
+			if(!isInput(e)) {
+				sb.append(formatAssignment(e, getValues(e)));
+			}
+		}
+		return sb.toString();
+	}
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
