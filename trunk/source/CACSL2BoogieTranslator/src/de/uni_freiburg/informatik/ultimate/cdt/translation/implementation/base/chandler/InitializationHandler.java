@@ -906,8 +906,8 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedArrayInit(final InitializerInfo initInfoIfAny) {
 		// TODO implement some heuristics
-//		return false;
-		return true;
+		return false;
+//		return true;
 	}
 
 	/**
@@ -919,8 +919,8 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedDefaultInit(final CType targetCType) {
 		// TODO implement some heuristics
-		return false;
-//		return true;
+//		return false;
+		return true;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
