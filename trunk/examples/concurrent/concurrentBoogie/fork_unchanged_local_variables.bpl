@@ -1,3 +1,4 @@
+//#Unsafe
 /*
  * This example should show that either one of the cases in the if statement will never be reached yet.
  * 
@@ -25,8 +26,7 @@ implementation ULTIMATE.start()
     }
     // Since the local variable of a procedure keeps its old value from the last time it became forked,
     // The sum will either be 15 or 3. So this program should always fail yet.
-    assert sum > 3;
-    assert sum < 15;
+    assert (sum == 3) || (sum == 15);
 }
 
 
