@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 
 	private final ILogger mLogger;
-	IAbstractDomain<STATE, IcfgEdge> mBackingDomain;
+	private final IAbstractDomain<STATE, IcfgEdge> mBackingDomain;
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Set<TermVariable> mVariableRetainmentSet;
 	private final Map<TermVariable, String> mAlternateOldNames;
