@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <assert.h>
 
 typedef unsigned long int pthread_t;
 
