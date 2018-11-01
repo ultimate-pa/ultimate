@@ -248,7 +248,8 @@ public class ProcedureMultiplier {
 							// add to join list
 							joinCurrentThreads.add(newJoinEdge);
 						} else {
-							throw new UnsupportedOperationException();
+							throw new UnsupportedOperationException(this.getClass().getSimpleName()
+									+ " does not support " + outEdge.getClass().getSimpleName());
 						}
 					}
 				}
