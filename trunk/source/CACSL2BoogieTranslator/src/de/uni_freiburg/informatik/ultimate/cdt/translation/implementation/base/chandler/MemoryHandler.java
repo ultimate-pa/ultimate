@@ -1881,6 +1881,9 @@ public class MemoryHandler {
 		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
 	}
 
+	/**
+	 *  arr == old(arr)[index := newValue]
+	 */
 	private static Expression ensuresArrayUpdate(final ILocation loc, final Expression newValue, final Expression index,
 			final Expression arrayExpr) {
 		final Expression oldArray =
@@ -2169,7 +2172,7 @@ public class MemoryHandler {
 												idcMalloc),
 										bLFalse),
 								Collections.emptySet()));
-		// #valid[#res!base] == true
+		// #valid == old(#valid)[#res!base := true]
 		specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
 				ensuresArrayUpdate(tuLoc, bLTrue, resBase, valid),
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
