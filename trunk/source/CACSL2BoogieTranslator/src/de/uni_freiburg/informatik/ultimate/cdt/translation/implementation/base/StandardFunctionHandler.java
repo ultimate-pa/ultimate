@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -687,10 +688,18 @@ public class StandardFunctionHandler {
 		final String methodName = idExpr.getIdentifier().substring(9);
 
 
-		 final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(), new CPrimitive(CPrimitives.ULONG), node);
+		final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(), new CPrimitive(CPrimitives.ULONG), node);
 
-
-		final Expression[] forkArguments = { startRoutineArguments.getLrValue().getValue() };
+		final CFunction function = mProcedureManager.getCFunctionType(methodName);
+		final int params = function.getParameterTypes().length;
+		final Expression[] forkArguments;
+		if (params == 0) {
+			forkArguments = new Expression[0];
+		} else if (params == 1) {
+			forkArguments = new Expression[] { startRoutineArguments.getLrValue().getValue() };
+		} else {
+			throw new UnsupportedSyntaxException(loc, "pthread_create calls function with more than one argument");
+		}
 		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId.getLrValue().getValue() },
 				methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
