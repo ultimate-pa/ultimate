@@ -19,13 +19,12 @@ implementation ULTIMATE.start()
     x := 0;
 
     while (x < 3) {
-        fork 1 foo();
+        fork x foo();
         join 1 assign res;
         sum := sum + res;
         x := x + 1;
     }
-    // Since the local variable of a procedure keeps its old value from the last time it became forked,
-    // The sum will either be 15 or 3. So this program should always fail yet.
+    // This is an unsafe assertion since it can also be a number between 3 and 15.
     assert (sum == 3) || (sum == 15);
 }
 
