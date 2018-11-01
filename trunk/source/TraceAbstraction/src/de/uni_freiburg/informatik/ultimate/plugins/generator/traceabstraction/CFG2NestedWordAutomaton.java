@@ -225,8 +225,14 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						} else {
 							nwa.addInternalTransition(state, letterProvider.apply(summaryEdge), succState);
 						}
-					} else {
+					} else if (edge instanceof IIcfgInternalTransition<?>) {
 						nwa.addInternalTransition(state, letterProvider.apply(edge), succState);
+					} else if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+						throw new UnsupportedOperationException("analysis for sequential programs does not support fork/join");
+					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+						throw new UnsupportedOperationException("analysis for sequential programs does not support fork/join");
+					} else {
+						throw new UnsupportedOperationException("unsupported edge " + edge.getClass().getSimpleName());
 					}
 				}
 			}
