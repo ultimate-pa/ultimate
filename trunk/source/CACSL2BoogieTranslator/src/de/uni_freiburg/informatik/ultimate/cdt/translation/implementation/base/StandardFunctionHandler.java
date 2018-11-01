@@ -764,6 +764,8 @@ public class StandardFunctionHandler {
 					node);
 			builder.addStatements(wc);
 		}
+		builder.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.INT), BigInteger.ZERO), new CPrimitive(CPrimitives.INT)));
 		return builder.build();
 	}
 
