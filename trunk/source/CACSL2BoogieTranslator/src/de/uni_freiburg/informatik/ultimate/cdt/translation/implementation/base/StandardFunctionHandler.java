@@ -415,6 +415,26 @@ public class StandardFunctionHandler {
 		fill(map, "fminf", this::handleBinaryFloatFunction);
 		fill(map, "fminl", this::handleBinaryFloatFunction);
 
+		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
+		fill(map, "remainder", this::handleBinaryFloatFunction);
+		fill(map, "remainderf", this::handleBinaryFloatFunction);
+		fill(map, "remainderl", this::handleBinaryFloatFunction);
+
+		// see 7.12.10.1 or http://en.cppreference.com/w/c/numeric/math/fmod
+		fill(map, "fmod", this::handleBinaryFloatFunction);
+		fill(map, "fmodf", this::handleBinaryFloatFunction);
+		fill(map, "fmodl", this::handleBinaryFloatFunction);
+
+		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
+		fill(map, "copysign", this::handleBinaryFloatFunction);
+		fill(map, "copysignf", this::handleBinaryFloatFunction);
+		fill(map, "copysignl", this::handleBinaryFloatFunction);
+
+		// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
+		fill(map, "fdim", this::handleBinaryFloatFunction);
+		fill(map, "fdimf", this::handleBinaryFloatFunction);
+		fill(map, "fdiml", this::handleBinaryFloatFunction);
+
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));

@@ -56,7 +56,11 @@ public class FloatFunction {
 			"round", "lround", "llround", // see 7.12.9.6 and 7.12.9.7
 			"floor", // see 7.12.9.2
 			"ceil", // see 7.12.9.1
-			"sin" // see 7.12.4.6
+			"sin", // see 7.12.4.6
+			"remainder", // see 7.12.10.2
+			"copysign", // see 7.12.11.1
+			"fmod", // see 7.12.10.1
+			"fdim" // see 7.12.12.1
 	};
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };

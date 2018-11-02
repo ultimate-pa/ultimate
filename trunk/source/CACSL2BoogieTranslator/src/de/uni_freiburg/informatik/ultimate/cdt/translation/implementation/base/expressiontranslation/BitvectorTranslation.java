@@ -996,6 +996,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.min");
 		case "fmax":
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max");
+		case "remainder":
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.remainder");
+		case "fmod":
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.fmod", true);
+		case "copysign":
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.copysign");
+		case "fdim":
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.fdim", true);
 		default:
 			throw new UnsupportedOperationException(
 					"not yet supported float operation " + floatFunction.getFunctionName());
@@ -1004,6 +1012,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
 			final String smtFunctionName) {
+
+		return delegateOtherBinaryFloatOperationToSmt(loc, first, second, smtFunctionName, false);
+	}
+
+	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
+			final String smtFunctionName, final Boolean rounding) {
 		checkIsFloatPrimitive(first);
 		checkIsFloatPrimitive(second);
 		final CPrimitive firstArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
@@ -1011,13 +1025,20 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (!firstArgumentType.equals(secondArgumentType)) {
 			throw new IllegalArgumentException("No mixed type arguments allowed");
 		}
-		declareFloatingPointFunction(loc, smtFunctionName, false, false, firstArgumentType, null, firstArgumentType,
+		declareFloatingPointFunction(loc, smtFunctionName, false, rounding, firstArgumentType, null, firstArgumentType,
 				secondArgumentType);
 		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, firstArgumentType);
 		final CPrimitive resultType = firstArgumentType;
-		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { first.getValue(), second.getValue() },
-				mTypeHandler.getBoogieTypeForCType(resultType));
+		Expression expr;
+		if (rounding) {
+			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { getRoundingMode(), first.getValue(), second.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
+		} else {
+			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { first.getValue(), second.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
+		}
 		return new RValue(expr, resultType);
 	}
 
