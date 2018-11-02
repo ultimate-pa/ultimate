@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * conflict-free. A Set E is called Suffix if there is a Configuration C, such that
  * <ul>
  * <li>C united with E is a Configuration</li>
- * <li>The intersection of PLACE and E is empty</li>
+ * <li>The intersection of C and E is empty</li>
  * </ul>
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
