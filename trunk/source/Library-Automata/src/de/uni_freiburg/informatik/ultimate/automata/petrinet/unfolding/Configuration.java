@@ -79,6 +79,9 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 *            minimum set of events
 	 */
 	private Configuration(final Set<Event<LETTER, PLACE>> events, final Set<Event<LETTER, PLACE>> min) {
+		if (min != null && min.isEmpty()) {
+			throw new AssertionError("minium must not be empty");
+		}
 		mEvents = events;
 		mMin = min;
 	}
@@ -116,6 +119,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 			throw new AssertionError("minimum must not be empty");
 		}
 		return result;
+
 	}
 
 	@Override
