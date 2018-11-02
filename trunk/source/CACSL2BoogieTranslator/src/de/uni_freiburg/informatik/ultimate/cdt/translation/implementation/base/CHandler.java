@@ -602,6 +602,7 @@ public class CHandler {
 		 */
 		final Collection<FunctionDeclaration> declaredFunctions =
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+		mExpressionTranslation.getFunctionDeclarations().finish();
 		mDeclarations.addAll(declaredFunctions);
 
 		// TODO Need to get a CLocation from somewhere

@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -315,6 +316,10 @@ public class MemoryHandler {
 				// create and add read and write procedure
 				decl.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray, hook));
 				decl.addAll(constructReadProcedures(main, tuLoc, heapDataArray, hook));
+
+				if (mRequiredMemoryModelFeatures.isDataOnHeapInitFunctionRequired(heapDataArray)) {
+					declareDataOnHeapInitFunction(heapDataArray);
+				}
 			}
 		}
 
@@ -672,12 +677,7 @@ public class MemoryHandler {
 	 */
 	public List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final CType valueType, final boolean isStaticInitialization, final IASTNode hook) {
-		final CType realValueType;
-		if (valueType instanceof CNamed) {
-			realValueType = ((CNamed) valueType).getUnderlyingType();
-		} else {
-			realValueType = valueType;
-		}
+		final CType realValueType = valueType.getUnderlyingType();
 
 		if (realValueType instanceof CPrimitive) {
 			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, isStaticInitialization, hook);
@@ -2534,8 +2534,90 @@ public class MemoryHandler {
 		return result;
 	}
 
+	/**
+	 * Sets the heap at the given base address to all 0s.
+	 * Analyzes the given type to check which heap arrays should be updated.
+	 *
+	 * Note that the type does not need to be an array type. A struct containing large arrays should also trigger this
+	 * kind of initialization.
+	 *
+	 * @param loc
+	 * @param baseAddress
+	 * @param cType
+	 * @return
+	 */
+	public List<Statement> getInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
+			final HeapLValue baseAddress, final CType cType) {
+		assert CTranslationUtil.isAggregateOrUnionType(cType);
 
+		// first collect the concerned heap arrays (in a set, to avoid duplicates)
+		final Set<HeapDataArray> relevantHeapArrays = new HashSet<>();
+		for (final CType baseType : CTranslationUtil.extractNonAggregateNonUnionTypes(cType)) {
+			assert !(baseType instanceof CNamed);
+			if (baseType instanceof CPointer) {
+				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				relevantHeapArrays.add(hda);
+			} else if (baseType instanceof CPrimitive) {
+				final CPrimitives primitive = ((CPrimitive) baseType).getType();
+				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
+				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				relevantHeapArrays.add(hda);
+			} else {
+				throw new AssertionError("unforseen case");
+			}
+		}
 
+		final List<Statement> result = new ArrayList<>();
+		// second construct the respective initialization call for each relevant heap array
+		for (final HeapDataArray relevantHeapArray : relevantHeapArrays) {
+			result.add(getInitializationForHeapArrayAtAddress(loc, relevantHeapArray, baseAddress));
+		}
+		return result;
+	}
+
+	private Statement getInitializationForHeapArrayAtAddress(final ILocation loc, final HeapDataArray relevantHeapArray,
+			final HeapLValue baseAddress) {
+		return StatementFactory.constructAssignmentStatement(loc,
+				new VariableLHS[] { relevantHeapArray.getVariableLHS() },
+				new Expression[] {
+						new FunctionApplication(loc,
+								getNameOfHeapInitFunction(relevantHeapArray),
+								new Expression[] {
+										relevantHeapArray.getIdentifierExpression(), baseAddress.getAddress() }
+								)});
+	}
+
+	private String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + "~initToZeroAtPointerBaseAddress~" + relevantHeapArray.getName();
+	}
+
+	private void declareDataOnHeapInitFunction(final HeapDataArray heapDataArray) {
+
+		throw new AssertionError("TODO");
+
+//		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+//
+//		String smtDefinition = "(store "
+////		final String smtlibFunctionName = getNameOfHeapInitFunction(heapDataArray);
+//
+//		final NamedAttribute namedAttribute = new NamedAttribute(ignoreLoc, FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+//				new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
+//
+//
+//		// register the FunctionDeclaration so it will be added at the end of translation
+//		mExpressionTranslation.getFunctionDeclarations()
+//			.declareFunction(ignoreLoc,
+//				getNameOfHeapInitFunction(heapDataArray),
+//				new Attribute[] { namedAttribute},
+//				heapDataArray.getASTType(),
+//				heapDataArray.getASTType(),
+//				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())
+//				);
+
+	}
 
 	public interface IBooleanArrayHelper {
 		ASTType constructBoolReplacementType();
@@ -2640,10 +2722,13 @@ public class MemoryHandler {
 		private boolean mPointerOnHeapRequired;
 		private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations;
 
+		private final Set<HeapDataArray> mDataOnHeapInitFunctionRequired;
+
 		public RequiredMemoryModelFeatures() {
 			mDataOnHeapRequired = new HashSet<>();
 			mRequiredMemoryModelDeclarations = new HashSet<>();
 			mUncheckedWriteRequired = new HashSet<>();
+			mDataOnHeapInitFunctionRequired = new HashSet<>();
 		}
 
 		public void reportPointerOnHeapRequired() {
@@ -2659,12 +2744,20 @@ public class MemoryHandler {
 			mDataOnHeapRequired.add(primitive);
 		}
 
+		public void reportDataOnHeapInitFunctionRequired(final HeapDataArray hda) {
+			mDataOnHeapInitFunctionRequired.add(hda);
+		}
+
 		public boolean isPointerOnHeapRequired() {
 			return mPointerOnHeapRequired;
 		}
 
 		public Set<CPrimitives> getDataOnHeapRequired() {
 			return mDataOnHeapRequired;
+		}
+
+		public boolean isDataOnHeapInitFunctionRequired(final HeapDataArray hda) {
+			return mDataOnHeapInitFunctionRequired.contains(hda);
 		}
 
 		public Set<CPrimitives> getUncheckedWriteRequired() {

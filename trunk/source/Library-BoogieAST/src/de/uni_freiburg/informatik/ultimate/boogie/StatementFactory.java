@@ -64,9 +64,10 @@ public class StatementFactory {
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
 
-	public static CallStatement constructCallStatement(final ILocation loc, final boolean b,
-			final VariableLHS[] variableLHSs, final String methodName, final Expression[] array) {
-		return new CallStatement(loc, b, variableLHSs, methodName, array);
+
+	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
+			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {
+		return new CallStatement(loc, isForall, variableLHSs, methodName, arguments);
 	}
 
 }

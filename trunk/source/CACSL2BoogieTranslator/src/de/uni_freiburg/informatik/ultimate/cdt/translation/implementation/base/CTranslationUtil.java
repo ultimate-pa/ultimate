@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -170,9 +171,21 @@ public class CTranslationUtil {
 	 * According to 6.2.5.21 of C11 the structure types and the array types (but not
 	 * the union types) are called aggregate types.
 	 */
-	public static boolean isAggregateType(final CType valueType) {
+	public static boolean isAggregateType(final CType valueTypeRaw) {
+		final CType valueType = valueTypeRaw.getUnderlyingType();
 		return (valueType instanceof CStructOrUnion && (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
 				|| valueType instanceof CArray);
+	}
+
+	public static boolean isAggregateOrUnionType(final CType valueTypeRaw) {
+		final CType valueType = valueTypeRaw.getUnderlyingType();
+		return isAggregateType(valueType) || isUnionType(valueType);
+	}
+
+	private static boolean isUnionType(final CType valueTypeRaw) {
+		final CType valueType = valueTypeRaw.getUnderlyingType();
+		return valueType instanceof CStructOrUnion
+				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes,
@@ -410,5 +423,43 @@ public class CTranslationUtil {
 			result = null;
 		}
 		return result;
+	}
+
+	public static CType getValueTypeOfNestedArray(final CArray arrayType) {
+		CType result = arrayType.getValueType().getUnderlyingType();
+		while (result instanceof CArray) {
+			result = ((CArray) result).getValueType().getUnderlyingType();
+		}
+		return result;
+	}
+
+	/**
+	 * Collects all non aggregate non union types that appear in the given CType.
+	 *
+	 * @param aggregateOrUnionCType
+	 * @return
+	 */
+	public static Set<CType> extractNonAggregateNonUnionTypes(final CType aggregateOrUnionCType) {
+		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
+		if (aggregateOrUnionCType instanceof CArray) {
+			final CType valueType = getValueTypeOfNestedArray((CArray) aggregateOrUnionCType).getUnderlyingType();
+			if (isAggregateOrUnionType(valueType)) {
+				return extractNonAggregateNonUnionTypes(valueType);
+			} else {
+				return Collections.singleton(valueType.getUnderlyingType());
+			}
+		} else if (aggregateOrUnionCType instanceof CStructOrUnion) {
+			final Set<CType> result = new HashSet<>();
+			for (final CType fieldType : ((CStructOrUnion) aggregateOrUnionCType).getFieldTypes()) {
+				if (isAggregateOrUnionType(fieldType)) {
+					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
+				} else {
+					result.add(fieldType.getUnderlyingType());
+				}
+			}
+			return result;
+		} else {
+			throw new AssertionError();
+		}
 	}
 }

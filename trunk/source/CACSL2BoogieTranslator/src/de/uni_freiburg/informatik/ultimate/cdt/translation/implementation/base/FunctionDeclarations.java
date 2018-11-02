@@ -59,8 +59,15 @@ public class FunctionDeclarations {
 	private final ITypeHandler mTypeHandler;
 	private final TypeSizes mTypeSizeConstants;
 	public static final String BUILTIN_IDENTIFIER = "builtin";
+	public static final String SMTDEFINED_IDENTIFIER = "smtdefined";
 	public static final String OVERAPPROX_IDENTIFIER = "overapproximation";
 	public static final String INDEX_IDENTIFIER = "indices";
+
+
+	/**
+	 * See {@link #finish()}.
+	 */
+	private boolean mIsFinished;
 
 	public FunctionDeclarations(final ITypeHandler typeHandler, final TypeSizes typeSizeConstants) {
 		super();
@@ -70,6 +77,9 @@ public class FunctionDeclarations {
 
 	public void declareFunction(final ILocation loc, final String prefixedFunctionName, final Attribute[] attributes,
 			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCTypes) {
+		if (mIsFinished) {
+			throw new AssertionError();
+		}
 		final ASTType resultASTType;
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
@@ -85,6 +95,9 @@ public class FunctionDeclarations {
 
 	public void declareFunction(final ILocation loc, final String prefixedFunctionName, final Attribute[] attributes,
 			final ASTType resultASTType, final ASTType... paramASTTypes) {
+		if (mIsFinished) {
+			throw new AssertionError();
+		}
 		// if (mDeclaredFunctions.containsKey(prefixedFunctionName)) {
 		// return;
 		// //throw new IllegalArgumentException("Function " + functionName + " already declared");
@@ -104,6 +117,10 @@ public class FunctionDeclarations {
 	}
 
 	public LinkedHashMap<String, FunctionDeclaration> getDeclaredFunctions() {
+		if (mIsFinished) {
+			throw new AssertionError("since the map is modifiable we do not allow this query once this class is "
+					+ "finished");
+		}
 		return mDeclaredFunctions;
 	}
 
@@ -128,6 +145,14 @@ public class FunctionDeclarations {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Simple locking mechanism to ensure that no function declarations are modified after the declarations have been
+	 * added to the translation result.
+	 */
+	public void finish() {
+		mIsFinished = true;
 	}
 
 }

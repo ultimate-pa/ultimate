@@ -666,7 +666,10 @@ public class InitializationHandler {
 
 			return initialization.build();
 		} else if (cType instanceof CArray) {
-			if (sophisticated) {
+			/* In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
+			 * applicable if the value type is simple, i.e., not a struct or union type. */
+			if (sophisticated
+					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, nondet);
 			}
 			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, (CArray) cType, lhsToInitIfAny, nondet, hook);
@@ -707,7 +710,11 @@ public class InitializationHandler {
 
 	private ExpressionResult makeSophisticatedOnHeapDefaultInitializationForArray(final ILocation loc,
 			final HeapLValue baseAddress, final CArray cType) {
-		throw new UnsupportedOperationException("TODO"); // TODO
+		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+		final List<Statement> initStatements =
+				mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc, baseAddress, cType);
+		initialization.addStatements(initStatements);
+		return initialization.build();
 	}
 
 	private ExpressionResult makeNaiveOffHeapDefaultOrNondetInitForArray(final ILocation loc, final CArray cArrayType,
@@ -906,8 +913,8 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedArrayInit(final InitializerInfo initInfoIfAny) {
 		// TODO implement some heuristics
-		return false;
-//		return true;
+//		return false;
+		return true;
 	}
 
 	/**
