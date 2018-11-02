@@ -51,8 +51,12 @@ public class FloatFunction {
 			"isnormal", // see 7.12.3.5
 			"signbit", // see 7.12.3.6
 			"sqrt", "fabs", // see 7.12.7.2
-			"fmin", "fmax"
-
+			"fmin", "fmax", //
+			"trunc", // see 7.12.9.8
+			"round", "lround", "llround", // see 7.12.9.6 and 7.12.9.7
+			"floor", // see 7.12.9.2
+			"ceil", // see 7.12.9.1
+			"sin" // see 7.12.4.6
 	};
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };

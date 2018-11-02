@@ -807,6 +807,77 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new Expression[] { getRoundingMode(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
+		} else if ("trunc".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.trunc";
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("round".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.round";
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("lround".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.lround";
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, resultType, null, argumentType);
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("llround".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.llround";
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, resultType, null, argumentType);
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("floor".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.floor";
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("ceil".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.ceil";
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
+		} else if ("sin".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argument);
+			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final String smtFunctionName = "fp.sin";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { getRoundingMode(), argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
+			return new RValue(expr, resultType);
 		} else if ("fabs".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();

@@ -370,6 +370,38 @@ public class StandardFunctionHandler {
 		fill(map, "fabsf", this::handleUnaryFloatFunction);
 		fill(map, "fabsl", this::handleUnaryFloatFunction);
 
+		// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
+		fill(map, "trunc", this::handleUnaryFloatFunction);
+		fill(map, "truncf", this::handleUnaryFloatFunction);
+		fill(map, "truncl", this::handleUnaryFloatFunction);
+
+		// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
+		fill(map, "round", this::handleUnaryFloatFunction);
+		fill(map, "roundf", this::handleUnaryFloatFunction);
+		fill(map, "roundl", this::handleUnaryFloatFunction);
+		// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
+		fill(map, "lround", this::handleUnaryFloatFunction);
+		fill(map, "lroundf", this::handleUnaryFloatFunction);
+		fill(map, "lroundl", this::handleUnaryFloatFunction);
+		fill(map, "llround", this::handleUnaryFloatFunction);
+		fill(map, "llroundf", this::handleUnaryFloatFunction);
+		fill(map, "llroundl", this::handleUnaryFloatFunction);
+
+		// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
+		fill(map, "floor", this::handleUnaryFloatFunction);
+		fill(map, "floorf", this::handleUnaryFloatFunction);
+		fill(map, "floorl", this::handleUnaryFloatFunction);
+
+		// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
+		fill(map, "ceil", this::handleUnaryFloatFunction);
+		fill(map, "ceilf", this::handleUnaryFloatFunction);
+		fill(map, "ceill", this::handleUnaryFloatFunction);
+
+		// see 7.12.4.6 or http://en.cppreference.com/w/c/numeric/math/sin
+		fill(map, "sin", this::handleUnaryFloatFunction);
+		fill(map, "sinf", this::handleUnaryFloatFunction);
+		fill(map, "sinl", this::handleUnaryFloatFunction);
+
 		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
 		// NaN arguments are treated as missing data: if one argument is a NaN and the
 		// other numeric, then the
@@ -654,12 +686,14 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 4, name, arguments);
 		final ExpressionResult argThreadIdPointer;
 		{
-			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+			final ExpressionResult tmp =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 			// TODO 2018-10-25 Matthias: conversion not correct
 			// we do not have a void pointer but a pthread_t pointer
-			// but this incorrectness  will currently not have a
+			// but this incorrectness will currently not have a
 			// negative effect
-			argThreadIdPointer = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			argThreadIdPointer =
+					mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		}
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
@@ -667,8 +701,10 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[2]);
 		final ExpressionResult startRoutineArguments;
 		{
-			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[3]);
-			startRoutineArguments = mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			final ExpressionResult tmp =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[3]);
+			startRoutineArguments =
+					mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		}
 		final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
 		final String rawProcName = castIdExpr.getName().toString();
@@ -687,8 +723,8 @@ public class StandardFunctionHandler {
 		}
 		final String methodName = idExpr.getIdentifier().substring(9);
 
-
-		final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(), new CPrimitive(CPrimitives.ULONG), node);
+		final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(),
+				new CPrimitive(CPrimitives.ULONG), node);
 
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
@@ -705,7 +741,8 @@ public class StandardFunctionHandler {
 		mProcedureManager.registerForkStatement(fs);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadIdPointer, threadId, argThreadAttributes, argStartRoutine, startRoutineArguments);
+		builder.addAllExceptLrValue(argThreadIdPointer, threadId, argThreadAttributes, argStartRoutine,
+				startRoutineArguments);
 
 		// auxvar for fork return value (status code)
 		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
@@ -726,23 +763,24 @@ public class StandardFunctionHandler {
 	private Result handleJoin(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		 // get arguments
-		 final IASTInitializerClause[] arguments = node.getArguments();
-		 checkArguments(loc, 2, name, arguments);
-			final ExpressionResult argThreadId;
+		// get arguments
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult argThreadId;
 		{
-			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
-					arguments[0]);
+			final ExpressionResult tmp =
+					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 			// TODO 2018-10-26 Matthias: we presume that pthread_t is unsigned long
 			argThreadId = mExprResultTransformer.convert(loc, tmp, new CPrimitive(CPrimitives.ULONG));
 		}
 		final ExpressionResult argAddressOfResultPointer;
 		{
-//			final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
-//					arguments[1]);
-			final ExpressionResult tmp =  (ExpressionResult) main.dispatch(arguments[1]);
-			argAddressOfResultPointer = mExprResultTransformer.convert(loc, tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)));
+			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
+			// loc,
+			// arguments[1]);
+			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
+			argAddressOfResultPointer =
+					mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		}
 
 		// Object that will build our result
@@ -769,13 +807,14 @@ public class StandardFunctionHandler {
 				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 						argAddressOfResultPointer.getLrValue().getValue(), cType, false, null);
 			}
-			final List<Statement> wc = mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false,
-					node);
+			final List<Statement> wc =
+					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false, node);
 			builder.addStatements(wc);
 		}
 		// we assume that this function is always successful and returns 0
-		builder.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ZERO), new CPrimitive(CPrimitives.INT)));
+		builder.setLrValue(new RValue(
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO),
+				new CPrimitive(CPrimitives.INT)));
 		return builder.build();
 	}
 
@@ -792,17 +831,17 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 
-//		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-//		// we assume that function is always successful and returns 0
-//		final BigInteger value = BigInteger.ZERO;
-//		final Expression mutexArray = mMemoryHandler.constructMutexArrayIdentifierExpression(loc);
-//		final Expression mutexArrayAtIndex = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
-//				new Expression[] { arg.getLrValue().getValue() });
-//		final Expression mutexIsUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-//				mutexArrayAtIndex, mMemoryHandler.getBooleanArrayHelper().constructValue(false));
-//		final AssumeStatement assumeMutexUnlocked = new AssumeStatement(loc, mutexIsUnlocked);
+		// final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		// // we assume that function is always successful and returns 0
+		// final BigInteger value = BigInteger.ZERO;
+		// final Expression mutexArray = mMemoryHandler.constructMutexArrayIdentifierExpression(loc);
+		// final Expression mutexArrayAtIndex = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
+		// new Expression[] { arg.getLrValue().getValue() });
+		// final Expression mutexIsUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+		// mutexArrayAtIndex, mMemoryHandler.getBooleanArrayHelper().constructValue(false));
+		// final AssumeStatement assumeMutexUnlocked = new AssumeStatement(loc, mutexIsUnlocked);
 		final Expression index = arg.getLrValue().getValue();
-//		final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, true);
+		// final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, true);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		// auxvar for joined procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
@@ -811,11 +850,11 @@ public class StandardFunctionHandler {
 		erb.addAuxVar(auxvarinfo);
 		erb.addStatement(mMemoryHandler.constructPthreadMutexLockCall(loc, index, auxvarinfo.getLhs()));
 		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
-//		erb.addAllExceptLrValue(arg);
-//		erb.addStatement(assumeMutexUnlocked);
-//		erb.addStatement(lockMutex);
-//		erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
-//				new CPrimitive(CPrimitives.INT)));
+		// erb.addAllExceptLrValue(arg);
+		// erb.addStatement(assumeMutexUnlocked);
+		// erb.addStatement(lockMutex);
+		// erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
+		// new CPrimitive(CPrimitives.INT)));
 		return erb.build();
 	}
 
