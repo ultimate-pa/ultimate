@@ -147,6 +147,8 @@ public class MemoryHandler {
 
 		Ultimate_Pthreads_Mutex("#PthreadsMutex"),
 
+		ULTIMATE_PTHREADS_MUTEX_LOCK("#PthreadsMutexLock"),
+
 		Ultimate_Valid(SFO.VALID);
 
 		private final String mName;
@@ -346,6 +348,10 @@ public class MemoryHandler {
 				.contains(MemoryModelDeclarations.Ultimate_Pthreads_Mutex)) {
 			decl.add(declarePThreadsMutexArray(tuLoc));
 		}
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
+			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc, hook));
+		}
 		assert assertContainsNodeProcedureDeclarations(decl) : "add procedure declarations via function handler!";
 		return decl;
 	}
@@ -366,6 +372,13 @@ public class MemoryHandler {
 		requireMemoryModelFeature(MemoryModelDeclarations.C_Memset);
 		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resVar },
 				MemoryModelDeclarations.C_Memset.getName(), new Expression[] { pointer, value, amount });
+	}
+
+	public CallStatement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK);
+		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { variableLHS },
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), new Expression[] { pointer });
 	}
 
 	/**
@@ -2453,6 +2466,76 @@ public class MemoryHandler {
 				constructOneDimensionalArrayUpdate(loc, pointer, array, possiblyExtendedValueExpr);
 		return statement;
 	}
+
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we
+	 * lock a mutex that that is already locked, then the thread blocks.
+	 */
+	private ArrayList<Declaration> declarePthreadMutexLock(final CHandler main, final ITypeHandler typeHandler,
+			final ILocation tuLoc, final IASTNode hook) {
+		final String inputPointerIdentifier = "#inputPtr";
+		final ASTType inputPointerAstType = typeHandler.cType2AstType(tuLoc,
+				new CPointer(new CPrimitive(CPrimitives.VOID)));
+		final String resultIdentifier = SFO.RES;
+		final CType resultCType = new CPrimitive(CPrimitives.INT);
+		final ASTType resultAstType = typeHandler.cType2AstType(tuLoc, resultCType);
+		final BoogieType resultBoogieType = typeHandler.getBoogieTypeForCType(resultCType);
+
+		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc, new CPrimitive(CPrimitives.INT),
+				BigInteger.ZERO);
+		final Expression inputPointerExpression = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				mTypeHandler.getBoogiePointerType(), inputPointerIdentifier,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+						MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName()));
+
+		final Expression resultIdentifierExpression = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				resultBoogieType, resultIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
+						MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName()));
+
+		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
+		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
+		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
+
+		final Procedure procDecl = new Procedure(tuLoc, new Attribute[0],
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), new String[0],
+				new VarList[] { new VarList(tuLoc, new String[] { inputPointerIdentifier }, inputPointerAstType) },
+				new VarList[] { new VarList(tuLoc, new String[] { resultIdentifier }, resultAstType) },
+				new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(main, tuLoc,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), procDecl);
+
+		final List<Specification> specs = new ArrayList<>();
+
+		// old(#PthreadsMutex)[#ptr] == false
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+						ExpressionFactory.constructNestedArrayAccessExpression(tuLoc,
+								ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD,
+										mutexArray),
+								new Expression[] { inputPointerExpression }),
+						bLFalse),
+				Collections.emptySet()));
+		// #PthreadsMutex == old(#PthreadsMutex)[#ptr := true]
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+				ensuresArrayUpdate(tuLoc, bLTrue, inputPointerExpression, mutexArray),
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))));
+
+		// we assume that function is always successful and returns 0
+		// #res == 0
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resultIdentifierExpression, nr0),
+				Collections.emptySet()));
+		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+
+		final ArrayList<Declaration> result = new ArrayList<>();
+		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName());
+//		result.add(procDecl);
+		return result;
+	}
+
+
+
 
 	public interface IBooleanArrayHelper {
 		ASTType constructBoolReplacementType();
