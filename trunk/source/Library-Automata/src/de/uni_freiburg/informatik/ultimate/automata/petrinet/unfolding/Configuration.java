@@ -109,9 +109,13 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	}
 
 	private Set<Event<LETTER, PLACE>> computeMin() {
-		return mEvents.stream()
+		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
 				.filter(event -> SetOperations.disjoint(event.getPredecessorEvents(), mEvents))
 				.collect(Collectors.toCollection(HashSet::new));
+		if (result.isEmpty()) {
+			throw new AssertionError("minimum must not be empty");
+		}
+		return result;
 	}
 
 	@Override
