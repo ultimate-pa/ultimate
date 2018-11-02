@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="900" cpuCores="2">
+  <option name="--full-output"/>
+
+  <rundefinition name="sv-comp19-memcleanup">
+  <tasks name="MemSafety-MemCleanup">
+    <includesfile>/storage/repos/svcomp-fix-benchmarks/c/MemSafety-MemCleanup.set</includesfile>
+    <propertyfile>/storage/repos/svcomp-fix-benchmarks/c/MemSafety-MemCleanup.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  </rundefinition>
+
+</benchmark>
