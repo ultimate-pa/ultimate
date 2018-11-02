@@ -63,6 +63,7 @@ class _PropParser:
         self.ltl = False
         self.init = None
         self.ltlformula = None
+        self.mem_cleanup = True
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
@@ -87,6 +88,8 @@ class _PropParser:
                 self.termination = True
             elif formula == 'G ! overflow':
                 self.overflow = True
+            elif formula == 'G valid-memcleanup':
+                self.mem_cleanup = True
             elif not check_string_contains(self.word_regex.findall(formula), self.forbidden_words):
                 # its ltl
                 if self.ltl:
@@ -110,10 +113,13 @@ class _PropParser:
         return self.mem_deref and not self.mem_free and not self.mem_memtrack
 
     def is_any_mem(self):
-        return self.mem_deref or self.mem_free or self.mem_memtrack
+        return self.mem_deref or self.mem_free or self.mem_memtrack or self.mem_cleanup
 
     def is_mem_deref_memtrack(self):
         return self.mem_deref and self.mem_memtrack
+
+    def is_mem_cleanup(self):
+        return self.mem_cleanup
 
     def is_overflow(self):
         return self.overflow
@@ -584,6 +590,9 @@ def create_settings_search_string(prop, architecture):
     elif prop.is_only_mem_deref():
         print('Checking for memory safety (deref)')
         settings_search_string = 'Deref'
+    elif prop.is_mem_cleanup():
+        print('Checking for memory safety (memcleanup)')
+        settings_search_string = 'MemCleanup'
     elif prop.is_termination():
         print('Checking for termination')
         settings_search_string = 'Termination'
@@ -608,7 +617,7 @@ def get_toolchain_path(prop, witnessmode):
             search_string = '*Termination.xml'
     elif witnessmode:
         search_string = '*ReachWitnessValidation.xml'
-    elif prop.is_mem_deref_memtrack():
+    elif prop.is_any_mem():
         search_string = '*MemDerefMemtrack.xml'
     elif prop.is_ltl():
         search_string = '*LTL.xml'
