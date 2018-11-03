@@ -20,4 +20,5 @@ Require-Bundle: com.github.jhoenicke.javacup,
 Export-Package: de.uni_freiburg.informatik.ultimate.reqtotestpowerset
 Import-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.nestedword,
- de.uni_freiburg.informatik.ultimate.automata.statefactory
+ de.uni_freiburg.informatik.ultimate.automata.statefactory,
+ de.uni_freiburg.informatik.ultimate.reqtotest.req
