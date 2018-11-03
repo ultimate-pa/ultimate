@@ -4218,8 +4218,8 @@ public class CHandler {
 				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
 		left = newOps.getFirst();
 		right = newOps.getSecond();
-		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType();
-		assert typeOfResult.equals(right.getLrValue().getCType());
+		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
+		assert typeOfResult.equals(right.getLrValue().getCType().getUnderlyingType());
 
 		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 		switch (op) {
@@ -4298,8 +4298,8 @@ public class CHandler {
 			right = newOps.getSecond();
 			result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			expr = mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left.getLrValue().getValue(),
-					(CPrimitive) left.getLrValue().getCType(), right.getLrValue().getValue(),
-					(CPrimitive) right.getLrValue().getCType());
+					(CPrimitive) left.getLrValue().getCType().getUnderlyingType(), right.getLrValue().getValue(),
+					(CPrimitive) right.getLrValue().getCType().getUnderlyingType());
 		} else if (lType instanceof CPointer && rType instanceof CPointer) {
 			final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals,
 					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
