@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+	private static final int FILES_PER_DIR_LIMIT = 100;
 	// private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 
@@ -63,14 +63,17 @@ public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
 		/***** Category  *****/
 		new DirectoryFileEndingsPair("examples/svcomp/pthread/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-C-DAC/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/pthread-complex/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-driver-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-ext/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-wmm/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.14-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-complex/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-driver-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-C-DAC/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-divine/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-nondet/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
 
 
@@ -99,17 +102,11 @@ public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
-//		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
+		"default/automizer/svcomp-Reach-32bit-PetriAutomizer_Default.epf"
 	};
 
 	private static final String[] SETTINGS_64BIT = {
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
-//		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 	};
-
 
 
 
