@@ -63,7 +63,7 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 
 		final ASTType intArrayType =
 				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
-		final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(intArrayType);
+		final BoogieType boogieType = mTypeHandler.getBoogieTypeForBoogieASTType(intArrayType);
 
 		mResolution = memoryModelResolution;
 		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, mTypeHandler.getBoogiePointerType(),

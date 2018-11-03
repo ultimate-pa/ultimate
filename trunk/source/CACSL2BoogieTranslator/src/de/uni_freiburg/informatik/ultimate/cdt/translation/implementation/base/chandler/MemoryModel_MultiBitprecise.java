@@ -82,7 +82,7 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 			final String name = primitive.getPrimitiveCategory().toString() + bytesize;
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 			final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(primitive));
-			final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(astType);
+			final BoogieType boogieType = mTypeHandler.getBoogieTypeForBoogieASTType(astType);
 			result = new HeapDataArray(name, astType, boogieType, mTypeHandler.getBoogiePointerType(), bytesize);
 			size2HeapdataArray.put(bytesize, result);
 		}

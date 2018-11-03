@@ -71,8 +71,8 @@ public class MemoryModel_Unbounded extends BaseMemoryModel {
 		 */
 		final ASTType realArrayType = typeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.FLOAT));
 
-		final BoogieType boogieIntArrayType = mTypeHandler.astTypeToBoogieType(intArrayType);
-		final BoogieType boogieRealArrayType = mTypeHandler.astTypeToBoogieType(realArrayType);
+		final BoogieType boogieIntArrayType = mTypeHandler.getBoogieTypeForBoogieASTType(intArrayType);
+		final BoogieType boogieRealArrayType = mTypeHandler.getBoogieTypeForBoogieASTType(realArrayType);
 
 		mIntegerArray =
 				new HeapDataArray(SFO.INT, intArrayType, boogieIntArrayType, mTypeHandler.getBoogiePointerType(), 0);

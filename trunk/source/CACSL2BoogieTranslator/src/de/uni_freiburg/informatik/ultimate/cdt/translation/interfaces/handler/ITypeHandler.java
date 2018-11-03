@@ -163,8 +163,6 @@ public interface ITypeHandler extends IHandler {
 
 	BoogieType getBoogiePointerType();
 
-	BoogieType astTypeToBoogieType(ASTType astType);
-
 	BoogieType getBoogieTypeForSizeT();
 
 	BoogieType getBoogieTypeForBoogieASTType(ASTType valueAstType);

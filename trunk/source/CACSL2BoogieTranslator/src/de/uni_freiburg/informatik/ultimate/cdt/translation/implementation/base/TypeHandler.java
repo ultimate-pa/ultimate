@@ -671,15 +671,6 @@ public class TypeHandler implements ITypeHandler {
 		return new NamedType(loc, getBoogiePointerType(), SFO.POINTER, new ASTType[0]);
 	}
 
-	@Override
-	public BoogieType astTypeToBoogieType(final ASTType astType) {
-		if (astType == null) {
-			// "null" astType represents a void type
-			return BoogieType.TYPE_ERROR;
-		}
-		return (BoogieType) astType.getBoogieType();
-	}
-
 	/**
 	 * Construct list of type declarations that are needed because the corresponding types are introduced by the
 	 * translation, e.g., pointers.
