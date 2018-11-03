@@ -593,6 +593,8 @@ public class ExpressionFactory {
 	 * @param arguments
 	 * @param resultBoogieType
 	 *            the BoogieType of the result of the function application.
+	 *            This type must be provided because we cannot track all FunctionDeclarations for type checking.
+	 *             (Those might not have been constructed yet, since Boogie does not enfore declare-before-use.)
 	 * @return
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
