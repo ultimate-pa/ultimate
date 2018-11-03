@@ -43,6 +43,7 @@ import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -726,8 +727,31 @@ public class StandardFunctionHandler {
 			startRoutineArguments =
 					mExprResultTransformer.convert(loc, tmp, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		}
-		final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
-		final String rawProcName = castIdExpr.getName().toString();
+		// We hope that the function is not given by a function pointer that is stored
+		// in a variable but directly by the function name
+		final String rawProcName;
+		if (arguments[2] instanceof CASTIdExpression) {
+			final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
+			rawProcName = castIdExpr.getName().toString();
+		} else if (arguments[2] instanceof CASTUnaryExpression) {
+			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) arguments[2];
+			if (castUnaryExpr.getOperator() == CASTUnaryExpression.op_amper) {
+				// function foo is probably given as a function pointer of the form & foo
+				if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
+					final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+					rawProcName = castIdExpr.getName().toString();
+				} else {
+					throw new UnsupportedOperationException("Third argument of pthread_create is: "
+							+ castUnaryExpr.getOperand().getClass().getSimpleName());
+				}
+			} else {
+				throw new UnsupportedOperationException(
+						"Third argument of pthread_create is: " + arguments[2].getClass().getSimpleName());
+			}
+		} else {
+			throw new UnsupportedOperationException(
+					"Third argument of pthread_create is " + arguments[2].getClass().getSimpleName());
+		}
 
 		final String multiParseProcedureName =
 				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
