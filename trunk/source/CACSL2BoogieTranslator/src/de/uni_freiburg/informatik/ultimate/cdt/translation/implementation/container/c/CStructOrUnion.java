@@ -262,55 +262,13 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	public int hashCode() {
 		// reproducible hash codes, but object equality
 		return mStructName.hashCode();
-//		final int prime = 31;
-//		int result = super.hashCode();
-//		result = prime * result + ((mBitFieldWidths == null) ? 0 : mBitFieldWidths.hashCode());
-//		result = prime * result + Arrays.hashCode(mFieldNames);
-//		result = prime * result + Arrays.hashCode(mFieldTypes);
-//		result = prime * result + (mIsComplete ? 1231 : 1237);
-//		result = prime * result + ((mIsStructOrUnion == null) ? 0 : mIsStructOrUnion.hashCode());
-//		result = prime * result + ((mStructName == null) ? 0 : mStructName.hashCode());
-//		return result;
 	}
 
-//	@Override
-//	public boolean equals(final Object o) {
-//		if (o == null) {
-//			return false;
-//		}
-//		if (o == this) {
-//			return true;
-//		}
-//		if (!(o instanceof CType)) {
-//			return false;
-//		}
-//		final CType oType = ((CType) o).getUnderlyingType();
-//		if (!(oType instanceof CStructOrUnion)) {
-//			return false;
-//		}
-//
-//		final CStructOrUnion oStruct = (CStructOrUnion) oType;
-//		if (mIsStructOrUnion != oStruct.isStructOrUnion()) {
-//			return false;
-//		}
-//		if (mFieldNames.length != oStruct.mFieldNames.length) {
-//			return false;
-//		}
-//		for (int i = mFieldNames.length - 1; i >= 0; --i) {
-//			if (!(mFieldNames[i].equals(oStruct.mFieldNames[i]))) {
-//				return false;
-//			}
-//		}
-//		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
-//			return false;
-//		}
-//		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
-//			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
+	@Override
+	public boolean equals(final Object o) {
+		// reproducible hash codes, but object equality
+		return this == o;
+	}
 
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {
