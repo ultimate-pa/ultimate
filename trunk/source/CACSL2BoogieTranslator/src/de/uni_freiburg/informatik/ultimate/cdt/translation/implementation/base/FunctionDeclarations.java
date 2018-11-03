@@ -108,12 +108,32 @@ public class FunctionDeclarations {
 
 		final VarList[] inParams = new VarList[paramASTTypes.length];
 		for (int i = 0; i < paramASTTypes.length; i++) {
-			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
+			inParams[i] = new VarList(loc, new String[] { constructNameForFunctionInParam(i) }, paramASTTypes[i]);
 		}
-		final VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
+		final VarList outParam = new VarList(loc, new String[] { constructNameForFunctionOutParam() }, resultASTType);
 		final FunctionDeclaration d =
 				new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
 		mDeclaredFunctions.put(prefixedFunctionName, d);
+	}
+
+	/**
+	 * (This class ({@link FunctionDeclarations}) does the naming of function parameters internally. This method exposes
+	 *  the naming scheme to the outside.)
+	 *
+	 * @return the name that is used for the out parameter of all {@link FunctionDeclaration}s created by this class
+	 */
+	public static String constructNameForFunctionOutParam() {
+		return "out";
+	}
+
+	/**
+	 * (This class ({@link FunctionDeclarations}) does the naming of function parameters internally. This method exposes
+	 *  the naming scheme to the outside.)
+	 *
+	 * @return the name that is used for the i-th in parameter of all {@link FunctionDeclaration}s created by this class
+	 */
+	public static String constructNameForFunctionInParam(final int i) {
+		return "in" + i;
 	}
 
 	public LinkedHashMap<String, FunctionDeclaration> getDeclaredFunctions() {

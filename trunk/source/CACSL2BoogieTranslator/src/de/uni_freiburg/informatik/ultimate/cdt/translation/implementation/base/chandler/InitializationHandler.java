@@ -34,8 +34,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -44,15 +46,23 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -129,6 +139,13 @@ public class InitializationHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
+//	/**
+//	 * Global Declarations that are required for initialization. (e.g. off heap array initialization functions)
+//	 */
+//	private List<Declaration> mInitializationInfrastructureDeclarations;
+
+	RequiredInitializationFeatures mRequiredInitializationFeatures;
+
 	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
 			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
@@ -142,6 +159,8 @@ public class InitializationHandler {
 		mTypeSizes = typeSizes;
 		mCHandler = chandler;
 		mExprResultTransformer = exprResultTransformer;
+
+		mRequiredInitializationFeatures = new RequiredInitializationFeatures();
 	}
 
 	/**
@@ -208,8 +227,10 @@ public class InitializationHandler {
 		{
 			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap, lhs, true,
 					hook);
-			init.addAllExceptLrValue();
-			init.setLrValue(mainInitCode.getLrValue());
+			init.addAllExceptLrValue(mainInitCode);
+			if (mainInitCode.hasLRValue()) {
+				init.setLrValue(mainInitCode.getLrValue());
+			}
 		}
 		return init.build();
 	}
@@ -666,12 +687,16 @@ public class InitializationHandler {
 
 			return initialization.build();
 		} else if (cType instanceof CArray) {
+			assert lhsToInitIfAny != null;
+
 			/* In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type. */
 			if (sophisticated
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
-				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, nondet);
+				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny,
+						nondet);
 			}
+
 			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, (CArray) cType, lhsToInitIfAny, nondet, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
@@ -746,8 +771,29 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
-			final CArray cArrayType, final boolean nondet) {
-		throw new UnsupportedOperationException("TODO"); // TODO
+			final CArray cArrayType, final LocalLValue lhsToInit, final boolean nondet) {
+		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+
+
+		final BoogieType boogieArrayType = mTypeHandler.getBoogieTypeForCType(cArrayType);
+
+		mRequiredInitializationFeatures.reportRequiresConstantArray((BoogieArrayType) boogieArrayType);
+
+		final Expression constantArray = ExpressionFactory.constructFunctionApplication(
+								loc,
+								mRequiredInitializationFeatures.getNameOfConstantArrayFunction(boogieArrayType),
+								new Expression[] { },
+								boogieArrayType
+								);
+		final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
+				new LeftHandSide[] {  lhsToInit.getLhs() },
+				new Expression[] { constantArray });
+
+		initialization.addStatement(assignment);
+
+//		initialization.setLrValue(new RValueForArrays(constantArray, cArrayType));
+//		initialization.setLrValue(new RValue(constantArray, cArrayType));
+		return initialization.build();
 	}
 
 	/**
@@ -850,6 +896,8 @@ public class InitializationHandler {
 	}
 
 	public List<Declaration> declareInitializationInfrastructure(final IDispatcher main, final ILocation loc) {
+		// declarations are stored in FunctionDeclarations, their creation is triggered by the below method call
+		mRequiredInitializationFeatures.constructAndRegisterDeclarations();
 		return Collections.emptyList();
 	}
 
@@ -913,8 +961,8 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedArrayInit(final InitializerInfo initInfoIfAny) {
 		// TODO implement some heuristics
-//		return false;
-		return true;
+		return false;
+//		return true;
 	}
 
 	/**
@@ -926,8 +974,8 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedDefaultInit(final CType targetCType) {
 		// TODO implement some heuristics
-//		return false;
-		return true;
+		return false;
+//		return true;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
@@ -1200,6 +1248,100 @@ public class InitializationHandler {
 		return new InitializerInfo(indexInitInfos, new ArrayList<>(rest));
 	}
 
+	private class RequiredInitializationFeatures {
+
+		private boolean mIsFinished;
+		private final Set<BoogieArrayType> mTypesForWhichConstantArraysAreRequired = new HashSet<>();
+
+		public void reportRequiresConstantArray(final BoogieArrayType boogieType) {
+			assert !mIsFinished;
+			mTypesForWhichConstantArraysAreRequired.add(boogieType);
+		}
+
+		private void constructAndRegisterDeclaration(final BoogieArrayType boogieType) {
+			final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+
+//			final String smtDefinition = String.format("((as const (Array Int Int)) 0)");
+//			final String smtDefinition = "((as const (Array Int Int)) 0)";
+			//"((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
+			final String smtSortString = getSmtSortStringForBoogieType(boogieType);
+			final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
+
+
+			final NamedAttribute namedAttribute = new NamedAttribute(
+					ignoreLoc,
+					FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+					new Expression[] {
+							ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+					});
+
+			// register the FunctionDeclaration so it will be added at the end of translation
+			mExpressionTranslation.getFunctionDeclarations()
+				.declareFunction(ignoreLoc,
+						getNameOfConstantArrayFunction(boogieType),
+						new Attribute[] { namedAttribute},
+						boogieType.toASTType(ignoreLoc)
+						);
+
+		}
+
+		private String getSmtConstantArrayStringForBoogieType(final BoogieArrayType boogieArrayType) {
+			String currentArray;
+			if (boogieArrayType.getValueType() instanceof BoogieArrayType) {
+				currentArray = getSmtConstantArrayStringForBoogieType((BoogieArrayType) boogieArrayType.getValueType());
+			} else {
+				currentArray = "0";
+			}
+			String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
+			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
+				currentTypeString = String.format("(Array %s %s)",
+						getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
+						currentTypeString);
+				currentArray = String.format("((as const %s) %s)", currentTypeString, currentArray);
+			}
+			return currentArray;
+		}
+
+		private String getSmtSortStringForBoogieType(final BoogieType boogieType) {
+			if (boogieType instanceof BoogiePrimitiveType) {
+				if (((BoogiePrimitiveType) boogieType).getTypeCode() == BoogiePrimitiveType.INT) {
+					return "Int";
+				} else {
+					throw new AssertionError("missing case");
+				}
+			} else if (boogieType instanceof BoogieArrayType) {
+				final BoogieArrayType boogieArrayType = (BoogieArrayType) boogieType;
+				String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
+				for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
+					currentTypeString = String.format("(Array %s %s)",
+							getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
+							currentTypeString);
+				}
+				return currentTypeString;
+			} else {
+				throw new AssertionError("missing case");
+			}
+		}
+
+		public void constructAndRegisterDeclarations() {
+			mIsFinished = true;
+			for (final BoogieArrayType boogieType : mTypesForWhichConstantArraysAreRequired) {
+				constructAndRegisterDeclaration(boogieType);
+			}
+		}
+
+		public String getNameOfConstantArrayFunction(final BoogieType boogieArrayType) {
+			if (!mTypesForWhichConstantArraysAreRequired.contains(boogieArrayType)) {
+				throw new AssertionError("type should have been reported as required first");
+			}
+			final String sanitizedTypeName = boogieArrayType.toString().replaceAll("\\]", "~").replaceAll("\\[", "");
+			return SFO.AUXILIARY_FUNCTION_PREFIX + "const-array-" + sanitizedTypeName;
+		}
+
+
+
+	}
+
 	/**
 	 * Represents all information that is needed to initialize a given target expression with a given initializer. Is
 	 * generated from an InitializerResult together with the target expression's CType.
@@ -1207,7 +1349,7 @@ public class InitializationHandler {
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
-	static class InitializerInfo {
+	private static class InitializerInfo {
 
 		private final ExpressionResult mExpressionResult;
 

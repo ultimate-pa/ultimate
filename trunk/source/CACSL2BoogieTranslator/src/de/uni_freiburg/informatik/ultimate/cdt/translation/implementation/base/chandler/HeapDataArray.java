@@ -86,7 +86,7 @@ public class HeapDataArray {
 		return mContentASTType;
 	}
 
-	public BoogieType getBoogieType() {
+	public BoogieType getArrayContentBoogieType() {
 		return mContentBoogieType;
 	}
 

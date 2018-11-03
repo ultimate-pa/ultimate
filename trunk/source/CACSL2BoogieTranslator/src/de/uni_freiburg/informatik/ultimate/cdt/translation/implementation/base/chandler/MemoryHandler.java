@@ -66,12 +66,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -2583,39 +2584,46 @@ public class MemoryHandler {
 		return StatementFactory.constructAssignmentStatement(loc,
 				new VariableLHS[] { relevantHeapArray.getVariableLHS() },
 				new Expression[] {
-						new FunctionApplication(loc,
+						ExpressionFactory.constructFunctionApplication(
+								loc,
 								getNameOfHeapInitFunction(relevantHeapArray),
 								new Expression[] {
-										relevantHeapArray.getIdentifierExpression(), baseAddress.getAddress() }
+										relevantHeapArray.getIdentifierExpression(),
+										getPointerBaseAddress(baseAddress.getAddress(), loc)
+										},
+								(BoogieType) relevantHeapArray.getIdentifierExpression().getType()
 								)});
 	}
 
 	private String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + "~initToZeroAtPointerBaseAddress~" + relevantHeapArray.getName();
+		return SFO.AUXILIARY_FUNCTION_PREFIX + "initToZeroAtPointerBaseAddress~" + relevantHeapArray.getName();
 	}
 
 	private void declareDataOnHeapInitFunction(final HeapDataArray heapDataArray) {
 
-		throw new AssertionError("TODO");
+		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-//		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-//
-//		String smtDefinition = "(store "
-////		final String smtlibFunctionName = getNameOfHeapInitFunction(heapDataArray);
-//
-//		final NamedAttribute namedAttribute = new NamedAttribute(ignoreLoc, FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-//				new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
-//
-//
-//		// register the FunctionDeclaration so it will be added at the end of translation
-//		mExpressionTranslation.getFunctionDeclarations()
-//			.declareFunction(ignoreLoc,
-//				getNameOfHeapInitFunction(heapDataArray),
-//				new Attribute[] { namedAttribute},
-//				heapDataArray.getASTType(),
-//				heapDataArray.getASTType(),
-//				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())
-//				);
+		final String smtDefinition = String.format("(store %s %s ((as const (Array Int Int)) 0))",
+				FunctionDeclarations.constructNameForFunctionInParam(0),
+				FunctionDeclarations.constructNameForFunctionInParam(1));
+
+		final NamedAttribute namedAttribute = new NamedAttribute(
+				ignoreLoc,
+				FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+				new Expression[] {
+						ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+						});
+
+
+		// register the FunctionDeclaration so it will be added at the end of translation
+		mExpressionTranslation.getFunctionDeclarations()
+			.declareFunction(ignoreLoc,
+				getNameOfHeapInitFunction(heapDataArray),
+				new Attribute[] { namedAttribute},
+				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
+				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
+				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())
+				);
 
 	}
 
