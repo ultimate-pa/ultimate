@@ -2646,7 +2646,7 @@ public class CHandler {
 						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
 			}
 			final BoogieType boogieType =
-					mTypeHandler.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
+					mTypeHandler.getBoogieTypeForBoogieASTType(mTypeHandler.cType2AstType(loc, cDec.getType()));
 
 			/**
 			 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var for the
