@@ -1569,11 +1569,18 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerClause node) {
-		assert node.getChildren().length == 1;
-		final Result r = main.dispatch(node.getChildren()[0]);
-		assert r instanceof ExpressionResult;
-		final ExpressionResult rex = (ExpressionResult) r;
-		return mExprResultTransformer.switchToRValueIfNecessary(rex, mLocationFactory.createCLocation(node), node);
+		if (node.getChildren().length == 1) {
+			final Result r = main.dispatch(node.getChildren()[0]);
+			assert r instanceof ExpressionResult;
+			final ExpressionResult rex = (ExpressionResult) r;
+			return mExprResultTransformer.switchToRValueIfNecessary(rex, mLocationFactory.createCLocation(node), node);
+		} else {
+			// TODO 2018-11-03 Matthias:
+			// added this Exception, fix soon only if this occurs often
+			throw new UnsupportedOperationException(
+					"Cannot understand initializer with more than two children. Is this a struct initialization? "
+							+ node.getRawSignature());
+		}
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerList node) {
