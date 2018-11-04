@@ -87,6 +87,9 @@ public class ProcedureSignature {
 
 	@Override
 	public boolean equals(final Object o) {
+		// TODO 2018-11-04 Matthias:
+		// Equality check based on String representation is a very bad idea and was
+		// responsible for at least one bug
 		return toString().equals(o.toString());
 	}
 
