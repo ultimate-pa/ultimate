@@ -4071,6 +4071,14 @@ public class CHandler {
 			} else {
 				resultCType = opPositive.getLrValue().getCType();
 			}
+		} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray &&
+				opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			// TODO 2018-11-04 Matthias: I could not find a reference for the
+			// following, but it seems to work for SV-COMP examples
+			// if both operands are arrays we decay both to pointers
+			resultCType = new CPointer(((CArray) opPositive.getLrValue().getCType()).getValueType());
+			opPositive = decayArrayToPointer(opPositive, loc, hook);
+			opNegative = decayArrayToPointer(opNegative, loc, hook);
 		} else {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
