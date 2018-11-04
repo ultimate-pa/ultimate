@@ -69,6 +69,7 @@ public class ProcedureSignature {
 
 	private StringBuilder flattenASTTypeName(final ASTType type, final StringBuilder sb) {
 		if (type instanceof StructType) {
+			sb.append("~structbegin~");
 			final StructType structType = (StructType) type;
 			final VarList[] fields = structType.getFields();
 			for (final VarList field : fields) {
@@ -77,6 +78,7 @@ public class ProcedureSignature {
 					sb.append(flatFieldType);
 				}
 			}
+			sb.append("~structend~");
 		} else {
 			sb.append(BoogiePrettyPrinter.print(type));
 		}
