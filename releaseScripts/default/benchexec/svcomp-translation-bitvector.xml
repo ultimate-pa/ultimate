@@ -9,6 +9,7 @@
     
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+	<includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays-new.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
@@ -18,6 +19,7 @@
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
+	<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </tasks>
 
@@ -31,6 +33,7 @@
     <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
+	<includesfile>../../../trunk/examples/svcomp/MemSafety-TerminCrafted.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf</option>
   </tasks>
 
