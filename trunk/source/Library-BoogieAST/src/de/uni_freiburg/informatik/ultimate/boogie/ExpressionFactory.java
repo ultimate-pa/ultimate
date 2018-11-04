@@ -587,30 +587,86 @@ public class ExpressionFactory {
 	}
 
 	/**
-	 *
+	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
+	 * This method
+	 * <ul>
+	 * <li>Renames the C function identifier to a {@link SupportedBitvectorOperations} identifier if it is appropriate.
+	 * <li>Simplifies pure constant expressions (e.g., 1+2 is replaced by 3)
+	 * <li>Analyzes the whole parse tree (i.e., all arguments are reevaluated)
+	 * </ul>
+	 * 
+	 * If you only want to rename _this_ function application and assume that all arguments are already correct, then
+	 * use {@link ExpressionFactory#constructFunctionApplication(ILocation, String, Expression[], BoogieType)}.
+	 * 
 	 * @param loc
+	 *            A location
 	 * @param identifier
+	 *            The C function identifier
 	 * @param arguments
+	 *            The Boogie arguments
 	 * @param resultBoogieType
 	 *            the BoogieType of the result of the function application. This type must be provided because we cannot
-	 *            track all FunctionDeclarations for type checking. (Those might not have been constructed yet, since
-	 *            Boogie does not enfore declare-before-use.)
-	 * @return
+	 *            track all FunctionDeclarations for type checking, as they might not have been constructed yet.
+	 * @return A Boogie function application.
+	 */
+	public static Expression constructFunctionApplicationDeep(final ILocation loc, final String identifier,
+			final Expression[] arguments, final BoogieType resultBoogieType) {
+		final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(identifier);
+		final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
+		final FunctionApplication origFunApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
+		if (sbo == null) {
+			return origFunApp;
+		}
+		final BitvectorCFunctionNames2SmtFunctionNames c2smt = new BitvectorCFunctionNames2SmtFunctionNames();
+		final Expression smtFunApp = origFunApp.accept(c2smt);
+		final Expression smtSimplifiedFunApp = smtFunApp.accept(new SimplifyBitvectorExpression());
+		return smtSimplifiedFunApp
+				.accept(new BitvectorSmtFunctionNames2CFunctionNames(c2smt.mSmtFunction2CFunctionNames));
+
+	}
+
+	/**
+	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
+	 * This method
+	 * <ul>
+	 * <li>Renames the C function identifier to a {@link SupportedBitvectorOperations} identifier if it is appropriate.
+	 * <li>Simplifies pure constant expressions (e.g., 1+2 is replaced by 3)
+	 * <li>Analyzes only this function application.
+	 * </ul>
+	 * 
+	 * If you only want to rename _this_ function application and assume that all arguments are already correct, then
+	 * use {@link ExpressionFactory#constructFunctionApplication(ILocation, String, Expression[], BoogieType)}.
+	 * 
+	 * @param loc
+	 *            A location
+	 * @param identifier
+	 *            The C function identifier
+	 * @param arguments
+	 *            The Boogie arguments
+	 * @param resultBoogieType
+	 *            the BoogieType of the result of the function application. This type must be provided because we cannot
+	 *            track all FunctionDeclarations for type checking, as they might not have been constructed yet.
+	 * @return A Boogie function application.
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
 		final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(identifier);
 		final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
-		final FunctionApplication origFunApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
-		if (sbo != null) {
-			final BitvectorCFunctionNames2SmtFunctionNames c2smt = new BitvectorCFunctionNames2SmtFunctionNames();
-			final Expression smtFunApp = origFunApp.accept(c2smt);
-			final Expression smtSimplifiedFunApp = smtFunApp.accept(new ComputeConstantBitvectorExpression());
-			final Expression cSimplifiedFunApp = smtSimplifiedFunApp
-					.accept(new BitvectorSmtFunctionNames2CFunctionNames(c2smt.mSmtFunction2CFunctionNames));
-			return cSimplifiedFunApp;
+		if (sbo == null) {
+			return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 		}
-		return origFunApp;
+		final FunctionApplication smtFunApp = new FunctionApplication(loc, resultBoogieType, smtIdentifier, arguments);
+		final Expression simplifiedExpression = simplifyBitvectorExpression(smtFunApp, sbo);
+		final Expression rtr;
+		// TODO: We assume that we do not leave a nested renamed function application in some argument
+		if (simplifiedExpression instanceof FunctionApplication
+				&& ((FunctionApplication) simplifiedExpression).getIdentifier() == smtIdentifier) {
+			rtr = new FunctionApplication(loc, resultBoogieType, identifier,
+					((FunctionApplication) simplifiedExpression).getArguments());
+		} else {
+			rtr = simplifiedExpression;
+		}
+		return rtr;
 	}
 
 	private static SupportedBitvectorOperations getSupportedBitvectorOperation(final String identifier) {
@@ -718,7 +774,11 @@ public class ExpressionFactory {
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
-	private static Expression newFunctionApplication(final FunctionApplication node, final boolean isChanged,
+	public static Expression constructBooleanWildCardExpression(final ILocation loc) {
+		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
+	}
+
+	private static FunctionApplication newFunctionApplication(final FunctionApplication node, final boolean isChanged,
 			final List<Expression> newArgs) {
 		if (isChanged) {
 			return new FunctionApplication(node.getLoc(), node.getType(), node.getIdentifier(),
@@ -750,8 +810,374 @@ public class ExpressionFactory {
 		return name.substring(1).replaceAll("\\d+", "");
 	}
 
-	public static Expression constructBooleanWildCardExpression(final ILocation loc) {
-		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
+	private static Expression simplifyBitvectorExpression(final FunctionApplication node,
+			final SupportedBitvectorOperations sbo) {
+		assert sbo != null;
+		final Expression[] args = node.getArguments();
+		if (isBinaryBitvec(sbo)) {
+			assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
+			final BinaryOperator<BitvectorConstant> op = getBinaryNonBooleanBitvectorOp(sbo);
+			if (isNeutralLeft(sbo, args[0])) {
+				return args[1];
+			}
+			if (isNeutralRight(sbo, args[1])) {
+				return args[0];
+			}
+			if (args[0] instanceof BitvecLiteral && args[1] instanceof BitvecLiteral) {
+				final BitvectorConstant left = toConstant((BitvecLiteral) args[0]);
+				final BitvectorConstant right = toConstant((BitvecLiteral) args[1]);
+				return toBitvectorLiteral(node, op.apply(left, right));
+			}
+			// TODO: Add optimization that moves constant in front (commutativity/assoc)
+		} else if (isBinaryBooleanBitvec(sbo)) {
+			assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
+			final BiFunction<BitvectorConstant, BitvectorConstant, Boolean> op = getBinaryBooleanBitvectorOp(sbo);
+			if (args[0] instanceof BitvecLiteral && args[1] instanceof BitvecLiteral) {
+				return toBooleanLiteral(node,
+						op.apply(toConstant((BitvecLiteral) args[0]), toConstant((BitvecLiteral) args[1])));
+			}
+
+		} else if (isUnaryBitvec(sbo)) {
+			assert args.length == 1 : "Unary expression cannot have " + args.length + " arguments";
+			final Function<BitvectorConstant, BitvectorConstant> op = getUnaryBitvectorOp(sbo);
+			if (args[0] instanceof BitvecLiteral) {
+				return toBitvectorLiteral(node, op.apply(toConstant((BitvecLiteral) args[0])));
+			}
+		}
+		return node;
+	}
+
+	private static BitvectorConstant toConstant(final BitvecLiteral lit) {
+		return new BitvectorConstant(new BigInteger(lit.getValue()), BigInteger.valueOf(lit.getLength()));
+	}
+
+	private static boolean isBinaryBitvec(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+			return true;
+		case extract:
+		case zero_extend:
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+		case bvneg:
+		case bvnot:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static boolean isUnaryBitvec(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+		case extract:
+		case zero_extend:
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			return false;
+		case bvneg:
+		case bvnot:
+			return true;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static boolean isBinaryBooleanBitvec(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+		case extract:
+		case zero_extend:
+		case bvneg:
+		case bvnot:
+			return false;
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			return true;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static boolean isNeutralLeft(final SupportedBitvectorOperations sbo, final Expression expr) {
+		if (expr instanceof BitvecLiteral) {
+			return isNeutralLeft(sbo, toConstant((BitvecLiteral) expr));
+		}
+		return false;
+	}
+
+	private static boolean isNeutralRight(final SupportedBitvectorOperations sbo, final Expression expr) {
+		if (expr instanceof BitvecLiteral) {
+			return isNeutralRight(sbo, toConstant((BitvecLiteral) expr));
+		}
+		return false;
+	}
+
+	private static boolean isNeutralLeft(final SupportedBitvectorOperations sbo, final BitvectorConstant bitvecConst) {
+		// TODO: Add more left neutral elements
+		switch (sbo) {
+		case bvadd:
+			return bitvecConst.isZero();
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+		case extract:
+		case zero_extend:
+		case bvneg:
+		case bvnot:
+			return false;
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static boolean isNeutralRight(final SupportedBitvectorOperations sbo, final BitvectorConstant bitvecConst) {
+		// TODO: Add more right neutral elements
+		switch (sbo) {
+		case bvadd:
+			return isNeutralLeft(sbo, bitvecConst);
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+		case extract:
+		case zero_extend:
+		case bvneg:
+		case bvnot:
+			return false;
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static BinaryOperator<BitvectorConstant>
+			getBinaryNonBooleanBitvectorOp(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+			return BitvectorConstant::bvadd;
+		case bvand:
+			return BitvectorConstant::bvand;
+		case bvashr:
+			return BitvectorConstant::bvashr;
+		case bvlshr:
+			return BitvectorConstant::bvlshr;
+		case bvmul:
+			return BitvectorConstant::bvmul;
+		case bvor:
+			return BitvectorConstant::bvor;
+		case bvsdiv:
+			return BitvectorConstant::bvsdiv;
+		case bvshl:
+			return BitvectorConstant::bvshl;
+		case bvsrem:
+			return BitvectorConstant::bvsrem;
+		case bvsub:
+			return BitvectorConstant::bvsub;
+		case bvudiv:
+			return BitvectorConstant::bvudiv;
+		case bvurem:
+			return BitvectorConstant::bvurem;
+		case bvxor:
+			return BitvectorConstant::bvxor;
+		case extract:
+		case zero_extend:
+			throw new AssertionError("Has wrong signature: " + sbo);
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			throw new AssertionError("Has wrong signature (is boolean): " + sbo);
+		case bvneg:
+		case bvnot:
+			throw new AssertionError("Has wrong signature (is unary): " + sbo);
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static Function<BitvectorConstant, BitvectorConstant>
+			getUnaryBitvectorOp(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+			throw new AssertionError("Has wrong signature (is binary): " + sbo);
+		case extract:
+		case zero_extend:
+			throw new AssertionError("Has wrong signature: " + sbo);
+		case bvsle:
+		case bvslt:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvsge:
+		case bvsgt:
+		case bvult:
+			throw new AssertionError("Has wrong signature (is boolean): " + sbo);
+		case bvneg:
+			return BitvectorConstant::bvneg;
+		case bvnot:
+			return BitvectorConstant::bvnot;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static BiFunction<BitvectorConstant, BitvectorConstant, Boolean>
+			getBinaryBooleanBitvectorOp(final SupportedBitvectorOperations sbo) {
+		switch (sbo) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvor:
+		case bvsdiv:
+		case bvshl:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvurem:
+		case bvxor:
+			throw new AssertionError("Has wrong signature (is binary): " + sbo);
+		case extract:
+		case zero_extend:
+			throw new AssertionError("Has wrong signature: " + sbo);
+		case bvsle:
+			return BitvectorConstant::bvsle;
+		case bvslt:
+			return BitvectorConstant::bvslt;
+		case bvuge:
+			return BitvectorConstant::bvuge;
+		case bvugt:
+			return BitvectorConstant::bvugt;
+		case bvule:
+			return BitvectorConstant::bvule;
+		case bvsge:
+			return BitvectorConstant::bvsge;
+		case bvsgt:
+			return BitvectorConstant::bvsgt;
+		case bvult:
+			return BitvectorConstant::bvult;
+		case bvneg:
+		case bvnot:
+			throw new AssertionError("Has wrong signature (is unary): " + sbo);
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+		}
+	}
+
+	private static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
+			final BitvectorConstant bitvectorConstant) {
+		return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
+				bitvectorConstant.getIndex().intValueExact());
+	}
+
+	private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
+		return new BooleanLiteral(node.getLoc(), node.getType(), value);
 	}
 
 	private static final class BitvectorCFunctionNames2SmtFunctionNames extends GeneratedBoogieAstTransformer {
@@ -811,7 +1237,7 @@ public class ExpressionFactory {
 
 	}
 
-	private static final class ComputeConstantBitvectorExpression extends GeneratedBoogieAstTransformer {
+	private static final class SimplifyBitvectorExpression extends GeneratedBoogieAstTransformer {
 
 		@Override
 		public Expression transform(final FunctionApplication node) {
@@ -821,283 +1247,13 @@ public class ExpressionFactory {
 			final List<Expression> newArgs = new ArrayList<>();
 			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
 			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
+			final FunctionApplication funApp = newFunctionApplication(node, isChanged, newArgs);
 			if (sbo == null) {
-				return newFunctionApplication(node, isChanged, newArgs);
+				return funApp;
 			}
-			if (newArgs.stream().anyMatch(a -> !(a instanceof BitvecLiteral))) {
-				return newFunctionApplication(node, isChanged, newArgs);
-			}
-
-			if (isBinaryBitvec(sbo)) {
-				final BinaryOperator<BitvectorConstant> accumulator = getAccumulator(sbo);
-				return toBitvectorLiteral(node, newArgs.stream().map(a -> (BitvecLiteral) a).map(
-						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
-						.reduce(accumulator).get());
-			} else if (isBinaryBoolean(sbo)) {
-				final List<BitvectorConstant> list = newArgs.stream().map(a -> (BitvecLiteral) a).map(
-						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
-						.collect(Collectors.toList());
-				if (list.size() != 2) {
-					throw new AssertionError();
-				}
-				final BiFunction<BitvectorConstant, BitvectorConstant, Boolean> op = getBooleanOp(sbo);
-				return toBooleanLiteral(node, op.apply(list.get(0), list.get(1)));
-			} else if (isUnaryBitvec(sbo)) {
-				if (newArgs.size() != 1) {
-					throw new AssertionError();
-				}
-				final BitvectorConstant param = newArgs.stream().map(a -> (BitvecLiteral) a).map(
-						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
-						.findAny().get();
-				final Function<BitvectorConstant, BitvectorConstant> op = getUnaryOp(sbo);
-				return toBitvectorLiteral(node, op.apply(param));
-			}
-
-			// TODO: Handle special ones
-			return node;
+			return simplifyBitvectorExpression(funApp, sbo);
 		}
 
-		private static boolean isUnaryBitvec(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-			case bvand:
-			case bvashr:
-			case bvlshr:
-			case bvmul:
-			case bvor:
-			case bvsdiv:
-			case bvshl:
-			case bvsrem:
-			case bvsub:
-			case bvudiv:
-			case bvurem:
-			case bvxor:
-			case extract:
-			case zero_extend:
-			case bvsle:
-			case bvslt:
-			case bvuge:
-			case bvugt:
-			case bvule:
-			case bvsge:
-			case bvsgt:
-			case bvult:
-				return false;
-			case bvneg:
-			case bvnot:
-				return true;
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static boolean isBinaryBoolean(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-			case bvand:
-			case bvashr:
-			case bvlshr:
-			case bvmul:
-			case bvor:
-			case bvsdiv:
-			case bvshl:
-			case bvsrem:
-			case bvsub:
-			case bvudiv:
-			case bvurem:
-			case bvxor:
-			case extract:
-			case zero_extend:
-			case bvneg:
-			case bvnot:
-				return false;
-			case bvsle:
-			case bvslt:
-			case bvuge:
-			case bvugt:
-			case bvule:
-			case bvsge:
-			case bvsgt:
-			case bvult:
-				return true;
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static BinaryOperator<BitvectorConstant> getAccumulator(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-				return BitvectorConstant::bvadd;
-			case bvand:
-				return BitvectorConstant::bvand;
-			case bvashr:
-				return BitvectorConstant::bvashr;
-			case bvlshr:
-				return BitvectorConstant::bvlshr;
-			case bvmul:
-				return BitvectorConstant::bvmul;
-			case bvor:
-				return BitvectorConstant::bvor;
-			case bvsdiv:
-				return BitvectorConstant::bvsdiv;
-			case bvshl:
-				return BitvectorConstant::bvshl;
-			case bvsrem:
-				return BitvectorConstant::bvsrem;
-			case bvsub:
-				return BitvectorConstant::bvsub;
-			case bvudiv:
-				return BitvectorConstant::bvudiv;
-			case bvurem:
-				return BitvectorConstant::bvurem;
-			case bvxor:
-				return BitvectorConstant::bvxor;
-			case extract:
-			case zero_extend:
-				throw new AssertionError("Has wrong signature: " + sbo);
-			case bvsle:
-			case bvslt:
-			case bvuge:
-			case bvugt:
-			case bvule:
-			case bvsge:
-			case bvsgt:
-			case bvult:
-				throw new AssertionError("Has wrong signature (is boolean): " + sbo);
-			case bvneg:
-			case bvnot:
-				throw new AssertionError("Has wrong signature (is unary): " + sbo);
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static Function<BitvectorConstant, BitvectorConstant>
-				getUnaryOp(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-			case bvand:
-			case bvashr:
-			case bvlshr:
-			case bvmul:
-			case bvor:
-			case bvsdiv:
-			case bvshl:
-			case bvsrem:
-			case bvsub:
-			case bvudiv:
-			case bvurem:
-			case bvxor:
-				throw new AssertionError("Has wrong signature (is binary): " + sbo);
-			case extract:
-			case zero_extend:
-				throw new AssertionError("Has wrong signature: " + sbo);
-			case bvsle:
-			case bvslt:
-			case bvuge:
-			case bvugt:
-			case bvule:
-			case bvsge:
-			case bvsgt:
-			case bvult:
-				throw new AssertionError("Has wrong signature (is boolean): " + sbo);
-			case bvneg:
-				return BitvectorConstant::bvneg;
-			case bvnot:
-				return BitvectorConstant::bvnot;
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static BiFunction<BitvectorConstant, BitvectorConstant, Boolean>
-				getBooleanOp(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-			case bvand:
-			case bvashr:
-			case bvlshr:
-			case bvmul:
-			case bvor:
-			case bvsdiv:
-			case bvshl:
-			case bvsrem:
-			case bvsub:
-			case bvudiv:
-			case bvurem:
-			case bvxor:
-				throw new AssertionError("Has wrong signature (is binary): " + sbo);
-			case extract:
-			case zero_extend:
-				throw new AssertionError("Has wrong signature: " + sbo);
-			case bvsle:
-				return BitvectorConstant::bvsle;
-			case bvslt:
-				return BitvectorConstant::bvslt;
-			case bvuge:
-				return BitvectorConstant::bvuge;
-			case bvugt:
-				return BitvectorConstant::bvugt;
-			case bvule:
-				return BitvectorConstant::bvule;
-			case bvsge:
-				return BitvectorConstant::bvsge;
-			case bvsgt:
-				return BitvectorConstant::bvsgt;
-			case bvult:
-				return BitvectorConstant::bvult;
-			case bvneg:
-			case bvnot:
-				throw new AssertionError("Has wrong signature (is unary): " + sbo);
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static boolean isBinaryBitvec(final SupportedBitvectorOperations sbo) {
-			switch (sbo) {
-			case bvadd:
-			case bvand:
-			case bvashr:
-			case bvlshr:
-			case bvmul:
-			case bvor:
-			case bvsdiv:
-			case bvshl:
-			case bvsrem:
-			case bvsub:
-			case bvudiv:
-			case bvurem:
-			case bvxor:
-				return true;
-			case extract:
-			case zero_extend:
-			case bvsle:
-			case bvslt:
-			case bvuge:
-			case bvugt:
-			case bvule:
-			case bvsge:
-			case bvsgt:
-			case bvult:
-			case bvneg:
-			case bvnot:
-				return false;
-			default:
-				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-			}
-		}
-
-		private static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
-				final BitvectorConstant bitvectorConstant) {
-			return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
-					bitvectorConstant.getIndex().intValueExact());
-		}
-
-		private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
-			return new BooleanLiteral(node.getLoc(), node.getType(), value);
-		}
 	}
 
 }

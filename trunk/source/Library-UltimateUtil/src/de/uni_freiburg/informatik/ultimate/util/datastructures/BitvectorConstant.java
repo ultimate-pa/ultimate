@@ -66,12 +66,16 @@ public class BitvectorConstant {
 		return mIndex;
 	}
 
+	public boolean isZero() {
+		return mValue.signum() == 0;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mIndex == null) ? 0 : mIndex.hashCode());
-		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
+		result = prime * result + (mIndex == null ? 0 : mIndex.hashCode());
+		result = prime * result + (mValue == null ? 0 : mValue.hashCode());
 		return result;
 	}
 
