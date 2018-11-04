@@ -9,10 +9,10 @@ import sys
 from functools import reduce
 
 """
-(k,v) where 
-  k is the string we search, 
-  v iff the log line where we found the string is the one we want to show, 
-  !v iff the following log line is the one we want to show   
+(k,v) where
+  k is the string we search,
+  v iff the log line where we found the string is the one we want to show,
+  !v iff the following log line is the one we want to show
 """
 known_exceptions = {
     "Argument of \"settings\" has invalid value": True,
@@ -43,6 +43,7 @@ known_exceptions = {
     "No suitable toolchain file found": True,
     "No suitable file found in config dir": True,
     "ExceptionOrErrorResult": False,
+    "was unable to instantiate class": True,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
