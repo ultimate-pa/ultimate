@@ -606,12 +606,14 @@ public class FunctionHandler {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
 				// non-deterministic return value. We do not need to declare the actual function.
 				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-				final AuxVarInfo auxvarinfo =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
-				resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-				resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-				final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
-				resultBuilder.setLrValue(returnValue);
+				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
+					final AuxVarInfo auxvarinfo =
+							mAuxVarInfoBuilder.constructAuxVarInfo(loc, calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
+					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+					resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+					final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
+					resultBuilder.setLrValue(returnValue);
+				}
 
 				// dispatch all arguments
 				for (final IASTInitializerClause arg : arguments) {
