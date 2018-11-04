@@ -43,7 +43,6 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
-	private final Map<String, VariableLHS> mId2VarLHS;
 	private final Map<String, Expression> mConst2Val;
 	
 	private final ILogger mLogger;
@@ -62,7 +61,6 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 	public ReqSymbolTable(final ILogger logger) {
 		mId2Type = new LinkedHashMap<>();
 		mId2IdExpr = new LinkedHashMap<>();
-		mId2VarLHS = new LinkedHashMap<>();
 		mConst2Val = new LinkedHashMap<>();
 
 		mLogger = logger;

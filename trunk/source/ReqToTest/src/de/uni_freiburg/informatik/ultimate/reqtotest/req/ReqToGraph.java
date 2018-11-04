@@ -314,7 +314,7 @@ public class ReqToGraph {
 			final Term nR = SmtUtils.not(mScript, R);
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript,
 					SmtUtils.and(mScript, nuR, ndS), 
-					SmtUtils.and(mScript, uR, R, dS, S),
+					SmtUtils.and(mScript, uR, R, ndS, S),
 					SmtUtils.and(mScript, uR, nR, ndS),
 					SmtUtils.and(mScript, S, uS, ndS))));
 			return q0;
@@ -377,8 +377,8 @@ public class ReqToGraph {
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			//define labels 
-			final Term E = mThreeValuedAuxVarGen.getDefineGuard(q0);
-			final Term notE = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
 			//normal labels
 			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
 			final Term nuR = SmtUtils.not(mScript, uR);
@@ -386,16 +386,16 @@ public class ReqToGraph {
 			final Term notR = SmtUtils.not(mScript, R);
 			final Term notRandS = SmtUtils.and(mScript, notR, S);
 			
-			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, notE)));
-			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, notE)));
-			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, RandS , E)));
-			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notRandS , E)));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, ndS)));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS)));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, RandS , dS)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notRandS , dS)));
 			
-			q0.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, notE)));
-			q1.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, E, S)));
-			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, notE)));
-			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, notE)));
-			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, notE)));
+			q0.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			q1.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, dS, S)));
+			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, notR, ndS)));
+			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS)));
 			
 			return q0;		
 		} else {

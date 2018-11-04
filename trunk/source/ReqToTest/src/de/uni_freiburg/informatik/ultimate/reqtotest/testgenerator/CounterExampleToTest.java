@@ -49,8 +49,7 @@ public class CounterExampleToTest {
 		}
 	}
 	
-	private IResult generateTestSequence(final CounterExampleResult<?, ?, ?> result){
-		IProgramExecution<IElement, Term> execution =  (IProgramExecution<IElement, Term>) result.getProgramExecution(); 
+	private IResult generateTestSequence(final CounterExampleResult<?, ?, ?> result){ 
 		IProgramExecution<?, ?> translatedPe = mServices.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		
 		List<SystemState> systemStates = new ArrayList<>();
@@ -79,26 +78,32 @@ public class CounterExampleToTest {
 	
 	private SystemState generateObservableProgramState(final ProgramState<Expression> programState) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
-		LinkedHashSet<Expression> inputs = new LinkedHashSet<Expression>();
+		LinkedHashSet<Expression> inputs = new LinkedHashSet<>();
+		LinkedHashMap<Expression, Collection<Expression>> reqLocations = new LinkedHashMap<>();
 		int i = 0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
-					mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
-				observableState.put(e, programState.getValues(e));
-				inputs.add(e);
+				mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
+					observableState.put(e, programState.getValues(e));
+					inputs.add(e);
 			}
 			if (e instanceof IdentifierExpression && 
-					mReqSymbolTable.isOutput(((IdentifierExpression) e).getIdentifier()) &&
-					isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)) {	
-				observableState.put(e, programState.getValues(e));
+				mReqSymbolTable.isOutput(((IdentifierExpression) e).getIdentifier()) &&
+				isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)) {	
+					observableState.put(e, programState.getValues(e));
 			}
 			if (e instanceof IdentifierExpression && 
-					((IdentifierExpression) e).getIdentifier().equals("delta")){
-						IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-						i =  Integer.parseInt(ilit.getValue());
-					}
+				((IdentifierExpression) e).getIdentifier().equals("delta")){
+					IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+					i =  Integer.parseInt(ilit.getValue());
+			}
+			if (e instanceof IdentifierExpression && 
+				((IdentifierExpression) e).getIdentifier().startsWith("reqtotest_pc") && 
+				((IdentifierExpression) e).getIdentifier().endsWith("'") ){
+				reqLocations.put(e, programState.getValues(e));
+			}
 		}
-		return new SystemState(observableState, inputs, i);
+		return new SystemState(observableState, inputs, reqLocations, i);
 	}
 	
 	private boolean isDefinedFlagSet(String ident, ProgramState<Expression> state) {

@@ -12,11 +12,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 public class SystemState extends ProgramState<Expression> {
 	
 	private final Set<Expression> mInputVariables;
+	private final Map<Expression, Collection<Expression>> mReqLocations;
 	private final int mTime;
 
-	public SystemState(Map<Expression, Collection<Expression>> variable2Values, Set<Expression> inputVariables, int time) {
+	public SystemState(Map<Expression, Collection<Expression>> variable2Values, Set<Expression> inputVariables, Map<Expression, Collection<Expression>> reqLocations, int time) {
 		super(variable2Values);
 		mInputVariables = inputVariables;
+		mReqLocations = reqLocations;
 		mTime = time;
 	}
 	
@@ -37,7 +39,7 @@ public class SystemState extends ProgramState<Expression> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(Integer.toString(mTime));
-		sb.append( "| " );
+		sb.append( " | " );
 		for(Expression e: getVariables()) {
 			if(isInput(e)) {
 				sb.append(formatAssignment(e, getValues(e)));
@@ -49,15 +51,20 @@ public class SystemState extends ProgramState<Expression> {
 				sb.append(formatAssignment(e, getValues(e)));
 			}
 		}
+		sb.append("														 (");
+		for(Expression e: mReqLocations.keySet()) {
+			sb.append(formatAssignment(e, mReqLocations.get(e)));
+		}
+		sb.append(" ) ");
 		return sb.toString();
 	}
 	
-	private String formatAssignment(Expression e, Collection<Expression> v) {
+	private String formatAssignment(Expression e, Collection<Expression> values) {
 		StringBuilder sb = new StringBuilder();
 		sb.append( BoogiePrettyPrinter.print(e));
 		sb.append( "=" );
-		for(Expression val : v) {
-			sb.append( BoogiePrettyPrinter.print(val));
+		for(Expression value: values) {
+			sb.append( BoogiePrettyPrinter.print(value));
 		}
 		sb.append("; ");
 		return sb.toString();

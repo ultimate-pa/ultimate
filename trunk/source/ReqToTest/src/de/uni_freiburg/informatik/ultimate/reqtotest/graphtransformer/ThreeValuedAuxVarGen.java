@@ -51,8 +51,11 @@ public class ThreeValuedAuxVarGen {
 	
 	
 	public void setEffectLabel(ReqGuardGraph req, Term effectTerm) {
-		mEffects.add(effectTerm);
-		final TermVariable[] idents = effectTerm.getFreeVars();
+		TermVariable[] idents = {};
+		if(SmtUtils.getDisjuncts(effectTerm).length <= 1) {
+			mEffects.add(effectTerm);
+			idents = effectTerm.getFreeVars();
+		} 
 		final List<TermVariable> effectVars = getNonInputNonConstantVars(idents);
 		final int reqId = getReqToId(req);
 		final Term effectGuard = SmtUtils.and(mScript, varsToDefineAnnotations(effectVars, reqId));
