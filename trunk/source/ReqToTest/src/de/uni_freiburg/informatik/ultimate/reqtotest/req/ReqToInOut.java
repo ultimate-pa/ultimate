@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
@@ -143,7 +144,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -158,7 +159,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -174,7 +175,7 @@ public class ReqToInOut {
 			addEffectSet(S.getFreeVars());
 	
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -190,8 +191,16 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());	
+		} else	if(pattern.getScope() instanceof SrParseScopeAfter) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			final Term Q = mCddToSmt.toSmt(pattern.getScope().getCdd1()); 
+			addTriggerSet(Q.getFreeVars());
+			addTriggerSet(R.getFreeVars());
+			addEffectSet(S.getFreeVars());	
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -206,7 +215,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -219,7 +228,7 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -232,7 +241,7 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
@@ -247,7 +256,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());	
 		} else {
-			throw new RuntimeException("Scope not implemented");
+			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
 		}
 	}
 	
