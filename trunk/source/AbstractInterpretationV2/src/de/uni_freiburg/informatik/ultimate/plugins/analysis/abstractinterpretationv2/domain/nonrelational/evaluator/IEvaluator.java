@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
@@ -57,7 +56,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *            The originating state to evaluate from.
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
-	List<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
+	Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
 
 	/**
 	 * Computes the inverse of {@link #evaluate(IAbstractState)} relative to some result of

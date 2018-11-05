@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -38,6 +40,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
+/**
+ * Represents an Evaluator for a function symbol. Note that currently, this evaluator always returns &top; as the
+ * evaluation result and always the old state as the inverse evaluation result.
+ *
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ * @param <VALUE>
+ * @param <STATE>
+ */
 public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
 		implements IFunctionEvaluator<VALUE, STATE> {
 
@@ -58,23 +69,18 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		final IEvaluationResult<VALUE> res =
-				new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), BooleanValue.TOP);
-		returnList.add(res);
-
-		return returnList;
+		// Return a top value since functions cannot be handled, yet.
+		return Collections.singletonList(
+				new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), BooleanValue.TOP));
 	}
 
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert currentState != null;
-		final List<STATE> returnList = new ArrayList<>();
-		returnList.add(currentState);
-		return returnList;
+		return Collections.singletonList(currentState);
 	}
 
 	@Override

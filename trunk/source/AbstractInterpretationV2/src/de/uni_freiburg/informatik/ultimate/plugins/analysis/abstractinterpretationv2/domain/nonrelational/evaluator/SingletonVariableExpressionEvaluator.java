@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -69,10 +69,10 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	}
 
 	@Override
-	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
+		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		VALUE val;
 		BooleanValue returnBool = BooleanValue.TOP;
@@ -104,11 +104,11 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	}
 
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
 
-		final List<STATE> returnList = new ArrayList<>();
+		final Collection<STATE> returnList = new ArrayList<>();
 
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVar, computedValue.getBooleanValue()));

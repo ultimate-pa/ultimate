@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -67,12 +66,12 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> subResult : subResults) {
 			final VALUE returnValue;
@@ -101,7 +100,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 
 		assert !returnList.isEmpty();
-		return new ArrayList<>(NonrelationalUtils.mergeIfNecessary(returnList, 2));
+		return NonrelationalUtils.mergeIfNecessary(returnList, 2);
 	}
 
 	@Override

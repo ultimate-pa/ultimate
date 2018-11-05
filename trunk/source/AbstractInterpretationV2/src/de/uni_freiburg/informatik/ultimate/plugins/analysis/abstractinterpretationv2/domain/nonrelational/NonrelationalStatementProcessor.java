@@ -307,7 +307,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			mEvaluatorCache.put(rhs, mExpressionEvaluator);
 		}
 
-		final List<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate);
+		final Collection<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate);
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
@@ -360,7 +360,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			mEvaluatorCache.put(formula, mExpressionEvaluator);
 		}
 
-		final List<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+		final Collection<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
 		for (final IEvaluationResult<V> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM

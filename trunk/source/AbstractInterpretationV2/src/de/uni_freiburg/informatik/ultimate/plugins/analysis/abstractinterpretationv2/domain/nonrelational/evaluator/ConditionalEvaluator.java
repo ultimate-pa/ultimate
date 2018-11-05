@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -65,13 +64,14 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 	}
 
 	@Override
-	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
+		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
-		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> negatedConditionResult =
+				mNegatedConditionEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
 			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
@@ -80,7 +80,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> ifRes : trueResult) {
 						if (!ifRes.getValue().isBottom() && !ifRes.getBooleanValue().isBottom()) {
@@ -103,7 +103,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> elseRes : falseResult) {
 						if (!elseRes.getValue().isBottom() && !elseRes.getBooleanValue().isBottom()) {
@@ -124,7 +124,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					BooleanValue.FALSE));
 		}
 
-		return new ArrayList<>(NonrelationalUtils.mergeIfNecessary(returnList, 1));
+		return NonrelationalUtils.mergeIfNecessary(returnList, 1);
 	}
 
 	@Override
@@ -193,7 +193,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			returnList.add(currentState.bottomState());
 		}
 
-		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(returnList, 1));
+		return NonrelationalUtils.mergeStatesIfNecessary(returnList, 1);
 	}
 
 	@Override
