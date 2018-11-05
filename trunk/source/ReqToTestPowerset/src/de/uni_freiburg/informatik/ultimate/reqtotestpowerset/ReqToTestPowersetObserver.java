@@ -11,10 +11,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 
@@ -50,6 +53,9 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
 		final ReqSymbolTable symbolTable =  new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
+		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
+		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
 
 		return false;
 	}
