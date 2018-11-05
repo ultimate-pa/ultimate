@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePre
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -274,7 +275,14 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
 				raw.switchToReadonlyMode();
 			}
-			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
+			try {
+				dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
+			} catch (final AutomataOperationCanceledException aoce) {
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
+								+ " states and an alphabet of " + mAbstraction.getAlphabet().size() + " letters");
+				throw aoce;
+			}
 			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false)
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
