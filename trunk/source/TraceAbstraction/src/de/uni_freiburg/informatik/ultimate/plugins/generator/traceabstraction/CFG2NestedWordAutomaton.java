@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private static final boolean DEBUG_STORE_HISTORY = false;
+	private static final boolean ADD_THREAD_USAGE_MONITORS = true;
 
 	private CFG2NestedWordAutomaton() {
 		// do not instantiate
@@ -125,7 +127,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
 		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
 		return constructPetriNet(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
-				predicateProvider, transitionMapping);
+				predicateProvider, transitionMapping, predicateFactory);
 	}
 
 	public static <LETTER> String printIcfg(final IUltimateServiceProvider services,
@@ -150,6 +152,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		}
 		return predicateProvider;
 	}
+
 
 	private static Function<IcfgLocation, IPredicate> constructDebugPredicateProvider() {
 		final SmtFreePredicateFactory pf = new SmtFreePredicateFactory();
@@ -246,14 +249,14 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
-			final Function<IIcfgTransition<?>, LETTER> letterProvider) {
+			final Function<IIcfgTransition<?>, LETTER> letterProvider, final PredicateFactory predicateFactory) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 
 		// construct the net
-		final BoundedPetriNet<LETTER, IPredicate> net =
-				new BoundedPetriNet<>(new AutomataLibraryServices(services), vpAlphabet.getInternalAlphabet(), false);
+		final BoundedPetriNet<LETTER, IPredicate> net = new BoundedPetriNet<>(new AutomataLibraryServices(services),
+				vpAlphabet.getInternalAlphabet(), false);
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 		{
 			// add places
@@ -264,6 +267,30 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				net.addPlace(place, isInitial, isAccepting);
 				nodes2States.put(locNode, place);
 			}
+		}
+
+		final Map<String, IPredicate> threadInstance2notinUseState = new HashMap<>();
+		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
+		if (ADD_THREAD_USAGE_MONITORS) {
+			final Collection<ThreadInstance> threadInstances = icfg.getCfgSmtToolkit().getConcurrencyInformation()
+					.getThreadInstanceMap().values();
+			for (final ThreadInstance ti : threadInstances) {
+				IPredicate threadNotInUsePredicate;
+				{
+					final Term negated = icfg.getCfgSmtToolkit().getManagedScript().getScript().term("not",
+							ti.getInUseVar().getTermVariable());
+					threadNotInUsePredicate = predicateFactory.newPredicate(negated);
+				}
+				IPredicate threadInUsePredicate;
+				{
+					threadInUsePredicate = predicateFactory.newPredicate(ti.getInUseVar().getTermVariable());
+				}
+				threadInstance2notinUseState.put(ti.getThreadInstanceName(), threadNotInUsePredicate);
+				threadInstance2inUseState.put(ti.getThreadInstanceName(), threadInUsePredicate);
+				net.addPlace(threadNotInUsePredicate, true, false);
+				net.addPlace(threadInUsePredicate, false, false);
+			}
+
 		}
 
 		// add transitions
@@ -283,22 +310,42 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 								.getCorrespondingIIcfgForkTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getTarget();
 						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
-						net.addTransition((LETTER) edge, Collections.singleton(state),
-								new HashSet<>(Arrays.asList(new IPredicate[] { succCurrentThread, succState })));
+						Set<IPredicate> predecessors;
+						Set<IPredicate> successors;
+						if (ADD_THREAD_USAGE_MONITORS) {
+							final String threadInstanceName = edge.getSucceedingProcedure();
+							final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
+							final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);
+							predecessors = new HashSet<>(Arrays.asList(state, threadNotInUse));
+							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState, threadInUse));
+						} else {
+							predecessors = Collections.singleton(state);
+							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState));
+						}
+						net.addTransition((LETTER) edge, predecessors, successors);
 					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
 					} else if (edge instanceof IIcfgJoinTransitionThreadOther) {
-						final IIcfgJoinTransitionThreadCurrent<?> current =
-								((IIcfgJoinTransitionThreadOther<?>) edge)
-										.getCorrespondingIIcfgJoinTransitionCurrentThread();
+						final IIcfgJoinTransitionThreadCurrent<?> current = ((IIcfgJoinTransitionThreadOther<?>) edge)
+								.getCorrespondingIIcfgJoinTransitionCurrentThread();
 						final IcfgLocation currentThreadLoc = current.getSource();
 						final IPredicate predCurrentThread = nodes2States.get(currentThreadLoc);
 						// if predCurrentThread is null, the position of the join in the calling
 						// thread is not reachable
 						if (predCurrentThread != null) {
-							net.addTransition((LETTER) edge,
-								new HashSet<>(Arrays.asList(new IPredicate[] { predCurrentThread, state })),
-								Collections.singleton(succState));
+							Set<IPredicate> predecessors;
+							Set<IPredicate> successors;
+							if (ADD_THREAD_USAGE_MONITORS) {
+								final String threadInstanceName = edge.getPrecedingProcedure();
+								final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
+								final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);
+								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state, threadInUse));
+								successors = new HashSet<>(Arrays.asList(succState, threadNotInUse));
+							} else {
+								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state));
+								successors = Collections.singleton(succState);
+							}
+							net.addTransition((LETTER) edge, predecessors, successors);
 						}
 					} else if (edge instanceof IIcfgCallTransition<?>) {
 						throw new UnsupportedOperationException(
