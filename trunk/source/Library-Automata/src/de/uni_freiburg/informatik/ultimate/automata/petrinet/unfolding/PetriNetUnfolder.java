@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -148,7 +149,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			}
 
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
+								+ " conditions, " + mUnfolding.getEvents().size() + " events, and "
+								+ mPossibleExtensions.size() + " possible extensions");
+				throw new AutomataOperationCanceledException(rti);
 			}
 		}
 	}
