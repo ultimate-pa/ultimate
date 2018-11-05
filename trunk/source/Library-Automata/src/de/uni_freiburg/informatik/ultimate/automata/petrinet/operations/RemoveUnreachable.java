@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
  * Removes unreachable nodes of a Petri Net preserving its behavior.
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *   <li> or accepting-places with a reachable predecessor transition,
  *   <li> or at most one accepting initial place without a reachable successor transition.
  * </ul>
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <LETTER>
@@ -77,31 +78,31 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
-	
+
 	/** {@link #mOperand} with only reachable transitions and required places. */
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	
+
 	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
-	
-	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand)
+
+	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, null);
 	}
-	
+
 	/**
 	 * Copies the reachable parts of a net.
-	 * 
+	 *
 	 * @param operand
 	 *     Petri net to be copied such that only reachable nodes remain.
 	 * @param reachableTransitions
 	 *     The reachable transitions (or a superset) of {@code operand}.
 	 *     Can be computed from an existing finite prefix using {@link #reachableTransitions(BranchingProcess)}
 	 *     or automatically when using {@link #RemoveUnreachable(AutomataLibraryServices, BoundedPetriNet)}.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException The operation was canceled
 	 */
-	public RemoveUnreachable(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
-			Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
+	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
+			final Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
@@ -109,10 +110,17 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	}
 
 	private Set<ITransition<LETTER, PLACE>> reachableTransitions() throws AutomataOperationCanceledException {
-		final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
-		return reachableTransitions(finPre);
+		try {
+			final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
+			return reachableTransitions(finPre);
+		} catch (final AutomataOperationCanceledException aoce) {
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "anayzing net that has "
+					+ mOperand.getPlaces().size() + " and " + mOperand.getTransitions().size() + " transistions.");
+			aoce.addRunningTaskInfo(rti);
+			throw aoce;
+		}
 	}
-	
+
 	/**
 	 * From a complete finite prefix compute the reachable transitions of the original Petri net.
 	 * A transition t is reachable iff there is a reachable marking enabling t.
@@ -120,7 +128,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	 * @return reachable transitions in N
 	 */
 	public static <LETTER, PLACE> Set<ITransition<LETTER, PLACE>> reachableTransitions(
-			BranchingProcess<LETTER, PLACE> finPre) {
+			final BranchingProcess<LETTER, PLACE> finPre) {
 		return finPre.getEvents().stream().map(Event::getTransition)
 				// finPre contains dummy root-event which does not correspond to any transition
 				.filter(Objects::nonNull)
@@ -136,7 +144,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
