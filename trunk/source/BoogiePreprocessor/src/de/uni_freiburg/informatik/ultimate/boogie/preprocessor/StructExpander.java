@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
@@ -143,6 +144,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @date 26.08.2012
  */
 public class StructExpander extends CachingBoogieTransformer implements IUnmanagedObserver {
+	private static final String ATTRIBUTE_EXPAND_STRUCT = "expand_struct";
+
 	/**
 	 * String holding a period / dot.
 	 */
@@ -726,10 +729,11 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			final IBoogieType retType = funDecl.getOutParam().getType().getBoogieType();
 			final BoogieType bt = flattenType(retType);
 			if (!(bt instanceof BoogieStructType)) {
+				// this checks if there are illegal { : expand_struct ""} attributes
+				processExpandStructAttribute(funDecl, 0, null);
 				// quick check, if processDeclaration can be used.
 				return new Declaration[] { processDeclaration(funDecl) };
 			}
-			// TODO: Consume {:expand-struct "id"} attributes
 			final BoogieStructType st = (BoogieStructType) bt;
 			final Declaration[] newDecls = new Declaration[st.getFieldCount()];
 			Expression[] bodies;
@@ -739,12 +743,14 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 				bodies = expandExpression(funDecl.getBody());
 			}
 			final VarList[] newInParams = processVarLists(funDecl.getInParams());
+			final Attribute[][] newAttribs = processExpandStructAttribute(funDecl, st.getFieldCount(), st);
 
 			for (int i = 0; i < newDecls.length; i++) {
 				final ILocation loc = funDecl.getOutParam().getLocation();
 				final VarList newOutParam =
 						new VarList(loc, funDecl.getOutParam().getIdentifiers(), st.getFieldType(i).toASTType(loc));
-				newDecls[i] = new FunctionDeclaration(funDecl.getLocation(), funDecl.getAttributes(),
+				assert newAttribs[i] != null;
+				newDecls[i] = new FunctionDeclaration(funDecl.getLocation(), newAttribs[i],
 						funDecl.getIdentifier() + DOT + st.getFieldIds()[i], funDecl.getTypeParams(), newInParams,
 						newOutParam, bodies[i]);
 			}
@@ -782,6 +788,111 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 		}
 	}
 
+	/**
+	 * Consume {:expand-struct "id"} attributes of a function by splitting the original attribute array into new ones
+	 * along the occurrences of {:expand-struct "id"} attributes.
+	 *
+	 * @param funDecl
+	 *            the declaration of the function
+	 * @param fieldCount
+	 *            the number of fields the return type of the function has
+	 * @param st
+	 *            The flattened return type of the function
+	 * @return A splitting of {@link Attribute}s
+	 */
+	private Attribute[][] processExpandStructAttribute(final FunctionDeclaration funDecl, final int fieldCount,
+			final BoogieStructType st) {
+		final Attribute[] attribs = funDecl.getAttributes();
+		if (fieldCount < 0) {
+			throw new IllegalArgumentException("negative field count");
+		}
+		if (attribs == null) {
+			final Attribute[][] rtr = new Attribute[fieldCount][0];
+			for (int i = 0; i < fieldCount; ++i) {
+				rtr[i] = null;
+			}
+			return rtr;
+		}
+		if (attribs.length == 0) {
+			final Attribute[][] rtr = new Attribute[fieldCount][0];
+			for (int i = 0; i < fieldCount; ++i) {
+				rtr[i] = new Attribute[0];
+			}
+			return rtr;
+		}
+		if (fieldCount == 0) {
+			if (Arrays.stream(attribs).filter(a -> a instanceof NamedAttribute).map(a -> ((NamedAttribute) a).getName())
+					.anyMatch(a -> a.equals(ATTRIBUTE_EXPAND_STRUCT))) {
+				throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
+						+ " attribute but no struct return type");
+			}
+			final Attribute[][] rtr = new Attribute[0][];
+			rtr[0] = funDecl.getAttributes();
+			return rtr;
+		}
+
+		final Attribute[][] rtr = new Attribute[fieldCount][];
+		int lastIdx = -1;
+		int rtrIdx = 0;
+		for (int i = 0; i < attribs.length; ++i) {
+			if (!(attribs[i] instanceof NamedAttribute)) {
+				continue;
+			}
+			final NamedAttribute namedAttrib = (NamedAttribute) attribs[i];
+			if (!ATTRIBUTE_EXPAND_STRUCT.equals(namedAttrib.getName())) {
+				continue;
+			}
+			if (lastIdx != -1) {
+				fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, rtrIdx, i);
+				rtrIdx++;
+
+			} else {
+				if (lastIdx == -1 && i != 0) {
+					throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " " + ATTRIBUTE_EXPAND_STRUCT
+							+ " attribute is not the first attribute; you will loose attributes");
+				}
+			}
+			lastIdx = i;
+		}
+		fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, rtrIdx, attribs.length);
+		rtrIdx++;
+
+		for (; rtrIdx < rtr.length; ++rtrIdx) {
+			rtr[rtrIdx] = new Attribute[0];
+		}
+		return rtr;
+	}
+
+	private void fillNextAttributeSegment(final FunctionDeclaration funDecl, final BoogieStructType st,
+			final Attribute[] attribs, final Attribute[][] rtr, final int lastIdx, final int rtrIdx, final int i) {
+		if (rtrIdx >= rtr.length) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has too many "
+					+ ATTRIBUTE_EXPAND_STRUCT + " attributes for its return type");
+		}
+		if (lastIdx == -1) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has no " + ATTRIBUTE_EXPAND_STRUCT
+					+ " attribute but struct return type");
+		}
+		// copy all attributes after lastIdx and before i into a new array and save it at rtr[rtrIdx]
+		final int newLength = i - lastIdx - 1;
+		final Attribute[] dest = new Attribute[newLength];
+		System.arraycopy(attribs, lastIdx + 1, dest, 0, newLength);
+		rtr[rtrIdx] = dest;
+
+		final String currentFieldId = st.getFieldIds()[rtrIdx];
+		final Expression expandStructArg = ((NamedAttribute) attribs[lastIdx]).getValues()[0];
+		if (!(expandStructArg instanceof StringLiteral)) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
+					+ " attribute but wrong attribute type");
+		}
+		final String expectedFieldName = ((StringLiteral) expandStructArg).getValue();
+		if (!currentFieldId.equals(expectedFieldName)) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
+					+ " attribute but field names and " + ATTRIBUTE_EXPAND_STRUCT + " names do not match: "
+					+ currentFieldId + " vs. " + expectedFieldName);
+		}
+	}
+
 	@Override
 	protected Statement processStatement(final Statement statement) {
 		final Statement rtr = super.processStatement(statement);
@@ -789,5 +900,18 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			mTranslator.addMapping(statement, rtr);
 		}
 		return rtr;
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	private static final class IllegalExpandStructUsageException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public IllegalExpandStructUsageException(final String msg) {
+			super(msg);
+		}
+
 	}
 }
