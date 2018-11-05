@@ -13,9 +13,10 @@ public class SystemState extends ProgramState<Expression> {
 	
 	private final Set<Expression> mInputVariables;
 	private final Map<Expression, Collection<Expression>> mReqLocations;
-	private final int mTime;
+	private final double mTime;
 
-	public SystemState(Map<Expression, Collection<Expression>> variable2Values, Set<Expression> inputVariables, Map<Expression, Collection<Expression>> reqLocations, int time) {
+	public SystemState(Map<Expression, Collection<Expression>> variable2Values, 
+			Set<Expression> inputVariables, Map<Expression, Collection<Expression>> reqLocations, double time) {
 		super(variable2Values);
 		mInputVariables = inputVariables;
 		mReqLocations = reqLocations;
@@ -38,7 +39,7 @@ public class SystemState extends ProgramState<Expression> {
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Integer.toString(mTime));
+		sb.append(Double.toString(mTime));
 		sb.append( " | " );
 		for(Expression e: getVariables()) {
 			if(isInput(e)) {

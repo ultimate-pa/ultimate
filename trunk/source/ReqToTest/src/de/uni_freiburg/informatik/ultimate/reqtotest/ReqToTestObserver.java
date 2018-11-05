@@ -63,21 +63,21 @@ public class ReqToTestObserver extends BaseObserver{
 
 		
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
-		final ReqSymbolTable symbolTable =  new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
-		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
+		final ReqSymbolTable reqSymbolTable =  new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(reqSymbolTable.constructVariableDeclarations(), mLogger);
 		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
-		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
-		if (symbolTable.getOutputVars().size() <= 0) {
-			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, symbolTable, cddToSmt);
+		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, reqSymbolTable);
+		if (reqSymbolTable.getOutputVars().size() <= 0) {
+			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, reqSymbolTable, cddToSmt);
 			reqToInOut.requirementToInOut(rawPatterns);
 		}
-		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, symbolTable);
-		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, threeValuedAuxVarGen, mScript, cddToSmt);
+		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, reqSymbolTable);
+		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, threeValuedAuxVarGen, mScript, cddToSmt, reqSymbolTable);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
-		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, symbolTable, threeValuedAuxVarGen, automata, mScript, mManagedScript);
+		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, threeValuedAuxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 		
-		mResultTransformer = new CounterExampleToTest(mLogger, mServices, symbolTable);
+		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable);
 		final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
 		mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
 		

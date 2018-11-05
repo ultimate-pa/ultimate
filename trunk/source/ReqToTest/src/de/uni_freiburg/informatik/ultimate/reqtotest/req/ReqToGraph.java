@@ -33,15 +33,18 @@ public class ReqToGraph {
 	private final ILogger mLogger;
 	
 	private final CddToSmt mCddToSmt;
+	private final ReqSymbolTable mReqSymbolTable;
 
 	private final ThreeValuedAuxVarGen mThreeValuedAuxVarGen;
 	private final Script mScript;
 	
-	public ReqToGraph(final ILogger logger, ThreeValuedAuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt){
+	public ReqToGraph(final ILogger logger, ThreeValuedAuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt,
+			ReqSymbolTable reqSymbolTable){
 		mLogger = logger;
 		mThreeValuedAuxVarGen = threeValuedAuxVarGen;
 		mCddToSmt = cddToSmt;
 		mScript = script;
+		mReqSymbolTable = reqSymbolTable;
 		
 	}
 	
@@ -49,10 +52,21 @@ public class ReqToGraph {
 		final List<ReqGuardGraph> gs = new ArrayList<ReqGuardGraph>();
 		for (PatternType pattern: patternList) {
 			if (! (pattern instanceof InitializationPattern)){
-				gs.add(patternToTestAutomaton(pattern));
+				ReqGuardGraph aut = patternToTestAutomaton(pattern);
+				if(aut != null) {
+					gs.add(aut);
+				}
 			}
 		}
 		return gs;
+	}
+	
+	private Term getDurationTerm(String duration) {
+		if (mReqSymbolTable.isConstVar(duration)) {
+			return mScript.variable(duration, mScript.sort("Real"));
+		} else {
+			return mScript.decimal(duration);
+		}
 	}
 	
 	 
@@ -106,10 +120,10 @@ public class ReqToGraph {
 			final String durationEffect = pattern.getDuration().get(1);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
-			Term triggerLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(durationTrigger));
-			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(durationTrigger));	
-			Term effectLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(durationEffect));
-			Term effectEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(durationEffect));
+			Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(durationTrigger));
+			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(durationTrigger));	
+			Term effectLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(durationEffect));
+			Term effectEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(durationEffect));
 					//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
@@ -132,7 +146,8 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -154,8 +169,8 @@ public class ReqToGraph {
 			final String duration = pattern.getDuration().get(0);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
-			Term triggerLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(duration));
-			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(duration));	
+			Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
+			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));	
 					//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
@@ -181,7 +196,8 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -201,8 +217,8 @@ public class ReqToGraph {
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			final String duration = pattern.getDuration().get(0);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
-			Term clockGuard = SmtUtils.leq(mScript, clockIdent, mScript.numeral(duration));	
-			Term clockGuardGeq = SmtUtils.greater(mScript, clockIdent, mScript.numeral(duration));	
+			Term clockGuard = SmtUtils.leq(mScript, clockIdent, getDurationTerm(duration));	
+			Term clockGuardGeq = SmtUtils.greater(mScript, clockIdent, getDurationTerm(duration));	
 					//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
@@ -224,7 +240,8 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -248,9 +265,9 @@ public class ReqToGraph {
 			final String duration = pattern.getDuration().get(0);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
-			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(duration));
-			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(duration));	
-			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, mScript.numeral(duration));
+			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
+			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));	
+			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, getDurationTerm(duration));
 			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
@@ -306,9 +323,9 @@ public class ReqToGraph {
 			final String duration = pattern.getDuration().get(0);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q1);
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
-			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, mScript.numeral(duration));
-			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, mScript.numeral(duration));	
-			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, mScript.numeral(duration));
+			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
+			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));	
+			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, getDurationTerm(duration));
 			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q1);
 			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q1);
@@ -355,7 +372,8 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -384,7 +402,8 @@ public class ReqToGraph {
 					SmtUtils.and(mScript, S, uS, ndS))));
 			return q0;
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -403,7 +422,8 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
 			return q0;
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -423,7 +443,8 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nS, dS)));
 			return q0;
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	
@@ -464,7 +485,8 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			throw new RuntimeException("Scope not implemented: " + pattern.getScope().toString());
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
 		}
 	}
 	

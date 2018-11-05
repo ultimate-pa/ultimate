@@ -21,6 +21,8 @@ public class ThreeValuedAuxVarGen {
 	
 	private final Sort mSortBool;
 	private final Sort mSortInt;
+	private final Sort mSortReal;
+	
 	
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
@@ -47,6 +49,7 @@ public class ThreeValuedAuxVarGen {
 		mReqToId = new LinkedHashMap<>();
 		mSortBool = mScript.sort("Bool");
 		mSortInt = mScript.sort("Int");
+		mSortReal = mScript.sort("Real");
 	}
 	
 	
@@ -108,8 +111,8 @@ public class ThreeValuedAuxVarGen {
 	
 	public TermVariable generateClockIdent(ReqGuardGraph req) {
 		final String auxIdent = "t_" + Integer.toString(getReqToId(req));
-		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_INT);
-		return mScript.variable(auxIdent,  mSortInt);
+		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_REAL);
+		return mScript.variable(auxIdent,  mSortReal);
 	}
 	
 	private Term createUseTerm(TermVariable ident) {
@@ -155,8 +158,12 @@ public class ThreeValuedAuxVarGen {
 		final List<Term> guards = new ArrayList<>();
 		for(TermVariable var: mVariableToUseTerm.keySet()) {
 			final Term usevar = mVariableToUseTerm.get(var);
-			final Term define = SmtUtils.or(mScript, mVariableToDefineTerm.get(var));
-			guards.add(SmtUtils.binaryBooleanEquality(mScript,usevar ,define ));		
+			if (mVariableToDefineTerm.containsKey(var)) {
+				final Term define = SmtUtils.or(mScript, mVariableToDefineTerm.get(var));
+				guards.add(SmtUtils.binaryBooleanEquality(mScript, usevar, define));	
+			} else {
+				guards.add(SmtUtils.not(mScript, usevar));
+			}
 		}
 		return guards;
 	}

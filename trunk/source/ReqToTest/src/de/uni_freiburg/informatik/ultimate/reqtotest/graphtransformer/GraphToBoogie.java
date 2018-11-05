@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -191,7 +192,7 @@ public class GraphToBoogie {
 		Statement[] body;
 		Statement setPcNextState = createVarIntAssignment(mGraphToPrimePc.get(graph), successor.getLabel());
 		if (label.getReset() != null) {
-			Statement resetClock = createVarIntAssignment(label.getReset().getName(),0);
+			Statement resetClock = createVarRealAssignment(label.getReset().getName(), 0.0f);
 			body = new Statement[] {resetClock, setPcNextState};
 		} else {
 			body = new Statement[] {setPcNextState};
@@ -221,7 +222,7 @@ public class GraphToBoogie {
 		VarList[] varListPrimed = new VarList[] { new VarList(mDummyLocation, identsPrimed,  BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varListPrimed));
 		//add encoding variable "delta"
-		varList = new VarList[] { new VarList(mDummyLocation, new String[] {"delta"},  BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
+		varList = new VarList[] { new VarList(mDummyLocation, new String[] {"delta"},  BoogieType.TYPE_REAL.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varList));
 		return statements;
 	}
@@ -243,6 +244,12 @@ public class GraphToBoogie {
 	private Statement createVarIntAssignment(String asignee, int value) {
 		final LeftHandSide[] lhs = new LeftHandSide[] {new VariableLHS(mDummyLocation, asignee)};
 		final Expression[] rhs = new Expression[] {new IntegerLiteral(mDummyLocation, Integer.toString(value))};
+		return new AssignmentStatement(mDummyLocation,lhs,rhs );
+	}
+	
+	private Statement createVarRealAssignment(String asignee, float value) {
+		final LeftHandSide[] lhs = new LeftHandSide[] {new VariableLHS(mDummyLocation, asignee)};
+		final Expression[] rhs = new Expression[] {new RealLiteral(mDummyLocation, Float.toString(value))};
 		return new AssignmentStatement(mDummyLocation,lhs,rhs );
 	}
 	
@@ -293,9 +300,9 @@ public class GraphToBoogie {
 	private List<Statement> generateClockInitialization() {
 		final List<Statement> statements = new ArrayList<>();
 		for(String clock: mSymbolTable.getClockVars()) {
-			statements.add(createVarIntAssignment(clock, 0));
+			statements.add(createVarRealAssignment(clock, 0.0f));
 		}
-		statements.add(createVarIntAssignment("delta", 0));
+		statements.add(createVarRealAssignment("delta", 0.0f));
 		return statements;
 	}
 	
@@ -336,7 +343,7 @@ public class GraphToBoogie {
 				new VariableLHS[] {new VariableLHS(mDummyLocation, "delta")} ));
 		stmts.add(new AssumeStatement(mDummyLocation,
 				new BinaryExpression(mDummyLocation, BinaryExpression.Operator.COMPGT,
-						new IdentifierExpression(mDummyLocation, "delta"), new IntegerLiteral(mDummyLocation, "0"))
+						new IdentifierExpression(mDummyLocation, "delta"), new RealLiteral(mDummyLocation, "1.0"))
 				));
 		for(String clockVar: mSymbolTable.getClockVars()) {
 			stmts.add(new AssignmentStatement(mDummyLocation, new VariableLHS[] {new VariableLHS(mDummyLocation, clockVar)},

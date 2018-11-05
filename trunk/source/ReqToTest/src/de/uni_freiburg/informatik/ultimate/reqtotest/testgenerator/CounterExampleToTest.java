@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -80,7 +81,7 @@ public class CounterExampleToTest {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
 		LinkedHashSet<Expression> inputs = new LinkedHashSet<>();
 		LinkedHashMap<Expression, Collection<Expression>> reqLocations = new LinkedHashMap<>();
-		int i = 0;
+		double i = 0.0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
 				mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
@@ -94,8 +95,8 @@ public class CounterExampleToTest {
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals("delta")){
-					IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-					i =  Integer.parseInt(ilit.getValue());
+				RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+					i =  Double.parseDouble(ilit.getValue());
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().startsWith("reqtotest_pc") && 

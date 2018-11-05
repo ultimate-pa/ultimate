@@ -154,8 +154,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		final BoogiePrimitiveType type = toPrimitiveType(init.getType());
 		final String name = init.getId();
 		if (type == BoogieType.TYPE_ERROR) {
-			//addTypeError(name, new TypeErrorInfo(TypeErrorType.NONE_TYPE, init));
-			return;
+			throw new RuntimeException("Variable has not Type: " + init.toString());
 		}
 
 		if (init.getCategory() == VariableCategory.CONST) {
