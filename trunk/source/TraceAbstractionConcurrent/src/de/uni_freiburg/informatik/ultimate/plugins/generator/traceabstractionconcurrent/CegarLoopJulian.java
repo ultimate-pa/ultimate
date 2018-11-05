@@ -208,16 +208,17 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 				abstraction, dia).getResult();
 
-		if (mRemoveUnreachable) {
-			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable(
-					new AutomataLibraryServices(mServices), (BoundedPetriNet) mAbstraction).getResult();
-		}
-
 		if (mPref.dumpAutomata()) {
 			// TODO Matthias: Iteration should probably added to TaskIdentifier
 			final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_AbstractionAfterDifference";
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
+
+		if (mRemoveUnreachable) {
+			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable(
+					new AutomataLibraryServices(mServices), (BoundedPetriNet) mAbstraction).getResult();
+		}
+
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
