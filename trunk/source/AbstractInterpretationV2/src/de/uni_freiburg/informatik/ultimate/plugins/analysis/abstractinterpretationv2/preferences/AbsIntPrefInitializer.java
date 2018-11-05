@@ -83,6 +83,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
+	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH =
+			"Maximum recursion depth of evaluation operations";
 	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN =
 			"Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
@@ -96,6 +98,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
+	public static final int DEF_MAX_EVALUATION_RECURSION_DEPTH = -1;
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
@@ -120,6 +123,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE, PreferenceType.Integer,
 				new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+		rtr.add(new UltimatePreferenceItem<>(LABEL_MAX_EVALUATION_RECURSION_DETPH, DEF_MAX_EVALUATION_RECURSION_DEPTH,
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 100000)));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
 				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,

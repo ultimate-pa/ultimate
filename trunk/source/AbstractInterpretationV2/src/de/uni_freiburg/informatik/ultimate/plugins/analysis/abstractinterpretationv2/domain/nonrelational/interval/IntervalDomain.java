@@ -121,8 +121,9 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+			final int maxRecursionDepth = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_EVALUATION_RECURSION_DETPH);
 			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
-					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
+					maxRecursionDepth, mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
 		return mPostOperator;
 	}

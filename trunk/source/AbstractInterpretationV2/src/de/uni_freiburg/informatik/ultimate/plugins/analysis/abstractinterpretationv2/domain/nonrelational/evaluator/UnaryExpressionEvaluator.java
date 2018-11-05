@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -54,24 +55,31 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		implements INAryEvaluator<VALUE, STATE> {
 
 	private final EvaluatorLogger mLogger;
-	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
 	private IEvaluator<VALUE, STATE> mSubEvaluator;
 	private Operator mOperator;
+	private final int mMaxRecursionDepth;
+	private final VALUE mTopValue;
 
-	public UnaryExpressionEvaluator(final EvaluatorLogger logger,
+	public UnaryExpressionEvaluator(final EvaluatorLogger logger, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
-		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mMaxRecursionDepth = maxRecursionDepth;
+		mTopValue = nonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
 		assert currentState != null;
+
+		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
+			return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
+		}
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final Collection<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> subResults =
+				mSubEvaluator.evaluate(currentState, currentRecursion + 1);
 
 		for (final IEvaluationResult<VALUE> subResult : subResults) {
 			final VALUE returnValue;
@@ -84,12 +92,12 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				break;
 			case LOGICNEG:
 				returnBool = subResult.getBooleanValue().neg();
-				returnValue = mNonrelationalValueFactory.createTopValue();
+				returnValue = mTopValue;
 				break;
 			default:
 				mLogger.warnUnknownOperator(mOperator);
 				returnBool = BooleanValue.TOP;
-				returnValue = mNonrelationalValueFactory.createTopValue();
+				returnValue = mTopValue;
 				break;
 			}
 
@@ -104,7 +112,13 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
+			final int currentRecursion) {
+
+		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
+			return Collections.singletonList(currentState);
+		}
+
 		VALUE evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
 
@@ -123,7 +137,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		final NonrelationalEvaluationResult<VALUE> evalResult =
 				new NonrelationalEvaluationResult<>(evalValue, evalBool);
 		mLogger.logInverseEvaluation(mOperator, evalResult, computedValue);
-		return mSubEvaluator.inverseEvaluate(evalResult, currentState);
+		return mSubEvaluator.inverseEvaluate(evalResult, currentState, currentRecursion + 1);
 	}
 
 	@Override

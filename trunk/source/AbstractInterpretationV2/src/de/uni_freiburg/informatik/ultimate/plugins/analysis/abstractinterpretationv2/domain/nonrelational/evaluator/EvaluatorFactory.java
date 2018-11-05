@@ -57,15 +57,17 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	private static final int BUFFER_MAX = 100;
 
 	private final int mMaxParallelStates;
+	private final int mMaxRecursionDepth;
 	private final EvaluatorLogger mEvalLogger;
 
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	private final Function<String, VALUE> mSingletonValueExpressionEvaluatorCreator;
 
-	public EvaluatorFactory(final ILogger logger, final int maxParallelStates,
+	public EvaluatorFactory(final ILogger logger, final int maxParallelStates, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Function<String, VALUE> singletonValueEvaluatorCreator) {
 		mMaxParallelStates = maxParallelStates;
+		mMaxRecursionDepth = maxRecursionDepth;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mSingletonValueExpressionEvaluatorCreator = singletonValueEvaluatorCreator;
 		mEvalLogger = new EvaluatorLogger(logger);
@@ -77,9 +79,10 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new UnaryExpressionEvaluator<>(mEvalLogger, mNonrelationalValueFactory);
+			return new UnaryExpressionEvaluator<>(mEvalLogger, mMaxRecursionDepth, mNonrelationalValueFactory);
 		case ARITY_MAX:
-			return new BinaryExpressionEvaluator<>(mEvalLogger, type, mMaxParallelStates, mNonrelationalValueFactory);
+			return new BinaryExpressionEvaluator<>(mEvalLogger, type, mMaxParallelStates, mMaxRecursionDepth,
+					mNonrelationalValueFactory);
 		default:
 			throw new UnsupportedOperationException(new StringBuilder(BUFFER_MAX).append("Arity of ").append(arity)
 					.append(" is not implemented.").toString());
@@ -94,7 +97,7 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 
 	@Override
 	public IEvaluator<VALUE, STATE> createConditionalEvaluator() {
-		return new ConditionalEvaluator<>(mNonrelationalValueFactory);
+		return new ConditionalEvaluator<>(mMaxRecursionDepth, mNonrelationalValueFactory);
 	}
 
 	@Override

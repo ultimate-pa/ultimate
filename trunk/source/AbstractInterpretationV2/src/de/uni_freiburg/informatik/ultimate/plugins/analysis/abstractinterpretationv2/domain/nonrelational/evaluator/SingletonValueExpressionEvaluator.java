@@ -66,13 +66,14 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
 		assert currentState != null;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mValue, BooleanValue.TOP));
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
+			final int currentRecursion) {
 		assert computedValue != null;
 		assert currentState != null;
 		return Collections.singletonList(currentState);

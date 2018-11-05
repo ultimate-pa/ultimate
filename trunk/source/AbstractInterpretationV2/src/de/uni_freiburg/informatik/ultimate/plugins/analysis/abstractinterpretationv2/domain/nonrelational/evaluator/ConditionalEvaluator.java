@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -52,35 +53,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
 		implements IEvaluator<VALUE, STATE> {
 
-	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
+	private final int mMaxRecursionDepth;
+	private final VALUE mTopValue;
 
 	private IEvaluator<VALUE, STATE> mConditionEvaluator;
 	private IEvaluator<VALUE, STATE> mNegatedConditionEvaluator;
 	private IEvaluator<VALUE, STATE> mIfEvaluator;
 	private IEvaluator<VALUE, STATE> mElseEvaluator;
 
-	public ConditionalEvaluator(final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		mNonrelationalValueFactory = nonrelationalValueFactory;
+	public ConditionalEvaluator(final int maxRecursionDepth,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		mMaxRecursionDepth = maxRecursionDepth;
+		mTopValue = nonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
 		assert currentState != null;
+
+		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
+			return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
+		}
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final Collection<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> conditionResult =
+				mConditionEvaluator.evaluate(currentState, currentRecursion + 1);
 		final Collection<IEvaluationResult<VALUE>> negatedConditionResult =
-				mNegatedConditionEvaluator.evaluate(currentState);
+				mNegatedConditionEvaluator.evaluate(currentState, currentRecursion + 1);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
-			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates =
+					mConditionEvaluator.inverseEvaluate(cond, currentState, currentRecursion + 1);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final Collection<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> trueResult =
+							mIfEvaluator.evaluate(conditionState, currentRecursion + 1);
 
 					for (final IEvaluationResult<VALUE> ifRes : trueResult) {
 						if (!ifRes.getValue().isBottom() && !ifRes.getBooleanValue().isBottom()) {
@@ -97,13 +108,15 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		}
 
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
-			final Collection<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates =
+					mNegatedConditionEvaluator.inverseEvaluate(cond, currentState, currentRecursion + 1);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final Collection<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> falseResult =
+							mElseEvaluator.evaluate(conditionState, currentRecursion + 1);
 
 					for (final IEvaluationResult<VALUE> elseRes : falseResult) {
 						if (!elseRes.getValue().isBottom() && !elseRes.getBooleanValue().isBottom()) {
@@ -120,35 +133,41 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		}
 
 		if (returnList.isEmpty()) {
-			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(),
-					BooleanValue.FALSE));
+			returnList.add(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.FALSE));
 		}
 
 		return NonrelationalUtils.mergeIfNecessary(returnList, 1);
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
-		assert computedValue != null;
-		assert currentState != null;
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
+			final int currentRecursion) {
+
+		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
+			return Collections.singletonList(currentState);
+		}
 
 		final Collection<STATE> returnList = new ArrayList<>();
 
-		final Collection<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> conditionResult =
+				mConditionEvaluator.evaluate(currentState, currentRecursion + 1);
 		final Collection<IEvaluationResult<VALUE>> negatedConditionResult =
-				mNegatedConditionEvaluator.evaluate(currentState);
+				mNegatedConditionEvaluator.evaluate(currentState, currentRecursion + 1);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
-			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates =
+					mConditionEvaluator.inverseEvaluate(cond, currentState, currentRecursion + 1);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final Collection<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> trueResult =
+							mIfEvaluator.evaluate(conditionState, currentRecursion + 1);
 
 					for (final IEvaluationResult<VALUE> t : trueResult) {
-						final Collection<STATE> ifStates = mIfEvaluator.inverseEvaluate(t, conditionState);
+						final Collection<STATE> ifStates =
+								mIfEvaluator.inverseEvaluate(t, conditionState, currentRecursion + 1);
 
 						for (final STATE ifState : ifStates) {
 							if (!ifState.isBottom()) {
@@ -165,16 +184,19 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		}
 
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
-			final Collection<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
+			final Collection<STATE> conditionStates =
+					mNegatedConditionEvaluator.inverseEvaluate(cond, currentState, currentRecursion + 1);
 
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final Collection<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> falseResult =
+							mElseEvaluator.evaluate(conditionState, currentRecursion + 1);
 
 					for (final IEvaluationResult<VALUE> f : falseResult) {
-						final Collection<STATE> elseStates = mElseEvaluator.inverseEvaluate(f, conditionState);
+						final Collection<STATE> elseStates =
+								mElseEvaluator.inverseEvaluate(f, conditionState, currentRecursion + 1);
 
 						for (final STATE elseState : elseStates) {
 							if (!elseState.isBottom()) {

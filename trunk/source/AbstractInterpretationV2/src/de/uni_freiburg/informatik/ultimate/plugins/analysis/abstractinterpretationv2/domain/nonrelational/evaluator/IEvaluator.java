@@ -54,9 +54,11 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *
 	 * @param currentState
 	 *            The originating state to evaluate from.
+	 * @param currentRecursion
+	 *            States the current number of recursions. Upon calling this method, the value should always be 0.
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
-	Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
+	Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion);
 
 	/**
 	 * Computes the inverse of {@link #evaluate(IAbstractState)} relative to some result of
@@ -68,9 +70,12 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *            The result of an earlier application of evaluate to <code>state</code>.
 	 * @param state
 	 *            The state on which the inverseEvaluation should be applied.
+	 * @param currentRecursion
+	 *            States the current number of recursions. Upon calling this method, the value should always be 0.
 	 * @return The result of the inverse application of the evaluate function.
 	 */
-	Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state);
+	Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state,
+			final int currentRecursion);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.

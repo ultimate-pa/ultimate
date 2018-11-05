@@ -45,10 +45,10 @@ public class IntervalPostOperator extends NonrelationalPostOperator<IntervalDoma
 
 	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
-			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit) {
-		super(logger, symbolTable, bpl2SmtSymbolTable,
-				new IntervalDomainStatementProcessor(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates),
-				maxParallelStates, boogie2Smt, cfgSmtToolkit);
+			final int maxRecursionDepth, final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit) {
+		super(logger, symbolTable, bpl2SmtSymbolTable, new IntervalDomainStatementProcessor(logger, symbolTable,
+				bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth), maxParallelStates, boogie2Smt,
+				cfgSmtToolkit);
 	}
 
 }

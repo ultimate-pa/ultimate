@@ -69,7 +69,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
 		assert currentState != null;
 
 		// Return a top value since functions cannot be handled, yet.
@@ -78,7 +78,8 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
+			final int currentRecursion) {
 		assert currentState != null;
 		return Collections.singletonList(currentState);
 	}

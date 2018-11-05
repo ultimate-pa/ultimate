@@ -52,13 +52,14 @@ public class CongruenceDomainStatementProcessor
 		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
 
 	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
-		super(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
+		super(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
 	}
 
 	@Override
 	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState>
-			createEvaluatorFactory(final int maxParallelStates) {
+			createEvaluatorFactory(final int maxParallelStates, final int maxRecursionDepth) {
 		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator =
 				(value, type) -> {
 					assert value != null;
@@ -69,7 +70,7 @@ public class CongruenceDomainStatementProcessor
 					assert type == BigDecimal.class;
 					return CongruenceDomainValue.createTop();
 				};
-		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new CongruenceValueFactory(),
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, maxRecursionDepth, new CongruenceValueFactory(),
 				singletonValueExpressionEvaluatorCreator);
 	}
 

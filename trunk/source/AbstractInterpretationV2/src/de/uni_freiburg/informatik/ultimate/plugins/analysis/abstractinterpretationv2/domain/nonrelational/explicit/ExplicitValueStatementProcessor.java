@@ -47,13 +47,14 @@ public class ExplicitValueStatementProcessor
 		extends NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> {
 
 	protected ExplicitValueStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
-		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
+		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
 	}
 
 	@Override
 	protected IEvaluatorFactory<BaseExplicitValueValue, ExplicitValueState>
-			createEvaluatorFactory(final int maxParallelStates) {
+			createEvaluatorFactory(final int maxParallelStates, final int maxRecursionDepth) {
 
 		final EvaluatorFactory.Function<String, BaseExplicitValueValue> valueExpressionEvaluatorCreator =
 				(value, type) -> new ExplicitValueValue(Rational.valueOf(new BigInteger(value), BigInteger.ONE));
@@ -70,7 +71,8 @@ public class ExplicitValueStatementProcessor
 						return ExplicitValueBottom.DEFAULT;
 					}
 				};
-		return new EvaluatorFactory<>(getLogger(), maxParallelStates, valueFac, valueExpressionEvaluatorCreator);
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, maxRecursionDepth, valueFac,
+				valueExpressionEvaluatorCreator);
 	}
 
 	@Override

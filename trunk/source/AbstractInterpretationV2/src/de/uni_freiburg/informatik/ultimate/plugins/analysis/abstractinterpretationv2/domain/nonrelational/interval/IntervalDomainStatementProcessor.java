@@ -47,16 +47,17 @@ public class IntervalDomainStatementProcessor
 		extends NonrelationalStatementProcessor<IntervalDomainState, IntervalDomainValue> {
 
 	protected IntervalDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
-		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
+		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
 	}
 
 	@Override
 	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState>
-			createEvaluatorFactory(final int maxParallelStates) {
+			createEvaluatorFactory(final int maxParallelStates, final int maxRecursionDepth) {
 		final EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator =
 				(value, type) -> new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value));
-		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new IntervalValueFactory(),
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, maxRecursionDepth, new IntervalValueFactory(),
 				valueExpressionEvaluatorCreator);
 	}
 

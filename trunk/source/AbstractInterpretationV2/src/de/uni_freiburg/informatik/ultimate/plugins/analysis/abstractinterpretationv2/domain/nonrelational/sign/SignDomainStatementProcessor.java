@@ -46,18 +46,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class SignDomainStatementProcessor extends NonrelationalStatementProcessor<SignDomainState, SignDomainValue> {
 
 	protected SignDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider mIcfgSymbolTable, final int maxParallelStates) {
-		super(logger, symbolTable, mIcfgSymbolTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider mIcfgSymbolTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
+		super(logger, symbolTable, mIcfgSymbolTable, maxParallelStates, maxRecursionDepth);
 	}
 
 	@Override
-	protected IEvaluatorFactory<SignDomainValue, SignDomainState> createEvaluatorFactory(final int maxParallelStates) {
+	protected IEvaluatorFactory<SignDomainValue, SignDomainState> createEvaluatorFactory(final int maxParallelStates,
+			final int maxRecursionDepth) {
 		final EvaluatorFactory.Function<String, SignDomainValue> singletonValueExpressionEvaluatorCreator =
 				(value, type) -> {
 					// TODO: Create proper value from string here!
 					return new SignDomainValue();
 				};
-		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new SignValueFactory(),
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, maxRecursionDepth, new SignValueFactory(),
 				singletonValueExpressionEvaluatorCreator);
 	}
 }

@@ -112,14 +112,15 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private boolean mOldScope;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mOldScope = false;
 		mLogger = logger;
 		mLhsVariable = null;
 		mNormalizedExpressionCache = new HashMap<>();
-		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates);
+		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
 		mEvaluatorCache = new HashMap<>();
 		assert mEvaluatorFactory != null;
 	}
@@ -202,7 +203,18 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return newExpr;
 	}
 
-	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates);
+	/**
+	 * Creates an evaluator factory for evaluators.
+	 *
+	 * @param maxParallelStates
+	 *            The maximum number of allowed parallel states before merging.
+	 * @param maxRecursionDepth
+	 *            The maximum number of recursion allowed during evaluation. The value -1 indicates that <b>no</b> limit
+	 *            should be used.
+	 * @return
+	 */
+	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates,
+			final int maxRecursionDepth);
 
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.
@@ -307,7 +319,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			mEvaluatorCache.put(rhs, mExpressionEvaluator);
 		}
 
-		final Collection<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate);
+		final Collection<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate, 0);
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
@@ -360,7 +372,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			mEvaluatorCache.put(formula, mExpressionEvaluator);
 		}
 
-		final Collection<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+		final Collection<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState, 0);
 
 		for (final IEvaluationResult<V> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
@@ -372,7 +384,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
 				// states. Otherwise, the return state will be bottom.
 				final Collection<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
-						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
+						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState, 0);
 				mReturnState.addAll(
 						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
 			}
