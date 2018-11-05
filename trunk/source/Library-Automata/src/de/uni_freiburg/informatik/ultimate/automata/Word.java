@@ -43,6 +43,10 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *            symbol type
  */
 public class Word<LETTER> implements Iterable<LETTER> {
+
+	private static final String QUOTE_SPACE = "\" ";
+	private static final char QUOTE = '\"';
+
 	/**
 	 * The word.
 	 */
@@ -112,7 +116,9 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		final StringBuilder builder = new StringBuilder();
 		builder.append('[');
 		for (int i = 0; i < length(); i++) {
+			builder.append(QUOTE);
 			builder.append(getSymbol(i));
+			builder.append(QUOTE_SPACE);
 		}
 		builder.append(']');
 		return builder.toString();
