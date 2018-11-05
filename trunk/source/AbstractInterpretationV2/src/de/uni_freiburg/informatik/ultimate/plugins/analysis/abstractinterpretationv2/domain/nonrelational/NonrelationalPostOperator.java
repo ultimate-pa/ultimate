@@ -199,7 +199,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			returnList.add(returnState);
 		}
-		return addOldvars(NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates),
+		return addOldvars(new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates)),
 				callInfo.getOldVarAssign(stateAfterLeaving.getVariables()));
 	}
 
@@ -316,7 +316,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		// add oldvars
-		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
+		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates));
 	}
 
 	private List<STATE> applyInputParamExpressions(final STATE stateAfterLeaving, final CallStatement correspondingCall,
@@ -376,7 +376,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			return currentStates;
 		}
 
-		return NonrelationalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
+		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(currentStates, mParallelStates));
 	}
 
 	private static CallStatement getCorrespondingCall(final IcfgEdge transition) {
@@ -411,7 +411,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			postStates.addAll(mStatementProcessor.process(pendingPostState, oldVarAssign));
 		}
 
-		return NonrelationalUtils.mergeStatesIfNecessary(postStates, mParallelStates);
+		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(postStates, mParallelStates));
 	}
 
 	private Procedure getProcedure(final String procedureName) {

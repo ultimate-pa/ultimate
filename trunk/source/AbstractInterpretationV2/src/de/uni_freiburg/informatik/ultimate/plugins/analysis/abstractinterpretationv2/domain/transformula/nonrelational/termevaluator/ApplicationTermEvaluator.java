@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -105,10 +106,10 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 
 		assert !returnList.isEmpty();
-		return mergeResult(returnList);
+		return new ArrayList<>(mergeResult(returnList));
 	}
 
-	private List<IEvaluationResult<VALUE>> mergeResult(final List<IEvaluationResult<VALUE>> returnList) {
+	private Collection<IEvaluationResult<VALUE>> mergeResult(final Collection<IEvaluationResult<VALUE>> returnList) {
 		if (mOperator == LOGICNEG) {
 			return NonrelationalUtils.mergeIfNecessary(returnList, 2);
 		}

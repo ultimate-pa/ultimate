@@ -28,9 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
@@ -58,8 +59,8 @@ public final class NonrelationalUtils {
 	 *            The largest allowed number of singular {@link IntervalDomainValue}s in the list.
 	 * @return A new list that contains the result of merging all {@link IntervalDomainValue}s in the given list.
 	 */
-	public static <V extends INonrelationalValue<V>> List<IEvaluationResult<V>>
-			mergeIfNecessary(final List<IEvaluationResult<V>> results, final int maxParallelStates) {
+	public static <V extends INonrelationalValue<V>> Collection<IEvaluationResult<V>>
+			mergeIfNecessary(final Collection<IEvaluationResult<V>> results, final int maxParallelStates) {
 		if (results.size() <= maxParallelStates) {
 			return results;
 		}
@@ -76,8 +77,8 @@ public final class NonrelationalUtils {
 	 *            The largest allowed number of singular {@link IntervalDomainState}s in the given list.
 	 * @return A new list that contains the result of merging all {@link IntervalDomainState}s in the given list.
 	 */
-	public static <STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>> List<STATE>
-			mergeStatesIfNecessary(final List<STATE> results, final int maxParallelStates) {
+	public static <STATE extends IAbstractState<STATE>> Collection<STATE>
+			mergeStatesIfNecessary(final Collection<STATE> results, final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(NonrelationalUtils::merge).get());
 		}
@@ -90,8 +91,7 @@ public final class NonrelationalUtils {
 				a.getBooleanValue().merge(b.getBooleanValue()));
 	}
 
-	private static <STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>> STATE
-			merge(final STATE a, final STATE b) {
+	private static <STATE extends IAbstractState<STATE>> STATE merge(final STATE a, final STATE b) {
 		return a.union(b);
 	}
 }

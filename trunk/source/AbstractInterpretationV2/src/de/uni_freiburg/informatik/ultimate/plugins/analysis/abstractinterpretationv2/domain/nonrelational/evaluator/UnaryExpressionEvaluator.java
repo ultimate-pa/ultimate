@@ -70,7 +70,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
+		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		final List<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
 
@@ -101,7 +101,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 
 		assert !returnList.isEmpty();
-		return NonrelationalUtils.mergeIfNecessary(returnList, 2);
+		return new ArrayList<>(NonrelationalUtils.mergeIfNecessary(returnList, 2));
 	}
 
 	@Override

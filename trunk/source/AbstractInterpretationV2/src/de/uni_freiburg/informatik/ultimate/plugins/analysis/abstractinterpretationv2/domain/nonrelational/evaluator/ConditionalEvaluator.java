@@ -124,18 +124,19 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					BooleanValue.FALSE));
 		}
 
-		return NonrelationalUtils.mergeIfNecessary(returnList, 1);
+		return new ArrayList<>(NonrelationalUtils.mergeIfNecessary(returnList, 1));
 	}
 
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
 
-		final List<STATE> returnList = new ArrayList<>();
+		final Collection<STATE> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
-		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> negatedConditionResult =
+				mNegatedConditionEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
 			final Collection<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
@@ -144,7 +145,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> t : trueResult) {
 						final Collection<STATE> ifStates = mIfEvaluator.inverseEvaluate(t, conditionState);
@@ -170,7 +171,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
-					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
+					final Collection<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
 
 					for (final IEvaluationResult<VALUE> f : falseResult) {
 						final Collection<STATE> elseStates = mElseEvaluator.inverseEvaluate(f, conditionState);
@@ -192,7 +193,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			returnList.add(currentState.bottomState());
 		}
 
-		return NonrelationalUtils.mergeStatesIfNecessary(returnList, 1);
+		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(returnList, 1));
 	}
 
 	@Override

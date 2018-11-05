@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStateUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
@@ -84,23 +84,23 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
+		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final List<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final Collection<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				final List<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
+				final Collection<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
 				mLogger.logEvaluation(mOperator, result, res1, res2);
 				returnList.addAll(result);
 			}
 		}
 		assert !returnList.isEmpty();
-		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
+		return new ArrayList<>(NonrelationalUtils.mergeIfNecessary(returnList, mMaxParallelSates));
 	}
 
-	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
+	private Collection<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 
 		final VALUE firstValue = first.getValue();
@@ -228,8 +228,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		final VALUE evalResultValue = evalResult.getValue();
 		final BooleanValue evalResultBool = evalResult.getBooleanValue();
 
-		final List<IEvaluationResult<VALUE>> leftValues = mLeftSubEvaluator.evaluate(oldState);
-		final List<IEvaluationResult<VALUE>> rightValues = mRightSubEvaluator.evaluate(oldState);
+		final Collection<IEvaluationResult<VALUE>> leftValues = mLeftSubEvaluator.evaluate(oldState);
+		final Collection<IEvaluationResult<VALUE>> rightValues = mRightSubEvaluator.evaluate(oldState);
 
 		for (final IEvaluationResult<VALUE> leftOp : leftValues) {
 			for (final IEvaluationResult<VALUE> rightOp : rightValues) {
@@ -328,7 +328,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 
 		assert !rtr.isEmpty();
-		return rtr;
+		return NonrelationalUtils.mergeStatesIfNecessary(rtr, mMaxParallelSates);
 	}
 
 	/**
