@@ -492,8 +492,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
 
 		if (mPref.dumpAutomata()) {
-			// TODO Matthias: Iteration should probably added to TaskIdentifier
-			final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_RawFloydHoareAutomaton";
+			final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_RawFloydHoareAutomaton";
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
@@ -703,14 +702,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			if (mPref.dumpAutomata()) {
-				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + "Iteration" + mIteration + "Enhanced"
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "Enhanced"
 						+ automatonType.getShortString() + "Automaton";
 				super.writeAutomatonToFile(subtrahend, filename);
 			}
 			if (mPref.dumpAutomata()) {
-				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + "Iteration" + mIteration + "AbstractionAfterDifference";
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "AbstractionAfterDifference";
 				super.writeAutomatonToFile(subtrahend, filename);
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);

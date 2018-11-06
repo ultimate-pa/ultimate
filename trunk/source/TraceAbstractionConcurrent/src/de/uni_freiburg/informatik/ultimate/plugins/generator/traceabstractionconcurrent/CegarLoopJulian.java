@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -139,10 +140,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
-		}
-		if (mPref.dumpAutomata()) {
-			final String filename = "Abstraction" + mIteration;
-			writeAutomatonToFile(mAbstraction, filename);
 		}
 	}
 
@@ -213,14 +210,19 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		mAbstraction = diff.getResult();
 
 		if (mPref.dumpAutomata()) {
-			// TODO Matthias: Iteration should probably added to TaskIdentifier
-			final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_AbstractionAfterDifference";
+			final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+					+ "_AbstractionAfterDifference";
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 
 		if (mRemoveUnreachable) {
-			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable(
+			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
 					new AutomataLibraryServices(mServices), (BoundedPetriNet) mAbstraction).getResult();
+			if (mPref.dumpAutomata()) {
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "_AbstractionAfterRemoveUnreachable";
+				super.writeAutomatonToFile(mAbstraction, filename);
+			}
 		}
 
 
@@ -300,8 +302,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
-				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + "_Iteration" + mIteration + "_EagerFloydHoareAutomaton";
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "_EagerFloydHoareAutomaton";
 				super.writeAutomatonToFile(dia, filename);
 			}
 			break;

@@ -406,8 +406,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mArtifactAutomaton = mAbstraction;
 			}
 			if (mPref.dumpAutomata()) {
-				// TODO Matthias: Iteration should probably added to TaskIdentifier
-				final String filename = mTaskIdentifier + ("_Iteration" + mIteration) + ("_Abstraction");
+				final String filename = mTaskIdentifier	+ "_InitialAbstraction";
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -503,7 +502,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					final boolean newMaximumReached =
 							mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 					if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-						final String filename = mIcfg.getIdentifier();
+						final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
 						writeAutomatonToFile(mAbstraction, filename);
 					}
 
