@@ -826,7 +826,7 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 				throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
 						+ " attribute but no struct return type");
 			}
-			final Attribute[][] rtr = new Attribute[0][];
+			final Attribute[][] rtr = new Attribute[1][];
 			rtr[0] = funDecl.getAttributes();
 			return rtr;
 		}
