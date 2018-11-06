@@ -659,7 +659,11 @@ public class ExpressionFactory {
 		return simplifyBitvectorExpression(funApp, sbo);
 	}
 
-	private static SupportedBitvectorOperations getSupportedBitvectorOperation(final String identifier) {
+	/**
+	 * @return the matching {@link SupportedBitvectorOperations} value if the identifier represents a supported
+	 *         bitvector operation, or null if it does not.
+	 */
+	public static SupportedBitvectorOperations getSupportedBitvectorOperation(final String identifier) {
 		try {
 			return BitvectorConstant.SupportedBitvectorOperations.valueOf(identifier);
 		} catch (final IllegalArgumentException iae) {

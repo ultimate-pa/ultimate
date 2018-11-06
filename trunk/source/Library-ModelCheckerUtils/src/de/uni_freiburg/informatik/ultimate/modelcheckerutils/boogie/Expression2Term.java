@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -257,44 +259,7 @@ public class Expression2Term {
 			return result;
 
 		} else if (exp instanceof FunctionApplication) {
-			final FunctionApplication func = ((FunctionApplication) exp);
-			final Term result;
-			final Map<String, Expression[]> attributes = mBoogie2SmtSymbolTable.getAttributes(func.getIdentifier());
-			final String overapproximation =
-					Boogie2SmtSymbolTable.checkForAttributeDefinedIdentifier(attributes, OVERAPPROXIMATION);
-			if (mOverapproximateFunctions || overapproximation != null) {
-				final Sort resultSort = mTypeSortTranslator.getSort(exp.getType(), exp);
-				final TermVariable auxVar =
-						mVariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
-				mAuxVars.add(auxVar);
-				mOverapproximations.put(overapproximation, exp.getLocation());
-				result = auxVar;
-			} else {
-				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-				final IBoogieType[] argumentTypes = new IBoogieType[func.getArguments().length];
-				for (int i = 0; i < func.getArguments().length; i++) {
-					argumentTypes[i] = func.getArguments()[i].getType();
-				}
-
-				final Sort[] params = new Sort[func.getArguments().length];
-				for (int i = 0; i < func.getArguments().length; i++) {
-					params[i] = mTypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
-				}
-
-				final Term[] parameters = new Term[func.getArguments().length];
-				for (int i = 0; i < func.getArguments().length; i++) {
-					parameters[i] = translate(func.getArguments()[i]);
-				}
-
-				final String funcSymb = mOperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
-				if (funcSymb == null) {
-					throw new IllegalArgumentException("unknown function" + func.getIdentifier());
-				}
-				// result = mScript.term(funcSymb, indices, null, parameters);
-				// overkill, this should be called only for bitvector operations.
-				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, parameters);
-			}
-			return result;
+			return translateFunctionApplication(((FunctionApplication) exp));
 		} else if (exp instanceof IdentifierExpression) {
 			final IdentifierExpression var = (IdentifierExpression) exp;
 			assert var.getDeclarationInformation() != null : " no declaration information";
@@ -400,6 +365,51 @@ public class Expression2Term {
 		} else {
 			throw new AssertionError("Unsupported expression " + exp);
 		}
+	}
+
+	private Term translateFunctionApplication(final FunctionApplication func) {
+		final Term result;
+		final Map<String, Expression[]> attributes = mBoogie2SmtSymbolTable.getAttributes(func.getIdentifier());
+		final String overapproximation =
+				Boogie2SmtSymbolTable.checkForAttributeDefinedIdentifier(attributes, OVERAPPROXIMATION);
+		if (mOverapproximateFunctions || overapproximation != null) {
+			final Sort resultSort = mTypeSortTranslator.getSort(func.getType(), func);
+			final TermVariable auxVar = mVariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
+			mAuxVars.add(auxVar);
+			mOverapproximations.put(overapproximation, func.getLocation());
+			result = auxVar;
+		} else {
+
+			final IBoogieType[] argumentTypes = new IBoogieType[func.getArguments().length];
+			for (int i = 0; i < func.getArguments().length; i++) {
+				argumentTypes[i] = func.getArguments()[i].getType();
+			}
+
+			final Sort[] params = new Sort[func.getArguments().length];
+			for (int i = 0; i < func.getArguments().length; i++) {
+				params[i] = mTypeSortTranslator.getSort(func.getArguments()[i].getType(), func);
+			}
+
+			final Term[] parameters = new Term[func.getArguments().length];
+			for (int i = 0; i < func.getArguments().length; i++) {
+				parameters[i] = translate(func.getArguments()[i]);
+			}
+
+			final String funcSymb = mOperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
+			if (funcSymb == null) {
+				throw new IllegalArgumentException("unknown function" + func.getIdentifier());
+			}
+
+			final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+			final SupportedBitvectorOperations sbo = ExpressionFactory.getSupportedBitvectorOperation(funcSymb);
+			if (sbo == null) {
+				result = mScript.term(funcSymb, indices, null, parameters);
+			} else {
+				// simplification is overkill for non-bv operations
+				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, parameters);
+			}
+		}
+		return result;
 	}
 
 	private boolean resultContainsNoNull(final Term result) {
