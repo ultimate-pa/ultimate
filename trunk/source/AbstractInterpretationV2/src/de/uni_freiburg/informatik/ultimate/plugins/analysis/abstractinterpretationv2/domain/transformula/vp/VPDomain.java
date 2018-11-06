@@ -61,8 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<EqState, ACTION> {
+public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractDomain<EqState, ACTION> {
 
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
@@ -87,8 +86,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * @param services
 	 * @param csToolkit
 	 * @param nonTheoryLiterals
-	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
-	 *          are unequal from all other constants.
+	 *            This set of program constants will be viewed as "literals" by the analysis. Literals are constants
+	 *            that are unequal from all other constants.
 	 * @param trackedArrays
 	 * @param mixArrayFunctions
 	 */
@@ -121,7 +120,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mBenchmark = new VPDomainBenchmark();
 	}
 
-	private WeqSettings prepareWeqSettings(final IPreferenceProvider ups) {
+	private static WeqSettings prepareWeqSettings(final IPreferenceProvider ups) {
 		final WeqSettings settings = new WeqSettings();
 		settings.setDeactivateWeakEquivalences(ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES));
 		settings.setPreciseWeqLabelComparison(ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR));
@@ -141,7 +140,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState> {
 		@Override
 		public EqState apply(final EqState first, final EqState second) {
-//			return mEqStateFactory.getTopState();
+			// return mEqStateFactory.getTopState();
 			return first.union(second);
 		}
 	}
@@ -182,19 +181,15 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public <LOC> void afterFixpointComputation(
-			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
+	public <LOC> void afterFixpointComputation(final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
-		/*
-		 * report VPDomainBenchmark
-		 */
+		// report VPDomainBenchmark
 		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
 			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
 		}
 
-		mBenchmark.setTransitionsCounter(
-				mPost.getTransformulaConverterCache().getAllTransitionRelations().size());
+		mBenchmark.setTransitionsCounter(mPost.getTransformulaConverterCache().getAllTransitionRelations().size());
 		for (final EqTransitionRelation tr : mPost.getTransformulaConverterCache().getAllTransitionRelations()) {
 			mBenchmark.reportStatsForTransitionRelation(tr::getStatistics);
 		}
@@ -202,63 +197,39 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
 
-		/*
-		 * report EqPostOperator's Benchmark
-		 */
-		{
-			final BenchmarkWithCounters bm = mPost.getBenchmark();
-			if (bm != null) {
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_ID, "EqPostOperator statistics", bm));
-			}
+		// report EqPostOperator's Benchmark
+		final BenchmarkWithCounters postBench = mPost.getBenchmark();
+		if (postBench != null) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new StatisticsResult<>(Activator.PLUGIN_ID, "EqPostOperator statistics", postBench));
 		}
 
-
-
-		/*
-		 * report EqConstraintFactory's Benchmark
-		 */
-		{
-			final BenchmarkWithCounters bm = mEqConstraintFactory.getBenchmark();
-			if (bm != null) {
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_ID, "EqConstraintFactoryStatistics",
-								mEqConstraintFactory.getBenchmark()));
-			}
+		// report EqConstraintFactory's Benchmark
+		final BenchmarkWithCounters eqBench = mEqConstraintFactory.getBenchmark();
+		if (eqBench != null) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_ID,
+					"EqConstraintFactoryStatistics", mEqConstraintFactory.getBenchmark()));
 		}
 
-		/*
-		 * report WeqCcManager's Benchmark
-		 */
-		{
-			final BenchmarkWithCounters bm = mEqConstraintFactory.getWeqCcManager().getBenchmark();
-			if (bm != null) {
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_ID, "WeqCcManagerStatistics",
-								mEqConstraintFactory.getWeqCcManager().getBenchmark()));
-			}
+		// report WeqCcManager's Benchmark
+		final BenchmarkWithCounters weqBench = mEqConstraintFactory.getWeqCcManager().getBenchmark();
+		if (weqBench != null) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_ID,
+					"WeqCcManagerStatistics", mEqConstraintFactory.getWeqCcManager().getBenchmark()));
 		}
 
-		/*
-		 * report CcManager's Benchmark
-		 */
-		{
-			final BenchmarkWithCounters bm = mEqConstraintFactory.getWeqCcManager().getCcManager().getBenchmark();
-			if (bm != null) {
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics", bm));
-			}
+		// report CcManager's Benchmark
+		final BenchmarkWithCounters ccBench = mEqConstraintFactory.getWeqCcManager().getCcManager().getBenchmark();
+		if (ccBench != null) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics", ccBench));
 		}
-
 
 		if (mEqConstraintFactory.getWeqCcManager().getCcManager().hasPartialOrderCacheBenchmark()) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics",
-						mEqConstraintFactory.getWeqCcManager().getCcManager().getPartialOrderCacheBenchmark()));
+			mServices.getResultService()
+					.reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_ID,
+							"CcManagerStatistics",
+							mEqConstraintFactory.getWeqCcManager().getCcManager().getPartialOrderCacheBenchmark()));
 		}
-
-
 	}
-
-
 }

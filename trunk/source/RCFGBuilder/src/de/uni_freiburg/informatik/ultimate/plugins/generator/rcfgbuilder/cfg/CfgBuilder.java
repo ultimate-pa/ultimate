@@ -151,7 +151,7 @@ public class CfgBuilder {
 	 */
 	private final BoogieIcfgContainer mIcfg;
 
-	private final Boogie2SMT mBoogie2smt;
+	private final Boogie2SMT mBoogie2Smt;
 	private final BoogieDeclarations mBoogieDeclarations;
 	TransFormulaAdder mTransFormulaAdder;
 
@@ -204,19 +204,124 @@ public class CfgBuilder {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
 
-		mBoogie2smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
+		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
 				simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
-		backtranslator.setTerm2Expression(mBoogie2smt.getTerm2Expression());
+		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
 
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, null);
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, null);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}
 
-	public Boogie2SMT getBoogie2smt() {
-		return mBoogie2smt;
+	/**
+	 * Build a recursive control flow graph for an unstructured boogie program.
+	 *
+	 * @param Unit
+	 *            that encodes a program.
+	 * @return RootNode of a recursive control flow graph.
+	 */
+	public IIcfg<?> createIcfg(final Unit unit) {
+
+		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices);
+
+		// Build entry, final and exit node for all procedures that have an
+		// implementation
+		final BoogieIcfgContainer icfg = mIcfg;
+		for (final String procName : mBoogieDeclarations.getProcImplementation().keySet()) {
+			final Body body = mBoogieDeclarations.getProcImplementation().get(procName).getBody();
+			final Statement firstStatement = body.getBlock()[0];
+			final BoogieIcfgLocation entryNode = new BoogieIcfgLocation(new ProcedureEntryDebugIdentifier(procName),
+					procName, false, firstStatement);
+			// We have to use some ASTNode for final and exit node. Let's take
+			// the procedure implementation.
+			final Procedure impl = mBoogieDeclarations.getProcImplementation().get(procName);
+			icfg.getProcedureEntryNodes().put(procName, entryNode);
+			final BoogieIcfgLocation finalNode =
+					new BoogieIcfgLocation(new ProcedureFinalDebugIdentifier(procName), procName, false, impl);
+			icfg.mFinalNode.put(procName, finalNode);
+			final BoogieIcfgLocation exitNode =
+					new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName), procName, false, impl);
+			icfg.getProcedureExitNodes().put(procName, exitNode);
+
+			// new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
+		}
+
+		// Build a control flow graph for each procedure
+		final ProcedureCfgBuilder procCfgBuilder = new ProcedureCfgBuilder();
+		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
+			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
+				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
+			} else {
+				// procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
+			}
+		}
+
+		// Transform CFGs to a recursive CFG
+		for (final Summary se : mImplementationSummarys) {
+			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
+		}
+
+		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
+			new LargeBlockEncoding();
+		}
+
+		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
+				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
+		if (initialNodes.isEmpty()) {
+			mLogger.info("Using library mode");
+			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
+		} else {
+			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
+					+ ULTIMATE_START + ")");
+			icfg.getInitialNodes().addAll(initialNodes);
+		}
+
+		// Add all transitions to the forked procedure entry locations.
+		IIcfg<?> result = icfg;
+		ModelUtils.copyAnnotations(unit, result);
+		if (!mForkCurrentThreads.isEmpty()) {
+			final BlockEncodingBacktranslator backtranslator =
+					new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+			final IcfgDuplicator duplicator =
+					new IcfgDuplicator(mLogger, mServices, mBoogie2Smt.getManagedScript(), backtranslator);
+			result = duplicator.copy(result);
+			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
+					duplicator.getOld2NewEdgeMapping();
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads =
+					mForkCurrentThreads.stream().map(old2newEdgeMapping::get)
+							.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads =
+					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
+							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
+			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
+					adder.constructTreadInstances(result, forkCurrentThreads);
+			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
+			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
+			final HashRelation<String, String> copyDirectives =
+					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
+			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator,
+					threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
+			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
+
+			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
+					threadInstanceMap, backtranslator);
+
+			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
+			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
+
+			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
+		} else {
+			mResultingBacktranslator = mRcfgBacktranslator;
+		}
+
+		return result;
+	}
+
+	public Boogie2SMT getBoogie2Smt() {
+		return mBoogie2Smt;
 	}
 
 	/**
@@ -278,111 +383,6 @@ public class CfgBuilder {
 
 		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings,
 				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
-	}
-
-	/**
-	 * Build a recursive control flow graph for an unstructured boogie program.
-	 *
-	 * @param Unit
-	 *            that encodes a program.
-	 * @return RootNode of a recursive control flow graph.
-	 */
-	public IIcfg<?> createIcfg(final Unit unit) {
-
-		mTransFormulaAdder = new TransFormulaAdder(mBoogie2smt, mServices);
-
-		// Build entry, final and exit node for all procedures that have an
-		// implementation
-		final BoogieIcfgContainer icfg = mIcfg;
-		for (final String procName : mBoogieDeclarations.getProcImplementation().keySet()) {
-			final Body body = mBoogieDeclarations.getProcImplementation().get(procName).getBody();
-			final Statement firstStatement = body.getBlock()[0];
-			final BoogieIcfgLocation entryNode = new BoogieIcfgLocation(new ProcedureEntryDebugIdentifier(procName),
-					procName, false, firstStatement);
-			// We have to use some ASTNode for final and exit node. Let's take
-			// the procedure implementation.
-			final Procedure impl = mBoogieDeclarations.getProcImplementation().get(procName);
-			icfg.getProcedureEntryNodes().put(procName, entryNode);
-			final BoogieIcfgLocation finalNode =
-					new BoogieIcfgLocation(new ProcedureFinalDebugIdentifier(procName), procName, false, impl);
-			icfg.mFinalNode.put(procName, finalNode);
-			final BoogieIcfgLocation exitNode =
-					new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName), procName, false, impl);
-			icfg.getProcedureExitNodes().put(procName, exitNode);
-
-			// new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
-		}
-
-		// Build a control flow graph for each procedure
-		final ProcedureCfgBuilder procCfgBuilder = new ProcedureCfgBuilder();
-		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
-			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
-			} else {
-				// procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
-			}
-		}
-
-		// Transform CFGs to a recursive CFG
-		for (final Summary se : mImplementationSummarys) {
-			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
-		}
-
-		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
-			new LargeBlockEncoding();
-		}
-
-		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
-		if (initialNodes.isEmpty()) {
-			mLogger.info("Using library mode");
-			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
-		} else {
-			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
-					+ ULTIMATE_START + ")");
-			icfg.getInitialNodes().addAll(initialNodes);
-		}
-
-		// Add all transitions to the forked procedure entry locations.
-		IIcfg<? extends IcfgLocation> result = icfg;
-		ModelUtils.copyAnnotations(unit, result);
-		if (!mForkCurrentThreads.isEmpty()) {
-			final BlockEncodingBacktranslator backtranslator =
-					new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
-			final IcfgDuplicator duplicator =
-					new IcfgDuplicator(mLogger, mServices, mBoogie2smt.getManagedScript(), backtranslator);
-			result = duplicator.copy(result);
-			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
-					duplicator.getOld2NewEdgeMapping();
-			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads =
-					mForkCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
-			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads =
-					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
-			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
-					adder.constructTreadInstances(result, forkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
-			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
-			final HashRelation<String, String> copyDirectives =
-					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
-			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator,
-					threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
-			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
-
-			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
-					threadInstanceMap, backtranslator);
-
-			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
-			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
-
-			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
-		} else {
-			mResultingBacktranslator = mRcfgBacktranslator;
-		}
-
-		return result;
 	}
 
 	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
@@ -498,6 +498,10 @@ public class CfgBuilder {
 		procLocNodes.put(errorLocLabel, errorLocNode);
 		errorNodes.add(errorLocNode);
 		return errorLocNode;
+	}
+
+	public ITranslator getBacktranslator() {
+		return mResultingBacktranslator;
 	}
 
 	/**
@@ -1501,9 +1505,5 @@ public class CfgBuilder {
 			}
 			return result;
 		}
-	}
-
-	public ITranslator getBacktranslator() {
-		return mResultingBacktranslator;
 	}
 }
