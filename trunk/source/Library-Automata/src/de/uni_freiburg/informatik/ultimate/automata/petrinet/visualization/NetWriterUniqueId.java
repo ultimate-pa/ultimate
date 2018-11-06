@@ -32,12 +32,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.CommonExternalFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 
 /**
  * Prints a {@link BoundedPetriNet}. In this version letters and places are represented by a default symbol and a unique
  * ID.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -60,13 +61,7 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
-		int counter = 0;
-		final Map<LETTER, String> alphabetMapping = new HashMap<>();
-		for (final LETTER letter : alphabet) {
-			alphabetMapping.put(letter, 'a' + Integer.toString(counter));
-			counter++;
-		}
-		return alphabetMapping;
+		return CommonExternalFormatWriter.constructAlphabetMapping(alphabet, 'a');
 	}
 
 	@Override

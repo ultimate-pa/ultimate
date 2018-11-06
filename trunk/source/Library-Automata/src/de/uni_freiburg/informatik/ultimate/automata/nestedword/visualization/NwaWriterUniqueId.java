@@ -28,9 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 /**
  * Prints an {@link INestedWordAutomaton}. In this version letters and states are represented by a default symbol and a
  * unique ID.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -62,21 +60,11 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 		super(writer, name, nwa);
 	}
 
-	
-	
+
+
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
-		int counter = 0;
-		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
-		
-		ArrayList<LETTER> alphabetList=new ArrayList<LETTER>(alphabet);
-		
-		Collections.sort(alphabetList, new sortLetter<LETTER>());
-		for (final LETTER letter : alphabetList) {
-			alphabetMapping.put(letter, symbol + Integer.toString(counter));
-			counter++;
-		}
-		return alphabetMapping;
+		return CommonExternalFormatWriter.constructAlphabetMapping(alphabet, symbol);
 	}
 
 	@Override
@@ -93,7 +81,8 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 
 class sortLetter<LETTER> implements Comparator<LETTER>
 {
-    public int compare(LETTER a, LETTER b)
+    @Override
+	public int compare(final LETTER a, final LETTER b)
     {
         return a.toString().compareTo(b.toString());
     }

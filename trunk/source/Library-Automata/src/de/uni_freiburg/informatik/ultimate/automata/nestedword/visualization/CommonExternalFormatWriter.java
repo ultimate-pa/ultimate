@@ -91,6 +91,20 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		return stateMapping;
 	}
 
+
+	public static <LETTER> Map<LETTER, String> constructAlphabetMapping(final Collection<LETTER> alphabet,
+			final char symbol) {
+		int counter = 0;
+		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
+		final ArrayList<LETTER> alphabetList = new ArrayList<LETTER>(alphabet);
+		Collections.sort(alphabetList, new sortLetter<LETTER>());
+		for (final LETTER letter : alphabetList) {
+			alphabetMapping.put(letter, symbol + Integer.toString(counter));
+			counter++;
+		}
+		return alphabetMapping;
+	}
+
 	/**
 	 * Converts a parametric object to a {@link String}.
 	 *
