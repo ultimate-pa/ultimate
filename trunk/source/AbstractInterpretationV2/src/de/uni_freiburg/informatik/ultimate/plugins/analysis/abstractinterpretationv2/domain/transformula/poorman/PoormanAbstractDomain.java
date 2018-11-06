@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -125,5 +126,15 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 		stringBuilder.append(" with backing domain ");
 		stringBuilder.append(mBackingDomain.domainDescription());
 		return stringBuilder.toString();
+	}
+
+	@Override
+	public void beforeFixpointComputation() {
+		mBackingDomain.beforeFixpointComputation();
+	}
+
+	@Override
+	public boolean isAbstractable(final Term term) {
+		return mBackingDomain.isAbstractable(term);
 	}
 }

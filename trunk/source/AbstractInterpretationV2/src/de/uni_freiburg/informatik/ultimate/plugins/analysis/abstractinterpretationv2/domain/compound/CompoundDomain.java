@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
@@ -95,5 +96,17 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 				mDomainList.stream().map(domain -> domain.domainDescription()).collect(Collectors.joining(", ")));
 		stringBuilder.append("]");
 		return stringBuilder.toString();
+	}
+
+	@Override
+	public void beforeFixpointComputation() {
+		for (final IAbstractDomain domain : mDomainList) {
+			domain.beforeFixpointComputation();
+		}
+	}
+
+	@Override
+	public boolean isAbstractable(final Term term) {
+		return mDomainList.stream().anyMatch(d -> d.isAbstractable(term));
 	}
 }
