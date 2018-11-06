@@ -237,7 +237,7 @@ public abstract class CodeBlock extends IcfgEdge {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return getSerialNumber();
 	}
 }
