@@ -207,8 +207,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
-				abstraction, dia).getResult();
+		final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
+				mPredicateFactoryInterpolantAutomata, abstraction, dia);
+		mLogger.info(diff.getAutomataOperationStatistics());
+		mAbstraction = diff.getResult();
 
 		if (mPref.dumpAutomata()) {
 			// TODO Matthias: Iteration should probably added to TaskIdentifier
