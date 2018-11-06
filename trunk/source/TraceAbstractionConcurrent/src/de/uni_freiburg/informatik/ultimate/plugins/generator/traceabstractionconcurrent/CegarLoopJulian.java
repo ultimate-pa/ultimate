@@ -285,9 +285,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
 						universalSubtrahendLoopers);
-				new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
-						null);
 				raw.switchToReadonlyMode();
 			}
 			try {
