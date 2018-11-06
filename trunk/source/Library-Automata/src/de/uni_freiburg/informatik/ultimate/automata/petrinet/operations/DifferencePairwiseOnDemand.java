@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -35,8 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -51,16 +57,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author schaetzc@informatik.uni-freiburg.de
  *
  * @param <LETTER>
- *            Type of letters in the alphabet of minuend Petri net, subtrahend DFA, and difference Petri net
+ *            Type of letters in the alphabet of minuend Petri net, subtrahend
+ *            DFA, and difference Petri net
  * @param <PLACE>
  *            Type of places in minuend and difference Petri net
  * @param <CRSF>
- *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
+ *            Type of factory needed to check the result of this operation in
+ *            {@link #checkResult(CRSF)}
  */
-public final class DifferencePairwiseOnDemand
-		<LETTER, PLACE>
+public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
-
 
 	private final IPetriNet<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
@@ -68,12 +74,11 @@ public final class DifferencePairwiseOnDemand
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
-
-
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
-			final AutomataLibraryServices services, final SF factory,
-			final IPetriNet<LETTER, PLACE> minuendNet,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa) throws AutomataOperationCanceledException {
+			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
+			final Set<LETTER> userProvidedUniversalSubtrahendLoopers)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
@@ -83,13 +88,40 @@ public final class DifferencePairwiseOnDemand
 			mLogger.info(startMessage());
 		}
 
-		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend);
+		final Set<LETTER> universalSubtrahendLoopers;
+		if (userProvidedUniversalSubtrahendLoopers != null) {
+			universalSubtrahendLoopers = userProvidedUniversalSubtrahendLoopers;
+			if (mLogger.isInfoEnabled()) {
+				final int numberLoopers = universalSubtrahendLoopers.size();
+				final int allLetters = mSubtrahend.getAlphabet().size();
+				mLogger.info("Universal subtrahend loopers provided by user.");
+				mLogger.info("Number of universal subtrahend loopers: " + numberLoopers + " of " + allLetters);
+			}
+		} else {
+			if (mSubtrahend instanceof INestedWordAutomaton) {
+				universalSubtrahendLoopers = determineUniversalLoopers((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend);
+				if (mLogger.isInfoEnabled()) {
+					final int numberLoopers = universalSubtrahendLoopers.size();
+					final int allLetters = mSubtrahend.getAlphabet().size();
+					mLogger.info("Number of universal subtrahend loopers: " + numberLoopers + " of " + allLetters);
+				}
+			} else {
+				universalSubtrahendLoopers = null;
+				mLogger.info("Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
+			}
+		}
+		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
+				universalSubtrahendLoopers);
 		new FinitePrefix<LETTER, PLACE>(mServices, difference);
 		mResult = difference.getYetConstructedPetriNet();
-
 	}
 
-
+	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
+			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
+			throws AutomataOperationCanceledException {
+		this(services, factory, minuendNet, subtrahendDfa, null);
+	}
 
 	@Override
 	public String startMessage() {
@@ -102,35 +134,26 @@ public final class DifferencePairwiseOnDemand
 		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
-
-
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_PLACES , mResult.getPlaces().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_FLOW, mResult.flowSize());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES, mMinuend.getPlaces().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS, mMinuend.getTransitions().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_FLOW, mResult.flowSize());
+		statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES, mMinuend.getPlaces().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
+				mMinuend.getTransitions().size());
 		if (mMinuend instanceof BoundedPetriNet) {
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW, ((BoundedPetriNet<LETTER, PLACE>) mMinuend).flowSize());
+			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW,
+					((BoundedPetriNet<LETTER, PLACE>) mMinuend).flowSize());
 		}
 		if (mSubtrahend instanceof INestedWordAutomaton) {
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES, ((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend).getStates().size());
+			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES,
+					((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend).getStates().size());
 		}
 		return statistics;
 	}
-
-
 
 	@Override
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
@@ -150,11 +173,10 @@ public final class DifferencePairwiseOnDemand
 
 	}
 
-	static <LETTER, PLACE> boolean doResultCheck(
-			final AutomataLibraryServices services, final ILogger logger,
-			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory,
-			final IPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
-			final BoundedPetriNet<LETTER, PLACE> result) throws AutomataLibraryException {
+	static <LETTER, PLACE> boolean doResultCheck(final AutomataLibraryServices services, final ILogger logger,
+			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory, final IPetriNet<LETTER, PLACE> minuend,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahend, final BoundedPetriNet<LETTER, PLACE> result)
+			throws AutomataLibraryException {
 		final INestedWordAutomaton<LETTER, PLACE> minuendAsAutoaton = new PetriNet2FiniteAutomaton<>(services,
 				stateFactory, minuend).getResult();
 		final INestedWordAutomaton<LETTER, PLACE> differenceAutomata = new DifferenceDD<>(services, stateFactory,
@@ -176,6 +198,46 @@ public final class DifferencePairwiseOnDemand
 		}
 
 		return subsetCheck.getResult() && supersetCheck.getResult();
+	}
+
+	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
+			throw new UnsupportedOperationException("call and return not implemented yet");
+		}
+		final Set<LETTER> result = new HashSet<>();
+		for (final LETTER letter : nwa.getAlphabet()) {
+			final boolean isUniversalLooper = isUniversalLooper(letter, nwa);
+			if (isUniversalLooper) {
+				result.add(letter);
+			}
+		}
+		return result;
+	}
+
+	private static <LETTER, STATE> boolean isUniversalLooper(final LETTER letter,
+			final INestedWordAutomaton<LETTER, STATE> nwa) {
+		for (final STATE state : nwa.getStates()) {
+			final boolean hasSelfloop = hasSelfloop(letter, state, nwa);
+			if (!hasSelfloop) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static <LETTER, STATE> boolean hasSelfloop(final LETTER letter, final STATE state,
+			final INestedWordAutomaton<LETTER, STATE> nwa) {
+		final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = nwa.internalSuccessors(state, letter).iterator();
+		if (!it.hasNext()) {
+			return false;
+		} else {
+			final OutgoingInternalTransition<LETTER, STATE> succTrans = it.next();
+			final boolean hasSelfloop = (succTrans.getSucc().equals(state));
+			if (it.hasNext()) {
+				throw new IllegalArgumentException("automaton is nondeterministic");
+			}
+			return hasSelfloop;
+		}
 	}
 
 }
