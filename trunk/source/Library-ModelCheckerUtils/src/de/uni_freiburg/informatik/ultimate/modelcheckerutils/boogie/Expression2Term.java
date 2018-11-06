@@ -404,7 +404,7 @@ public class Expression2Term {
 
 	private boolean resultContainsNoNull(final Term result) {
 		// toString crashes if the result contains a null element
-		return result.toString() instanceof Object;
+		return result.toString() != null;
 	}
 
 	abstract static class TranslationResult {
