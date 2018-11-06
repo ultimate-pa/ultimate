@@ -3,7 +3,7 @@
 type rational = { n, d: int, v:real };
 
 // correct usage of :expand_struct 
-function { :expand_struct "n" } { :smtdefined "n" } { :expand_struct "d" } { :smtdefined "d" } { :expand_struct "v" } { :smtdefined "(div n d)" } foo(n:int, d:int) returns (out:rational);
+function { :expand_struct "n" } { :smtdefined "(+ n 0)" } { :expand_struct "d" } { :smtdefined "(+ d 0)" } { :expand_struct "v" } { :smtdefined "(/ (to_real n) (to_real d))" } foo(n:int, d:int) returns (out:rational);
 
 // incorrect: will loose first :smtdefined 
 // function  { :smtdefined "n" } { :expand_struct "n" } { :smtdefined "d" } { :smtdefined "(div n d)" } bar(n:int, d:int) returns (out:rational);
@@ -35,15 +35,22 @@ function { :expand_struct "n" } { :smtdefined "n" } { :expand_struct "d" } { :sm
 // incorrect: :expand_struct for the same field occurs twice 
 // function { :expand_struct "n" } { :smtdefined "n" } { :expand_struct "n" } { :smtdefined "d" } { :expand_struct "v" } { :smtdefined "(div n d)" } bar(n:int, d:int) returns (out:rational);
 
+function {:builtin "bvadd"} bvadd(a : bv8, b : bv8) returns (out : bv8);
 
 procedure main() returns ()
 {
    var a : rational;
-
+   var b : bv8; 
+   
    a := foo(1,2);
    assert a!n == 1;
    assert a!d == 2;
    assert a!v == 0.5;
+   
+   
+   b := 1bv8;
+   b := bvadd(b,b);
+   assert b == 2bv8;
 }
 
 

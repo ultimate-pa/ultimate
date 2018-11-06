@@ -56,7 +56,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -67,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -89,7 +92,12 @@ public class Boogie2SmtSymbolTable
 	 * </ul>
 	 *
 	 */
-	static final String ID_BUILTIN = "builtin";
+	public static final String ID_BUILTIN = "builtin";
+
+	/**
+	 * Identifier of attribute that we use to declare a function symbol that should be mapped to an SMT term
+	 */
+	public static final String ID_SMTDEFINED = "smtdefined";
 
 	private static final String ID_INDICES = "indices";
 
@@ -324,11 +332,16 @@ public class Boogie2SmtSymbolTable
 		final String id = funcdecl.getIdentifier();
 		mBoogieFunction2Attributes.put(id, attributes);
 		final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
-		String smtID;
+		final String smtDefinedBody = checkForAttributeDefinedIdentifier(attributes, ID_SMTDEFINED);
+		final String smtID;
 		if (attributeDefinedIdentifier == null) {
 			smtID = Boogie2SMT.quoteId(id);
 		} else {
 			smtID = attributeDefinedIdentifier;
+			if (smtDefinedBody != null) {
+				throw new IllegalSmtDefinedUsageException(
+						id + " has " + ID_SMTDEFINED + " and " + ID_BUILTIN + " attributes");
+			}
 		}
 		int numParams = 0;
 		for (final VarList vl : funcdecl.getInParams()) {
@@ -337,6 +350,7 @@ public class Boogie2SmtSymbolTable
 		}
 
 		final Sort[] paramSorts = new Sort[numParams];
+		final String[] paramIds = new String[numParams];
 		int paramNr = 0;
 		for (final VarList vl : funcdecl.getInParams()) {
 			int ids = vl.getIdentifiers().length;
@@ -346,14 +360,49 @@ public class Boogie2SmtSymbolTable
 			final IBoogieType paramType = vl.getType().getBoogieType();
 			final Sort paramSort = mTypeSortTranslator.getSort(paramType, funcdecl);
 			for (int i = 0; i < ids; i++) {
-				paramSorts[paramNr++] = paramSort;
+				paramSorts[paramNr] = paramSort;
+				paramIds[paramNr] = vl.getIdentifiers()[i];
+				paramNr++;
 			}
 		}
 		final IBoogieType resultType = funcdecl.getOutParam().getType().getBoogieType();
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			mScript.declareFun(this, smtID, paramSorts, resultSort);
+			if (smtDefinedBody == null) {
+				mScript.declareFun(this, smtID, paramSorts, resultSort);
+			} else {
+				final TermVariable[] params = new TermVariable[paramSorts.length];
+				final Script script = mScript.getScript();
+				for (int i = 0; i < paramSorts.length; ++i) {
+					if (paramIds[i] == null) {
+						throw new IllegalSmtDefinedUsageException(
+								"Unnamed parameter in function declaration together with " + ID_SMTDEFINED
+										+ " attribute");
+					}
+					params[i] = script.variable(paramIds[i], paramSorts[i]);
+				}
+
+				// this is rather hacky, but seems to work: we quantify the smt body so that we do not have to create
+				// new symbols, and then use the body of the term together with the params we created in the actual
+				// function declaration.
+				final StringBuilder sb = new StringBuilder();
+				sb.append("(forall (");
+				for (final TermVariable param : params) {
+					sb.append("(");
+					sb.append(param.getName());
+					sb.append(" ");
+					sb.append(param.getSort());
+					sb.append(")");
+				}
+				sb.append(") ");
+				sb.append(smtDefinedBody);
+				sb.append(")");
+
+				final QuantifiedFormula term = (QuantifiedFormula) TermParseUtils.parseTerm(script, sb.toString());
+				mScript.getScript().defineFun(smtID, params, resultSort, term.getSubformula());
+			}
+
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
 		mSmtFunction2BoogieFunction.put(smtID, id);
@@ -375,7 +424,7 @@ public class Boogie2SmtSymbolTable
 			final StringLiteral sl = (StringLiteral) values[0];
 			return sl.getValue();
 		}
-		throw new IllegalArgumentException("no single value attribute");
+		throw new IllegalArgumentException("Attribute has more than one argument or argument is not String: " + n);
 	}
 
 	/**
@@ -739,6 +788,18 @@ public class Boogie2SmtSymbolTable
 
 	private static <V, T, K1, K2> Stream<T> getAll(final Map<K1, Map<K2, V>> map, final Function<V, T> fun) {
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	private static final class IllegalSmtDefinedUsageException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public IllegalSmtDefinedUsageException(final String msg) {
+			super(msg);
+		}
 	}
 
 }

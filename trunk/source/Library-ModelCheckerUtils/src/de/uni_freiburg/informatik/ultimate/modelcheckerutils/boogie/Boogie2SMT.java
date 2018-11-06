@@ -135,7 +135,6 @@ public class Boogie2SMT {
 	}
 
 	static String quoteId(final String id) {
-		// return Term.quoteId(id);
 		return id;
 	}
 
