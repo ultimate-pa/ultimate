@@ -129,8 +129,8 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 	}
 
 	@Override
-	public void beforeFixpointComputation() {
-		mBackingDomain.beforeFixpointComputation();
+	public void beforeFixpointComputation(final Object... objects) {
+		mBackingDomain.beforeFixpointComputation(objects);
 	}
 
 	@Override

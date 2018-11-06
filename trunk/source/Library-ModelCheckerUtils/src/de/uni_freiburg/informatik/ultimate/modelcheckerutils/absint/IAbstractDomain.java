@@ -41,8 +41,13 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 	/**
 	 * This method is called before the fixpoint computation begins. You can use it to prepare for reporting of
 	 * domain-specific statistics.
+	 *
+	 * @param objects
+	 *            You can pass multiple objects that should be used by the abstract domain. The domain should do the
+	 *            check for the types and casts of the objects. Calling this method with objects that cannot be handled
+	 *            by the domain should not lead to errors.
 	 */
-	default void beforeFixpointComputation() {
+	default void beforeFixpointComputation(final Object... objects) {
 		// default is doing nothing
 	}
 

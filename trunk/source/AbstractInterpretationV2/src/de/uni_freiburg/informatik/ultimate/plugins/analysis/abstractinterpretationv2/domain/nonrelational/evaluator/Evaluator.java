@@ -81,12 +81,13 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
 	public final Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
-		if (mCurrentEvaluationRecursion < currentRecursion) {
-			mCurrentEvaluationRecursion = currentRecursion;
-		}
 
 		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
 			return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
+		}
+
+		if (mCurrentEvaluationRecursion < currentRecursion) {
+			mCurrentEvaluationRecursion = currentRecursion;
 		}
 
 		return evaluate(currentState);
@@ -116,12 +117,12 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 	public final Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldstate,
 			final int currentRecursion) {
 
-		if (mCurrentInverseEvaluationRecursion < currentRecursion) {
-			mCurrentInverseEvaluationRecursion = currentRecursion;
-		}
-
 		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
 			return Collections.singletonList(oldstate);
+		}
+
+		if (mCurrentInverseEvaluationRecursion < currentRecursion) {
+			mCurrentInverseEvaluationRecursion = currentRecursion;
 		}
 
 		return inverseEvaluate(evalResult, oldstate);
@@ -214,14 +215,20 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 		return mSubEvaluators.size();
 	}
 
+	/**
+	 * @return The sum of the maximum recursion depth of all sub evaluators and the current recursion depth.
+	 */
 	public final int getEvaluationRecursionDepth() {
-		return mCurrentEvaluationRecursion
-				+ mSubEvaluators.stream().mapToInt(evaluator -> evaluator.getEvaluationRecursionDepth()).sum();
+		return Math.max(mCurrentEvaluationRecursion,
+				mSubEvaluators.stream().mapToInt(Evaluator::getEvaluationRecursionDepth).max().orElse(0));
 	}
 
+	/**
+	 * @return The sum of the maximum recursion depth of all sub inverse evaluators and the current recursion depth.
+	 */
 	public final int getInverseEvaluationRecursionDepth() {
-		return mCurrentInverseEvaluationRecursion
-				+ mSubEvaluators.stream().mapToInt(evaluator -> evaluator.getInverseEvaluationRecursionDepth()).sum();
+		return Math.max(mCurrentInverseEvaluationRecursion,
+				mSubEvaluators.stream().mapToInt(Evaluator::getInverseEvaluationRecursionDepth).max().orElse(0));
 	}
 
 }

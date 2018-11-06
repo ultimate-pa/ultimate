@@ -91,7 +91,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 		for (final Statement stmt : statements) {
 			final List<SignDomainState> afterProcessStates = new ArrayList<>();
 			for (final SignDomainState currentState : currentStates) {
-				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt);
+				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt, null);
 				assert !processed.isEmpty();
 				afterProcessStates.addAll(processed);
 			}

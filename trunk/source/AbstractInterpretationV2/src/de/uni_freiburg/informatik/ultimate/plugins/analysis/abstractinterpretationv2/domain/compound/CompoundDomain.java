@@ -99,9 +99,9 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 	}
 
 	@Override
-	public void beforeFixpointComputation() {
+	public void beforeFixpointComputation(final Object... objects) {
 		for (final IAbstractDomain domain : mDomainList) {
-			domain.beforeFixpointComputation();
+			domain.beforeFixpointComputation(objects);
 		}
 	}
 

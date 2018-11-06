@@ -72,9 +72,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.Evaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
@@ -110,6 +112,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private final Map<Expression, ExpressionEvaluator<V, STATE>> mEvaluatorCache;
 
 	private boolean mOldScope;
+	private AbsIntBenchmark<IcfgEdge> mAbsIntBenchmark;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates,
@@ -132,10 +135,14 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 *            The prestate to use.
 	 * @param statement
 	 *            The statement to compute the abstract post states for.
+	 * @param absIntBenchmark
+	 *            An instance of {@link AbsIntBenchmark} which is used by the processor to report benchmarks. This
+	 *            parameter may be null, if no benchmarks should be collected.
 	 * @return
 	 */
-	public List<STATE> process(final STATE oldState, final Statement statement) {
-		return process(oldState, statement, Collections.emptyMap());
+	public List<STATE> process(final STATE oldState, final Statement statement,
+			final AbsIntBenchmark<IcfgEdge> absIntBenchmark) {
+		return process(oldState, statement, Collections.emptyMap(), absIntBenchmark);
 	}
 
 	/**
@@ -148,10 +155,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @param tmpVars
 	 *            A map of left hand side variables to program variables that have been temporarily added to the states.
 	 *            This map is needed for the computation of the abstract post states when dealing with transformulas.
+	 * @param absIntBenchmark
+	 *            An instance of {@link AbsIntBenchmark} which is used by the processor to report benchmarks. This
+	 *            parameter may be null, if no benchmarks should be collected.
 	 * @return
 	 */
 	public List<STATE> process(final STATE oldState, final Statement statement,
-			final Map<LeftHandSide, IProgramVarOrConst> tmpVars) {
+			final Map<LeftHandSide, IProgramVarOrConst> tmpVars, final AbsIntBenchmark<IcfgEdge> absIntBenchmark) {
 		assert oldState != null;
 		assert statement != null;
 		assert tmpVars != null;
@@ -160,6 +170,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mOldState = oldState;
 		mTemporaryVars = tmpVars;
 		mLhsVariable = null;
+
+		mAbsIntBenchmark = absIntBenchmark;
 
 		processStatement(statement);
 		final List<STATE> rtr = mReturnState;
@@ -358,6 +370,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			newStates.add(newState);
 		}
 
+		if (mAbsIntBenchmark != null) {
+			mAbsIntBenchmark.recordEvaluationRecursionDepth(
+					mExpressionEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
+			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
+					mExpressionEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
+		}
+
 		return newStates;
 	}
 
@@ -410,6 +429,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				mReturnState.addAll(
 						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
 			}
+		}
+
+		if (mAbsIntBenchmark != null) {
+			mAbsIntBenchmark.recordEvaluationRecursionDepth(
+					mExpressionEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
+			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
+					mExpressionEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
 		}
 	}
 

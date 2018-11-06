@@ -33,13 +33,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -59,7 +60,7 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 	private final BoogieSymbolTable mSymbolTable;
 
 	private IAbstractStateBinaryOperator<ExplicitValueState> mWideningOperator;
-	private IAbstractPostOperator<ExplicitValueState, IcfgEdge> mPostOperator;
+	private NonrelationalPostOperator<ExplicitValueState, BaseExplicitValueValue> mPostOperator;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IBoogieSymbolTableVariableProvider mBpl2SmtSymbolTable;
 
@@ -94,7 +95,7 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 	}
 
 	@Override
-	public IAbstractPostOperator<ExplicitValueState, IcfgEdge> getPostOperator() {
+	public NonrelationalPostOperator<ExplicitValueState, BaseExplicitValueValue> getPostOperator() {
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
@@ -111,5 +112,17 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 	@Override
 	public boolean isAbstractable(final Term inputTerm) {
 		return false;
+	}
+
+	@Override
+	public void beforeFixpointComputation(final Object... objects) {
+		for (final Object o : objects) {
+			if (o instanceof AbsIntBenchmark) {
+				@SuppressWarnings("unchecked")
+				final AbsIntBenchmark<IcfgEdge> absIntBenchmark = (AbsIntBenchmark<IcfgEdge>) o;
+				getPostOperator().setAbsIntBenchmark(absIntBenchmark);
+			}
+		}
+
 	}
 }

@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -92,6 +93,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
 	private final Boogie2SMT mBoogie2Smt;
 	private final CallInfoCache mCallInfoCache;
+	private AbsIntBenchmark<IcfgEdge> mAbsIntBenchmark = null;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable,
@@ -156,6 +158,15 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 	}
 
+	/**
+	 * Sets the {@link AbsIntBenchmark} for this operator.
+	 *
+	 * @param absIntBenchmark
+	 */
+	public void setAbsIntBenchmark(final AbsIntBenchmark<IcfgEdge> absIntBenchmark) {
+		mAbsIntBenchmark = absIntBenchmark;
+	}
+
 	private List<STATE> handleCallTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final Call call) {
 
@@ -169,8 +180,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		// process assignment of expressions in old scope to inparams of procedure
 		final STATE interimState = stateBeforeLeaving.addVariables(callInfo.getTempInParams());
-		final List<STATE> result =
-				mStatementProcessor.process(interimState, callInfo.getInParamAssign(), callInfo.getLhs2TmpVar());
+		final List<STATE> result = mStatementProcessor.process(interimState, callInfo.getInParamAssign(),
+				callInfo.getLhs2TmpVar(), mAbsIntBenchmark);
 		if (result.isEmpty()) {
 			throw new AssertionError("The assignment operation resulted in 0 states.");
 		}
@@ -359,7 +370,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		for (final Statement stmt : statements) {
 			final List<STATE> afterProcessStates = new ArrayList<>();
 			for (final STATE currentState : currentStates) {
-				final List<STATE> processed = mStatementProcessor.process(currentState, stmt);
+				final List<STATE> processed = mStatementProcessor.process(currentState, stmt, mAbsIntBenchmark);
 				for (final STATE s : processed) {
 					if (!s.isBottom()) {
 						afterProcessStates.add(s);
@@ -408,7 +419,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final List<STATE> postStates = new ArrayList<>();
 
 		for (final STATE pendingPostState : pendingPostStates) {
-			postStates.addAll(mStatementProcessor.process(pendingPostState, oldVarAssign));
+			postStates.addAll(mStatementProcessor.process(pendingPostState, oldVarAssign, mAbsIntBenchmark));
 		}
 
 		return new ArrayList<>(NonrelationalUtils.mergeStatesIfNecessary(postStates, mParallelStates));
