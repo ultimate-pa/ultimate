@@ -113,7 +113,7 @@ public class ReqToGraph {
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			final ReqGuardGraph q2 = new ReqGuardGraph(2);
-			final ReqGuardGraph qw = new ReqGuardGraph(3);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			final String durationTrigger = pattern.getDuration().get(0);
@@ -163,7 +163,7 @@ public class ReqToGraph {
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			final ReqGuardGraph q2 = new ReqGuardGraph(2);
-			final ReqGuardGraph qw = new ReqGuardGraph(3);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			final String duration = pattern.getDuration().get(0);
@@ -212,7 +212,7 @@ public class ReqToGraph {
 			//create states to identify automaton
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
-			final ReqGuardGraph qw = new ReqGuardGraph(2);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			final String duration = pattern.getDuration().get(0);
@@ -259,7 +259,7 @@ public class ReqToGraph {
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			final ReqGuardGraph q2 = new ReqGuardGraph(2);
-			final ReqGuardGraph qw = new ReqGuardGraph(3);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			final String duration = pattern.getDuration().get(0);
@@ -313,11 +313,11 @@ public class ReqToGraph {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			final Term Q = mCddToSmt.toSmt(pattern.getScope().getCdd1()); 
 			//create states to identify automaton
-			final ReqGuardGraph q0 = new ReqGuardGraph(0); // TODO
+			final ReqGuardGraph q0 = new ReqGuardGraph(0); 
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			final ReqGuardGraph q2 = new ReqGuardGraph(2);
 			final ReqGuardGraph q3 = new ReqGuardGraph(3);
-			final ReqGuardGraph qw = new ReqGuardGraph(4);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q1, S);
 			final String duration = pattern.getDuration().get(0);
@@ -459,7 +459,7 @@ public class ReqToGraph {
 			//create states to identify automaton
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
-			final ReqGuardGraph qw = new ReqGuardGraph(2);
+			final ReqGuardGraph qw = new ReqGuardGraph(-1);
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			//define labels 

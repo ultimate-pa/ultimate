@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 public class ThreeValuedAuxVarGen {
 	
 	private final Sort mSortBool;
-	private final Sort mSortInt;
 	private final Sort mSortReal;
 	
 	
@@ -48,7 +47,6 @@ public class ThreeValuedAuxVarGen {
 		mReqToNonDefineAnnotation = new LinkedHashMap<>();
 		mReqToId = new LinkedHashMap<>();
 		mSortBool = mScript.sort("Bool");
-		mSortInt = mScript.sort("Int");
 		mSortReal = mScript.sort("Real");
 	}
 	

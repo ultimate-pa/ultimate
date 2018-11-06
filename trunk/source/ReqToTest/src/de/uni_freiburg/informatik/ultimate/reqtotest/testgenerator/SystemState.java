@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -38,26 +39,38 @@ public class SystemState extends ProgramState<Expression> {
 	}
 	
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(Double.toString(mTime));
-		sb.append( " | " );
+		ArrayList<String> output = new ArrayList<String>();
 		for(Expression e: getVariables()) {
 			if(isInput(e)) {
-				sb.append(formatAssignment(e, getValues(e)));
+				output.add(String.format("| %-60s|", formatAssignment(e, getValues(e))));
 			}
-		}		
-		sb.append(" | ");
+		}	
+		int i = 0;
 		for(Expression e: getVariables()) {
 			if(!isInput(e)) {
-				sb.append(formatAssignment(e, getValues(e)));
+				if(i < output.size()) {
+					output.set(i, output.get(i) + (String.format(" %-60s|", formatAssignment(e, getValues(e)))));
+				} else {
+					output.add(String.format("|%120s| %-60s|","", formatAssignment(e, getValues(e))));
+				}
+				i++;
 			}
 		}
-		sb.append("														 (");
+		i = 0;
 		for(Expression e: mReqLocations.keySet()) {
-			sb.append(formatAssignment(e, mReqLocations.get(e)));
+			if(i < output.size()) {
+				output.set(i, output.get(i) + (String.format(" %-60s|", formatAssignment(e, mReqLocations.get(e)))));
+			} else {
+				output.add(String.format("|%180s| %-60s|","", formatAssignment(e, mReqLocations.get(e))));
+			}
+			i++;
 		}
-		sb.append(" ) ");
-		return sb.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("----| Step: t ");
+		sb.append(Double.toString(mTime));
+		sb.append("|---------------------------------------------- \n");
+		sb.append(String.join("\n", output));
+		return  sb.toString();
 	}
 	
 	private String formatAssignment(Expression e, Collection<Expression> values) {

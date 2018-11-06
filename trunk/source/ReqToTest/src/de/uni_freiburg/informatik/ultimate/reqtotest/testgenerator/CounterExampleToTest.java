@@ -100,7 +100,8 @@ public class CounterExampleToTest {
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().startsWith("reqtotest_pc") && 
-				((IdentifierExpression) e).getIdentifier().endsWith("'") ){
+				((IdentifierExpression) e).getIdentifier().endsWith("'") &&
+				isLargerZero(((IdentifierExpression) e).getIdentifier(), programState)){
 				reqLocations.put(e, programState.getValues(e));
 			}
 		}
@@ -120,6 +121,21 @@ public class CounterExampleToTest {
 		}
 		return false;
 	}
+	
+	private boolean isLargerZero(String ident, ProgramState<Expression> state) {
+		for(Expression e: state.getVariables()) {
+			if(e instanceof IdentifierExpression && ((IdentifierExpression) e).getIdentifier().equals(ident)){
+				Collection<Expression> values = state.getValues(e);
+				for(Expression v: values) {
+					return v instanceof IntegerLiteral && Integer.parseInt(((IntegerLiteral)v).getValue()) > 0;
+				}
+			}
+				
+		}
+		return false;
+	}
+	
+
 	
 }
 

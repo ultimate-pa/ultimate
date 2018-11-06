@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -186,19 +187,19 @@ public class GraphToBoogie {
 		final Expression rhs = new IdentifierExpression(mDummyLocation, mGraphToPc.get(req));
 		final BinaryExpression condition = new BinaryExpression(mDummyLocation, BinaryExpression.Operator.COMPEQ, lhs, rhs);
 		return new IfStatement(mDummyLocation, condition, body, elsePart);
-	}
+	} 
 	
 	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph graph, ReqGuardGraph successor, TimedLabel label) {
 		Statement[] body;
-		Statement setPcNextState = createVarIntAssignment(mGraphToPrimePc.get(graph), successor.getLabel());
+		Statement setPcNextState = generateVarIntAssignment(mGraphToPrimePc.get(graph), successor.getLabel());
 		if (label.getReset() != null) {
-			Statement resetClock = createVarRealAssignment(label.getReset().getName(), 0.0f);
+			Statement resetClock = generateVarRealAssignment(label.getReset().getName(), 0.0f);
 			body = new Statement[] {resetClock, setPcNextState};
 		} else {
 			body = new Statement[] {setPcNextState};
 		}
-			IfStatement ifStatement = new IfStatement(mDummyLocation, 
-					mTerm2Expression.translate(label.getGuard()), body, innerIf);	
+		final Expression guard = mTerm2Expression.translate(label.getGuard());
+		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
 		return new Statement[] {ifStatement};
 	}
 	
@@ -241,13 +242,13 @@ public class GraphToBoogie {
 		return new AssignmentStatement(mDummyLocation,lhs,rhs );
 	}
 	
-	private Statement createVarIntAssignment(String asignee, int value) {
+	private Statement generateVarIntAssignment(String asignee, int value) {
 		final LeftHandSide[] lhs = new LeftHandSide[] {new VariableLHS(mDummyLocation, asignee)};
 		final Expression[] rhs = new Expression[] {new IntegerLiteral(mDummyLocation, Integer.toString(value))};
 		return new AssignmentStatement(mDummyLocation,lhs,rhs );
 	}
 	
-	private Statement createVarRealAssignment(String asignee, float value) {
+	private Statement generateVarRealAssignment(String asignee, float value) {
 		final LeftHandSide[] lhs = new LeftHandSide[] {new VariableLHS(mDummyLocation, asignee)};
 		final Expression[] rhs = new Expression[] {new RealLiteral(mDummyLocation, Float.toString(value))};
 		return new AssignmentStatement(mDummyLocation,lhs,rhs );
@@ -292,7 +293,7 @@ public class GraphToBoogie {
 	private List<Statement> generatePcInitialization() {
 		final List<Statement> statements = new ArrayList<>();
 		for(ReqGuardGraph req: mRequirements) {
-			statements.add(createVarIntAssignment(mGraphToPc.get(req), req.getLabel()));
+			statements.add(generateVarIntAssignment(mGraphToPc.get(req), req.getLabel()));
 		}
 		return statements;
 	}
@@ -300,9 +301,9 @@ public class GraphToBoogie {
 	private List<Statement> generateClockInitialization() {
 		final List<Statement> statements = new ArrayList<>();
 		for(String clock: mSymbolTable.getClockVars()) {
-			statements.add(createVarRealAssignment(clock, 0.0f));
+			statements.add(generateVarRealAssignment(clock, 0.0f));
 		}
-		statements.add(createVarRealAssignment("delta", 0.0f));
+		statements.add(generateVarRealAssignment("delta", 0.0f));
 		return statements;
 	}
 	
@@ -325,7 +326,7 @@ public class GraphToBoogie {
 		final List<Statement> oracles = new ArrayList<>();	
 		final List<Term> guards = mThreeValuedAuxVarGen.getOracleGuards();
 		
-		// dummyassertion to catch states at this point in the program
+		// dummy assertion to mark the program location
 		NamedAttribute attribute = new NamedAttribute(mDummyLocation, TEST_ORACLE_MARKER , new Expression[0] );
 		Statement assume = new AssertStatement(mDummyLocation, new NamedAttribute[] {attribute}, new BooleanLiteral(mDummyLocation, true));	
 		oracles.add(assume);
