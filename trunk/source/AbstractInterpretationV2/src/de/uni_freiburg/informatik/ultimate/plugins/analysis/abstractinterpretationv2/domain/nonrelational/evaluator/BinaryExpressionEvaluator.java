@@ -55,17 +55,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The state type of the domain.
  */
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
-		implements INAryEvaluator<VALUE, STATE> {
+		extends NAryEvaluator<VALUE, STATE> {
 
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
-	private final int mMaxRecursionDepth;
 
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-
-	private IEvaluator<VALUE, STATE> mLeftSubEvaluator;
-	private IEvaluator<VALUE, STATE> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -74,28 +70,24 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
 		mLogger = logger;
 		mEvaluatorType = type;
 		mMaxParallelSates = maxParallelStates;
-		mMaxRecursionDepth = maxRecursionDepth;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mTopValue = mNonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-
-		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
-			return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
-		}
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		final Collection<IEvaluationResult<VALUE>> firstResult =
-				mLeftSubEvaluator.evaluate(currentState, currentRecursion + 1);
+				getSubEvaluator(0).evaluate(currentState, getCurrentEvaluationRecursion() + 1);
 		final Collection<IEvaluationResult<VALUE>> secondResult =
-				mRightSubEvaluator.evaluate(currentState, currentRecursion + 1);
+				getSubEvaluator(1).evaluate(currentState, getCurrentEvaluationRecursion() + 1);
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
@@ -141,7 +133,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			// Don't do anything with the return value here. Just check for inequality and return the
 			// appropriate boolean value.
 			// TODO it might be necessary to change this behavior for different other abstract domains!
-			if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+			if (!getSubEvaluator(0).containsBool() && !getSubEvaluator(1).containsBool()) {
 				return onlyBoolean(firstValue.compareInequality(secondValue));
 			}
 			return onlyTop();
@@ -197,7 +189,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		rtr.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 		final BooleanValue negBool = returnBool.neg();
 		final Collection<VALUE> compl;
-		if (mLeftSubEvaluator.getType() == EvaluatorType.INTEGER) {
+		if (getSubEvaluator(0).getType() == EvaluatorType.INTEGER) {
 			compl = returnValue.complementInteger();
 		} else {
 			compl = returnValue.complement();
@@ -211,7 +203,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	private Collection<IEvaluationResult<VALUE>> evaluateCompEq(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		BooleanValue returnBool = BooleanValue.INVALID;
-		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+		if (getSubEvaluator(0).containsBool() || getSubEvaluator(1).containsBool()) {
 			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
 					? BooleanValue.TRUE
 					: BooleanValue.BOTTOM;
@@ -221,7 +213,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 		if (returnBool.isBottom() || returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
-		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+		} else if (!getSubEvaluator(0).containsBool() && !getSubEvaluator(1).containsBool()) {
 			returnBool = first.getValue().compareEquality(second.getValue());
 		}
 
@@ -229,12 +221,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState,
-			final int currentRecursion) {
-
-		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
-			return Collections.singletonList(oldState);
-		}
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState) {
 
 		final Collection<STATE> rtr = new HashSet<>();
 
@@ -242,9 +229,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		final BooleanValue evalResultBool = evalResult.getBooleanValue();
 
 		final Collection<IEvaluationResult<VALUE>> leftValues =
-				mLeftSubEvaluator.evaluate(oldState, currentRecursion + 1);
+				getSubEvaluator(0).evaluate(oldState, getCurrentEvaluationRecursion() + 1);
 		final Collection<IEvaluationResult<VALUE>> rightValues =
-				mRightSubEvaluator.evaluate(oldState, currentRecursion + 1);
+				getSubEvaluator(1).evaluate(oldState, getCurrentEvaluationRecursion() + 1);
 
 		for (final IEvaluationResult<VALUE> leftOp : leftValues) {
 			for (final IEvaluationResult<VALUE> rightOp : rightValues) {
@@ -262,16 +249,18 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 				switch (mOperator) {
 				case LOGICAND:
-					final Collection<STATE> leftAnd =
-							mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState, currentRecursion + 1);
-					final Collection<STATE> rightAnd =
-							mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState, currentRecursion + 1);
+					final Collection<STATE> leftAnd = getSubEvaluator(0).inverseEvaluate(logicalLeftOpValue, oldState,
+							getCurrentInverseEvaluationRecursion() + 1);
+					final Collection<STATE> rightAnd = getSubEvaluator(1).inverseEvaluate(logicalRightOpValue, oldState,
+							getCurrentInverseEvaluationRecursion() + 1);
 					rtr.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState, currentRecursion + 1)
+					getSubEvaluator(0)
+							.inverseEvaluate(logicalLeftOpValue, oldState, getCurrentInverseEvaluationRecursion() + 1)
 							.forEach(rtr::add);
-					mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState, currentRecursion + 1)
+					getSubEvaluator(1)
+							.inverseEvaluate(logicalRightOpValue, oldState, getCurrentInverseEvaluationRecursion() + 1)
 							.forEach(rtr::add);
 					break;
 				case LOGICIMPLIES:
@@ -282,7 +271,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 							"If and only if expressions should have been removed during expression normalization.");
 				case COMPEQ:
 					final BooleanValue intersectBool = leftOp.getBooleanValue().intersect(rightOp.getBooleanValue());
-					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					if ((getSubEvaluator(0).containsBool() || getSubEvaluator(1).containsBool())
 							&& (intersectBool == BooleanValue.TOP)) {
 						rtr.add(oldState);
 						break;
@@ -296,14 +285,14 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final NonrelationalEvaluationResult<VALUE> rightEvalResult =
 							new NonrelationalEvaluationResult<>(inverseRight, leftOp.getBooleanValue());
 
-					final Collection<STATE> leftEq =
-							mLeftSubEvaluator.inverseEvaluate(leftEvalResult, oldState, currentRecursion + 1);
-					final Collection<STATE> rightEq =
-							mRightSubEvaluator.inverseEvaluate(rightEvalResult, oldState, currentRecursion + 1);
+					final Collection<STATE> leftEq = getSubEvaluator(0).inverseEvaluate(leftEvalResult, oldState,
+							getCurrentInverseEvaluationRecursion() + 1);
+					final Collection<STATE> rightEq = getSubEvaluator(1).inverseEvaluate(rightEvalResult, oldState,
+							getCurrentInverseEvaluationRecursion() + 1);
 					rtr.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
-					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+					if (getSubEvaluator(0).containsBool() || getSubEvaluator(1).containsBool()) {
 						throw new UnsupportedOperationException(
 								"COMPNEQ operator should not occur for boolean formulas.");
 					}
@@ -326,10 +315,10 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
 							new NonrelationalEvaluationResult<>(newValueRight, evalResultBool);
 
-					final Collection<STATE> leftInverseArith =
-							mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState, currentRecursion + 1);
-					final Collection<STATE> rightInverseArith =
-							mRightSubEvaluator.inverseEvaluate(inverseResultRight, oldState, currentRecursion + 1);
+					final Collection<STATE> leftInverseArith = getSubEvaluator(0).inverseEvaluate(inverseResultLeft,
+							oldState, getCurrentInverseEvaluationRecursion() + 1);
+					final Collection<STATE> rightInverseArith = getSubEvaluator(1).inverseEvaluate(inverseResultRight,
+							oldState, getCurrentInverseEvaluationRecursion() + 1);
 
 					rtr.addAll(crossIntersect(leftInverseArith, rightInverseArith));
 					break;
@@ -444,29 +433,13 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
-		assert evaluator != null;
-
-		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
-			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned to.");
-		}
-
-		if (mLeftSubEvaluator == null) {
-			mLeftSubEvaluator = evaluator;
-			return;
-		}
-
-		mRightSubEvaluator = evaluator;
-	}
-
-	@Override
 	public boolean hasFreeOperands() {
-		return mLeftSubEvaluator == null || mRightSubEvaluator == null;
+		return getNumberOfSubEvaluators() < 2;
 	}
 
 	@Override
 	public boolean containsBool() {
-		return mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool();
+		return getSubEvaluator(0).containsBool() || getSubEvaluator(1).containsBool();
 	}
 
 	@Override
@@ -486,7 +459,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append('(').append(mLeftSubEvaluator);
+		sb.append('(').append(getSubEvaluator(0));
 
 		switch (mOperator) {
 		case ARITHDIV:
@@ -539,7 +512,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		}
 
-		sb.append(mRightSubEvaluator).append(')');
+		sb.append(getSubEvaluator(1)).append(')');
 
 		return sb.toString();
 	}
@@ -600,8 +573,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	@Override
 	public EvaluatorType getType() {
-		assert mLeftSubEvaluator.getType() == mRightSubEvaluator.getType();
+		assert getSubEvaluator(0).getType() == getSubEvaluator(1).getType();
 		return mEvaluatorType;
 	}
-
 }

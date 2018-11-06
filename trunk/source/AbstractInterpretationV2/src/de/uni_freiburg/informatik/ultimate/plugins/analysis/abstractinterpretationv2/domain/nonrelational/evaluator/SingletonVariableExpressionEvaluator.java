@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            The type of abstract domain states.
  */
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-		implements IEvaluator<VALUE, STATE> {
+		extends Evaluator<VALUE, STATE> {
 
 	private final IProgramVarOrConst mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
@@ -61,15 +61,16 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	private boolean mContainsBoolean = false;
 	private final EvaluatorType mType;
 
-	public SingletonVariableExpressionEvaluator(final IProgramVarOrConst var,
+	public SingletonVariableExpressionEvaluator(final IProgramVarOrConst var, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
 		mVar = var;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mType = EvaluatorUtils.getEvaluatorType(mVar);
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
@@ -104,8 +105,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
-			final int currentRecursion) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
 
@@ -118,12 +118,6 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		}
 
 		return returnList;
-	}
-
-	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
-		throw new UnsupportedOperationException(
-				"Cannot add a subevaluator to singleton variable expression evaluators.");
 	}
 
 	@Override

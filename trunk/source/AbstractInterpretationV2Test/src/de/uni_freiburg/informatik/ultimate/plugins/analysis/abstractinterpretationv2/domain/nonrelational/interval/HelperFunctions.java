@@ -66,9 +66,9 @@ public final class HelperFunctions {
 
 		final EvaluatorLogger logger = new EvaluatorLogger(new ConsoleLogger());
 		final SingletonValueExpressionEvaluator<IntervalDomainValue, IntervalDomainState> value1Evaluator =
-				new SingletonValueExpressionEvaluator<>(first, type);
+				new SingletonValueExpressionEvaluator<>(first, type, maxRecursionDepth, new IntervalValueFactory());
 		final SingletonValueExpressionEvaluator<IntervalDomainValue, IntervalDomainState> value2Evaluator =
-				new SingletonValueExpressionEvaluator<>(second, type);
+				new SingletonValueExpressionEvaluator<>(second, type, maxRecursionDepth, new IntervalValueFactory());
 		final BinaryExpressionEvaluator<IntervalDomainValue, IntervalDomainState> binaryExpressionEvaluator =
 				new BinaryExpressionEvaluator<>(logger, type, maxParallelStates, maxRecursionDepth,
 						new IntervalValueFactory());

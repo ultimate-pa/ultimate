@@ -49,34 +49,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The type of the states of the abstract domain.
  */
 public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
-		implements IEvaluator<VALUE, STATE> {
+		extends Evaluator<VALUE, STATE> {
 
 	private final BooleanValue mBooleanValue;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	public SingletonBooleanExpressionEvaluator(final BooleanValue booleanValue,
+	public SingletonBooleanExpressionEvaluator(final BooleanValue booleanValue, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
 		mBooleanValue = booleanValue;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 		return Collections.singletonList(
 				new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), mBooleanValue));
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
-			final int currentRecursion) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		return Collections.singletonList(currentState);
-	}
-
-	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
-		throw new UnsupportedOperationException(
-				"Adding a subevaluator is not supported for singleton boolean expression evaluators.");
 	}
 
 	@Override

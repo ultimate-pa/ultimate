@@ -28,10 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
@@ -50,26 +48,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  */
 public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
-		implements IFunctionEvaluator<VALUE, STATE> {
+		extends Evaluator<VALUE, STATE> {
 
 	private final String mName;
 	private final int mInParamCount;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private final List<IEvaluator<VALUE, STATE>> mInputParamEvaluators;
 	private final EvaluatorType mType;
 
-	public FunctionEvaluator(final String name, final int numInParams,
+	public FunctionEvaluator(final String name, final int numInParams, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorType type) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
 		mName = name;
 		mInParamCount = numInParams;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
-		mInputParamEvaluators = new ArrayList<>();
 		mType = type;
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
 		// Return a top value since functions cannot be handled, yet.
@@ -78,24 +75,14 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
-			final int currentRecursion) {
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert currentState != null;
 		return Collections.singletonList(currentState);
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
-		if (mInputParamEvaluators.size() < mInParamCount) {
-			mInputParamEvaluators.add(evaluator);
-		} else {
-			throw new UnsupportedOperationException("No space left to add sub evaluators to this function evaluator.");
-		}
-	}
-
-	@Override
 	public boolean hasFreeOperands() {
-		return mInputParamEvaluators.size() < mInParamCount;
+		return getNumberOfSubEvaluators() < mInParamCount;
 	}
 
 	@Override
@@ -103,7 +90,9 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 		return false;
 	}
 
-	@Override
+	/**
+	 * @return The number of in-parameters for this function.
+	 */
 	public int getNumberOfInParams() {
 		return mInParamCount;
 	}
@@ -113,11 +102,11 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(mName).append('(');
-		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
+		for (int i = 0; i < getNumberOfSubEvaluators(); i++) {
 			if (i > 0) {
 				sb.append(", ");
 			}
-			sb.append(mInputParamEvaluators.get(i));
+			sb.append(getSubEvaluator(i));
 		}
 		sb.append(')');
 
@@ -128,5 +117,4 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	public EvaluatorType getType() {
 		return mType;
 	}
-
 }

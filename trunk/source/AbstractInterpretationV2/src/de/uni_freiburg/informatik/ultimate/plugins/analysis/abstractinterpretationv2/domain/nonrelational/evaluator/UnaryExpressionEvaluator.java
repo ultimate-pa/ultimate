@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -52,34 +51,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The type of states of the abstract domain.
  */
 public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
-		implements INAryEvaluator<VALUE, STATE> {
+		extends NAryEvaluator<VALUE, STATE> {
 
 	private final EvaluatorLogger mLogger;
 
-	private IEvaluator<VALUE, STATE> mSubEvaluator;
 	private Operator mOperator;
-	private final int mMaxRecursionDepth;
 	private final VALUE mTopValue;
 
 	public UnaryExpressionEvaluator(final EvaluatorLogger logger, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
 		mLogger = logger;
-		mMaxRecursionDepth = maxRecursionDepth;
 		mTopValue = nonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
-	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState, final int currentRecursion) {
+	public Collection<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-
-		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
-			return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
-		}
 
 		final Collection<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		final Collection<IEvaluationResult<VALUE>> subResults =
-				mSubEvaluator.evaluate(currentState, currentRecursion + 1);
+				getSubEvaluator(0).evaluate(currentState, getCurrentEvaluationRecursion() + 1);
 
 		for (final IEvaluationResult<VALUE> subResult : subResults) {
 			final VALUE returnValue;
@@ -112,12 +105,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState,
-			final int currentRecursion) {
-
-		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
-			return Collections.singletonList(currentState);
-		}
+	public Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 
 		VALUE evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
@@ -137,28 +125,17 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		final NonrelationalEvaluationResult<VALUE> evalResult =
 				new NonrelationalEvaluationResult<>(evalValue, evalBool);
 		mLogger.logInverseEvaluation(mOperator, evalResult, computedValue);
-		return mSubEvaluator.inverseEvaluate(evalResult, currentState, currentRecursion + 1);
-	}
-
-	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
-		assert evaluator != null;
-
-		if (mSubEvaluator == null) {
-			mSubEvaluator = evaluator;
-		} else {
-			throw new UnsupportedOperationException("Cannot add more evaluators to this unary expression evaluator.");
-		}
+		return getSubEvaluator(0).inverseEvaluate(evalResult, currentState, getCurrentInverseEvaluationRecursion() + 1);
 	}
 
 	@Override
 	public boolean hasFreeOperands() {
-		return mSubEvaluator == null;
+		return getNumberOfSubEvaluators() == 0;
 	}
 
 	@Override
 	public boolean containsBool() {
-		return mSubEvaluator.containsBool();
+		return getSubEvaluator(0).containsBool();
 	}
 
 	@Override
@@ -190,7 +167,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		default:
 		}
 
-		sb.append(mSubEvaluator);
+		sb.append(getSubEvaluator(0));
 
 		if (mOperator == Operator.OLD) {
 			sb.append(')');
@@ -201,6 +178,6 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 	@Override
 	public EvaluatorType getType() {
-		return mSubEvaluator.getType();
+		return getSubEvaluator(0).getType();
 	}
 }

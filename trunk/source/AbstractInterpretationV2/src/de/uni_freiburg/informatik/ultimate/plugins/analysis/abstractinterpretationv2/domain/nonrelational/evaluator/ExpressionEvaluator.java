@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an
@@ -40,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
+public class ExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>> {
 
-	private final Deque<IEvaluator<VALUE, STATE>> mEvaluators;
-	private IEvaluator<VALUE, STATE> mRootEvaluator;
+	private final Deque<Evaluator<VALUE, STATE>> mEvaluators;
+	private Evaluator<VALUE, STATE> mRootEvaluator;
 
 	/**
 	 * The default constructor.
@@ -60,7 +61,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *
 	 * @param evaluator
 	 */
-	public void addEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addEvaluator(final Evaluator<VALUE, STATE> evaluator) {
 
 		// TODO Insert sanity checks to be on the safe side.
 
@@ -95,7 +96,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
 	 *
 	 * @return
 	 */
-	public IEvaluator<VALUE, STATE> getRootEvaluator() {
+	public Evaluator<VALUE, STATE> getRootEvaluator() {
 		return mRootEvaluator;
 	}
 

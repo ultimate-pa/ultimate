@@ -75,12 +75,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbo
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.Evaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.NAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -125,10 +125,31 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		assert mEvaluatorFactory != null;
 	}
 
+	/**
+	 * Computes the abstract post states for a given statement and prestate.
+	 *
+	 * @param oldState
+	 *            The prestate to use.
+	 * @param statement
+	 *            The statement to compute the abstract post states for.
+	 * @return
+	 */
 	public List<STATE> process(final STATE oldState, final Statement statement) {
 		return process(oldState, statement, Collections.emptyMap());
 	}
 
+	/**
+	 * Computes the abstract post states for a given statement and prestate.
+	 *
+	 * @param oldState
+	 *            The prestate to use.
+	 * @param statement
+	 *            The statement to compute the abstract post states for.
+	 * @param tmpVars
+	 *            A map of left hand side variables to program variables that have been temporarily added to the states.
+	 *            This map is needed for the computation of the abstract post states when dealing with transformulas.
+	 * @return
+	 */
 	public List<STATE> process(final STATE oldState, final Statement statement,
 			final Map<LeftHandSide, IProgramVarOrConst> tmpVars) {
 		assert oldState != null;
@@ -336,6 +357,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 			newStates.add(newState);
 		}
+
 		return newStates;
 	}
 
@@ -417,21 +439,21 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IntegerLiteral expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final Evaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final RealLiteral expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final Evaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final BinaryExpression expr) {
-		final INAryEvaluator<V, STATE> evaluator =
+		final NAryEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -439,7 +461,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final FunctionApplication expr) {
-		final IEvaluator<V, STATE> evaluator;
+		final Evaluator<V, STATE> evaluator;
 		final List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 
 		// If we don't have a specification for the function, we return top.
@@ -468,7 +490,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final Evaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
@@ -476,7 +498,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final UnaryExpression expr) {
-		final INAryEvaluator<V, STATE> evaluator =
+		final NAryEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -485,7 +507,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory
+		final Evaluator<V, STATE> evaluator = mEvaluatorFactory
 				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -502,7 +524,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IfThenElseExpression expr) {
-		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory.createConditionalEvaluator();
+		final Evaluator<V, STATE> evaluator = mEvaluatorFactory.createConditionalEvaluator();
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case

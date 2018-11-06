@@ -29,13 +29,21 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 
 /**
- * Interface for NAry evaluators that have some operator.
+ * Abstract class for NAry evaluators that have some operator.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE>> extends IEvaluator<VALUE, STATE> {
+public abstract class NAryEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		extends Evaluator<VALUE, STATE> {
+
+	public NAryEvaluator(final int maxRecursionDepth,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+		super(maxRecursionDepth, nonrelationalValueFactory);
+	}
 
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.
@@ -43,12 +51,12 @@ public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE>> exte
 	 * @param operator
 	 *            The operator to set.
 	 */
-	void setOperator(Object operator);
+	public abstract void setOperator(Object operator);
 
 	/**
 	 * Returns the arity of the evaluator.
 	 *
 	 * @return An integer corresponding to the arity of the evaluator.
 	 */
-	int getArity();
+	public abstract int getArity();
 }
