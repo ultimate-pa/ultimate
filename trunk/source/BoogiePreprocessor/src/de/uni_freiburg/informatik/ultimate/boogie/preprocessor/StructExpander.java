@@ -800,7 +800,7 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 	 *            The flattened return type of the function
 	 * @return A splitting of {@link Attribute}s
 	 */
-	private Attribute[][] processExpandStructAttribute(final FunctionDeclaration funDecl, final int fieldCount,
+	private static Attribute[][] processExpandStructAttribute(final FunctionDeclaration funDecl, final int fieldCount,
 			final BoogieStructType st) {
 		final Attribute[] attribs = funDecl.getAttributes();
 		if (fieldCount < 0) {
@@ -833,7 +833,7 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 
 		final Attribute[][] rtr = new Attribute[fieldCount][];
 		int lastIdx = -1;
-		int rtrIdx = 0;
+
 		for (int i = 0; i < attribs.length; ++i) {
 			if (!(attribs[i] instanceof NamedAttribute)) {
 				continue;
@@ -843,8 +843,7 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 				continue;
 			}
 			if (lastIdx != -1) {
-				fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, rtrIdx, i);
-				rtrIdx++;
+				fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, i);
 
 			} else {
 				if (lastIdx == -1 && i != 0) {
@@ -854,43 +853,54 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			}
 			lastIdx = i;
 		}
-		fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, rtrIdx, attribs.length);
-		rtrIdx++;
+		fillNextAttributeSegment(funDecl, st, attribs, rtr, lastIdx, attribs.length);
 
-		for (; rtrIdx < rtr.length; ++rtrIdx) {
-			rtr[rtrIdx] = new Attribute[0];
+		for (int i = 0; i < rtr.length; ++i) {
+			if (rtr[i] == null) {
+				rtr[i] = new Attribute[0];
+			}
 		}
 		return rtr;
 	}
 
-	private void fillNextAttributeSegment(final FunctionDeclaration funDecl, final BoogieStructType st,
-			final Attribute[] attribs, final Attribute[][] rtr, final int lastIdx, final int rtrIdx, final int i) {
-		if (rtrIdx >= rtr.length) {
-			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has too many "
-					+ ATTRIBUTE_EXPAND_STRUCT + " attributes for its return type");
-		}
+	private static void fillNextAttributeSegment(final FunctionDeclaration funDecl, final BoogieStructType st,
+			final Attribute[] attribs, final Attribute[][] rtr, final int lastIdx, final int i) {
+
 		if (lastIdx == -1) {
 			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has no " + ATTRIBUTE_EXPAND_STRUCT
 					+ " attribute but struct return type");
 		}
-		// copy all attributes after lastIdx and before i into a new array and save it at rtr[rtrIdx]
-		final int newLength = i - lastIdx - 1;
-		final Attribute[] dest = new Attribute[newLength];
-		System.arraycopy(attribs, lastIdx + 1, dest, 0, newLength);
-		rtr[rtrIdx] = dest;
 
-		final String currentFieldId = st.getFieldIds()[rtrIdx];
-		final Expression expandStructArg = ((NamedAttribute) attribs[lastIdx]).getValues()[0];
+		final Expression[] expandStructAttribArgs = ((NamedAttribute) attribs[lastIdx]).getValues();
+		if (expandStructAttribArgs.length != 1) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
+					+ " attribute with wrong number of arguments: " + expandStructAttribArgs.length);
+		}
+		final Expression expandStructArg = expandStructAttribArgs[0];
 		if (!(expandStructArg instanceof StringLiteral)) {
 			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
 					+ " attribute but wrong attribute type");
 		}
 		final String expectedFieldName = ((StringLiteral) expandStructArg).getValue();
-		if (!currentFieldId.equals(expectedFieldName)) {
+		final int idx = Arrays.asList(st.getFieldIds()).indexOf(expectedFieldName);
+		if (idx == -1) {
 			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + ATTRIBUTE_EXPAND_STRUCT
-					+ " attribute but field names and " + ATTRIBUTE_EXPAND_STRUCT + " names do not match: "
-					+ currentFieldId + " vs. " + expectedFieldName);
+					+ " attribute but field name " + expectedFieldName + " does not exist in flattened struct");
 		}
+		if (idx >= rtr.length) {
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has too many "
+					+ ATTRIBUTE_EXPAND_STRUCT + " attributes for its return type");
+		}
+		if (rtr[idx] != null) {
+			throw new IllegalExpandStructUsageException(
+					funDecl.getIdentifier() + " " + ATTRIBUTE_EXPAND_STRUCT + " attribute occurs twice");
+		}
+
+		// copy all attributes after lastIdx and before i into a new array and save it at rtr[rtrIdx]
+		final int newLength = i - lastIdx - 1;
+		final Attribute[] dest = new Attribute[newLength];
+		System.arraycopy(attribs, lastIdx + 1, dest, 0, newLength);
+		rtr[idx] = dest;
 	}
 
 	@Override
