@@ -42,22 +42,13 @@ public class ConcurrencyInformation {
 
 	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mThreadInstanceMap;
 
-
-
-	public ConcurrencyInformation(final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2) {
+	public ConcurrencyInformation(
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2) {
 		mThreadInstanceMap = threadInstanceMap2;
 	}
-
-
 
 	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> getThreadInstanceMap() {
 		return mThreadInstanceMap;
 	}
-
-
-
-
-
-
 
 }

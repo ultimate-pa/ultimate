@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -50,33 +50,33 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class TermTransferrer extends TermTransformer {
-	
-	public enum TransferMode { ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC }
-	
+
+	public enum TransferMode {
+		ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC
+	}
+
 	protected final Script mScript;
 	private final Set<Sort> mDeclaredSorts = new HashSet<>();
 
-	protected final Map<Term, Term> mBacktransferMapping = new HashMap<Term,Term>();
+	protected final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 	protected final Map<Term, Term> mTransferMapping;
-	
-	
+
 	public Map<Term, Term> getBacktranferMapping() {
 		return mBacktransferMapping;
 	}
 
-
-	public TermTransferrer(Script script) {
+	public TermTransferrer(final Script script) {
 		mScript = script;
 		mTransferMapping = Collections.emptyMap();
 	}
-	
-	public TermTransferrer(Script script, Map<Term, Term> transferMapping) {
+
+	public TermTransferrer(final Script script, final Map<Term, Term> transferMapping) {
 		mScript = script;
 		mTransferMapping = transferMapping;
 	}
 
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		final Term mappingResult = mTransferMapping.get(term);
 		if (mappingResult != null) {
 			setResult(mappingResult);
@@ -112,21 +112,21 @@ public class TermTransferrer extends TermTransformer {
 			super.convert(term);
 		}
 	}
-	
-	TermVariable transferTermVariable(TermVariable tv) {
-//		final Term mappingResult = mTransferMapping.get(tv);
+
+	TermVariable transferTermVariable(final TermVariable tv) {
+		// final Term mappingResult = mTransferMapping.get(tv);
 		final TermVariable transferResult;
-//		if (mappingResult == null) {
-			final Sort sort = transferSort(tv.getSort());
-			transferResult = mScript.variable(tv.getName(), sort);
-//			mTransferMapping.put(tv, transferResult);
-//		} else {
-//			transferResult = (TermVariable) mappingResult;
-//		}
+		// if (mappingResult == null) {
+		final Sort sort = transferSort(tv.getSort());
+		transferResult = mScript.variable(tv.getName(), sort);
+		// mTransferMapping.put(tv, transferResult);
+		// } else {
+		// transferResult = (TermVariable) mappingResult;
+		// }
 		return transferResult;
 	}
 
-	private Sort declareSortIfNeeded(Sort sort) {
+	private Sort declareSortIfNeeded(final Sort sort) {
 		if (!sort.isInternal()) {
 			if (!mDeclaredSorts.contains(sort)) {
 				mScript.declareSort(sort.getName(), sort.getIndices().length);
@@ -138,8 +138,8 @@ public class TermTransferrer extends TermTransformer {
 		}
 		return mScript.sort(sort.getName());
 	}
-	
-	private Sort transferSort(Sort sort) {
+
+	private Sort transferSort(final Sort sort) {
 		final Sort[] arguments = transferSorts(sort.getArguments());
 		final BigInteger[] indices = sort.getIndices();
 		Sort result;
@@ -155,17 +155,17 @@ public class TermTransferrer extends TermTransformer {
 		}
 		return result;
 	}
-	
-	private Sort[] transferSorts(Sort[] sorts) {
+
+	private Sort[] transferSorts(final Sort[] sorts) {
 		final Sort[] result = new Sort[sorts.length];
-		for (int i=0; i<sorts.length; i++) {
+		for (int i = 0; i < sorts.length; i++) {
 			result[i] = transferSort(sorts[i]);
 		}
 		return result;
 	}
 
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		Term result;
 		try {
 			final BigInteger[] indices = appTerm.getFunction().getIndices();
@@ -185,15 +185,15 @@ public class TermTransferrer extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
+	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		throw new UnsupportedOperationException("not yet implemented");
-		//Term result = mScript.let(vars, newValues, newBody);
+		// Term result = mScript.let(vars, newValues, newBody);
 	}
 
 	@Override
-	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final TermVariable[] vars = new TermVariable[old.getVariables().length];
-		for (int i=0; i<old.getVariables().length; i++) {
+		for (int i = 0; i < old.getVariables().length; i++) {
 			vars[i] = transferTermVariable(old.getVariables()[i]);
 		}
 		final Term result = mScript.quantifier(old.getQuantifier(), vars, newBody);
@@ -201,14 +201,9 @@ public class TermTransferrer extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertAnnotation(AnnotatedTerm old,
-			Annotation[] newAnnots, Term newBody) {
+	public void postConvertAnnotation(final AnnotatedTerm old, final Annotation[] newAnnots, final Term newBody) {
 		final Term result = mScript.annotate(newBody, newAnnots);
 		setResult(result);
 	}
-	
-	
-	
-	
 
 }
