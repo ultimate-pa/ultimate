@@ -363,13 +363,13 @@ public class CfgBuilder {
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
 					adder.constructTreadInstances(result, forkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit =
-					adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
+			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
 			final HashRelation<String, String> copyDirectives =
 					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
-			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator, threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
-			adder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
+			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator,
+					threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
+			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
 
 			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
 					threadInstanceMap, backtranslator);
@@ -385,7 +385,7 @@ public class CfgBuilder {
 		return result;
 	}
 
-	private Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
+	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
 		final Set<Term> result = new HashSet<>();
 		for (final ThreadInstance ti : values) {
 			result.add(ti.getInUseVar().getTerm());

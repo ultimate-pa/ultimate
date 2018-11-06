@@ -84,8 +84,7 @@ public class EqAtomicBaseNode extends EqNode {
 		final EqNode replacer = mapping.get(this);
 		if (replacer != null) {
 			return replacer;
-		} else {
-			return this;
 		}
+		return this;
 	}
 }

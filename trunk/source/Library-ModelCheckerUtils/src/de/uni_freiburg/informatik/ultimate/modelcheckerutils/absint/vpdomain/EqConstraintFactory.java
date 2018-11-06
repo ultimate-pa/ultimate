@@ -82,16 +82,15 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private final Set<IProgramConst> mNonTheoryLiterals;
 
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
-			final IUltimateServiceProvider services,  final ManagedScript mgdScript,
-			final WeqSettings settings, final boolean debugMode, final Set<IProgramConst> nonTheoryLiterals) {
+			final IUltimateServiceProvider services, final ManagedScript mgdScript, final WeqSettings settings,
+			final boolean debugMode, final Set<IProgramConst> nonTheoryLiterals) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mMgdScript = mgdScript;
 
 		mNonTheoryLiterals = nonTheoryLiterals;
 
-		final Set<NODE> nonTheoryLiteralNodes =
-				nonTheoryLiterals.stream()
+		final Set<NODE> nonTheoryLiteralNodes = nonTheoryLiterals.stream()
 				.map(pc -> eqNodeAndFunctionFactory.getOrConstructNode(pc.getTerm())).collect(Collectors.toSet());
 		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
 				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode,
@@ -128,9 +127,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	public EqConstraint<NODE> getEmptyConstraint(final boolean modifiable) {
 		if (modifiable) {
 			return new EqConstraint<>(mConstraintIdCounter++, mWeqCcManager.getEmptyWeqCc(true), this);
-		} else {
-			return mEmptyConstraint;
 		}
+		return mEmptyConstraint;
 	}
 
 	public EqConstraint<NODE> getBottomConstraint() {
@@ -169,7 +167,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-
 	/**
 	 * Return a constraint built from the given weqcc, result is frozen.
 	 *
@@ -188,11 +185,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public EqDisjunctiveConstraint<NODE>
-			getDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList) {
+	public EqDisjunctiveConstraint<NODE> getDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList) {
 		assert !constraintList.stream().filter(cons -> cons == null).findAny().isPresent();
 		// TODO: do we want full-fledged filtering for weakest constraints here? (e.g. via PartialOrderCache, like in
-		//    CcManager)
+		// CcManager)
 
 		// if one of the disjuncts is "top", remove all other disjuncts
 		if (constraintList.stream().filter(cons -> cons.isTop()).findAny().isPresent()) {
@@ -203,7 +199,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		final Collection<EqConstraint<NODE>> bottomsFiltered = constraintList.stream()
 				.filter(cons -> !(cons instanceof EqBottomConstraint)).collect(Collectors.toSet());
 
-		return new EqDisjunctiveConstraint<NODE>(bottomsFiltered, this);
+		return new EqDisjunctiveConstraint<>(bottomsFiltered, this);
 	}
 
 	public EqConstraint<NODE> conjoin(final EqConstraint<NODE> constraint1Raw, final EqConstraint<NODE> constraint2,
@@ -234,30 +230,24 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			constraint1.freezeIfNecessary();
 		}
 
-//		assert !mWeqCcManager.getSettings().closeAllEqConstraints() || constraint2.getWeqCc().isClosed() : "right?..";
+		// assert !mWeqCcManager.getSettings().closeAllEqConstraints() || constraint2.getWeqCc().isClosed() :
+		// "right?..";
 
 		assert inplace != constraint1.isFrozen();
 
-		final WeqCongruenceClosure<NODE> newPa = mWeqCcManager.meet(constraint1.getWeqCc(), constraint2.getWeqCc(),
-				inplace);
+		final WeqCongruenceClosure<NODE> newPa =
+				mWeqCcManager.meet(constraint1.getWeqCc(), constraint2.getWeqCc(), inplace);
 
 		assert inplace != newPa.isFrozen();
 
 		if (inplace) {
 			debugEnd(BmNames.CONJOIN);
 			return constraint1;
-		} else {
-			final EqConstraint<NODE> res = getEqConstraint(newPa, false);
-			debugEnd(BmNames.CONJOIN);
-			return res;
 		}
+		final EqConstraint<NODE> res = getEqConstraint(newPa, false);
+		debugEnd(BmNames.CONJOIN);
+		return res;
 	}
-
-//	private void freezeIfNecessary(final EqConstraint<NODE> constraint1) {
-//		if (!constraint1.isFrozen()) {
-//			constraint1.freezeAndClose();
-//		}
-//	}
 
 	public EqConstraint<NODE> closeIfNecessary(final EqConstraint<NODE> constraint) {
 		if (constraint.isBottom()) {
@@ -277,20 +267,19 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param conjuncts
 	 * @return
 	 */
-	public EqDisjunctiveConstraint<NODE> conjoinDisjunctiveConstraints(
-			final List<EqDisjunctiveConstraint<NODE>> conjuncts) {
+	public EqDisjunctiveConstraint<NODE>
+			conjoinDisjunctiveConstraints(final List<EqDisjunctiveConstraint<NODE>> conjuncts) {
 		debugStart(BmNames.CONJOIN_DISJUNCTIVE);
-		final List<Set<EqConstraint<NODE>>> listOfConstraintSets = conjuncts.stream()
-				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
+		final List<Set<EqConstraint<NODE>>> listOfConstraintSets =
+				conjuncts.stream().map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
 
-		final List<List<EqConstraint<NODE>>> crossProduct =
-				CrossProducts.crossProductOfSets(listOfConstraintSets);
+		final List<List<EqConstraint<NODE>>> crossProduct = CrossProducts.crossProductOfSets(listOfConstraintSets);
 
 		// for each tuple in the cross product: construct the meet, and add it to the resulting constraintList
 		final List<EqConstraint<NODE>> constraintList = crossProduct.stream()
-			.map(tuple -> tuple.stream()
-					.reduce((constraint1, constraint2) -> conjoin(constraint1, constraint2, false)).get())
-			.collect(Collectors.toList());
+				.map(tuple -> tuple.stream()
+						.reduce((constraint1, constraint2) -> conjoin(constraint1, constraint2, false)).get())
+				.collect(Collectors.toList());
 		debugEnd(BmNames.CONJOIN_DISJUNCTIVE);
 		return getDisjunctiveConstraint(constraintList);
 	}
@@ -304,17 +293,15 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			mWeqCcManager.reportWeakEquivalence(inputConstraint.getWeqCc(), array1, array2, storeIndex, true);
 			debugEnd(BmNames.ADD_WEAK_EQUALITY);
 			return inputConstraint;
-		} else {
-			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.reportWeakEquivalence(inputConstraint.getWeqCc(),
-					array1, array2, storeIndex, false);
-			final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
-			debugEnd(BmNames.ADD_WEAK_EQUALITY);
-			return result;
 		}
+		final WeqCongruenceClosure<NODE> newWeqCc =
+				mWeqCcManager.reportWeakEquivalence(inputConstraint.getWeqCc(), array1, array2, storeIndex, false);
+		final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
+		debugEnd(BmNames.ADD_WEAK_EQUALITY);
+		return result;
 	}
 
-	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(
-			final EqDisjunctiveConstraint<NODE> disjunct1,
+	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(final EqDisjunctiveConstraint<NODE> disjunct1,
 			final EqDisjunctiveConstraint<NODE> disjunct2) {
 		debugStart(BmNames.DISJOIN_DISJUNCTIVE);
 		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>();
@@ -331,8 +318,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param disjuncts
 	 * @return
 	 */
-	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(
-			final List<EqDisjunctiveConstraint<NODE>> disjuncts) {
+	public EqDisjunctiveConstraint<NODE>
+			disjoinDisjunctiveConstraints(final List<EqDisjunctiveConstraint<NODE>> disjuncts) {
 		debugStart(BmNames.DISJOIN_DISJUNCTIVE);
 
 		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>();
@@ -365,8 +352,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public EqConstraint<NODE> addEquality(final NODE node1, final NODE node2,
-			final EqConstraint<NODE> inputConstraint, final boolean inplace) {
+	public EqConstraint<NODE> addEquality(final NODE node1, final NODE node2, final EqConstraint<NODE> inputConstraint,
+			final boolean inplace) {
 		debugStart(BmNames.ADD_EQUALITY);
 		if (inputConstraint.isBottom()) {
 			debugEnd(BmNames.ADD_EQUALITY);
@@ -388,15 +375,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			mWeqCcManager.reportEquality(inputConstraint.getWeqCc(), node1, node2, true);
 			debugEnd(BmNames.ADD_EQUALITY);
 			return inputConstraint;
-		} else {
-			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.reportEquality(inputConstraint.getWeqCc(),
-					node1, node2, false);
-			final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
-			debugEnd(BmNames.ADD_EQUALITY);
-			return result;
 		}
+		final WeqCongruenceClosure<NODE> newWeqCc =
+				mWeqCcManager.reportEquality(inputConstraint.getWeqCc(), node1, node2, false);
+		final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
+		debugEnd(BmNames.ADD_EQUALITY);
+		return result;
 	}
-
 
 	public EqConstraint<NODE> addDisequality(final NODE node1, final NODE node2,
 			final EqConstraint<NODE> inputConstraint, final boolean inplace) {
@@ -425,15 +410,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			mWeqCcManager.reportDisequality(inputConstraint.getWeqCc(), node1, node2, true);
 			debugEnd(BmNames.ADD_DISEQUALITY);
 			return inputConstraint;
-		} else {
-			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.reportDisequality(inputConstraint.getWeqCc(),
-					node1, node2, false);
-			final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
-			debugEnd(BmNames.ADD_DISEQUALITY);
-			return result;
 		}
+		final WeqCongruenceClosure<NODE> newWeqCc =
+				mWeqCcManager.reportDisequality(inputConstraint.getWeqCc(), node1, node2, false);
+		final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
+		debugEnd(BmNames.ADD_DISEQUALITY);
+		return result;
 	}
-
 
 	public EqDisjunctiveConstraint<NODE> renameVariables(final EqDisjunctiveConstraint<NODE> constraint,
 			final Map<Term, Term> substitutionMapping) {
@@ -457,13 +440,12 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			mWeqCcManager.renameVariables(oldConstraint.getWeqCc(), substitutionMapping, true);
 			debugEnd(BmNames.RENAME_VARIABLES);
 			return oldConstraint;
-		} else {
-			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.renameVariables(oldConstraint.getWeqCc(),
-				substitutionMapping, false);
-			final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
-			debugEnd(BmNames.RENAME_VARIABLES);
-			return result;
 		}
+		final WeqCongruenceClosure<NODE> newWeqCc =
+				mWeqCcManager.renameVariables(oldConstraint.getWeqCc(), substitutionMapping, false);
+		final EqConstraint<NODE> result = getEqConstraint(newWeqCc, false);
+		debugEnd(BmNames.RENAME_VARIABLES);
+		return result;
 	}
 
 	/**
@@ -502,40 +484,38 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			postProjectHelper(original, termsToProjectAway, original);
 			return original;
-		} else {
-			WeqCongruenceClosure<NODE> newWeqCc = original.getWeqCc();
-			for (final Term term : termsToProjectAway) {
-				if (!getEqNodeAndFunctionFactory().hasNode(term)) {
-					continue;
-				}
-				if (newWeqCc.isInconsistent(false)) {
-					postProjectHelper(original, termsToProjectAway, getBottomConstraint());
-					return getBottomConstraint();
-				}
-
-				// havoccing an element
-				final NODE nodeToProjectAway = getEqNodeAndFunctionFactory().getExistingNode(term);
-				newWeqCc = mWeqCcManager.projectAway(newWeqCc, nodeToProjectAway);
-
-				if (newWeqCc.isInconsistent(false)) {
-					postProjectHelper(original, termsToProjectAway, getBottomConstraint());
-					return getBottomConstraint();
-				}
-
-				assert newWeqCc.sanityCheck();
-			}
-			result = getEqConstraint(newWeqCc, false);
-			postProjectHelper(original, termsToProjectAway, result);
-			return result;
 		}
+		WeqCongruenceClosure<NODE> newWeqCc = original.getWeqCc();
+		for (final Term term : termsToProjectAway) {
+			if (!getEqNodeAndFunctionFactory().hasNode(term)) {
+				continue;
+			}
+			if (newWeqCc.isInconsistent(false)) {
+				postProjectHelper(original, termsToProjectAway, getBottomConstraint());
+				return getBottomConstraint();
+			}
 
+			// havoccing an element
+			final NODE nodeToProjectAway = getEqNodeAndFunctionFactory().getExistingNode(term);
+			newWeqCc = mWeqCcManager.projectAway(newWeqCc, nodeToProjectAway);
+
+			if (newWeqCc.isInconsistent(false)) {
+				postProjectHelper(original, termsToProjectAway, getBottomConstraint());
+				return getBottomConstraint();
+			}
+
+			assert newWeqCc.sanityCheck();
+		}
+		result = getEqConstraint(newWeqCc, false);
+		postProjectHelper(original, termsToProjectAway, result);
+		return result;
 
 	}
 
 	private void postProjectHelper(final EqConstraint<NODE> original, final Collection<Term> termsToProjectAway,
 			final EqConstraint<NODE> result) {
-		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, result, getMgdScript().getScript()) :
-					"resulting constraint still has at least one of the to-be-projected vars";
+		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, result,
+				getMgdScript().getScript()) : "resulting constraint still has at least one of the to-be-projected vars";
 
 		if (mIsDebugMode) {
 			mLogger.debug("projected variables " + termsToProjectAway + " from " + original.hashCode() + " result: "
@@ -549,9 +529,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return mEqNodeAndFunctionFactory;
 	}
 
-//	public EqDisjunctiveConstraint<NODE> getTopDisjunctiveConstraint() {
-//		return mEmptyDisjunctiveConstraint;
-//	}
+	// public EqDisjunctiveConstraint<NODE> getTopDisjunctiveConstraint() {
+	// return mEmptyDisjunctiveConstraint;
+	// }
 
 	public ManagedScript getMgdScript() {
 		return mMgdScript;
@@ -580,15 +560,15 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	/**
 	 *
-	 * @param modifiable return a modifiable, fresh constraint
+	 * @param modifiable
+	 *            return a modifiable, fresh constraint
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<NODE> getEmptyDisjunctiveConstraint(final boolean modifiable) {
 		if (modifiable) {
 			return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint(true)));
-		} else {
-			return mEmptyDisjunctiveConstraint;
 		}
+		return mEmptyDisjunctiveConstraint;
 	}
 
 	public BenchmarkWithCounters getBenchmark() {

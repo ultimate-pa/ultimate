@@ -63,13 +63,13 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	final EqConstraintFactory<NODE> mFactory;
 	/**
-	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this
-	 * constraint; computed lazily by getVariables.
+	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint; computed lazily by
+	 * getVariables.
 	 */
 	private Set<IProgramVar> mVariables;
 	/**
-	 * Same as mVariables, but with respect to IProgramVarOrConst, and getTerm,
-	 * instead of IProgramVar and getTermVariable.
+	 * Same as mVariables, but with respect to IProgramVarOrConst, and getTerm, instead of IProgramVar and
+	 * getTermVariable.
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
@@ -95,9 +95,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * Whenever an EqConstraint becomes inconsistent, we replace it with an
-	 * EqBottomConstraint. Thus this should always return false. (see also
-	 * checkForContradictionMethod)
+	 * Whenever an EqConstraint becomes inconsistent, we replace it with an EqBottomConstraint. Thus this should always
+	 * return false. (see also checkForContradictionMethod)
 	 *
 	 * @return
 	 */
@@ -142,20 +141,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mWeqCc.isInconsistent();
 	}
 
-	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
-		for (int i = 0; i < freeVars.length; i++) {
-			if (freeVars[i].equals(var)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	/**
 	 *
 	 * @param node1
 	 * @param node2
-	 * @param addNodesIfNecessary whether the nodes should be added if not present already before posing the query
+	 * @param addNodesIfNecessary
+	 *            whether the nodes should be added if not present already before posing the query
 	 * @return true iff this constraint implies that node1 and node2 are equal
 	 */
 	public boolean areEqual(final NODE node1, final NODE node2, final boolean addNodesIfNecessary) {
@@ -163,13 +154,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = getWeqCcWithAddedNodes(node1, node2);
 			/*
 			 * TODO: would it be a good idea to keep the updated weqcc here? that would mean that the eqconstraint is
-			 *  somewhat mutable..
+			 * somewhat mutable..
 			 */
 			return unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
-		} else {
-			if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
-				return false;
-			}
+		}
+		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
+			return false;
 		}
 		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
 	}
@@ -178,7 +168,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 *
 	 * @param node1
 	 * @param node2
-	 * @param addNodesIfNecessary whether the nodes should be added if not present already before posing the query
+	 * @param addNodesIfNecessary
+	 *            whether the nodes should be added if not present already before posing the query
 	 * @return true iff this constraint implies that node1 and node2 are unequal
 	 */
 	public boolean areUnequal(final NODE node1, final NODE node2, final boolean addNodesIfNecessary) {
@@ -186,13 +177,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = getWeqCcWithAddedNodes(node1, node2);
 			/*
 			 * TODO: would it be a good idea to keep the updated weqcc here? that would mean that the eqconstraint is
-			 *  somewhat mutable..
+			 * somewhat mutable..
 			 */
 			return unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
-		} else {
-			if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
-				return false;
-			}
+		}
+		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
+			return false;
 		}
 		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
@@ -223,9 +213,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * This only really makes sense when this constraint is in a renaming state such
-	 * that the TermVariables are "normalized" to the TermVariables that are
-	 * associated to IProgramVars.
+	 * This only really makes sense when this constraint is in a renaming state such that the TermVariables are
+	 * "normalized" to the TermVariables that are associated to IProgramVars.
 	 *
 	 * I.e. when it is the constraint of a EqPredicate or an EqState
 	 *
@@ -238,8 +227,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		final Collection<TermVariable> allTvs = getAllTermVariables();
 
 		/*
-		 * note this will probably crash if this method is called on an EqConstraint
-		 * that does not belong to a predicate or state
+		 * note this will probably crash if this method is called on an EqConstraint that does not belong to a predicate
+		 * or state
 		 */
 		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(Collectors.toSet());
 
@@ -248,18 +237,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this
-	 * EqConstraint by looking up the TermVariables and nullary ApplicationTerms in
-	 * the symbol table.
+	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this EqConstraint by looking up the TermVariables
+	 * and nullary ApplicationTerms in the symbol table.
 	 *
-	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState
-	 * that has this constraint, i.e., only Pvocs that are actually constrained by
-	 * this constraint are mentioned.
+	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState that has this constraint, i.e., only
+	 * Pvocs that are actually constrained by this constraint are mentioned.
 	 *
-	 * We expect this to only be called when this constraint is the constraint of an
-	 * EqState, thus we expect all TermVariables to correspond to an IProgramVar and
-	 * all nullary ApplicationTerms to correspond to a constant that is mentioned in
-	 * the symbol table.
+	 * We expect this to only be called when this constraint is the constraint of an EqState, thus we expect all
+	 * TermVariables to correspond to an IProgramVar and all nullary ApplicationTerms to correspond to a constant that
+	 * is mentioned in the symbol table.
 	 *
 	 * @param symbolTable
 	 *
@@ -302,8 +288,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (other.isTop()) {
 			return other;
 		}
-		final WeqCongruenceClosure<NODE> newPartialArrangement = mFactory.getWeqCcManager().join(
-				this.mWeqCc, other.mWeqCc, true);
+		final WeqCongruenceClosure<NODE> newPartialArrangement =
+				mFactory.getWeqCcManager().join(this.mWeqCc, other.mWeqCc, true);
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement, true);
 		return res;
 	}
@@ -383,7 +369,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final EqConstraint other = (EqConstraint) obj;
+		final EqConstraint<?> other = (EqConstraint<?>) obj;
 		if (mId != other.mId) {
 			return false;
 		}
