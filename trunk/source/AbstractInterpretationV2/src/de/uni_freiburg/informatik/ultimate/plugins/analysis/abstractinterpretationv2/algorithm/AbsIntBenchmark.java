@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider.CsvColumn;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<Object> {
+public class AbsIntBenchmark<ACTION> implements ICsvProviderProvider<Object> {
 
 	private final Map<Integer, Integer> mAction2Visits;
 	private final Map<Integer, Integer> mAction2Merges;
@@ -27,6 +27,10 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 
 	@CsvColumn("PostApplication")
 	private int mPostApplication;
+	private int mEvaluationRecursions;
+	private int mEvaluationMaxRecursionDepth;
+	private int mInverseEvaluationRecursions;
+	private int mInverseEvaluationMaxRecursionDepth;
 
 	public AbsIntBenchmark() {
 		mAction2Visits = new HashMap<>();
@@ -35,6 +39,10 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 		mAction2Fixpoints = new HashMap<>();
 		mMaxVariables = 0;
 		mPostApplication = 0;
+		mEvaluationRecursions = 0;
+		mEvaluationMaxRecursionDepth = 0;
+		mInverseEvaluationRecursions = 0;
+		mInverseEvaluationMaxRecursionDepth = 0;
 	}
 
 	@Override
@@ -67,6 +75,20 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 
 	void countPostApplication() {
 		mPostApplication++;
+	}
+
+	public void recordEvaluationRecursionDepth(final int maxDepth) {
+		if (maxDepth > mEvaluationMaxRecursionDepth) {
+			mEvaluationMaxRecursionDepth = maxDepth;
+		}
+		mEvaluationRecursions++;
+	}
+
+	public void recordInverseEvaluationRecursionDepth(final int maxDepth) {
+		if (maxDepth > mInverseEvaluationMaxRecursionDepth) {
+			mInverseEvaluationMaxRecursionDepth = maxDepth;
+		}
+		mInverseEvaluationRecursions++;
 	}
 
 	private void addOrIncrement(final Map<Integer, Integer> map) {
@@ -105,6 +127,18 @@ public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<O
 					mAction2Widen.entrySet().stream().map(a -> a.getValue()).reduce((a, b) -> a + b);
 			sb.append("Widened at ").append(mAction2Widen.size()).append(" different actions ").append(widen.get())
 					.append(" times. ");
+		}
+
+		if (mEvaluationRecursions > 0) {
+			sb.append("Performed ").append(mEvaluationRecursions)
+					.append(" root evaluator evaluations with a maximum evaluation depth of ")
+					.append(mEvaluationMaxRecursionDepth).append(". ");
+		}
+
+		if (mInverseEvaluationRecursions > 0) {
+			sb.append("Performed ").append(mInverseEvaluationRecursions)
+					.append(" inverse root evaluator evaluations with a maximum inverse evaluation depth of ")
+					.append(mInverseEvaluationMaxRecursionDepth).append(". ");
 		}
 
 		if (mAction2Fixpoints.isEmpty()) {

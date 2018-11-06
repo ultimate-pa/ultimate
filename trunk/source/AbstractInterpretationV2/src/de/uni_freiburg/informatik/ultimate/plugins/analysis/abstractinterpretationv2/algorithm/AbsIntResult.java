@@ -62,7 +62,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 	private final IVariableProvider<STATE, ACTION> mVariableProvider;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final List<AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION>> mCounterexamples;
-	private final AbsIntBenchmark<ACTION, LOCATION> mBenchmark;
+	private final AbsIntBenchmark<ACTION> mBenchmark;
 
 	private final Script mScript;
 
@@ -207,7 +207,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 	}
 
 	@Override
-	public AbsIntBenchmark<ACTION, LOCATION> getBenchmark() {
+	public AbsIntBenchmark<ACTION> getBenchmark() {
 		return mBenchmark;
 	}
 
