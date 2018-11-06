@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -267,12 +268,22 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
 							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
-				final Set<LETTER> universalMinuendLoopers = determineUniversalMinuendLoopers(mAbstraction.getAlphabet(),
-						interpolAutomaton.getStates());
-				mLogger.info("Number of universal loopers: " + universalMinuendLoopers.size() + " out of "
+				final Set<LETTER> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
+						mAbstraction.getAlphabet(), interpolAutomaton.getStates());
+				mLogger.info("Number of universal loopers: " + universalSubtrahendLoopers.size() + " out of "
 						+ mAbstraction.getAlphabet().size());
-				new DifferencePairwiseOnDemand(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, (IPetriNet) mAbstraction, raw);
+				final NestedWordAutomaton<LETTER, IPredicate> ia = (NestedWordAutomaton<LETTER, IPredicate>) interpolAutomaton;
+				for (final IPredicate state : ia.getStates()) {
+					for (final LETTER letter : universalSubtrahendLoopers) {
+						ia.addInternalTransition(state, letter, state);
+					}
+				}
+				new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
+						universalSubtrahendLoopers);
+				new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
+						null);
 				raw.switchToReadonlyMode();
 			}
 			try {
@@ -311,7 +322,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		return dia;
 	}
 
-	private Set<LETTER> determineUniversalMinuendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
+	private Set<LETTER> determineUniversalSubtrahendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
 		final Set<LETTER> result = new HashSet<>();
 		for (final LETTER letter : alphabet) {
 			final boolean isUniversalLooper = isUniversalLooper(letter, states);
