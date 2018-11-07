@@ -42,11 +42,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 /**
@@ -56,8 +55,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
  *
  */
 public class Boogie2SMT {
-
-	public static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
 
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
@@ -70,7 +67,7 @@ public class Boogie2SMT {
 
 	private final Statements2TransFormula mStatements2TransFormula;
 
-	private final IPredicate mAxioms;
+	private final SmtSymbols mSmtSymbols;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -110,8 +107,8 @@ public class Boogie2SMT {
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList),
 				maScript.getScript(), mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
-		mAxioms = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(), tvp.getFormula(),
-				tvp.getVars(), tvp.getClosedFormula());
+		mSmtSymbols = new SmtSymbols(tvp.getClosedFormula(), tvp.getProcedures());
+
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, maScript);
@@ -154,8 +151,8 @@ public class Boogie2SMT {
 		return mTypeSortTranslator;
 	}
 
-	public IPredicate getAxioms() {
-		return mAxioms;
+	public SmtSymbols getSmtSymbols() {
+		return mSmtSymbols;
 	}
 
 	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {

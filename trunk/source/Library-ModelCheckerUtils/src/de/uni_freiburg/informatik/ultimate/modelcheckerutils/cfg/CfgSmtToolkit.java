@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  *
@@ -48,28 +47,29 @@ public class CfgSmtToolkit {
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalsTable mModifiableGlobalsTable;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final IPredicate mAxioms;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
 	private final Map<String, List<ILocalProgramVar>> mInParams;
 	private final Map<String, List<ILocalProgramVar>> mOutParams;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private final ConcurrencyInformation mConcurrencyInformation;
+	private final SmtSymbols mSmtSymbols;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures,
+			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final Map<String, List<ILocalProgramVar>> inParams, final Map<String, List<ILocalProgramVar>> outParams,
-			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo) {
+			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo,
+			final SmtSymbols smtSymbols) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
 		mOldVarsAssignmentCache = new OldVarsAssignmentCache(mManagedScript, mModifiableGlobalsTable);
-		mAxioms = axioms;
 		mProcedures = procedures;
 		mInParams = inParams;
 		mOutParams = outParams;
 		mIcfgEdgeFactory = icfgEdgeFactory;
 		mConcurrencyInformation = concurInfo;
+		mSmtSymbols = smtSymbols;
 	}
 
 	public ManagedScript getManagedScript() {
@@ -88,8 +88,8 @@ public class CfgSmtToolkit {
 		return mSymbolTable;
 	}
 
-	public IPredicate getAxioms() {
-		return mAxioms;
+	public SmtSymbols getSmtSymbols() {
+		return mSmtSymbols;
 	}
 
 	public Set<String> getProcedures() {
@@ -109,8 +109,8 @@ public class CfgSmtToolkit {
 	}
 
 	/**
-	 * Object that provides additional information about concurrency in the program.
-	 * Returns null if the program is not a concurrent program.
+	 * Object that provides additional information about concurrency in the program. Returns null if the program is not
+	 * a concurrent program.
 	 */
 	public ConcurrencyInformation getConcurrencyInformation() {
 		return mConcurrencyInformation;

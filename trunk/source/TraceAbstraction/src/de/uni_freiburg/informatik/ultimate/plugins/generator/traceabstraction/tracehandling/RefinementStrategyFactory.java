@@ -33,14 +33,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb.BPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -243,9 +241,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
 					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
-			final TermTransferrer tt = new TermTransferrer(tcSolver);
-			final Term axioms = icfgContainer.getCfgSmtToolkit().getAxioms().getFormula();
-			tcSolver.assertTerm(tt.transform(axioms));
+			icfgContainer.getCfgSmtToolkit().getSmtSymbols().transferSymbols(tcSolver);
 		} else {
 			mgdScriptTc = prefs.getCfgSmtToolkit().getManagedScript();
 		}

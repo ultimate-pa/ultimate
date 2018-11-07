@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -69,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
@@ -339,10 +339,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		}
 
-		final IPredicate transformedAxioms = transformAxioms(oldToolkit.getAxioms());
+		final SmtSymbols transformedSymbols = transformSmtSymbols(oldToolkit.getSmtSymbols());
 		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
-				newSymbolTable, transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getInParams(),
-				oldToolkit.getOutParams(), oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation());
+				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
+				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 
@@ -499,14 +499,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		return null;
 	}
 
-	private IPredicate transformAxioms(final IPredicate oldaxioms) {
-		final AxiomTransformationResult translationResult = mTransformer.transform(oldaxioms);
+	private SmtSymbols transformSmtSymbols(final SmtSymbols smtSymbols) {
+		final AxiomTransformationResult translationResult = mTransformer.transform(smtSymbols.getAxioms());
 		if (translationResult.isOverapproximation()) {
 			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
 		}
 
 		if (mAdditionalAxioms.isEmpty()) {
-			return translationResult.getAxiom();
+			return new SmtSymbols(translationResult.getAxiom());
 		}
 
 		final List<Term> newAxiomsClosed =
@@ -515,14 +515,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		final Term newAxioms = SmtUtils.and(mMgdScript.getScript(), newAxiomsClosed);
-
-		// Axioms may have serial number 0, hence we do not need a
-		// PredicateFactory here.
-		final int serialNumber = 0;
-		// Axioms do not contains local variables
-		final String[] procedures = new String[0];
-		return new BasicPredicate(serialNumber, procedures, newAxioms, Collections.emptySet(), newAxioms);
-
+		return new SmtSymbols(newAxioms, new String[0]);
 	}
 
 }

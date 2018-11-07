@@ -39,7 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.AddAxioms;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.AddSymbols;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.CommuHashPreprocessor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.MatchInOutVars;
@@ -75,13 +75,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -136,7 +136,7 @@ public class LassoAnalysis {
 	/**
 	 * The axioms regarding the transitions' constants
 	 */
-	protected final IPredicate mAxioms;
+	protected final SmtSymbols mSmtSymbols;
 
 	/**
 	 * The current preferences
@@ -175,10 +175,11 @@ public class LassoAnalysis {
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
 	 *
 	 * If the stem is null, the stem has to be added separately by calling addStem().
+	 *
 	 * @param modifiableGlobalsAtHonda
 	 *            global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
-	 * @param axioms
-	 *            a collection of axioms regarding the transitions' constants
+	 * @param smtSymbols
+	 *            a collection of smt symbols regarding the transitions' constants
 	 * @param preferences
 	 *            configuration options for this plugin; these are constant for the life time of this object
 	 * @param services
@@ -201,9 +202,10 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final IPredicate axioms, final ILassoRankerPreferences preferences,
+			final SmtSymbols smtSymbols, final ILassoRankerPreferences preferences,
 			final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws TermException {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique)
+			throws TermException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -214,7 +216,7 @@ public class LassoAnalysis {
 		mLogger.info("Preferences:");
 		mPreferences.feedSettingsString(mLogger::info);
 
-		mAxioms = axioms;
+		mSmtSymbols = smtSymbols;
 		mArrayIndexSupportingInvariants = new HashSet<>();
 		mMgdScript = csToolkit.getManagedScript();
 		mCfgSmtToolkit = csToolkit;
@@ -246,7 +248,7 @@ public class LassoAnalysis {
 	 *            the boogie2smt object that created the TransFormulas
 	 * @param loop
 	 *            a transition formula corresponding to the lasso's loop
-	 * @param axioms
+	 * @param symbols
 	 *            a collection of axioms regarding the transitions' constants
 	 * @param preferences
 	 *            configuration options for this plugin; these are constant for the life time of this object
@@ -257,13 +259,13 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
-			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final IPredicate axioms,
-			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
+	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable,
+			final UnmodifiableTransFormula loop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
+			final SmtSymbols symbols, final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
-		this(csToolkit, null, loop, modifiableGlobalsAtHonda, axioms, preferences, services, storage, simplificationTechnique,
-				xnfConversionTechnique);
+		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, storage,
+				simplificationTechnique, xnfConversionTechnique);
 	}
 
 	/**
@@ -278,8 +280,8 @@ public class LassoAnalysis {
 	 */
 	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
-		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mCfgSmtToolkit, mStemTransition,
-				mLoopTransition, mPreferences.getNlaHandling());
+		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mCfgSmtToolkit, mStemTransition, mLoopTransition,
+				mPreferences.getNlaHandling());
 		assert lassoBuilder.isSane("initial lasso construction");
 		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.isOverapproximateArrayIndexConnection()),
 				getPreProcessors(lassoBuilder, false));
@@ -317,7 +319,7 @@ public class LassoAnalysis {
 		}
 		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				new StemAndLoopPreprocessor(mMgdScript,
-						new AddAxioms(lassoBuilder.getReplacementVarFactory(), mAxioms)),
+						new AddSymbols(lassoBuilder.getReplacementVarFactory(), mSmtSymbols)),
 				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				mPreferences.isEnablePartitioneer()
 						? new LassoPartitioneerPreprocessor(mMgdScript, mServices, mXnfConversionTechnique)
@@ -425,7 +427,7 @@ public class LassoAnalysis {
 				nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices, mStorage);
 				constraintSat = nas.synthesize();
 			}
-			
+
 			final long endTime = System.nanoTime();
 
 			final boolean isFixpoint;
@@ -434,9 +436,9 @@ public class LassoAnalysis {
 			} else {
 				isFixpoint = false;
 			}
-			final NonterminationAnalysisBenchmark nab =
-					new NonterminationAnalysisBenchmark(constraintSat, isFixpoint, lasso.getStemVarNum(), lasso.getLoopVarNum(),
-							lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(), endTime - startTime);
+			final NonterminationAnalysisBenchmark nab = new NonterminationAnalysisBenchmark(constraintSat, isFixpoint,
+					lasso.getStemVarNum(), lasso.getLoopVarNum(), lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(),
+					endTime - startTime);
 			mLassoNonterminationAnalysisBenchmarks.add(nab);
 
 			if (constraintSat == LBool.SAT) {
@@ -467,8 +469,7 @@ public class LassoAnalysis {
 		}
 		return nta;
 	}
-	
-	
+
 	private NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
 		return new NonTerminationAnalysisSettings(new NonTerminationAnalysisSettings(settings) {
 
@@ -656,7 +657,7 @@ public class LassoAnalysis {
 				return "tf";
 			case RewriteIte.DESCRIPTION:
 				return "ite";
-			case AddAxioms.DESCRIPTION:
+			case AddSymbols.DESCRIPTION:
 				return "ax";
 			case CommuHashPreprocessor.DESCRIPTION:
 				return "hnf";

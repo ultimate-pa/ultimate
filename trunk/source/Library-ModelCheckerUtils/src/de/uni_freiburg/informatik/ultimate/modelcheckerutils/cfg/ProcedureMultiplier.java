@@ -69,23 +69,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Modifies a given {@link IIcfg} by adding copies of existing procedures.
  * <p>
- * Copies are constructed according to the {@link HashRelation} argument
- * "copyDirectives". If the relation contains the pair (foo, bar) we construct a
- * copy of the procedure "foo" and the identifier of the copy is "bar".
+ * Copies are constructed according to the {@link HashRelation} argument "copyDirectives". If the relation contains the
+ * pair (foo, bar) we construct a copy of the procedure "foo" and the identifier of the copy is "bar".
  * <p />
  * <p>
- * A {@link ProcedureMultiplier} replaces also all local variables accordingly
- * and replaces the {@link CfgSmtToolkit}.
+ * A {@link ProcedureMultiplier} replaces also all local variables accordingly and replaces the {@link CfgSmtToolkit}.
  * <p />
  * <p>
- * For every copy e_copy of an edge e, the map entry (e_copy,e) is added to the
- * given {@link BlockEncodingBacktranslator}.
+ * For every copy e_copy of an edge e, the map entry (e_copy,e) is added to the given
+ * {@link BlockEncodingBacktranslator}.
  * <p />
  *
  *
@@ -103,11 +100,11 @@ public class ProcedureMultiplier {
 		final Map<String, List<ILocalProgramVar>> inParams = new HashMap<>(icfg.getCfgSmtToolkit().getInParams());
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
 		final Set<String> procedures = new HashSet<>(icfg.getCfgSmtToolkit().getProcedures());
-		final IPredicate axioms = icfg.getCfgSmtToolkit().getAxioms();
+		final SmtSymbols smtSymbols = icfg.getCfgSmtToolkit().getSmtSymbols();
 		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable(icfg.getSymboltable(), procedures);
 		final ManagedScript managedScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>(
-				icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
+		final HashRelation<String, IProgramNonOldVar> proc2globals =
+				new HashRelation<>(icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
 
 		final Map<ILocalProgramVar, ILocalProgramVar> newVar2OldVar = new HashMap<>();
 		final Map<String, Map<ILocalProgramVar, ILocalProgramVar>> oldVar2newVar = new HashMap<>();
@@ -121,8 +118,8 @@ public class ProcedureMultiplier {
 				procedures.add(copyIdentifier);
 				final List<ILocalProgramVar> inParamsOfCopy = new ArrayList<>();
 				for (final ILocalProgramVar inParam : inParams.get(proc)) {
-					final ILocalProgramVar inParamCopy = constructCopy(inParam, copyIdentifier,
-							icfg.getCfgSmtToolkit().getManagedScript(), this);
+					final ILocalProgramVar inParamCopy =
+							constructCopy(inParam, copyIdentifier, icfg.getCfgSmtToolkit().getManagedScript(), this);
 					inParamsOfCopy.add(inParamCopy);
 					newVar2OldVar.put(inParamCopy, inParam);
 					procOldVar2NewVar.put(inParam, inParamCopy);
@@ -132,8 +129,8 @@ public class ProcedureMultiplier {
 				inParams.put(copyIdentifier, inParamsOfCopy);
 				final List<ILocalProgramVar> outParamsOfCopy = new ArrayList<>();
 				for (final ILocalProgramVar outParam : outParams.get(proc)) {
-					final ILocalProgramVar outParamCopy = constructCopy(outParam, copyIdentifier,
-							icfg.getCfgSmtToolkit().getManagedScript(), this);
+					final ILocalProgramVar outParamCopy =
+							constructCopy(outParam, copyIdentifier, icfg.getCfgSmtToolkit().getManagedScript(), this);
 					outParamsOfCopy.add(outParamCopy);
 					newVar2OldVar.put(outParamCopy, outParam);
 					procOldVar2NewVar.put(outParam, outParamCopy);
@@ -162,18 +159,18 @@ public class ProcedureMultiplier {
 		}
 		backtranslator.setTermTranslator(
 				x -> new Substitution(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping)
-				.transform(x));
+						.transform(x));
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable,
-				axioms, procedures, inParams, outParams, icfgEdgeFactory,
-				icfg.getCfgSmtToolkit().getConcurrencyInformation());
+		final CfgSmtToolkit newCfgSmtToolkit =
+				new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable, procedures, inParams, outParams,
+						icfgEdgeFactory, icfg.getCfgSmtToolkit().getConcurrencyInformation(), smtSymbols);
 		final Map<IcfgLocation, IcfgLocation> newLoc2OldLoc = new HashMap<>();
 		for (final String proc : copyDirectives.getDomain()) {
 			final IcfgLocation procEntry = icfg.getProcedureEntryNodes().get(proc);
-			final List<IcfgLocation> procLocs = new IcfgLocationIterator<>(procEntry).asStream()
-					.collect(Collectors.toList());
+			final List<IcfgLocation> procLocs =
+					new IcfgLocationIterator<>(procEntry).asStream().collect(Collectors.toList());
 			for (final String copyIdentifier : copyDirectives.getImage(proc)) {
 				final Map<IcfgLocation, IcfgLocation> procOldLoc2NewLoc = new HashMap<>();
 				// add locations
@@ -197,28 +194,27 @@ public class ProcedureMultiplier {
 							final IcfgLocation target = procOldLoc2NewLoc.get(oldInternalEdge.getTarget());
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
-									managedScript, outEdge.getTransformula(),
-									oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransition newInternalEdge = icfgEdgeFactory
-									.createInternalTransition(source, target, payload, transFormula);
+									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
+							final IcfgInternalTransition newInternalEdge =
+									icfgEdgeFactory.createInternalTransition(source, target, payload, transFormula);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
 							source.addOutgoing(newInternalEdge);
 							target.addIncoming(newInternalEdge);
 						} else if (outEdge instanceof IcfgForkThreadCurrentTransition) {
 							// mainly copy and paste form IcfgInternalTransition
-							final IcfgForkThreadCurrentTransition oldForkEdge = (IcfgForkThreadCurrentTransition) outEdge;
+							final IcfgForkThreadCurrentTransition oldForkEdge =
+									(IcfgForkThreadCurrentTransition) outEdge;
 							final IcfgLocation source = procOldLoc2NewLoc.get(oldForkEdge.getSource());
 							final IcfgLocation target = procOldLoc2NewLoc.get(oldForkEdge.getTarget());
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
-									managedScript, outEdge.getTransformula(),
-									oldVar2newVar.get(copyIdentifier));
-							final ForkSmtArguments newForkSmtArguments = copyForkSmtArguments(
-									oldForkEdge.getForkSmtArguments(), oldVar2newVar.get(copyIdentifier),
-									managedScript);
-							final IcfgForkThreadCurrentTransition newForkEdge = icfgEdgeFactory
-									.createForkThreadCurrentTransition(source, target, payload, transFormula,
-											newForkSmtArguments, oldForkEdge.getNameOfForkedProcedure());
+									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
+							final ForkSmtArguments newForkSmtArguments =
+									copyForkSmtArguments(oldForkEdge.getForkSmtArguments(),
+											oldVar2newVar.get(copyIdentifier), managedScript);
+							final IcfgForkThreadCurrentTransition newForkEdge =
+									icfgEdgeFactory.createForkThreadCurrentTransition(source, target, payload,
+											transFormula, newForkSmtArguments, oldForkEdge.getNameOfForkedProcedure());
 							backtranslator.mapEdges(newForkEdge, oldForkEdge);
 							source.addOutgoing(newForkEdge);
 							target.addIncoming(newForkEdge);
@@ -229,19 +225,19 @@ public class ProcedureMultiplier {
 							threadInstanceMap.put(newForkEdge, threadInstance);
 						} else if (outEdge instanceof IcfgJoinThreadCurrentTransition) {
 							// mainly copy and paste form IcfgInternalTransition
-							final IcfgJoinThreadCurrentTransition oldJoinEdge = (IcfgJoinThreadCurrentTransition) outEdge;
+							final IcfgJoinThreadCurrentTransition oldJoinEdge =
+									(IcfgJoinThreadCurrentTransition) outEdge;
 							final IcfgLocation source = procOldLoc2NewLoc.get(oldJoinEdge.getSource());
 							final IcfgLocation target = procOldLoc2NewLoc.get(oldJoinEdge.getTarget());
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
-									managedScript, outEdge.getTransformula(),
-									oldVar2newVar.get(copyIdentifier));
-							final JoinSmtArguments newForkSmtArguments = copyJoinSmtArguments(
-									oldJoinEdge.getJoinSmtArguments(), oldVar2newVar.get(copyIdentifier),
-									managedScript);
-							final IcfgJoinThreadCurrentTransition newJoinEdge = icfgEdgeFactory
-									.createJoinThreadCurrentTransition(source, target, payload, transFormula,
-											newForkSmtArguments);
+									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
+							final JoinSmtArguments newForkSmtArguments =
+									copyJoinSmtArguments(oldJoinEdge.getJoinSmtArguments(),
+											oldVar2newVar.get(copyIdentifier), managedScript);
+							final IcfgJoinThreadCurrentTransition newJoinEdge =
+									icfgEdgeFactory.createJoinThreadCurrentTransition(source, target, payload,
+											transFormula, newForkSmtArguments);
 							backtranslator.mapEdges(newJoinEdge, oldJoinEdge);
 							source.addOutgoing(newJoinEdge);
 							target.addIncoming(newJoinEdge);
@@ -261,20 +257,20 @@ public class ProcedureMultiplier {
 	private ForkSmtArguments copyForkSmtArguments(final ForkSmtArguments forkSmtArguments,
 			final Map<ILocalProgramVar, ILocalProgramVar> map, final ManagedScript managedScript) {
 		final Map<Term, Term> defaultVariableMapping = constructDefaultVariableMapping(map);
-		final MultiTermResult newThreadIdArguments = copyMultiTermResult(forkSmtArguments.getThreadIdArguments(),
-				defaultVariableMapping, managedScript);
-		final MultiTermResult newProcedureArguments = copyMultiTermResult(forkSmtArguments.getProcedureArguments(),
-				defaultVariableMapping, managedScript);
+		final MultiTermResult newThreadIdArguments =
+				copyMultiTermResult(forkSmtArguments.getThreadIdArguments(), defaultVariableMapping, managedScript);
+		final MultiTermResult newProcedureArguments =
+				copyMultiTermResult(forkSmtArguments.getProcedureArguments(), defaultVariableMapping, managedScript);
 		return new ForkSmtArguments(newThreadIdArguments, newProcedureArguments);
 	}
 
 	private JoinSmtArguments copyJoinSmtArguments(final JoinSmtArguments joinSmtArguments,
 			final Map<ILocalProgramVar, ILocalProgramVar> map, final ManagedScript managedScript) {
 		final Map<Term, Term> defaultVariableMapping = constructDefaultVariableMapping(map);
-		final MultiTermResult newThreadIdArguments = copyMultiTermResult(joinSmtArguments.getThreadIdArguments(),
-				defaultVariableMapping, managedScript);
-		final List<IProgramVar> newAssignmentLhs = joinSmtArguments.getAssignmentLhs().stream().map(map::get)
-				.collect(Collectors.toList());
+		final MultiTermResult newThreadIdArguments =
+				copyMultiTermResult(joinSmtArguments.getThreadIdArguments(), defaultVariableMapping, managedScript);
+		final List<IProgramVar> newAssignmentLhs =
+				joinSmtArguments.getAssignmentLhs().stream().map(map::get).collect(Collectors.toList());
 		return new JoinSmtArguments(newThreadIdArguments, newAssignmentLhs);
 	}
 
@@ -315,10 +311,10 @@ public class ProcedureMultiplier {
 
 		final TermVariable termVariable = managedScript.getScript().variable(name, sort);
 
-		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(managedScript, lockOwner, sort,
-				name);
-		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(managedScript, lockOwner, sort,
-				name);
+		final ApplicationTerm defaultConstant =
+				ProgramVarUtils.constructDefaultConstant(managedScript, lockOwner, sort, name);
+		final ApplicationTerm primedConstant =
+				ProgramVarUtils.constructPrimedConstant(managedScript, lockOwner, sort, name);
 
 		final LocalBoogieVar bv = new LocalBoogieVar(localVar.getIdentifier(), copyIdentifier, null, termVariable,
 				defaultConstant, primedConstant);
@@ -329,8 +325,8 @@ public class ProcedureMultiplier {
 		return proc + "_" + suffix;
 	}
 
-	public static HashRelation<String, String> generateCopyDirectives(
-			final Collection<ThreadInstance> threadInstances) {
+	public static HashRelation<String, String>
+			generateCopyDirectives(final Collection<ThreadInstance> threadInstances) {
 		final HashRelation<String, String> result = new HashRelation<>();
 		for (final ThreadInstance ti : threadInstances) {
 			result.addPair(ti.getThreadTemplateName(), ti.getThreadInstanceName());

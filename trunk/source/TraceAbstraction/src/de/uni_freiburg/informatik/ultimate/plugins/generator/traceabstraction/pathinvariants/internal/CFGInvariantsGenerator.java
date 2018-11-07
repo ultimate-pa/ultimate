@@ -223,7 +223,7 @@ public final class CFGInvariantsGenerator {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
-				xnfConversionTechnique, csToolkit.getAxioms(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
+				xnfConversionTechnique, csToolkit.getSmtSymbols(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
 				kindOfInvariant);
 	}
 

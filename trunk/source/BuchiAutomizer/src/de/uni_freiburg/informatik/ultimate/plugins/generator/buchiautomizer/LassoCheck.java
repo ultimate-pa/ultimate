@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -182,7 +183,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	private NonTerminationArgument mNonterminationArgument;
 
-	private final IPredicate mAxioms;
+	private final SmtSymbols mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean mRemoveSuperfluousSupportingInvariants = true;
@@ -209,7 +210,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	public LassoCheck(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final SmtSymbols smtSymbols,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final String lassoCheckIdentifier, final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
@@ -235,7 +236,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckIdentifier = lassoCheckIdentifier;
-		mAxioms = axioms;
+		mSmtSymbols = smtSymbols;
 		mRefinementStrategyFactory = refinementStrategyFactory;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
@@ -576,7 +577,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mAxioms,
+				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
 						mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
@@ -608,7 +609,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mAxioms,
+			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
 					mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);

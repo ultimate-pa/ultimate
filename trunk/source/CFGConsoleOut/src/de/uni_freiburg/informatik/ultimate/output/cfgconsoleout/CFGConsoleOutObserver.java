@@ -78,7 +78,7 @@ public class CFGConsoleOutObserver extends BaseObserver {
 				+ icfg.getLoopLocations().stream().map(a -> a.toString()).collect(Collectors.joining(",")));
 		mLogger.info("ErrorLocs: "
 				+ IcfgUtils.getErrorLocations(icfg).stream().map(a -> a.toString()).collect(Collectors.joining(",")));
-		mLogger.info("Axioms: " + icfg.getCfgSmtToolkit().getAxioms());
+		mLogger.info("Axioms: " + icfg.getCfgSmtToolkit().getSmtSymbols());
 
 		while (iter.hasNext()) {
 			final IcfgEdge current = iter.next();

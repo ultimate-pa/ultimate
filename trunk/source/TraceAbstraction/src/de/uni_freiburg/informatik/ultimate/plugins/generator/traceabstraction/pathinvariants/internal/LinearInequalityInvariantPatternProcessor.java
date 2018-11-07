@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -120,9 +121,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * terms from the annotations in unsat core.
 	 */
 	private Map<String, Term> mAnnotTerm2MotzkinTerm;
-	
+
 	/**
-	 * Maps annotated terms to the locations (i.e. source and target locations) of corresponding transitions. 
+	 * Maps annotated terms to the locations (i.e. source and target locations) of corresponding transitions.
 	 */
 	private Map<String, Set<IcfgLocation>> mTermAnnotations2Locs;
 	/**
@@ -262,7 +263,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param storage
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
-	 * @param axioms
+	 * @param smtSymbols
 	 * @param startLocation
 	 * @param errorLocations
 	 *            a set of error locations
@@ -276,7 +277,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final IPredicate axioms, final Script solver, final List<IcfgLocation> locations,
+			final SmtSymbols smtSymbols, final Script solver, final List<IcfgLocation> locations,
 			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
 			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
@@ -295,7 +296,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSynthesizeEntryPattern = synthesizeEntryPattern;
 		mKindOfInvariant = kindOfInvariant;
 
-		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, axioms, storage, simplicationTechnique,
+		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, smtSymbols, storage, simplicationTechnique,
 				xnfConversionTechnique);
 		mPrecondition = mLinearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, csToolkit.getManagedScript()));
@@ -375,7 +376,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
-		
+
 		mTermAnnotations2Locs = new HashMap<>();
 		// Reset map that stores motzkin coefficients to linear inequalities
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
@@ -884,12 +885,12 @@ public final class LinearInequalityInvariantPatternProcessor
 			mLinearInequalities2Locations.put(lineqsAsSet, locs);
 			// TODO: 2018-05-19 Matthias: The following code was used while analyzing
 			// unsolved problems that we had with invariant synthesis
-//			final List<IcfgLocation> locsOfLineqs = mLinearInequalities2Locations.get(lineqsAsSet);
-//			if (locsOfLineqs != null) {
-//				locs.addAll(locsOfLineqs);
-//			} else {
-//				mLinearInequalities2Locations.put(lineqsAsSet, locs);
-//			}
+			// final List<IcfgLocation> locsOfLineqs = mLinearInequalities2Locations.get(lineqsAsSet);
+			// if (locsOfLineqs != null) {
+			// locs.addAll(locsOfLineqs);
+			// } else {
+			// mLinearInequalities2Locations.put(lineqsAsSet, locs);
+			// }
 		}
 	}
 
@@ -1121,8 +1122,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Set<TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> transitionIngredients =
 					successorIngredient.buildTransitionConstraintIngredients();
 			for (final TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> transitionIngredient : transitionIngredients) {
-				final Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays.asList(transitionIngredient.getSourceLocation(),
-						transitionIngredient.getTargetLocation()));
+				final Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays
+						.asList(transitionIngredient.getSourceLocation(), transitionIngredient.getTargetLocation()));
 				annotateAndAssertTermAndStoreMapping(
 						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred), transitionLocs);
 				// final LBool smtResult = mSolver.checkSat();
@@ -1252,7 +1253,8 @@ public final class LinearInequalityInvariantPatternProcessor
 					if (term instanceof TermVariable) {
 						mVarsFromUnsatCore.add((TermVariable) term);
 					} else {
-//						 throw new UnsupportedOperationException("Linear inequality (" + term + ")is not a TermVariable");
+						// throw new UnsupportedOperationException("Linear inequality (" + term + ")is not a
+						// TermVariable");
 						mLogger.warn("Linear inequality (" + term + ")is not a TermVariable");
 					}
 				}

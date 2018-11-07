@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermC
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils;
@@ -68,7 +69,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mSynthesizeEntryPattern;
 	private final KindOfInvariant mKindOfInvariant;
 	private final SolverSettings mSolverSettings;
-	private final IPredicate mAxioms;
+	private final SmtSymbols mSmtSymbols;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
 
@@ -87,7 +88,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 *            the invariant strategy to pass to the produced processor
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
-	 * @param axioms
+	 * @param smtSymbols
 	 * @param overapprox
 	 * @param underapprox
 	 * @param synthesizeEntryPattern
@@ -99,10 +100,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
-			final boolean useNonlinerConstraints, final boolean useUnsatCores,
-			final SolverSettings solverSettings,
+			final boolean useNonlinerConstraints, final boolean useUnsatCores, final SolverSettings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IPredicate axioms, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
+			final SmtSymbols smtSymbols, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 		mServices = services;
@@ -111,7 +111,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
 		mCsToolkit = csToolkit;
-		mAxioms = axioms;
+		mSmtSymbols = smtSymbols;
 		mStrategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mUseUnsatCores = useUnsatCores;
@@ -144,7 +144,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		final boolean useAlsoIntegers;
 		// 2017-11-05 Matthias:
 		// seems like we always need integers since program variables can have sort Int.
-//		useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		// useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
 		useAlsoIntegers = true;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
@@ -177,11 +177,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	}
 
 	@Override
-	public IInvariantPatternProcessor<Dnf<AbstractLinearInvariantPattern>> produce(
-			final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
-			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
-			final Set<IcfgLocation> errorLocations) {
-		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
+	public IInvariantPatternProcessor<Dnf<AbstractLinearInvariantPattern>> produce(final List<IcfgLocation> locations,
+			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
+			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations) {
+		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mSmtSymbols,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocations,
 				mStrategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique,
 				mLoc2underApprox, mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);

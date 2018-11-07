@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -293,10 +294,10 @@ public final class TraceCheckUtils {
 	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong to a trace, and return the
 	 * {@link TermClassifier}. TODO: Maybe also check local vars assignment and global vars assignment?
 	 */
-	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final IPredicate axioms) {
+	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final SmtSymbols smtSymbols) {
 
 		final TermClassifier cs = new TermClassifier();
-		cs.checkTerm(axioms.getFormula());
+		smtSymbols.classify(cs);
 		for (final IAction action : word) {
 			if (action instanceof IInternalAction) {
 				cs.checkTerm(((IInternalAction) action).getTransformula().getFormula());

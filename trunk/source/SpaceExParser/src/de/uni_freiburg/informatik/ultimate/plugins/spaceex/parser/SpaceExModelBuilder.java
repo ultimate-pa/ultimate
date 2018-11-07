@@ -37,19 +37,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
@@ -160,33 +158,11 @@ public class SpaceExModelBuilder {
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 
-		final IPredicate axioms = new IPredicate() {
-
-			@Override
-			public Set<IProgramVar> getVars() {
-				return Collections.emptySet();
-			}
-
-			@Override
-			public String[] getProcedures() {
-				return procedures.toArray(new String[procedures.size()]);
-			}
-
-			@Override
-			public Term getFormula() {
-				return script.term("true");
-			}
-
-			@Override
-			public Term getClosedFormula() {
-				return script.term("true");
-			}
-		};
-		final Map<String, List<ILocalProgramVar>> inParams = Collections.singletonMap(HybridTranslatorConstants.PROC_NAME,
-				Collections.emptyList());
+		final Map<String, List<ILocalProgramVar>> inParams =
+				Collections.singletonMap(HybridTranslatorConstants.PROC_NAME, Collections.emptyList());
 		final Map<String, List<ILocalProgramVar>> outParams = inParams;
-		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures, inParams,
-				outParams, new IcfgEdgeFactory(new SerialProvider()), null);
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, procedures, inParams, outParams,
+				new IcfgEdgeFactory(new SerialProvider()), null, new SmtSymbols(script));
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

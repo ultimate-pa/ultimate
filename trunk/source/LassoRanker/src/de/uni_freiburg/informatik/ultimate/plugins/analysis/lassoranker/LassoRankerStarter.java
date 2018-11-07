@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -173,14 +174,14 @@ public class LassoRankerStarter {
 		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
-		final IPredicate axioms = mIcfg.getCfgSmtToolkit().getAxioms();
+		final SmtSymbols smtSymbols = mIcfg.getCfgSmtToolkit().getSmtSymbols();
 		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
 		try {
-			laNT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, axioms,
+			laNT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
 					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
@@ -217,7 +218,7 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laT = null;
 		try {
-			laT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, axioms,
+			laT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
 					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
@@ -439,7 +440,7 @@ public class LassoRankerStarter {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
-	 * 
+	 *
 	 * @param loop
 	 * @param stem
 	 *

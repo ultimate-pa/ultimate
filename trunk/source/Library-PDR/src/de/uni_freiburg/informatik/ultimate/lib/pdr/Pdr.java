@@ -186,7 +186,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
 		mScript = mCsToolkit.getManagedScript();
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getAxioms());
+		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
