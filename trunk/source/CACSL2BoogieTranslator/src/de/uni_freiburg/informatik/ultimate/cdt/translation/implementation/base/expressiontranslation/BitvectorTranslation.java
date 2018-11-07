@@ -71,7 +71,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class BitvectorTranslation extends ExpressionTranslation {
 
-	private final Expression mRoundingMode;
+	private final Expression mActiveRoundingMode;
+
+	private final Expression mRoundingModeRNE;
 
 	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";
 	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
@@ -93,12 +95,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		 * enumeration type??) --> choosing int for now, change it later in case also, location was null before --> is
 		 * ignore location an improvement??
 		 */
+		// TODO: DD: we need the smt constants for that
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final IdentifierExpression roundingMode = // new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
-				ExpressionFactory.constructIdentifierExpression(ignoreLoc, TYPE_OF_BOOGIE_ROUNDING_MODES,
-						BOOGIE_ROUNDING_MODE_RNE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-
-		mRoundingMode = roundingMode;
+		mActiveRoundingMode = ExpressionFactory.constructIdentifierExpression(ignoreLoc, TYPE_OF_BOOGIE_ROUNDING_MODES,
+				BOOGIE_ROUNDING_MODE_RNE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mRoundingModeRNE = ExpressionFactory.constructIdentifierExpression(ignoreLoc, TYPE_OF_BOOGIE_ROUNDING_MODES,
+				BOOGIE_ROUNDING_MODE_RNE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	@Override
@@ -790,7 +792,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression getRoundingMode() {
-		return mRoundingMode;
+		return mActiveRoundingMode;
 	}
 
 	@Override
@@ -848,14 +850,23 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("floor".equals(floatFunction.getFunctionName())) {
+			/*
+			 * TODO: See http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml and
+			 * https://en.cppreference.com/w/c/numeric/math/floor
+			 *
+			 * This has to be done with ((_ fp.to_sbv m) RoundingMode (_ FloatingPoint eb sb) (_ BitVec m))
+			 *
+			 * Note that the actual RoundingMode has no effect
+			 */
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.floor";
-			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String smtFunctionName = "fp.to_sbv";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, null, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+					new Expression[] { mRoundingModeRNE, argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("ceil".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
