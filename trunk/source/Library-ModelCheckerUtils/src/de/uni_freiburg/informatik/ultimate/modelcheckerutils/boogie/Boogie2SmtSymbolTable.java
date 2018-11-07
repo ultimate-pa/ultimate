@@ -361,7 +361,11 @@ public class Boogie2SmtSymbolTable
 			final Sort paramSort = mTypeSortTranslator.getSort(paramType, funcdecl);
 			for (int i = 0; i < ids; i++) {
 				paramSorts[paramNr] = paramSort;
-				paramIds[paramNr] = vl.getIdentifiers()[i];
+				if (i < vl.getIdentifiers().length) {
+					paramIds[paramNr] = vl.getIdentifiers()[i];
+				} else {
+					paramIds[paramNr] = null;
+				}
 				paramNr++;
 			}
 		}
