@@ -247,6 +247,13 @@ public class PartialOrderCache<E> {
 		return result;
 	}
 
+	public List<E> getReverseTopologicalOrdering() {
+		final TopologicalSorter<E, ?> sorter = TopologicalSorter.create(this::successor);
+		final List<E> result = sorter.reversedTopologicalOrdering(mMaximalElements);
+		assert result != null : "Cycle in partial order";
+		return result;
+	}
+
 	/**
 	 * Return all elements that are strictly smaller than the element.
 	 */

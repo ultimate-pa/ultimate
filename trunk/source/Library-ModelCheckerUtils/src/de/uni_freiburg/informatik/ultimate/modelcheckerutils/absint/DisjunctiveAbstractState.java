@@ -625,9 +625,10 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 				case EQUAL:
 					return ComparisonResult.EQUAL;
 				case STRICT:
+				case NON_STRICT:
 					return ComparisonResult.STRICTLY_SMALLER;
 				case NONE:
-				case NON_STRICT:
+
 				default:
 					break;
 				}
@@ -637,9 +638,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 				case EQUAL:
 					throw new AssertionError("Equal is symmetric");
 				case STRICT:
+				case NON_STRICT:
 					return ComparisonResult.STRICTLY_GREATER;
 				case NONE:
-				case NON_STRICT:
 				default:
 					return ComparisonResult.INCOMPARABLE;
 				}
@@ -647,8 +648,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		};
 		final PartialOrderCache<STATE> poCache = new PartialOrderCache<>(comparator);
 		states.forEach(poCache::addElement);
-		final List<STATE> result = poCache.getTopologicalOrdering();
-		assert hasDescendingOrder(result);
+		final List<STATE> result = poCache.getReverseTopologicalOrdering();
+		assert hasDescendingOrder(result) : "states are not in descending order";
 		return result;
 	}
 
@@ -681,6 +682,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 			case STRICT:
 				return false;
 			case NONE:
+
 			default:
 				continue;
 			}
