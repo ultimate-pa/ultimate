@@ -98,7 +98,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			mStorage.put(loc, state);
 			return state;
 		}
-		final DisjunctiveAbstractState<STATE> mergedState = oldState.union(state);
+		final DisjunctiveAbstractState<STATE> mergedState = oldState.saturatedUnion(state);
 		mStorage.put(loc, mergedState);
 		return mergedState;
 	}
@@ -256,8 +256,8 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public void saveSummarySubstituion(final ACTION action,
-			final DisjunctiveAbstractState<STATE> summaryPostState, final ACTION summaryAction) {
+	public void saveSummarySubstituion(final ACTION action, final DisjunctiveAbstractState<STATE> summaryPostState,
+			final ACTION summaryAction) {
 		assert action instanceof IIcfgCallTransition<?>;
 		mParent.mUsedSummary.add(action.getSucceedingProcedure());
 	}

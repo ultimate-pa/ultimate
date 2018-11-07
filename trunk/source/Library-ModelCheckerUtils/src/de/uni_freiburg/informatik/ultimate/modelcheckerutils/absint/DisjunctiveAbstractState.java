@@ -269,6 +269,12 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		return new DisjunctiveAbstractState<>(mMaxSize, reduce(set));
 	}
 
+	public DisjunctiveAbstractState<STATE> saturatedUnion(final DisjunctiveAbstractState<STATE> other) {
+		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
+		final Set<STATE> set = newSet(mStates, other.mStates);
+		return new DisjunctiveAbstractState<>(mMaxSize, reduceByTopologicalOrder(set, mMaxSize));
+	}
+
 	/**
 	 * Apply the {@link IVariableProvider#defineVariablesAfter(Object, IAbstractState, IAbstractState)} function to all
 	 * states in this multi-state. This state acts as local pre state, and all states in hierachicalPreState are used as
