@@ -253,8 +253,7 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	private IIdentifierTranslator[]
-			getIdentifierTranslatorsIntraprocedural() {
+	private IIdentifierTranslator[] getIdentifierTranslatorsIntraprocedural() {
 		return new IIdentifierTranslator[] { new LocalVarTranslatorWithInOutVarManagement(),
 				new GlobalVarTranslatorWithInOutVarManagement(mCurrentProcedure, false),
 				mConstOnlyIdentifierTranslator };
@@ -741,11 +740,13 @@ public class Statements2TransFormula {
 	}
 
 	/**
-	 * Outsourced method for getting the inParamAssignment.
-	 * For detailed documentation look at the fork and call specific function.
+	 * Outsourced method for getting the inParamAssignment. For detailed documentation look at the fork and call
+	 * specific function.
 	 *
-	 * @param callee Name of the method called/forked.
-	 * @param arguments arguments of the method.
+	 * @param callee
+	 *            Name of the method called/forked.
+	 * @param arguments
+	 *            arguments of the method.
 	 * @param simplificationTechnique
 	 * @return The final transFormula.
 	 */
@@ -782,7 +783,6 @@ public class Statements2TransFormula {
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
-
 	@Deprecated
 	public TranslationResult forkThreadIdAssignment(final IProgramVar[] threadTemplateIdVar,
 			final String forkingProcedureId, final Expression[] forkThreadIdExpressions,
@@ -813,7 +813,6 @@ public class Statements2TransFormula {
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
-
 	@Deprecated
 	public TranslationResult joinThreadIdAssumption(final IProgramVar[] forkIdAuxVar,
 			final String joiningThreadProcedureId, final Expression[] joinedThreadIdExpressions,
@@ -841,7 +840,6 @@ public class Statements2TransFormula {
 		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplificationTechnique);
 	}
-
 
 	/**
 	 * Returns a TransFormula that describes the assignment of (local) out parameters to variables that take the result.
@@ -880,12 +878,13 @@ public class Statements2TransFormula {
 	}
 
 	@Deprecated
-	public TranslationResult resultAssignment(final JoinStatement st, final String caller,
-			final String callee, final SimplificationTechnique simplificationTechnique) {
+	public TranslationResult resultAssignment(final JoinStatement st, final String caller, final String callee,
+			final SimplificationTechnique simplificationTechnique) {
 		initialize(caller);
 		final Procedure impl = mBoogieDeclarations.getProcImplementation().get(callee);
 		int offset = 0;
-		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, callee);
+		final DeclarationInformation declInfo =
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, callee);
 		final Term[] assignments = new Term[st.getLhs().length];
 		for (final VarList ourParamVarList : impl.getOutParams()) {
 			for (final String outParamId : ourParamVarList.getIdentifiers()) {

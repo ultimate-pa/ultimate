@@ -532,7 +532,7 @@ public class BinaryStatePredicateManager {
 
 	private ITraceCheck createTraceCheck(final IPredicate preCond, final IPredicate postCond,
 			final NestedWord<? extends IIcfgTransition<?>> trace) {
-		return new TraceCheck(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
+		return new TraceCheck<>(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
 
 	}

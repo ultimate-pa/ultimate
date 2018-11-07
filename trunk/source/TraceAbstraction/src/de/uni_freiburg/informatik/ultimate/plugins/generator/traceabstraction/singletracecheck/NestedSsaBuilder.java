@@ -143,12 +143,12 @@ public class NestedSsaBuilder {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
+	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript managedScript,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
-		mScript = csToolkit.getScript();
+		mScript = managedScript.getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = modifiableGlobalsTable;
 		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
-public class TraceCheckWithAccessibleSSATerms extends TraceCheck {
+public class TraceCheckWithAccessibleSSATerms extends TraceCheck<CodeBlock> {
 
 	private final Script mScript;
 
