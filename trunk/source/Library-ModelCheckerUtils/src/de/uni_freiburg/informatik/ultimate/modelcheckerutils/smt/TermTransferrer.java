@@ -150,7 +150,11 @@ public class TermTransferrer extends TermTransformer {
 		Term result;
 		try {
 			final BigInteger[] indices = appTerm.getFunction().getIndices();
-			result = mScript.term(appTerm.getFunction().getName(), indices, null, newArgs);
+			final FunctionSymbol fsymb = appTerm.getFunction();
+			/* note that result sort must be non-null if and only if we have an explicitly instantiated polymorphic
+			 * FunctionSymbol, i.e. a function of the form (as <name> <sort>). Otherwise mScript.term(..) will fail */
+			final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
+			result = mScript.term(fsymb.getName(), indices, resultSort, newArgs);
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				final FunctionSymbol fsymb = appTerm.getFunction();
