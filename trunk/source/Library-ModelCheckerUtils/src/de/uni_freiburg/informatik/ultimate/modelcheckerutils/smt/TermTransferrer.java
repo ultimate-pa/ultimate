@@ -114,32 +114,13 @@ public class TermTransferrer extends TermTransformer {
 	}
 
 	TermVariable transferTermVariable(final TermVariable tv) {
-		// final Term mappingResult = mTransferMapping.get(tv);
 		final TermVariable transferResult;
-		// if (mappingResult == null) {
 		final Sort sort = transferSort(tv.getSort());
 		transferResult = mScript.variable(tv.getName(), sort);
-		// mTransferMapping.put(tv, transferResult);
-		// } else {
-		// transferResult = (TermVariable) mappingResult;
-		// }
 		return transferResult;
 	}
 
-	private Sort declareSortIfNeeded(final Sort sort) {
-		if (!sort.isInternal()) {
-			if (!mDeclaredSorts.contains(sort)) {
-				mScript.declareSort(sort.getName(), sort.getIndices().length);
-				mDeclaredSorts.add(sort);
-			}
-		}
-		if (sort.getArguments().length > 0) {
-			throw new UnsupportedOperationException("not yet implemented");
-		}
-		return mScript.sort(sort.getName());
-	}
-
-	private Sort transferSort(final Sort sort) {
+	public Sort transferSort(final Sort sort) {
 		final Sort[] arguments = transferSorts(sort.getArguments());
 		final BigInteger[] indices = sort.getIndices();
 		Sort result;
@@ -156,7 +137,7 @@ public class TermTransferrer extends TermTransformer {
 		return result;
 	}
 
-	private Sort[] transferSorts(final Sort[] sorts) {
+	public Sort[] transferSorts(final Sort[] sorts) {
 		final Sort[] result = new Sort[sorts.length];
 		for (int i = 0; i < sorts.length; i++) {
 			result[i] = transferSort(sorts[i]);

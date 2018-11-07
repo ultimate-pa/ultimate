@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -100,14 +101,17 @@ public class Boogie2SMT {
 		}
 
 		final ArrayList<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
+		mScript.getScript().echo(new QuotedObject("Start declaration of axioms"));
 		for (final Axiom decl : boogieDeclarations.getAxioms()) {
 			final Term term = declareAxiom(decl, mExpression2Term);
 			axiomList.add(term);
 		}
+		mScript.getScript().echo(new QuotedObject("Finished declaration of axioms"));
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList),
 				maScript.getScript(), mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
-		mSmtSymbols = new SmtSymbols(tvp.getClosedFormula(), tvp.getProcedures());
+		mSmtSymbols = new SmtSymbols(tvp.getClosedFormula(), tvp.getProcedures(),
+				mBoogie2SmtSymbolTable.getSmtFunction2SmtFunctionDefinition());
 
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);

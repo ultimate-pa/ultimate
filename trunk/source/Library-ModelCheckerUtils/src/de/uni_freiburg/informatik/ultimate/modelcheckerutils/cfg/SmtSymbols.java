@@ -28,10 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable.SmtFunctionDefinition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -48,31 +52,35 @@ public class SmtSymbols {
 	public static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
 
 	private final IPredicate mAxioms;
+	private final Map<String, SmtFunctionDefinition> mSmtFunctions2SmtFunctionDefinitions;
 
 	/**
 	 * Create an empty {@link SmtSymbols} instance.
 	 */
 	public SmtSymbols(final Script script) {
-		this(script.term("true"), new String[0]);
+		this(script.term("true"), new String[0], Collections.emptyMap());
 	}
 
-	public SmtSymbols(final Term axioms, final String[] defininingProcedures) {
+	public SmtSymbols(final Term axioms, final String[] defininingProcedures,
+			final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
-				axioms));
+				axioms), smtFun2SmtFunDef);
 	}
 
-	public SmtSymbols(final IPredicate axioms) {
+	public SmtSymbols(final IPredicate axioms, final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
+		mAxioms = Objects.requireNonNull(axioms);
+		mSmtFunctions2SmtFunctionDefinitions = Objects.requireNonNull(smtFun2SmtFunDef);
 		assert axioms.getClosedFormula() == axioms.getFormula() : "Axioms are not closed";
 		assert axioms.getFormula().getFreeVars().length == 0 : "Axioms are not closed";
 		assert axioms.getProcedures() != null;
-		mAxioms = axioms;
+
 	}
 
 	public SmtSymbols addAxiom(final Script script, final Term additionalAxioms) {
 		final Term newAxioms = SmtUtils.and(script, mAxioms.getClosedFormula(), additionalAxioms);
 		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
 				additionalAxioms, Collections.emptySet(), newAxioms);
-		return new SmtSymbols(newAxiomsPred);
+		return new SmtSymbols(newAxiomsPred, mSmtFunctions2SmtFunctionDefinitions);
 	}
 
 	/**
@@ -85,10 +93,20 @@ public class SmtSymbols {
 		final TermTransferrer tt = new TermTransferrer(script);
 		final LBool quickCheckAxioms = script.assertTerm(tt.transform(mAxioms.getClosedFormula()));
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
+		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
+			entry.getValue().defineOrDeclareFunction(script, tt);
+		}
+
 	}
 
 	public void classify(final TermClassifier cs) {
 		cs.checkTerm(mAxioms.getFormula());
+		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
+			if (entry.getValue().getDefinition() == null) {
+				continue;
+			}
+			cs.checkTerm(entry.getValue().getDefinition());
+		}
 	}
 
 	public IPredicate getAxioms() {

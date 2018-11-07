@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransformulaTransformationResult;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable.SmtFunctionDefinition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -500,13 +501,15 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	private SmtSymbols transformSmtSymbols(final SmtSymbols smtSymbols) {
+		// TODO: Transfer defined SMT functions
+		final Map<String, SmtFunctionDefinition> transformedSmtFunctions = Collections.emptyMap();
 		final AxiomTransformationResult translationResult = mTransformer.transform(smtSymbols.getAxioms());
 		if (translationResult.isOverapproximation()) {
 			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
 		}
 
 		if (mAdditionalAxioms.isEmpty()) {
-			return new SmtSymbols(translationResult.getAxiom());
+			return new SmtSymbols(translationResult.getAxiom(), transformedSmtFunctions);
 		}
 
 		final List<Term> newAxiomsClosed =
@@ -515,7 +518,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		final Term newAxioms = SmtUtils.and(mMgdScript.getScript(), newAxiomsClosed);
-		return new SmtSymbols(newAxioms, new String[0]);
+		return new SmtSymbols(newAxioms, new String[0], transformedSmtFunctions);
 	}
 
 }
