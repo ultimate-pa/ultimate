@@ -298,6 +298,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						universalSubtrahendLoopers);
 				onDemandConstructedNet = dpod.getResult();
 				raw.switchToReadonlyMode();
+			} else {
+				onDemandConstructedNet = null;
 			}
 			try {
 				dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
