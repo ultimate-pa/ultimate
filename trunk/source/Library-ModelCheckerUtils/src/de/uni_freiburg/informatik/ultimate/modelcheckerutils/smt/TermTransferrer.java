@@ -151,8 +151,8 @@ public class TermTransferrer extends TermTransformer {
 		try {
 			final BigInteger[] indices = appTerm.getFunction().getIndices();
 			final FunctionSymbol fsymb = appTerm.getFunction();
-			/* note that result sort must be non-null if and only if we have an explicitly instantiated polymorphic
-			 * FunctionSymbol, i.e. a function of the form (as <name> <sort>). Otherwise mScript.term(..) will fail */
+			/* Note that resultSort must be non-null if and only if we have an explicitly instantiated polymorphic
+			 * FunctionSymbol, i.e., a function of the form (as <name> <sort>). Otherwise mScript.term(..) will fail.*/
 			final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 			result = mScript.term(fsymb.getName(), indices, resultSort, newArgs);
 		} catch (final SMTLIBException e) {
