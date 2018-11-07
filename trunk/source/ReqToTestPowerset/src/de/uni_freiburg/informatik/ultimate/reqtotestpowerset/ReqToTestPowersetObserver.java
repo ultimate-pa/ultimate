@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.reqtotestpowerset;
 
 import java.util.List;
 
+import org.eclipse.osgi.internal.messages.Msg;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -18,8 +20,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
+import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.BuchiGraph;
 
 public class ReqToTestPowersetObserver extends BaseObserver{
 
@@ -56,7 +60,16 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		BoogieDeclarations boogieDeclarations = new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
 		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
 		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
-
+		
+		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt, symbolTable);
+		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
+		
+		// TODO remove this later
+		// need some way to check if the built automata are correct...
+		/*for (ReqGuardGraph automaton : automata ) {
+			mLogger.warn("test string ####X#X#X#X#X#X");
+		}
+		*/
 		return false;
 	}
 
