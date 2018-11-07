@@ -45,6 +45,8 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -57,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -99,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -223,6 +228,19 @@ public class StandardFunctionHandler {
 			fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 			fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
 			fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
+			fill(map, "pthread_exit", this::handlePthread_exit);
+			fill(map, "pthread_cond_init", die);
+			fill(map, "pthread_cond_wait", die);
+			fill(map, "pthread_cond_signal", die);
+			fill(map, "pthread_cond_destroy", die);
+			fill(map, "pthread_cond_broadcast", die);
+			fill(map, "pthread_mutex_destroy", die);
+			// the following three occur at SV-COMP 2019 only in one benchmark
+			fill(map, "pthread_attr_init", die);
+			fill(map, "pthread_attr_setdetachstate", die);
+			fill(map, "pthread_attr_destroy", die);
+			fill(map, "__VERIFIER_atomic_begin", die);
+			fill(map, "__VERIFIER_atomic_end", die);
 		} else {
 			fill(map, "pthread_create", die);
 		}
@@ -862,6 +880,34 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
+	private Result handlePthread_exit(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult arg = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
+				arguments[0]);
+		final ExpressionResult transformedArg = mExprResultTransformer.convert(loc, arg,
+				new CPointer(new CPrimitive(CPrimitives.VOID)));
+
+		final IBoogieType type = mTypeHandler.getBoogiePointerType();
+		final String identifier = SFO.RES;
+		final DeclarationInformation declarationInformation = new DeclarationInformation(
+				StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID());
+		final LeftHandSide[] lhs = new LeftHandSide[] {
+				new VariableLHS(loc, type, identifier, declarationInformation) };
+		final AssignmentStatement retValAssignment = new AssignmentStatement(loc, lhs,
+				new Expression[] { transformedArg.getLrValue().getValue() });
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(transformedArg);
+		erb.addStatement(retValAssignment);
+		erb.addStatement(new ReturnStatement(loc));
+
+		return erb.build();
+	}
+
 	/**
 	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
 	 * locked, then the thread blocks.
@@ -961,6 +1007,8 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT)));
 		return erb.build();
 	}
+
+
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
 		/*
