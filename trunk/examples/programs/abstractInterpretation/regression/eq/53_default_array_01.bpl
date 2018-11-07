@@ -8,5 +8,5 @@ procedure foo() {
   assert a[i] == 0;
 }
 
-function { :builtin "const-Array-Int-Int" } ~const~Array~Int~Int(in : int) returns (out : [int] int);
+function { :smtdefined "((as const (Array Int Int)) in)" } ~const~Array~Int~Int(in : int) returns (out : [int] int);
 
