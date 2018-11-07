@@ -91,8 +91,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+
+	private static final boolean USE_ON_DEMAND_RESULT = false;
 
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
@@ -187,8 +190,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomaton<LETTER, IPredicate> dia =
+		final INestedWordAutomaton<LETTER, IPredicate> dia;
+		final Pair<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>> enhancementResult =
 				enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton);
+		dia = enhancementResult.getFirst();
 
 		// Complement the interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
@@ -204,10 +209,14 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
-				mPredicateFactoryInterpolantAutomata, abstraction, dia);
-		mLogger.info(diff.getAutomataOperationStatistics());
-		mAbstraction = diff.getResult();
+		if (USE_ON_DEMAND_RESULT) {
+			mAbstraction = enhancementResult.getSecond();
+		} else {
+			final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
+					mPredicateFactoryInterpolantAutomata, abstraction, dia);
+			mLogger.info(diff.getAutomataOperationStatistics());
+			mAbstraction = diff.getResult();
+		}
 
 		if (mPref.dumpAutomata()) {
 			final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
@@ -253,11 +262,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		return true;
 	}
 
-	protected INestedWordAutomaton<LETTER, IPredicate>
+	protected Pair<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>>
 			enhanceAnddeterminizeInterpolantAutomaton(final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException {
 		mLogger.debug("Start determinization");
 		INestedWordAutomaton<LETTER, IPredicate> dia;
+		final IPetriNet<LETTER, IPredicate> onDemandConstructedNet;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
@@ -265,6 +275,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final DeterminizeDD<LETTER, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(mServices),
 					mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
+			onDemandConstructedNet = null;
 			break;
 		case PREDICATE_ABSTRACTION:
 			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
@@ -282,9 +293,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						ia.addInternalTransition(state, letter, state);
 					}
 				}
-				new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+				final DifferencePairwiseOnDemand dpod = new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
 						universalSubtrahendLoopers);
+				onDemandConstructedNet = dpod.getResult();
 				raw.switchToReadonlyMode();
 			}
 			try {
@@ -316,11 +328,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
 			writeAutomatonToFile(dia, filename);
 		}
-		assert accepts(mServices, dia, mCounterexample.getWord(),
-				true) : "Counterexample not accepted by determinized interpolant automaton: "
-						+ mCounterexample.getWord();
+//		assert accepts(mServices, dia, mCounterexample.getWord(),
+//				true) : "Counterexample not accepted by determinized interpolant automaton: "
+//						+ mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
-		return dia;
+		return new Pair<>(dia, onDemandConstructedNet);
 	}
 
 	private Set<LETTER> determineUniversalSubtrahendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
