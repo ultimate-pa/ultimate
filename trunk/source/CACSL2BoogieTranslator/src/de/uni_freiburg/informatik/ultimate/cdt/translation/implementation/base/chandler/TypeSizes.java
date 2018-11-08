@@ -256,7 +256,7 @@ public class TypeSizes {
 		case FLOAT: {
 			final int sizeof = getSize(cPrimitive);
 			if (sizeof == 4) {
-				result = new FloatingPointSize(24, 8);
+				result = new FloatingPointSize(sizeof, 24, 8);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
@@ -265,7 +265,7 @@ public class TypeSizes {
 		case DOUBLE: {
 			final int sizeof = getSize(cPrimitive);
 			if (sizeof == 8) {
-				result = new FloatingPointSize(53, 11);
+				result = new FloatingPointSize(sizeof, 53, 11);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
@@ -273,8 +273,9 @@ public class TypeSizes {
 			break;
 		case LONGDOUBLE: {
 			final int sizeof = getSize(cPrimitive);
+			// 12 because of 80bit long doubles on linux x86
 			if (sizeof == 12 || sizeof == 16) {
-				result = new FloatingPointSize(113, 15);
+				result = new FloatingPointSize(sizeof, 113, 15);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
@@ -502,14 +503,15 @@ public class TypeSizes {
 	/**
 	 * The size of a real floating point type is defined by a significant and an exponent.
 	 */
-	public class FloatingPointSize {
-		final int mSignificant;
-		final int mExponent;
+	public static final class FloatingPointSize {
+		private final int mSignificant;
+		private final int mExponent;
+		private final int mByteSize;
 
-		public FloatingPointSize(final int significant, final int exponent) {
-			super();
+		public FloatingPointSize(final int byteSize, final int significant, final int exponent) {
 			mSignificant = significant;
 			mExponent = exponent;
+			mByteSize = byteSize;
 		}
 
 		public int getSignificant() {
@@ -518,6 +520,17 @@ public class TypeSizes {
 
 		public int getExponent() {
 			return mExponent;
+		}
+
+		public int getByteSize() {
+			return mByteSize;
+		}
+
+		/**
+		 * @return an int array containing the exponent and the significant
+		 */
+		public int[] getIndices() {
+			return new int[] { getExponent(), getSignificant() };
 		}
 	}
 
