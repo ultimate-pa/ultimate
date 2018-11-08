@@ -716,9 +716,11 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 			}
 			break;
 		}
-		final Set<STATE> mergeDown = new HashSet<>();
-		iter.forEachRemaining(mergeDown::add);
-		rtr.add(reduce(mergeDown, 1).iterator().next());
+		if (iter.hasNext()) {
+			final Set<STATE> mergeDown = new HashSet<>();
+			iter.forEachRemaining(mergeDown::add);
+			rtr.add(reduce(mergeDown, 1).iterator().next());
+		}
 		assert rtr.size() <= maxSize;
 		return rtr;
 	}
