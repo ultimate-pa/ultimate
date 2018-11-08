@@ -272,7 +272,7 @@ public class TypeChecker extends BaseObserver {
 					final BoogieType[] subst = new BoogieType[fs.getTypeArgCount()];
 					final Expression[] appArgs = app.getArguments();
 					if (appArgs.length != fs.getParamCount()) {
-						typeError(expr, "Type check failed (wrong number of indices): " + expr);
+						typeError(expr, "Type check failed (wrong number of arguments): " + expr);
 					} else {
 						for (int i = 0; i < appArgs.length; i++) {
 							final BoogieType t = typecheckExpression(appArgs[i]);
