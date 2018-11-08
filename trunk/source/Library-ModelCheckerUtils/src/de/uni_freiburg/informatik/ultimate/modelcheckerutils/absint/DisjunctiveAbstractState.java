@@ -705,7 +705,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		final Set<STATE> rtr = newSet(maxSize);
 		final Iterator<STATE> iter = ordered.iterator();
 
-		// take n-1 allowed elements directly from the toplogical order
+		// take n-1 allowed elements directly from the topological order
 		int i = 1;
 		while (iter.hasNext() && i < maxSize) {
 			final STATE current = iter.next();

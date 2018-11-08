@@ -323,16 +323,16 @@ public class PostProcessor {
 				if (!mSettings.overapproximateFloatingPointOperations()) {
 					// declare floating point constructors here because we might
 					// always need them for our backtranslation
-					(mExpressionTranslation).declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+					mExpressionTranslation.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
 					mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF,
 							new CPrimitive(cPrimitive));
-					(mExpressionTranslation).declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF,
+					mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF,
 							new CPrimitive(cPrimitive));
-					(mExpressionTranslation).declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN,
+					mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN,
 							new CPrimitive(cPrimitive));
-					(mExpressionTranslation).declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO,
+					mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO,
 							new CPrimitive(cPrimitive));
-					(mExpressionTranslation).declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO,
+					mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO,
 							new CPrimitive(cPrimitive));
 				}
 
