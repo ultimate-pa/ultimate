@@ -72,6 +72,7 @@ public final class TranslationSettings {
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mCheckSignedIntegerBounds;
+	private final boolean mUseConstantArrays;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -111,6 +112,7 @@ public final class TranslationSettings {
 		mBitvectorTranslation = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -224,6 +226,10 @@ public final class TranslationSettings {
 
 	public boolean checkSignedIntegerBounds() {
 		return mCheckSignedIntegerBounds;
+	}
+
+	public boolean useConstantArrays() {
+		return mUseConstantArrays;
 	}
 
 }

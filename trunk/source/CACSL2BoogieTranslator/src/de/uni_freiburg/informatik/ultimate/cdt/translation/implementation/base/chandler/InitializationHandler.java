@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -139,18 +140,15 @@ public class InitializationHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-//	/**
-//	 * Global Declarations that are required for initialization. (e.g. off heap array initialization functions)
-//	 */
-//	private List<Declaration> mInitializationInfrastructureDeclarations;
+	private final RequiredInitializationFeatures mRequiredInitializationFeatures;
 
-	RequiredInitializationFeatures mRequiredInitializationFeatures;
+	private final boolean mUseConstantArrays;
 
-	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
-			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final TypeSizes typeSizes, final CHandler chandler,
-			final ExpressionResultTransformer exprResultTransformer) {
+	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
+			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,
+			final ITypeHandler typeHandler, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TypeSizes typeSizes,
+			final CHandler chandler, final ExpressionResultTransformer exprResultTransformer) {
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
@@ -159,8 +157,10 @@ public class InitializationHandler {
 		mTypeSizes = typeSizes;
 		mCHandler = chandler;
 		mExprResultTransformer = exprResultTransformer;
+		mUseConstantArrays = settings.useConstantArrays();
 
 		mRequiredInitializationFeatures = new RequiredInitializationFeatures();
+
 	}
 
 	/**
@@ -961,8 +961,7 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedArrayInit(final InitializerInfo initInfoIfAny) {
 		// TODO implement some heuristics
-		return false;
-//		return true;
+		return mUseConstantArrays;
 	}
 
 	/**
@@ -974,8 +973,7 @@ public class InitializationHandler {
 	 */
 	private boolean determineIfSophisticatedDefaultInit(final CType targetCType) {
 		// TODO implement some heuristics
-		return false;
-//		return true;
+		return mUseConstantArrays;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
@@ -1261,10 +1259,7 @@ public class InitializationHandler {
 		private void constructAndRegisterDeclaration(final BoogieArrayType boogieType) {
 			final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-//			final String smtDefinition = String.format("((as const (Array Int Int)) 0)");
-//			final String smtDefinition = "((as const (Array Int Int)) 0)";
 			//"((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
-			final String smtSortString = getSmtSortStringForBoogieType(boogieType);
 			final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
 
 

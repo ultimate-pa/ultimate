@@ -100,6 +100,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
 	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
 	public static final String LABEL_CHECK_ALLOCATION_PURITY = "Check allocation purity";
+	public static final String LABEL_USE_CONSTANT_ARRAYS = "Use constant arrays";
+	private static final String DESC_USE_CONSTANT_ARRAYS =
+			"Use SMT constant arrays for default initialization of variables.";
 
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
@@ -193,6 +196,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				// new UltimatePreferenceItem<Integer>(
 				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_SIGNEDNESS_CHAR, Signedness.SIGNED, PreferenceType.Combo,
-						Signedness.values()), };
+						Signedness.values()),
+				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
+						PreferenceType.Boolean),
+				};
 	}
 }

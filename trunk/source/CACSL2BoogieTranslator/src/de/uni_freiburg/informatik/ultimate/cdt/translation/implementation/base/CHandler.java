@@ -419,7 +419,7 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager,
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 		mStandardFunctionHandler = new StandardFunctionHandler(functionTable, mAuxVarInfoBuilder, mNameHandler,
 				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, this, mReporter,
@@ -499,8 +499,8 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, procedureManager, mTypeHandler,
-				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, procedureManager,
+				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 		mStandardFunctionHandler = new StandardFunctionHandler(prerunCHandler.mFunctionTable, mAuxVarInfoBuilder,
 				mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, procedureManager, this,
 				mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler);
