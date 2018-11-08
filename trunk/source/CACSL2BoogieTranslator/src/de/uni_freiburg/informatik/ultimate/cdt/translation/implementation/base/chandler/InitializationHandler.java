@@ -1334,8 +1334,12 @@ public class InitializationHandler {
 			if (!mTypesForWhichConstantArraysAreRequired.contains(boogieArrayType)) {
 				throw new AssertionError("type should have been reported as required first");
 			}
-			final String sanitizedTypeName = boogieArrayType.toString().replaceAll("\\]", "~").replaceAll("\\[", "");
-			return SFO.AUXILIARY_FUNCTION_PREFIX + "const-array-" + sanitizedTypeName;
+			/* "~RB~" stands for "right bracket", if there is a nicer naming that still avoids name clashes, that naming
+			 * should be used. */
+			final String sanitizedTypeName = boogieArrayType.toString()
+					.replaceAll("\\]", "~RB~")
+					.replaceAll("\\[", "~LB~");
+			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;
 		}
 
 
