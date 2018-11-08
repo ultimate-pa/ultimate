@@ -895,7 +895,7 @@ public class StandardFunctionHandler {
 		final IBoogieType type = mTypeHandler.getBoogiePointerType();
 		final String identifier = SFO.RES;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(
-				StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID());
+				StorageClass.IMPLEMENTATION_OUTPARAM, mProcedureManager.getCurrentProcedureID());
 		final LeftHandSide[] lhs = new LeftHandSide[] {
 				new VariableLHS(loc, type, identifier, declarationInformation) };
 		final AssignmentStatement retValAssignment = new AssignmentStatement(loc, lhs,
