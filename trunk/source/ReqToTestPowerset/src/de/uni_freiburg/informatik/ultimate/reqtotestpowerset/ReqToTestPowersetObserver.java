@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.BuchiGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.PrintGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.AuxGraphOperations;
 
 public class ReqToTestPowersetObserver extends BaseObserver{
 
@@ -66,19 +66,8 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt, symbolTable);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
 		
-		// TODO remove this later
-		// need some way to check if the built automata are correct...
-		/*for (ReqGuardGraph automaton : automata ) {
-			for (TimedLabel lable : automaton.getOutgoingEdgeLabels()) {
-				final List<ReqGuardGraph> meh = automaton.getOutgoingNodes();
-				mLogger.warn(meh.size());
-				mLogger.warn(lable.getGuard().toString());
-			}
-			mLogger.warn("##### NEXT AUTOMATON #####");
-		}
-		*/
 		for (ReqGuardGraph automaton : automata ) {
-			mLogger.warn(PrintGraph.makeStringInterpretation(automaton));
+			mLogger.warn(AuxGraphOperations.makeStringInterpretation(automaton));
 		}
 		return false;
 	}

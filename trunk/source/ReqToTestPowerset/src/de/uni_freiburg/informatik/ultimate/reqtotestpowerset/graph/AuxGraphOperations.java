@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 
-public class PrintGraph {
+public class AuxGraphOperations {
 
 	public static String makeStringInterpretation(ReqGuardGraph automaton) {
 		String autRepr = "";

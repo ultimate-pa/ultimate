@@ -85,17 +85,12 @@ public class BuchiGraph {
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			// TODO is a 3rd State (error-state) needed?
 			
-			// 
+			// Edges
 			q0.connectOutgoing(q0, new TimedLabel(nR));
 			q0.connectOutgoing(q1, new TimedLabel(R));
 			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, S)));
 			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, S)));
 			
-			/*for debug TODO remove later
-			mLogger.warn(R.toString());
-			mLogger.warn(S.toString());
-			mLogger.warn("-------------------");
-			*/
 			return q0;
 		} else {
 			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
@@ -109,8 +104,22 @@ public class BuchiGraph {
 	 *  G(R -> S)
 	 */
 	private ReqGuardGraph makeInvariantPatternAutomaton(PatternType pattern) {
-		// TODO Auto-generated method stub
-		return null;
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			// Terms
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0));
+			
+			// States 
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1);
+			
+			// TODO add edges
+			return q0;
+		} else {
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
+		}
 	}
 
 	/*
@@ -119,7 +128,22 @@ public class BuchiGraph {
 	 *  G(S)
 	 */
 	private ReqGuardGraph makeUniversalityPatternAutomaton(PatternType pattern) {
-		// TODO Auto-generated method stub
-		return null;
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			
+			// Terms
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			
+			// States
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			
+			// Labels
+			q0.connectOutgoing(q0, new TimedLabel(S));
+			
+			return q0;
+		} else {
+			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			return null;
+		}
 	}
 }
