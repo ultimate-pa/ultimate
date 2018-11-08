@@ -15,30 +15,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 
 public class BuchiGraph {
 	
 	private final ILogger mLogger;
 	private final CddToSmt mCddToSmt;
-	private final ReqSymbolTable mReqSymbolTable;
 	private final Script mScript;
 	
-	public BuchiGraph(final ILogger logger, Script script, CddToSmt cddToSmt,
-			ReqSymbolTable reqSymbolTable) {
+	public BuchiGraph(final ILogger logger, Script script, CddToSmt cddToSmt) {
 		mLogger = logger;
 		mCddToSmt = cddToSmt;
 		mScript = script;
-		mReqSymbolTable = reqSymbolTable;
 	}
 	
-	public List<ReqGuardGraph> patternListToBuechi(List<PatternType> patternList){
-		final List<ReqGuardGraph> gs = new ArrayList<ReqGuardGraph>();
+	public List<GuardGraph> patternListToBuechi(List<PatternType> patternList){
+		final List<GuardGraph> gs = new ArrayList<GuardGraph>();
 		for (PatternType pattern: patternList) {
 			if (! (pattern instanceof InitializationPattern)){
-				ReqGuardGraph aut = patternToAutomaton(pattern);
+				GuardGraph aut = patternToAutomaton(pattern);
 				if(aut != null) {
 					gs.add(aut);
 				}
@@ -53,7 +48,7 @@ public class BuchiGraph {
   		BndResponsePatternUT			X
   	*/
 	
-	public ReqGuardGraph patternToAutomaton(PatternType pattern) {
+	public GuardGraph patternToAutomaton(PatternType pattern) {
 		if(pattern instanceof InvariantPattern){
 			return makeInvariantPatternAutomaton(pattern);
 		} else if(pattern instanceof UniversalityPattern) {
@@ -70,26 +65,23 @@ public class BuchiGraph {
 	 *  
 	 *  G(R -> XS)
 	 */
-	private ReqGuardGraph makeBndResponsePatternUTAutomaton(PatternType pattern) {
+	private GuardGraph makeBndResponsePatternUTAutomaton(PatternType pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			// Terms - also known as edge labels
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0));
 			final Term nR = SmtUtils.not(mScript, R);
-			final Term RandS = SmtUtils.and(mScript, R, S);
-			final Term nRandS = SmtUtils.and(mScript, nR, S);
 			
 			// States 
-			final ReqGuardGraph q0 = new ReqGuardGraph(0);
-			final ReqGuardGraph q1 = new ReqGuardGraph(1);
-			// TODO is a 3rd State (error-state) needed?
+			final GuardGraph q0 = new GuardGraph(0);
+			final GuardGraph q1 = new GuardGraph(1);
 			
 			// Edges
-			q0.connectOutgoing(q0, new TimedLabel(nR));
-			q0.connectOutgoing(q1, new TimedLabel(R));
-			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, S)));
-			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, S)));
+			q0.connectOutgoing(q0, nR);
+			q0.connectOutgoing(q1, R);
+			q1.connectOutgoing(q1, SmtUtils.and(mScript, R, S));
+			q1.connectOutgoing(q0, SmtUtils.and(mScript, nR, S));
 			
 			return q0;
 		} else {
@@ -103,18 +95,20 @@ public class BuchiGraph {
 	 *  
 	 *  G(R -> S)
 	 */
-	private ReqGuardGraph makeInvariantPatternAutomaton(PatternType pattern) {
+	private GuardGraph makeInvariantPatternAutomaton(PatternType pattern) {
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			// Terms
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0));
+			final Term nR = SmtUtils.not(mScript, R);
 			
 			// States 
-			final ReqGuardGraph q0 = new ReqGuardGraph(0);
-			final ReqGuardGraph q1 = new ReqGuardGraph(1);
+			final GuardGraph q0 = new GuardGraph(0);
 			
-			// TODO add edges
+			// Edges
+			q0.connectOutgoing(q0, SmtUtils.or(mScript, SmtUtils.or(mScript, nR, S)));
+			
 			return q0;
 		} else {
 			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
@@ -127,7 +121,7 @@ public class BuchiGraph {
 	 *  
 	 *  G(S)
 	 */
-	private ReqGuardGraph makeUniversalityPatternAutomaton(PatternType pattern) {
+	private GuardGraph makeUniversalityPatternAutomaton(PatternType pattern) {
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			
@@ -135,10 +129,10 @@ public class BuchiGraph {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			
 			// States
-			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			final GuardGraph q0 = new GuardGraph(0);
 			
-			// Labels
-			q0.connectOutgoing(q0, new TimedLabel(S));
+			// Edges
+			q0.connectOutgoing(q0, S);
 			
 			return q0;
 		} else {

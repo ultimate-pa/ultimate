@@ -6,19 +6,19 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 
 public class AuxGraphOperations {
 
-	public static String makeStringInterpretation(ReqGuardGraph automaton) {
+	public static String makeStringInterpretation(GuardGraph automaton) {
 		String autRepr = "";
 		String autStates = "";
 		String autEdges = "";
-		final List<ReqGuardGraph> nodes = automaton.getOutgoingNodes();
+		final List<GuardGraph> nodes = automaton.getOutgoingNodes();
 		autRepr += "Automaton has Nodes: ";
 		
-		for (ReqGuardGraph node : nodes) {
-			for (ReqGuardGraph node2 : nodes) {
+		for (GuardGraph node : nodes) {
+			for (GuardGraph node2 : nodes) {
 				if (!(node.getOutgoingEdgeLabel(node2) == null)) {
 					autEdges += "Node: " + node.getLabel() + " transitions to node: " +
 							node2.getLabel() + " with edge label: " +
-							node.getOutgoingEdgeLabel(node2).getGuard().toString();
+							node.getOutgoingEdgeLabel(node2).toString();
 				}
 				autEdges += "\n";
 			}

@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.reqtotestpowerset;
 
 import java.util.List;
 
-import org.eclipse.osgi.internal.messages.Msg;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -20,11 +18,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.BuchiGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.GuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.AuxGraphOperations;
 
 public class ReqToTestPowersetObserver extends BaseObserver{
@@ -33,7 +30,6 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	
-	private IElement mBoogieAst;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	
@@ -63,10 +59,10 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
 		CddToSmt cddToSmt = new CddToSmt(mServices, mStorage, mScript, boogie2Smt, boogieDeclarations, symbolTable);
 		
-		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt, symbolTable);
-		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
+		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt);
+		final List<GuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
 		
-		for (ReqGuardGraph automaton : automata ) {
+		for (GuardGraph automaton : automata ) {
 			mLogger.warn(AuxGraphOperations.makeStringInterpretation(automaton));
 		}
 		return false;
