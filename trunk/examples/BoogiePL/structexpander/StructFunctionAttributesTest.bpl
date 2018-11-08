@@ -2,6 +2,8 @@
 // Daniel Dietsch 2018-11-06
 type rational = { n, d: int, v:real };
 
+type pointer = { base : int, offset : int };
+
 // correct usage of :expand_struct 
 function { :expand_struct "n" } { :smtdefined "(+ n 0)" } { :expand_struct "d" } { :smtdefined "(+ d 0)" } { :expand_struct "v" } { :smtdefined "(/ (to_real n) (to_real d))" } foo(n:int, d:int) returns (out:rational);
 
@@ -36,6 +38,10 @@ function { :expand_struct "n" } { :smtdefined "(+ n 0)" } { :expand_struct "d" }
 // function { :expand_struct "n" } { :smtdefined "n" } { :expand_struct "n" } { :smtdefined "d" } { :expand_struct "v" } { :smtdefined "(div n d)" } bar(n:int, d:int) returns (out:rational);
 
 function {:builtin "bvadd"} bvadd(a : bv8, b : bv8) returns (out : bv8);
+
+function { :smtdefined "(store in0 in1 ((as const (Array Int Int)) 0))" } ~initToZeroAtPointerBaseAddress~int(in0 : [pointer]int, in1 : int) returns (out : [pointer]int);
+
+function { :smtdefined "(store in0 in1 ((as const (Array Int Int)) 0))" } ~initToZeroAtPointerBaseAddress~int_exp(in0 : [{ base : int, offset : int }]int, in1 : int) returns (out : [{ base : int, offset : int }]int);
 
 procedure main() returns ()
 {
