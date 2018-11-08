@@ -142,6 +142,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -1870,7 +1871,8 @@ public class CHandler {
 			// are we in prerun mode?
 			if (mIsPrerun) {
 				// all unions should be on heap
-				if (CStructOrUnion.isUnion(cDec.getType().getUnderlyingType()) && storageClass != CStorageClass.TYPEDEF) {
+				if (CStructOrUnion.isUnion(cDec.getType().getUnderlyingType())
+						&& storageClass != CStorageClass.TYPEDEF) {
 					addToVariablesOnHeap(d);
 				}
 			}
@@ -2629,7 +2631,8 @@ public class CHandler {
 				} else if (cDec.getType().getUnderlyingType() instanceof CEnum) {
 					identifier = (((CEnum) cDec.getType().getUnderlyingType()).getName());
 				} else {
-					throw new AssertionError("missing support for global incomplete " + cDec.getType().getUnderlyingType());
+					throw new AssertionError(
+							"missing support for global incomplete " + cDec.getType().getUnderlyingType());
 				}
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
@@ -4071,8 +4074,8 @@ public class CHandler {
 			} else {
 				resultCType = opPositive.getLrValue().getCType();
 			}
-		} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray &&
-				opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+		} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray
+				&& opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 			// TODO 2018-11-04 Matthias: I could not find a reference for the
 			// following, but it seems to work for SV-COMP examples
 			// if both operands are arrays we decay both to pointers
@@ -4097,7 +4100,14 @@ public class CHandler {
 
 		// auxvar that will hold the result of the ite expression
 		final AuxVarInfo auxvar;
-		if (resultCType.isVoidType()) {
+		final Boolean isBranchDead;
+		if (opCondition.getLrValue().isBoogieBool()) {
+			isBranchDead = ((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
+		} else {
+			isBranchDead = null;
+		}
+
+		if (resultCType.isVoidType() || isBranchDead != null) {
 			/* in this case we will not make any assignment, so we do not need the aux var */
 			auxvar = null;
 		} else {
@@ -4107,53 +4117,61 @@ public class CHandler {
 		}
 
 		// collect side effects of "then" branch
-		final List<Statement> ifStatements = new ArrayList<>();
-		{
-			ifStatements.addAll(opPositive.getStatements());
-			if (!resultCType.isVoidType() && !secondArgIsVoid) {
-				final LeftHandSide[] lhs = { auxvar.getLhs() };
-				final Expression assignedVal = opPositive.getLrValue().getValue();
-				final AssignmentStatement assignStmt =
-						StatementFactory.constructAssignmentStatement(loc, lhs, new Expression[] { assignedVal });
-				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
-					overapprItem.annotate(assignStmt);
-				}
-				ifStatements.add(assignStmt);
-			}
-			resultBuilder.addAllExceptLrValueAndStatements(opPositive);
-		}
-
 		// collect side effects of "else" branch
-		final List<Statement> elseStatements = new ArrayList<>();
-		{
-			elseStatements.addAll(opNegative.getStatements());
-			if (!resultCType.isVoidType() && !thirdArgIsVoid) {
-				final LeftHandSide[] lhs = { auxvar.getLhs() };
-				final Expression assignedVal = opNegative.getLrValue().getValue();
-				final AssignmentStatement assignStmt =
-						StatementFactory.constructAssignmentStatement(loc, lhs, new Expression[] { assignedVal });
-				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
-					overapprItem.annotate(assignStmt);
-				}
-				elseStatements.add(assignStmt);
+		if (isBranchDead == null) {
+			final List<Statement> ifStatements = new ArrayList<>();
+			final List<Statement> elseStatements = new ArrayList<>();
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements);
+			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements);
+			final Statement rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
+					ifStatements.toArray(new Statement[ifStatements.size()]),
+					elseStatements.toArray(new Statement[elseStatements.size()]));
+			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
+				overapprItem.annotate(rtrStatement);
 			}
-			resultBuilder.addAllExceptLrValueAndStatements(opNegative);
-		}
-		final Statement ifStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
-				ifStatements.toArray(new Statement[ifStatements.size()]),
-				elseStatements.toArray(new Statement[elseStatements.size()]));
-		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
-			overapprItem.annotate(ifStatement);
-		}
-		resultBuilder.addStatement(ifStatement);
-
-		if (!resultCType.isVoidType()) {
-			/* the result has a value only if the result type is not void.. */
-			resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
+			resultBuilder.addStatement(rtrStatement);
+		} else if (isBranchDead) {
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null);
 		} else {
-			// for better error detection we give the dummy void value here (edit: see the todo above)
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null);
 		}
+
+		if (isBranchDead == null) {
+			if (!resultCType.isVoidType()) {
+				/* the result has a value only if the result type is not void.. */
+				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
+			} else {
+				// for better error detection we give the dummy void value here (edit: see the todo above)
+			}
+		} else if (isBranchDead) {
+			// the else branch is dead
+			resultBuilder.setLrValue(opPositive.getLrValue());
+		} else {
+			// the then branch is dead
+			resultBuilder.setLrValue(opNegative.getLrValue());
+		}
+
 		return resultBuilder.build();
+	}
+
+	private static void assignAuxVar(final ILocation loc, final ExpressionResult branchResult,
+			final ExpressionResultBuilder resultBuilder, final AuxVarInfo auxvar,
+			final List<Statement> resultStatements) {
+		if (auxvar != null) {
+			final LeftHandSide[] lhs = { auxvar.getLhs() };
+			final Expression assignedVal = branchResult.getLrValue().getValue();
+			final AssignmentStatement assignStmt =
+					StatementFactory.constructAssignmentStatement(loc, lhs, new Expression[] { assignedVal });
+			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
+				overapprItem.annotate(assignStmt);
+			}
+			resultStatements.addAll(branchResult.getStatements());
+			resultStatements.add(assignStmt);
+			resultBuilder.addAllExceptLrValueAndStatements(branchResult);
+		} else {
+			resultBuilder.addAllExceptLrValue(branchResult);
+		}
+
 	}
 
 	/**
