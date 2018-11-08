@@ -456,6 +456,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		if (other.isBottom()) {
 			return SubsetResult.NONE;
 		}
+		if (isEqualTo(other)) {
+			return SubsetResult.EQUAL;
+		}
 
 		for (final Entry<IProgramVarOrConst, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V thisValue = entry.getValue();
@@ -467,6 +470,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			if (!thisValue.isContainedIn(otherValue)) {
 				return SubsetResult.NONE;
 			}
+
 		}
 
 		for (final Entry<IProgramVarOrConst, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
@@ -480,7 +484,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 				return SubsetResult.NONE;
 			}
 		}
-		return SubsetResult.NON_STRICT;
+		return SubsetResult.STRICT;
 	}
 
 	@Override
