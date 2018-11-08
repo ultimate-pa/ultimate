@@ -7,7 +7,6 @@ function { :expand_struct "n" } { :smtdefined "(+ n 0)" } { :expand_struct "d" }
 procedure main() returns ()
 {
    var a : rational;
-   var b : bv8; 
    
    a := foo(1,2);
    assert a!n == 1;
