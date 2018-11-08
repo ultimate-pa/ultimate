@@ -625,10 +625,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 				case EQUAL:
 					return ComparisonResult.EQUAL;
 				case STRICT:
-				case NON_STRICT:
 					return ComparisonResult.STRICTLY_SMALLER;
+				case NON_STRICT:
 				case NONE:
-
 				default:
 					break;
 				}
@@ -638,8 +637,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 				case EQUAL:
 					throw new AssertionError("Equal is symmetric");
 				case STRICT:
-				case NON_STRICT:
 					return ComparisonResult.STRICTLY_GREATER;
+				case NON_STRICT:
 				case NONE:
 				default:
 					return ComparisonResult.INCOMPARABLE;
@@ -678,11 +677,10 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 			final SubsetResult isCovered = last.isSubsetOf(current);
 			switch (isCovered) {
 			case EQUAL:
-			case NON_STRICT:
 			case STRICT:
 				return false;
 			case NONE:
-
+			case NON_STRICT:
 			default:
 				continue;
 			}
@@ -706,22 +704,21 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		final List<STATE> ordered = getTopologicalOrder(states);
 		final Set<STATE> rtr = newSet(maxSize);
 		final Iterator<STATE> iter = ordered.iterator();
-		int i = 0;
-		while (iter.hasNext()) {
-			++i;
+
+		// take n-1 allowed elements directly from the toplogical order
+		int i = 1;
+		while (iter.hasNext() && i < maxSize) {
 			final STATE current = iter.next();
-			if (i < maxSize) {
-				rtr.add(current);
-				continue;
-			}
-			break;
+			rtr.add(current);
+			++i;
 		}
 		if (iter.hasNext()) {
 			final Set<STATE> mergeDown = new HashSet<>();
 			iter.forEachRemaining(mergeDown::add);
-			rtr.add(reduce(mergeDown, 1).iterator().next());
+			final Set<STATE> reduced = reduce(mergeDown, 1);
+			rtr.add(reduced.iterator().next());
 		}
-		assert rtr.size() <= maxSize;
+		assert rtr.size() <= maxSize : "reduceByTopologicalOrder left too many states";
 		return rtr;
 	}
 
