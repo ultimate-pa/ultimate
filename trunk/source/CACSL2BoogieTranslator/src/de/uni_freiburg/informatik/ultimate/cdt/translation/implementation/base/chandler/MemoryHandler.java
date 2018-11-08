@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,7 +87,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -2603,23 +2606,74 @@ public class MemoryHandler {
 
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final String smtDefinition = String.format("(store %s %s ((as const (Array Int Int)) 0))",
-				FunctionDeclarations.constructNameForFunctionInParam(0),
-				FunctionDeclarations.constructNameForFunctionInParam(1));
+		final List<Attribute> attributeList = new ArrayList<>();
 
-		final NamedAttribute namedAttribute = new NamedAttribute(
-				ignoreLoc,
-				FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-				new Expression[] {
-						ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+
+		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
+		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types
+		final BoogieType flattenedType = StructExpanderUtil.flattenType(heapContentBoogieType, new HashMap<>(), new HashMap<>());
+
+		if (flattenedType instanceof BoogieStructType) {
+			final BoogieStructType bst = (BoogieStructType) flattenedType;
+
+			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+
+				// add expand attribute
+				final NamedAttribute expandAttribute = new NamedAttribute(
+						ignoreLoc,
+						StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc, bst.getFieldIds()[fieldNr])
 						});
+				attributeList.add(expandAttribute);
 
+				final String zero = "0";
+
+				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
+
+				final String smtDefinition = String.format("(store %s %s ((as const (Array Int %s)) %s))",
+						FunctionDeclarations.constructNameForFunctionInParam(0)
+							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
+						FunctionDeclarations.constructNameForFunctionInParam(1),
+						contentType,
+						zero);
+
+				final NamedAttribute namedAttribute = new NamedAttribute(
+						ignoreLoc,
+						FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+						});
+				attributeList.add(namedAttribute);
+			}
+		} else {
+			final String zero = "0";
+
+			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
+
+			final String smtDefinition = String.format("(store %s %s ((as const (Array Int %s)) %s))",
+					FunctionDeclarations.constructNameForFunctionInParam(0),
+					FunctionDeclarations.constructNameForFunctionInParam(1),
+					contentType,
+					zero);
+
+			final NamedAttribute namedAttribute = new NamedAttribute(
+					ignoreLoc,
+					FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+					new Expression[] {
+							ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+					});
+			attributeList.add(namedAttribute);
+		}
+
+		final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
 
 		// register the FunctionDeclaration so it will be added at the end of translation
 		mExpressionTranslation.getFunctionDeclarations()
 			.declareFunction(ignoreLoc,
 				getNameOfHeapInitFunction(heapDataArray),
-				new Attribute[] { namedAttribute},
+				//new Attribute[] { namedAttribute},
+				attributes,
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
 				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())

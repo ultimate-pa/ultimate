@@ -56,8 +56,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -1259,22 +1260,59 @@ public class InitializationHandler {
 		private void constructAndRegisterDeclaration(final BoogieArrayType boogieType) {
 			final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-			//"((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
-			final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
+			final BoogieType ft = StructExpanderUtil.flattenType(boogieType, new HashMap<>(), new HashMap<>());
+
+			final List<Attribute> attributeList = new ArrayList<>();
+
+			if (ft instanceof BoogieStructType) {
+				final BoogieStructType bst = (BoogieStructType) ft;
+
+				for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+
+					// add expand attribute
+					final NamedAttribute expandAttribute = new NamedAttribute(
+						ignoreLoc,
+						StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc, bst.getFieldIds()[fieldNr])
+						});
+					attributeList.add(expandAttribute);
 
 
-			final NamedAttribute namedAttribute = new NamedAttribute(
-					ignoreLoc,
-					FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-					new Expression[] {
-							ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
-					});
+					// add smtdefined attribute
+					final String smtDefinition =
+							getSmtConstantArrayStringForBoogieType((BoogieArrayType) bst.getFieldType(fieldNr));
+
+					final NamedAttribute smtdefinedAttribute = new NamedAttribute(
+						ignoreLoc,
+						FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+						});
+					attributeList.add(smtdefinedAttribute);
+				}
+			} else {
+				//build something like "((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
+				final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
+
+				final NamedAttribute namedAttribute = new NamedAttribute(
+						ignoreLoc,
+						FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+						});
+				attributeList.add(namedAttribute);
+			}
+
+
+			final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
 
 			// register the FunctionDeclaration so it will be added at the end of translation
 			mExpressionTranslation.getFunctionDeclarations()
 				.declareFunction(ignoreLoc,
 						getNameOfConstantArrayFunction(boogieType),
-						new Attribute[] { namedAttribute},
+						//new Attribute[] { namedAttribute},
+						attributes,
 						boogieType.toASTType(ignoreLoc)
 						);
 
@@ -1287,36 +1325,16 @@ public class InitializationHandler {
 			} else {
 				currentArray = "0";
 			}
-			String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
+			String currentTypeString = CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getValueType());
 			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
 				currentTypeString = String.format("(Array %s %s)",
-						getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
+						CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
 						currentTypeString);
 				currentArray = String.format("((as const %s) %s)", currentTypeString, currentArray);
 			}
 			return currentArray;
 		}
 
-		private String getSmtSortStringForBoogieType(final BoogieType boogieType) {
-			if (boogieType instanceof BoogiePrimitiveType) {
-				if (((BoogiePrimitiveType) boogieType).getTypeCode() == BoogiePrimitiveType.INT) {
-					return "Int";
-				} else {
-					throw new AssertionError("missing case");
-				}
-			} else if (boogieType instanceof BoogieArrayType) {
-				final BoogieArrayType boogieArrayType = (BoogieArrayType) boogieType;
-				String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
-				for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
-					currentTypeString = String.format("(Array %s %s)",
-							getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
-							currentTypeString);
-				}
-				return currentTypeString;
-			} else {
-				throw new AssertionError("missing case");
-			}
-		}
 
 		public void constructAndRegisterDeclarations() {
 			mIsFinished = true;
@@ -1329,9 +1347,18 @@ public class InitializationHandler {
 			if (!mTypesForWhichConstantArraysAreRequired.contains(boogieArrayType)) {
 				throw new AssertionError("type should have been reported as required first");
 			}
-			/* "~RB~" stands for "right bracket", if there is a nicer naming that still avoids name clashes, that naming
+			/*
+			 * "~RB~" stands for "right bracket",
+			 * "~RC~" stands for "right curly brace",
+			 * "~COM~" stands for "comma",
+			 * "~COL~" stands for "colon",
+			 * if there is a nicer naming that still avoids name clashes, that naming
 			 * should be used. */
 			final String sanitizedTypeName = boogieArrayType.toString()
+					.replaceAll(":", "~COL~")
+					.replaceAll(", ", "~COM~")
+					.replaceAll("\\{ ", "~LC~")
+					.replaceAll(" \\}", "~RC~")
 					.replaceAll("\\]", "~RB~")
 					.replaceAll("\\[", "~LB~");
 			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;

@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -460,6 +462,27 @@ public class CTranslationUtil {
 			return result;
 		} else {
 			throw new AssertionError();
+		}
+	}
+
+	public static String getSmtSortStringForBoogieType(final BoogieType boogieType) {
+		if (boogieType instanceof BoogiePrimitiveType) {
+			if (((BoogiePrimitiveType) boogieType).getTypeCode() == BoogiePrimitiveType.INT) {
+				return "Int";
+			} else {
+				throw new AssertionError("missing case");
+			}
+		} else if (boogieType instanceof BoogieArrayType) {
+			final BoogieArrayType boogieArrayType = (BoogieArrayType) boogieType;
+			String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
+			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
+				currentTypeString = String.format("(Array %s %s)",
+						getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
+						currentTypeString);
+			}
+			return currentTypeString;
+		} else {
+			throw new AssertionError("missing case");
 		}
 	}
 }
