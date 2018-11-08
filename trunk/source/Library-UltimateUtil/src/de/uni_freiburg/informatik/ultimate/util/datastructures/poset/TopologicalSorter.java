@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -112,9 +112,9 @@ public class TopologicalSorter<V, L> {
 	 * @return Topological ordering of the nodes. null iff the graph contained a circle.
 	 */
 	public List<V> reversedTopologicalOrdering(final Collection<V> graph) {
-		mUnmarkedNodes = new HashSet<>(graph);
-		mTemporarilyMarkedNodes = new HashSet<>();
-		mPermanentlyMarkedNodes = new HashSet<>();
+		mUnmarkedNodes = new LinkedHashSet<>(graph);
+		mTemporarilyMarkedNodes = new LinkedHashSet<>();
+		mPermanentlyMarkedNodes = new LinkedHashSet<>();
 		mTopolicalSorting = new ArrayList<>(graph.size());
 		while (!mUnmarkedNodes.isEmpty()) {
 			try {
