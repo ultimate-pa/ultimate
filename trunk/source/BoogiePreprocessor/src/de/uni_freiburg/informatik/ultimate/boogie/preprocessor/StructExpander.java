@@ -365,6 +365,13 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 		return flat.toArray(new VarList[flat.size()]);
 	}
 
+	@Override
+	protected VarList processVarList(final VarList vl) {
+		final VarList[] newVl = processVarLists(new VarList[] { vl });
+		assert newVl.length == 1;
+		return newVl[0];
+	}
+
 	/**
 	 * Expands a single var list. This will expand declarations of structs into declarations for all fields in the
 	 * struct. If the declared variables have a struct type, it creates one declaration for every variable and every
