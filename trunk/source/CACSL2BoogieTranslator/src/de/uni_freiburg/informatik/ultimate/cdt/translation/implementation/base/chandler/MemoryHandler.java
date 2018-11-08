@@ -2608,6 +2608,13 @@ public class MemoryHandler {
 
 		final List<Attribute> attributeList = new ArrayList<>();
 
+		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
+		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
+		final BoogieType boogieTypeOfPointerComponents =
+				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents);
+		final String smtSortOfPointerComponents =
+				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents);
+
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
 		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types
@@ -2627,14 +2634,15 @@ public class MemoryHandler {
 						});
 				attributeList.add(expandAttribute);
 
-				final String zero = "0";
+				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
 
 				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
 
-				final String smtDefinition = String.format("(store %s %s ((as const (Array Int %s)) %s))",
+				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 						FunctionDeclarations.constructNameForFunctionInParam(0)
 							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
 						FunctionDeclarations.constructNameForFunctionInParam(1),
+						smtSortOfPointerComponents,
 						contentType,
 						zero);
 
@@ -2647,13 +2655,14 @@ public class MemoryHandler {
 				attributeList.add(namedAttribute);
 			}
 		} else {
-			final String zero = "0";
 
+			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
 			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
 
-			final String smtDefinition = String.format("(store %s %s ((as const (Array Int %s)) %s))",
+			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 					FunctionDeclarations.constructNameForFunctionInParam(0),
 					FunctionDeclarations.constructNameForFunctionInParam(1),
+					smtSortOfPointerComponents,
 					contentType,
 					zero);
 
@@ -2669,6 +2678,7 @@ public class MemoryHandler {
 		final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
 
 		// register the FunctionDeclaration so it will be added at the end of translation
+
 		mExpressionTranslation.getFunctionDeclarations()
 			.declareFunction(ignoreLoc,
 				getNameOfHeapInitFunction(heapDataArray),
@@ -2676,7 +2686,7 @@ public class MemoryHandler {
 				attributes,
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
-				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())
+				astTypeOfPointerComponents
 				);
 
 	}

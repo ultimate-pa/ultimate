@@ -467,8 +467,11 @@ public class CTranslationUtil {
 
 	public static String getSmtSortStringForBoogieType(final BoogieType boogieType) {
 		if (boogieType instanceof BoogiePrimitiveType) {
-			if (((BoogiePrimitiveType) boogieType).getTypeCode() == BoogiePrimitiveType.INT) {
+			final BoogiePrimitiveType boogiePrimitiveType = (BoogiePrimitiveType) boogieType;
+			if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.INT) {
 				return "Int";
+			} else if (boogiePrimitiveType.getTypeCode() >= 0) {
+				return String.format("(_ BitVec %s)", boogiePrimitiveType.getTypeCode());
 			} else {
 				throw new AssertionError("missing case");
 			}
@@ -481,6 +484,26 @@ public class CTranslationUtil {
 						currentTypeString);
 			}
 			return currentTypeString;
+		} else {
+			throw new AssertionError("missing case");
+		}
+	}
+
+	public static String getSmtZeroStringForBoogieType(final BoogieType boogieType) {
+		if (boogieType instanceof BoogiePrimitiveType) {
+			final BoogiePrimitiveType boogiePrimitiveType = (BoogiePrimitiveType) boogieType;
+			if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.INT) {
+				return "0";
+			} else if (boogiePrimitiveType.getTypeCode() >= 0) {
+				final StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < boogiePrimitiveType.getTypeCode(); i++) {
+					sb.append('0');
+				}
+				return String.format("#b%s)", sb.toString());
+//				return String.format("#b%s)", boogiePrimitiveType.getTypeCode());
+			} else {
+				throw new AssertionError("missing case");
+			}
 		} else {
 			throw new AssertionError("missing case");
 		}

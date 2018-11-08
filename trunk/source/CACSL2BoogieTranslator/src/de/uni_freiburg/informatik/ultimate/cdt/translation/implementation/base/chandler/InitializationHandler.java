@@ -1323,7 +1323,7 @@ public class InitializationHandler {
 			if (boogieArrayType.getValueType() instanceof BoogieArrayType) {
 				currentArray = getSmtConstantArrayStringForBoogieType((BoogieArrayType) boogieArrayType.getValueType());
 			} else {
-				currentArray = "0";
+				currentArray = CTranslationUtil.getSmtZeroStringForBoogieType(boogieArrayType.getValueType());
 			}
 			String currentTypeString = CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getValueType());
 			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
