@@ -51,8 +51,4 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 		throw new UnsupportedOperationException("do we need to implement this?");
 	}
 
-	@Override
-	public void addMixArrayFunctions(final Collection<String> mixArrayFunctions) {
-		throw new UnsupportedOperationException("do we need to implement this?");
-	}
 }

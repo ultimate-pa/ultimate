@@ -65,6 +65,4 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	 */
 	void setTrackedArrays(List<String> trackedArrays);
 
-	void addMixArrayFunctions(Collection<String> mixArrayFunctions);
-
 }

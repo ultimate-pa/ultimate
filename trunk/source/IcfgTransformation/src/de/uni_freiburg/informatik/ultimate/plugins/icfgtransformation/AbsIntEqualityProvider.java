@@ -69,7 +69,6 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private final Set<IProgramConst> mAdditionalLiterals;
 	private List<String> mTrackedArrays;
-	private final Set<String> mMixArrayFunctions;
 	private ICsvProviderProvider<Object> mAbsIntBenchmark;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
@@ -77,19 +76,12 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mAdditionalLiterals = new HashSet<>();
-		mMixArrayFunctions = new HashSet<>();
 	}
 
 	@Override
 	public void announceAdditionalLiterals(final Collection<IProgramConst> literals) {
 		mAdditionalLiterals.addAll(literals);
 	}
-
-	@Override
-	public void addMixArrayFunctions(final Collection<String> mixArrayFunctions) {
-		mMixArrayFunctions.addAll(mixArrayFunctions);
-	}
-
 
 	@Override
 	public void setTrackedArrays(final List<String> trackedArrays) {
@@ -103,7 +95,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		final IAbstractInterpretationResult<? extends IEqualityProvidingState, IcfgEdge, IcfgLocation> absIntResult =
 				// AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
 				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger, mAdditionalLiterals,
-						mTrackedArrays, mMixArrayFunctions);
+						mTrackedArrays);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
 		mBotState = absIntResult.getUsedDomain().createBottomState();

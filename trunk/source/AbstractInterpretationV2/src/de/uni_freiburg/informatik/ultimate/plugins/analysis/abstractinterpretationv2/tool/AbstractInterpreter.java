@@ -204,12 +204,12 @@ public final class AbstractInterpreter {
 	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
 			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals,
-			final List<String> trackedArrays, final Set<String> mixArrayFunctions) {
+			final List<String> trackedArrays) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
 				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
-						logger, root, services, additionalLiterals, trackedArrays, mixArrayFunctions))
+						logger, root, services, additionalLiterals, trackedArrays))
 						.setTimer(timer),
 				p -> new FixpointEngine<>(p));
 	}
