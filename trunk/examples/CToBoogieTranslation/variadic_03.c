@@ -19,7 +19,7 @@ int add_nums(int count, ...)
     return result;
 }
 
-int old_main(void) 
+int another_fun(void) 
 {
     int result;
     result = add_nums(5, 1, 2, 3, 4, 5);
