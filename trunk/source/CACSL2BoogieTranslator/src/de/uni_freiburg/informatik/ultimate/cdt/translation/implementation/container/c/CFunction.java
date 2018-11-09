@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  */
 public class CFunction extends CType {
 
-	private enum VarArgsUsage {
+	public enum VarArgsUsage {
 		USED, UNUSED, UNKNOWN
 	}
 
@@ -162,7 +162,7 @@ public class CFunction extends CType {
 	 */
 	public CFunction newParameter(final CDeclaration[] newParamTypes) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
-				newParamTypes, takesVarArgs());
+				newParamTypes, takesVarArgs(), usesVarArgs());
 	}
 
 	/**
@@ -170,7 +170,17 @@ public class CFunction extends CType {
 	 */
 	public CFunction newReturnType(final CType returnType) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), returnType,
-				getParameterTypes(), takesVarArgs());
+				getParameterTypes(), takesVarArgs(), usesVarArgs());
+	}
+
+	/**
+	 * Create a new {@link CFunction} that is identical to this one but sets the usage of varargs. Only useful if the
+	 * function actually takes varargs.
+	 */
+	public CFunction updateVarArgsusage(final boolean usesVarArgs) {
+		assert takesVarArgs();
+		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
+				getParameterTypes(), takesVarArgs(), usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
 	}
 
 	public CType getResultType() {
@@ -183,6 +193,10 @@ public class CFunction extends CType {
 
 	public boolean takesVarArgs() {
 		return mTakesVarArgs;
+	}
+
+	public VarArgsUsage usesVarArgs() {
+		return mVarArgsUsage;
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -90,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction.VarArgsUsage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
@@ -256,17 +258,25 @@ public class FunctionHandler {
 
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
-		final CType returnCType = ((CFunction) cDec.getType()).getResultType();
+		final CFunction oldFunType = (CFunction) cDec.getType();
+		final CFunction funType;
+		// update varags usage
+		if (oldFunType.takesVarArgs() && oldFunType.usesVarArgs() == VarArgsUsage.UNKNOWN) {
+			// if the function body creates a va_list object it uses its varargs
+			final ASTNameCollector vaListFinder = new ASTNameCollector("va_list");
+			node.getBody().accept(vaListFinder);
+			final boolean usesVarArgs = vaListFinder.getNames().length > 0;
+			funType = oldFunType.updateVarArgsusage(usesVarArgs);
+		} else {
+			funType = oldFunType;
+		}
+
+		final CType returnCType = funType.getResultType();
+		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		if (cDec.getType() instanceof CFunction) {
-			definedProcInfo.updateCFunction((CFunction) cDec.getType());
-		} else {
-			throw new AssertionError();
-		}
-
-		VarList[] in = processInParams(loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
+		VarList[] in = processInParams(loc, funType, definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -627,9 +637,20 @@ public class FunctionHandler {
 				}
 				return resultBuilder.build();
 			}
-			throw new UnsupportedSyntaxException(loc,
-					"encountered a call to a var args function, var args are not supported at the moment: "
-							+ calleeProcInfo.getProcedureName());
+			if (calleeProcCType.usesVarArgs() == VarArgsUsage.USED) {
+				throw new UnsupportedSyntaxException(loc,
+						"encountered a call to a var args function, var args are not supported at the moment: "
+								+ calleeProcInfo.getProcedureName());
+			}
+			if (calleeProcCType.usesVarArgs() == VarArgsUsage.UNKNOWN) {
+				// this should not happen, but just to be sure
+				throw new UnsupportedSyntaxException(loc,
+						"encountered a call to a var args function and varargs usage is unknown: "
+								+ calleeProcInfo.getProcedureName());
+			}
+			// if the varargs are unused, we can just handle the function like any other function, but we need to
+			// dispatch the varargs arguments separately and remove them from the actual call, so that the number of
+			// parameters of the boogie procedure match
 		}
 
 		/*
@@ -638,11 +659,8 @@ public class FunctionHandler {
 		 */
 		final boolean isCalleeSignatureNotYetDetermined =
 				!calleeProcInfo.hasImplementation() && calleeProcDecl.getInParams().length == 0;
-		if (!isCalleeSignatureNotYetDetermined && arguments.length != calleeProcDecl.getInParams().length
-				&& !(calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null
-						&& arguments.length == 0)) {
-			throw new IncorrectSyntaxException(loc, "Function call has incorrect number of in-params: " + calleeName);
-		}
+		checkNumberOfArguments(loc, calleeName, arguments, calleeProcDecl, calleeProcCType,
+				isCalleeSignatureNotYetDetermined);
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
@@ -662,6 +680,12 @@ public class FunctionHandler {
 				calleeProcInfo.updateCFunctionAddParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
+				if (i >= calleeProcCType.getParameterTypes().length
+						&& calleeProcCType.usesVarArgs() == VarArgsUsage.UNUSED) {
+					// only add the params if they are part of the signature or if the function uses its varargs
+					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+					continue;
+				}
 				CType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
@@ -681,6 +705,7 @@ public class FunctionHandler {
 				// implicit casts
 				in = mExprResultTransformer.convert(loc, in, expectedParamType);
 			}
+
 			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 		}
@@ -703,6 +728,25 @@ public class FunctionHandler {
 		}
 
 		return makeTheFunctionCallItself(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
+	}
+
+	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
+			final IASTInitializerClause[] arguments, final Procedure calleeProcDecl, final CFunction calleeProcCType,
+			final boolean isCalleeSignatureNotYetDetermined) {
+		if (isCalleeSignatureNotYetDetermined) {
+			return;
+		}
+		if (arguments.length == calleeProcDecl.getInParams().length) {
+			return;
+		}
+		if (calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null
+				&& arguments.length == 0) {
+			return;
+		}
+		if (calleeProcCType.takesVarArgs()) {
+			return;
+		}
+		throw new IncorrectSyntaxException(loc, "Function call has incorrect number of in-params: " + calleeName);
 	}
 
 	/**

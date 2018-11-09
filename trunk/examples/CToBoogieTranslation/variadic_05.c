@@ -13,9 +13,19 @@ int add_nums(int count, ...)
     return result;
 }
 
+int foo(int x){
+    if(x != 5){
+        //@assert \false;
+    }
+    return x;
+}
+
 int main(void) 
 {
     int result;
-    result = add_nums(10,11,12);
+    int x = 2;
+    int y = 3;
+    
+    result = add_nums(10,foo(x+y),x*y);
     //@assert result == 0;
 }
