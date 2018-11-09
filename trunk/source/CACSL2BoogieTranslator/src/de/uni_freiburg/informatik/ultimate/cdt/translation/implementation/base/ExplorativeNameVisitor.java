@@ -33,6 +33,7 @@ import org.eclipse.cdt.core.dom.ILinkage;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.IASTName;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.ICompositeType;
 import org.eclipse.cdt.core.dom.ast.IFunction;
@@ -58,22 +59,24 @@ public class ExplorativeNameVisitor extends ASTVisitor {
 	public ExplorativeNameVisitor(final ILogger logger) {
 		// visit all nodes by default
 		super(true);
+		shouldVisitAmbiguousNodes = true;
 		mLogger = logger;
 	}
 
 	@Override
 	public int visit(final IASTName name) {
-		mLogger.info("--");
-		mLogger.info(name.getRawSignature());
+		mLogger.info("IASTName");
+		mLogger.info("  " + name.getRawSignature());
 		final IBinding binding = name.resolveBinding();
 		final IASTName[] declarations = name.getTranslationUnit().getDeclarationsInAST(binding);
-		Arrays.stream(declarations).forEach(a -> mLogger.info(a.getRawSignature() + " as " + a.getRoleOfName(true)));
+		Arrays.stream(declarations)
+				.forEach(a -> mLogger.info("  " + a.getRawSignature() + " as " + a.getRoleOfName(true)));
 		final IScope scope;
 		final ILinkage linkage = binding.getLinkage();
 		try {
 			scope = binding.getScope();
 		} catch (final DOMException e) {
-			mLogger.fatal("Exception during getScope: ", e);
+			mLogger.fatal("  " + "Exception during getScope: ", e);
 			return super.visit(name);
 		}
 
@@ -83,23 +86,22 @@ public class ExplorativeNameVisitor extends ASTVisitor {
 		} else {
 			scopeName = scope.getKind().toString();
 		}
-		mLogger.info("Scope: " + scopeName + " Linkage: " + linkage.getLinkageName());
+		mLogger.info("  " + "Scope: " + scopeName + " Linkage: " + linkage.getLinkageName());
 
 		if (binding instanceof IVariable) {
 			final IVariable var = (IVariable) binding;
-			printType(var.getType());
-
+			mLogger.info("  " + toString(var.getType()));
 		} else if (binding instanceof ITypedef) {
 			final ITypedef typedef = (ITypedef) binding;
-			printType(typedef.getType());
+			mLogger.info("  " + toString(typedef.getType()));
 		} else if (binding instanceof IFunction) {
 			final IFunction function = (IFunction) binding;
 			final IScope fScope = function.getFunctionScope();
 			if (fScope == null) {
-				mLogger.info("NOFSCOPE");
+				mLogger.info("  " + "NOFSCOPE");
 			} else {
-				mLogger.info(fScope.getScopeName());
-				mLogger.info(fScope.getKind());
+				mLogger.info("  " + fScope.getScopeName());
+				mLogger.info("  " + fScope.getKind());
 			}
 
 			final IFunctionType fType = function.getType();
@@ -109,19 +111,21 @@ public class ExplorativeNameVisitor extends ASTVisitor {
 			sb.append(Arrays.stream(fType.getParameterTypes()).map(this::toString).collect(Collectors.joining(",")));
 			sb.append(") :");
 			sb.append(toString(fType.getReturnType()));
-			mLogger.info(sb.toString() + " " + function.getType().getClass().getSimpleName());
+			mLogger.info("  " + sb.toString() + " " + function.getType().getClass().getSimpleName());
 		} else if (binding instanceof ICompositeType) {
 			final ICompositeType compType = (ICompositeType) binding;
-			mLogger.info("Fields: " + compType.getFields());
+			mLogger.info("  " + "Fields: " + compType.getFields());
 		} else {
-			mLogger.info("Unhandled binding class:" + binding.getClass().getSimpleName());
+			mLogger.info("  " + "Unhandled binding class:" + binding.getClass().getSimpleName());
 		}
 
 		return super.visit(name);
 	}
 
-	private void printType(final IType type) {
-		mLogger.info(toString(type));
+	@Override
+	public int visit(final IASTStatement statement) {
+		mLogger.info(statement.getClass());
+		return super.visit(statement);
 	}
 
 	private String toString(final IType type) {
