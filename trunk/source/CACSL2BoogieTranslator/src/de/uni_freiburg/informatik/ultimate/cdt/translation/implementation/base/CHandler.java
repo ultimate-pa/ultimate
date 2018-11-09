@@ -1113,30 +1113,25 @@ public class CHandler {
 			}
 			final IASTName name = funcDecl.getName();
 			final IBinding binding = name.resolveBinding();
-			final CFunction funcType;
-
 			if (binding == null) {
 				// this happens if the parent is actually a cast
-				funcType =
-						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
+				cType = CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
 			} else if (binding instanceof IProblemBinding) {
 				// this happens if CDT detects a parse issue at this position
 				mLogger.warn("Detected problem " + ((IProblemBinding) binding).getMessage() + " at " + loc);
-				funcType =
-						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
+				cType = CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
 			} else if (binding instanceof IFunction) {
-				funcType = CFunction.createCFunction(resType.getCType(), paramsParsed, (IFunction) binding);
+				cType = CFunction.createCFunction(resType.getCType(), paramsParsed, (IFunction) binding);
 			} else if (binding instanceof IVariable) {
 				// it is a function pointer
-				funcType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (IVariable) binding);
+				cType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (IVariable) binding);
 			} else if (binding instanceof ITypedef) {
 				// it is a typedef of a function pointer or a function
-				funcType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (ITypedef) binding);
+				cType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (ITypedef) binding);
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot extract function type from binding " + binding.getClass());
 			}
-			cType = funcType;
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
@@ -1515,13 +1510,12 @@ public class CHandler {
 			assert r instanceof ExpressionResult;
 			final ExpressionResult rex = (ExpressionResult) r;
 			return mExprResultTransformer.switchToRValueIfNecessary(rex, mLocationFactory.createCLocation(node), node);
-		} else {
-			// TODO 2018-11-03 Matthias:
-			// added this Exception, fix soon only if this occurs often
-			throw new UnsupportedOperationException(
-					"Cannot understand initializer with more than two children. Is this a struct initialization? "
-							+ node.getRawSignature());
 		}
+		// TODO 2018-11-03 Matthias:
+		// added this Exception, fix soon only if this occurs often
+		throw new UnsupportedOperationException(
+				"Cannot understand initializer with more than two children. Is this a struct initialization? "
+						+ node.getRawSignature());
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerList node) {

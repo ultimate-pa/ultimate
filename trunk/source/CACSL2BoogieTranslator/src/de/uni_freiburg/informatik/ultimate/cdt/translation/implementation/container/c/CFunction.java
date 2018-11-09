@@ -81,9 +81,9 @@ public class CFunction extends CType {
 	}
 
 	public static CFunction createCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
-			final IFunction funBinding) {
-		return new CFunction(false, funBinding.isInline(), false, false, funBinding.isExtern(), resultType,
-				paramDeclarations, funBinding.takesVarArgs());
+			final IFunction binding) {
+		return new CFunction(false, binding.isInline(), false, false, binding.isExtern(), resultType, paramDeclarations,
+				binding.takesVarArgs());
 	}
 
 	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
@@ -111,8 +111,8 @@ public class CFunction extends CType {
 	}
 
 	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
-			final IVariable varBinding) {
-		IType varType = varBinding.getType();
+			final IVariable binding) {
+		IType varType = binding.getType();
 		if (varType instanceof IPointerType) {
 			// the initial type is already the pointer type
 		} else if (varType instanceof IArrayType) {
@@ -134,7 +134,7 @@ public class CFunction extends CType {
 		if (varType instanceof IFunctionType) {
 			// it was indeed a function pointer
 			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
-					initialPointer.isVolatile(), varBinding.isExtern(), resultType, paramDeclarations,
+					initialPointer.isVolatile(), binding.isExtern(), resultType, paramDeclarations,
 					((IFunctionType) varType).takesVarArgs());
 		}
 		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + varType);

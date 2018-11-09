@@ -51,11 +51,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ExplorativeVisitor extends ASTVisitor {
+public class ExplorativeNameVisitor extends ASTVisitor {
 
 	private final ILogger mLogger;
 
-	public ExplorativeVisitor(final ILogger logger) {
+	public ExplorativeNameVisitor(final ILogger logger) {
 		// visit all nodes by default
 		super(true);
 		mLogger = logger;
@@ -131,5 +131,4 @@ public class ExplorativeVisitor extends ASTVisitor {
 		}
 		return type + " (" + type.getClass().getSimpleName() + ")";
 	}
-
 }
