@@ -4101,7 +4101,7 @@ public class CHandler {
 		// auxvar that will hold the result of the ite expression
 		final AuxVarInfo auxvar;
 		final Boolean isBranchDead;
-		if (opCondition.getLrValue().isBoogieBool()) {
+		if (opCondition.getLrValue().getValue() instanceof BooleanLiteral) {
 			isBranchDead = ((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
 		} else {
 			isBranchDead = null;
