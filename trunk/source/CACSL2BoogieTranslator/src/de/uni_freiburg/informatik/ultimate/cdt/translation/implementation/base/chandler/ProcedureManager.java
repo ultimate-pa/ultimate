@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -587,17 +586,6 @@ public class ProcedureManager {
 		}
 
 		/**
-		 * Replace all parameter of the current function with the specified one.
-		 */
-		public void updateCFunctionReturnType(final CType returnCType) {
-			if (hasCType()) {
-				mCType = mCType.newReturnType(returnCType);
-			} else {
-				mCType = CFunction.createEmptyCFunction().newReturnType(returnCType);
-			}
-		}
-
-		/**
 		 * Add a parameter to the current function.
 		 */
 		public void updateCFunctionAddParam(final CDeclaration param) {
@@ -711,7 +699,5 @@ public class ProcedureManager {
 		}
 
 	}
-
-
 
 }
