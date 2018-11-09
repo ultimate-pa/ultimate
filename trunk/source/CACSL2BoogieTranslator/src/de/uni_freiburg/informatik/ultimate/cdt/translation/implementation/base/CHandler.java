@@ -1146,10 +1146,8 @@ public class CHandler {
 				assert paramDeclRes.getDeclarations().size() == 1;
 				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
 			}
-			final IFunction binding = (IFunction) funcDecl.getName().getBinding();
-			final CFunction funcType = new CFunction(false, binding.isInline(), false, false, binding.isExtern(),
-					resType.getCType(), paramsParsed, binding.takesVarArgs());
-			cType = funcType;
+			cType = CFunction.createCFunction(resType.getCType(), paramsParsed,
+					(IFunction) funcDecl.getName().getBinding());
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else {
 			cType = resType.getCType();

@@ -48,19 +48,36 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  */
 public class CFunction extends CType {
 
+	private enum VarArgsUsage {
+		USED, UNUSED, UNKNOWN
+	}
+
 	private final CType mResultType;
-
 	private final CDeclaration[] mParamTypes;
-
 	private final boolean mTakesVarArgs;
+	private final VarArgsUsage mVarArgsUsage;
 
-	public CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes,
-			final boolean takesVarArgs) {
+	private CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
+			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
+			final VarArgsUsage varArgsUsage) {
 		super(isConst, isInline, isRestrict, isVolatile, isExtern);
 		mResultType = resultType;
 		mParamTypes = paramTypes;
 		mTakesVarArgs = takesVarArgs;
+		mVarArgsUsage = varArgsUsage;
+		assert mVarArgsUsage != VarArgsUsage.USED || mTakesVarArgs : "Cannot use varargs but not have varargs";
+		assert mVarArgsUsage == VarArgsUsage.UNUSED
+				|| mTakesVarArgs : "Cannot have no varargs and not know about usage";
+	}
+
+	/**
+	 * Create C function with unknown varargs usage
+	 */
+	private CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
+			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes,
+			final boolean takesVarArgs) {
+		this(isConst, isInline, isRestrict, isVolatile, isExtern, resultType, paramTypes, takesVarArgs,
+				takesVarArgs ? VarArgsUsage.UNKNOWN : VarArgsUsage.UNUSED);
 	}
 
 	/**
@@ -90,8 +107,8 @@ public class CFunction extends CType {
 			final ITypedef binding) {
 		IType typedefType = binding.getType();
 		if (typedefType instanceof IFunctionType) {
-			return new CFunction(false, false, false, false, false, resultType, paramDeclarations,
-					((IFunctionType) typedefType).takesVarArgs());
+			final boolean takesVarArgs = ((IFunctionType) typedefType).takesVarArgs();
+			return new CFunction(false, false, false, false, false, resultType, paramDeclarations, takesVarArgs);
 		}
 		final IPointerType initialPointer;
 		if (typedefType instanceof IPointerType) {
