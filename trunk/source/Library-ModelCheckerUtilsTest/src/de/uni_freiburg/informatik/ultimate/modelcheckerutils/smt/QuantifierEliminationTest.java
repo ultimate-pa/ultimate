@@ -266,6 +266,68 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
+	/**
+	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
+	 * Boogie translation. Variant where the helper function is inlined.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 */
+	@Test
+	public void constantArrayTest01() {
+		mScript.declareFun("a", new Sort[0],
+				SmtSortUtils.getArraySort(mScript, mIntSort,
+						SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort)));
+		mScript.declareFun("i", new Sort[0], mIntSort);
+
+		final String formulaAsString =
+				"(exists ((v_a (Array Int (Array Int Int)))) "
+				+ "(= a (store v_a i ((as const (Array Int Int)) 0))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
+		final Term result = elim2(formulaAsTerm);
+		mLogger.info("Result: " + result.toStringDirect());
+		Assert.assertTrue(!(result instanceof QuantifiedFormula));
+	}
+
+	/**
+	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
+	 * Boogie translation. Variant where a helper function is used that is defined via define-function.
+	 * (Perhaps this makes no difference.)
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 */
+	@Test
+	public void constantArrayTest02() {
+		final Sort arrayFromIntToIntToInt = SmtSortUtils.getArraySort(mScript, mIntSort,
+						SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort));
+
+		mScript.declareFun("a", new Sort[0], arrayFromIntToIntToInt);
+		mScript.declareFun("i", new Sort[0], mIntSort);
+
+		final String functionDefinitionAsString = "(exists ((a (Array Int (Array Int Int))) (i Int)) "
+				+ "(store a i ((as const (Array Int Int)) 0)))";
+		final Term functionDefinitionAsTerm =
+				((QuantifiedFormula) TermParseUtils.parseTerm(mScript, functionDefinitionAsString)).getSubformula();
+
+		mScript.defineFun("~initToZeroAtPointerBaseAddress~int",
+				new TermVariable[] {
+						mScript.variable("a", arrayFromIntToIntToInt),
+						mScript.variable("i", mIntSort)
+						},
+				arrayFromIntToIntToInt,
+				functionDefinitionAsTerm);
+
+		final String formulaAsString =
+				"(exists ((v_a (Array Int (Array Int Int)))) "
+				+ "(= a (~initToZeroAtPointerBaseAddress~int v_a i)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
+		final Term result = elim2(formulaAsTerm);
+		mLogger.info("Result: " + result.toStringDirect());
+		Assert.assertTrue(!(result instanceof QuantifiedFormula));
+	}
+
+
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
 		// TODO: DD: Somehow the quantified formulas are too large / strange for TermParseUtils.parseTerm, but this way
