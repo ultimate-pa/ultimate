@@ -28,11 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -74,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
@@ -97,7 +98,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataLibraryServies;
-	private final ILogger mLogger;
+	public final ILogger mLogger;
 	private Term mAssertionTerm;
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
@@ -429,8 +430,8 @@ public class MoNatDiffScript extends NoopScript {
 	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processElement(final ApplicationTerm term) {
 		if (term.getParameters().length != 2)
 			throw new IllegalArgumentException("Element must have exactly two parameters.");
-
-		final AffineTerm affineTerm = MoNatDiffUtils.makeAffineTerm(this, term.getParameters()[0]);
+		
+		final AffineTerm affineTerm = MoNatDiffUtils.makeAffineTerm(this, term.getParameters()[0], mLogger);
 		final Map<Term, Rational> variables = affineTerm.getVariable2Coefficient();
 		final Rational constant = affineTerm.getConstant();
 
@@ -492,8 +493,27 @@ public class MoNatDiffScript extends NoopScript {
 		if (isEmpty.getResult() == false) {
 			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
 			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
+			
+			final Set<Term> terms = word.getSymbol(0).getMap().keySet();
+			final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
+			
+			for (int i = 0; i < word.length(); i++)
+			{
+				final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+				
+				for (final Term term : terms)
+				{
+					if (!result.containsKey(term))
+						result.put(term, new ArrayList<Integer>());
+					
+					if (symbol.getMap().get(term))
+						result.get(term).add(i);
+				}
+			}
+			
 			mLogger.info("Accepting word: " + word);
-
+			mLogger.info("Model: " + result);
+			
 			return;
 		}
 

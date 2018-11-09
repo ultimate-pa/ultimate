@@ -11,6 +11,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -113,13 +114,15 @@ public final class MoNatDiffUtils {
 	/*
 	 * TODO: Comment.
 	 */
-	public static AffineTerm makeAffineTerm(final Script script, final Term term) {
-		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
+	public static AffineTerm makeAffineTerm(final Script script, final Term term, final ILogger logger) {
+		final AffineTerm affineTerm = (AffineTerm)new AffineTermTransformer(script).transform(term);
 
 		if (affineTerm.isErrorTerm())
 			throw new IllegalArgumentException("Could not transform input to AffineTerm.");
 
-		return (AffineTerm) affineTerm.toTerm(script);
+		// return (AffineTerm) affineTerm.toTerm(script);
+		
+		return affineTerm;
 	}
 
 	/*
