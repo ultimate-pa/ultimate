@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2014-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -28,9 +29,23 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
+import org.eclipse.cdt.core.dom.ast.IArrayType;
+import org.eclipse.cdt.core.dom.ast.IFunction;
+import org.eclipse.cdt.core.dom.ast.IFunctionType;
+import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.core.dom.ast.IType;
+import org.eclipse.cdt.core.dom.ast.ITypedef;
+import org.eclipse.cdt.core.dom.ast.IVariable;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class CFunction extends CType {
 
 	private final CType mResultType;
@@ -49,6 +64,83 @@ public class CFunction extends CType {
 	}
 
 	/**
+	 * Create a default CFunction without arguments and with int as return type.
+	 */
+	public static CFunction createDefaultCFunction() {
+		return new CFunction(false, false, false, false, false, new CPrimitive(CPrimitives.INT), new CDeclaration[0],
+				false);
+	}
+
+	/**
+	 * Create an empty CFunction without arguments and with return type null
+	 *
+	 * TODO: This seems like a legacy method
+	 */
+	public static CFunction createEmptyCFunction() {
+		return new CFunction(false, false, false, false, false, null, new CDeclaration[0], false);
+	}
+
+	public static CFunction createCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+			final IFunction funBinding) {
+		return new CFunction(false, funBinding.isInline(), false, false, funBinding.isExtern(), resultType,
+				paramDeclarations, funBinding.takesVarArgs());
+	}
+
+	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+			final ITypedef binding) {
+		IType typedefType = binding.getType();
+		if (typedefType instanceof IFunctionType) {
+			return new CFunction(false, false, false, false, false, resultType, paramDeclarations,
+					((IFunctionType) typedefType).takesVarArgs());
+		}
+		final IPointerType initialPointer;
+		if (typedefType instanceof IPointerType) {
+			initialPointer = (IPointerType) typedefType;
+		} else {
+			throw new UnsupportedOperationException("Cannot extract function type from typedef " + typedefType);
+		}
+		while (typedefType instanceof IPointerType) {
+			typedefType = ((IPointerType) typedefType).getType();
+		}
+		if (typedefType instanceof IFunctionType) {
+			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
+					initialPointer.isVolatile(), false, resultType, paramDeclarations,
+					((IFunctionType) typedefType).takesVarArgs());
+		}
+		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + typedefType);
+	}
+
+	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+			final IVariable varBinding) {
+		IType varType = varBinding.getType();
+		if (varType instanceof IPointerType) {
+			// the initial type is already the pointer type
+		} else if (varType instanceof IArrayType) {
+			// its an array of function pointers -- find the value type
+			while (varType instanceof IArrayType) {
+				varType = ((IArrayType) varType).getType();
+			}
+			if (!(varType instanceof IPointerType)) {
+				throw new UnsupportedOperationException(
+						"Cannot extract function type from array of non-pointers " + varType);
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
+		}
+		final IPointerType initialPointer = (IPointerType) varType;
+		while (varType instanceof IPointerType) {
+			varType = ((IPointerType) varType).getType();
+		}
+		if (varType instanceof IFunctionType) {
+			// it was indeed a function pointer
+			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
+					initialPointer.isVolatile(), varBinding.isExtern(), resultType, paramDeclarations,
+					((IFunctionType) varType).takesVarArgs());
+		}
+		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + varType);
+	}
+
+	/**
 	 * Create a new {@link CFunction} that is identical to this one except for the parameter types.
 	 */
 	public CFunction newParameter(final CDeclaration[] newParamTypes) {
@@ -62,23 +154,6 @@ public class CFunction extends CType {
 	public CFunction newReturnType(final CType returnType) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), returnType,
 				getParameterTypes(), takesVarArgs());
-	}
-
-	/**
-	 * Create a default CFunction without arguments and with int as return type.
-	 */
-	public static CFunction createDefaultCFunction() {
-		return new CFunction(false, false, false, false, false, new CPrimitive(CPrimitives.INT), new CDeclaration[0],
-				false);
-	}
-
-	/**
-	 * Create an empty CFunction without arguments and wit return type null
-	 *
-	 * TODO: This seems like a legacy method
-	 */
-	public static CFunction createEmptyCFunction() {
-		return new CFunction(false, false, false, false, false, null, new CDeclaration[0], false);
 	}
 
 	public CType getResultType() {

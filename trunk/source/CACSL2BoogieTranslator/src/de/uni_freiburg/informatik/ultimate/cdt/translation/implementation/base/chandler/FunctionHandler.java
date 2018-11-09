@@ -260,7 +260,11 @@ public class FunctionHandler {
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		definedProcInfo.updateCFunctionReturnType(returnCType);
+		if (cDec.getType() instanceof CFunction) {
+			definedProcInfo.updateCFunction((CFunction) cDec.getType());
+		} else {
+			throw new AssertionError();
+		}
 
 		VarList[] in = processInParams(loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
@@ -600,15 +604,15 @@ public class FunctionHandler {
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
-		assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
+		assert calleeProcDecl != null;
 		if (calleeProcCType != null && calleeProcCType.takesVarArgs()) {
 			if (calleeProcCType.isExtern()) {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
 				// non-deterministic return value. We do not need to declare the actual function.
 				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
-					final AuxVarInfo auxvarinfo =
-							mAuxVarInfoBuilder.constructAuxVarInfo(loc, calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
+					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+							calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
 					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 					resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 					final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());

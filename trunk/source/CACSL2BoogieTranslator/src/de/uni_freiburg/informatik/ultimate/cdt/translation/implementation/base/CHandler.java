@@ -110,13 +110,9 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IFunction;
-import org.eclipse.cdt.core.dom.ast.IFunctionType;
-import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.core.dom.ast.IProblemBinding;
-import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.IVariable;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
@@ -1129,15 +1125,13 @@ public class CHandler {
 				funcType =
 						CFunction.createEmptyCFunction().newReturnType(resType.getCType()).newParameter(paramsParsed);
 			} else if (binding instanceof IFunction) {
-				final IFunction funBinding = (IFunction) binding;
-				funcType = new CFunction(false, funBinding.isInline(), false, false, funBinding.isExtern(),
-						resType.getCType(), paramsParsed, funBinding.takesVarArgs());
+				funcType = CFunction.createCFunction(resType.getCType(), paramsParsed, (IFunction) binding);
 			} else if (binding instanceof IVariable) {
 				// it is a function pointer
-				funcType = extractFunctionType(resType, paramsParsed, (IVariable) binding);
+				funcType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (IVariable) binding);
 			} else if (binding instanceof ITypedef) {
 				// it is a typedef of a function pointer or a function
-				funcType = extractFunctionType(resType, paramsParsed, (ITypedef) binding);
+				funcType = CFunction.tryCreateCFunction(resType.getCType(), paramsParsed, (ITypedef) binding);
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot extract function type from binding " + binding.getClass());
@@ -1189,60 +1183,6 @@ public class CHandler {
 		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(cType, declName, node.getInitializer(),
 				null, isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
-	}
-
-	private static CFunction extractFunctionType(final TypesResult resType, final CDeclaration[] paramsParsed,
-			final ITypedef binding) {
-		IType typedefType = binding.getType();
-		if (typedefType instanceof IFunctionType) {
-			return new CFunction(false, false, false, false, false, resType.getCType(), paramsParsed,
-					((IFunctionType) typedefType).takesVarArgs());
-		}
-		final IPointerType initialPointer;
-		if (typedefType instanceof IPointerType) {
-			initialPointer = (IPointerType) typedefType;
-		} else {
-			throw new UnsupportedOperationException("Cannot extract function type from typedef " + typedefType);
-		}
-		while (typedefType instanceof IPointerType) {
-			typedefType = ((IPointerType) typedefType).getType();
-		}
-		if (typedefType instanceof IFunctionType) {
-			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
-					initialPointer.isVolatile(), false, resType.getCType(), paramsParsed,
-					((IFunctionType) typedefType).takesVarArgs());
-		}
-		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + typedefType);
-	}
-
-	private static CFunction extractFunctionType(final TypesResult resType, final CDeclaration[] paramsParsed,
-			final IVariable varBinding) {
-		IType varType = varBinding.getType();
-		if (varType instanceof IPointerType) {
-			// the initial type is already the pointer type
-		} else if (varType instanceof IArrayType) {
-			// its an array of function pointers -- find the value type
-			while (varType instanceof IArrayType) {
-				varType = ((IArrayType) varType).getType();
-			}
-			if (!(varType instanceof IPointerType)) {
-				throw new UnsupportedOperationException(
-						"Cannot extract function type from array of non-pointers " + varType);
-			}
-		} else {
-			throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
-		}
-		final IPointerType initialPointer = (IPointerType) varType;
-		while (varType instanceof IPointerType) {
-			varType = ((IPointerType) varType).getType();
-		}
-		if (varType instanceof IFunctionType) {
-			// it was indeed a function pointer
-			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
-					initialPointer.isVolatile(), varBinding.isExtern(), resType.getCType(), paramsParsed,
-					((IFunctionType) varType).takesVarArgs());
-		}
-		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + varType);
 	}
 
 	/**
