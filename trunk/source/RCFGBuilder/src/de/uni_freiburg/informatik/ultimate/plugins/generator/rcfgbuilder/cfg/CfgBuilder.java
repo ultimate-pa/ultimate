@@ -568,6 +568,9 @@ public class CfgBuilder {
 		 */
 		Set<CodeBlock> mEdges;
 
+		/**
+		 * TODO: document this variable (Daniel Dietsch?)
+		 */
 		Map<Integer, Integer> mNameCache;
 
 		/**
