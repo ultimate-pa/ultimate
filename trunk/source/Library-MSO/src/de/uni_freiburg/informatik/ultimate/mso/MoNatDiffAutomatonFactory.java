@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -114,7 +115,7 @@ public final class MoNatDiffAutomatonFactory {
 
 		if (c.signum() == 1) {
 			automaton.addInternalTransition("init", xy11, "final");
-			addUpToConstPart(automaton, c.add(Rational.MONE), xy01, xy01, xy10);
+			addUpToConstPart(automaton, c.add(Rational.MONE), xy01, xy00, xy10);
 		}
 
 		return automaton;
@@ -271,7 +272,7 @@ public final class MoNatDiffAutomatonFactory {
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
 			final AutomataLibraryServices automataLibraryServices,
 			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton,
-			final Set<MoNatDiffAlphabetSymbol> alphabet, final boolean isExtended) {
+			final Set<MoNatDiffAlphabetSymbol> alphabet, final boolean isExtended, final ILogger mLogger) {
 
 		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = MoNatDiffAutomatonFactory
 				.emptyAutomaton(automataLibraryServices);

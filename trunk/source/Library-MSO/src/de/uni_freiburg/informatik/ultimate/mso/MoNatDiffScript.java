@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
 
 /*
  * Questions:
+ * TODO: implement automaton for true, false and use them in traverse Post order
  * 1) (solved) How to deal with constant values larger than max integer in constantTermToInt()?
  * 2) How to deal with empty symbol in MoNatDiffAlphabetSymbol?
  * 3) What to do iff all variables are quantified ones? 
@@ -119,6 +120,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
+		mLogger.info("Term: " + term);
 		mAssertionTerm = mAssertionTerm == null ? term : term("and", new Term[] { mAssertionTerm, term });
 		return null;
 	}
@@ -128,7 +130,7 @@ public class MoNatDiffScript extends NoopScript {
 		final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nwa = traversePostOrder(mAssertionTerm);
 		checkEmptiness(nwa);
 
-		mLogger.info("RESULT: " + nwaToString(nwa, Format.ATS));
+		//mLogger.info("RESULT: " + nwaToString(nwa, Format.ATS));
 
 		return null;
 	}
@@ -249,7 +251,7 @@ public class MoNatDiffScript extends NoopScript {
 
 		mLogger.info("Reduced alphabet: " + collectionToString(reducedAlphabet));
 
-		result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, result, reducedAlphabet, false);
+		result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, result, reducedAlphabet, false, mLogger);
 
 		result = makeStatesFinal(result, additionalFinals);
 		// mLogger.info("EXISTS: " + nwaToString(result, Format.ATS));
@@ -270,12 +272,12 @@ public class MoNatDiffScript extends NoopScript {
 		} catch (final AutomataOperationCanceledException e) {
 			mLogger.info("ERROR: " + e);
 		}
-
-		final Set<Term> terms = result.getAlphabet().iterator().next().getMap().keySet();
+		
+		final Set<Term> terms = new HashSet<Term>(result.getAlphabet().iterator().next().getMap().keySet());
 
 		mLogger.info("Variables: " + collectionToString(terms));
 		terms.removeIf(o -> !MoNatDiffUtils.isIntVariable(o));
-		mLogger.info("IntVariables: " + collectionToString(terms));
+		mLogger.info("IntVariables: " + collectionToString(terms));		
 
 		final Iterator<Term> itTerms = terms.iterator();
 		while (itTerms.hasNext()) {
@@ -283,7 +285,7 @@ public class MoNatDiffScript extends NoopScript {
 					.intVariableAutomaton(mAutomataLibraryServies, itTerms.next());
 
 			variableAutomaton = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, variableAutomaton,
-					result.getAlphabet(), true);
+					result.getAlphabet(), true, mLogger);
 
 			try {
 				result = new Intersect<>(mAutomataLibraryServies, new StringFactory(), result, variableAutomaton)
@@ -312,8 +314,8 @@ public class MoNatDiffScript extends NoopScript {
 			final Set<MoNatDiffAlphabetSymbol> alphabet = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(),
 					automaton.getAlphabet());
 
-			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, result, alphabet, true);
-			automaton = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, automaton, alphabet, true);
+			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, result, alphabet, true, mLogger);
+			automaton = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibraryServies, automaton, alphabet, true, mLogger);
 
 			try {
 				result = new Intersect<>(mAutomataLibraryServies, new StringFactory(), result, automaton).getResult();
@@ -382,6 +384,8 @@ public class MoNatDiffScript extends NoopScript {
 			final Iterator<Entry<Term, Rational>> it = variables.entrySet().iterator();
 			final Entry<Term, Rational> var1 = it.next();
 			final Entry<Term, Rational> var2 = it.next();
+			
+			mLogger.info(var1 + " - " + var2 + " < " + constant);
 
 			if (!var1.getValue().add(var2.getValue()).equals(Rational.ZERO))
 				throw new IllegalArgumentException("Input is not difference logic.");
@@ -447,7 +451,7 @@ public class MoNatDiffScript extends NoopScript {
 
 			if (!var.getValue().equals(Rational.ONE))
 				throw new IllegalArgumentException("Invalid input.");
-
+			
 			return MoNatDiffAutomatonFactory.elementAutomaton(mAutomataLibraryServies, var.getKey(), constant,
 					term.getParameters()[1]);
 		}
@@ -488,36 +492,43 @@ public class MoNatDiffScript extends NoopScript {
 		} catch (final AutomataOperationCanceledException e) {
 			mLogger.info("ERROR: " + e);
 		}
-
-		// NullPointerException if isEmpty == null.
-		if (isEmpty.getResult() == false) {
-			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
-			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
-			
-			final Set<Term> terms = word.getSymbol(0).getMap().keySet();
-			final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
-			
-			for (int i = 0; i < word.length(); i++)
-			{
-				final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
-				
-				for (final Term term : terms)
-				{
-					if (!result.containsKey(term))
-						result.put(term, new ArrayList<Integer>());
-					
-					if (symbol.getMap().get(term))
-						result.get(term).add(i);
-				}
-			}
-			
-			mLogger.info("Accepting word: " + word);
-			mLogger.info("Model: " + result);
-			
+		
+		if (isEmpty.getResult())
+		{
+			mLogger.info("Language is empty.");
 			return;
 		}
 
-		mLogger.info("Language is empty.");
+		final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
+		final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
+		
+		mLogger.info("Accepting word: \"" + word + "\"");
+		
+		if (word.length() == 0)
+			return;
+			
+		final Set<Term> terms = word.getSymbol(0).getMap().keySet();
+		final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
+		
+		for (int i = 0; i < word.length(); i++)
+		{
+			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+			
+			for (final Term term : terms)
+			{
+				if (!result.containsKey(term))
+					result.put(term, new ArrayList<Integer>());
+				
+				if (symbol.getMap().get(term))
+					result.get(term).add(i);
+			}
+		}
+		
+		
+		mLogger.info("Model: " + result);
+		
+		return;
+
 	}
 
 	/*
