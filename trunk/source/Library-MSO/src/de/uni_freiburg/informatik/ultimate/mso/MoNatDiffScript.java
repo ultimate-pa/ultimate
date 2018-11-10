@@ -154,6 +154,12 @@ public class MoNatDiffScript extends NoopScript {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			final String functionSymbol = applicationTerm.getFunction().getName();
+			
+			if (functionSymbol.equals("true"))
+				return processTrue();
+			
+			if (functionSymbol.equals("false"))
+				return processFalse();
 
 			if (functionSymbol.equals("not"))
 				return processNegation(applicationTerm);
@@ -267,6 +273,24 @@ public class MoNatDiffScript extends NoopScript {
 
 		return result;
 	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processTrue() {
+		mLogger.info("Construct True.");
+		
+		return MoNatDiffAutomatonFactory.trueAutomaton(mAutomataLibraryServies);
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processFalse() {
+		mLogger.info("Construct False.");
+
+		return MoNatDiffAutomatonFactory.falseAutomaton(mAutomataLibraryServies);
+	}
 
 	/*
 	 * TODO: Comment.
@@ -282,6 +306,9 @@ public class MoNatDiffScript extends NoopScript {
 			mLogger.info("ERROR: " + e);
 		}
 		
+		if (result.getAlphabet().isEmpty())
+			return result;
+		
 		final Set<Term> terms = new HashSet<Term>(result.getAlphabet().iterator().next().getMap().keySet());
 
 		mLogger.info("Variables: " + collectionToString(terms));
@@ -289,7 +316,8 @@ public class MoNatDiffScript extends NoopScript {
 		mLogger.info("IntVariables: " + collectionToString(terms));		
 
 		final Iterator<Term> itTerms = terms.iterator();
-		while (itTerms.hasNext()) {
+		while (itTerms.hasNext())
+		{
 			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> variableAutomaton = MoNatDiffAutomatonFactory
 					.intVariableAutomaton(mAutomataLibraryServies, itTerms.next());
 

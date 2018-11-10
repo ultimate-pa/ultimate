@@ -173,8 +173,12 @@ public final class MoNatDiffUtils {
 			final Set<MoNatDiffAlphabetSymbol> alphabet2) {
 
 		final Set<Term> terms = new HashSet<Term>();
-		terms.addAll(alphabet1.iterator().next().getMap().keySet());
-		terms.addAll(alphabet2.iterator().next().getMap().keySet());
+		
+		if (!alphabet1.isEmpty())
+			terms.addAll(alphabet1.iterator().next().getMap().keySet());
+		
+		if (!alphabet2.isEmpty())
+			terms.addAll(alphabet2.iterator().next().getMap().keySet());
 
 		return createAlphabet(terms.toArray(new Term[terms.size()]));
 	}

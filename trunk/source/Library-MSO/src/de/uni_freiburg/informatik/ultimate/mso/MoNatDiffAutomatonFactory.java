@@ -39,6 +39,36 @@ public final class MoNatDiffAutomatonFactory {
 		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
 				stringFactory);
 	}
+	
+	/*
+	 * Constructs automaton for atomic formula "true".
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> trueAutomaton(
+			final AutomataLibraryServices automataLibraryServices) {
+
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		final MoNatDiffAlphabetSymbol emptyWord = new MoNatDiffAlphabetSymbol();
+		
+		automaton.addState(true, true, "init");
+		automaton.addInternalTransition("init", emptyWord, "init");
+
+		return automaton;
+	}
+	
+	/*
+	 * Constructs automaton for atomic formula "false".
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> falseAutomaton(
+			final AutomataLibraryServices automataLibraryServices) {
+
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
+		final MoNatDiffAlphabetSymbol emptyWord = new MoNatDiffAlphabetSymbol();
+		
+		automaton.addState(true, false, "init");
+		automaton.addInternalTransition("init", emptyWord, "init");
+
+		return automaton;
+	}
 
 	/*
 	 * Constructs automaton that represents an Int variable.
