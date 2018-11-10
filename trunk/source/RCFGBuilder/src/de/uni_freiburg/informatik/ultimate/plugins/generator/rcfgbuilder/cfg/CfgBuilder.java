@@ -1027,27 +1027,19 @@ public class CfgBuilder {
 				return;
 			}
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				final StatementSequence codeBlock =
-						mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
-				ModelUtils.copyAnnotations(st, codeBlock);
-				mEdges.add(codeBlock);
-				mCurrent = codeBlock;
+				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
 				if (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
 						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
-					final StatementSequence stSeq = (StatementSequence) mCurrent;
-					stSeq.addStatement(st);
-					ModelUtils.copyAnnotations(st, stSeq);
+					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 				} else {
 					final DebugIdentifier locName = constructLocDebugIdentifier(st);
 					final BoogieIcfgLocation locNode =
 							new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 					((CodeBlock) mCurrent).connectTarget(locNode);
+					mCurrent = locNode;
 					mProcLocNodes.put(locName, locNode);
-					final StatementSequence codeBlock = mCbf.constructStatementSequence(locNode, null, st, origin);
-					ModelUtils.copyAnnotations(st, codeBlock);
-					mEdges.add(codeBlock);
-					mCurrent = codeBlock;
+					startNewStatementSequenceAndAddStatement(st, origin);
 				}
 			} else {
 				// mcurrent must either be LocNode or TransEdge
@@ -1055,6 +1047,49 @@ public class CfgBuilder {
 			}
 
 		}
+
+		private void startNewStatementSequenceAndAddStatement(final Statement st, final Origin origin) {
+			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
+			final StatementSequence codeBlock = mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
+			ModelUtils.copyAnnotations(st, codeBlock);
+			mEdges.add(codeBlock);
+			mCurrent = codeBlock;
+		}
+
+		private void addStatementToStatementSequenceThatIsCurrentlyBuilt(final Statement st) {
+			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
+			final StatementSequence stSeq = (StatementSequence) mCurrent;
+			stSeq.addStatement(st);
+			ModelUtils.copyAnnotations(st, stSeq);
+		}
+
+		private boolean isIntraproceduralBranchFreeStatement(final Statement st) {
+			if (st instanceof AssumeStatement) {
+				return true;
+			} else if (st instanceof AssignmentStatement) {
+				return true;
+			} else if (st instanceof HavocStatement) {
+				return true;
+			} else if (st instanceof CallStatement) {
+				final CallStatement call = (CallStatement) st;
+				if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
+					// procedure has implementation
+					return false;
+				} else {
+					if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
+							|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
+						// procedure does not have non-free requires
+						// and hence does not require an additional branch into an error location
+						return true;
+					} else {
+						return false;
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+
 
 		private void processAssertStatement(final AssertStatement st) {
 			if (mDeadcode) {
