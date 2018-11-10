@@ -1,0 +1,7 @@
+Input A is int
+Internal B is int 
+Input G is int
+Internal H is int 
+
+req1: Globally, it is always the case that if "A == 1" holds then "B == 2" holds after at most 10 time units.
+req7: Globally, it is always the case that if "G == 2" holds then "H == 2" holds after at most 12 time units.

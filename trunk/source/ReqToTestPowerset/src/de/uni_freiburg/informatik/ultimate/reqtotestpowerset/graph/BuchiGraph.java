@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class BuchiGraph {
 	
@@ -139,5 +138,9 @@ public class BuchiGraph {
 			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
 			return null;
 		}
+	}
+	
+	public GuardGraph makePowerSetAutomaton(List<GuardGraph> automata) {
+		return AuxGraphOperations.makePowerSetAutomaton(automata, mScript);
 	}
 }
