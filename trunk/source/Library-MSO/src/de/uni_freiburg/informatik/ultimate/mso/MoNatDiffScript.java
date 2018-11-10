@@ -176,6 +176,9 @@ public class MoNatDiffScript extends NoopScript {
 			if (functionSymbol.equals("element"))
 				return processElement(applicationTerm);
 			
+			if (functionSymbol.equals("="))
+				return processEqual(applicationTerm);
+			
 			if (functionSymbol.equals(">"))
 				return processGreater(applicationTerm);
 			
@@ -362,11 +365,32 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * TODO: Comment.
 	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processEqual(final ApplicationTerm term) {
+		final Term[] terms = term.getParameters();
+		final Term lessEqual = SmtUtils.leq(this, terms[0], terms[1]);
+		final Term greaterEqual = SmtUtils.not(this, SmtUtils.less(this, terms[0], terms[1]));
+		final Term equal = SmtUtils.and(this, lessEqual, greaterEqual);
+		
+		mLogger.info("processEqual ...");
+		mLogger.info("TEST: " + terms[0] + " " + terms[1]);
+		mLogger.info("lessEqual: " + lessEqual);
+		mLogger.info("greaterEqual: " + greaterEqual);
+		
+		return traversePostOrder(equal);
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processGreater(final ApplicationTerm term) {
 		final Term[] terms = term.getParameters();	
-		final Term lessEqual = SmtUtils.not(this, SmtUtils.leq(this, terms[0], terms[1]));
-
-		return traversePostOrder(lessEqual);
+		final Term greater = SmtUtils.not(this, SmtUtils.leq(this, terms[0], terms[1]));
+		
+		mLogger.info("processGreater ...");
+		mLogger.info("TEST: " + terms[0] + " " + terms[1]);
+		mLogger.info("greater: " + greater);
+		
+		return traversePostOrder(greater);
 	}
 	
 	/*
@@ -374,9 +398,13 @@ public class MoNatDiffScript extends NoopScript {
 	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term) {
 		final Term[] terms = term.getParameters();	
-		final Term less = SmtUtils.not(this, SmtUtils.less(this, terms[0], terms[1]));
-
-		return traversePostOrder(less);
+		final Term greaterEqual = SmtUtils.not(this, SmtUtils.less(this, terms[0], terms[1]));
+		
+		mLogger.info("processGreaterEqual ...");
+		mLogger.info("TEST: " + terms[0] + " " + terms[1]);
+		mLogger.info("greaterEqual: " + greaterEqual);
+		
+		return traversePostOrder(greaterEqual);
 	}
 	
 	/*
@@ -405,7 +433,7 @@ public class MoNatDiffScript extends NoopScript {
 		}
 
 		if (variables.size() == 2) {
-			mLogger.info("Construct x-y < c: " + term);
+			mLogger.info("Construct x-y < c: " + affineTerm);
 
 			final Iterator<Entry<Term, Rational>> it = variables.entrySet().iterator();
 			final Entry<Term, Rational> var1 = it.next();
