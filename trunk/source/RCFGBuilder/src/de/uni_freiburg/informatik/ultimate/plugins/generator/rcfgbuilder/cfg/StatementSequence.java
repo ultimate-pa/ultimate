@@ -33,6 +33,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -97,9 +98,10 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	 */
 	public void addStatement(final Statement st) {
 		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement)
-				&& !(st instanceof HavocStatement)) {
+				&& !(st instanceof HavocStatement) && !(st instanceof CallStatement)) {
 			throw new IllegalArgumentException(
-					"Only Assignment, Assume and" + " HavocStatement allowed in InternalEdge.");
+					"Only Assignment, Assume and HavocStatement allowed in InternalEdge."
+							+ " Additionally CallStatements are allowed if the callee is a procedure without implementation and has an emtpy requires clause.");
 		}
 		mStatements.add(st);
 		mPrettyPrintedStatements = null;

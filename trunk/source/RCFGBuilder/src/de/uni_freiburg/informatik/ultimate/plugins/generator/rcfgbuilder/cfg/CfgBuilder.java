@@ -1176,6 +1176,28 @@ public class CfgBuilder {
 			if (mDeadcode) {
 				return;
 			}
+			final String callee = st.getMethodName();
+			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
+			// Check first for a special case.
+			// If the called procedure neither has an implementation nor a non-free requires
+			// specification the call is considered as a summary and we may add it to
+			// a statement sequence. (Note that this will not work if there is a
+			// non-free requires because in this case the control-flow has to
+			// branch to an error location.)
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements
+							|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
+					&& !mBoogieDeclarations.getProcImplementation().containsKey(callee)
+					&& (requiresNonFree == null || requiresNonFree.isEmpty())) {
+				if (mCurrent instanceof BoogieIcfgLocation) {
+					startNewStatementSequenceAndAddStatement(st, Origin.IMPLEMENTATION);
+				} else if (mCurrent instanceof CodeBlock) {
+					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
+				} else {
+					throw new AssertionError("mCurrent must be CodeBlock or BoogieIcfgLocation");
+				}
+				return;
+			}
+
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
 				final DebugIdentifier locName = constructLocDebugIdentifier(st);
@@ -1192,7 +1214,6 @@ public class CfgBuilder {
 			final BoogieIcfgLocation returnNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, returnNode);
 			// add summary edge
-			final String callee = st.getMethodName();
 			Summary summaryEdge;
 			if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
 				summaryEdge = mCbf.constructSummary(locNode, returnNode, st, true);
@@ -1213,7 +1234,6 @@ public class CfgBuilder {
 			//
 
 			// in fork throw unsuportedOperationException
-			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
 			if (requiresNonFree != null && !requiresNonFree.isEmpty()) {
 				for (final RequiresSpecification spec : requiresNonFree) {
 					// use implementation if available and specification
