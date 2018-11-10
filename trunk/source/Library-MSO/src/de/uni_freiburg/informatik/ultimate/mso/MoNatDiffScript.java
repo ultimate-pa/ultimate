@@ -175,9 +175,15 @@ public class MoNatDiffScript extends NoopScript {
 
 			if (functionSymbol.equals("element"))
 				return processElement(applicationTerm);
+			
+			if (functionSymbol.equals(">"))
+				return processGreater(applicationTerm);
+			
+			if (functionSymbol.equals(">="))
+				return processGreaterEqual(applicationTerm);
 
 			if (functionSymbol.equals("<") || functionSymbol.equals("<="))
-				return processInequality(applicationTerm);
+				return processLessOrLessEqual(applicationTerm);
 		}
 
 		throw new IllegalArgumentException("Input must be a QuantifiedFormula or an ApplicationTerm. " + term);
@@ -356,7 +362,27 @@ public class MoNatDiffScript extends NoopScript {
 	/*
 	 * TODO: Comment.
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processInequality(final ApplicationTerm term) {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processGreater(final ApplicationTerm term) {
+		final Term[] terms = term.getParameters();	
+		final Term lessEqual = SmtUtils.not(this, SmtUtils.leq(this, terms[0], terms[1]));
+
+		return traversePostOrder(lessEqual);
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term) {
+		final Term[] terms = term.getParameters();	
+		final Term less = SmtUtils.not(this, SmtUtils.less(this, terms[0], terms[1]));
+
+		return traversePostOrder(less);
+	}
+	
+	/*
+	 * TODO: Comment.
+	 */
+	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term) {
 		final AffineRelation affineRelation = MoNatDiffUtils.makeAffineRelation(this, term,
 				TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = affineRelation.getAffineTerm();
