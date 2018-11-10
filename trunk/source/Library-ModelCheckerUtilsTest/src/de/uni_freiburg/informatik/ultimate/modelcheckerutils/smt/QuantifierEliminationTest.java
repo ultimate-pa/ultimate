@@ -284,7 +284,7 @@ public class QuantifierEliminationTest {
 				+ "(= a (store v_a i ((as const (Array Int Int)) 0))))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
-		final Term result = elim2(formulaAsTerm);
+		final Term result = elim(formulaAsTerm);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -322,7 +322,7 @@ public class QuantifierEliminationTest {
 				+ "(= a (~initToZeroAtPointerBaseAddress~int v_a i)))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
-		final Term result = elim2(formulaAsTerm);
+		final Term result = elim(formulaAsTerm);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -364,6 +364,12 @@ public class QuantifierEliminationTest {
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
+
+	/**
+	 * Special method for partial quantifier elimination that applies only
+	 * local elimination techniques and replaces the outermost
+	 * quantifier by an existential quantifier.
+	 */
 	private Term elim2(final Term term) {
 		final QuantifiedFormula quantFormula = (QuantifiedFormula) term;
 		return PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mMgdScript, PqeTechniques.ALL_LOCAL,
