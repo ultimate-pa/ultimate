@@ -576,6 +576,11 @@ public class CfgBuilder {
 		 */
 		Map<Integer, Integer> mNameCache;
 
+		/**
+		 * If this is switched to true all statements have to be added to one
+		 * single {@link StatementSequence} until the value is again switched
+		 * to false.
+		 */
 		public boolean mAtomicMode = false;
 
 		/**
@@ -1207,10 +1212,18 @@ public class CfgBuilder {
 			// a statement sequence. (Note that this will not work if there is a
 			// non-free requires because in this case the control-flow has to
 			// branch to an error location.)
-			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-							|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mAtomicMode)
-					&& !mBoogieDeclarations.getProcImplementation().containsKey(callee)
-					&& (requiresNonFree == null || requiresNonFree.isEmpty())) {
+			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
+			final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
+			if (mAtomicMode && procedureHasImplementation) {
+				throw new UnsupportedOperationException(
+						"In an atomic block calls to procedures that have an implementation are not allowed.");
+			}
+			if (mAtomicMode && nonFreeRequiresIsEmpty) {
+				throw new UnsupportedOperationException(
+						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not allowed.");
+			}
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
+					|| mAtomicMode) && !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					startNewStatementSequenceAndAddStatement(st, Origin.IMPLEMENTATION);
 				} else if (mCurrent instanceof CodeBlock) {
