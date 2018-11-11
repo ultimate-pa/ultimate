@@ -1,39 +1,36 @@
+// #Safe
 /*
- * A little example to present the atomic statement.
+ * Check that statements inside an atomic statement are executed
+ * atomically (i.e., there must not be a context switch between
+ * the execution of these statements.
  *
  * Author: Lars Nitzke (lars.nitzke@mailfence.com)
+ * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 2018-11-11
  * 
- * We check if the atomic statement
  */
 
- var n: int;
+var n: int;
 
- procedure ULTIMATE.start();
+
+procedure ULTIMATE.start()
 modifies n;
-
-implementation ULTIMATE.start()
 {
-    var i: int;
-    i := 0;
-    n := 0;
-
     fork 1 foo();
 
     atomic {
-        while (i < 10) {
-            n := n + 1;
-            i := i + 1;
-        }
+        call inc();
+        n := n + 1;
     }
-    
-    join 1;
+
 }
 
-procedure foo();
+procedure foo()
 modifies n;
-
-implementation foo()
 {
-    n := 1;
+    n := n * 2;
 }
+
+procedure inc();
+modifies n;
+ensures n == old(n)+1;
