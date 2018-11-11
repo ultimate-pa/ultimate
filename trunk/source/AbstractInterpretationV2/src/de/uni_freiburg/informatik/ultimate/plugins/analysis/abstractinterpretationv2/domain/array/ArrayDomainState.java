@@ -754,7 +754,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 								}
 								segmentationMap.add(newVar, createFreshSegmentationCopy(s, old2newVars));
 							} else {
-								constraints.add(project(newVar, oldVar, getSubTerm()));
+								constraints.add(project(newVar, oldVar, thisState.getSubTerm()));
 								newVariables.add(newVar);
 								removedVarsThis.add(oldVar);
 							}
@@ -1302,21 +1302,26 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return mEquivalenceFinder;
 	}
 
-	// @Override
-	// public Set<ArrayDomainState<STATE>> union(final Set<ArrayDomainState<STATE>> states, final int maxSize) {
-	// final LinkedList<ArrayDomainState<STATE>> newStates = new LinkedList<>(states);
-	// int numberOfMerges = states.size() - maxSize;
-	// while (numberOfMerges > 0) {
-	// // Merge the states in reversed order
-	// final ArrayDomainState<STATE> state1 = newStates.removeLast();
-	// final ArrayDomainState<STATE> state2 = newStates.removeLast();
-	// if (newStates.add(state1.union(state2))) {
-	// --numberOfMerges;
-	// } else {
-	// numberOfMerges -= 2;
-	// }
-	// }
-	// assert states.size() <= maxSize : "Did not reduce enough states";
-	// return new LinkedHashSet<>(newStates);
-	// }
+	@Override
+	public Set<ArrayDomainState<STATE>> union(final Set<ArrayDomainState<STATE>> states, final int maxSize) {
+		final LinkedList<ArrayDomainState<STATE>> stateList = new LinkedList<>(states);
+		final Set<ArrayDomainState<STATE>> result = new HashSet<>(states);
+		int numberOfMerges = states.size() - maxSize;
+		while (numberOfMerges > 0) {
+			// Merge the states in reversed order
+			final ArrayDomainState<STATE> state1 = stateList.removeLast();
+			final ArrayDomainState<STATE> state2 = stateList.removeLast();
+			result.remove(state1);
+			result.remove(state2);
+			final ArrayDomainState<STATE> newState = state1.union(state2);
+			if (result.add(newState)) {
+				stateList.add(newState);
+				--numberOfMerges;
+			} else {
+				numberOfMerges -= 2;
+			}
+		}
+		assert result.size() <= maxSize : "Did not reduce enough states";
+		return result;
+	}
 }
