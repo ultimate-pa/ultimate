@@ -176,6 +176,7 @@ public class CfgBuilder {
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services, final IToolchainStorage storage)
 			throws IOException {
 		mServices = services;
@@ -574,6 +575,8 @@ public class CfgBuilder {
 		 * TODO: document this variable (Daniel Dietsch?)
 		 */
 		Map<Integer, Integer> mNameCache;
+
+		public boolean mAtomicMode = false;
 
 		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
@@ -1034,7 +1037,7 @@ public class CfgBuilder {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
 				if (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
+						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mAtomicMode) {
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 				} else {
 					final DebugIdentifier locName = constructLocDebugIdentifier(st);
@@ -1180,6 +1183,22 @@ public class CfgBuilder {
 			if (mDeadcode) {
 				return;
 			}
+			if (st.getMethodName().equals("__VERIFIER_atomic_begin")) {
+				if (mAtomicMode) {
+					throw new AssertionError("already in atomic mode");
+				} else {
+					mAtomicMode = true;
+				}
+				return;
+			}
+			if (st.getMethodName().equals("__VERIFIER_atomic_end")) {
+				if (!mAtomicMode) {
+					throw new AssertionError("already ended atomic mode");
+				} else {
+					mAtomicMode = false;
+				}
+				return;
+			}
 			final String callee = st.getMethodName();
 			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
 			// Check first for a special case.
@@ -1189,7 +1208,7 @@ public class CfgBuilder {
 			// non-free requires because in this case the control-flow has to
 			// branch to an error location.)
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-							|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
+							|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mAtomicMode)
 					&& !mBoogieDeclarations.getProcImplementation().containsKey(callee)
 					&& (requiresNonFree == null || requiresNonFree.isEmpty())) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
