@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008-2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2016 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2018 Lars Nitkze (lars.nitzke@outlook.com)
+ * Copyright (C) 2018 Lars Nitkze (lars.nitzke@mailfence.com)
  * Copyright (C) 2015-2016 University of Freiburg
  *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -813,6 +814,8 @@ public class TypeChecker extends BaseObserver {
 			for (int i = 0; i < join.getLhs().length; i++) {
 				typecheckLeftHandSide(join.getLhs()[i]);
 			}
+		} else if (statement instanceof AtomicStatement) {
+			// Nothing to check (yet).
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}

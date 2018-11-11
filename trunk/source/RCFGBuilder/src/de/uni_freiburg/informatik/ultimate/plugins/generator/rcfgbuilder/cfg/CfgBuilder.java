@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
+ * Copyright (C) 2018 Lars Nitzke (lars.nitzke@mailfence.com)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -339,7 +340,8 @@ public class CfgBuilder {
 				} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
 						|| (st instanceof HavocStatement) || (st instanceof GotoStatement) || (st instanceof Label)
 						|| (st instanceof JoinStatement) || (st instanceof CallStatement)
-						|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)) {
+						|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)
+						|| (st instanceof AtomicStatement)) {
 					// do nothing
 				} else {
 					throw new UnsupportedOperationException(
@@ -700,6 +702,8 @@ public class CfgBuilder {
 					processForkStatement((ForkStatement) st);
 				} else if (st instanceof JoinStatement) {
 					processJoinStatement((JoinStatement) st);
+				} else if (st instanceof AtomicStatement) {
+					// TODO: Not implemented yet.
 				} else {
 					throw new UnsupportedOperationException("At the moment"
 							+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");

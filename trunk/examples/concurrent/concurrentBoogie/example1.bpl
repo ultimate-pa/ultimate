@@ -2,7 +2,7 @@
 /*
  * Just a little example to demonstrate how the fork and join statements can 
  * be used.
- * Author: Lars Nitzke (lars.nitzke@outlook.com)
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com)
  * Date: 09.05.2018
  * 
  * Check that some thread can be joined, execution continues after join.

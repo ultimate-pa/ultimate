@@ -98,7 +98,7 @@ terminal OLD;
 terminal FORALL, EXISTS;
 terminal BOOL, INT, REAL;
 terminal FALSE, TRUE;
-terminal ASSUME, ASSERT, HAVOC, FORK, JOIN, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO;
+terminal ASSUME, ASSERT, HAVOC, FORK, JOIN, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO, ATOMIC;
 /* Other Symbols */
 terminal COMMA, COLON, SEMI, COLONEQUALS, EQUALS, ASSIGN;
 terminal LPAR, RPAR, LBKT, RBKT, LBRCCOLON, LBRC, RBRC, LANG, RANG;
@@ -714,6 +714,8 @@ stmt ::=
 	  	RESULT = new WhileStatement(getLocation(x$,block$), c, inv.toArray(new LoopInvariantSpecification[inv.size()]), block);
 	  	new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(RESULT);  
 	  :}
+	| ATOMIC:x blockStmt:block
+	  {: RESULT = new AtomicStatement(getLocation(x$, block$), block); :}
 	| BREAK:x SEMI
 	  {: RESULT = new BreakStatement(getLocation(x$,x$)); :}
 	| BREAK:x ID:label SEMI

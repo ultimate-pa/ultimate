@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Lars Nitkze (lars.nitzke@mailfence.com)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -202,6 +204,8 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 			visit((ReturnStatement) statement);
 		} else if (statement instanceof WhileStatement) {
 			visit((WhileStatement) statement);
+		} else if (statement instanceof AtomicStatement) {
+			visit((AtomicStatement) statement);
 		} else {
 			throw new UnsupportedOperationException(
 					String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, statement.getClass()));
@@ -211,6 +215,10 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	}
 
 	protected void visit(final WhileStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
+	
+	protected void visit(final AtomicStatement statment) {
 		// empty because it may be overridden (but does not have to)
 	}
 

@@ -519,7 +519,19 @@ Statement ::=
 		/**
 		 * The loop body.
 		 */
-		body       : Statement[]         
+		body       : Statement[]  
+	| { /**
+		 * The atomic statement. Used for concurrent programs.
+		 * At the verification process with other threads, the whole body of
+		 * the atomic statement is checked with each statement of the other 
+		 * thread instead of checking each statement within the atomic body with
+		 * each statement of the other thread. 
+		 */
+		 AtomicStatement }
+		 /**
+		  * Body of the atomic statement.
+		  */
+		  body		: Statement[]       
 	| { /**
 	     * The break statement is used to jump out of a while loop.
 		 */
