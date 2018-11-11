@@ -6,13 +6,13 @@
 int i = 0;
 
 void myVoid() {
-	i++;
+    i++;
 }
 
 int main() {
-	_Bool flag;
-	flag ? i-- : myVoid();
-       	//@assert (flag == 0) ==> (i == 1);
+    _Bool flag;
+    flag ? i-- : myVoid();
+    //@assert (flag == 0) ==> (i == 1);
 }
 
 
