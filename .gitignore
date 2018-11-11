@@ -113,6 +113,7 @@ hs_err_pid*
 
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/GeneratedBoogieAstTransformer.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/GeneratedBoogieAstVisitor.java
+/trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/AtomicStatement.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/ArrayAccessExpression.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/ArrayLHS.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/ArrayStoreExpression.java
