@@ -121,6 +121,7 @@ hs_err_pid*
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/AssignmentStatement.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/AssumeStatement.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/ASTType.java
+/trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/AtomicStatement.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/Attribute.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/Axiom.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/BinaryExpression.java
