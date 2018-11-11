@@ -83,6 +83,8 @@ java -Dosgi.configuration.area=./data/config -Xmx12G -Xms1G -jar ./plugins/org.e
 
 */ 
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 struct net_device_ops {
 
    int (*ndo_stop)(  ) ;
