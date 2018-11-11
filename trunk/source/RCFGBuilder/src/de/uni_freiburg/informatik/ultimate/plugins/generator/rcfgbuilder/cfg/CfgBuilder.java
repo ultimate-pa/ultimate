@@ -1220,7 +1220,7 @@ public class CfgBuilder {
 			final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
 			if (mAtomicMode && nonFreeRequiresIsEmpty) {
 				throw new UnsupportedOperationException(
-						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not allowed.");
+						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
 			}
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
 					|| mAtomicMode) && !procedureHasImplementation && nonFreeRequiresIsEmpty) {
