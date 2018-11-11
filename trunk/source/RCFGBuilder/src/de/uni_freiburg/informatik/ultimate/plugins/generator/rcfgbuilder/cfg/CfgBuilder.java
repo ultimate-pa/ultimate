@@ -711,7 +711,7 @@ public class CfgBuilder {
 				} else if (st instanceof JoinStatement) {
 					processJoinStatement((JoinStatement) st);
 				} else if (st instanceof AtomicStatement) {
-					// TODO: Not implemented yet.
+					processAtomicStatement((AtomicStatement) st);
 				} else {
 					throw new UnsupportedOperationException("At the moment"
 							+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");
@@ -755,6 +755,7 @@ public class CfgBuilder {
 			}
 			// mBoogie2smt.removeLocals(proc);
 		}
+
 
 		/**
 		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
@@ -1410,6 +1411,33 @@ public class CfgBuilder {
 
 			mEdges.add(joinCurrentThreadEdge);
 			mCurrent = joinCurrentNode;
+		}
+
+		private void processAtomicStatement(final AtomicStatement atomicStatement) {
+			mAtomicMode = true;
+			for (final Statement st : atomicStatement.getBody()) {
+				if (st instanceof AssignmentStatement || (st instanceof AssumeStatement) || (st instanceof HavocStatement)) {
+					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
+				} else if (st instanceof CallStatement) {
+					final CallStatement callStatement = (CallStatement) st;
+					final String callee = ((CallStatement) st).getMethodName();
+					final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
+					final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
+					if (mAtomicMode && procedureHasImplementation) {
+						throw new UnsupportedOperationException(
+								"In an atomic block, calls to procedures that have an implementation are not allowed.");
+					}
+					final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
+					if (mAtomicMode && !nonFreeRequiresIsEmpty) {
+						throw new UnsupportedOperationException(
+								"In an atomic block, calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
+					}
+					processCallStatement(callStatement);
+				} else {
+					throw new UnsupportedOperationException("Not supported in atomic block " + st.getClass().getSimpleName());
+				}
+			}
+			mAtomicMode = false;
 		}
 
 		/**
