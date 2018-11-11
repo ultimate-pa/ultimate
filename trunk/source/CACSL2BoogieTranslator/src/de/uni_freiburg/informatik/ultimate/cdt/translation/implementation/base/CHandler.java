@@ -1015,7 +1015,7 @@ public class CHandler {
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		final boolean isOnHeap = (mIsPrerun ? false : mVariablesOnHeap.contains(node));
+		final boolean isOnHeap = mIsPrerun ? false : mVariablesOnHeap.contains(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
@@ -2561,7 +2561,7 @@ public class CHandler {
 				if (cDec.getType().getUnderlyingType() instanceof CStructOrUnion) {
 					identifier = ((CStructOrUnion) cDec.getType().getUnderlyingType()).getName();
 				} else if (cDec.getType().getUnderlyingType() instanceof CEnum) {
-					identifier = (((CEnum) cDec.getType().getUnderlyingType()).getName());
+					identifier = ((CEnum) cDec.getType().getUnderlyingType()).getName();
 				} else {
 					throw new AssertionError(
 							"missing support for global incomplete " + cDec.getType().getUnderlyingType());
@@ -4053,8 +4053,8 @@ public class CHandler {
 		if (isBranchDead == null) {
 			final List<Statement> ifStatements = new ArrayList<>();
 			final List<Statement> elseStatements = new ArrayList<>();
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements);
-			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements);
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements, secondArgIsVoid);
+			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements, thirdArgIsVoid);
 			final Statement rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
 					ifStatements.toArray(new Statement[ifStatements.size()]),
 					elseStatements.toArray(new Statement[elseStatements.size()]));
@@ -4063,9 +4063,9 @@ public class CHandler {
 			}
 			resultBuilder.addStatement(rtrStatement);
 		} else if (isBranchDead) {
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null);
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null, secondArgIsVoid);
 		} else {
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null);
+			assignAuxVar(loc, opNegative, resultBuilder, auxvar, null, thirdArgIsVoid);
 		}
 
 		if (isBranchDead == null) {
@@ -4088,8 +4088,11 @@ public class CHandler {
 
 	private static void assignAuxVar(final ILocation loc, final ExpressionResult branchResult,
 			final ExpressionResultBuilder resultBuilder, final AuxVarInfo auxvar,
-			final List<Statement> resultStatements) {
-		if (auxvar != null) {
+			final List<Statement> resultStatements, final boolean relevantArgIsVoid) {
+		if (resultStatements != null) {
+			resultStatements.addAll(branchResult.getStatements());
+		}
+		if (auxvar != null && !relevantArgIsVoid) {
 			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = branchResult.getLrValue().getValue();
 			final AssignmentStatement assignStmt =
@@ -4097,12 +4100,9 @@ public class CHandler {
 			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 				overapprItem.annotate(assignStmt);
 			}
-			resultStatements.addAll(branchResult.getStatements());
 			resultStatements.add(assignStmt);
-			resultBuilder.addAllExceptLrValueAndStatements(branchResult);
-		} else {
-			resultBuilder.addAllExceptLrValue(branchResult);
 		}
+		resultBuilder.addAllExceptLrValueAndStatements(branchResult);
 
 	}
 
