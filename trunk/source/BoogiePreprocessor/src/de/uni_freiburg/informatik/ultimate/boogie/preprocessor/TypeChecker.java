@@ -725,6 +725,9 @@ public class TypeChecker extends BaseObserver {
 			outer.push("*");
 			typecheckBlock(outer, allLabels, whilestmt.getBody());
 			outer.pop();
+		} else if (statement instanceof AtomicStatement) {
+			final AtomicStatement atomicstmt = (AtomicStatement) statement;
+			typecheckBlock(outer, allLabels, atomicstmt.getBody());
 		} else if (statement instanceof CallStatement) {
 			final CallStatement call = (CallStatement) statement;
 			final ProcedureInfo procInfo = mDeclaredProcedures.get(call.getMethodName());

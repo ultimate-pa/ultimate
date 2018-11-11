@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
@@ -123,6 +124,11 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			final Statement[] body = whilestmt.getBody();
 			final Statement[] newBody = processStatements(body);
 			newStat = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+		} else if (stat instanceof AtomicStatement) {
+			final AtomicStatement atomicstmt = (AtomicStatement) stat;
+			final Statement[] body = atomicstmt.getBody();
+			final Statement[] newBody = processStatements(body);
+			newStat = new AtomicStatement(atomicstmt.getLocation(), newBody);
 		} else if (stat instanceof BreakStatement) {
 			final BreakStatement bs = (BreakStatement) stat;
 			newStat = new BreakStatement(bs.getLocation(), bs.getLabel());

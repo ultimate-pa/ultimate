@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -432,6 +433,13 @@ public abstract class BoogieTransformer {
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);
 			if (newThreadId != threadId || newLhs != lhs) {
 				newStatement = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
+			}
+		} else if (statement instanceof AtomicStatement) {
+			final AtomicStatement atomicstmt = (AtomicStatement) statement;
+			final Statement[] body = atomicstmt.getBody();
+			final Statement[] newBody = processStatements(body);
+			if (newBody != body) {
+				newStatement = new AtomicStatement(atomicstmt.getLocation(), newBody);
 			}
 		}
 		if (newStatement == null) {

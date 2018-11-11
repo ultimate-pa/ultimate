@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -806,6 +807,10 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(whileStat.getInvariants());
 			final Statement[] newBody = flattenStatementsArray(whileStat.getBody());
 			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
+		} else if (stat instanceof AtomicStatement) {
+			final AtomicStatement atomicStat = (AtomicStatement) stat;
+			final Statement[] newBody = flattenStatementsArray(atomicStat.getBody());
+			newStat = new AtomicStatement(atomicStat.getLocation(), newBody);
 		}  else if (stat instanceof ForkStatement) {
 			getAndUpdateEdgeIndex();
 		}
