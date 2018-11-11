@@ -1213,11 +1213,11 @@ public class CfgBuilder {
 			// non-free requires because in this case the control-flow has to
 			// branch to an error location.)
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
-			final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
 			if (mAtomicMode && procedureHasImplementation) {
 				throw new UnsupportedOperationException(
 						"In an atomic block calls to procedures that have an implementation are not allowed.");
 			}
+			final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
 			if (mAtomicMode && nonFreeRequiresIsEmpty) {
 				throw new UnsupportedOperationException(
 						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not allowed.");
