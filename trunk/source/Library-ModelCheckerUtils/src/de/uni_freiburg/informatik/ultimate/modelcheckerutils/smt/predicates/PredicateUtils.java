@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -253,7 +254,7 @@ public class PredicateUtils {
 			final Term cIndex;
 			if (tf.getAuxVars().contains(tv)) {
 				// replace auxvar by corresponding constant
-				cIndex = script.term(tv.getName());
+				cIndex = script.term(ProgramVarUtils.generateConstantIdentifierForAuxVar(tv));
 			} else {
 				cIndex = reverseMapping.get(tv).getDefaultConstant();
 			}

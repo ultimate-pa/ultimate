@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -778,8 +779,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final ArrayList<Term> replacers = new ArrayList<>();
 		for (final TermVariable auxVarTv : auxVars) {
 			replacees.add(auxVarTv);
-			final Term correspondingConstant =
-					SmtUtils.termVariable2constant(mManagedScript.getScript(), auxVarTv, false);
+			final Term correspondingConstant = mManagedScript.term(this,
+					ProgramVarUtils.generateConstantIdentifierForAuxVar(auxVarTv));
 			replacers.add(correspondingConstant);
 		}
 		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);

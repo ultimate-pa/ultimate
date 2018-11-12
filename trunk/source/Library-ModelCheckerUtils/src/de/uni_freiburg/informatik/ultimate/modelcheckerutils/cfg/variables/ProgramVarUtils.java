@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  */
 public class ProgramVarUtils {
-	
+
 	private static final String AUX_VAR_PREFIX = "c_aux_";
 
 
@@ -57,7 +57,11 @@ public class ProgramVarUtils {
 		// do not instantiate
 	}
 
-	
+	public static String generateConstantIdentifierForAuxVar(final TermVariable auxVar) {
+		return AUX_VAR_PREFIX + auxVar.getName();
+	}
+
+
 	/**
 	 * Construct primed constant for a {@link IProgramVar}
 	 * @param script {@link ManagedScript} for which constant is constructed.
@@ -89,11 +93,11 @@ public class ProgramVarUtils {
 		}
 		return defaultConstant;
 	}
-	
+
 	/**
 	 * Construct constant for an aux var. (The default constant is used to
 	 * represent the aux var in the closed formulas of {@link TransFormula}s.
-	 * 
+	 *
 	 * @param mgdScript
 	 *            {@link ManagedScript} for which constant is constructed.
 	 */
@@ -101,7 +105,7 @@ public class ProgramVarUtils {
 		ApplicationTerm defaultConstant;
 		{
 
-			final String defaultConstantName = AUX_VAR_PREFIX + auxVar.getName();
+			final String defaultConstantName = generateConstantIdentifierForAuxVar(auxVar);
 			final Object lockOwner = auxVar;
 			mgdScript.lock(lockOwner);
 			mgdScript.declareFun(lockOwner, defaultConstantName, new Sort[0], auxVar.getSort());
@@ -111,12 +115,13 @@ public class ProgramVarUtils {
 		return defaultConstant;
 	}
 
+
 	/**
 	 * Get the constant that represents an auxVar. Requires that this constant
 	 * has already been declared.
 	 */
 	public static ApplicationTerm getAuxVarConstant(final ManagedScript mgdScript, final TermVariable auxVar) {
-		final String defaultConstantName = AUX_VAR_PREFIX + auxVar.getName();
+		final String defaultConstantName = generateConstantIdentifierForAuxVar(auxVar);
 		return (ApplicationTerm) mgdScript.getScript().term(defaultConstantName);
 	}
 
@@ -130,7 +135,7 @@ public class ProgramVarUtils {
 		}
 		return result;
 	}
-	
+
 	public static Set<IProgramOldVar> extractOldVars(final Term term, final IIcfgSymbolTable symbolTable) {
 		final Set<IProgramOldVar> result = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
@@ -141,8 +146,8 @@ public class ProgramVarUtils {
 		}
 		return result;
 	}
-	
-	public static Term renameNonOldGlobalsToOldGlobals(final Term term, 
+
+	public static Term renameNonOldGlobalsToOldGlobals(final Term term,
 			final IIcfgSymbolTable symbolTable,
 			final ManagedScript mgdScript) {
 		final Set<IProgramNonOldVar> nonOldVars = extractNonOldVars(term, symbolTable);
@@ -156,8 +161,8 @@ public class ProgramVarUtils {
 		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
 		return result;
 	}
-	
-	public static Term renameOldGlobalsToNonOldGlobals(final Term term, 
+
+	public static Term renameOldGlobalsToNonOldGlobals(final Term term,
 			final IIcfgSymbolTable symbolTable,
 			final ManagedScript mgdScript) {
 		final Set<IProgramOldVar> oldVars = extractOldVars(term, symbolTable);
@@ -171,8 +176,8 @@ public class ProgramVarUtils {
 		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
 		return result;
 	}
-	
-	
+
+
 	public static String buildBoogieVarName(final String identifier, final String procedure,
 			final boolean isGlobal, final boolean isOldvar) {
 		String name;
@@ -189,13 +194,13 @@ public class ProgramVarUtils {
 		}
 		return name;
 	}
-	
-	
+
+
 	/**
-	 * Construct global {@link BoogieNonOldVar} together with corresponding 
+	 * Construct global {@link BoogieNonOldVar} together with corresponding
 	 * {@link BoogieOldVar} and return the {@link BoogieNonOldVar}
 	 */
-	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort, 
+	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
 		final String procedure = null;
 		BoogieOldVar oldVar;
@@ -221,5 +226,5 @@ public class ProgramVarUtils {
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
 	}
-	
+
 }
