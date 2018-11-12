@@ -1238,7 +1238,6 @@ public final class SmtUtils {
 			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case "-":
-		case "bvminus":
 			if (params.length == 1) {
 				result = SmtUtils.neg(script, params[0]);
 			} else {
