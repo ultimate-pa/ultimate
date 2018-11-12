@@ -11,16 +11,16 @@
 (declare-fun I () SetOfInt)
 
 ; forall y: y = 0 ==> y \in I
-;(assert (forall ((y Int)) (=> (<= y 0) (element y I))))
+(assert (forall ((y Int)) (=> (<= y 0) (element y I))))
 
 ; forall x, y: (x <= 23 /\ x \in I /\ y = x + 2) ==> (y \in I)
-;(assert (forall ((x Int) (y Int)) (=> (and (<= x 23) (element x I) (= (- y x) 2)) (element y I))))
+(assert (forall ((x Int) (y Int)) (=> (and (<= x 23) (element x I) (= (- y x) 2)) (element y I))))
 
 ; forall x: x \in I ==> x != 7
-;(assert (forall ((x Int)) (=> (element x I) (or (< x 7) (not (<= x 7))))))
+(assert (forall ((x Int)) (=> (element x I) (or (< x 7) (not (<= x 7))))))
 
-(assert (not (element 0 I)))
-(assert (not (= x 0)))
+;(assert (not (element 0 I)))
+;(assert (not (= x 0)))
 
 (check-sat)
 (get-model)

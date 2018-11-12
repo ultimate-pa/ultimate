@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -208,15 +208,13 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns the given word with all variables translated to integer.
+	 * Returns a map which holds all terms and their integer values parsed from
+	 * given word.
 	 */
-	public static Map<Term, List<Integer>> parseMoNatDiffToInteger(final NestedWord<MoNatDiffAlphabetSymbol> word,
+	public static Map<Term, List<Integer>> parseMoNatDiffToInteger(final Word<MoNatDiffAlphabetSymbol> word,
 			final Term... terms) {
 
 		final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
-
-		// if (word.length() > 0) {
-		// final Set<Term> terms = word.getSymbol(0).getMap().keySet();
 
 		for (final Term term : terms)
 			result.put(term, new ArrayList<Integer>());
@@ -229,7 +227,6 @@ public final class MoNatDiffUtils {
 					result.get(term).add(i);
 			}
 		}
-		// }
 
 		return result;
 	}
