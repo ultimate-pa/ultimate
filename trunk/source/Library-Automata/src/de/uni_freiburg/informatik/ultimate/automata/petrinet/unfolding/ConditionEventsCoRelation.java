@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
-	private int mQueryCounter;
+	private long mQueryCounter;
 
 	/**
 	 * TODO schaetzc 2018-08-16: This does not seem to store all co-relations between conditions and events.
@@ -65,7 +65,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	@Override
-	public int getQueryCounter() {
+	public long getQueryCounter() {
 		return mQueryCounter;
 	}
 
@@ -169,12 +169,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * <p>
 	 * 2. If for all c1 \in *e1, c2 \in *e2: c1 ic c2 then e1 ci e2.<br>
 	 * <b>Proof:</b>Assume the left side of the implication.<br>
-	 * 
+	 *
 	 * <u>TODO schaetzc 2018-08-16: The next line is not true in the general case.
 	 * It is possible for a transition/event to have no predecessors.
 	 * In a bounded net such transition must also have no successors.
 	 * Do we support such transitions?</u><br>
-	 * 
+	 *
 	 * If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
 	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t. \exists c1 \in *e1 s.t. c1 < e2. For each
 	 * parent c2 \in *e2 then c1 < c2 holds. (e1 > e2 analogously) _|_<br>
@@ -184,7 +184,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * If e2 = e2' then c \in *e2 _|_ (e1=e1' analogously). <br>
 	 * If e1 != e1' and e2 != e2' then there are predecessor-conditions c1 \in *e1, c2 \in *e2 s.t. c1#c2 _|_. <br>
 	 * q.e.d.
-	 * 
+	 *
 	 * @param e1 An event
 	 * @param e2 Another event
 	 * @return e1 ic e2 (e1 and e2 are in irreflexive co-relation)

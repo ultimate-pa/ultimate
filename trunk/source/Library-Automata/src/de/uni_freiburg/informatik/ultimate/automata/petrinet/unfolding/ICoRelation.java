@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,7 @@ import java.util.Set;
  * whereas &lt; is the causal relation and # the conflict-relation.
  * <p>
  * Since the relation is only needed on Conditions, only related Methods exist.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            symbol type
@@ -54,7 +54,7 @@ import java.util.Set;
 public interface ICoRelation<LETTER, PLACE> {
 	/**
 	 * Updates the Co-relation regarding an event that just has been added to the branching process.
-	 * 
+	 *
 	 * @param event
 	 *            the Event that has been added.
 	 */
@@ -81,12 +81,12 @@ public interface ICoRelation<LETTER, PLACE> {
 	/**
 	 * @return The number of co-relation queries that have been issued.
 	 */
-	int getQueryCounter();
+	long getQueryCounter();
 
 	/**
 	 * All initial Conditions in a branchin process are in co relation. Hence, all pairs of Conditions from
 	 * <code>initialConditions</code> are added.
-	 * 
+	 *
 	 * @param initialConditions
 	 *            set of initial conditions
 	 */
