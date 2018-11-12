@@ -89,6 +89,22 @@ public class UltimateNormalFormTest {
 
 	@Test
 	public void unf02() {
+		final Sort realSort = SmtSortUtils.getRealSort(mScript);
+
+		mScript.declareFun("X", new Sort[0], realSort);
+		final Term var = mScript.term("X");
+		final Term value = mScript.decimal("23.0");
+		final Map<Term, Term> substitutionMapping = Collections.singletonMap(var, value);
+		final Term input = TermParseUtils.parseTerm(mScript, "(- X)");
+
+		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(input);
+
+		final Term expectedResult = Rational.valueOf(-23, 1).toTerm(realSort);
+		Assert.isTrue(result.equals(expectedResult));
+	}
+
+	@Test
+	public void unf03() {
 		mScript.reset();
 
 		mScript.setLogic(Logics.ALL);

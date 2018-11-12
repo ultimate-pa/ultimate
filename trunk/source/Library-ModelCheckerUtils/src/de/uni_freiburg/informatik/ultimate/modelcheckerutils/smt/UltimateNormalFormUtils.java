@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,17 +34,18 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Provides auxiliary methods for checking if terms respect a certain normal form.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public final class UltimateNormalFormUtils {
 
 	private UltimateNormalFormUtils() {
-		// do not instantiate 
+		// do not instantiate
 	}
 
 	private static boolean rootRespectsUltimateNormalForm(final ConstantTerm term) {
@@ -100,6 +101,25 @@ public final class UltimateNormalFormUtils {
 				}
 			}
 		}
+		if (SmtUtils.isUnaryNumericMinus(term.getFunction())) {
+			final Term param = term.getParameters()[0];
+			if (param instanceof ConstantTerm) {
+				return true;
+			} else if (param instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) param;
+				if (appTerm.getFunction().isIntern()) {
+					assert false : "must not be argument of unary minus " + appTerm.getFunction().getName();
+					return false;
+				} else {
+					return true;
+				}
+			} else if (param instanceof TermVariable) {
+				return true;
+			} else {
+				throw new AssertionError("Illegal kind of term " + param.getClass().getSimpleName());
+			}
+
+		}
 		return true;
 	}
 
@@ -122,7 +142,7 @@ public final class UltimateNormalFormUtils {
 	 * <li>Do not use "distinct" terms. Always use negated equalities instead. This allows us to detect that (and (= a
 	 * b) (not (= a b))) is equivalent to false.
 	 * </ul>
-	 * 
+	 *
 	 * @param term
 	 *            The {@link Term} that should be checked.
 	 * @return true iff term is in Ultimate normal form.
@@ -131,8 +151,8 @@ public final class UltimateNormalFormUtils {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
 		return !new SubtermPropertyChecker(property).isPropertySatisfied(term);
 	}
-	
-	
+
+
 	public static boolean respectsUltimateNormalForm(final Term... terms) {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
 		boolean respects = true;

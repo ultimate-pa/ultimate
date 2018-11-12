@@ -555,11 +555,39 @@ public final class SmtUtils {
 		final Sort sort = operand.getSort();
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (SmtSortUtils.isNumericSort(sort)) {
-			return script.term("-", operand);
+			return unaryNumericMinus(script, operand);
 		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			return script.term("bvneg", operand);
+			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", new BigInteger[0], operand);
 		} else {
 			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
+		}
+	}
+
+	public static Term unaryNumericMinus(final Script script, final Term operand) {
+		if (operand instanceof ConstantTerm) {
+			final ConstantTerm ct = (ConstantTerm) operand;
+			final Rational value = convertConstantTermToRational(ct);
+			return value.negate().toTerm(operand.getSort());
+		} else if (operand instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) operand;
+			if (appTerm.getFunction().isIntern()) {
+				if (isUnaryNumericMinus(appTerm.getFunction())) {
+					return appTerm.getParameters()[0];
+				} else if (appTerm.getFunction().getName().equals("+")) {
+					return sum(script, operand.getSort(),
+							(Term[]) Arrays.stream(appTerm.getParameters()).map(x -> unaryNumericMinus(script, x)).toArray());
+				} else {
+					// TODO: handle all theory-defined functions
+					return operand;
+				}
+			} else {
+				return script.term("-", operand);
+			}
+		} else if (operand instanceof TermVariable) {
+			return script.term("-", operand);
+		} else {
+			throw new UnsupportedOperationException(
+					"cannot apply unary minus to " + operand.getClass().getSimpleName());
 		}
 	}
 
@@ -1238,8 +1266,10 @@ public final class SmtUtils {
 			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case "-":
+		case "bvsub":
 			if (params.length == 1) {
-				result = SmtUtils.neg(script, params[0]);
+				assert !funcname.equals("bvsub");
+				result = SmtUtils.unaryNumericMinus(script, params[0]);
 			} else {
 				result = SmtUtils.minus(script, params);
 			}
@@ -1277,7 +1307,6 @@ public final class SmtUtils {
 			break;
 		case "zero_extend":
 		case "extract":
-		case "bvsub":
 			// case "bvmul":
 		case "bvudiv":
 		case "bvurem":
@@ -1966,6 +1995,12 @@ public final class SmtUtils {
 	public static QuotedObject echo(final Script script, final String message) {
 		return script.echo(new QuotedObject(message));
 	}
+
+	public static boolean isUnaryNumericMinus(final FunctionSymbol function) {
+		return function.isIntern() && function.getName().equals("-") && function.getParameterSorts().length == 1
+				&& function.getParameterSorts()[0].isNumericSort() && function.getReturnSort().isNumericSort();
+	}
+
 
 	private static class InnerDualJunctTracker {
 
