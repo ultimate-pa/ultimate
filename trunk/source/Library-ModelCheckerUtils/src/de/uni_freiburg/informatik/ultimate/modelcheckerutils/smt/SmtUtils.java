@@ -578,7 +578,7 @@ public final class SmtUtils {
 							(Term[]) Arrays.stream(appTerm.getParameters()).map(x -> unaryNumericMinus(script, x)).toArray());
 				} else {
 					// TODO: handle all theory-defined functions
-					return operand;
+					return script.term("-", operand);
 				}
 			} else {
 				return script.term("-", operand);
