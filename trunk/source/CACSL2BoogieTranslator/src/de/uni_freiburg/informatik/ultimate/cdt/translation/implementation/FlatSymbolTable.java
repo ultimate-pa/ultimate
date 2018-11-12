@@ -154,27 +154,24 @@ public class FlatSymbolTable {
 	private SymbolTableValue tableFind(final IASTNode hook, final String id, final boolean onlyInnermost) {
 		IASTNode cursor = mCHookSkip.apply(hook);
 		while (cursor != null) {
-			Map<String, SymbolTableValue> scope = null;
+			final Map<String, SymbolTableValue> scope;
 			if (cursor instanceof IASTTranslationUnit) {
 				// This node references the global scope
 				scope = mGlobalScope;
 			} else {
-				final Map<String, SymbolTableValue> scopeCandidate = mCTable.get(cursor);
-				if (scopeCandidate != null) {
-					// This node has an associated scope, check whether the ID is found in that scope
-					scope = scopeCandidate;
-				}
+				// This node may have an associated scope
+				scope = mCTable.get(cursor);
 			}
 			if (scope != null) {
+				// we have a scope: check whether the ID is found in that scope
 				final SymbolTableValue resultCandidate = scope.get(id);
 				if (resultCandidate != null) {
 					// This scope shadows all outer (=upper) scopes
 					return resultCandidate;
 				}
-
 				if (onlyInnermost) {
 					// This node represents the innermost scope but doesn't contain the ID
-					break;
+					return null;
 				}
 			}
 			// Check the next level of the AST for scopes
@@ -195,7 +192,8 @@ public class FlatSymbolTable {
 	}
 
 	/**
-	 * Convenience method for checking if an entry exists
+	 * Convenience method for checking if an entry exists. Note that you should never combine it with
+	 * {@link #findCSymbol(IASTNode, String)} because it will double your runtime.
 	 *
 	 * @see FlatSymbolTable#findCSymbol(IASTNode, String)
 	 */

@@ -529,8 +529,8 @@ public class ACSLHandler implements IACSLHandler {
 			// identifiers, since the identifier could also refer to a global
 			// variable! However, we don't know that at this moment!
 
-			if (mSymboltable.containsCSymbol(main.getAcslHook(), cId)) {
-				stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
+			stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
+			if (stv != null) {
 				cType = stv.getCType();
 			} else {
 				throw new UnsupportedOperationException(

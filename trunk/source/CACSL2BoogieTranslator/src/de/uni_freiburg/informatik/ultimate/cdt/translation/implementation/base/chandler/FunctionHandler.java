@@ -491,12 +491,10 @@ public class FunctionHandler {
 		// Resolve the function name (might be prefixed by multiparse)
 		final String methodName = mSymboltable.applyMultiparseRenaming(functionName.getContainingFilename(), rawName);
 
-		if (mSymboltable.containsCSymbol(functionName, methodName)) {
+		final SymbolTableValue nd = mSymboltable.findCSymbol(functionName, methodName);
+		if (nd != null && !(nd.getDeclarationNode().getParent() instanceof IASTFunctionDefinition)) {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
-			final SymbolTableValue nd = mSymboltable.findCSymbol(functionName, methodName);
-			if (!(nd.getDeclarationNode().getParent() instanceof IASTFunctionDefinition)) {
-				return handleFunctionPointerCall(loc, main, functionName, arguments);
-			}
+			return handleFunctionPointerCall(loc, main, functionName, arguments);
 		}
 
 		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, functionName);
