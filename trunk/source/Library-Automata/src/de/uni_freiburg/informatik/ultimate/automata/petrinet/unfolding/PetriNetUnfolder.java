@@ -173,8 +173,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		if (mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff)) {
 			mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
 		} else {
+			final long sizeBefore = mPossibleExtensions.size();
 			mPossibleExtensions.update(event);
+			final long newPossibleExtensions = mPossibleExtensions.size() - sizeBefore;
 			mLogger.debug("Constructed Non-cut-off-Event: " + event.toString());
+			mLogger.debug("The Event lead to " + newPossibleExtensions + " new possible extensions.");
 		}
 		mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
 				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
