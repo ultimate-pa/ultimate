@@ -40,10 +40,15 @@ known_exceptions = {
     "Wrong parameter type at index": True,
     "Undeclared identifier ": True,
     "Modifies not transitive": True,
+    "encountered a call to a var args function and varargs usage is unknown":True,
+    "UnsupportedOperationException: floating point operation not supported in non-bitprecise translation":True,
+    "ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive":True,
+    "StackOverflowError: null":True,
     "No suitable toolchain file found": True,
     "No suitable file found in config dir": True,
     "ExceptionOrErrorResult": False,
     "was unable to instantiate class": True,
+    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":True, 
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
