@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  *            Why is {@link SmtUtils#geq} not usable in {@link #processEqual},
  *            {@link #processGreater}?
  * 
- *            Model is sometimes not minimal?
+ *            Model is not always minimal e.g. (assert (element 9 I))?
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -129,7 +129,7 @@ public class MoNatDiffScript extends NoopScript {
 		final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nwa = traversePostOrder(mAssertionTerm);
 		checkEmptiness(nwa);
 
-		// mLogger.info("RESULT: " + nwaToString(nwa, Format.ATS));
+		// mLogger.info(nwaToString(nwa, Format.ATS));
 
 		return null;
 	}
@@ -390,13 +390,11 @@ public class MoNatDiffScript extends NoopScript {
 		}
 
 		if (variables.size() == 2) {
-			mLogger.info("Construct x-y < c: " + affineTerm);
+			mLogger.info("Construct x-y < c: " + term);
 
 			final Iterator<Entry<Term, Rational>> it = variables.entrySet().iterator();
 			final Entry<Term, Rational> var1 = it.next();
 			final Entry<Term, Rational> var2 = it.next();
-
-			mLogger.info(var1 + " - " + var2 + " < " + constant);
 
 			if (!var1.getValue().add(var2.getValue()).equals(Rational.ZERO))
 				throw new IllegalArgumentException("Input is not difference logic.");
@@ -493,25 +491,29 @@ public class MoNatDiffScript extends NoopScript {
 	 * @throws IllegalArgumentException
 	 *             if operation fails.
 	 */
-	private void checkEmptiness(final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> nwa) {
+	private void checkEmptiness(final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton) {
 		IsEmpty<MoNatDiffAlphabetSymbol, String> isEmpty;
 
 		try {
-			isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mALS, nwa);
+			isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mALS, automaton);
 		} catch (final AutomataOperationCanceledException e) {
 			throw new IllegalArgumentException("Could not create IsEmpty: " + e);
 		}
 
-		if (isEmpty.getResult()) {
+		mLogger.info("---------------------------------------------------------------------------");
+
+		if (!isEmpty.getResult()) {
+			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
+			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
+			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+
+			mLogger.info("RESULT: SAT");
+			mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word, terms));
+		} else {
 			mLogger.info("RESULT: UNSAT");
-			return;
 		}
 
-		final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
-		final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
-
-		mLogger.info("RESULT: SAT");
-		mLogger.info("MODEL: " + MoNatDiffUtils.wordMoNatDiffToInteger(word));
+		mLogger.info("---------------------------------------------------------------------------");
 	}
 
 	/**

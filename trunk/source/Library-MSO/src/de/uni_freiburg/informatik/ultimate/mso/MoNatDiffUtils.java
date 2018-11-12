@@ -208,26 +208,28 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * TODO: Comment.
+	 * Returns the given word with all variables translated to integer.
 	 */
-	public static Map<Term, List<Integer>> wordMoNatDiffToInteger(final NestedWord<MoNatDiffAlphabetSymbol> word) {
+	public static Map<Term, List<Integer>> parseMoNatDiffToInteger(final NestedWord<MoNatDiffAlphabetSymbol> word,
+			final Term... terms) {
+
 		final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
 
-		if (word.length() > 0) {
-			final Set<Term> terms = word.getSymbol(0).getMap().keySet();
+		// if (word.length() > 0) {
+		// final Set<Term> terms = word.getSymbol(0).getMap().keySet();
 
-			for (int i = 0; i < word.length(); i++) {
-				final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+		for (final Term term : terms)
+			result.put(term, new ArrayList<Integer>());
 
-				for (final Term term : terms) {
-					if (!result.containsKey(term))
-						result.put(term, new ArrayList<Integer>());
+		for (int i = 0; i < word.length(); i++) {
+			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
 
-					if (symbol.getMap().get(term))
-						result.get(term).add(i);
-				}
+			for (final Term term : terms) {
+				if (symbol.getMap().get(term))
+					result.get(term).add(i);
 			}
 		}
+		// }
 
 		return result;
 	}
