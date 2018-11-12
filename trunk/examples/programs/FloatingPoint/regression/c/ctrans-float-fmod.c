@@ -1,3 +1,4 @@
+//#Safe
 /*  
     https://en.cppreference.com/w/c/numeric/math/fmod
 */
