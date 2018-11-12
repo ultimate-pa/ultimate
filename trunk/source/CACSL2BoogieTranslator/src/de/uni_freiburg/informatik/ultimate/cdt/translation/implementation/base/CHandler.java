@@ -1795,8 +1795,8 @@ public class CHandler {
 		 * <code>int[]</code>. To solve this, the declaration items are visited one after another.
 		 */
 		final List<Result> intermediateResults = new ArrayList<>();
-		for (final IASTDeclarator d : node.getDeclarators()) {
-			final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(d);
+		for (final IASTDeclarator declarator : node.getDeclarators()) {
+			final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(declarator);
 			final CDeclaration cDec = declResult.getDeclaration();
 			cDec.setStorageClass(storageClass);
 
@@ -1805,17 +1805,17 @@ public class CHandler {
 				// all unions should be on heap
 				if (CStructOrUnion.isUnion(cDec.getType().getUnderlyingType())
 						&& storageClass != CStorageClass.TYPEDEF) {
-					addToVariablesOnHeap(d);
+					addToVariablesOnHeap(declarator.getName());
 				}
 			}
 
 			if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
 				// update functionHandler.procedures instead of symbol table
-				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(d), mContract, cDec,
-						d);
+				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator), mContract,
+						cDec, declarator);
 				continue;
 			}
-			intermediateResults.add(handleIASTDeclarator(main, loc, node, declResult, d, cDec, storageClass));
+			intermediateResults.add(handleIASTDeclarator(main, loc, node, declResult, declarator, cDec, storageClass));
 		}
 		mCurrentDeclaredTypes.pop();
 
