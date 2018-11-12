@@ -574,8 +574,8 @@ public final class SmtUtils {
 				if (isUnaryNumericMinus(appTerm.getFunction())) {
 					return appTerm.getParameters()[0];
 				} else if (appTerm.getFunction().getName().equals("+")) {
-					return sum(script, operand.getSort(),
-							(Term[]) Arrays.stream(appTerm.getParameters()).map(x -> unaryNumericMinus(script, x)).toArray());
+					return sum(script, operand.getSort(), Arrays.stream(appTerm.getParameters())
+							.map(x -> unaryNumericMinus(script, x)).toArray(Term[]::new));
 				} else {
 					// TODO: handle all theory-defined functions
 					return script.term("-", operand);
@@ -1569,7 +1569,7 @@ public final class SmtUtils {
 		}
 		return rat;
 	}
-	
+
 	public static Rational toRational(final String realLiteralValue) {
 		final String[] twoParts = realLiteralValue.split("/");
 		if(twoParts.length == 2) {
