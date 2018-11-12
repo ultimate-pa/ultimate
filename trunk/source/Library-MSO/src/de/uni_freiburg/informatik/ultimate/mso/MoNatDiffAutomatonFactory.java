@@ -1,4 +1,4 @@
-/*
+/**
  * TODO: Copyright.
  */
 
@@ -15,73 +15,78 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
-/*
- * TODO: Comment.
- * TODO: CHECK INPUTS !
+/**
+ * TODO: Check inputs.
+ * 
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public final class MoNatDiffAutomatonFactory {
 
-	/*
-	 * Constructs empty automaton.
+	/**
+	 * Constructs an empty automaton.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> emptyAutomaton(
-			final AutomataLibraryServices automataLibraryServices) {
+			final AutomataLibraryServices services) {
 
 		final Set<MoNatDiffAlphabetSymbol> alphabet = new HashSet<MoNatDiffAlphabetSymbol>();
 		final VpAlphabet<MoNatDiffAlphabetSymbol> vpAlphabet = new VpAlphabet<MoNatDiffAlphabetSymbol>(alphabet);
 		final StringFactory stringFactory = new StringFactory();
 
-		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(automataLibraryServices, vpAlphabet,
-				stringFactory);
+		return new NestedWordAutomaton<MoNatDiffAlphabetSymbol, String>(services, vpAlphabet, stringFactory);
 	}
-	
-	/*
-	 * Constructs automaton for atomic formula "true".
+
+	/**
+	 * Constructs an automaton that represents "true".
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> trueAutomaton(
-			final AutomataLibraryServices automataLibraryServices) {
+			final AutomataLibraryServices services) {
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol emptyWord = new MoNatDiffAlphabetSymbol();
-		
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol symbol = new MoNatDiffAlphabetSymbol();
+		automaton.getAlphabet().add(symbol);
+
 		automaton.addState(true, true, "init");
-		automaton.addInternalTransition("init", emptyWord, "init");
+		automaton.addInternalTransition("init", symbol, "init");
 
 		return automaton;
 	}
-	
-	/*
-	 * Constructs automaton for atomic formula "false".
+
+	/**
+	 * Constructs an automaton that represents "false".
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> falseAutomaton(
-			final AutomataLibraryServices automataLibraryServices) {
+			final AutomataLibraryServices services) {
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol emptyWord = new MoNatDiffAlphabetSymbol();
-		
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol symbol = new MoNatDiffAlphabetSymbol();
+		automaton.getAlphabet().add(symbol);
+
 		automaton.addState(true, false, "init");
-		automaton.addInternalTransition("init", emptyWord, "init");
+		automaton.addInternalTransition("init", symbol, "init");
 
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton that represents an Int variable.
+	/**
+	 * Constructs an automaton that represents an Int variable.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x is not of type Int.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> intVariableAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x) {
+			final AutomataLibraryServices services, final Term x) {
 
 		if (!MoNatDiffUtils.isIntVariable(x))
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
-		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, false);
+		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, true);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
@@ -93,18 +98,21 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "x < c".
+	/**
+	 * Constructs an automaton that represents "x < c".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x is not of type Int or c is smaller than 0.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Rational c) {
+			final AutomataLibraryServices services, final Term x, final Rational c) {
 
 		if (!MoNatDiffUtils.isIntVariable(x) || c.isNegative())
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
-		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, false);
+		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, true);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		if (c.signum() == 1) {
@@ -118,20 +126,24 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "x-y < c".
+	/**
+	 * Constructs an automaton that represents "x-y < c".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type Int or c is smaller than 0.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictIneqAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Term y, final Rational c) {
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational c) {
 
 		if (!MoNatDiffUtils.isIntVariable(x) || !MoNatDiffUtils.isIntVariable(y) || c.isNegative())
 			throw new IllegalArgumentException("Input x, y must be Int variables and c must be >= 0.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
-		final MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
-		final MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
-		final MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol xy00, xy01, xy10, xy11;
+		xy00 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
+		xy01 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
+		xy10 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
+		xy11 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -151,18 +163,21 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "-x < c".
+	/**
+	 * Constructs an automaton that represents "-x < c".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x is not of type Int or c is smaller than 0.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictNegIneqAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Rational c) {
+			final AutomataLibraryServices services, final Term x, final Rational c) {
 
 		if (!MoNatDiffUtils.isIntVariable(x) || c.isNegative())
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
-		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, false);
+		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, true);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
@@ -182,20 +197,24 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "X strictSubsetInt Y".
+	/**
+	 * Constructs an automaton that represents "X strictSubsetInt Y".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type SetOfInt.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> strictSubsetAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Term y) {
+			final AutomataLibraryServices services, final Term x, final Term y) {
 
 		if (!MoNatDiffUtils.isSetOfIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y))
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
-		final MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
-		final MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
-		final MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol xy00, xy01, xy10, xy11;
+		xy00 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
+		xy01 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
+		xy10 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
+		xy11 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -210,20 +229,24 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "X nonStrictSubsetInt Y".
+	/**
+	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type SetOfInt.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> subsetAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Term y) {
+			final AutomataLibraryServices services, final Term x, final Term y) {
 
 		if (!MoNatDiffUtils.isSetOfIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y))
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
-		final MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
-		final MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
-		final MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol xy00, xy01, xy10, xy11;
+		xy00 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
+		xy01 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
+		xy10 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
+		xy11 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -238,20 +261,24 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "x+c element Y".
+	/**
+	 * Constructs an automaton that represents "x+c element Y".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> elementAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Term x, final Rational c, final Term y) {
+			final AutomataLibraryServices services, final Term x, final Rational c, final Term y) {
 
 		if (!MoNatDiffUtils.isIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y) || c.isNegative())
 			throw new IllegalArgumentException("Input x, y must be Int, SetOfInt variables and c must be >= 0.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol xy00 = new MoNatDiffAlphabetSymbol(x, y, 0, 0);
-		final MoNatDiffAlphabetSymbol xy01 = new MoNatDiffAlphabetSymbol(x, y, 0, 1);
-		final MoNatDiffAlphabetSymbol xy10 = new MoNatDiffAlphabetSymbol(x, y, 1, 0);
-		final MoNatDiffAlphabetSymbol xy11 = new MoNatDiffAlphabetSymbol(x, y, 1, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol xy00, xy01, xy10, xy11;
+		xy00 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
+		xy01 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
+		xy10 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
+		xy11 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -269,18 +296,21 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
-	 * Constructs automaton for atomic formula "c element X".
+	/**
+	 * Constructs an automaton that represents "c element X".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x is not of type SetOfInt or c is smaller than 0.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> constElementAutomaton(
-			final AutomataLibraryServices automataLibraryServices, final Rational c, final Term x) {
+			final AutomataLibraryServices services, final Rational c, final Term x) {
 
 		if (!MoNatDiffUtils.isSetOfIntVariable(x) || c.isNegative())
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable and c must be >= 0.");
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(automataLibraryServices);
-		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, 0);
-		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, 1);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol x0 = new MoNatDiffAlphabetSymbol(x, false);
+		final MoNatDiffAlphabetSymbol x1 = new MoNatDiffAlphabetSymbol(x, true);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
@@ -296,34 +326,28 @@ public final class MoNatDiffAutomatonFactory {
 		return automaton;
 	}
 
-	/*
+	/**
 	 * TODO: Comment.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
-			final AutomataLibraryServices automataLibraryServices,
+			final AutomataLibraryServices services,
 			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton,
-			final Set<MoNatDiffAlphabetSymbol> alphabet, final boolean isExtended, final ILogger mLogger) {
+			final Set<MoNatDiffAlphabetSymbol> alphabet, final boolean isExtended) {
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = MoNatDiffAutomatonFactory
-				.emptyAutomaton(automataLibraryServices);
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result;
 
+		result = MoNatDiffAutomatonFactory.emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
-		final Iterator<String> itStates = automaton.getStates().iterator();
 
-		while (itStates.hasNext()) {
-			final String state = itStates.next();
+		for (final String state : automaton.getStates()) {
 			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-			final Iterator<OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String>> itTransitions = automaton
-					.internalSuccessors(state).iterator();
 
-			while (itTransitions.hasNext()) {
-				final OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition = itTransitions.next();
-				Iterator<MoNatDiffAlphabetSymbol> itMatches;
+			for (final OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
+					.internalSuccessors(state)) {
 
-				if (isExtended)
-					itMatches = alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator();
-				else
-					itMatches = alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
+				final Iterator<MoNatDiffAlphabetSymbol> itMatches = isExtended
+						? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
+						: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
 
 				while (itMatches.hasNext()) {
 					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
@@ -334,8 +358,8 @@ public final class MoNatDiffAutomatonFactory {
 		return result;
 	}
 
-	/*
-	 * Adds a part to automaton that represents the value of constant c.
+	/**
+	 * Adds a part to the given automaton that represents the value of constant c.
 	 */
 	private static void addConstPart(final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton,
 			final Rational c, final MoNatDiffAlphabetSymbol initToState1, final MoNatDiffAlphabetSymbol initToState2,
@@ -364,8 +388,9 @@ public final class MoNatDiffAutomatonFactory {
 		}
 	}
 
-	/*
-	 * Adds a part to automaton that represents values from zero up to constant c.
+	/**
+	 * Adds a part to the given automaton that represents values from 0 up to
+	 * constant c.
 	 */
 	private static void addUpToConstPart(final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton,
 			final Rational c, final MoNatDiffAlphabetSymbol initToState, final MoNatDiffAlphabetSymbol predToState,

@@ -1,4 +1,4 @@
-/*
+/**
  * TODO: Copyright.
  */
 
@@ -15,41 +15,36 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-/*
- * TODO: Comment.
+/**
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class MoNatDiffAlphabetSymbol {
 
 	private final Map<Term, Boolean> mMap;
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Constructor for empty alphabet symbol.
 	 */
 	public MoNatDiffAlphabetSymbol() {
 		mMap = new HashMap<Term, Boolean>();
 	}
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Constructor for alphabet symbol that contains a single variable.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term term, final int value) {
+	public MoNatDiffAlphabetSymbol(final Term term, final boolean value) {
 		mMap = new HashMap<Term, Boolean>();
 		add(term, value);
 	}
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Constructor for alphabet symbol that contains multiple variables.
+	 * 
+	 * @throws InvalidParameterException
+	 *             if lengths of terms and values differ.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term term1, final Term term2, final int value1, final int value2) {
-		mMap = new HashMap<Term, Boolean>();
-		add(term1, value1);
-		add(term2, value2);
-	}
-
-	/*
-	 * TODO: Comment.
-	 */
-	public MoNatDiffAlphabetSymbol(final Term[] terms, final int[] values) {
+	public MoNatDiffAlphabetSymbol(final Term[] terms, final boolean[] values) {
 		if (terms.length != values.length)
 			throw new InvalidParameterException("Input terms, values of different length.");
 
@@ -58,46 +53,46 @@ public class MoNatDiffAlphabetSymbol {
 			add(terms[i], values[i]);
 	}
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Returns a map with variables forming this alphabet symbol.
 	 */
 	public final Map<Term, Boolean> getMap() {
 		return mMap;
 	}
-
-	/*
-	 * TODO: Comment.
+	
+	/**
+	 * Returns the terms contained in this alphabet symbol.
 	 */
-	public void add(final Term term, final int value) {
-		if (!MoNatDiffUtils.isVariable(term))
-			throw new InvalidParameterException("Input term must be a Int or SetOfInt variable.");
-
-		if (value < 0 || value > 1)
-			throw new InvalidParameterException("Input value must be 0 or 1.");
-
-		mMap.put(term, value != 0);
+	public final Term[] getTerms() {
+		return mMap.keySet().toArray(new Term[0]);
 	}
 
-	// @Override
-	// public boolean equals(Object object) {
-	// if (object == this)
-	// return true;
-	//
-	// return (object instanceof MoNatDiffAlphabetSymbol &&
-	// ((MoNatDiffAlphabetSymbol)object).mMap.equals(mMap));
-	// }
+	/**
+	 * Adds the given variable to this alphabet symbol.
+	 * 
+	 * @throws InvalidParameterException
+	 *             if term is not of type Int or SetOfInt.
+	 */
+	public void add(final Term term, final boolean value) {
+		if (!MoNatDiffUtils.isVariable(term))
+			throw new InvalidParameterException("Input term must be an Int or SetOfInt variable.");
 
-	/*
-	 * TODO: Comment.
+		mMap.put(term, value);
+	}
+
+	/**
+	 * Returns true if all variables of the given alphabet symbol are included in
+	 * this alphabet symbol.
 	 */
 	public boolean contains(final MoNatDiffAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Returns true if all but the excluded variables of this alphabet symbol match
+	 * the given value.
 	 */
-	public boolean allMatches(final Boolean value, final Term... excludedTerms) {
+	public boolean allMatches(final boolean value, final Term... excludedTerms) {
 		final Set<Term> excluded = new HashSet<Term>(Arrays.asList(excludedTerms));
 		final Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
 
@@ -111,23 +106,20 @@ public class MoNatDiffAlphabetSymbol {
 		return true;
 	}
 
-	/*
-	 * TODO: Comment.
+	/**
+	 * Returns a string representation of this alphabet symbol.
 	 */
 	@Override
 	public String toString() {
 		String str = new String();
 
 		if (mMap.isEmpty())
-			str += "empty";
+			return "empty";
 
-		final Iterator<Map.Entry<Term, Boolean>> it = mMap.entrySet().iterator();
-		while (it.hasNext()) {
-			final Map.Entry<Term, Boolean> entry = it.next();
-			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1" : "0");
-			str += it.hasNext() ? " " : "";
+		for (final Map.Entry<Term, Boolean> entry : mMap.entrySet()) {
+			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1 " : "0 ");
 		}
 
-		return str;
+		return str.trim();
 	}
 }

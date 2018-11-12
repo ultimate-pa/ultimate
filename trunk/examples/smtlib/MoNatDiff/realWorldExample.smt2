@@ -19,9 +19,7 @@
 ; forall x: x \in I ==> x != 7
 ;(assert (forall ((x Int)) (=> (element x I) (or (< x 7) (not (<= x 7))))))
 
-(assert (and (< x 3) false))
-
-;(assert (= x 5))
+(assert (element 9 I))
 
 (check-sat)
 (get-model)
