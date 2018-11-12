@@ -31,7 +31,10 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
@@ -40,6 +43,12 @@ import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
  */
 
 public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
+
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
+	}
 
 	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 
@@ -53,7 +62,7 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mUltimateRepository = {
 		"examples/concurrent/concurrentBoogie",
-//		"examples/programs/concurrent/pthreads",
+		"examples/concurrent/pthreads",
 	};
 
 
