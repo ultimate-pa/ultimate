@@ -365,7 +365,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			return "co relation was queried " + mUnfolding.getCoRelation().getQueryCounter() + " times.";
 		}
 
-		public int getCoRelationQueries() {
+		public long getCoRelationQueries() {
 			return mUnfolding.getCoRelation().getQueryCounter();
 		}
 
