@@ -87,7 +87,10 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
 		if (cand.isFullyInstantiated()) {
 			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-				mPe.add(new Event<>(cand.getInstantiated(), trans, mBranchingProcess));
+				final boolean somethingWasAdded = mPe.add(new Event<>(cand.getInstantiated(), trans, mBranchingProcess));
+				if (!somethingWasAdded) {
+					throw new AssertionError("Event was already in queue.");
+				}
 			}
 			return;
 		}
