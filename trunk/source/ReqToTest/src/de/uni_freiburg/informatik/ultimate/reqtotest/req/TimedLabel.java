@@ -25,4 +25,9 @@ public class TimedLabel{
 	public TermVariable getReset() {
 		return mReset;
 	}
+	
+	@Override
+	public String toString() {
+		return "Guard: " + mGuard.toString();
+	}
 }

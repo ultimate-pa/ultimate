@@ -144,7 +144,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -159,7 +159,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -175,7 +175,7 @@ public class ReqToInOut {
 			addEffectSet(S.getFreeVars());
 	
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -200,7 +200,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());	
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -215,7 +215,7 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -228,7 +228,7 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
 	}
 	
@@ -241,7 +241,7 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);;
 		}
 	}
 	
@@ -256,8 +256,18 @@ public class ReqToInOut {
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());	
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 		}
+	}
+	
+	private void scopeNotImplementedWarning(PatternType pattern) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Scope not implemented: ");
+		sb.append(pattern.getScope().toString());
+		sb.append(" [in: ");
+		sb.append(pattern.getId());
+		sb.append(" ]");
+		mLogger.warn(sb.toString());
 	}
 	
 	

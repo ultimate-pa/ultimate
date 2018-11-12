@@ -1,14 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -23,10 +19,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class CounterExampleToTest {
@@ -50,22 +47,28 @@ public class CounterExampleToTest {
 		}
 	}
 	
-	private IResult generateTestSequence(final CounterExampleResult<?, ?, ?> result){ 
+	private IResult generateTestSequence(final CounterExampleResult<?, ?, ?> result){
 		IProgramExecution<?, ?> translatedPe = mServices.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		
 		List<SystemState> systemStates = new ArrayList<>();
 		for(int i = 0; i < translatedPe.getLength(); i++) {
-			if( isTestPurposeAssertion((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i))) {
+			IElement peek = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i)).getTraceElement();
+			// retrieve system state
+			if( isTestPurposeAssertion(peek)) {
 				if (translatedPe.getProgramState(i) == null) continue;
 				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i)));
+			} 
+			// retrieve variables from all conditions fulfilled
+			if ( translatedPe.getTraceElement(i).getStepInfo().contains(StepInfo.CONDITION_EVAL_TRUE) &&
+					ReqGraphAnnotation.getAnnotation(peek) != null) {
+				mLogger.warn(ReqGraphAnnotation.getAnnotation(peek).getAnnotationsAsMap().get("label"));
 			}
 		}
 		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates);
 		return testSequence;
 	}
 	
-	private boolean isTestPurposeAssertion(final AtomicTraceElement<IElement> atomicTraceElement) {
-		IElement e = atomicTraceElement.getTraceElement();
+	private boolean isTestPurposeAssertion(final IElement e) {
 		if (e instanceof AssertStatement) {
 			NamedAttribute[] attrs = ((AssertStatement) e).getAttributes();
 			if(attrs != null && attrs.length>0) {
@@ -94,13 +97,13 @@ public class CounterExampleToTest {
 					observableState.put(e, programState.getValues(e));
 			}
 			if (e instanceof IdentifierExpression && 
-				((IdentifierExpression) e).getIdentifier().equals("delta")){
+				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
 				RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
 					i =  Double.parseDouble(ilit.getValue());
 			}
 			if (e instanceof IdentifierExpression && 
-				((IdentifierExpression) e).getIdentifier().startsWith("reqtotest_pc") && 
-				((IdentifierExpression) e).getIdentifier().endsWith("'") &&
+				((IdentifierExpression) e).getIdentifier().startsWith(GraphToBoogie.LOCATION_PREFIX) && 
+				((IdentifierExpression) e).getIdentifier().endsWith(GraphToBoogie.LOCATION_PRIME) &&
 				isLargerZero(((IdentifierExpression) e).getIdentifier(), programState)){
 				reqLocations.put(e, programState.getValues(e));
 			}

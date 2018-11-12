@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -38,15 +39,16 @@ public class SystemState extends ProgramState<Expression> {
 		return sb.toString();
 	}
 	
-	public String toString() {
+	public String toString() {	
+		Set<Expression> variables = getVariables();
 		ArrayList<String> output = new ArrayList<String>();
-		for(Expression e: getVariables()) {
+		for(Expression e: variables) {
 			if(isInput(e)) {
 				output.add(String.format("| %-60s|", formatAssignment(e, getValues(e))));
 			}
 		}	
 		int i = 0;
-		for(Expression e: getVariables()) {
+		for(Expression e: variables) {
 			if(!isInput(e)) {
 				if(i < output.size()) {
 					output.set(i, output.get(i) + (String.format(" %-60s|", formatAssignment(e, getValues(e)))));
@@ -55,6 +57,9 @@ public class SystemState extends ProgramState<Expression> {
 				}
 				i++;
 			}
+		}
+		for(; i < output.size(); i++) {
+			output.set(i, output.get(i) + "                                                            |");
 		}
 		i = 0;
 		for(Expression e: mReqLocations.keySet()) {
@@ -68,8 +73,9 @@ public class SystemState extends ProgramState<Expression> {
 		StringBuilder sb = new StringBuilder();
 		sb.append("----| Step: t ");
 		sb.append(Double.toString(mTime));
-		sb.append("|---------------------------------------------- \n");
-		sb.append(String.join("\n", output));
+		sb.append("|-------------------------------------------------------------------------------------------");
+		sb.append(System.getProperty("line.separator"));
+		sb.append(String.join(System.getProperty("line.separator") , output));
 		return  sb.toString();
 	}
 	

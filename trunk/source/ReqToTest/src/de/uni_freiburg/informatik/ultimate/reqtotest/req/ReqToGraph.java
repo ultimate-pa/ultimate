@@ -146,7 +146,7 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -196,7 +196,7 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -240,7 +240,7 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -372,7 +372,7 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -402,7 +402,7 @@ public class ReqToGraph {
 					SmtUtils.and(mScript, S, uS, ndS))));
 			return q0;
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -422,7 +422,7 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
 			return q0;
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -443,7 +443,7 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nS, dS)));
 			return q0;
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
 	}
@@ -485,9 +485,19 @@ public class ReqToGraph {
 			
 			return q0;		
 		} else {
-			mLogger.warn("Scope not implemented: " + pattern.getScope().toString());
+			scopeNotImplementedWarning(pattern);
 			return null;
 		}
+	}
+	
+	private void scopeNotImplementedWarning(PatternType pattern) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Scope not implemented: ");
+		sb.append(pattern.getScope().toString());
+		sb.append(" [in: ");
+		sb.append(pattern.getId());
+		sb.append(" ]");
+		mLogger.warn(sb.toString());
 	}
 	
 	

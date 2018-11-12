@@ -21,8 +21,7 @@ public class ThreeValuedAuxVarGen {
 	
 	private final Sort mSortBool;
 	private final Sort mSortReal;
-	
-	
+		
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
 	private final Script mScript;

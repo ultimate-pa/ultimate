@@ -151,8 +151,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 
 	@Override
 	public Term realTranslation(final RealLiteral exp) {
-		final BigDecimal bigDec = new BigDecimal(exp.getValue());
-		final Rational rat = SmtUtils.toRational(bigDec);
+		Rational rat = SmtUtils.toRational(exp.getValue());
 		return rat.toTerm(SmtSortUtils.getRealSort(mScript));
 	}
 }
