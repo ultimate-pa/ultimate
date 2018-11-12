@@ -149,10 +149,15 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			}
 
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				final int numberOfUselessCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getUselessCandidates();
+				final int numberOfCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
+						.getUsefulCandidates()
+						+ numberOfUselessCandidates;
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
 								+ " conditions, " + mUnfolding.getEvents().size() + " events, and "
-								+ mPossibleExtensions.size() + " possible extensions");
+								+ mPossibleExtensions.size() + " possible extensions. " + numberOfCandidates
+								+ " candidates were considered " + numberOfUselessCandidates + " were useless");
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}

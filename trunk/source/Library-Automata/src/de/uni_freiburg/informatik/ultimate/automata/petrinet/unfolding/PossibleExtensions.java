@@ -58,6 +58,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 	private final boolean mLazySuccessorComputation = !false;
 
+	/**
+	 * A candidate is useful if it lead to at least one new possible extension.
+	 */
+	private int mUsefulCandidates = 0;
+	private int mUselessCandidates = 0;
+
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
 		mPe = new PriorityQueue<>(order);
@@ -75,7 +81,13 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			if (candidate.getInstantiated().isEmpty()) {
 				throw new AssertionError("at least one place has to be instantiated");
 			}
+			final int possibleExtensionsBefore = mPe.size();
 			evolveCandidate(candidate);
+			if (mPe.size() > possibleExtensionsBefore) {
+				mUsefulCandidates++;
+			} else {
+				mUselessCandidates++;
+			}
 		}
 	}
 
@@ -153,4 +165,14 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	public int size() {
 		return mPe.size();
 	}
+
+	public int getUsefulCandidates() {
+		return mUsefulCandidates;
+	}
+
+	public int getUselessCandidates() {
+		return mUselessCandidates;
+	}
+
+
 }
