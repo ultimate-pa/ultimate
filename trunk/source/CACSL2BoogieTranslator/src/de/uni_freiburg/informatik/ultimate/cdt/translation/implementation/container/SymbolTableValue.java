@@ -110,7 +110,6 @@ public class SymbolTableValue {
 	 *            constant integer value (which is stored in an axiom elsewhere)
 	 */
 	public SymbolTableValue(final String bId, final Declaration boogieDecl, final CDeclaration cdecl,
-			// final boolean isGlobal,
 			final DeclarationInformation declarationInformation, final IASTNode declNode,
 			final boolean isIntFromPointer, final Expression constantValue) {
 		assert bId != null && !bId.equals(SFO.EMPTY);
@@ -219,5 +218,11 @@ public class SymbolTableValue {
 			sb.append(mBoogieName).append(" : ?");
 		}
 		return sb.toString();
+	}
+
+	public SymbolTableValue createOnHeap(final String onHeapBoogieName) {
+		final CDeclaration newCDecl = mCDecl.createOnHeap();
+		return new SymbolTableValue(onHeapBoogieName, mBoogieDecl, newCDecl, mDeclarationInformation, mDeclarationNode,
+				mIsIntFromPointer, mConstantValue);
 	}
 }

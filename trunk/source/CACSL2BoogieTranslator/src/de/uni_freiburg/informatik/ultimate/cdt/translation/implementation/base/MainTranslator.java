@@ -156,7 +156,7 @@ public class MainTranslator {
 		final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
 
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
-		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst, nameHandler);
+		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final TypeSizes typeSizes = new TypeSizes(ups, translationSettings, flatSymbolTable);
 
 		// final ExplorativeVisitor evv = executePreRun(new ExplorativeVisitor(mLogger), nodes);
@@ -166,6 +166,8 @@ public class MainTranslator {
 				executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
 
 		final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
+		// final NewPreRunner newPreRunner = executePreRun(new NewPreRunner(flatSymbolTable, functionTable,
+		// nameHandler), nodes);
 		final PreRunnerResult preRunnerResult = preRunner.getResult();
 
 		final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
@@ -202,7 +204,7 @@ public class MainTranslator {
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes prerunTypeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 
-		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst, nameHandler);
+		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
 		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);

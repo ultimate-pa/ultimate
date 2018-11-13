@@ -50,10 +50,8 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -111,14 +109,10 @@ public class FlatSymbolTable {
 	 * Maps C Declarations to Boogie Declarations
 	 */
 	private final Map<CDeclaration, Declaration> mCDeclToBoogieDecl;
-	/**
-	 * The name handler.
-	 */
-	private final INameHandler mNameHandler;
 
 	private final ILogger mLogger;
 
-	public FlatSymbolTable(final ILogger logger, final MultiparseSymbolTable mst, final INameHandler nameHandler) {
+	public FlatSymbolTable(final ILogger logger, final MultiparseSymbolTable mst) {
 		mLogger = logger;
 		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
@@ -137,7 +131,6 @@ public class FlatSymbolTable {
 			}
 			return n;
 		};
-		mNameHandler = nameHandler;
 	}
 
 	/**
@@ -172,6 +165,37 @@ public class FlatSymbolTable {
 				if (onlyInnermost) {
 					// This node represents the innermost scope but doesn't contain the ID
 					return null;
+				}
+			}
+			// Check the next level of the AST for scopes
+			cursor = cursor.getParent();
+			cursor = mCHookSkip.apply(cursor);
+		}
+		// we did not find the value
+		return null;
+	}
+
+	/**
+	 * Return the cursor on which a given symbol table value is stored. This can be used to update a symbol table value.
+	 * Returns null if the value is not present.
+	 */
+	public IASTNode tableFindCursor(final IASTNode hook, final String id, final SymbolTableValue val) {
+		IASTNode cursor = mCHookSkip.apply(hook);
+		while (cursor != null) {
+			final Map<String, SymbolTableValue> scope;
+			if (cursor instanceof IASTTranslationUnit) {
+				// This node references the global scope
+				scope = mGlobalScope;
+			} else {
+				// This node may have an associated scope
+				scope = mCTable.get(cursor);
+			}
+			if (scope != null) {
+				// we have a scope: check whether the ID is found in that scope
+				final SymbolTableValue resultCandidate = scope.get(id);
+				if (resultCandidate != null && val == resultCandidate) {
+					// This scope shadows all outer (=upper) scopes
+					return cursor;
 				}
 			}
 			// Check the next level of the AST for scopes
@@ -230,8 +254,9 @@ public class FlatSymbolTable {
 					cursor instanceof IASTCompoundStatement && !(cursor.getParent() instanceof IASTFunctionDefinition)
 							&& !(cursor.getParent() instanceof IASTForStatement);
 			if (hasImplicitScope || hasExplicitScope) {
-				if (mCScopeIDs.containsKey(cursor)) {
-					return mCScopeIDs.get(cursor);
+				final Integer counter = mCScopeIDs.get(cursor);
+				if (counter != null) {
+					return counter;
 				}
 				mScopeCounter++;
 				mCScopeIDs.put(cursor, mScopeCounter);
@@ -259,6 +284,10 @@ public class FlatSymbolTable {
 		while (cursor != null) {
 			if (cursor instanceof IASTTranslationUnit) {
 				mGlobalScope.put(id, val);
+				if (DEBUG_ENABLE_STORE_LOGGING) {
+					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s", CoreUtil.getCallerSignature(4),
+							cursor.getClass().getSimpleName(), id, val));
+				}
 				break;
 			}
 			if (cursor instanceof IASTCompositeTypeSpecifier) {
@@ -279,7 +308,7 @@ public class FlatSymbolTable {
 					mCTable.put(cursor, scopeTable);
 				}
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: %s to %s", CoreUtil.getCallerSignature(4),
+					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s", CoreUtil.getCallerSignature(4),
 							cursor.getClass().getSimpleName(), id, val));
 				}
 				scopeTable.put(id, val);
@@ -302,6 +331,44 @@ public class FlatSymbolTable {
 		tableStore(hook, id, val);
 		mBoogieIdToCId.put(val.getBoogieName(), id);
 		mCDeclToBoogieDecl.put(val.getCDecl(), val.getBoogieDecl());
+	}
+
+	/**
+	 * Update an existing symbol table value with a new one.
+	 */
+	public void updateCSymbolFromOccurence(final IASTNode hook, final String id, final SymbolTableValue oldVal,
+			final SymbolTableValue newVal) {
+		final IASTNode cursor = tableFindCursor(hook, id, oldVal);
+		updateCSymbolFromCursor(cursor, id, oldVal, newVal);
+	}
+
+	/**
+	 * Update an existing symbol table value with a new one. The cursor must be exactly the location of the symbol.
+	 */
+	public void updateCSymbolFromCursor(final IASTNode cursor, final String id, final SymbolTableValue oldVal,
+			final SymbolTableValue newVal) {
+		if (cursor != null) {
+			final Map<String, SymbolTableValue> scope;
+			if (cursor instanceof IASTTranslationUnit) {
+				scope = mGlobalScope;
+			} else {
+				scope = mCTable.get(cursor);
+			}
+			if (scope != null) {
+				if (DEBUG_ENABLE_STORE_LOGGING) {
+					mLogger.info(String.format("%-50.50s[%-25.25s]: Updating %s from %s to %s",
+							CoreUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, oldVal, newVal));
+				}
+				scope.put(id, newVal);
+				mBoogieIdToCId.remove(oldVal.getBoogieName());
+				mBoogieIdToCId.put(newVal.getBoogieName(), id);
+				mCDeclToBoogieDecl.remove(oldVal.getCDecl());
+				mCDeclToBoogieDecl.put(newVal.getCDecl(), newVal.getBoogieDecl());
+				return;
+			}
+		}
+		throw new IllegalArgumentException(
+				"The old symbol table value could not be found in the table with the given cursor: " + cursor);
 	}
 
 	/**
@@ -399,26 +466,6 @@ public class FlatSymbolTable {
 	 */
 	public Map<String, String> getBoogieCIdentifierMapping() {
 		return Collections.unmodifiableMap(mBoogieIdToCId);
-	}
-
-	/**
-	 * Creates a boogie identifier.
-	 *
-	 * @param scope
-	 *            where the identifier is used
-	 * @param scopeHook
-	 *            where the identifier belongs to
-	 * @param type
-	 *            the type of the thing
-	 * @param onHeap
-	 *            whether the thing is on the heap
-	 * @param cName
-	 *            the original identifier in C
-	 * @return the identifier
-	 */
-	public String createBoogieId(final IASTNode scope, final IASTNode scopeHook, final CType type, final boolean onHeap,
-			final String cName) {
-		return mNameHandler.getUniqueIdentifier(scope, cName, getCScopeId(scopeHook), onHeap, type);
 	}
 
 	private static boolean hasOwnScope(final IASTNode node) {
