@@ -115,6 +115,7 @@ public class PreRunner extends ASTVisitor {
 	 * Constructor.
 	 */
 	public PreRunner(final FlatSymbolTable symTab, final Map<String, IASTNode> functionTable) {
+		super();
 		shouldVisitDeclarations = true;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitExpressions = true;
@@ -185,14 +186,13 @@ public class PreRunner extends ASTVisitor {
 
 				mIsMMRequired = true;
 				if (id != null) {
+					// Rename the ID according to multiparse rules
 					final String rslvId = mSymTab.applyMultiparseRenaming(expression.getContainingFilename(), id);
 					final IASTNode function = mFunctionTable.get(rslvId);
-					if (function != null && mTemporarySymbolTable.get(rslvId) == null) { // id is the name of a function
-																							// and
-																							// not shadowed here
-						// Rename the ID according to multiparse rules
+					if (function != null && mTemporarySymbolTable.get(rslvId) == null) {
+						// id is the name of a function
+						// and not shadowed here
 						updateFunctionPointers(rslvId, function);
-						// functionPointers.put(id, function);
 						updateFunctionToIndex(rslvId);
 					} else {
 						mVariablesOnHeap.add(get(rslvId, loc));
