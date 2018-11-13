@@ -72,7 +72,8 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 	private static final int TIMEOUT = 60 * 1_000;
 	private static final String[] DIRECTORIES = {
 			"examples/Automata/PetriNet",
-			"examples/Automata/regression/pn"
+			"examples/Automata/regression/pn",
+			"examples/Automata/benchmarks/pn",
 	};
 
 	private static final String[] FILE_ENDINGS = { ".ats" };
@@ -91,6 +92,9 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			StatisticsType.NUMBER_CO_RELATION_QUERIES.toString(),
 			StatisticsType.NUMBER_CUT_OFF_EVENTS.toString(),
 			StatisticsType.NUMBER_NON_CUT_OFF_EVENTS.toString(),
+			StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS.toString(),
+			StatisticsType.EXTENSION_CANDIDATES_TOTAL.toString(),
+			StatisticsType.EXTENSION_CANDIDATES_USELESS.toString(),
 	};
 
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
