@@ -64,7 +64,7 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		final GuardGraph setAutomaton = AuxGraphOperations.makePowerSetAutomaton(automata, mScript);
 		
 		// TODO remove this; just for debug
-		mLogger.warn(AuxGraphOperations.makeStringInterpretation(setAutomaton));
+		mLogger.warn(setAutomaton);
 		/*
 		for (GuardGraph automaton : automata ) {
 			mLogger.warn(AuxGraphOperations.makeStringInterpretation(automaton));

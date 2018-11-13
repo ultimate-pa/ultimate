@@ -9,28 +9,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public class AuxGraphOperations {
 
-	public static String makeStringInterpretation(GuardGraph automaton) {
-		String autRepr = "";
-		String autStates = "";
-		String autEdges = "";
-		final List<GuardGraph> nodes = automaton.getOutgoingNodes();
-		autRepr += "Automaton has Nodes: ";
 
-		for (GuardGraph node : nodes) {
-			for (GuardGraph node2 : nodes) {
-				if (!(node.getOutgoingEdgeLabel(node2) == null)) {
-					autEdges += "Node: " + node.getLabel() + " transitions to node: " +
-							node2.getLabel() + " with edge label: " +
-							node.getOutgoingEdgeLabel(node2).toString();
-				}
-				autEdges += "\n";
-			}
-			autStates += node.getLabel() + " ";
-		}
-		autRepr += autStates + "\n" + autEdges;
-
-		return autRepr;
-	}
 
 	public static GuardGraph makePowerSetAutomaton(List<GuardGraph> automata, Script mScript) {
 		// take first automaton from list
@@ -61,6 +40,7 @@ public class AuxGraphOperations {
 	private static int findTheNode(int idNode1, int idNode2, int sizeOfB) {
 		return idNode1 * sizeOfB + idNode2;
 	}
+	
 	private static GuardGraph makeProductOfTwoAutomata(GuardGraph auto1, GuardGraph auto2, Script mScript) {
 
 		final List<GuardGraph> auto1Nodes = auto1.getOutgoingNodes();
@@ -86,7 +66,7 @@ public class AuxGraphOperations {
 		Term Y;
 		for (GuardGraph v : auto1Nodes) {
 			for(GuardGraph vl : auto1Nodes) {
-				if (!(v.getOutgoingEdgeLabel(vl) == null)) {
+				if (v.getOutgoingEdgeLabel(vl) != null) {
 					// take the term, now we have (v, X, v')
 					X = v.getOutgoingEdgeLabel(vl);
 					// TODO this does not work... throws exception array index out of range
