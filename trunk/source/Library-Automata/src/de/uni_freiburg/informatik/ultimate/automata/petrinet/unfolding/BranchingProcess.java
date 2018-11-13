@@ -101,8 +101,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	public Event<LETTER, PLACE> getDummyRoot() {
 		return mDummyRoot;
 	}
-	
-	public Condition<LETTER, PLACE> constructCondition(Event<LETTER, PLACE> predecessor, PLACE place) {
+
+	public Condition<LETTER, PLACE> constructCondition(final Event<LETTER, PLACE> predecessor, final PLACE place) {
 		return new Condition<LETTER, PLACE>(predecessor, place, mConditionSerialnumberCounter++);
 	}
 
@@ -119,6 +119,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	boolean addEvent(final Event<LETTER, PLACE> event) {
 		mEvents.add(event);
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
+			assert !c.getPredecessorEvent().isCutoffEvent() : "Cut-off events must not have successors.";
 			c.addSuccesssor(event);
 		}
 		boolean someSuccessorIsAccepting = false;
