@@ -928,10 +928,7 @@ public class Interpolator extends NonRecursive {
 					if (unquoted instanceof AnnotatedTerm) {
 						unquoted = ((AnnotatedTerm) unquoted).getSubterm();
 					}
-					final HashSet<Term> subTerms = getSubTerms(unquoted);
-					for (final Term sub : subTerms) {
-						addOccurrence(sub, partition);
-					}
+					addOccurrence(unquoted, partition);
 				}
 			}
 		}
@@ -965,19 +962,26 @@ public class Interpolator extends NonRecursive {
 			/* Constant terms are always implicitly shared. */
 			return;
 		}
-		final Occurrence occ = getOccurrence(term);
-		if (occ.contains(part)) {
+		Occurrence occ = mSymbolPartition.get(term);
+		if (occ != null && occ.contains(part)) {
 			/* Already colored correctly */
 			return;
 		}
-		occ.occursIn(part);
 		/* Recursively color subterms */
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm at = (ApplicationTerm) term;
 			for (final Term p : at.getParameters()) {
 				addOccurrence(p, part);
 			}
+			if (at.getFunction().isIntern()) {
+				return;
+			}
 		}
+		/* Create occurrence if it is *not* an internal function and if it does not exists yet */
+		if (occ == null) {
+			occ = getOccurrence(term);
+		}
+		occ.occursIn(part);
 	}
 
 	HashSet<Term> getSubTerms(final Term literal) {
