@@ -185,6 +185,9 @@ public final class SFO {
 	public static final String MEMCPY_SIZE = "size";
 	public static final String MEMCPY = "#memcpy";
 
+	public static final String STRCPY_DEST = "dest";
+	public static final String STRCPY_SRC = "src";
+
 	public static final String TO_INT = "#to_int";
 	public static final String MEMSET = "ULTIMATE.memset";
 
@@ -204,6 +207,8 @@ public final class SFO {
 
 	public static final String C_MEMSET = "#Ultimate.C_memset";
 
+	public static final String C_STRCPY = "#Ultimate.C_strcpy";
+
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
 
 
@@ -212,9 +217,15 @@ public final class SFO {
 	 */
 	public enum AUXVAR {
 		/**
-		 * variable used for a loop that we introduce through the translatino
+		 * variable used for a loop that we introduce through the translation
 		 */
 		LOOPCTR("loopctr"),
+
+		/**
+		 * variable used for an increasing address offset in a loop that we introduce through the translation
+		 */
+		OFFSET("offset"),
+
 
 		/**
 		 * Auxiliary variable used to store the result of a call of a function pointer.
@@ -318,17 +329,23 @@ public final class SFO {
 		/**
 		 * Auxiliary variable used for the result of a call to the 'builtin' memcpy function
 		 */
-		MEMCPYRES("memcpy"),
+		MEMCPYRES("memcpy~res"),
 
 		/**
 		 * Auxiliary variable used for the result of a call to the 'builtin' memmove function
 		 */
-		MEMMOVERES("memmove"),
+		MEMMOVERES("memmove~res"),
 
 		/**
 		 * Auxiliary variable used for the result of a call to the 'builtin' memset function
 		 */
-		MEMSETRES("memset"),
+		MEMSETRES("memset~res"),
+
+		/**
+		 * Auxiliary variable used for the result of a call to the 'builtin' memset function
+		 */
+		STRCPYRES("strcpy~res"),
+
 
 		/**
 		 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used
