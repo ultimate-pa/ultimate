@@ -139,8 +139,4 @@ public class BuchiGraph {
 			return null;
 		}
 	}
-	
-	public GuardGraph makePowerSetAutomaton(List<GuardGraph> automata) {
-		return AuxGraphOperations.makePowerSetAutomaton(automata, mScript);
-	}
 }
