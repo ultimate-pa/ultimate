@@ -149,15 +149,16 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			}
 
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final int numberOfUselessCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getUselessCandidates();
-				final int numberOfCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
-						.getUsefulCandidates()
-						+ numberOfUselessCandidates;
+				final int numberOfUselessExtensionCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
+						.getUselessExtensionCandidates();
+				final int numberOfExtensionsCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
+						.getUsefulExtensionCandidates() + numberOfUselessExtensionCandidates;
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
 								+ " conditions, " + mUnfolding.getEvents().size() + " events, and "
-								+ mPossibleExtensions.size() + " possible extensions. " + numberOfCandidates
-								+ " candidates were considered " + numberOfUselessCandidates + " were useless");
+								+ mPossibleExtensions.size() + " possible extensions. " + numberOfExtensionsCandidates
+								+ " extension candidates were considered " + numberOfUselessExtensionCandidates
+								+ " were useless");
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
@@ -393,5 +394,15 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			final long reachableTransitions = RemoveUnreachable.reachableTransitions(mUnfolding).size();
 			return transitionsInNet - reachableTransitions;
 		}
+
+		public int getNumberOfUselessExtensionCandidates() {
+			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getUselessExtensionCandidates();
+		}
+
+		public int getNumberOfExtensionCandidates() {
+			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
+					.getUsefulExtensionCandidates() + getNumberOfUselessExtensionCandidates();
+		}
+
 	}
 }

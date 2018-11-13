@@ -61,8 +61,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
 	 */
-	private int mUsefulCandidates = 0;
-	private int mUselessCandidates = 0;
+	private int mUsefulExtensionCandidates = 0;
+	private int mUselessExtensionCandidates = 0;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
@@ -84,9 +84,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final int possibleExtensionsBefore = mPe.size();
 			evolveCandidate(candidate);
 			if (mPe.size() > possibleExtensionsBefore) {
-				mUsefulCandidates++;
+				mUsefulExtensionCandidates++;
 			} else {
-				mUselessCandidates++;
+				mUselessExtensionCandidates++;
 			}
 		}
 	}
@@ -166,12 +166,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		return mPe.size();
 	}
 
-	public int getUsefulCandidates() {
-		return mUsefulCandidates;
+	public int getUsefulExtensionCandidates() {
+		return mUsefulExtensionCandidates;
 	}
 
-	public int getUselessCandidates() {
-		return mUselessCandidates;
+	public int getUselessExtensionCandidates() {
+		return mUselessExtensionCandidates;
 	}
 
 

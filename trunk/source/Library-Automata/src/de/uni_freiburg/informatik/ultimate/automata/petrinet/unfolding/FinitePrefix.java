@@ -57,9 +57,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			throws AutomataOperationCanceledException {
 		this(services, operand, false);
 	}
-	
+
 	public FinitePrefix(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, STATE> operand,
-			boolean sameTransitionCutOff) throws AutomataOperationCanceledException {
+			final boolean sameTransitionCutOff) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -97,13 +97,18 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 
 		final int numberConditions = new NumberOfConditions<>(mServices, getResult()).getResult();
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CONDITIONS, numberConditions);
-		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES, mUnfoldingStatistics.getCoRelationQueries());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES,
+				mUnfoldingStatistics.getCoRelationQueries());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
 		if (mOperand instanceof IPetriNet) {
-			statistics.addKeyValuePair(
-					StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS, mUnfoldingStatistics.unreachableTransitionsInOperand());
+			statistics.addKeyValuePair(StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS,
+					mUnfoldingStatistics.unreachableTransitionsInOperand());
 		}
+		statistics.addKeyValuePair(StatisticsType.EXTENSION_CANDIDATES_TOTAL,
+				mUnfoldingStatistics.getNumberOfExtensionCandidates());
+		statistics.addKeyValuePair(StatisticsType.EXTENSION_CANDIDATES_USELESS,
+				mUnfoldingStatistics.getNumberOfUselessExtensionCandidates());
 
 		return statistics;
 	}

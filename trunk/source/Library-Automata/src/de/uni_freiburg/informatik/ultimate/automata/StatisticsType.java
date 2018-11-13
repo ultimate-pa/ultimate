@@ -155,6 +155,17 @@ public enum StatisticsType {
 	 */
 	DETERMINIZED_GAME_AUTOMATON_STATES,
 	/**
+	 * Number of transitions for which we checked if there are corresponding events
+	 * that have to be added to the possible extensions.
+	 */
+	EXTENSION_CANDIDATES_TOTAL,
+	/**
+	 * Number of transitions for which we checked if there are corresponding events
+	 * that have to be added to the possible extensions, but we could not find such
+	 * an event.
+	 */
+	EXTENSION_CANDIDATES_USELESS,
+	/**
 	 * Amount of merge attempts that where aborted (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
 	 */
