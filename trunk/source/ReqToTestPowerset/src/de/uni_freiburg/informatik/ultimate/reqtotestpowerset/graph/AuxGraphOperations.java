@@ -81,30 +81,44 @@ public class AuxGraphOperations {
 		 *  Startnode = vw   also (findTheNode(v, w, sizeOf(V2))
 		 *  Endnode = v'w'   also (findTheNode(v', w', sizeOf(V2))
 		 */
+		Term conjTerm;
+		Term X;
+		Term Y;
 		for (GuardGraph v : auto1Nodes) {
 			for(GuardGraph vl : auto1Nodes) {
 				if (!(v.getOutgoingEdgeLabel(vl) == null)) {
 					// take the term, now we have (v, X, v')
-					Term X = v.getOutgoingEdgeLabel(vl);
+					X = v.getOutgoingEdgeLabel(vl);
+					// TODO this does not work... throws exception array index out of range
+					/* possible optimization, skip edges with the label false
+					if (SmtUtils.isFalse(X)) {
+						continue;
+					}
+					*/
+					
 					// now for the second term and tuple
 					for (GuardGraph w : auto2Nodes) {
 						for (GuardGraph wl : auto2Nodes) {
 							if (!(w.getOutgoingEdgeLabel(wl) == null)) {
 								// take the term, now we have (w, Y, w')
-								Term Y = w.getOutgoingEdgeLabel(wl);
-								
+								Y = w.getOutgoingEdgeLabel(wl);
+								// TODO test this
+								// possible optimization, skip edges with the label false
+								/*if (SmtUtils.isFalse(Y)) {
+									continue;
+								}*/
 								int fromIndex = findTheNode(v.getLabel(), w.getLabel(), auto2Nodes.size());
 								int toIndex = findTheNode(vl.getLabel(), wl.getLabel(), auto2Nodes.size());
-								Term conjTerm = SmtUtils.and(mScript, X, Y);
+								conjTerm = SmtUtils.and(mScript, X, Y);
 								
 								newStates.get(fromIndex).connectOutgoing(newStates.get(toIndex), conjTerm);
 							} else {
-								// TODO warn a brother that the edge is null
+								// TODO that the edge is null
 							}
 						}
 					}
 				} else {
-					// TODO warn a brother that the edge is null
+					// TODO warn that the edge is null
 				}
 			}
 		}
