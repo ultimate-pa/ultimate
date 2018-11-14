@@ -121,6 +121,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -1015,7 +1016,7 @@ public class CHandler {
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		final boolean isOnHeap = mIsPrerun ? false : mVariablesOnHeap.contains(node);
+		final boolean isOnHeap = isOnHeap(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
@@ -1176,6 +1177,23 @@ public class CHandler {
 		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(cType, declName, node.getInitializer(),
 				null, isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
+	}
+
+	private boolean isOnHeap(final IASTDeclarator node) {
+		if (mIsPrerun) {
+			return false;
+		}
+		if (mVariablesOnHeap.contains(node)) {
+			return true;
+		}
+		final IBinding binding = node.getName().resolveBinding();
+		if (binding instanceof CVariable) {
+			final IASTNode def = ((CVariable) binding).getDefinition();
+			if (def != null) {
+				return mVariablesOnHeap.contains(def.getParent());
+			}
+		}
+		return false;
 	}
 
 	/**
