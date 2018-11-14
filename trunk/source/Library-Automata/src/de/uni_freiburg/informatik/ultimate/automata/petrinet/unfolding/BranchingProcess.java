@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -75,8 +76,14 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
 	private final IOrder<LETTER, PLACE> mOrder;
-	
+
 	private int mConditionSerialnumberCounter = 0;
+
+	/**
+	 * Relation between the hashcode of {@link Event} {@link Marking}s and Events.
+	 * Hashcode is the key, allows us to check find cut-off events more quickly.
+	 */
+	private final HashRelation<Integer, Event<LETTER, PLACE>> mMarkingEventRelation = new HashRelation<>();
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final IOrder<LETTER, PLACE> order) {
@@ -118,6 +125,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	boolean addEvent(final Event<LETTER, PLACE> event) {
 		mEvents.add(event);
+		mMarkingEventRelation.addPair(event.getMark().hashCode(), event);
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
 			assert !c.getPredecessorEvent().isCutoffEvent() : "Cut-off events must not have successors.";
 			c.addSuccesssor(event);
@@ -163,8 +171,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	public boolean isCutoffEvent(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
 			final boolean sameTransitionCutOff) {
-		// TODO possibly optimize
-		for (final Event<LETTER, PLACE> ev : getEvents()) {
+		for (final Event<LETTER, PLACE> ev : mMarkingEventRelation.getImage(event.getMark().hashCode())) {
 			if (event.checkCutOffSetCompanion(ev, order, sameTransitionCutOff)) {
 				return true;
 			}
