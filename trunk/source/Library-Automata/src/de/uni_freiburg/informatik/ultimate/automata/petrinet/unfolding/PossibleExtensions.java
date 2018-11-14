@@ -128,10 +128,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			// equality intended here
 			assert c.getPlace().equals(p);
 			assert !cand.getInstantiated().contains(c);
-			if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {
-				cand.instantiateNext(c);
-				evolveCandidate(cand);
-				cand.undoOneInstantiation();
+			if (!c.getPredecessorEvent().isCutoffEvent()) {
+				if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {
+					cand.instantiateNext(c);
+					evolveCandidate(cand);
+					cand.undoOneInstantiation();
+				}
 			}
 		}
 	}

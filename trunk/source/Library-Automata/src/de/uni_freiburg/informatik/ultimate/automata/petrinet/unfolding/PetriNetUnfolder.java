@@ -165,9 +165,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	}
 
 	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) {
-		if (parentIsCutoffEvent(event)) {
-			return false;
-		}
+		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
 		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
 		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
 		if (succOfEventIsAccpting && mRun == null) {
