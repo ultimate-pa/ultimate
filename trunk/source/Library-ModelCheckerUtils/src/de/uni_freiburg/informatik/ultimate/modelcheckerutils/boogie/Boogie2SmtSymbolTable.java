@@ -35,7 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -57,22 +56,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtFunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtFunctionDefinition.IllegalSmtFunctionUsageException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -343,7 +339,7 @@ public class Boogie2SmtSymbolTable
 		} else {
 			smtID = attributeDefinedIdentifier;
 			if (smtDefinedBody != null) {
-				throw new IllegalSmtDefinedUsageException(
+				throw new IllegalSmtFunctionUsageException(
 						id + " has " + ID_SMTDEFINED + " and " + ID_BUILTIN + " attributes");
 			}
 		}
@@ -377,41 +373,8 @@ public class Boogie2SmtSymbolTable
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			final SmtFunctionDefinition smtFunctionDefinition;
-			if (smtDefinedBody == null) {
-				smtFunctionDefinition = new SmtFunctionDefinition(smtID, paramSorts, resultSort);
-			} else {
-				// this is rather hacky, but seems to work: we quantify the smt body so that we do not have to create
-				// new symbols, and then use the body of the term together with the params we created in the actual
-				// function declaration.
-
-				Term parseResult;
-				if (paramIds.length > 0){
-					final StringBuilder sb = new StringBuilder();
-					sb.append("(forall (");
-					for (int i = 0; i < paramIds.length; ++i) {
-						sb.append("(");
-						sb.append(paramIds[i]);
-						sb.append(" ");
-						sb.append(paramSorts[i]);
-						sb.append(")");
-					}
-					sb.append(") ");
-					sb.append(smtDefinedBody);
-					sb.append(")");
-
-					final QuantifiedFormula term =
-						(QuantifiedFormula) TermParseUtils.parseTerm(mScript.getScript(), sb.toString());
-					parseResult = term.getSubformula();
-				} else {
-					// paramIds.length == 0
-					parseResult = TermParseUtils.parseTerm(mScript.getScript(), smtDefinedBody);
-				}
-
-				smtFunctionDefinition =
-						new SmtFunctionDefinition(smtID, paramIds, paramSorts, resultSort, parseResult);
-
-			}
+			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition.create(mScript.getScript(), smtID,
+					smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclareFunction(mScript.getScript());
 			mSmtFunction2SmtFunctionDefinition.put(smtID, smtFunctionDefinition);
 
@@ -805,89 +768,4 @@ public class Boogie2SmtSymbolTable
 	private static <V, T, K1, K2> Stream<T> getAll(final Map<K1, Map<K2, V>> map, final Function<V, T> fun) {
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
 	}
-
-	/**
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	private static final class IllegalSmtDefinedUsageException extends RuntimeException {
-
-		private static final long serialVersionUID = 1L;
-
-		public IllegalSmtDefinedUsageException(final String msg) {
-			super(msg);
-		}
-	}
-
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	public static final class SmtFunctionDefinition {
-
-		private final String mId;
-		private final String[] mParamIds;
-		private final Sort[] mParamSorts;
-		private final Sort mResultSort;
-		private final Term mDefinition;
-
-		/**
-		 * Define a SMT function without body.
-		 */
-		public SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
-			mId = Objects.requireNonNull(smtID);
-			mParamSorts = Objects.requireNonNull(paramSorts);
-			mResultSort = Objects.requireNonNull(resultSort);
-			mParamIds = null;
-			mDefinition = null;
-		}
-
-		/**
-		 * Define a SMT function with body.
-		 */
-		public SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
-				final Sort resultSort, final Term subformula) {
-			mId = Objects.requireNonNull(smtID);
-			mParamSorts = Objects.requireNonNull(paramSorts);
-			mResultSort = Objects.requireNonNull(resultSort);
-			mParamIds = Objects.requireNonNull(paramIds);
-			mDefinition = Objects.requireNonNull(subformula);
-		}
-
-		public void defineOrDeclareFunction(final Script script, final TermTransferrer tt) {
-			final Sort[] newParamSorts = tt.transferSorts(mParamSorts);
-			final Sort newResultSort = tt.transferSort(mResultSort);
-			final SmtFunctionDefinition newFunDef;
-			if (mDefinition != null) {
-				final Term newDefinition = tt.transform(mDefinition);
-				newFunDef = new SmtFunctionDefinition(mId, mParamIds, newParamSorts, newResultSort, newDefinition);
-			} else {
-				newFunDef = new SmtFunctionDefinition(mId, newParamSorts, newResultSort);
-			}
-			newFunDef.defineOrDeclareFunction(script);
-		}
-
-		public void defineOrDeclareFunction(final Script script) {
-			if (mDefinition == null) {
-				script.declareFun(mId, mParamSorts, mResultSort);
-			} else {
-				final TermVariable[] params = new TermVariable[mParamSorts.length];
-				for (int i = 0; i < mParamSorts.length; ++i) {
-					if (mParamIds[i] == null) {
-						throw new IllegalSmtDefinedUsageException(
-								"Unnamed parameter in function declaration together with " + ID_SMTDEFINED
-										+ " attribute");
-					}
-					params[i] = script.variable(mParamIds[i], mParamSorts[i]);
-				}
-				script.defineFun(mId, params, mResultSort, mDefinition);
-			}
-		}
-
-		public Term getDefinition() {
-			return mDefinition;
-		}
-
-	}
-
 }

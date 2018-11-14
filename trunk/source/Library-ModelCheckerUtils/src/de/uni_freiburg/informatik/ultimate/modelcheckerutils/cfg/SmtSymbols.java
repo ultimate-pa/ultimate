@@ -28,15 +28,19 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable.SmtFunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -102,6 +106,19 @@ public class SmtSymbols {
 	}
 
 	/**
+	 * Create a new {@link SmtSymbols} instance with an additional function declaration.
+	 *
+	 * Also define the function in the supplied script.
+	 *
+	 */
+	public SmtSymbols addFunction(final Script script, final SmtFunctionDefinition additionalFunction) {
+		final Map<String, SmtFunctionDefinition> map = new LinkedHashMap<>(mSmtFunctions2SmtFunctionDefinitions);
+		map.put(additionalFunction.getName(), additionalFunction);
+		additionalFunction.defineOrDeclareFunction(script);
+		return new SmtSymbols(mAxioms, map);
+	}
+
+	/**
 	 * Define all symbols defined by this SmtSymbols in a fresh script (by asserting or defining)
 	 *
 	 * @param script
@@ -130,8 +147,65 @@ public class SmtSymbols {
 		}
 	}
 
+	/**
+	 * Replace all function applications of the supplied term that are contained in this {@link SmtSymbols} instance
+	 * with their bodies.
+	 *
+	 * TODO: Also inline axioms.
+	 */
+	public Term inline(final Script script, final Term term) {
+		return new SmtFunctionInliner().inline(script, term);
+	}
+
 	public IPredicate getAxioms() {
 		return mAxioms;
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private class SmtFunctionInliner extends TermTransformer {
+
+		private Script mScript;
+
+		public Term inline(final Script script, final Term term) {
+			mScript = script;
+			return transform(term);
+		}
+
+		@Override
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+			final String funName = appTerm.getFunction().getName();
+			final SmtFunctionDefinition decl = mSmtFunctions2SmtFunctionDefinitions.get(funName);
+			if (decl == null) {
+				super.convertApplicationTerm(appTerm, newArgs);
+				return;
+			}
+			final Term body = decl.getDefinition();
+			if (body == null) {
+				super.convertApplicationTerm(appTerm, newArgs);
+				return;
+			}
+			if (appTerm.getParameters().length == 0) {
+				setResult(body);
+				return;
+			}
+
+			final Term[] paramVars = decl.getParamVars();
+			assert newArgs.length == paramVars.length;
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (int i = 0; i < paramVars.length; ++i) {
+				final Term paramVar = paramVars[i];
+				if (paramVar == null) {
+					// this var does not occur in the body
+					continue;
+				}
+				substitutionMapping.put(paramVar, newArgs[i]);
+			}
+			setResult(new Substitution(mScript, substitutionMapping).transform(body));
+		}
 	}
 
 }

@@ -192,6 +192,7 @@ public class Statements2TransFormula {
 		} else {
 			formula = mAssumes;
 		}
+		formula = mBoogie2SMT.getSmtSymbols().inline(mScript, formula);
 		formula = eliminateAuxVars(formula, mAuxVars);
 
 		Infeasibility infeasibility = null;
@@ -217,7 +218,6 @@ public class Statements2TransFormula {
 				} else {
 					infeasibility = Infeasibility.UNPROVEABLE;
 				}
-
 			}
 		}
 
