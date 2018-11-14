@@ -1110,7 +1110,7 @@ public class InitializationHandler {
 				 * has entries, but they are not needed and may be removed in the future) The result we return here will
 				 * only contain the RValue.
 				 */
-				final StringLiteralResult exprResult = (StringLiteralResult) convertInitResultWithExpressionResult(loc,
+				final ExpressionResult exprResult = convertInitResultWithExpressionResult(loc,
 						targetCType, initializerResult, hook);
 
 				assert exprResult.getDeclarations().isEmpty() : "the declarations necessary for a StringLiteral "
