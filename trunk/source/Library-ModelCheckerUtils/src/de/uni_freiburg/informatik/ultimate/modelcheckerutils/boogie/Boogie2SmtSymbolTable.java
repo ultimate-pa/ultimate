@@ -384,23 +384,32 @@ public class Boogie2SmtSymbolTable
 				// this is rather hacky, but seems to work: we quantify the smt body so that we do not have to create
 				// new symbols, and then use the body of the term together with the params we created in the actual
 				// function declaration.
-				final StringBuilder sb = new StringBuilder();
-				sb.append("(forall (");
-				for (int i = 0; i < paramIds.length; ++i) {
-					sb.append("(");
-					sb.append(paramIds[i]);
-					sb.append(" ");
-					sb.append(paramSorts[i]);
-					sb.append(")");
-				}
-				sb.append(") ");
-				sb.append(smtDefinedBody);
-				sb.append(")");
 
-				final QuantifiedFormula term =
+				Term parseResult;
+				if (paramIds.length > 0){
+					final StringBuilder sb = new StringBuilder();
+					sb.append("(forall (");
+					for (int i = 0; i < paramIds.length; ++i) {
+						sb.append("(");
+						sb.append(paramIds[i]);
+						sb.append(" ");
+						sb.append(paramSorts[i]);
+						sb.append(")");
+					}
+					sb.append(") ");
+					sb.append(smtDefinedBody);
+					sb.append(")");
+
+					final QuantifiedFormula term =
 						(QuantifiedFormula) TermParseUtils.parseTerm(mScript.getScript(), sb.toString());
+					parseResult = term.getSubformula();
+				} else {
+					// paramIds.length == 0
+					parseResult = TermParseUtils.parseTerm(mScript.getScript(), smtDefinedBody);
+				}
+
 				smtFunctionDefinition =
-						new SmtFunctionDefinition(smtID, paramIds, paramSorts, resultSort, term.getSubformula());
+						new SmtFunctionDefinition(smtID, paramIds, paramSorts, resultSort, parseResult);
 
 			}
 			smtFunctionDefinition.defineOrDeclareFunction(mScript.getScript());
