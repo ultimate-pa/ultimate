@@ -176,8 +176,9 @@ public class PreRunner extends ASTVisitor {
 			// final ILocation loc = LocationFactory.createCLocation(expression);
 			final ILocation loc = LocationFactory.createIgnoreCLocation(expression);
 			final IASTUnaryExpression ue = (IASTUnaryExpression) expression;
-			if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on
-																	// the heap
+			if (ue.getOperator() == IASTUnaryExpression.op_amper) {
+				// every variable that is addressoffed has to be on
+				// the heap
 				final IASTNode operand = ue.getOperand();
 				// add the operand to VariablesOnHeap!
 				String id = null;
@@ -223,7 +224,6 @@ public class PreRunner extends ASTVisitor {
 			// if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
 			if (d instanceof IASTArrayDeclarator && expression.getParent() instanceof IASTFunctionCallExpression) {
 				mVariablesOnHeap.add(d);
-
 			}
 		} else if (expression instanceof IASTFieldReference) {
 			// TODO
