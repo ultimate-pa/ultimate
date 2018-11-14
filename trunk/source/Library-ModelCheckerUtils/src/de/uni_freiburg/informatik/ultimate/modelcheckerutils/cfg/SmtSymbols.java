@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
+ * {@link SmtSymbols} contains axioms and SMT function symbols created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -61,12 +62,21 @@ public class SmtSymbols {
 		this(script.term("true"), new String[0], Collections.emptyMap());
 	}
 
+	/**
+	 * Create a {@link SmtSymbols} instance with axioms defined in a single term together with the procedures in which
+	 * they were defined (if any), and a map from defined function names to {@link SmtFunctionDefinition} instances were
+	 * each entry represents a defined SMT function.
+	 */
 	public SmtSymbols(final Term axioms, final String[] defininingProcedures,
 			final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
 				axioms), smtFun2SmtFunDef);
 	}
 
+	/**
+	 * Create a {@link SmtSymbols} instance with axioms defined by an {@link IPredicate} and a map from defined function
+	 * names to {@link SmtFunctionDefinition} instances were each entry represents a defined SMT function.
+	 */
 	public SmtSymbols(final IPredicate axioms, final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
 		mAxioms = Objects.requireNonNull(axioms);
 		mSmtFunctions2SmtFunctionDefinitions = Objects.requireNonNull(smtFun2SmtFunDef);
@@ -76,18 +86,26 @@ public class SmtSymbols {
 
 	}
 
+	/**
+	 * Create a new {@link SmtSymbols} instance with an additional axiom without corresponding procedure.
+	 *
+	 * Also asserts the new axiom in the supplied script.
+	 *
+	 */
 	public SmtSymbols addAxiom(final Script script, final Term additionalAxioms) {
 		final Term newAxioms = SmtUtils.and(script, mAxioms.getClosedFormula(), additionalAxioms);
+		final LBool quickCheckAxioms = script.assertTerm(additionalAxioms);
+		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
 				additionalAxioms, Collections.emptySet(), newAxioms);
 		return new SmtSymbols(newAxiomsPred, mSmtFunctions2SmtFunctionDefinitions);
 	}
 
 	/**
-	 * Assert all symbols defined by this SmtSymbols in a fresh script.
+	 * Define all symbols defined by this SmtSymbols in a fresh script (by asserting or defining)
 	 *
 	 * @param script
-	 *            the new solver.
+	 *            the new script.
 	 */
 	public void transferSymbols(final Script script) {
 		final TermTransferrer tt = new TermTransferrer(script);
@@ -99,6 +117,9 @@ public class SmtSymbols {
 
 	}
 
+	/**
+	 * Apply a {@link TermClassifier} to all axioms and function bodies defined by this {@link SmtSymbols} instance.
+	 */
 	public void classify(final TermClassifier cs) {
 		cs.checkTerm(mAxioms.getFormula());
 		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
