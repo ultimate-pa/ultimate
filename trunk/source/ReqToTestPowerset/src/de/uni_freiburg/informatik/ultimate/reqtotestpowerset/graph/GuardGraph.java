@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
@@ -25,7 +24,6 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 		StringBuilder autRepr = new StringBuilder();
 		StringBuilder autStates = new StringBuilder();
 		StringBuilder autEdges = new StringBuilder();
-		final List<GuardGraph> nodes = getOutgoingNodes();
 		autRepr.append("Automaton has Nodes: ");
 
 		for (GuardGraph node : getAllNodes()) {
