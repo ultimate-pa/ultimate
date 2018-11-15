@@ -1090,8 +1090,8 @@ public class MemoryHandler {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			decl.add(loopCtrAux.getVarDec());
 
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, new CPrimitive(CPrimitives.UCHAR),
-					BigInteger.ZERO);
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
+					new CPrimitive(CPrimitives.UCHAR), BigInteger.ZERO);
 			final List<Statement> loopBody =
 					constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, zero, procName, hook);
 
@@ -1105,7 +1105,8 @@ public class MemoryHandler {
 				stepsize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.valueOf(resolution));
 			} else {
 				final IdentifierExpression inParamSizeOfFieldsExpr =
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamSizeOfFields,
+						ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT,
+								inParamSizeOfFields,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 				stepsize = inParamSizeOfFieldsExpr;
@@ -1305,12 +1306,6 @@ public class MemoryHandler {
 		decl.add(loopCtrAux.getVarDec());
 
 		final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
-
-		// strcpy only needs to copy the integer heap data array, since chars are integers
-		final Collection<HeapDataArray> onlyIntHda =
-				heapDataArrays.stream().filter(hda -> hda.getName().equals(SFO.INT)).collect(Collectors.toList());
-		assert onlyIntHda.size() == 1;
-		final HeapDataArray intHda = onlyIntHda.iterator().next();
 
 		final Expression srcId =
 					ExpressionFactory.constructIdentifierExpression(ignoreLoc,
