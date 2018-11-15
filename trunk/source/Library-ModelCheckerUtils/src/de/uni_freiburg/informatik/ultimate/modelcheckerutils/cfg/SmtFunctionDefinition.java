@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 
 /**
@@ -97,6 +98,8 @@ public final class SmtFunctionDefinition {
 
 			final QuantifiedFormula term = (QuantifiedFormula) TermParseUtils.parseTerm(script, sb.toString());
 			bodyTerm = term.getSubformula();
+			assert UltimateNormalFormUtils
+					.respectsUltimateNormalForm(bodyTerm) : "SMT function body not in Ultimate normal form";
 		}
 		return new SmtFunctionDefinition(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
 	}
