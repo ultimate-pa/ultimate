@@ -110,9 +110,8 @@ public final class UltimateNormalFormUtils {
 				if (appTerm.getFunction().isIntern()) {
 					assert false : "must not be argument of unary minus " + appTerm.getFunction().getName();
 					return false;
-				} else {
-					return true;
 				}
+				return true;
 			} else if (param instanceof TermVariable) {
 				return true;
 			} else {
@@ -151,7 +150,6 @@ public final class UltimateNormalFormUtils {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
 		return !new SubtermPropertyChecker(property).isPropertySatisfied(term);
 	}
-
 
 	public static boolean respectsUltimateNormalForm(final Term... terms) {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
