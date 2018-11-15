@@ -1031,7 +1031,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		// one function takes varargs, the other does not
-		if (type1.takesVarArgs() != type2.takesVarArgs()) {
+		if (type1.hasVarArgs() != type2.hasVarArgs()) {
 			return false;
 		}
 

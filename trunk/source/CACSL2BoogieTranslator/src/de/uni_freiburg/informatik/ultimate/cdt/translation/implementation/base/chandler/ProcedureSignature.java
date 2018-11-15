@@ -36,7 +36,7 @@ public class ProcedureSignature {
 		} else {
 			mReturnType = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
-		mTakesVarArgs = cf.takesVarArgs();
+		mTakesVarArgs = cf.hasVarArgs();
 		mStringRepresentation = buildStringRepresentation();
 	}
 

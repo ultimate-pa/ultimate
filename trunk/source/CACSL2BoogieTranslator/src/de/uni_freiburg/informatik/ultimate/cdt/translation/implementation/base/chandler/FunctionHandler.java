@@ -39,7 +39,9 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -47,6 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -212,7 +215,7 @@ public class FunctionHandler {
 	 *            the location of the FunctionDeclarator
 	 */
 	public Result handleFunctionDeclarator(final IDispatcher main, final ILocation loc, final List<ACSLNode> contract,
-			final CDeclaration cDec, final IASTNode hook) {
+			final CDeclaration cDec, final IASTDeclarator hook) {
 		final String methodName = cDec.getName();
 		final CFunction funcType = (CFunction) cDec.getType();
 
@@ -259,18 +262,7 @@ public class FunctionHandler {
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
 		final CFunction oldFunType = (CFunction) cDec.getType();
-		final CFunction funType;
-		// update varags usage
-		if (oldFunType.takesVarArgs() && oldFunType.usesVarArgs() == VarArgsUsage.UNKNOWN) {
-			// if the function body creates a va_list object it uses its varargs
-			final ASTNameCollector vaListFinder = new ASTNameCollector("va_list");
-			node.getBody().accept(vaListFinder);
-			final boolean usesVarArgs = vaListFinder.getNames().length > 0;
-			funType = oldFunType.updateVarArgsusage(usesVarArgs);
-		} else {
-			funType = oldFunType;
-		}
-
+		final CFunction funType = updateVarArgsUsage(node, oldFunType);
 		final CType returnCType = funType.getResultType();
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -400,6 +392,21 @@ public class FunctionHandler {
 		mProcedureManager.endProcedureScope(mCHandler);
 
 		return new Result(impl);
+	}
+
+	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction oldFunType) {
+		final CFunction funType;
+		// update varags usage
+		if (oldFunType.hasVarArgs() && oldFunType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+			// if the function body creates a va_list object it uses its varargs
+			final ASTNameCollector vaListFinder = new ASTNameCollector("va_list");
+			node.getBody().accept(vaListFinder);
+			final boolean usesVarArgs = vaListFinder.getNames().length > 0;
+			funType = oldFunType.updateVarArgsUsage(usesVarArgs);
+		} else {
+			funType = oldFunType;
+		}
+		return funType;
 	}
 
 	/**
@@ -613,7 +620,7 @@ public class FunctionHandler {
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
 		assert calleeProcDecl != null;
-		if (calleeProcCType != null && calleeProcCType.takesVarArgs()) {
+		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
 				// non-deterministic return value. We do not need to declare the actual function.
@@ -635,12 +642,12 @@ public class FunctionHandler {
 				}
 				return resultBuilder.build();
 			}
-			if (calleeProcCType.usesVarArgs() == VarArgsUsage.USED) {
+			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
 				throw new UnsupportedSyntaxException(loc,
 						"encountered a call to a var args function, var args are not supported at the moment: "
 								+ calleeProcInfo.getProcedureName());
 			}
-			if (calleeProcCType.usesVarArgs() == VarArgsUsage.UNKNOWN) {
+			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 				// this should not happen, but just to be sure
 				throw new UnsupportedSyntaxException(loc,
 						"encountered a call to a var args function and varargs usage is unknown: "
@@ -679,7 +686,7 @@ public class FunctionHandler {
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				if (i >= calleeProcCType.getParameterTypes().length
-						&& calleeProcCType.usesVarArgs() == VarArgsUsage.UNUSED) {
+						&& calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNUSED) {
 					// only add the params if they are part of the signature or if the function uses its varargs
 					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 					continue;
@@ -741,7 +748,7 @@ public class FunctionHandler {
 				&& arguments.length == 0) {
 			return;
 		}
-		if (calleeProcCType.takesVarArgs()) {
+		if (calleeProcCType.hasVarArgs()) {
 			return;
 		}
 		throw new IncorrectSyntaxException(loc, "Function call has incorrect number of in-params: " + calleeName);
@@ -960,19 +967,23 @@ public class FunctionHandler {
 	/**
 	 * Register a new procedure declaration in our internal data structures.
 	 *
+	 * @param main
+	 * @param loc
 	 * @param contract
-	 *            allows to give null for empty contract
+	 *            may be null for empty contract
+	 * @param methodName
 	 * @param funcType
 	 *            the signature of the corresponding C function
+	 * @param node
 	 */
 	private void registerFunctionDeclaration(final IDispatcher main, final ILocation loc, final List<ACSLNode> contract,
-			final String methodName, final CFunction funcType, final IASTNode hook) {
+			final String methodName, final CFunction funcType, final IASTNode node) {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
 		mCHandler.beginScope();
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, hook, false);
+		final VarList[] in = processInParams(loc, funcType, procInfo, node, false);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -1013,9 +1024,24 @@ public class FunctionHandler {
 
 		procInfo.resetDeclaration(newDeclaration);
 
-		// TODO: Why do we update varargs and result type here? I just update everything.
-		// procInfo.updateCFunction(funcType.getResultType(), null, null, funcType.takesVarArgs());
-		procInfo.updateCFunction(funcType);
+		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
+		final CFunction newFuncType;
+		if (node instanceof IASTDeclarator && funcType.hasVarArgs()
+				&& funcType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+			final IBinding binding = ((IASTDeclarator) node).getName().resolveBinding();
+			final org.eclipse.cdt.internal.core.dom.parser.c.CFunction funBinding =
+					(org.eclipse.cdt.internal.core.dom.parser.c.CFunction) binding;
+			final IASTFunctionDeclarator definitionDeclarator = funBinding.getDefinition();
+			if (definitionDeclarator != null) {
+				final IASTFunctionDefinition def = (IASTFunctionDefinition) funBinding.getDefinition().getParent();
+				newFuncType = updateVarArgsUsage(def, funcType);
+			} else {
+				newFuncType = funcType;
+			}
+		} else {
+			newFuncType = funcType;
+		}
+		procInfo.updateCFunction(newFuncType);
 		// end scope for retranslation of ACSL specification
 		mCHandler.endScope();
 	}

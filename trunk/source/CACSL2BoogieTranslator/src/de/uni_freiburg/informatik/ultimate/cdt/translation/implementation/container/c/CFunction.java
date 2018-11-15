@@ -162,7 +162,7 @@ public class CFunction extends CType {
 	 */
 	public CFunction newParameter(final CDeclaration[] newParamTypes) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
-				newParamTypes, takesVarArgs(), usesVarArgs());
+				newParamTypes, hasVarArgs(), getVarArgsUsage());
 	}
 
 	/**
@@ -170,17 +170,17 @@ public class CFunction extends CType {
 	 */
 	public CFunction newReturnType(final CType returnType) {
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), returnType,
-				getParameterTypes(), takesVarArgs(), usesVarArgs());
+				getParameterTypes(), hasVarArgs(), getVarArgsUsage());
 	}
 
 	/**
 	 * Create a new {@link CFunction} that is identical to this one but sets the usage of varargs. Only useful if the
 	 * function actually takes varargs.
 	 */
-	public CFunction updateVarArgsusage(final boolean usesVarArgs) {
-		assert takesVarArgs();
+	public CFunction updateVarArgsUsage(final boolean usesVarArgs) {
+		assert hasVarArgs();
 		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
-				getParameterTypes(), takesVarArgs(), usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
+				getParameterTypes(), hasVarArgs(), usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
 	}
 
 	public CType getResultType() {
@@ -191,11 +191,11 @@ public class CFunction extends CType {
 		return mParamTypes;
 	}
 
-	public boolean takesVarArgs() {
+	public boolean hasVarArgs() {
 		return mTakesVarArgs;
 	}
 
-	public VarArgsUsage usesVarArgs() {
+	public VarArgsUsage getVarArgsUsage() {
 		return mVarArgsUsage;
 	}
 
@@ -204,7 +204,7 @@ public class CFunction extends CType {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("((");
 		for (int i = 0; i < mParamTypes.length; i++) {
-			sb.append(mParamTypes[i].getType().toString());
+			appendCType(sb, mParamTypes[i].getType());
 			sb.append(" ");
 		}
 		if (mTakesVarArgs) {
@@ -212,9 +212,18 @@ public class CFunction extends CType {
 		}
 		sb.append(")");
 		sb.append(" : ");
-		sb.append(mResultType.toString());
+		appendCType(sb, mResultType);
 		sb.append(")");
 		return sb.toString();
+	}
+
+	private static StringBuilder appendCType(final StringBuilder sb, final CType type) {
+		if (type == null) {
+			sb.append("?");
+		} else {
+			sb.append(type.toString());
+		}
+		return sb;
 	}
 
 	public String functionSignatureAsProcedureName() {
