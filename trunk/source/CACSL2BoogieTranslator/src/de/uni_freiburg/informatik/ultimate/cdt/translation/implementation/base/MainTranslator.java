@@ -308,7 +308,7 @@ public class MainTranslator {
 
 	private void commonDoTranslationExceptionHandling(final IResult result) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mLogger.warn(result.getShortDescription() + ": " + result.getLongDescription());
+		mLogger.error(result.getShortDescription() + ": " + result.getLongDescription());
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
