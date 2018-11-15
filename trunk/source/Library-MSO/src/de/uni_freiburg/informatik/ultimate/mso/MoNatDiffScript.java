@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -71,14 +72,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
 /**
  * @Questions How to use SmtUtils.toCNF()? (Might be helpful for dealing with
  *            disjunction, implication, equality)
- * 
+ *
  *            One-transitions in {@link #processExists} are not needed?.
- * 
+ *
  *            Why is {@link SmtUtils#geq} not usable in {@link #processEqual},
  *            {@link #processGreater}?
- * 
+ *
  *            Model is not always minimal e.g. (assert (element 9 I))?
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -127,6 +128,14 @@ public class MoNatDiffScript extends NoopScript {
 		try {
 
 			automaton = traversePostOrder(mAssertionTerm);
+
+			final boolean minimize = true;
+			if (minimize) {
+				final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new MinimizeSevpa<>(
+						mAutomataLibrarayServices, new StringFactory(), automaton).getResult();
+				automaton = minimized;
+			}
+
 			checkEmptiness(automaton);
 
 		} catch (final Exception e) {
@@ -142,7 +151,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	/**
 	 * Traverses term in post order.
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 *             iff pi = 4.
 	 */
@@ -284,7 +293,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	/**
 	 * Returns automaton that represents "not φ".
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Complement} or {@link Intersect} fails.
 	 */
@@ -310,12 +319,19 @@ public class MoNatDiffScript extends NoopScript {
 			result = new Intersect<>(mAutomataLibrarayServices, new StringFactory(), result, varAutomaton).getResult();
 		}
 
+		final boolean minimize = true;
+		if (minimize) {
+			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new MinimizeSevpa<>(
+					mAutomataLibrarayServices, new StringFactory(), result).getResult();
+			result = minimized;
+		}
+
 		return result;
 	}
 
 	/**
 	 * Returns automaton that represents "φ and ... and ψ".
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Intersect} fails.
 	 */
@@ -417,7 +433,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	/**
 	 * Returns automaton that represents "t < c" or "t <= c".
-	 * 
+	 *
 	 * @throws NotAffineException
 	 *             if construction of {@link AffineRelation} fails.
 	 */
@@ -529,7 +545,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	/**
 	 * Returns a automaton where also the given states are final.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if construction of {@link NestedWordAutomatonReachableStates}
 	 *             fails.
@@ -550,7 +566,7 @@ public class MoNatDiffScript extends NoopScript {
 
 	/**
 	 * Checks if the language of the given automaton is empty.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if construction of {@link IsEmpty} fails.
 	 */
