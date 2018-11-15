@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
-<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="4GB" cpuCores="1">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
  
   <rundefinition name="Default">
           <option name="-tc">../../../trunk/examples/toolchains/C-BPP-RCFG.xml</option>
