@@ -216,6 +216,17 @@ public class InitializationHandler {
 		}
 
 		final ExpressionResultBuilder init = new ExpressionResultBuilder();
+		/*
+		 * C11 6.7.9.21 :
+		 * If there are fewer initializers in a brace-enclosed list than there are elements or members
+		 * of an aggregate, or fewer characters in a string literal used to initialize an array of known
+		 * size than there are elements in the array, the remainder of the aggregate shall be
+		 * initialized implicitly the same as objects that have static storage duration.
+		 *  --> this means that nondeterministic initialization only happens if there is no initializer at all (i.e.,
+		 *    this statement is wrong: the cells not mentioned in the initializer have a nondeterministic value if the
+		 *    initialized variable is local, i.e., has automatic storage duration)
+		 *
+		 */
 		final boolean nondet = initializerInfo != null && initializerInfo.isMakeNondeterministicInitialization();
 		if (onHeap && !nondet && determineIfSophisticatedDefaultInit(targetCTypeRaw)) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
@@ -1458,6 +1469,20 @@ public class InitializationHandler {
 			return mOverApprs;
 		}
 
+		/**
+		 * background:
+		 * C11 6.7.9.21 :
+		 * If there are fewer initializers in a brace-enclosed list than there are elements or members
+		 * of an aggregate, or fewer characters in a string literal used to initialize an array of known
+		 * size than there are elements in the array, the remainder of the aggregate shall be
+		 * initialized implicitly the same as objects that have static storage duration.
+		 *  --> this means that nondeterministic initialization only happens if there is no initializer at all (i.e.,
+		 *    this statement is wrong: the cells not mentioned in the initializer have a nondeterministic value if the
+		 *    initialized variable is local, i.e., has automatic storage duration)
+		 *  --> therefore, if this method returns true, the InitializerInfo has no further information (besides overapp
+		 *    info), and vice versa
+		 * @return
+		 */
 		public boolean isMakeNondeterministicInitialization() {
 			return mMakeNondeterministicInitialization;
 		}
