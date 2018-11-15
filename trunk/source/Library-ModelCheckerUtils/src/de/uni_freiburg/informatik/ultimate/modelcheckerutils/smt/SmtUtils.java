@@ -580,9 +580,8 @@ public final class SmtUtils {
 					// TODO: handle all theory-defined functions
 					return script.term("-", operand);
 				}
-			} else {
-				return script.term("-", operand);
 			}
+			return script.term("-", operand);
 		} else if (operand instanceof TermVariable) {
 			return script.term("-", operand);
 		} else {
@@ -1572,13 +1571,13 @@ public final class SmtUtils {
 
 	public static Rational toRational(final String realLiteralValue) {
 		final String[] twoParts = realLiteralValue.split("/");
-		if(twoParts.length == 2) {
+		if (twoParts.length == 2) {
 			return Rational.valueOf(new BigInteger(twoParts[0]), new BigInteger(twoParts[1]));
 		}
-		if(twoParts.length == 1) {
+		if (twoParts.length == 1) {
 			return toRational(new BigDecimal(realLiteralValue));
 		}
-		throw new IllegalArgumentException("Not a valid real literal value: "+realLiteralValue);
+		throw new IllegalArgumentException("Not a valid real literal value: " + realLiteralValue);
 	}
 
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
@@ -2011,7 +2010,6 @@ public final class SmtUtils {
 		return function.isIntern() && function.getName().equals("-") && function.getParameterSorts().length == 1
 				&& function.getParameterSorts()[0].isNumericSort() && function.getReturnSort().isNumericSort();
 	}
-
 
 	private static class InnerDualJunctTracker {
 
