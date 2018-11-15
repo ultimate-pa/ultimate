@@ -514,8 +514,6 @@ public class MemoryHandler {
 			// requires ~addr!base == 0 || #valid[~addr!base];
 			final Expression addrIsValid = mBooleanArrayHelper
 					.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
-			// final RequiresSpecification baseValid = new RequiresSpecification(loc, free,
-			// ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
 			final AssertStatement baseValid = new AssertStatement(loc,
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
 			check.annotate(baseValid);
@@ -1225,12 +1223,10 @@ public class MemoryHandler {
 		final EnsuresSpecification returnValue =
 				mProcedureManager.constructEnsuresSpecification(
 						ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
-								// new IdentifierExpression(ignoreLoc, SFO.RES),
 								ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 										mTypeHandler.getBoogiePointerType(), SFO.RES,
 										new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
 												memCopyOrMemMove.getName())),
-								// new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST)));
 								ExpressionFactory
 										.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
 												SFO.MEMCPY_DEST, new DeclarationInformation(
@@ -2507,7 +2503,7 @@ public class MemoryHandler {
 					new Expression[] { new ArrayStoreExpression(tuLoc, length, idcAddrBase, size) });
 			block[5] = StatementFactory.constructAssignmentStatement(tuLoc, new LeftHandSide[] { resLhs },
 					new Expression[] { addr });
-			// final Body bodyMalloc = new Body(tuLoc, localVars, block);
+
 			final Body bodyMalloc = mProcedureManager.constructBody(tuLoc, localVars, block,
 					MemoryModelDeclarations.Ultimate_Alloc.getName());
 			result.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Alloc.getName(),
