@@ -1,4 +1,5 @@
-/* #Safe
+//#Safe
+/* 
  * 
  * Example demonstrates the following problem:
  * 1. When we dispatch the first declaration of g, 
