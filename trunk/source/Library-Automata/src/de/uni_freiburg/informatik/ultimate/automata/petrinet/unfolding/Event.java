@@ -75,7 +75,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 *            homomorphism transition
 	 */
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final ITransition<LETTER, PLACE> transition,
-			BranchingProcess<LETTER, PLACE> bp) {
+			final BranchingProcess<LETTER, PLACE> bp) {
 		assert conditionToPlaceEqual(predecessors,
 				bp.getNet().getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
@@ -84,6 +84,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
 		mTransition = transition;
+		mSuccessors = new HashSet<>();
+		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
+			mSuccessors.add(bp.constructCondition(this, p));
+		}
+		mHashCode = computeHashCode();
+
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 
 		final Set<Event<LETTER, PLACE>> predecessorEvents = new HashSet<>();
@@ -100,17 +106,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 		mLocalConfiguration.add(this);
 
-		mSuccessors = new HashSet<>();
-		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
-			mSuccessors.add(bp.constructCondition(this, p));
-		}
 		for (final Event<LETTER, PLACE> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
 		}
 		conditionMarkSet.addAll(mSuccessors);
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mMark = mConditionMark.getMarking();
-		mHashCode = computeHashCode();
 	}
 
 	/**
