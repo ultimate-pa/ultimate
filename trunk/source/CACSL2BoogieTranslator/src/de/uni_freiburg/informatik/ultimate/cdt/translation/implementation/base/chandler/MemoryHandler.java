@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -1616,36 +1617,36 @@ public class MemoryHandler {
 		final ArrayList<Statement> result = new ArrayList<>();
 
 
-//		final IdentifierExpression ptrExpr =
-//				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(), ptr,
-//						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedureName));
-//
-//		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
-//				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-//				new CPrimitive(CPrimitives.VOID), hook);
-//		for (final HeapDataArray hda : heapDataArrays) {
-//			final Expression convertedValue;
-//			ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
-//			if (hda.getName().equals(SFO.POINTER)) {
-//				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
-//						mExpressionTranslation.getCTypeOfPointerComponents());
-//				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-//						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-//				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
-//			} else {
-//				// convert to smallest
-//				final List<ReadWriteDefinition> rwds =
-//						mMemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
-//				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
-//				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
-//				convertedValue = exprRes.getLrValue().getValue();
-//			}
-//			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc, hda.getVariableLHS(),
-//					new Expression[] { currentPtr });
-//
-//			result.add(StatementFactory.constructAssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc },
-//					new Expression[] { convertedValue }));
-//		}
+		final IdentifierExpression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(), ptr,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedureName));
+
+		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
+				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
+				new CPrimitive(CPrimitives.VOID), hook);
+		for (final HeapDataArray hda : heapDataArrays) {
+			final Expression convertedValue;
+			ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
+			if (hda.getName().equals(SFO.POINTER)) {
+				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
+						mExpressionTranslation.getCTypeOfPointerComponents());
+				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
+			} else {
+				// convert to smallest
+				final List<ReadWriteDefinition> rwds =
+						mMemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
+				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
+				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
+				convertedValue = exprRes.getLrValue().getValue();
+			}
+			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc, hda.getVariableLHS(),
+					new Expression[] { currentPtr });
+
+			result.add(StatementFactory.constructAssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc },
+					new Expression[] { convertedValue }));
+		}
 		return result;
 	}
 
