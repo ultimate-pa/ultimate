@@ -588,12 +588,7 @@ public class MemoryHandler {
 		final String readCallProcedureName;
 		{
 
-			final CType ut;
-			if (resultType instanceof CNamed) {
-				ut = ((CNamed) resultType).getUnderlyingType();
-			} else {
-				ut = resultType;
-			}
+			final CType ut = resultType.getUnderlyingType();
 
 			if (ut instanceof CPrimitive) {
 				final CPrimitive cp = (CPrimitive) ut;
@@ -1076,34 +1071,49 @@ public class MemoryHandler {
 		mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, memCpyProcDecl);
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
-		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
-		final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
-		decl.add(loopCtrAux.getVarDec());
+		final List<Statement> stmt = new ArrayList<>();
+		if (mSettings.useConstantArrays()) {
 
-		final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, new CPrimitive(CPrimitives.UCHAR),
-				BigInteger.ZERO);
-		final List<Statement> loopBody =
-				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, zero, procName, hook);
+			final IdentifierExpression pointerIdExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+					mTypeHandler.getBoogiePointerType(),
+					inParamPtr, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+			final HeapLValue hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointerIdExpr,
+							new CPointer(new CPrimitive(CPrimitives.VOID)), null);
 
-		final IdentifierExpression inParamProductExpr =
-				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-						inParamProduct, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+			final Set<CType> cPrimitivesWithRequiredHeapArray =
+					mRequiredMemoryModelFeatures.getDataOnHeapRequired().stream()
+						.map(cPrim -> new CPrimitive(cPrim)).collect(Collectors.toSet());
+			stmt.addAll(getInitializationForHeapAtPointer(ignoreLoc, hlv, cPrimitivesWithRequiredHeapArray));
 
-		final Expression stepsize;
-		if (mMemoryModel instanceof MemoryModel_SingleBitprecise) {
-			final int resolution = ((MemoryModel_SingleBitprecise) mMemoryModel).getResolution();
-			stepsize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.valueOf(resolution));
 		} else {
-			final IdentifierExpression inParamSizeOfFieldsExpr =
-					ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamSizeOfFields,
-							new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+			final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
+			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
+			decl.add(loopCtrAux.getVarDec());
 
-			stepsize = inParamSizeOfFieldsExpr;
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, new CPrimitive(CPrimitives.UCHAR),
+					BigInteger.ZERO);
+			final List<Statement> loopBody =
+					constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, zero, procName, hook);
+
+			final IdentifierExpression inParamProductExpr =
+					ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
+							inParamProduct, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+
+			final Expression stepsize;
+			if (mMemoryModel instanceof MemoryModel_SingleBitprecise) {
+				final int resolution = ((MemoryModel_SingleBitprecise) mMemoryModel).getResolution();
+				stepsize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.valueOf(resolution));
+			} else {
+				final IdentifierExpression inParamSizeOfFieldsExpr =
+						ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamSizeOfFields,
+								new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
+
+				stepsize = inParamSizeOfFieldsExpr;
+			}
+
+			stmt.addAll(constructCountingLoop(constructBoundExitCondition(inParamProductExpr, loopCtrAux), loopCtrAux,
+					stepsize, loopBody, procName));
 		}
-
-		final List<Statement> stmt =
-				constructCountingLoop(constructBoundExitCondition(inParamProductExpr, loopCtrAux), loopCtrAux, stepsize,
-						loopBody, procName);
 
 		final Body procBody = mProcedureManager.constructBody(ignoreLoc,
 				decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt.size()]), procName);
@@ -1586,23 +1596,26 @@ public class MemoryHandler {
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
 					charCType, hook);
 
-			final Expression srcAcc;
-			{
-				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, charCType, hook);
-				srcAcc = srcAccExpRes.getLrValue().getValue();
-				loopBody.addStatements(srcAccExpRes.getStatements());
-				loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-				assert srcAccExpRes.getOverapprs().isEmpty();
-			}
+			for (final CPrimitives cPrim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
+				final CType cPrimType = new CPrimitive(cPrim);
+				final Expression srcAcc;
+				{
+					final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, cPrimType, hook);
+					srcAcc = srcAccExpRes.getLrValue().getValue();
+					loopBody.addStatements(srcAccExpRes.getStatements());
+					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
+					assert srcAccExpRes.getOverapprs().isEmpty();
+				}
 
-			{
-				final List<Statement> writeCall = getWriteCall(ignoreLoc,
-						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, charCType, null),
-						srcAcc,
-						charCType,
-						true,
-						hook);
-				loopBody.addStatements(writeCall);
+				{
+					final List<Statement> writeCall = getWriteCall(ignoreLoc,
+							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPrimType, null),
+							srcAcc,
+							cPrimType,
+							true,
+							hook);
+					loopBody.addStatements(writeCall);
+				}
 			}
 		}
 
@@ -2793,9 +2806,16 @@ public class MemoryHandler {
 			final HeapLValue baseAddress, final CType cType) {
 		assert CTranslationUtil.isAggregateOrUnionType(cType);
 
+		final Set<CType> relevantBaseTypes = CTranslationUtil.extractNonAggregateNonUnionTypes(cType);
+
+		return getInitializationForHeapAtPointer(loc, baseAddress, relevantBaseTypes);
+	}
+
+	private List<Statement> getInitializationForHeapAtPointer(final ILocation loc, final HeapLValue baseAddress,
+			final Set<CType> relevantBaseTypes) throws AssertionError {
 		// first collect the concerned heap arrays (in a set, to avoid duplicates)
 		final Set<HeapDataArray> relevantHeapArrays = new HashSet<>();
-		for (final CType baseType : CTranslationUtil.extractNonAggregateNonUnionTypes(cType)) {
+		for (final CType baseType : relevantBaseTypes ) {
 			assert !(baseType instanceof CNamed);
 			if (baseType instanceof CPointer) {
 				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
