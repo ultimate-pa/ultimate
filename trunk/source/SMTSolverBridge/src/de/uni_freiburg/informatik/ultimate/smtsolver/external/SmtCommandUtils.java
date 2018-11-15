@@ -362,6 +362,7 @@ public class SmtCommandUtils {
 			}
 			sb.append(") ");
 			pt.append(sb, resultSort);
+			sb.append(" ");
 			pt.append(sb, definition);
 			sb.append(")");
 			return sb.toString();
