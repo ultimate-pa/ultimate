@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.index.IIndex;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -257,32 +258,37 @@ public class CDTParser implements ISource {
 		final List<IASTTranslationUnit> tuList = new ArrayList<>();
 		// get source folders
 		try {
+			final IIndex index = CCorePlugin.getIndexManager().getIndex(cproject);
+			index.acquireReadLock();
 			for (final ISourceRoot sourceRoot : cproject.getSourceRoots()) {
 				// get all elements
 				for (final ICElement element : sourceRoot.getChildren()) {
 					// if it is a container (i.e., a source folder)
 					if (element.getElementType() == ICElement.C_CCONTAINER) {
-						recursiveContainerTraversal((ICContainer) element, tuList);
+						recursiveContainerTraversal(index, (ICContainer) element, tuList);
 					} else {
 						final ITranslationUnit tu = (ITranslationUnit) element;
-						tuList.add(tu.getAST());
+						final IASTTranslationUnit ast = tu.getAST(index, ITranslationUnit.AST_SKIP_INDEXED_HEADERS);
+						tuList.add(ast);
 					}
 				}
 			}
 		} catch (final CModelException e) {
 			e.printStackTrace();
+		} catch (final InterruptedException e) {
+			e.printStackTrace();
 		}
 		return tuList;
 	}
 
-	private static void recursiveContainerTraversal(final ICContainer container, final List<IASTTranslationUnit> tuList)
-			throws CoreException {
+	private static void recursiveContainerTraversal(final IIndex index, final ICContainer container,
+			final List<IASTTranslationUnit> tuList) throws CoreException {
 		for (final ICContainer inContainer : container.getCContainers()) {
-			recursiveContainerTraversal(inContainer, tuList);
+			recursiveContainerTraversal(index, inContainer, tuList);
 		}
 
 		for (final ITranslationUnit tu : container.getTranslationUnits()) {
-			tuList.add(tu.getAST());
+			tuList.add(tu.getAST(index, ITranslationUnit.AST_SKIP_INDEXED_HEADERS));
 		}
 	}
 
