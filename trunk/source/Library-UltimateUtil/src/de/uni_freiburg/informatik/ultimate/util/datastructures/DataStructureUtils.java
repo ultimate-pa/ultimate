@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,6 +69,22 @@ public class DataStructureUtils {
 			smaller = set1;
 		}
 		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Constructs a new {@link Set} that contains only elements that occur in all
+	 * sets that are in the list inputSets. Modifies the list inputSets but not the
+	 * contained sets.
+	 */
+	public static <T> Set<T> intersection(final List<Set<T>> inputSets) {
+		Collections.sort(inputSets, (o1, o2) -> o1.size() - o2.size());
+		Set<T> result;
+		final Iterator<Set<T>> it = inputSets.iterator();
+		result = new HashSet<>(it.next());
+		while (it.hasNext()) {
+			result.retainAll(it.next());
+		}
+		return result;
 	}
 
 	/**
