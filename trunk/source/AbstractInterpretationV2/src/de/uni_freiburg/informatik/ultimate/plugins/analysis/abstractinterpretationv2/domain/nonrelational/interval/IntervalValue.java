@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
@@ -124,7 +124,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 *            The value to set.
 	 */
 	public IntervalValue(final String val) {
-		this(BigDecimalSanitizer.sanitizeBigDecimalValue(val));
+		this(AbsIntUtil.sanitizeBigDecimalValue(val));
 	}
 
 	/**

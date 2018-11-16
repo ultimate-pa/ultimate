@@ -40,7 +40,6 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -70,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
@@ -128,51 +128,69 @@ public class ExpressionFactory {
 		return new UnaryExpression(loc, resultType, operator, expr);
 	}
 
-	public static Expression newBinaryExpression(final ILocation loc, final Operator op,
-			final List<Expression> conditions) {
-		if (conditions == null || conditions.size() < 2) {
-			throw new IllegalArgumentException("Too few operators");
-		}
-		return newBinaryExpression(loc, op, conditions.stream());
-	}
-
-	public static Expression newBinaryExpression(final ILocation loc, final Operator op,
-			final Expression... conditions) {
-		if (conditions == null || conditions.length < 2) {
-			throw new IllegalArgumentException("Too few operators");
-		}
-		return newBinaryExpression(loc, op, Arrays.stream(conditions));
-	}
-
-	private static Expression newBinaryExpression(final ILocation loc, final Operator op,
-			final Stream<Expression> conditions) {
-		final Iterator<Expression> iter = conditions.iterator();
-		Expression result = iter.next();
-		while (iter.hasNext()) {
-			result = newBinaryExpression(loc, op, result, iter.next());
-		}
-		return result;
-	}
-
-	public static Expression newBinaryExpression(final ILocation loc, final Operator operator, final Expression left,
+	public static Expression newBinaryExpression(final ILocation loc, final Operator op, final Expression left,
 			final Expression right) {
-		if (isLiteral(left) && isLiteral(right)) {
-			if (left instanceof BooleanLiteral) {
-				return constructBinExprWithLiteralOps_Bool(loc, operator, (BooleanLiteral) left,
-						(BooleanLiteral) right);
-			} else if (left instanceof IntegerLiteral) {
-				return constructBinExprWithLiteralOps_Integer(loc, operator, (IntegerLiteral) left,
-						(IntegerLiteral) right);
-			} else if (left instanceof RealLiteral) {
-				return constructBinExprWithLiteralOps_Real(loc, operator, (RealLiteral) left, (RealLiteral) right);
-			} else if (left instanceof BitvecLiteral) {
-				return constructBinExprWithLiteralOps_Bitvector(loc, operator, (BitvecLiteral) left,
-						(BitvecLiteral) right);
-			} else {
-				throw new UnsupportedOperationException("Unknown literal: " + left.getClass());
+
+		final boolean isLeftLiteral = isLiteral(left);
+		final boolean isRightLiteral = isLiteral(right);
+
+		if (!isLeftLiteral && !isRightLiteral) {
+			return constructBinaryExpression(loc, op, left, right);
+		}
+
+		final boolean isCommutative = isCommutative(op);
+		if (!isLeftLiteral && isRightLiteral && isCommutative(op)) {
+			// keep the literal on the left if commutative
+			return newBinaryExpression(loc, op, right, left);
+		}
+
+		if (isLeftLiteral) {
+			if (isNeutralLeft(op, left)) {
+				return right;
+			}
+			if (isAnnihilatingLeft(op, left)) {
+				return left;
 			}
 		}
-		return constructBinaryExpression(loc, operator, left, right);
+
+		if (isRightLiteral) {
+			if (isNeutralRight(op, right)) {
+				return left;
+			}
+			if (isAnnihilatingRight(op, right)) {
+				return right;
+			}
+		}
+
+		if (isLeftLiteral && isRightLiteral) {
+			return computeBinaryExpression(loc, op, left, right);
+		} else if (isLeftLiteral && isCommutative) {
+			if (right instanceof BinaryExpression) {
+				// if possible, try to combine constants
+				// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
+				final BinaryExpression rightBinExp = ((BinaryExpression) right);
+				if (rightBinExp.getOperator() == op && isLiteral(rightBinExp.getLeft())) {
+					return newBinaryExpression(loc, op, computeBinaryExpression(loc, op, left, rightBinExp.getLeft()),
+							rightBinExp.getRight());
+				}
+			}
+		}
+		return constructBinaryExpression(loc, op, left, right);
+	}
+
+	private static Expression computeBinaryExpression(final ILocation loc, final Operator op, final Expression left,
+			final Expression right) {
+		if (left instanceof BooleanLiteral) {
+			return constructBinExprWithLiteralOps_Bool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
+		} else if (left instanceof IntegerLiteral) {
+			return constructBinExprWithLiteralOps_Integer(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
+		} else if (left instanceof RealLiteral) {
+			return constructBinExprWithLiteralOps_Real(loc, op, (RealLiteral) left, (RealLiteral) right);
+		} else if (left instanceof BitvecLiteral) {
+			return constructBinExprWithLiteralOps_Bitvector(loc, op, (BitvecLiteral) left, (BitvecLiteral) right);
+		} else {
+			throw new UnsupportedOperationException("Unknown literal: " + left.getClass());
+		}
 	}
 
 	private static BooleanLiteral constructBinExprWithLiteralOps_Bool(final ILocation loc, final Operator operator,
@@ -876,7 +894,7 @@ public class ExpressionFactory {
 			return node;
 		}
 
-		if (sbo.isAssociative()) {
+		if (sbo.isCommutative()) {
 			return simplifyBinaryAssociativeExpression(node, sbo, args, left, right);
 		}
 		return node;
@@ -925,6 +943,196 @@ public class ExpressionFactory {
 
 	private static BitvectorConstant toConstant(final BitvecLiteral lit) {
 		return new BitvectorConstant(new BigInteger(lit.getValue()), BigInteger.valueOf(lit.getLength()));
+	}
+
+	/**
+	 * true iff left is annihilating (or absorbing) if it is the left operand of binOp, false otherwise
+	 *
+	 * If true, then (binOp left x) == left for any x
+	 */
+	private static boolean isAnnihilatingLeft(final Operator binOp, final Expression left) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+			if (left instanceof IntegerLiteral) {
+				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
+			} else if (left instanceof RealLiteral) {
+				return toRational(((RealLiteral) left).getValue()).signum() == 0;
+			}
+			return false;
+		case LOGICAND:
+			if (left instanceof BooleanLiteral) {
+				return !((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case LOGICOR:
+			if (left instanceof BooleanLiteral) {
+				return ((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case ARITHPLUS:
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ:
+		case COMPPO:
+		case LOGICIFF:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
+	}
+
+	/**
+	 * true iff right is annihilating (or absorbing) if it is the right operand of binOp, false otherwise
+	 *
+	 * If true, then (binOp right x) == right for any x
+	 */
+	private static boolean isAnnihilatingRight(final Operator binOp, final Expression right) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+		case ARITHPLUS:
+		case COMPEQ:
+		case COMPNEQ:
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICOR:
+			return isAnnihilatingLeft(binOp, right);
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPPO:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
+	}
+
+	/**
+	 * true iff left is neutral if it is the left operand of binOp, false otherwise
+	 *
+	 * If true, then (binOp left x) == x for any x
+	 */
+	private static boolean isNeutralLeft(final Operator binOp, final Expression left) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+			if (left instanceof IntegerLiteral) {
+				return new BigInteger(((IntegerLiteral) left).getValue()).equals(BigInteger.ONE);
+			} else if (left instanceof RealLiteral) {
+				return toRational(((RealLiteral) left).getValue()).equals(Rational.ONE);
+			}
+			return false;
+		case ARITHPLUS:
+			if (left instanceof IntegerLiteral) {
+				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
+			} else if (left instanceof RealLiteral) {
+				return toRational(((RealLiteral) left).getValue()).signum() == 0;
+			}
+			return false;
+		case LOGICAND:
+			if (left instanceof BooleanLiteral) {
+				return ((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case LOGICOR:
+			if (left instanceof BooleanLiteral) {
+				return !((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case COMPEQ:
+		case COMPNEQ:
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPPO:
+		case LOGICIMPLIES:
+		case LOGICIFF:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
+	}
+
+	/**
+	 * true iff right is neutral if it is the right operand of binOp, false otherwise
+	 *
+	 * If true, then (binOp right x) == x for any x
+	 */
+	private static boolean isNeutralRight(final Operator binOp, final Expression right) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+		case ARITHPLUS:
+		case COMPEQ:
+		case COMPNEQ:
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICOR:
+			return isNeutralLeft(binOp, right);
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPPO:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
+	}
+
+	/**
+	 * true iff binOp is commutative, false otherwise
+	 */
+	private static boolean isCommutative(final Operator binOp) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+		case ARITHPLUS:
+		case COMPEQ:
+		case COMPNEQ:
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICOR:
+			return true;
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPPO:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
 	}
 
 	/**
@@ -1229,6 +1437,34 @@ public class ExpressionFactory {
 
 	private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
 		return new BooleanLiteral(node.getLoc(), node.getType(), value);
+	}
+
+	public static Rational toRational(final String realLiteralValue) {
+		final String[] twoParts = realLiteralValue.split("/");
+		if (twoParts.length == 2) {
+			return Rational.valueOf(new BigInteger(twoParts[0]), new BigInteger(twoParts[1]));
+		}
+		if (twoParts.length == 1) {
+			return toRational(new BigDecimal(realLiteralValue));
+		}
+		throw new IllegalArgumentException("Not a valid real literal value: " + realLiteralValue);
+	}
+
+	public static Rational toRational(final BigInteger bigInt) {
+		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+
+	public static Rational toRational(final BigDecimal bigDec) {
+		Rational rat;
+		if (bigDec.scale() <= 0) {
+			final BigInteger num = bigDec.toBigInteger();
+			rat = Rational.valueOf(num, BigInteger.ONE);
+		} else {
+			final BigInteger num = bigDec.unscaledValue();
+			final BigInteger denom = BigInteger.TEN.pow(bigDec.scale());
+			rat = Rational.valueOf(num, denom);
+		}
+		return rat;
 	}
 
 	private static final class BitvectorCFunctionNames2SmtFunctionNames extends GeneratedBoogieAstTransformer {

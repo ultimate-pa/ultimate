@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -1174,53 +1175,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
-	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
-	 */
-	public static Rational decimalToRational(final BigDecimal d) {
-		Rational rat;
-		if (d.scale() <= 0) {
-			final BigInteger num = d.toBigInteger();
-			rat = Rational.valueOf(num, BigInteger.ONE);
-		} else {
-			final BigInteger num = d.unscaledValue();
-			final BigInteger denom = BigInteger.TEN.pow(d.scale());
-			rat = Rational.valueOf(num, denom);
-		}
-		return rat;
-	}
-
-	/**
-	 * Convert a constant term to Rational.
-	 *
-	 * @param ct
-	 *            constant term that represents a Rational
-	 * @return Rational from the value of ct
-	 * @throws IllegalArgumentException
-	 *             if ct does not represent a Rational.
-	 * @deprecated replace this method by convertConstantTermToRational()
-	 */
-	@Deprecated
-	public static Rational convertCT(final ConstantTerm ct) throws IllegalArgumentException {
-		if (SmtSortUtils.isRealSort(ct.getSort())) {
-			if (ct.getValue() instanceof Rational) {
-				return (Rational) ct.getValue();
-			} else if (ct.getValue() instanceof BigDecimal) {
-				return decimalToRational((BigDecimal) ct.getValue());
-			} else {
-				throw new UnsupportedOperationException("ConstantTerm's value has to be either Rational or BigDecimal");
-			}
-		} else if (SmtSortUtils.isIntSort(ct.getSort())) {
-			if (ct.getValue() instanceof Rational) {
-				return (Rational) ct.getValue();
-			}
-			return Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
-		} else {
-			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
-		}
-	}
-
-	/**
 	 * Construct term but simplify it using lightweight simplification techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
@@ -1553,31 +1507,15 @@ public final class SmtUtils {
 	}
 
 	public static Rational toRational(final BigInteger bigInt) {
-		return Rational.valueOf(bigInt, BigInteger.ONE);
+		return ExpressionFactory.toRational(bigInt);
 	}
 
 	public static Rational toRational(final BigDecimal bigDec) {
-		Rational rat;
-		if (bigDec.scale() <= 0) {
-			final BigInteger num = bigDec.toBigInteger();
-			rat = Rational.valueOf(num, BigInteger.ONE);
-		} else {
-			final BigInteger num = bigDec.unscaledValue();
-			final BigInteger denom = BigInteger.TEN.pow(bigDec.scale());
-			rat = Rational.valueOf(num, denom);
-		}
-		return rat;
+		return ExpressionFactory.toRational(bigDec);
 	}
 
 	public static Rational toRational(final String realLiteralValue) {
-		final String[] twoParts = realLiteralValue.split("/");
-		if (twoParts.length == 2) {
-			return Rational.valueOf(new BigInteger(twoParts[0]), new BigInteger(twoParts[1]));
-		}
-		if (twoParts.length == 1) {
-			return toRational(new BigDecimal(realLiteralValue));
-		}
-		throw new IllegalArgumentException("Not a valid real literal value: " + realLiteralValue);
+		return ExpressionFactory.toRational(realLiteralValue);
 	}
 
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
@@ -1667,7 +1605,7 @@ public final class SmtUtils {
 			}
 		} else if (SmtSortUtils.isRealSort(constTerm.getSort())) {
 			if (value instanceof BigDecimal) {
-				rational = decimalToRational((BigDecimal) value);
+				rational = toRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
 				rational = (Rational) value;
 			} else {

@@ -31,7 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Values for {@link OctMatrix} entries.
@@ -100,7 +100,7 @@ public class OctValue implements Comparable<OctValue> {
 		if ("inf".equals(s)) {
 			return INFINITY;
 		}
-		return new OctValue(BigDecimalSanitizer.sanitizeBigDecimalValue(s));
+		return new OctValue(AbsIntUtil.sanitizeBigDecimalValue(s));
 	}
 
 	/**

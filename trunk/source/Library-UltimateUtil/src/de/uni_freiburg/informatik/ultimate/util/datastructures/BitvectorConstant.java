@@ -250,7 +250,7 @@ public class BitvectorConstant {
 		/**
 		 * @return true iff the order of the operands does not matter.
 		 */
-		public boolean isAssociative() {
+		public boolean isCommutative() {
 			return mIsAssociative;
 		}
 

@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -144,9 +145,9 @@ public class NumUtilTest {
 			Assert.fail(String.format("%s / %s: expected %s but was %s", a, b, qExpectedDec, qActualDec));
 		}
 
-		final Rational aRat = AbsIntUtil.convert(aDec);
-		final Rational bRat = AbsIntUtil.convert(bDec);
-		final Rational qExpectedRat = AbsIntUtil.convert(qExpectedDec);
+		final Rational aRat = SmtUtils.toRational(aDec);
+		final Rational bRat = SmtUtils.toRational(bDec);
+		final Rational qExpectedRat = SmtUtils.toRational(qExpectedDec);
 
 		final Rational qActualRat = AbsIntUtil.euclideanDivision(aRat, bRat);
 		if (qActualRat.compareTo(qExpectedRat) != 0) {
@@ -165,9 +166,9 @@ public class NumUtilTest {
 			Assert.fail(String.format("%s %% %s: expected %s but was %s", a, b, rExpectedDec, rActualDec));
 		}
 
-		final Rational aRat = AbsIntUtil.convert(aDec);
-		final Rational bRat = AbsIntUtil.convert(bDec);
-		final Rational rExpectedRat = AbsIntUtil.convert(rExpectedDec);
+		final Rational aRat = SmtUtils.toRational(aDec);
+		final Rational bRat = SmtUtils.toRational(bDec);
+		final Rational rExpectedRat = SmtUtils.toRational(rExpectedDec);
 
 		final Rational rActualRat = AbsIntUtil.euclideanModulo(aRat, bRat);
 		if (rActualRat.compareTo(rExpectedRat) != 0) {
