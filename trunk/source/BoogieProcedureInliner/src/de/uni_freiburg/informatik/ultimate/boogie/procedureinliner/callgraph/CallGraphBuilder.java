@@ -165,12 +165,7 @@ public class CallGraphBuilder {
 	}
 
 	private CallGraphNode getOrCreateNode(final String procedureId) {
-		CallGraphNode node = mCallGraphNodes.get(procedureId);
-		if (node == null) {
-			node = new CallGraphNode(procedureId);
-			mCallGraphNodes.put(procedureId, node);
-		}
-		return node;
+		return mCallGraphNodes.computeIfAbsent(procedureId, CallGraphNode::new);
 	}
 
 	private void registerCallStatementsInGraph(final CallGraphNode callerNode, final Statement[] statementBlock) {
