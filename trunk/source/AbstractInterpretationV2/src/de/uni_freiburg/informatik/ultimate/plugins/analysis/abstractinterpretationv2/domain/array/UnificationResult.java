@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public class UnificationResult<STATE extends IAbstractState<STATE>> {
+class UnificationResult<STATE extends IAbstractState<STATE>> {
 	private final ArrayDomainState<STATE> mFirstState;
 	private final ArrayDomainState<STATE> mSecondState;
 	private final EqClassSegmentation mSegmentation;

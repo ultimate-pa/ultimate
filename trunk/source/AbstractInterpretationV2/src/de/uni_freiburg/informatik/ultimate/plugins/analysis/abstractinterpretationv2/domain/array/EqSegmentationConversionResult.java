@@ -1,31 +1,31 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
+import java.util.Collection;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public class EqSegmentationConversionResult<STATE extends IAbstractState<STATE>> {
-	private final ArrayDomainState<STATE> mFirstState;
-	private final ArrayDomainState<STATE> mSecondState;
+class EqSegmentationConversionResult {
 	private final Segmentation mSegmentation;
 	private final Map<IProgramVar, Segmentation> mNewSegmentations;
+	private final Collection<Term> mConstraints;
+	private final Collection<IProgramVarOrConst> mNewVariables;
+	private final Collection<IProgramVarOrConst> mRemoveVariablesFirstState;
+	private final Collection<IProgramVarOrConst> mRemoveVariablesSecondState;
 
-	public EqSegmentationConversionResult(final ArrayDomainState<STATE> firstState,
-			final ArrayDomainState<STATE> secondState, final Segmentation segmentation,
-			final Map<IProgramVar, Segmentation> newSegmentations) {
-		mFirstState = firstState;
-		mSecondState = secondState;
+	public EqSegmentationConversionResult(final Segmentation segmentation,
+			final Map<IProgramVar, Segmentation> newSegmentations, final Collection<Term> constraints,
+			final Collection<IProgramVarOrConst> newVariables,
+			final Collection<IProgramVarOrConst> removeVariablesFirstState,
+			final Collection<IProgramVarOrConst> removeVariablesSecondState) {
 		mSegmentation = segmentation;
 		mNewSegmentations = newSegmentations;
-	}
-
-	public ArrayDomainState<STATE> getFirstState() {
-		return mFirstState;
-	}
-
-	public ArrayDomainState<STATE> getSecondState() {
-		return mSecondState;
+		mConstraints = constraints;
+		mNewVariables = newVariables;
+		mRemoveVariablesFirstState = removeVariablesFirstState;
+		mRemoveVariablesSecondState = removeVariablesSecondState;
 	}
 
 	public Segmentation getSegmentation() {
@@ -34,5 +34,21 @@ public class EqSegmentationConversionResult<STATE extends IAbstractState<STATE>>
 
 	public Map<IProgramVar, Segmentation> getNewSegmentations() {
 		return mNewSegmentations;
+	}
+
+	public Collection<Term> getConstraints() {
+		return mConstraints;
+	}
+
+	public Collection<IProgramVarOrConst> getNewVariables() {
+		return mNewVariables;
+	}
+
+	public Collection<IProgramVarOrConst> getRemoveVariablesFirstState() {
+		return mRemoveVariablesFirstState;
+	}
+
+	public Collection<IProgramVarOrConst> getRemoveVariablesSecondState() {
+		return mRemoveVariablesSecondState;
 	}
 }
