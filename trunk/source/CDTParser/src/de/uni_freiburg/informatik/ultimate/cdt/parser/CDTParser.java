@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -113,6 +114,7 @@ public class CDTParser implements ISource {
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private IProject mProject;
+	private IToolchainStorage mStorage;
 
 	public CDTParser() {
 		mFileTypes = new String[] { ".c", ".i", ".h" };
@@ -254,7 +256,7 @@ public class CDTParser implements ISource {
 		return icdtProject;
 	}
 
-	public static List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) throws CoreException {
+	public List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) throws CoreException {
 		final List<IASTTranslationUnit> tuList = new ArrayList<>();
 		// get source folders
 		try {
@@ -273,6 +275,7 @@ public class CDTParser implements ISource {
 					}
 				}
 			}
+			new IndexReadlockReleaser(index).store(mStorage);
 		} catch (final CModelException e) {
 			e.printStackTrace();
 		} catch (final InterruptedException e) {
@@ -326,8 +329,8 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public void setToolchainStorage(final IToolchainStorage services) {
-		// not necessary
+	public void setToolchainStorage(final IToolchainStorage storage) {
+		mStorage = storage;
 	}
 
 	@Override
@@ -445,5 +448,25 @@ public class CDTParser implements ISource {
 		} catch (final Exception e) {
 			// Ignore
 		}
+	}
+
+	private static final class IndexReadlockReleaser implements IStorable {
+
+		private final IIndex mIndex;
+
+		public IndexReadlockReleaser(final IIndex index) {
+			mIndex = index;
+		}
+
+		@Override
+		public void destroy() {
+			mIndex.releaseReadLock();
+		}
+
+		public void store(final IToolchainStorage storage) {
+			final IStorable old = storage.putStorable(getClass().toString() + mIndex.hashCode(), this);
+			assert old == this || old == null;
+		}
+
 	}
 }
