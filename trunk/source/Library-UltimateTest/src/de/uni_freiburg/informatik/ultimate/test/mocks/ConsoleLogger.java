@@ -116,7 +116,6 @@ public final class ConsoleLogger implements ILogger {
 	@Override
 	public void setLevel(final LogLevel level) {
 		mLevel = level;
-		final ILogFunction log = new Log(mLevel);
 		final ILogFunction noLog = new NoLog();
 		mDebug = noLog;
 		mInfo = noLog;
@@ -128,15 +127,15 @@ public final class ConsoleLogger implements ILogger {
 		case OFF:
 			break;
 		case DEBUG:
-			mDebug = log;
+			mDebug = new Log(LogLevel.DEBUG);
 		case INFO:
-			mInfo = log;
+			mInfo = new Log(LogLevel.INFO);
 		case WARN:
-			mWarn = log;
+			mWarn = new Log(LogLevel.WARN);
 		case ERROR:
-			mError = log;
+			mError = new Log(LogLevel.ERROR);
 		case FATAL:
-			mFatal = log;
+			mFatal = new Log(LogLevel.FATAL);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown log level " + level);
