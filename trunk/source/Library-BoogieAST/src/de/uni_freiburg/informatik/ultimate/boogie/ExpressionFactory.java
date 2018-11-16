@@ -36,8 +36,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
@@ -846,9 +845,12 @@ public class ExpressionFactory {
 	private static Expression simplifyUnaryBitvectorExpression(final FunctionApplication node,
 			final SupportedBitvectorOperations sbo, final Expression[] args) {
 		assert args.length == 1 : "Unary expression cannot have " + args.length + " arguments";
-		final Function<BitvectorConstant, BitvectorConstant> op = getUnaryBitvectorOp(sbo);
+
 		if (args[0] instanceof BitvecLiteral) {
-			return toBitvectorLiteral(node, op.apply(toConstant((BitvecLiteral) args[0])));
+			final BitvectorConstantOperationResult result =
+					BitvectorConstant.apply(sbo, toConstant((BitvecLiteral) args[0]));
+			assert !result.isBoolean();
+			return toBitvectorLiteral(node, result.getBvResult());
 		}
 		return node;
 	}
@@ -934,11 +936,13 @@ public class ExpressionFactory {
 	private static Expression computeBinaryBitvectorExpression(final FunctionApplication node,
 			final SupportedBitvectorOperations sbo, final BitvectorConstant left, final BitvectorConstant right) {
 		if (sbo.isBoolean()) {
-			final BiFunction<BitvectorConstant, BitvectorConstant, Boolean> op = getBinaryBooleanBitvectorOp(sbo);
-			return toBooleanLiteral(node, op.apply(left, right));
+			final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
+			assert result.isBoolean();
+			return toBooleanLiteral(node, result.getBooleanResult());
 		}
-		final BinaryOperator<BitvectorConstant> op = getBinaryNonBooleanBitvectorOp(sbo);
-		return toBitvectorLiteral(node, op.apply(left, right));
+		final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
+		assert !result.isBoolean();
+		return toBitvectorLiteral(node, result.getBvResult());
 	}
 
 	private static BitvectorConstant toConstant(final BitvecLiteral lit) {
@@ -1295,137 +1299,6 @@ public class ExpressionFactory {
 			return false;
 		default:
 			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
-	}
-
-	private static BinaryOperator<BitvectorConstant>
-			getBinaryNonBooleanBitvectorOp(final SupportedBitvectorOperations sbo) {
-		switch (sbo) {
-		case bvadd:
-			return BitvectorConstant::bvadd;
-		case bvand:
-			return BitvectorConstant::bvand;
-		case bvashr:
-			return BitvectorConstant::bvashr;
-		case bvlshr:
-			return BitvectorConstant::bvlshr;
-		case bvmul:
-			return BitvectorConstant::bvmul;
-		case bvor:
-			return BitvectorConstant::bvor;
-		case bvsdiv:
-			return BitvectorConstant::bvsdiv;
-		case bvshl:
-			return BitvectorConstant::bvshl;
-		case bvsrem:
-			return BitvectorConstant::bvsrem;
-		case bvsub:
-			return BitvectorConstant::bvsub;
-		case bvudiv:
-			return BitvectorConstant::bvudiv;
-		case bvurem:
-			return BitvectorConstant::bvurem;
-		case bvxor:
-			return BitvectorConstant::bvxor;
-		case extract:
-		case zero_extend:
-			throw new AssertionError("Has wrong signature: " + sbo);
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			throw new AssertionError("Has wrong signature (is boolean): " + sbo);
-		case bvneg:
-		case bvnot:
-			throw new AssertionError("Has wrong signature (is unary): " + sbo);
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-		}
-	}
-
-	private static Function<BitvectorConstant, BitvectorConstant>
-			getUnaryBitvectorOp(final SupportedBitvectorOperations sbo) {
-		switch (sbo) {
-		case bvadd:
-		case bvand:
-		case bvashr:
-		case bvlshr:
-		case bvmul:
-		case bvor:
-		case bvsdiv:
-		case bvshl:
-		case bvsrem:
-		case bvsub:
-		case bvudiv:
-		case bvurem:
-		case bvxor:
-			throw new AssertionError("Has wrong signature (is binary): " + sbo);
-		case extract:
-		case zero_extend:
-			throw new AssertionError("Has wrong signature: " + sbo);
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			throw new AssertionError("Has wrong signature (is boolean): " + sbo);
-		case bvneg:
-			return BitvectorConstant::bvneg;
-		case bvnot:
-			return BitvectorConstant::bvnot;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
-		}
-	}
-
-	private static BiFunction<BitvectorConstant, BitvectorConstant, Boolean>
-			getBinaryBooleanBitvectorOp(final SupportedBitvectorOperations sbo) {
-		switch (sbo) {
-		case bvadd:
-		case bvand:
-		case bvashr:
-		case bvlshr:
-		case bvmul:
-		case bvor:
-		case bvsdiv:
-		case bvshl:
-		case bvsrem:
-		case bvsub:
-		case bvudiv:
-		case bvurem:
-		case bvxor:
-			throw new AssertionError("Has wrong signature (is binary): " + sbo);
-		case extract:
-		case zero_extend:
-			throw new AssertionError("Has wrong signature: " + sbo);
-		case bvsle:
-			return BitvectorConstant::bvsle;
-		case bvslt:
-			return BitvectorConstant::bvslt;
-		case bvuge:
-			return BitvectorConstant::bvuge;
-		case bvugt:
-			return BitvectorConstant::bvugt;
-		case bvule:
-			return BitvectorConstant::bvule;
-		case bvsge:
-			return BitvectorConstant::bvsge;
-		case bvsgt:
-			return BitvectorConstant::bvsgt;
-		case bvult:
-			return BitvectorConstant::bvult;
-		case bvneg:
-		case bvnot:
-			throw new AssertionError("Has wrong signature (is unary): " + sbo);
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + sbo);
 		}
 	}
 
