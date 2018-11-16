@@ -2819,6 +2819,12 @@ public class MemoryHandler {
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
 				relevantHeapArrays.add(hda);
+			} else if (baseType instanceof CEnum) {
+				final CPrimitives primitive = CPrimitives.INT;
+				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
+				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				relevantHeapArrays.add(hda);
 			} else {
 				throw new AssertionError("unforseen case");
 			}
