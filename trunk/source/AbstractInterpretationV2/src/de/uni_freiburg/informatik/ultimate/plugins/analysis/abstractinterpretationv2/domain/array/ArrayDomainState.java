@@ -194,8 +194,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	@Override
 	public ArrayDomainState<STATE> patch(final ArrayDomainState<STATE> dominator) {
 		final STATE newSubState = mSubState.patch(dominator.mSubState);
-		final Set<IProgramVarOrConst> oldArrays = mSegmentationMap.getArrays();
-		final Set<IProgramVarOrConst> dominatorArrays = dominator.mSegmentationMap.getArrays();
+		final Set<IProgramVarOrConst> oldArrays =
+				mVariables.stream().filter(x -> x.getSort().isArraySort()).collect(Collectors.toSet());
+		final Set<IProgramVarOrConst> dominatorArrays =
+				dominator.mVariables.stream().filter(x -> x.getSort().isArraySort()).collect(Collectors.toSet());
 		final Set<IProgramVarOrConst> overwrittenArrays = DataStructureUtils.intersection(oldArrays, dominatorArrays);
 		final Set<IProgramVarOrConst> newVariables = DataStructureUtils.union(mVariables, dominator.mVariables);
 		final ArrayDomainState<STATE> result =

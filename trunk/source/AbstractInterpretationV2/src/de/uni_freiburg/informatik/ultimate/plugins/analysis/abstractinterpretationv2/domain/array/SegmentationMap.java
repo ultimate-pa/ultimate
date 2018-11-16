@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -141,8 +142,14 @@ public class SegmentationMap {
 	}
 
 	public void remove(final IProgramVarOrConst variable) {
+		final Set<IProgramVarOrConst> newEquivalenceClass = new HashSet<>(mArrayEqualities.getContainingSet(variable));
+		newEquivalenceClass.remove(variable);
+		final Iterator<IProgramVarOrConst> iterator = newEquivalenceClass.iterator();
+		final Segmentation segmentation = mRepresentiveSegmentations.remove(variable);
+		if (iterator.hasNext()) {
+			mRepresentiveSegmentations.put(iterator.next(), segmentation);
+		}
 		mArrayEqualities.remove(variable);
-		mRepresentiveSegmentations.remove(variable);
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {
