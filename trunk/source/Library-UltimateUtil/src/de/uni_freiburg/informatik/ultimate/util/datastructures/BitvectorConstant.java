@@ -504,4 +504,102 @@ public class BitvectorConstant {
 		return bvValue.subtract(biggestUnsigned);
 	}
 
+	public BigInteger toSignedInt() {
+		return toSignedInt(mValue, mIndex);
+	}
+
+	public static BitvectorConstantOperationResult apply(final SupportedBitvectorOperations sbo,
+			final BitvectorConstant... operands) {
+		if (operands == null) {
+			throw new IllegalArgumentException("No operands");
+		}
+		if (operands.length != sbo.getArity()) {
+			throw new IllegalArgumentException("Operation " + sbo + " has arity " + sbo.getArity() + " but "
+					+ operands.length + " operands given");
+		}
+		switch (sbo) {
+		case bvadd:
+			return new BitvectorConstantOperationResult(bvadd(operands[0], operands[1]));
+		case bvand:
+			return new BitvectorConstantOperationResult(bvand(operands[0], operands[1]));
+		case bvashr:
+			return new BitvectorConstantOperationResult(bvashr(operands[0], operands[1]));
+		case bvlshr:
+			return new BitvectorConstantOperationResult(bvlshr(operands[0], operands[1]));
+		case bvmul:
+			return new BitvectorConstantOperationResult(bvmul(operands[0], operands[1]));
+		case bvneg:
+			return new BitvectorConstantOperationResult(bvneg(operands[0]));
+		case bvnot:
+			return new BitvectorConstantOperationResult(bvnot(operands[0]));
+		case bvor:
+			return new BitvectorConstantOperationResult(bvor(operands[0], operands[1]));
+		case bvsdiv:
+			return new BitvectorConstantOperationResult(bvsdiv(operands[0], operands[1]));
+		case bvsge:
+			return new BitvectorConstantOperationResult(bvsge(operands[0], operands[1]));
+		case bvsgt:
+			return new BitvectorConstantOperationResult(bvsgt(operands[0], operands[1]));
+		case bvshl:
+			return new BitvectorConstantOperationResult(bvshl(operands[0], operands[1]));
+		case bvsle:
+			return new BitvectorConstantOperationResult(bvsle(operands[0], operands[1]));
+		case bvslt:
+			return new BitvectorConstantOperationResult(bvslt(operands[0], operands[1]));
+		case bvsrem:
+			return new BitvectorConstantOperationResult(bvsrem(operands[0], operands[1]));
+		case bvsub:
+			return new BitvectorConstantOperationResult(bvsub(operands[0], operands[1]));
+		case bvudiv:
+			return new BitvectorConstantOperationResult(bvudiv(operands[0], operands[1]));
+		case bvuge:
+			return new BitvectorConstantOperationResult(bvuge(operands[0], operands[1]));
+		case bvugt:
+			return new BitvectorConstantOperationResult(bvugt(operands[0], operands[1]));
+		case bvule:
+			return new BitvectorConstantOperationResult(bvule(operands[0], operands[1]));
+		case bvult:
+			return new BitvectorConstantOperationResult(bvult(operands[0], operands[1]));
+		case bvurem:
+			return new BitvectorConstantOperationResult(bvurem(operands[0], operands[1]));
+		case bvxor:
+			return new BitvectorConstantOperationResult(bvxor(operands[0], operands[1]));
+		default:
+			throw new UnsupportedOperationException("Operation currently unsupported: " + sbo);
+		}
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static final class BitvectorConstantOperationResult {
+
+		private final BitvectorConstant mBvResult;
+		private final Boolean mBooleanResult;
+
+		public BitvectorConstantOperationResult(final BitvectorConstant result) {
+			mBvResult = result;
+			mBooleanResult = null;
+		}
+
+		public BitvectorConstantOperationResult(final boolean result) {
+			mBvResult = null;
+			mBooleanResult = result;
+		}
+
+		public boolean isBoolean() {
+			return mBooleanResult != null;
+		}
+
+		public boolean getBooleanResult() {
+			return mBooleanResult.booleanValue();
+		}
+
+		public BitvectorConstant getBvResult() {
+			return mBvResult;
+		}
+	}
+
 }
