@@ -76,7 +76,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	private PrintWriter openTempFile(final IElement root) {
 		String path;
 		String filename;
-		File file;
+		File file = null;
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
@@ -121,7 +121,12 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 			return new PrintWriter(new FileWriter(file));
 
 		} catch (final IOException e) {
-			mLogger.fatal("Cannot open file", e);
+			if (file != null) {
+				mLogger.fatal("Cannot open file: " + file.getAbsolutePath(), e);
+			} else {
+				mLogger.fatal("Cannot open file", e);
+			}
+
 			return null;
 		}
 	}
