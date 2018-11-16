@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -1107,7 +1108,11 @@ public class FunctionHandler {
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
 					methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
 		}
-		functionCallERB.addStatement(call);
+		if (isSvcompAtomicallyExecutedFunction(methodName)) {
+			functionCallERB.addStatement(new AtomicStatement(loc, new Statement[] { call }));
+		} else {
+			functionCallERB.addStatement(call);
+		}
 
 		final CType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)
 				: procInfo.getCType().getResultType();
@@ -1124,6 +1129,11 @@ public class FunctionHandler {
 		}
 
 		return functionCallERB.build();
+	}
+
+	private boolean isSvcompAtomicallyExecutedFunction(final String methodName) {
+		return methodName.startsWith("__VERIFIER_atomic_") && !methodName.equals("__VERIFIER_atomic_begin")
+				&& !methodName.equals("__VERIFIER_atomic_end");
 	}
 
 	public Set<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
