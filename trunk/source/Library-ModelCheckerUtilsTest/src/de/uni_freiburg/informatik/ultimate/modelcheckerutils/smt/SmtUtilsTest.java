@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -83,7 +83,8 @@ public class SmtUtilsTest {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 			if (i < values.length) {
 				final Term value = values[i];
-				substitutionMapping.put(term, value);
+				final Term newValue = new UnfTransformer(mScript).transform(value);
+				substitutionMapping.put(term, newValue);
 			}
 		}
 
@@ -108,22 +109,15 @@ public class SmtUtilsTest {
 	public void testSubstitutionWithLocalSimplification2() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final boolean fail = true;
-		final Term evilSubstitute;
-		if (fail) {
-			evilSubstitute = mScript.term("-", mScript.numeral("1"));
-		} else {
-			evilSubstitute = Rational.MONE.toTerm(intSort);
-		}
-
 		final String names = "AB";
-		final Term[] values = new Term[] { evilSubstitute, mScript.numeral("0") };
+		final Term[] values = new Term[] { mScript.term("-", mScript.numeral("1")), mScript.numeral("0") };
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 			if (i < values.length) {
 				final Term value = values[i];
-				substitutionMapping.put(term, value);
+				final Term newValue = new UnfTransformer(mScript).transform(value);
+				substitutionMapping.put(term, newValue);
 			}
 		}
 
