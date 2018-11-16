@@ -140,8 +140,8 @@ public final class LocalTransformer implements ITransformulaTransformer {
 
 	@Override
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
-		// TODO
-		throw new UnsupportedOperationException("TODO");
+		// TODO: We construct ModifiableGlobalsTable here and in the usage. Seems strange, is there a reason?
+		return mReplacementVarFactory.constructModifiableGlobalsTable().getProcToGlobals();
 	}
 
 }

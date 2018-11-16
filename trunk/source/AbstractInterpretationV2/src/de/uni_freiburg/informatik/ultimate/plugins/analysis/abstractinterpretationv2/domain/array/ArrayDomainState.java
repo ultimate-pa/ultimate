@@ -147,10 +147,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVariables);
 		final Set<IProgramVarOrConst> nonArrayVars = new HashSet<>();
 		for (final IProgramVarOrConst v : variables) {
-			if (!mVariables.contains(v)) {
+			final boolean wasThere = newVariables.remove(v);
+			if (!wasThere) {
 				throw new UnsupportedOperationException("Unknown variable " + v);
 			}
-			newVariables.remove(v);
 			if (v.getSort().isArraySort()) {
 				newSegmentationMap.remove(v);
 			} else {
