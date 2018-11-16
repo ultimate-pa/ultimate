@@ -557,7 +557,7 @@ public final class SmtUtils {
 		if (SmtSortUtils.isNumericSort(sort)) {
 			return unaryNumericMinus(script, operand);
 		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", new BigInteger[0], operand);
+			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", null, operand);
 		} else {
 			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
