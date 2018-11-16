@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -187,6 +188,9 @@ public class CallGraphBuilder {
 			} else if (statement instanceof WhileStatement) {
 				final WhileStatement whileStatement = (WhileStatement) statement;
 				registerCallStatementsInGraph(callerNode, whileStatement.getBody());
+			} else if (statement instanceof AtomicStatement) {
+				final AtomicStatement atomicStatement = (AtomicStatement) statement;
+				registerCallStatementsInGraph(callerNode, atomicStatement.getBody());
 			}
 			// else, assume statement contains no other statements
 		}
