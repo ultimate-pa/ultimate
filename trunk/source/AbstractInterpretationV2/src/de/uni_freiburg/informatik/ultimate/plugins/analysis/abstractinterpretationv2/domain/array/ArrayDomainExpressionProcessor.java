@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -59,7 +60,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 						disjuncts.add(SmtUtils.binaryEquality(script, auxVar.getTermVariable(),
 								segmentation.getValue(i).getTermVariable()));
 					}
-					tmpState = processAssumeTerm(tmpState.addAuxVar(auxVar), SmtUtils.and(script, disjuncts));
+					tmpState = processAssumeTerm(tmpState.addAuxVar(auxVar), SmtUtils.or(script, disjuncts));
 				} else {
 					auxVars.add(auxVar);
 					final List<Term> disjuncts = new ArrayList<>();
@@ -106,19 +107,22 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		if (SmtUtils.isFunctionApplication(assumption, "=")) {
 			final Term[] params = ((ApplicationTerm) assumption).getParameters();
 			assert params.length == 2;
-			if (params[0].getSort().isArraySort()) {
+			final Sort sort = params[0].getSort();
+			if (sort.isArraySort()) {
 				final Expression left = mToolkit.getExpression(params[0]);
 				final Expression right = mToolkit.getExpression(params[1]);
 				final SegmentationMap segmentationMap = state.getSegmentationMap();
+				SegmentationMap newSegmentationMap;
 				if (left instanceof IdentifierExpression && right instanceof IdentifierExpression) {
 					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
 					final Segmentation leftSegmentation = segmentationMap.getSegmentation(leftVar);
 					final Segmentation rightSegmentation = segmentationMap.getSegmentation(rightVar);
 					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
-							state.intersectSegmentations(leftSegmentation, rightSegmentation);
-					segmentationMap.union(leftVar, rightVar, intersectionResult.getFirst());
-					return intersectionResult.getSecond().updateState(segmentationMap);
+							state.intersectSegmentations(leftSegmentation, rightSegmentation, sort);
+					newSegmentationMap = intersectionResult.getSecond().getSegmentationMap();
+					newSegmentationMap.union(leftVar, rightVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(newSegmentationMap);
 				}
 				if (left instanceof IdentifierExpression) {
 					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
@@ -126,9 +130,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 					final Pair<ArrayDomainState<STATE>, Segmentation> rightPair = state.getSegmentation(right);
 					final Segmentation rightSegmentation = rightPair.getSecond();
 					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
-							rightPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation);
-					segmentationMap.put(leftVar, intersectionResult.getFirst());
-					return intersectionResult.getSecond().updateState(segmentationMap);
+							rightPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation, sort);
+					newSegmentationMap = intersectionResult.getSecond().getSegmentationMap();
+					newSegmentationMap.put(leftVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(newSegmentationMap);
 				}
 				if (right instanceof IdentifierExpression) {
 					final Pair<ArrayDomainState<STATE>, Segmentation> leftPair = state.getSegmentation(left);
@@ -136,9 +141,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
 					final Segmentation rightSegmentation = segmentationMap.getSegmentation(rightVar);
 					final Pair<Segmentation, ArrayDomainState<STATE>> intersectionResult =
-							leftPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation);
-					segmentationMap.put(rightVar, intersectionResult.getFirst());
-					return intersectionResult.getSecond().updateState(segmentationMap);
+							leftPair.getFirst().intersectSegmentations(leftSegmentation, rightSegmentation, sort);
+					newSegmentationMap = intersectionResult.getSecond().getSegmentationMap();
+					newSegmentationMap.put(rightVar, intersectionResult.getFirst());
+					return intersectionResult.getSecond().updateState(newSegmentationMap);
 				}
 				return state;
 			}
