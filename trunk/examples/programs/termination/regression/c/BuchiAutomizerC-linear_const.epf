@@ -1,0 +1,22 @@
+#Fri Apr 03 17:28:56 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ to\ simplify\ termination\ arguments=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/GNTA\ analysis=LINEAR_WITH_GUESSES
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=LINEAR_WITH_GUESSES
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (GNTA\ synthesis)=false
+
+
+#Tue Feb 18 11:27:46 CET 2014
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
+
