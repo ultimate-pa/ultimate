@@ -470,6 +470,10 @@ public class CTranslationUtil {
 			final BoogiePrimitiveType boogiePrimitiveType = (BoogiePrimitiveType) boogieType;
 			if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.INT) {
 				return "Int";
+			} else if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.REAL) {
+				return "Real";
+			} else if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.BOOL) {
+				return "Bool";
 			} else if (boogiePrimitiveType.getTypeCode() >= 0) {
 				return String.format("(_ BitVec %s)", boogiePrimitiveType.getTypeCode());
 			} else {
@@ -494,6 +498,10 @@ public class CTranslationUtil {
 			final BoogiePrimitiveType boogiePrimitiveType = (BoogiePrimitiveType) boogieType;
 			if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.INT) {
 				return "0";
+			} else if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.REAL) {
+				return "0.0";
+			} else if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.BOOL) {
+				return "false";
 			} else if (boogiePrimitiveType.getTypeCode() >= 0) {
 				final StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < boogiePrimitiveType.getTypeCode(); i++) {
