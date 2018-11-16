@@ -203,7 +203,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final ArrayDomainState<STATE> result =
 				new ArrayDomainState<>(newSubState, getSegmentationMap(), newVariables, mToolkit)
 						.removeVariables(overwrittenArrays);
-		result.mSegmentationMap.addAll(dominator.mSegmentationMap);
+		result.mSegmentationMap.putAll(dominator.mSegmentationMap);
 		return result.removeUnusedAuxVars();
 	}
 

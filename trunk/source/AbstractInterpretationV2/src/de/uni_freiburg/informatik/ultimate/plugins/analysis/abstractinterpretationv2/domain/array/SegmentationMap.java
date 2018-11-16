@@ -112,9 +112,15 @@ public class SegmentationMap {
 		mRepresentiveSegmentations.put(mArrayEqualities.find(var), segmentation);
 	}
 
-	public void addAll(final SegmentationMap other) {
+	public void putAll(final SegmentationMap other) {
 		for (final IProgramVarOrConst rep : other.mArrayEqualities.getAllRepresentatives()) {
-			mArrayEqualities.addEquivalenceClass(other.getEquivalenceClass(rep), rep);
+			final Set<IProgramVarOrConst> eqClass = other.getEquivalenceClass(rep);
+			for (final IProgramVarOrConst v : eqClass) {
+				if (getArrays().contains(v)) {
+					remove(v);
+				}
+			}
+			mArrayEqualities.addEquivalenceClass(eqClass, rep);
 			mRepresentiveSegmentations.put(rep, other.getSegmentation(rep));
 		}
 	}
