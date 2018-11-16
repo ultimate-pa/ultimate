@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -947,6 +948,11 @@ public class BoogieOutput {
 			sb.append(indent).append("}");
 		} else if (s instanceof Label) {
 			sb.append(((Label) s).getName()).append(":");
+		} else if (s instanceof AtomicStatement) {
+			final AtomicStatement stmt = (AtomicStatement) s;
+			sb.append("atomic {").append(LINEBREAK);
+			appendBlock(sb, stmt.getBody(), indent);
+			sb.append(indent).append("}");
 		} else {
 			throw new IllegalArgumentException(s.toString());
 		}
