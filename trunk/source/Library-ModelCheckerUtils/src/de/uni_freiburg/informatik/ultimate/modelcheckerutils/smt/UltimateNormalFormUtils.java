@@ -107,7 +107,7 @@ public final class UltimateNormalFormUtils {
 				return true;
 			} else if (param instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) param;
-				if (appTerm.getFunction().isIntern()) {
+				if (appTerm.getFunction().getName().equals("+")) {
 					assert false : "must not be argument of unary minus " + appTerm.getFunction().getName();
 					return false;
 				}
