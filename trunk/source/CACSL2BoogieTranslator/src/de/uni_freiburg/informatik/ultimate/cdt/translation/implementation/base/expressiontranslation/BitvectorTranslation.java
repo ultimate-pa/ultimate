@@ -82,36 +82,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-		/**
-		 * Round towards the nearest, tie to even.
-		 */
-		RNE("roundNearestTiesToEven"),
+	/**
+	 * Round towards the nearest, tie to even.
+	 */
+	RNE("roundNearestTiesToEven"),
 
-		/**
-		 * Round toward nearest, tie to away.
-		 */
-		RNA("roundNearestTiesToAway"),
+	/**
+	 * Round toward nearest, tie to away.
+	 */
+	RNA("roundNearestTiesToAway"),
 
-		/**
-		 * Round toward positive.
-		 *
-		 * In this mode, a number r is rounded to the least upper floating-point bound.
-		 */
-		RTP("roundTowardPositive"),
+	/**
+	 * Round toward positive.
+	 *
+	 * In this mode, a number r is rounded to the least upper floating-point bound.
+	 */
+	RTP("roundTowardPositive"),
 
-		/**
-		 * Round toward negative.
-		 *
-		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-		 */
-		RTN("roundTowardNegative"),
+	/**
+	 * Round toward negative.
+	 *
+	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+	 */
+	RTN("roundTowardNegative"),
 
-		/**
-		 * Round toward zero.
-		 *
-		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-		 */
-		RTZ("roundTowardZero");
+	/**
+	 * Round toward zero.
+	 *
+	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+	 */
+	RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -900,12 +900,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else if ("trunc".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.trunc";
-			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, argumentType);
+			final String smtFunctionName = "fp.roundToIntegral";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+					new Expression[] { SmtRoundingMode.RTZ.getBoogieIdentifierExpression(), argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("round".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
@@ -915,35 +916,55 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { SmtRoundingMode.RTZ.getBoogieIdentifierExpression(), argument.getValue() },
+					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("lround".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.lround";
+			final String smtFunctionName = "fp.roundToIntegral";
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
-			declareFloatingPointFunction(loc, smtFunctionName, false, false, resultType, argumentType);
+
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, resultType, argumentType);
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
+
+			final CPrimitive longResultType = new CPrimitive(CPrimitives.LONG);
+			final String smtConvertTypeFunctionName = "fp.to_sbv";
+			final String ConvertBoogieFunctionName = SFO.getBoogieFunctionName(smtConvertTypeFunctionName, resultType);
+			declareFloatingPointFunction(loc, smtConvertTypeFunctionName, false, true, longResultType, resultType);
+			final Expression convertExpr =
+					ExpressionFactory.constructFunctionApplication(loc, ConvertBoogieFunctionName,
+							new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), expr },
+							mTypeHandler.getBoogieTypeForCType(longResultType));
+
+			return new RValue(convertExpr, longResultType);
 		} else if ("llround".equals(floatFunction.getFunctionName())) {
+			// TODO fix result type. fp.to_sbv. smt function to convert to long long??
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.llround";
+			final String smtFunctionName = "fp.roundToIntegral";
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
+
 			declareFloatingPointFunction(loc, smtFunctionName, false, false, resultType, argumentType);
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
+
+			final CPrimitive longLongResultType = new CPrimitive(CPrimitives.LONGLONG);
+			final String smtConvertTypeFunctionName = "fp.to_sbv";
+			final String ConvertBoogieFunctionName = SFO.getBoogieFunctionName(smtConvertTypeFunctionName, resultType);
+			declareFloatingPointFunction(loc, smtConvertTypeFunctionName, false, true, longLongResultType, resultType);
+			final Expression convertExpr =
+					ExpressionFactory.constructFunctionApplication(loc, ConvertBoogieFunctionName,
+							new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), expr },
+							mTypeHandler.getBoogieTypeForCType(longLongResultType));
+
+			return new RValue(convertExpr, longLongResultType);
 		} else if ("floor".equals(floatFunction.getFunctionName())) {
-			/*
-			 * TODO: See http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml and
-			 * https://en.cppreference.com/w/c/numeric/math/floor
-			 *
-			 */
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.roundToIntegral";
@@ -961,14 +982,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else if ("ceil".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.ceil";
-			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, argumentType);
+			final String smtFunctionName = "fp.roundToIntegral";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+					new Expression[] { SmtRoundingMode.RTP.getBoogieIdentifierExpression(), argument.getValue() },
+					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("sin".equals(floatFunction.getFunctionName())) {
+			// TODO Create correct BoogieFunction using SMT functions. See
+			// http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml
+			// Check how sin in calculated in c source. I believe it is approximated with a polynomial
+			// See Taylor's theorem
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.sin";
@@ -983,7 +1009,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.abs";
-
 			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
@@ -1066,11 +1091,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		} else if ("signbit".equals(floatFunction.getFunctionName())) {
 			final Expression isNegative;
-			{
-				final String smtFunctionName = "fp.isNegative";
-				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
-				isNegative = rvalue.getValue();
-			}
+			final String smtFunctionName = "fp.isNegative";
+			final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
+			isNegative = rvalue.getValue();
+
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
 					mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
@@ -1098,17 +1122,51 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case "fmax":
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max");
 		case "remainder":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.remainder");
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 		case "fmod":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.fmod", true);
+			// fmod guarantees that the return value is the same sign as the first argument (x)
+			// copies the sign of firts element to remainder value
+			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
+			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
+			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first);
 		case "copysign":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.copysign");
+			// if second is negative, return arithneg of abs(first), else return abs(first)
+			final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
+			final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
+
+			final Expression isNegativeSecond;
+			final String smtNegativeFunctionName = "fp.isNegative";
+			final RValue secondNegativeRvalue =
+					constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
+			isNegativeSecond = secondNegativeRvalue.getValue();
+			final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
+			final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
+					absoluteValue.getValue(), resultType);
+			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
+					negative, absoluteValue.getValue());
+			return new RValue(resultExpr, resultType);
 		case "fdim":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.fdim", true);
+			// if first>second, first - second, else +0
+			final CPrimitive typeFirst = (CPrimitive) first.getCType().getUnderlyingType();
+			final CPrimitive typeSecond = (CPrimitive) second.getCType().getUnderlyingType();
+
+			final Expression comparison = constructBinaryComparisonFloatingPointExpression(loc,
+					IASTBinaryExpression.op_greaterThan, first.getValue(), typeFirst, second.getValue(), typeSecond);
+
+			final Expression subtraction = constructArithmeticFloatingPointExpression(loc,
+					IASTBinaryExpression.op_minus, first.getValue(), typeFirst, second.getValue(), typeSecond);
+
+			final Expression zero = constructLiteralForFloatingType(loc, typeFirst, BigDecimal.ZERO);
+
+			final Expression resultExprFdim =
+					ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
+			return new RValue(resultExprFdim, typeFirst);
+
 		default:
 			throw new UnsupportedOperationException(
 					"not yet supported float operation " + floatFunction.getFunctionName());
 		}
+
 	}
 
 	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
@@ -1122,6 +1180,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		checkIsFloatPrimitive(first);
 		checkIsFloatPrimitive(second);
 		final CPrimitive firstArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
+
 		final CPrimitive secondArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
 		if (!firstArgumentType.equals(secondArgumentType)) {
 			throw new IllegalArgumentException("No mixed type arguments allowed");
