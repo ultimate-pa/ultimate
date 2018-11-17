@@ -49,6 +49,10 @@ public final class UltimateNormalFormUtils {
 	}
 
 	private static boolean rootRespectsUltimateNormalForm(final ConstantTerm term) {
+		if (SmtSortUtils.isBitvecSort(term.getSort())) {
+			assert false : "UNF does not support bitvector literals, use instead e.g., (_ bv23 64) to construct a bitvector of length 64 whose decimal value is 23.";
+			return false;
+		}
 		if (term.getValue() instanceof Rational) {
 			return true;
 		}
