@@ -503,12 +503,7 @@ public class CTranslationUtil {
 			} else if (boogiePrimitiveType.getTypeCode() == BoogiePrimitiveType.BOOL) {
 				return "false";
 			} else if (boogiePrimitiveType.getTypeCode() >= 0) {
-				final StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < boogiePrimitiveType.getTypeCode(); i++) {
-					sb.append('0');
-				}
-				return String.format("#b%s)", sb.toString());
-//				return String.format("#b%s)", boogiePrimitiveType.getTypeCode());
+				return String.format("(_ bv0 %s)", boogiePrimitiveType.getTypeCode());
 			} else {
 				throw new AssertionError("missing case");
 			}
