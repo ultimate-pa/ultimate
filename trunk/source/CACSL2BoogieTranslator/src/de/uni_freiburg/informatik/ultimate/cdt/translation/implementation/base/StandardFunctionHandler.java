@@ -118,8 +118,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class StandardFunctionHandler {
 
-	private static final boolean ENABLE_PTHREAD_SUPPORT = true;
-
 	private final LocationFactory mLocationFactory;
 
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
@@ -220,29 +218,23 @@ public class StandardFunctionHandler {
 			fill(map, unsupportedFloatFunction, dieFloat);
 		}
 
-		if (ENABLE_PTHREAD_SUPPORT) {
-			/** functions of pthread library **/
-			fill(map, "pthread_create", this::handleFork);
-			fill(map, "pthread_join", this::handleJoin);
-			fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
-			fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
-			fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
-			fill(map, "pthread_exit", this::handlePthread_exit);
-			fill(map, "pthread_cond_init", die);
-			fill(map, "pthread_cond_wait", die);
-			fill(map, "pthread_cond_signal", die);
-			fill(map, "pthread_cond_destroy", die);
-			fill(map, "pthread_cond_broadcast", die);
-			fill(map, "pthread_mutex_destroy", die);
-			// the following three occur at SV-COMP 2019 only in one benchmark
-			fill(map, "pthread_attr_init", die);
-			fill(map, "pthread_attr_setdetachstate", die);
-			fill(map, "pthread_attr_destroy", die);
-			fill(map, "__VERIFIER_atomic_begin", die);
-			fill(map, "__VERIFIER_atomic_end", die);
-		} else {
-			fill(map, "pthread_create", die);
-		}
+		/** functions of pthread library **/
+		fill(map, "pthread_create", this::handleFork);
+		fill(map, "pthread_join", this::handleJoin);
+		fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
+		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
+		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
+		fill(map, "pthread_exit", this::handlePthread_exit);
+		fill(map, "pthread_cond_init", die);
+		fill(map, "pthread_cond_wait", die);
+		fill(map, "pthread_cond_signal", die);
+		fill(map, "pthread_cond_destroy", die);
+		fill(map, "pthread_cond_broadcast", die);
+		fill(map, "pthread_mutex_destroy", die);
+		// the following three occur at SV-COMP 2019 only in one benchmark
+		fill(map, "pthread_attr_init", die);
+		fill(map, "pthread_attr_setdetachstate", die);
+		fill(map, "pthread_attr_destroy", die);
 
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 
