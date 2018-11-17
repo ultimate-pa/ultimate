@@ -3991,16 +3991,14 @@ public class CHandler {
 			resultCType = new CPrimitive(CPrimitives.VOID);
 		} else if (opPositive.getLrValue().isNullPointerConstant()) {
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
-
 			if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
-				// convert the "0" to a pointer
-				opPositive = mExpressionTranslation.convertIntToPointer(loc, opPositive,
+				opPositive = convertNullPointerConstantToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
 			} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 				opNegative = decayArrayToPointer(opNegative, loc, hook);
-				opPositive = mExpressionTranslation.convertIntToPointer(loc, opPositive,
+				opPositive = convertNullPointerConstantToPointer(loc, opPositive,
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
 			} else {
@@ -4009,16 +4007,14 @@ public class CHandler {
 
 		} else if (opNegative.getLrValue().isNullPointerConstant()) {
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
-
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
-				// convert the "0" to a pointer
-				opNegative = mExpressionTranslation.convertIntToPointer(loc, opNegative,
+				opNegative = convertNullPointerConstantToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 				opPositive = decayArrayToPointer(opPositive, loc, hook);
-				opNegative = mExpressionTranslation.convertIntToPointer(loc, opNegative,
+				opNegative = convertNullPointerConstantToPointer(loc, opNegative,
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else {
@@ -4102,6 +4098,28 @@ public class CHandler {
 		}
 
 		return resultBuilder.build();
+	}
+
+	/**
+	 * Convert a null pointer constant into a pointer a given pointer type. A null
+	 * pointer constant can be (at least in our translation) a "0" that has integer
+	 * type or something that has pointer type.
+	 * TODO 2018-11-17 Matthias: I think we need this method an cannot apply the
+	 * usual conversion since the usual restrictions for pointer-to-pointer 
+	 * conversions might be too strict.
+	 * Furthermore, if (in the future) we take the type information from eclipse 
+	 * CDT we might be immediately able to identify the correct type of a "0"
+	 * in the code.
+	 * 
+	 */
+	private ExpressionResult convertNullPointerConstantToPointer(final ILocation loc, ExpressionResult nullPointerConstant,
+			CPointer desiredResultType) {
+		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
+			nullPointerConstant = mExpressionTranslation.convertIntToPointer(loc, nullPointerConstant, desiredResultType);
+		} else {
+			assert (nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer);
+		}
+		return nullPointerConstant;
 	}
 
 	private static void assignAuxVar(final ILocation loc, final ExpressionResult branchResult,
