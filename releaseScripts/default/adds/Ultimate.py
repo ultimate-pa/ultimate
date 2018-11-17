@@ -63,7 +63,7 @@ class _PropParser:
         self.ltl = False
         self.init = None
         self.ltlformula = None
-        self.mem_cleanup = True
+        self.mem_cleanup = False
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
