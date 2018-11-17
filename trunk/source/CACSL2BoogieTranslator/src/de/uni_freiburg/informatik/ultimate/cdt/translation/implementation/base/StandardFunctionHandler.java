@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
@@ -486,6 +487,9 @@ public class StandardFunctionHandler {
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
+		// from fenv.h
+		fill(map, "fegetround", this::handleBuiltinFegetround);
+
 		checkFloatSupport(map, dieFloat);
 
 		return Collections.unmodifiableMap(map);
@@ -559,7 +563,6 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-
 	/**
 	 *
 	 * char *strcpy( char *dest, const char *src );
@@ -587,12 +590,12 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(dest);
 		resultBuilder.addAllExceptLrValue(src);
 
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, dest.getLrValue().getCType(),
-				SFO.AUXVAR.STRCPYRES);
+		final AuxVarInfo auxvarinfo =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, dest.getLrValue().getCType(), SFO.AUXVAR.STRCPYRES);
 
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
-				new VariableLHS[] { auxvarinfo.getLhs() }, strCpyMmDecl.getName(), new Expression[] {
-						dest.getLrValue().getValue(), src.getLrValue().getValue() });
+				new VariableLHS[] { auxvarinfo.getLhs() }, strCpyMmDecl.getName(),
+				new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue() });
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
 		resultBuilder.addStatement(call);
@@ -794,7 +797,7 @@ public class StandardFunctionHandler {
 			rawProcName = castIdExpr.getName().toString();
 		} else if (arguments[2] instanceof CASTUnaryExpression) {
 			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) arguments[2];
-			if (castUnaryExpr.getOperator() == CASTUnaryExpression.op_amper) {
+			if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
 				// function foo is probably given as a function pointer of the form & foo
 				if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
 					final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
@@ -928,19 +931,19 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
-		final ExpressionResult arg = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc,
-				arguments[0]);
-		final ExpressionResult transformedArg = mExprResultTransformer.convert(loc, arg,
-				new CPointer(new CPrimitive(CPrimitives.VOID)));
+		final ExpressionResult arg =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult transformedArg =
+				mExprResultTransformer.convert(loc, arg, new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 		final IBoogieType type = mTypeHandler.getBoogiePointerType();
 		final String identifier = SFO.RES;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(
 				StorageClass.IMPLEMENTATION_OUTPARAM, mProcedureManager.getCurrentProcedureID());
-		final LeftHandSide[] lhs = new LeftHandSide[] {
-				new VariableLHS(loc, type, identifier, declarationInformation) };
-		final AssignmentStatement retValAssignment = new AssignmentStatement(loc, lhs,
-				new Expression[] { transformedArg.getLrValue().getValue() });
+		final LeftHandSide[] lhs =
+				new LeftHandSide[] { new VariableLHS(loc, type, identifier, declarationInformation) };
+		final AssignmentStatement retValAssignment =
+				new AssignmentStatement(loc, lhs, new Expression[] { transformedArg.getLrValue().getValue() });
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(transformedArg);
 		erb.addStatement(retValAssignment);
@@ -1049,8 +1052,6 @@ public class StandardFunctionHandler {
 		return erb.build();
 	}
 
-
-
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
 		/*
 		 * https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
@@ -1070,6 +1071,18 @@ public class StandardFunctionHandler {
 		return new ExpressionResult(
 				Collections.singletonList(new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false))),
 				null);
+	}
+
+	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 0, name, arguments);
+
+		final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
+
+		return new ExpressionResultBuilder().setLrValue(rvalue).build();
+
 	}
 
 	private Result handleMemset(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,

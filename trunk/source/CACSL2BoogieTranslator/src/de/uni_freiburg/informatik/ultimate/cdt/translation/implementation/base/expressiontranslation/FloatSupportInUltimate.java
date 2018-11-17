@@ -115,7 +115,10 @@ public class FloatSupportInUltimate {
 			"fdiml",
 			// math.h macros (incomplete)
 			"fpclassify",
-			"isnormal"
+			"isnormal",
+
+			// from fenv.h
+			"fegetround"
 	};
 
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
@@ -284,7 +287,6 @@ public class FloatSupportInUltimate {
 			"feraiseexcept",
 			"fesetexceptflag",
 			"fetestexcept",
-			"fegetround",
 			"fesetround",
 			"fegetenv",
 			"feholdexcept",

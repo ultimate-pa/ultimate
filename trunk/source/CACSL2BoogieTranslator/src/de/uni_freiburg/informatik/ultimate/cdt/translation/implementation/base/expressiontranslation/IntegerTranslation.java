@@ -497,11 +497,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 				chk1.annotate(assertGeq0);
 				erb.addStatement(assertGeq0);
 
-				final AssertStatement assertLtMax =
-						new AssertStatement(loc,
-								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-										oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc,
-												maxValuePlusOne.toString())));
+				final AssertStatement assertLtMax = new AssertStatement(loc,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, oldWrappedIfNeeded,
+								ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
 				final Check chk2 = new Check(Spec.UINT_OVERFLOW);
 				chk2.annotate(assertLtMax);
 				erb.addStatement(assertLtMax);
@@ -937,6 +935,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
 			final String[] bitvectorFunctions) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public RValue constructBuiltinFegetround(final ILocation loc) {
 		throw new UnsupportedOperationException();
 	}
 

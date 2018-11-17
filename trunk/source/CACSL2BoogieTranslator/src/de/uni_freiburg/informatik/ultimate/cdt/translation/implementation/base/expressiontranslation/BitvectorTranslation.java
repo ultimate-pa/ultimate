@@ -1219,6 +1219,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
+	public RValue constructBuiltinFegetround(final ILocation loc) {
+		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
+		// https://en.cppreference.com/w/c/numeric/fenv/feround
+
+		final CPrimitive resultCType = new CPrimitive(CPrimitives.INT);
+		Expression resultExpression;
+		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+
+		switch (((IdentifierExpression) getRoundingMode()).getIdentifier()) {
+		case "~roundTowardZero":
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			break;
+		case "~roundNearestTiesToEven":
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			break;
+		case "~roundTowardPositive":
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("2"));
+			break;
+		case "~roundTowardNegative":
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("3"));
+			break;
+		default:
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("-1"));
+			break;
+		}
+
+		return new RValue(resultExpression, resultCType);
+	}
+
+	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
 		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
