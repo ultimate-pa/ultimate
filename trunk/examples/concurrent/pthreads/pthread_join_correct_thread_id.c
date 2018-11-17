@@ -10,10 +10,9 @@
 
 typedef unsigned long int pthread_t;
 
-int x;
+int x = 4;
 
 void *thread1(void *arg) {
-  x = 4;
   return 0;
 }
 
@@ -32,10 +31,8 @@ int main(void)
   pthread_create(&t0, 0, thread0, 0);
   pthread_join(t0, 0);
   
-  if (x == 5) {
-    //@ assert \true;
-  } else {
+  if (x != 5) {
     //@ assert \false;
-  }  
+  } 
   return 0;
 }
