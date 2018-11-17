@@ -3989,7 +3989,13 @@ public class CHandler {
 		} else if (secondArgIsVoid && thirdArgIsVoid) {
 			/* C11 6.5.15.5 If both operands have void type, the result has void type. */
 			resultCType = new CPrimitive(CPrimitives.VOID);
-		} else if (opPositive.getLrValue().isNullPointerConstant()) {
+		} else if (opPositive.getLrValue().isNullPointerConstant()
+				|| opPositive.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
+			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
+			// allows the second disjunct above. Maybe a GNU extension?
+			// However this seems to help on a bunch of SV-COMP benchmarks where we have an
+			// Integer and String literal as second and third operand of the conditional
+			// operator. 
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
 			if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				opPositive = convertNullPointerConstantToPointer(loc, opPositive,
@@ -4005,7 +4011,13 @@ public class CHandler {
 				resultCType = opNegative.getLrValue().getCType();
 			}
 
-		} else if (opNegative.getLrValue().isNullPointerConstant()) {
+		} else if (opNegative.getLrValue().isNullPointerConstant()
+				|| opNegative.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
+			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
+			// allows the second disjunct above. Maybe a GNU extension?
+			// However this seems to help on a bunch of SV-COMP benchmarks where we have an
+			// Integer and String literal as second and third operand of the conditional
+			// operator. 
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				opNegative = convertNullPointerConstantToPointer(loc, opNegative,
