@@ -46,6 +46,7 @@ known_exceptions = {
     "StackOverflowError: null":True,
     "No suitable toolchain file found": True,
     "No suitable file found in config dir": True,
+    "AssertionError: var is still there": True,
     "ExceptionOrErrorResult": False,
     "was unable to instantiate class": True,
     "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":True, 
