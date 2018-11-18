@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -331,6 +332,15 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatementFromCond(origStmt, negatedCondStmt, true, false);
 				mReachable = true;
 			}
+		} else if (origStmt instanceof AtomicStatement) {
+			final LinkedList<Statement> currentFlatStatements = mFlatStatements;
+			mFlatStatements = new LinkedList<>();
+			unstructureBlock(((AtomicStatement) origStmt).getBody());
+			final AtomicStatement newAtomicStatement = new AtomicStatement(origStmt.getLoc(),
+					mFlatStatements.toArray(new Statement[mFlatStatements.size()]));
+			ModelUtils.copyAnnotations(origStmt, newAtomicStatement);
+			currentFlatStatements.add(newAtomicStatement);
+			mFlatStatements = currentFlatStatements;
 		} else if (origStmt instanceof IfStatement) {
 			final IfStatement stmt = (IfStatement) origStmt;
 			final String thenLabel = generateLabel();

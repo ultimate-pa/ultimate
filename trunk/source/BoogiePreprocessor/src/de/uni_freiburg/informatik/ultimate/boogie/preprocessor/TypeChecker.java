@@ -640,6 +640,8 @@ public class TypeChecker extends BaseObserver {
 				processLabels(labels, ((IfStatement) s).getElsePart());
 			} else if (s instanceof WhileStatement) {
 				processLabels(labels, ((WhileStatement) s).getBody());
+			} else if (s instanceof AtomicStatement) {
+				processLabels(labels, ((AtomicStatement) s).getBody());
 			}
 		}
 	}
