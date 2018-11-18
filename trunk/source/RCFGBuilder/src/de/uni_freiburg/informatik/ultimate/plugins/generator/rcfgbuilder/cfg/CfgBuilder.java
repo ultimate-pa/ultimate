@@ -86,10 +86,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ProcedureMultiplier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -110,9 +108,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IcfgDuplicator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -126,7 +121,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -163,7 +157,7 @@ public class CfgBuilder {
 	List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinCurrentThreads = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
-	private ITranslator mResultingBacktranslator;
+	private ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> mResultingBacktranslator;
 
 	private final CodeBlockSize mCodeBlockSize;
 
@@ -293,38 +287,9 @@ public class CfgBuilder {
 		final ManagedScript mgdScript = mBoogie2Smt.getManagedScript();
 
 		if (!forkCurrentThreads.isEmpty()) {
-			final BlockEncodingBacktranslator backtranslator =
-					new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
-			final IcfgDuplicator duplicator =
-					new IcfgDuplicator(mLogger, mServices, mgdScript, backtranslator);
-			result = duplicator.copy(result);
-			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
-					duplicator.getOld2NewEdgeMapping();
-			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> newForkCurrentThreads =
-					forkCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
-			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> newJoinCurrentThreads =
-					joinCurrentThreads.stream().map(old2newEdgeMapping::get)
-							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
-			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
-					adder.constructTreadInstances(result, newForkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap,
-					newJoinCurrentThreads);
-			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
-			final HashRelation<String, String> copyDirectives =
-					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
-			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator,
-					threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
-			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
-
-			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, newForkCurrentThreads,
-					newJoinCurrentThreads, threadInstanceMap, backtranslator);
-
-			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
-			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
-
-			mResultingBacktranslator = new TranslatorConcatenation<>(backtranslator, mRcfgBacktranslator);
+			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg);
+			result = icfgPetrifier.getPetrifiedIcfg();
+			mResultingBacktranslator = new TranslatorConcatenation<>(icfgPetrifier.getBacktranslator(), mRcfgBacktranslator);
 		} else {
 			mResultingBacktranslator = mRcfgBacktranslator;
 		}
@@ -398,16 +363,7 @@ public class CfgBuilder {
 				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
 	}
 
-	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
-		final Set<Term> result = new HashSet<>();
-		for (final ThreadInstance ti : values) {
-			result.add(ti.getInUseVar().getTerm());
-			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
-				result.add(idVar.getTerm());
-			}
-		}
-		return result;
-	}
+
 
 	private static Expression getNegation(final Expression expr) {
 		if (expr == null) {
@@ -506,7 +462,7 @@ public class CfgBuilder {
 		return errorLocNode;
 	}
 
-	public ITranslator getBacktranslator() {
+	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> getBacktranslator() {
 		return mResultingBacktranslator;
 	}
 
