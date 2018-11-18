@@ -151,6 +151,8 @@ public class StandardFunctionHandler {
 
 	private final ITypeHandler mTypeHandler;
 
+	private int mPthreadCreateCounter = 0;
+
 	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
@@ -829,8 +831,18 @@ public class StandardFunctionHandler {
 		}
 		final String methodName = idExpr.getIdentifier().substring(9);
 
-		final ExpressionResult threadId = mMemoryHandler.getReadCall(argThreadIdPointer.getLrValue().getValue(),
-				new CPrimitive(CPrimitives.ULONG), node);
+		final HeapLValue heapLValue;
+		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
+			heapLValue = (HeapLValue) argThreadIdPointer.getLrValue();
+		} else {
+			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
+					argThreadIdPointer.getLrValue().getValue(), argThreadIdPointer.getLrValue().getCType(), false, null);
+		}
+
+		final Expression threadId = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG),
+				BigInteger.valueOf(mPthreadCreateCounter++));
+		final List<Statement> writeCall = mMemoryHandler.getWriteCall(loc, heapLValue, threadId,
+				new CPrimitive(CPrimitives.ULONG), false, node);
 
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
@@ -842,13 +854,14 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "pthread_create calls function with more than one argument");
 		}
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId.getLrValue().getValue() },
+		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId },
 				methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadIdPointer, threadId, argThreadAttributes, argStartRoutine,
+		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine,
 				startRoutineArguments);
+		builder.addStatements(writeCall);
 
 		// auxvar for fork return value (status code)
 		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
