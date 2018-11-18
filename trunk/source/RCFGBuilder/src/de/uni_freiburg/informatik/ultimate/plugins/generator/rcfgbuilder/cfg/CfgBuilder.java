@@ -300,7 +300,7 @@ public class CfgBuilder {
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
 					adder.constructTreadInstances(result, forkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap);
+			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap, joinCurrentThreads);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
 			final HashRelation<String, String> copyDirectives =
 					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());

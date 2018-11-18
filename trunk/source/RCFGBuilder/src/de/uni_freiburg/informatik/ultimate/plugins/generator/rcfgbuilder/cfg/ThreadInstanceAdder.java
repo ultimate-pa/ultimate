@@ -258,7 +258,7 @@ public class ThreadInstanceAdder {
 
 	/**
 	 * Add JoinOtherThreadEdge from
-	 * 
+	 *
 	 * @param backtranslator
 	 *
 	 * @param edge
@@ -434,19 +434,21 @@ public class ThreadInstanceAdder {
 	}
 
 	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2) {
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions) {
 		final DefaultIcfgSymbolTable newSymbolTable =
 				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals =
 				new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
-		for (final ThreadInstance ti : threadInstanceMap2.values()) {
+		for (final ThreadInstance ti : threadInstanceMap.values()) {
 			addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
 				addVar(idVar, newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			}
 		}
 		newSymbolTable.finishConstruction();
-		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap2);
+		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap,
+				joinTransitions);
 		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
 				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
 				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
