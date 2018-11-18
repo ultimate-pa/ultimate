@@ -1415,7 +1415,8 @@ public class CfgBuilder {
 
 		private void processAtomicStatement(final AtomicStatement atomicStatement) {
 			mAtomicMode = true;
-			for (final Statement st : atomicStatement.getBody()) {
+			for (int i = 0; i<atomicStatement.getBody().length; i++) {
+				final Statement st = atomicStatement.getBody()[i];
 				if (st instanceof AssignmentStatement || (st instanceof AssumeStatement) || (st instanceof HavocStatement)) {
 					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 				} else if (st instanceof CallStatement) {
@@ -1433,6 +1434,19 @@ public class CfgBuilder {
 								"In an atomic block, calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
 					}
 					processCallStatement(callStatement);
+				} else if (st instanceof GotoStatement) {
+					final GotoStatement gotoStatement = (GotoStatement) st;
+					final Statement nextStatement = atomicStatement.getBody()[i+1];
+					if (gotoStatement.getLabels().length == 1 && (nextStatement instanceof Label)
+							&& ((Label) nextStatement).getName().equals(gotoStatement.getLabels()[0])) {
+						// do nothing, we can skip goto and label
+					} else {
+						throw new UnsupportedOperationException(
+								"In atomic statements, GotoStatements are (currently) only allowed if they jump to exactly one label and this label is the next statement after the GotoStatement");
+					}
+				} else if (st instanceof Label) {
+					// do nothing, drop label
+					mLogger.info("dropping label inside atomic statement: " + ((Label) st).getName());
 				} else {
 					throw new UnsupportedOperationException("Not supported in atomic block " + st.getClass().getSimpleName());
 				}
