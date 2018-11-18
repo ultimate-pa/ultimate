@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ProcedureMultiplier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -158,8 +159,8 @@ public class CfgBuilder {
 
 	Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
-	List<ForkThreadCurrent> mForkCurrentThreads = new ArrayList<>();
-	List<JoinThreadCurrent> mJoinCurrentThreads = new ArrayList<>();
+	Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mForkCurrentThreads = new HashMap<>();
+	List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinCurrentThreads = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
 	private ITranslator mResultingBacktranslator;
@@ -212,7 +213,8 @@ public class CfgBuilder {
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
 
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, null);
+		final ConcurrencyInformation ci = new ConcurrencyInformation(mForkCurrentThreads, mJoinCurrentThreads);
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}
@@ -283,33 +285,41 @@ public class CfgBuilder {
 		// Add all transitions to the forked procedure entry locations.
 		IIcfg<?> result = icfg;
 		ModelUtils.copyAnnotations(unit, result);
-		if (!mForkCurrentThreads.isEmpty()) {
+
+		final Collection<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads = icfg.getCfgSmtToolkit()
+				.getConcurrencyInformation().getThreadInstanceMap().keySet();
+		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads = icfg.getCfgSmtToolkit()
+				.getConcurrencyInformation().getJoinTransitions();
+		final ManagedScript mgdScript = mBoogie2Smt.getManagedScript();
+
+		if (!forkCurrentThreads.isEmpty()) {
 			final BlockEncodingBacktranslator backtranslator =
 					new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 			final IcfgDuplicator duplicator =
-					new IcfgDuplicator(mLogger, mServices, mBoogie2Smt.getManagedScript(), backtranslator);
+					new IcfgDuplicator(mLogger, mServices, mgdScript, backtranslator);
 			result = duplicator.copy(result);
 			final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
 					duplicator.getOld2NewEdgeMapping();
-			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads =
-					mForkCurrentThreads.stream().map(old2newEdgeMapping::get)
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> newForkCurrentThreads =
+					forkCurrentThreads.stream().map(old2newEdgeMapping::get)
 							.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
-			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads =
-					mJoinCurrentThreads.stream().map(old2newEdgeMapping::get)
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> newJoinCurrentThreads =
+					joinCurrentThreads.stream().map(old2newEdgeMapping::get)
 							.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
 			final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap =
-					adder.constructTreadInstances(result, forkCurrentThreads);
-			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap, joinCurrentThreads);
+					adder.constructTreadInstances(result, newForkCurrentThreads);
+			final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(result.getCfgSmtToolkit(), threadInstanceMap,
+					newJoinCurrentThreads);
 			((BasicIcfg<IcfgLocation>) result).setCfgSmtToolkit(cfgSmtToolkit);
 			final HashRelation<String, String> copyDirectives =
 					ProcedureMultiplier.generateCopyDirectives(threadInstanceMap.values());
 			new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) result, copyDirectives, backtranslator,
-					threadInstanceMap, forkCurrentThreads, joinCurrentThreads);
+					threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
 			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) result, threadInstanceMap.values());
 
-			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, forkCurrentThreads, joinCurrentThreads,
-					threadInstanceMap, backtranslator);
+			result = adder.connectThreadInstances((IIcfg<IcfgLocation>) result, newForkCurrentThreads,
+					newJoinCurrentThreads, threadInstanceMap, backtranslator);
 
 			final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
 			backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
@@ -448,13 +458,6 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
-	public Collection<ForkThreadCurrent> getForkCurrentThreads() {
-		return mForkCurrentThreads;
-	}
-
-	public Collection<JoinThreadCurrent> getJoinCurrentThreads() {
-		return mJoinCurrentThreads;
-	}
 
 	/**
 	 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
@@ -1366,7 +1369,7 @@ public class CfgBuilder {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, true);
 				final IIcfgElement cb = forkCurrentThreadEdge;
 				ModelUtils.copyAnnotations(st, cb);
-				mForkCurrentThreads.add(forkCurrentThreadEdge);
+				mForkCurrentThreads.put(forkCurrentThreadEdge, null);
 			} else {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, false);
 				final IIcfgElement cb = forkCurrentThreadEdge;

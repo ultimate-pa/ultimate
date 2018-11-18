@@ -56,4 +56,10 @@ public class ConcurrencyInformation {
 		return mThreadInstanceMap;
 	}
 
+	public Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> getJoinTransitions() {
+		return mJoinTransitions;
+	}
+
+
+
 }
