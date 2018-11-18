@@ -962,6 +962,9 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CType type1, final CType type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
+		if (type1 == type2) {
+			return true;
+		}
 
 		final CType ulType1 = type1.getUnderlyingType();
 		final CType ulType2 = type2.getUnderlyingType();
