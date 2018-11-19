@@ -41,7 +41,8 @@ public interface IInlineSelector {
 	/**
 	 * Set the {@link CallGraphEdgeLabel#getInlineFlag()} value of all call graph edges.
 	 * @param callGraph Mapping from all procedure identifiers to the nodes of the call graph.
+	 * @param programIsConcurrent Program contains a fork statement
 	 */
-	public void setInlineFlags(Map<String, CallGraphNode> callGraph);
+	public void setInlineFlags(Map<String, CallGraphNode> callGraph, boolean programIsConcurrent);
 
 }

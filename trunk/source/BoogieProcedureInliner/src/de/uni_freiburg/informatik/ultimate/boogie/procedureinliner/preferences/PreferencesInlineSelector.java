@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.IInlineSelect
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter.IRelationFilter;
 
@@ -52,14 +53,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.Topological
 public class PreferencesInlineSelector implements IInlineSelector {
 
 	private final boolean mInlineUnimplemented;
-	private final boolean mInlineImplemented;
+	private final EnableWhen mInlineImplemented;
 	private final boolean mIgnoreCallForAll;
 	private final boolean mIgnoreRecursive;
 	private final boolean mIgnoreWithFreeRequires;
 	private final boolean mIgnorePolymorphic;
-	private final boolean mIgnoreMultipleCalled;
+	private final EnableWhen mIgnoreMultipleCalled;
 	private final Collection<String> mUserList;
 	private final UserListType mUserListType;
+
+	private boolean mProgramIsConcurrent;
 
 	/** Filter determining whether to set an inline flag or not, using the general settings. */
 	private final IRelationFilter<CallGraphNode, CallGraphEdgeLabel> mGeneralSettingsFilter;
@@ -80,29 +83,23 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	 *            The current {@link IUltimateServiceProvider} instance that is used to retrieve valid preferences.
 	 */
 	public PreferencesInlineSelector(final IUltimateServiceProvider services) {
-		mInlineUnimplemented = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.INLINE_UNIMPLEMENTED.getName());
-		mInlineImplemented = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.INLINE_IMPLEMENTED.getName());
-		mIgnoreCallForAll = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.getName());
+		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		mInlineUnimplemented = prefs.getBoolean(PreferenceItem.INLINE_UNIMPLEMENTED.getName());
+		mInlineImplemented = prefs.getEnum(PreferenceItem.INLINE_IMPLEMENTED.getName(), EnableWhen.class);
+		mIgnoreCallForAll = prefs.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.getName());
 		mUserList = new HashSet<>(PreferenceItem.USER_LIST.getStringValueTokens(services));
-		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(PreferenceItem.USER_LIST_TYPE.getName(), UserListType.class);
-		mIgnoreRecursive = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_RECURSIVE.getName());
-		mIgnoreWithFreeRequires = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getName());
-		mIgnorePolymorphic = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName());
-		mIgnoreMultipleCalled = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName());
+		mUserListType = prefs.getEnum(PreferenceItem.USER_LIST_TYPE.getName(), UserListType.class);
+		mIgnoreRecursive = prefs.getBoolean(PreferenceItem.IGNORE_RECURSIVE.getName());
+		mIgnoreWithFreeRequires = prefs.getBoolean(PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getName());
+		mIgnorePolymorphic = prefs.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName());
+		mIgnoreMultipleCalled = prefs.getEnum(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName(), EnableWhen.class);
 		mGeneralSettingsFilter = new GeneralSettingsFilter();
 		mUserListFilter = new UserListFilter();
 	}
 
 	@Override
-	public void setInlineFlags(final Map<String, CallGraphNode> callGraph) {
+	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, boolean programIsConcurrent) {
+		mProgramIsConcurrent = programIsConcurrent;
 		mLastInlinedCall = new HashMap<>();
 		final List<IRelationFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
 		if (!mUserListType.isOnly()) {
@@ -173,9 +170,9 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		private boolean acceptNormalCall(final CallGraphEdgeLabel callLabel, final CallGraphNode callee) {
 			// Assume that all procedures are called only once (can be undone later)
 			final boolean isImplemented = callee.isImplemented();
-			final boolean inlineIfSingleCall =
-					(mInlineImplemented && isImplemented) || (mInlineUnimplemented && !isImplemented);
-			if (!inlineIfSingleCall || !mIgnoreMultipleCalled) {
+			final boolean inlineIfSingleCall = (!isImplemented && mInlineUnimplemented)
+					|| (isImplemented && mInlineImplemented.isEnabled(mProgramIsConcurrent));
+			if (!inlineIfSingleCall || !mIgnoreMultipleCalled.isEnabled(mProgramIsConcurrent)) {
 				return inlineIfSingleCall;
 			}
 			final CallGraphEdgeLabel inlinedCallOfSameProcedure = mLastInlinedCall.put(callee.getId(), callLabel);

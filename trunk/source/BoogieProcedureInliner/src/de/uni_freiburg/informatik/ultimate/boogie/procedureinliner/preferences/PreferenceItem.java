@@ -47,18 +47,19 @@ public enum PreferenceItem {
 
 	LABEL_ENABLE_INLINING_FOR("Enable inlining for ..."),
 
-	INLINE_UNIMPLEMENTED("calls to unimplemented procedures", "Inline calls to unimplemented procedures.", Boolean.FALSE,
-			PreferenceType.Boolean),
+	INLINE_UNIMPLEMENTED("calls to unimplemented procedures",
+			"Inline calls to unimplemented procedures.",
+			Boolean.FALSE, PreferenceType.Boolean),
 
-	INLINE_IMPLEMENTED("calls to implemented procedures", "Inline calls to implemented procedures.", Boolean.TRUE,
-			PreferenceType.Boolean),
+	INLINE_IMPLEMENTED("... calls to implemented procedures",
+			"When to inline calls to implemented procedures.",
+			EnableWhen.ONLY_FOR_CONCURRENT_PROGRAMS, PreferenceType.Combo, EnableWhen.values()),
 
 	LABEL_IGNORE_CALLS("Ignore calls ..."),
 
 	IGNORE_CALL_FORALL("with \'forall\' modifier",
 			"Do not inline calls with forall-star modifier (attempting to inline these can cause exceptions).",
-			Boolean.TRUE,
-			PreferenceType.Boolean),
+			Boolean.TRUE, PreferenceType.Boolean),
 
 	IGNORE_WITH_FREE_REQUIRES("to procedures with \'free requires\' specifications",
 			"Do not inline calls to procedures with free-requires specification "
@@ -74,33 +75,38 @@ public enum PreferenceItem {
 			Boolean.TRUE,
 			PreferenceType.Boolean),
 
-	IGNORE_MULTIPLE_CALLED("to procedures, called more than once",
-			"Do not inline calls to procedures called more than once.", Boolean.FALSE, PreferenceType.Boolean),
+	IGNORE_MULTIPLE_CALLED("... to procedures called more than once",
+			"When to ignore calls to procedures called more than once.",
+			EnableWhen.NEVER, PreferenceType.Combo, EnableWhen.values()),
+
 
 	LABEL_USER_LIST("User list (procedure ids, separated by whitespace)"),
 
-	USER_LIST("User list", "Specify procedure names that should not be inlined (separate with a comma).", "",
-			PreferenceType.MultilineString),
+	USER_LIST("User list",
+			"Specify procedure names that should not be inlined (separate with a comma).",
+			"", PreferenceType.MultilineString),
 
-	USER_LIST_TYPE("User list type", UserListType.description(), UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo,
-			UserListType.values()),
+	USER_LIST_TYPE("User list type",
+			UserListType.description(),
+			UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 
 	LABEL_ENTRY_PROCEDURE_HANDLING("Entry procedure handling"),
 
-	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", null, Boolean.TRUE,
-			PreferenceType.Boolean),
+	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures",
+			null, Boolean.TRUE, PreferenceType.Boolean),
 
-	ENTRY_PROCEDURES("Entry procedures", "Give names separated by whitespace.", "ULTIMATE.start",
-			PreferenceType.String),
+	ENTRY_PROCEDURES("Entry procedures",
+			"Give names separated by whitespace.",
+			"ULTIMATE.start", PreferenceType.String),
 
 	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",
 			"If no entry procedure can be found, just treat every procedure as potential entry procedure.",
-			Boolean.TRUE,
-			PreferenceType.Boolean),
+			Boolean.TRUE, PreferenceType.Boolean),
 
 	/** @see CallGraphNodeLabel#isDead() */
-	ELIMINATE_DEAD_CODE("Remove dead code", "Eliminate dead code after inlining.", Boolean.TRUE,
-			PreferenceType.Boolean);
+	ELIMINATE_DEAD_CODE("Remove dead code",
+			"Eliminate dead code after inlining.",
+			Boolean.TRUE, PreferenceType.Boolean);
 
 	private final String mName;
 	private final Object mDefaultValue;

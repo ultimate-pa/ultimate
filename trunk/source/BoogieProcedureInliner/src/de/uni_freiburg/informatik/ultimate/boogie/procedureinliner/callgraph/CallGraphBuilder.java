@@ -68,6 +68,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.T
  */
 public class CallGraphBuilder {
 
+	/**
+	 * Program corresponding to the last built graph contained a fork statement.
+	 * Fork statements in dead code do count too.
+	 */
+	private boolean mProgramIsConcurrent;
+
 	/** All Declarations from the last processed Boogie ast, other than Procedures. */
 	private Collection<Declaration> mNonProcedureDeclarations;
 
@@ -112,8 +118,8 @@ public class CallGraphBuilder {
 	}
 
 	/**
-	 * Gets the builded call graph, containing all Boogie Procedures from the last run. The Procedure identifiers are
-	 * used as keys. The values are the nodes from the call graph.
+	 * Returns the last built call graph, containing all Boogie Procedures from the last run.
+	 * The procedure identifiers are used as keys. The values are the nodes from the call graph.
 	 *
 	 * @return Call graph from the last run.
 	 */
@@ -121,6 +127,13 @@ public class CallGraphBuilder {
 		return mCallGraphNodes;
 	}
 
+	/**
+	 * @return In the last run a fork statement was found. Fork statements in dead code count too.
+	 */
+	public boolean getProgramIsConcurrent() {
+		return mProgramIsConcurrent;
+	}
+	
 	/**
 	 * Gets all the Boogie declarations from the last run, other than Procedures.
 	 *
@@ -131,6 +144,7 @@ public class CallGraphBuilder {
 	}
 
 	public void init() {
+		mProgramIsConcurrent = false;
 		mNonProcedureDeclarations = new ArrayList<>();
 		mCallGraphNodes = new HashMap<>();
 		mRecursiveComponents = null;
@@ -175,6 +189,7 @@ public class CallGraphBuilder {
 				final EdgeType edgeType = callStatement.isForall() ? EdgeType.CALL_FORALL : null;
 				addEdge(callerNode, edgeType, callStatement.getMethodName());
 			} else if (statement instanceof ForkStatement) {
+				mProgramIsConcurrent = true;
 				addEdge(callerNode, EdgeType.FORK, ((ForkStatement) statement).getProcedureName());
 			} else if (statement instanceof IfStatement) {
 				final IfStatement ifStatement = (IfStatement) statement;

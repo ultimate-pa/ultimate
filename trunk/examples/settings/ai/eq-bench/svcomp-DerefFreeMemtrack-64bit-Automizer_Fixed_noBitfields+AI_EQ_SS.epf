@@ -35,7 +35,7 @@ file_export_version=3.0
 file_export_version=3.0
 #Wed Mar 28 11:00:48 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ to\ procedures\ called\ more\ than\ once=NEVER
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.23
 file_export_version=3.0
 #Wed Mar 28 11:00:48 CEST 2018

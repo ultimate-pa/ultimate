@@ -137,12 +137,12 @@ public class Inliner implements IUnmanagedObserver {
 	}
 
 	private void buildCallGraph() throws CancelToolchainException {
-		final CallGraphBuilder callGraphBuilder = new CallGraphBuilder();
-		callGraphBuilder.buildCallGraph(mAstUnit);
-		mCallGraph = callGraphBuilder.getCallGraph();
-		mNonProcedureDeclarations = callGraphBuilder.getNonProcedureDeclarations();
+		final CallGraphBuilder builder = new CallGraphBuilder();
+		builder.buildCallGraph(mAstUnit);
+		mCallGraph = builder.getCallGraph();
+		mNonProcedureDeclarations = builder.getNonProcedureDeclarations();
 
-		mInlineSelector.setInlineFlags(mCallGraph);
+		mInlineSelector.setInlineFlags(mCallGraph, builder.getProgramIsConcurrent());
 	}
 
 	/**
