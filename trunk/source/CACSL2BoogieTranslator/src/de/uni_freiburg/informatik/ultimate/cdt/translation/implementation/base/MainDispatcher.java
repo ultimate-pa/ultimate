@@ -379,7 +379,7 @@ public class MainDispatcher implements IDispatcher {
 			} else if (n instanceof IASTTypeIdExpression) {
 				result = mCHandler.visit(this, (IASTTypeIdExpression) n);
 			} else if (n instanceof IASTTypeIdInitializerExpression) {
-				result = mCHandler.visit(this, n);
+				result = mCHandler.visit(this, (IASTTypeIdInitializerExpression) n);
 			} else if (n instanceof IASTUnaryExpression) {
 				result = mCHandler.visit(this, (IASTUnaryExpression) n);
 			} else if (n instanceof IASTProblemExpression) {

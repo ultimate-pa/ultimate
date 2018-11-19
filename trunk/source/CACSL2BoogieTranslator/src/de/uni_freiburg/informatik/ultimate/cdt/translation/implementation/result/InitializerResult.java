@@ -135,4 +135,14 @@ public class InitializerResult extends Result {
 		}
 		return sb.toString();
 	}
+
+	public static ExpressionResult getFirstValueInInitializer(final InitializerResult ir) {
+		if (ir.hasRootExpressionResult()) {
+			return ir.getRootExpressionResult();
+		}
+		if (!ir.getList().isEmpty()) {
+			return getFirstValueInInitializer(ir.getList().get(0));
+		}
+		throw new AssertionError("found no value in initializer");
+	}
 }

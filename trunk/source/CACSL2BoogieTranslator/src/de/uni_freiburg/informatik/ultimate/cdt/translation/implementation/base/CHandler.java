@@ -107,7 +107,9 @@ import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.dom.ast.IBinding;
@@ -1520,18 +1522,43 @@ public class CHandler {
 		return new ExpressionResult(stmt, null, decl, Collections.emptySet(), overappr);
 	}
 
+	public Result visit(final IDispatcher main, final IASTTypeIdInitializerExpression node) {
+		// node represents a compound literal (something like "(int []) { 1, 2 }")
+
+		// translate type
+		CType cType;
+		{
+			final IASTTypeId typeId = node.getTypeId();
+			final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
+			mCurrentDeclaredTypes.push(declSpecifierResult);
+			final DeclaratorResult declaratorResult =
+					(DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
+			mCurrentDeclaredTypes.pop();
+
+			final CDeclaration cDeclaration = declaratorResult.getDeclaration();
+			assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
+			assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
+			cType = cDeclaration.getType();
+		}
+
+		final IASTInitializer initializer = node.getInitializer();
+		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
+
+		if (cType instanceof CPrimitive) {
+			return InitializerResult.getFirstValueInInitializer(ir);
+		}
+
+		throw new UnsupportedOperationException("sophisticated compound literals are not yet supported: "
+				+ node.getRawSignature());
+	}
+
 	public Result visit(final IDispatcher main, final IASTInitializerClause node) {
 		if (node.getChildren().length == 1) {
-			final Result r = main.dispatch(node.getChildren()[0]);
-			assert r instanceof ExpressionResult;
-			final ExpressionResult rex = (ExpressionResult) r;
+			final ExpressionResult rex = (ExpressionResult) main.dispatch(node.getChildren()[0]);
 			return mExprResultTransformer.switchToRValueIfNecessary(rex, mLocationFactory.createCLocation(node), node);
 		}
-		// TODO 2018-11-03 Matthias:
-		// added this Exception, fix soon only if this occurs often
-		throw new UnsupportedOperationException(
-				"Cannot understand initializer with more than two children. Is this a struct initialization? "
-						+ node.getRawSignature());
+		throw new UnsupportedOperationException("Cannot understand initializer that has more than two children."
+				+ node.getRawSignature());
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerList node) {
@@ -3995,7 +4022,7 @@ public class CHandler {
 			// allows the second disjunct above. Maybe a GNU extension?
 			// However this seems to help on a bunch of SV-COMP benchmarks where we have an
 			// Integer and String literal as second and third operand of the conditional
-			// operator. 
+			// operator.
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
 			if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				opPositive = convertNullPointerConstantToPointer(loc, opPositive,
@@ -4017,7 +4044,7 @@ public class CHandler {
 			// allows the second disjunct above. Maybe a GNU extension?
 			// However this seems to help on a bunch of SV-COMP benchmarks where we have an
 			// Integer and String literal as second and third operand of the conditional
-			// operator. 
+			// operator.
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				opNegative = convertNullPointerConstantToPointer(loc, opNegative,
@@ -4117,15 +4144,15 @@ public class CHandler {
 	 * pointer constant can be (at least in our translation) a "0" that has integer
 	 * type or something that has pointer type.
 	 * TODO 2018-11-17 Matthias: I think we need this method an cannot apply the
-	 * usual conversion since the usual restrictions for pointer-to-pointer 
+	 * usual conversion since the usual restrictions for pointer-to-pointer
 	 * conversions might be too strict.
-	 * Furthermore, if (in the future) we take the type information from eclipse 
+	 * Furthermore, if (in the future) we take the type information from eclipse
 	 * CDT we might be immediately able to identify the correct type of a "0"
 	 * in the code.
-	 * 
+	 *
 	 */
 	private ExpressionResult convertNullPointerConstantToPointer(final ILocation loc, ExpressionResult nullPointerConstant,
-			CPointer desiredResultType) {
+			final CPointer desiredResultType) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			nullPointerConstant = mExpressionTranslation.convertIntToPointer(loc, nullPointerConstant, desiredResultType);
 		} else {
