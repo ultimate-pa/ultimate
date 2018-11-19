@@ -83,6 +83,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		mSegmentationMap = segmentationMap;
 		mToolkit = toolkit;
 		mVariables = variables;
+		assert checkSegmentationMap();
 	}
 
 	public ArrayDomainState(final STATE subState, final Set<IProgramVarOrConst> variables,
@@ -109,8 +110,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			newVariables.add(v);
 			IProgramVarOrConst var = v;
 			while (var.getSort().isArraySort()) {
-				final IBoogieType valueType = mToolkit.getType(TypeUtils.getValueSort(var.getSort()));
-				final Pair<IProgramVar, Segmentation> pair = mToolkit.createTopSegmentation(valueType);
+				final Pair<IProgramVar, Segmentation> pair = mToolkit.createTopSegmentation(var.getSort());
 				newSegmentationMap.add(var, pair.getSecond());
 				var = pair.getFirst();
 			}
@@ -126,8 +126,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		for (final IProgramVarOrConst v : auxVars) {
 			IProgramVarOrConst var = v;
 			while (var.getSort().isArraySort()) {
-				final IBoogieType valueType = mToolkit.getType(TypeUtils.getValueSort(var.getSort()));
-				final Pair<IProgramVar, Segmentation> pair = mToolkit.createTopSegmentation(valueType);
+				final Pair<IProgramVar, Segmentation> pair = mToolkit.createTopSegmentation(var.getSort());
 				newSegmentationMap.add(var, pair.getSecond());
 				var = pair.getFirst();
 			}
@@ -455,6 +454,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	private UnificationResult<STATE> unify(final ArrayDomainState<STATE> other, final Segmentation segmentation,
 			final Segmentation otherSegmentation) {
+		assert segmentation.getValue(0).getSort()
+				.equals(otherSegmentation.getValue(0).getSort()) : "The segmentations have different sorts.";
 		final Script script = mToolkit.getScript();
 		final Segmentation simplifiedThisSegmentation = simplifySegmentation(segmentation);
 		final Segmentation simplifiedOtherSegmentation = other.simplifySegmentation(otherSegmentation);
@@ -593,8 +594,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 				// TODO: Handle this for multidim arrays precisely
 				if (newValue.getSort().isArraySort()) {
-					final Pair<IProgramVar, Segmentation> segmentationPair = mToolkit
-							.createTopSegmentation(mToolkit.getType(TypeUtils.getValueSort(newValue.getSort())));
+					final Pair<IProgramVar, Segmentation> segmentationPair =
+							mToolkit.createTopSegmentation(newValue.getSort());
 					newSegmentationMapThis.add(newValue, segmentationPair.getSecond());
 					newSegmentationMapOther.add(newValue, segmentationPair.getSecond());
 				} else {
@@ -1064,10 +1065,9 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			return new Pair<>(tmpState.updateState(newSubState), new Segmentation(newBounds, newValues));
 		}
 		// Otherwise return a top segmentation
-		// TODO: Implement this for multidimensional arrays?
-		final Pair<IProgramVar, Segmentation> segmentationPair = mToolkit.createTopSegmentation(array.getType());
-		return new Pair<>(updateState(mSubState.addVariable(segmentationPair.getFirst())),
-				segmentationPair.getSecond());
+		final Sort arraySort = mToolkit.getTerm(array).getSort();
+		final Pair<IProgramVar, Segmentation> segmentationPair = mToolkit.createTopSegmentation(arraySort);
+		return new Pair<>(addAuxVar(segmentationPair.getFirst()), segmentationPair.getSecond());
 	}
 
 	private Set<IProgramVarOrConst> getEqualArrays(final IProgramVarOrConst array) {
@@ -1252,5 +1252,31 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 		assert result.size() <= maxSize : "Did not reduce enough states";
 		return result;
+	}
+
+	private boolean checkSegmentationMap() {
+		if (isBottom()) {
+			return true;
+		}
+		for (final IProgramVarOrConst var : mVariables) {
+			final Sort sort = var.getSort();
+			if (!sort.isArraySort()) {
+				continue;
+			}
+			final Sort valueSort = TypeUtils.getValueSort(sort);
+			final Segmentation segmentation = mSegmentationMap.getSegmentation(var);
+			assert segmentation != null : var + " not in segmentation map of state" + this;
+			for (final IProgramVar v : segmentation.getValues()) {
+				final Sort sort2 = v.getSort();
+				assert valueSort.equals(sort2) : "The value " + v
+						+ " has not the sort corresponding to its array variable " + var;
+				if (sort2.isArraySort()) {
+					assert mSegmentationMap.getSegmentation(v) != null : v + " not in segmentation map of state" + this;
+				} else {
+					assert mSubState.containsVariable(v) : v + " not in substate of state" + this;
+				}
+			}
+		}
+		return true;
 	}
 }

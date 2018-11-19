@@ -151,11 +151,11 @@ public class SegmentationMap {
 		final Set<IProgramVarOrConst> newEquivalenceClass = new HashSet<>(mArrayEqualities.getContainingSet(variable));
 		newEquivalenceClass.remove(variable);
 		final Iterator<IProgramVarOrConst> iterator = newEquivalenceClass.iterator();
+		mArrayEqualities.remove(variable);
 		final Segmentation segmentation = mRepresentiveSegmentations.remove(variable);
 		if (iterator.hasNext()) {
-			mRepresentiveSegmentations.put(iterator.next(), segmentation);
+			mRepresentiveSegmentations.put(mArrayEqualities.find(iterator.next()), segmentation);
 		}
-		mArrayEqualities.remove(variable);
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {
