@@ -16,3 +16,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
 /instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
 /instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Plugins=INFO
+
+#Tue Feb 18 11:27:46 CET 2014
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=false
