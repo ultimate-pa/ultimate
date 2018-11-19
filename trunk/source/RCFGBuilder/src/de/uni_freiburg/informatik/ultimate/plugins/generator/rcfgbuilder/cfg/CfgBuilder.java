@@ -580,7 +580,7 @@ public class CfgBuilder {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If st"
+								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If st"
 										+ " is a Label and the last constructed node"
 										+ " was a TransEdge, then the last"
 										+ " Statement must not be a Label, Return or" + " Goto";
@@ -595,7 +595,7 @@ public class CfgBuilder {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If the"
+								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If the"
 										+ " last constructed node is a TransEdge, then"
 										+ " the last Statement must not be a Label,"
 										+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
@@ -607,7 +607,7 @@ public class CfgBuilder {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If the"
+								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If the"
 										+ " last constructed node is a TransEdge, then"
 										+ " the last Statement must not be a Label,"
 										+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
@@ -629,7 +629,7 @@ public class CfgBuilder {
 					if (mCurrent instanceof CodeBlock) {
 						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
+								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If mcurrent is a TransEdge, then lastSt"
 										+ " must not be a Label, Return or Goto."
 										+ " (i.e. this is not the first Statemnt" + " of the block)";
 					}
