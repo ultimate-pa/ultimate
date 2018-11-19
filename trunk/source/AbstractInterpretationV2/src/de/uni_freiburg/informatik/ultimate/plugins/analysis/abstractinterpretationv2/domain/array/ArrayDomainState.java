@@ -76,6 +76,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	private final Set<IProgramVarOrConst> mVariables;
 	private Term mCachedTerm;
 	private EquivalenceFinder mEquivalenceFinder;
+	private Map<Segmentation, Segmentation> mSimplifiedSegmentations;
 
 	private ArrayDomainState(final STATE subState, final SegmentationMap segmentationMap,
 			final Set<IProgramVarOrConst> variables, final ArrayDomainToolkit<STATE> toolkit) {
@@ -83,6 +84,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		mSegmentationMap = segmentationMap;
 		mToolkit = toolkit;
 		mVariables = variables;
+		mSimplifiedSegmentations = new HashMap<>();
 		assert checkSegmentationMap();
 	}
 
@@ -1147,28 +1149,33 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private Segmentation simplifySegmentation(final Segmentation segmentation) {
-		final Script script = mToolkit.getScript();
-		final List<IProgramVar> newBounds = new ArrayList<>();
-		final List<IProgramVar> newValues = new ArrayList<>();
-		newBounds.add(segmentation.getBound(0));
-		newValues.add(segmentation.getValue(0));
-		for (int i = 1; i < segmentation.size(); i++) {
-			final TermVariable currentBound = segmentation.getBound(i).getTermVariable();
-			final TermVariable nextBound = segmentation.getBound(i + 1).getTermVariable();
-			final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
-			if (mSubState.evaluate(script, boundEquality) == EvalResult.TRUE) {
-				continue;
+		Segmentation result = mSimplifiedSegmentations.get(segmentation);
+		if (result == null) {
+			final Script script = mToolkit.getScript();
+			final List<IProgramVar> newBounds = new ArrayList<>();
+			final List<IProgramVar> newValues = new ArrayList<>();
+			newBounds.add(segmentation.getBound(0));
+			newValues.add(segmentation.getValue(0));
+			for (int i = 1; i < segmentation.size(); i++) {
+				final TermVariable currentBound = segmentation.getBound(i).getTermVariable();
+				final TermVariable nextBound = segmentation.getBound(i + 1).getTermVariable();
+				final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
+				if (mSubState.evaluate(script, boundEquality) == EvalResult.TRUE) {
+					continue;
+				}
+				final IProgramVar currentValue = segmentation.getValue(i);
+				final IProgramVar lastValue = newValues.get(newValues.size() - 1);
+				if (areVariablesEquivalent(currentValue, lastValue)) {
+					continue;
+				}
+				newValues.add(segmentation.getValue(i));
+				newBounds.add(segmentation.getBound(i));
 			}
-			final IProgramVar currentValue = segmentation.getValue(i);
-			final IProgramVar lastValue = newValues.get(newValues.size() - 1);
-			if (areVariablesEquivalent(currentValue, lastValue)) {
-				continue;
-			}
-			newValues.add(segmentation.getValue(i));
-			newBounds.add(segmentation.getBound(i));
+			newBounds.add(mToolkit.getMaxBound());
+			result = new Segmentation(newBounds, newValues);
+			mSimplifiedSegmentations.put(segmentation, result);
 		}
-		newBounds.add(mToolkit.getMaxBound());
-		return new Segmentation(newBounds, newValues);
+		return result;
 	}
 
 	private boolean areVariablesEquivalent(final IProgramVar v1, final IProgramVar v2) {
