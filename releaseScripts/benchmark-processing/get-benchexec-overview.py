@@ -276,6 +276,7 @@ def process_wrapper_script_log(file):
 def process_direct_call_log(file):
     result = None
     with open(file) as f:
+        version = ''
         lines = [line.rstrip('\n') for line in f].__iter__()
         for line in lines:
             if not line:

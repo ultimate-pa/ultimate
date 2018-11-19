@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
     <rundefinition name="sv-comp19-unsound"></rundefinition>
-    <option name="--full-output"/>
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+	<option name="-ea"/>
 
-    <tasks name="Memsafety-32bit">
+    <tasks name="Memsafety-32bit_BV">
         <include>../../../trunk/examples/svcomp/memsafety-ext3/freeAlloca_false-valid-free.c</include>
         <include>../../../trunk/examples/svcomp/memsafety-ext3/naturalNumbers1_false-valid-deref.c</include>
-        <propertyfile>../../../trunk/examples/svcomp/MemSafety.prp</propertyfile>
-        <option name="--architecture">32bit</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf</option>
     </tasks>
 
-	<tasks name="ReachSafety-32bit">
+	<tasks name="ReachSafety-32bit_BV">
         <include>../../../trunk/examples/svcomp/float-benchs/sin_interpolated_index_false-unreach-call_true-termination.c</include>
         <include>../../../trunk/examples/svcomp/float-newlib/double_req_bl_0870a_false-unreach-call.c</include>
         <include>../../../trunk/examples/svcomp/floats-esbmc-regression/isunordered_true-unreach-call.i</include>
@@ -18,11 +18,10 @@
         <include>../../../trunk/examples/svcomp/heap-manipulation/tree_false-unreach-call_false-valid-memcleanup.i</include>
         <include>../../../trunk/examples/svcomp/loop-invariants/bin-suffix-5_true-unreach-call_true-valid-memsafety_true-no-overflow_false-termination.c</include>
         <include>../../../trunk/examples/svcomp/loops/s3_false-unreach-call.i</include>
-        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
-        <option name="--architecture">32bit</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
 	</tasks>
 
-    <tasks name="Systems_DeviceDriversLinux64_ReachSafety-64bit">
+    <tasks name="Systems_DeviceDriversLinux64_ReachSafety-64bit-BV">
         <include>../../../trunk/examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-usb-dev__drivers-media-usb-hdpvr-hdpvr_false-unreach-call.cil.c</include>
         <include>../../../trunk/examples/svcomp/ldv-commit-tester/m0_false-unreach-call_drivers-usb-gadget-g_printer-ko--106_1a--2b9ec6c.c</include>
         <include>../../../trunk/examples/svcomp/ldv-linux-3.0/module_get_put-drivers-net-wan-farsync.ko_false-unreach-call.cil.out.i.pp.i</include>
@@ -56,9 +55,7 @@
         <include>../../../trunk/examples/svcomp/ldv-validator-v0.8/linux-stable-064368f-1-111_1a-drivers--media--radio--si4713-i2c.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c</include>
         <include>../../../trunk/examples/svcomp/ldv-validator-v0.8/linux-stable-a450319-1-144_1a-drivers--input--tablet--acecad.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c</include>
         <include>../../../trunk/examples/svcomp/ldv-validator-v0.8/linux-stable-a450319-1-144_2a-drivers--input--tablet--acecad.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c</include>
-
-        <propertyfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.prp</propertyfile>
-        <option name="--architecture">64bit</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf</option>
 	</tasks>
 
 </benchmark>
