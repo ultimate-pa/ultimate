@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.lib.translation.TranslatorConcatenation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -87,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -275,26 +273,8 @@ public class CfgBuilder {
 					+ ULTIMATE_START + ")");
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
-
-		// Add all transitions to the forked procedure entry locations.
-		IIcfg<?> result = icfg;
-		ModelUtils.copyAnnotations(unit, result);
-
-		final Collection<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads = icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getThreadInstanceMap().keySet();
-		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads = icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getJoinTransitions();
-		final ManagedScript mgdScript = mBoogie2Smt.getManagedScript();
-
-		if (!forkCurrentThreads.isEmpty()) {
-			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg);
-			result = icfgPetrifier.getPetrifiedIcfg();
-			mResultingBacktranslator = new TranslatorConcatenation<>(icfgPetrifier.getBacktranslator(), mRcfgBacktranslator);
-		} else {
-			mResultingBacktranslator = mRcfgBacktranslator;
-		}
-
-		return result;
+		ModelUtils.copyAnnotations(unit, icfg);
+		return icfg;
 	}
 
 	public Boogie2SMT getBoogie2Smt() {

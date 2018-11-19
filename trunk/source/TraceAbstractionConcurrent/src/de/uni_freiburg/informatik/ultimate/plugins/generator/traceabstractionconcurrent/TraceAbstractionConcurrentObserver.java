@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -93,17 +94,18 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final IIcfg<? extends IcfgLocation> rootAnnot = (IIcfg) root;
-
-		final IIcfg<? extends IcfgLocation> rootNode = (IIcfg) root;
+		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg) root;
+		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg);
+		final IIcfg<? extends IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		mLogger.warn(taPrefs.dumpPath());
 
-		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
+		final CfgSmtToolkit csToolkit = petrifiedIcfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
-		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
+		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
 		if (csToolkit.getConcurrencyInformation() == null) {
 			// no fork or join
@@ -113,7 +115,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					.map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
 		}
 
-		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) rootAnnot.getProcedureErrorNodes();
+		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) petrifiedIcfg.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
 		for (final Entry<String, Set<? extends IcfgLocation>> proc2errorLocs : proc2errNodes.entrySet()) {
 			for (final IcfgLocation errorLoc : proc2errorLocs.getValue()) {
@@ -126,15 +128,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		BasicCegarLoop<?> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopJulian<>(name, rootNode, csToolkit, predicateFactory, timingStatistics,
+			abstractCegarLoop = new CegarLoopJulian<>(name, petrifiedIcfg, csToolkit, predicateFactory, timingStatistics,
 					taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, rootNode, csToolkit, predicateFactory,
+			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					timingStatistics, taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
 		} else {
 			throw new IllegalArgumentException();
 		}
-		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
+		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Result result = abstractCegarLoop.iterate();
 		abstractCegarLoop.finish();
 		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
@@ -175,7 +177,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		stat += "Statistics:  ";
 		stat += " Iterations " + abstractCegarLoop.getIteration() + ".";
 		stat += " CFG has ";
-		stat += rootAnnot.getProgramPoints().size();
+		stat += petrifiedIcfg.getProgramPoints().size();
 		stat += " locations,";
 		stat += errNodesOfAllProc.size();
 		stat += " error locations.";
