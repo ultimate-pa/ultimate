@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
-<benchmark tool="ultimateautomizer" timelimit="120s" hardtimelimit="120s" memlimit="8GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" timelimit="240s" hardtimelimit="240s" memlimit="8GB" cpuCores="2">
  
   <rundefinition name="Bitvector">
           <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
@@ -14,18 +14,6 @@
 		  <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   </rundefinition>
 
-  <rundefinition name="Bitvector-ConstArray">
-          <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-          <option name="-ea" />
-	      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector-Const.epf</option>
-  </rundefinition>
-
-  <rundefinition name="Default-ConstArray">
-          <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-          <option name="-ea" />
-		  <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default-Const.epf</option>
-  </rundefinition>
-    
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
 	<includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays-new.set</includesfile>
