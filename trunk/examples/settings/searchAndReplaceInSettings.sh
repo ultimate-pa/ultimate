@@ -8,7 +8,7 @@
 # Go to the trunk/examples/settings folder
 # Call the following command. Don't forget the quote symbols.
 # Use the whole settings string that usually starts with /instance.
-# ./searchAndReplaceInSettings.sh "OLDSTRING" "NEWSTRING"
+# ./searchAndReplaceInSettings.sh [OLDSTRING] [NEWSTRING]
 #
 # The replacement will be done in all subfolders of trunk/examples/settings
 # and in /trunk/examples/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/
@@ -16,16 +16,20 @@
 # Check if your replacement was succesfull using
 # grep -ir SOME_KEYWORD .
 #
-# Author: Matthias Heizmann
+# Author: Matthias Heizmann, Claus Schaetzle
 # Date: 2015-02-11
 
 
-#quote oldstring
-OLDSTRING=$(sed 's/\\/\\\\/g' <<< "$1")
-NEWSTRING=$(sed 's/\\/\\\\/g' <<< "$2")
+# Convert a raw string into a basic regular expression for a sed s/.../.../ command
+sedQuote() {
+    sed 's/[][/\.*$^]/\\&/g' <<< "$*"
+}
+
 echo "Replacing the OLDSTRING with NEWSTRING in each .epf file"
 echo "OLDSTRING: $1"
 echo "NEWSTRING: $2"
-#use comma as delimiter for sed because is hopefully does not occur in string
-find . -name "*.epf" -exec sed -i -e "s,${OLDSTRING},${NEWSTRING}," {} \;
-find ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ -name "*.epf" -exec sed -i -e "s,${OLDSTRING},${NEWSTRING}," {} \;
+old="$(sedQuote "$1")"
+new="$(sedQuote "$2")"
+find . ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ \
+	-name \*.epf -exec sed -i -e "s/$old/$new/g" {} +
+
