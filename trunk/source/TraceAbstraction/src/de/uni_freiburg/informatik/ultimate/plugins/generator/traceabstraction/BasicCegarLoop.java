@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -247,9 +249,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
-				predicateFactory, mPref.computeHoareAnnotation(), mHoareAnnotationLocations);
+				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
-				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
+				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
 
 		mAssertCodeBlocksIncrementally = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
@@ -313,8 +315,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
+		if (super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
 				mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+		} else {
+			final BoundedPetriNet<LETTER, IPredicate> net = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
+					mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory);
+			mAbstraction = new PetriNet2FiniteAutomaton<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, net).getResult();
+		}
 
 		if (mComputeHoareAnnotation
 				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {

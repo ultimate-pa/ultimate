@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 /**
@@ -198,4 +199,10 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	public String toString() {
 		return this.mPlaces.toString();
 	}
+
+	public Stream<PLACE> stream() {
+		return mPlaces.stream();
+	}
+
+
 }

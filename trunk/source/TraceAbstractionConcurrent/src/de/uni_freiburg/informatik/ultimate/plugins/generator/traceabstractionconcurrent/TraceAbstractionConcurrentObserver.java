@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -95,7 +96,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg) root;
-		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg);
+		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg,
+				IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		final IIcfg<? extends IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);

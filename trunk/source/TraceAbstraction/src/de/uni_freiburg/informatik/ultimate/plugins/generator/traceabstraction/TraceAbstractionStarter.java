@@ -65,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -114,13 +116,22 @@ public class TraceAbstractionStarter {
 			new ArrayList<>();
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<IcfgLocation> rcfgRootNode,
+			final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		runCegarLoops(rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile);
+		if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+
+		} else {
+			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
+					IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
+			final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+			runCegarLoops(petrifiedIcfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
+		}
+
 	}
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
@@ -349,6 +360,14 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
+		final boolean computeHoareAnnotation;
+		if (taPrefs.computeHoareAnnotation()
+				&& !root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
+			computeHoareAnnotation = false;
+		} else {
+			computeHoareAnnotation = taPrefs.computeHoareAnnotation();
+		}
 
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
@@ -360,17 +379,17 @@ public class TraceAbstractionStarter {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:
 					result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
 							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case LAZY_IN_ORDER:
 					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
 							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
+							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage);
 					break;
 				default:
 					throw new AssertionError();
@@ -378,7 +397,7 @@ public class TraceAbstractionStarter {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+					taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
 					languageOperation);
 		}
 		return result;

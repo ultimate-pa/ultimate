@@ -76,7 +76,8 @@ public class IcfgPetrifier {
 	private final BlockEncodingBacktranslator mBacktranslator;
 
 
-	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg) {
+	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
+			final IcfgConstructionMode icfgConstructionMode) {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -109,8 +110,10 @@ public class IcfgPetrifier {
 				.generateCopyDirectives(threadInstanceMap.values());
 		new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) mPetrifiedIcfg, copyDirectives, backtranslator,
 				threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
-		ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
-				threadInstanceMap.values());
+		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
+			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
+					threadInstanceMap.values());
+		}
 
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads,
 				threadInstanceMap, backtranslator);
