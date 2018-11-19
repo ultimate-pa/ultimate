@@ -143,6 +143,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -1549,26 +1550,101 @@ public class CHandler {
 			ir = (InitializerResult) main.dispatch(initializer);
 		 }
 
-		// catch simple cases
-		if (cType instanceof CPrimitive || cType instanceof CEnum) {
-			final ExpressionResult exprRes = mExprResultTransformer.switchToRValueIfNecessary(
-					InitializerResult.getFirstValueInInitializer(ir), loc, node);
+		final boolean isAddressTaken = (node.getParent() instanceof IASTUnaryExpression)
+					&&  ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
+		// catch simple case
+		if (!isAddressTaken) {
+			if (cType instanceof CPrimitive || cType instanceof CEnum) {
+				final CPrimitive cPrim = (CPrimitive) cType;
+				final ExpressionResult exprRes = mExprResultTransformer.switchToRValueIfNecessary(
+						InitializerResult.getFirstValueInInitializer(ir), loc, node);
+				assert exprRes.hasLRValue();
+				final ExpressionResult converted = mExprResultTransformer.convert(loc, exprRes, cType);
 
-			assert exprRes.hasLRValue();
+				final RValue rVal = (RValue) converted.getLrValue();
 
-			final RValue rVal = (RValue) exprRes.getLrValue();
+				// used to check if rVal is a constant
+				final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
 
-			// used to check if rVal is a constant
-			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
-
-			if (exprRes.hasNoSideEffects() && intVal != null) {
-				// ExpressionResult is just an integer constant
-				return exprRes;
+				if (converted.hasNoSideEffects() && intVal != null && cPrim.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+					// ExpressionResult is just an integer constant
+					return converted;
+				}
 			}
 		}
 
-		throw new UnsupportedOperationException("sophisticated compound literals are not yet supported: "
-				+ node.getRawSignature());
+		/*
+		 * @formatter:off
+		 * treat the general case
+		 *  - introduce an auxiliary variable aux of type pointer
+		 *    (c type: pointer to the type from the compound literal's type id)
+		 *  - aux points to fresh memory
+		 *  - the value of aux never changes and aux is associated with this compound literal
+		 *  - set the contents of aux to the value of the initializer
+		 *  - the scope of the compound literal depends on where it occurs, like for variable declarations
+		 *  TODO:
+		 *  - the const specifier is not supported at the moment
+		 *    -- we would have to check that the compound literal's memory is not written to
+		 *    -- we would have to account for possible sharing of memory between different compound literals, and
+		 *      possibly string literals (right now, the addresses of distinct compound literals are guaranteed to be
+		 *       distinct in our Boogie program, even if the compound literals have the same contents, this is unsound)
+		 * @formatter:on
+		 */
+
+		/* find out the size of the memory block that the compound literal takes, there are two cases
+		 *  - incomplete array declarator: (e.g. (int [])): then the size depends on the initializer
+		 *  - otherwise: the size is given by the CType
+		 */
+		final Expression size = mTypeSizeComputer.constructBytesizeExpression(loc, cType, node);
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		final CPointer pointerType = new CPointer(cType);
+
+		// declare aux
+		final AuxVarInfo aux;
+		{
+
+			/* note: it seems ok to make the aux declaration local to Ultimate.Init, since the compound literal cannot
+			 *  be from another point in the program. (this is in contrast e.g. to on heap variables, which
+			 *  aux is somewhat similar to) */
+			final DeclarationInformation declInfo = mProcedureManager.isGlobalScope()
+					? new DeclarationInformation(StorageClass.LOCAL, SFO.INIT)
+							: new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
+
+			aux = mAuxVarInfoBuilder.constructAuxVarInfoForBlockScope(loc, pointerType, SFO.AUXVAR.COMPOUNDLITERAL,
+					declInfo);
+			builder.addDeclaration(aux.getVarDec());
+			// do not add aux var to builder for havoccing here (havoccing is done after freeing at endScope
+		}
+
+
+		// add malloc/free
+		{
+			final LocalLValue llv = new LocalLValue(aux.getLhs(), cType, null);
+			if (mProcedureManager.isGlobalScope()) {
+				final CallStatement malloc = mMemoryHandler.getMallocCall(llv, loc, node);
+				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singleton(malloc));
+
+			} else {
+				final LocalLValueILocationPair llvp =
+						new LocalLValueILocationPair(llv, loc);
+				// malloc auxvar; note that in contrast to on-heap variables, this malloc must only happen at the beginning
+				//  of the scope, not each time the declaration point of the variable/this compound literal is reached
+				mMemoryHandler.addVariableToBeMalloced(llvp);
+				// schedule aux to be freed at scope end
+				mMemoryHandler.addVariableToBeFreed(llvp);
+			}
+		}
+
+
+		// write the contents of the compound literal to the memory location designated by aux
+		final ExpressionResult initialization = mInitHandler.initialize(loc, aux.getLhs(), cType, ir, true, node);
+		builder.addAllExceptLrValue(initialization);
+
+		builder.setLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, aux.getExp(), cType, null));
+
+		return builder.build();
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerClause node) {

@@ -105,11 +105,17 @@ public class AuxVarInfoBuilder {
 
 	private AuxVarInfo constructAuxVarHelper(final ILocation loc, final String id, final ASTType astType,
 			final boolean isGlobal) {
-		final VariableDeclaration decl = new VariableDeclaration(loc, new Attribute[0],
-				new VarList[] { new VarList(loc, new String[] { id }, astType) });
 
 		final DeclarationInformation declInfo = isGlobal ? DeclarationInformation.DECLARATIONINFO_GLOBAL
 				: new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
+		return constructAuxVarHelper(loc, id, astType, declInfo);
+	}
+
+	private AuxVarInfo constructAuxVarHelper(final ILocation loc, final String id, final ASTType astType,
+			final DeclarationInformation declInfo) {
+		final VariableDeclaration decl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { id }, astType) });
+
 
 		final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, declInfo);
@@ -118,6 +124,29 @@ public class AuxVarInfoBuilder {
 				mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, declInfo);
 
 		return new AuxVarInfo(decl, lhs, exp);
+	}
+
+	/**
+	 * Normal aux vars are havocced as soon as possible (once we arrive at "statement level" in the translated C
+	 * program).
+	 * Some aux vars are havocced only when the scope (procedure) is left
+	 *
+	 * @param loc
+	 * @param cType
+	 * @param declInfo
+	 * @param compoundliteral
+	 * @return
+	 */
+	public AuxVarInfo constructAuxVarInfoForBlockScope(final ILocation loc, final CType cType,
+			final AUXVAR auxVarType, final DeclarationInformation declInfo) {
+		assert auxVarType == SFO.AUXVAR.COMPOUNDLITERAL : "only block-scope aux vars are allowed here (extend the "
+				+ "assertion if you added a new one)";
+
+		final String id = mNameHandler.getTempVarUIDForBlockScope(auxVarType, cType);
+		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+
+		return constructAuxVarHelper(loc, id, astType, declInfo);
+
 	}
 
 }

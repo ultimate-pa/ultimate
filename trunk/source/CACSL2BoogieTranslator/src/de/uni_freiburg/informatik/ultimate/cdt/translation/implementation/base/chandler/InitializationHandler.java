@@ -179,13 +179,18 @@ public class InitializationHandler {
 	 */
 	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
 			final InitializerResult initializerRaw, final IASTNode hook) {
-
 		final boolean onHeap;
 		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
 			onHeap = mCHandler.isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
 		} else {
 			onHeap = false;
 		}
+
+		return initialize(loc, lhsRaw, targetCTypeRaw, initializerRaw, onHeap, hook);
+	}
+
+	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
+			final InitializerResult initializerRaw, final boolean onHeap, final IASTNode hook) {
 
 		final LRValue lhs;
 		if (onHeap) {

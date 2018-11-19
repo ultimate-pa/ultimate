@@ -760,6 +760,11 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 
+	public void addVariableToBeMalloced(final LocalLValueILocationPair llvp) {
+		mVariablesToBeMalloced.put(llvp, mVariablesToBeMalloced.getActiveScopeNum());
+	}
+
+
 	public void addVariableToBeFreed(final LocalLValueILocationPair llvp) {
 		mVariablesToBeFreed.put(llvp, mVariablesToBeFreed.getActiveScopeNum());
 	}

@@ -317,6 +317,12 @@ public final class SFO {
 		STRINGLITERAL("string"),
 
 		/**
+		 * Auxiliary variable used for the memory address of a compound literal
+		 */
+		COMPOUNDLITERAL("compoundliteral"),
+
+
+		/**
 		 * Auxiliary variable used for struct initialisation.
 		 */
 		STRUCTINIT("structinit"),

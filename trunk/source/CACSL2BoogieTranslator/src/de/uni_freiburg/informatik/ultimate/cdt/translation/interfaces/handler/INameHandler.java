@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 public interface INameHandler {
 	/**
 	 * Creates an unique (in translation unit) identifier for each variable.
-	 * 
+	 *
 	 * @param scope
 	 *            should be IASTTranslationUnit, IASTCompoundStatement.
 	 * @param cId
@@ -61,14 +61,14 @@ public interface INameHandler {
 
 	/**
 	 * Creates a unique identifier for temporary variables.
-	 * 
+	 *
 	 * @return a unique identifier for temporary variables.
 	 */
 	String getTempVarUID(AUXVAR purpose, CType cType);
 
 	/**
 	 * Create identifier for in-parameter of Boogie procedure.
-	 * 
+	 *
 	 * @param cid
 	 *            the name of the C procedure parameter
 	 * @param cType
@@ -80,4 +80,6 @@ public interface INameHandler {
 	public String getGloballyUniqueIdentifier(String looplabel);
 
 	public boolean isTempVar(String id);
+
+	public String getTempVarUIDForBlockScope(AUXVAR auxVarType, CType cType);
 }

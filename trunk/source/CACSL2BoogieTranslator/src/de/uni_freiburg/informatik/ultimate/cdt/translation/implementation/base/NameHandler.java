@@ -153,6 +153,15 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
+	public String getTempVarUIDForBlockScope(final SFO.AUXVAR purpose, final CType cType) {
+		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
+		// do not add it as a temp var since it should not be havocced immediately (at C statement level)
+//		mBacktranslator.putTempVar(boogieId, purpose, cType);
+		return boogieId;
+	}
+
+
+	@Override
 	public String getGloballyUniqueIdentifier(final String looplabel) {
 		return looplabel + mGlobalCounter++;
 	}
