@@ -155,7 +155,6 @@ public class CfgBuilder {
 	List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinCurrentThreads = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
-	private ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> mResultingBacktranslator;
 
 	private final CodeBlockSize mCodeBlockSize;
 
@@ -443,7 +442,7 @@ public class CfgBuilder {
 	}
 
 	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> getBacktranslator() {
-		return mResultingBacktranslator;
+		return mRcfgBacktranslator;
 	}
 
 	/**
