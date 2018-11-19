@@ -171,4 +171,28 @@ public class ExpressionResult extends Result {
 		return sb.toString();
 	}
 
+	/**
+	 * Returns true if the only content of this ExpressionResult is its LRValue
+	 *
+	 * @return
+	 */
+	public boolean hasNoSideEffects() {
+		if (!mStmt.isEmpty()) {
+			return false;
+		}
+		if (!mDecl.isEmpty()) {
+			return false;
+		}
+		if (!mAuxVars.isEmpty()) {
+			return false;
+		}
+		if (!mOverappr.isEmpty()) {
+			return false;
+		}
+		if (!mOtherUnionFields.isEmpty()) {
+			return false;
+		}
+		return true;
+	}
+
 }

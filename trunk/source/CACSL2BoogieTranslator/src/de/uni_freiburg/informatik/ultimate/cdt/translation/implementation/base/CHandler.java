@@ -1524,6 +1524,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTTypeIdInitializerExpression node) {
 		// node represents a compound literal (something like "(int []) { 1, 2 }")
+		final ILocation loc = mLocationFactory.createCLocation(node);
 
 		// translate type
 		CType cType;
@@ -1538,14 +1539,32 @@ public class CHandler {
 			final CDeclaration cDeclaration = declaratorResult.getDeclaration();
 			assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
 			assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-			cType = cDeclaration.getType();
+			cType = cDeclaration.getType().getUnderlyingType();
 		}
 
-		final IASTInitializer initializer = node.getInitializer();
-		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
+		// translate initializer
+		final InitializerResult ir;
+		{
+			final IASTInitializer initializer = node.getInitializer();
+			ir = (InitializerResult) main.dispatch(initializer);
+		 }
 
-		if (cType instanceof CPrimitive) {
-			return InitializerResult.getFirstValueInInitializer(ir);
+		// catch simple cases
+		if (cType instanceof CPrimitive || cType instanceof CEnum) {
+			final ExpressionResult exprRes = mExprResultTransformer.switchToRValueIfNecessary(
+					InitializerResult.getFirstValueInInitializer(ir), loc, node);
+
+			assert exprRes.hasLRValue();
+
+			final RValue rVal = (RValue) exprRes.getLrValue();
+
+			// used to check if rVal is a constant
+			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
+
+			if (exprRes.hasNoSideEffects() && intVal != null) {
+				// ExpressionResult is just an integer constant
+				return exprRes;
+			}
 		}
 
 		throw new UnsupportedOperationException("sophisticated compound literals are not yet supported: "
