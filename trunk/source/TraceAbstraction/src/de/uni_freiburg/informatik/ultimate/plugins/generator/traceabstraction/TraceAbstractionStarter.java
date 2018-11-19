@@ -123,10 +123,10 @@ public class TraceAbstractionStarter {
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-
+			runCegarLoops(icfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
 		} else {
-			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
-					IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
+			final IcfgPetrifier icfgPetrifier =
+					new IcfgPetrifier(mServices, icfg, IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
 			final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			runCegarLoops(petrifiedIcfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
@@ -397,8 +397,7 @@ public class TraceAbstractionStarter {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
-					languageOperation);
+					taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage, languageOperation);
 		}
 		return result;
 	}
