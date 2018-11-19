@@ -100,12 +100,12 @@ public class ThreadInstanceAdder {
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2,
-			final BlockEncodingBacktranslator backtranslator) {
+			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
 			final ThreadInstance ti = threadInstanceMap2.get(fct);
 
 			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
-					ti.getThreadInstanceName(), backtranslator);
+					ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
 		}
 
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
@@ -177,6 +177,7 @@ public class ThreadInstanceAdder {
 	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry location of the forked procedure.
 	 *
 	 * @param backtranslator
+	 * @param addThreadInUseViolationEdges
 	 * @param string
 	 *
 	 * @param edge
@@ -185,7 +186,8 @@ public class ThreadInstanceAdder {
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
 			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
 			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
-			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator) {
+			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator,
+			final boolean addThreadInUseViolationEdges) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
@@ -224,14 +226,15 @@ public class ThreadInstanceAdder {
 		// hack to get the original fork
 		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(fct, backtranslator);
 		backtranslator.mapEdges(forkThreadOther, originalEdge);
-
-		// Add the assume statement for the error location and construct the
-		final UnmodifiableTransFormula forkErrorTransFormula =
-				constructThreadInUseViolationAssumption(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
-		final IcfgInternalTransition errorTransition =
-				ef.createInternalTransition(callerNode, errorNode, null, forkErrorTransFormula);
-		callerNode.addOutgoing(errorTransition);
-		errorNode.addIncoming(errorTransition);
+		if (addThreadInUseViolationEdges) {
+			// Add the assume statement for the error location and construct the
+			final UnmodifiableTransFormula forkErrorTransFormula =
+					constructThreadInUseViolationAssumption(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
+			final IcfgInternalTransition errorTransition =
+					ef.createInternalTransition(callerNode, errorNode, null, forkErrorTransFormula);
+			callerNode.addOutgoing(errorTransition);
+			errorNode.addIncoming(errorTransition);
+		}
 
 		// TODO Matthias 2018-09-15: Set overapproximations for both edges
 		final Map<String, ILocation> overapproximations = new HashMap<>();

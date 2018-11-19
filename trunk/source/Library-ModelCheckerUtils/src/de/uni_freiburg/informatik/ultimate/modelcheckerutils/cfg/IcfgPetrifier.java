@@ -115,8 +115,9 @@ public class IcfgPetrifier {
 					threadInstanceMap.values());
 		}
 
+		final boolean addThreadInUseViolationEdges = (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads,
-				threadInstanceMap, backtranslator);
+				threadInstanceMap, backtranslator, addThreadInUseViolationEdges);
 
 		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
 		backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
