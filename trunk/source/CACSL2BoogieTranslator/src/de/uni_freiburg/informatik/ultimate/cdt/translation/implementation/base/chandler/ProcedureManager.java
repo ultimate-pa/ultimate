@@ -479,10 +479,8 @@ public class ProcedureManager {
 	 */
 	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
 			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
-		// // TODO: what is the criterion for when an ensures clause constitutes a
-		// modification??
-		// // --> probably we have to set this manually!...
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
+
 		procInfo.addModifiedGlobals(modifiedGlobals);
 
 		return new EnsuresSpecification(loc, isFree, formula);

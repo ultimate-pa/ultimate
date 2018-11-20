@@ -1981,15 +1981,17 @@ public class MemoryHandler {
 					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 		}
 
+		final boolean useSelectInsteadOfStore = writeMode == HeapWriteMode.Select;
+
 		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
 			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-					returnValue, x -> x, inPtrExp, x -> x));
+					returnValue, x -> x, inPtrExp, x -> x, useSelectInsteadOfStore));
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
 			final Function<Expression, Expression> valueExtension =
 					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
 			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-					returnValue, valueExtension, inPtrExp, x -> x));
+					returnValue, valueExtension, inPtrExp, x -> x, useSelectInsteadOfStore));
 		} else {
 			assert rda.getBytesize() % heapDataArray.getSize() == 0 : "incompatible sizes";
 			for (int i = 0; i < rda.getBytesize() / heapDataArray.getSize(); i++) {
@@ -1999,16 +2001,20 @@ public class MemoryHandler {
 						heapDataArray.getSize() * (currentI + 1) * 8, heapDataArray.getSize() * currentI * 8);
 				if (i == 0) {
 					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-							returnValue, extractBits, inPtrExp, x -> x));
+							returnValue, extractBits, inPtrExp, x -> x, useSelectInsteadOfStore));
 				} else {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
 					final Function<Expression, Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
 					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-							returnValue, extractBits, inPtrExp, pointerAddition));
+							returnValue, extractBits, inPtrExp, pointerAddition, useSelectInsteadOfStore));
 				}
 			}
 		}
+
+		final Set<VariableLHS> modifiedGlobals = useSelectInsteadOfStore ?
+				Collections.emptySet() : Collections.singleton(heapDataArray.getVariableLHS());
+
 		if (floating2bitvectorTransformationNeeded && !mSettings.useFpToIeeeBvExtension()) {
 			final Expression returnValueAsBitvector = ExpressionFactory.constructIdentifierExpression(loc,
 					mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
@@ -2030,10 +2036,10 @@ public class MemoryHandler {
 			final QuantifierExpression qe =
 					new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
 			swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false, qe,
-					Collections.singleton(heapDataArray.getVariableLHS())));
+					modifiedGlobals));
 		} else {
 			swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false,
-					ExpressionFactory.and(loc, conjuncts), Collections.singleton(heapDataArray.getVariableLHS())));
+					ExpressionFactory.and(loc, conjuncts), modifiedGlobals));
 		}
 
 		mProcedureManager.addSpecificationsToCurrentProcedure(swrite);
@@ -2043,13 +2049,15 @@ public class MemoryHandler {
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final Expression value,
 			final Function<Expression, Expression> valueModification, final IdentifierExpression inPtrExp,
-			final Function<Expression, Expression> ptrModification) {
+			final Function<Expression, Expression> ptrModification, final boolean useSelectInsteadOfStore) {
 		final List<Expression> conjuncts = new ArrayList<>();
 		for (final HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
-				conjuncts.add(ensuresHeapArrayUpdate(loc, value, valueModification, inPtrExp, ptrModification, other));
+				conjuncts.add(constructHeapArrayUpdateForWriteEnsures(loc, value, valueModification, inPtrExp,
+						ptrModification, other, useSelectInsteadOfStore));
 			} else {
-				conjuncts.add(ensuresHeapArrayHardlyModified(loc, inPtrExp, ptrModification, other));
+				conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, inPtrExp, ptrModification, other,
+						useSelectInsteadOfStore));
 			}
 
 		}
@@ -2166,19 +2174,31 @@ public class MemoryHandler {
 	}
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
-	private static Expression ensuresHeapArrayUpdate(final ILocation loc, final Expression valueExpr,
+	private static Expression constructHeapArrayUpdateForWriteEnsures(final ILocation loc, final Expression valueExpr,
 			final Function<Expression, Expression> valueModification, final IdentifierExpression ptrExpr,
-			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
+			final Function<Expression, Expression> ptrModification, final HeapDataArray hda,
+			final boolean useSelectInsteadOfStore) {
 		final Expression memArray = hda.getIdentifierExpression();
-		return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr), memArray);
+		if (useSelectInsteadOfStore) {
+			return ensuresArrayHasValue(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr),
+					memArray);
+		} else {
+			return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr),
+					memArray);
+		}
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
-	private static Expression ensuresHeapArrayHardlyModified(final ILocation loc, final IdentifierExpression ptrExpr,
-			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
+	private static Expression constructHeapArrayHardlyModifiedForWriteEnsures(final ILocation loc,
+			final IdentifierExpression ptrExpr, final Function<Expression, Expression> ptrModification,
+			final HeapDataArray hda, final boolean useSelectInsteadOfStore) {
 		final Expression memArray = hda.getIdentifierExpression();
 		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
-		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
+		if (useSelectInsteadOfStore) {
+			return ensuresArrayHasValue(loc, aae, ptrModification.apply(ptrExpr), memArray);
+		} else {
+			return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
+		}
 	}
 
 	/**
@@ -2190,6 +2210,17 @@ public class MemoryHandler {
 				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructOneDimensionalArrayStore(loc, oldArray, index, newValue);
 		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
+		return eq;
+	}
+
+	/**
+	 *  arr[index] == value
+	 */
+	private static Expression ensuresArrayHasValue(final ILocation loc, final Expression value, final Expression index,
+			final Expression arrayExpr) {
+		final Expression select = ExpressionFactory.constructNestedArrayAccessExpression(loc, arrayExpr,
+				new Expression[] { index });
+		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, select, value);
 		return eq;
 	}
 
