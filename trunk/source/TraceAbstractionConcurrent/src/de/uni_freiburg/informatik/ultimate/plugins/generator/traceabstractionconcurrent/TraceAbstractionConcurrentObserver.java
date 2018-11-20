@@ -109,7 +109,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
-		if (csToolkit.getConcurrencyInformation() == null) {
+		if (csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			// no fork or join
 			threadErrorLocations = Collections.emptySet();
 		} else {

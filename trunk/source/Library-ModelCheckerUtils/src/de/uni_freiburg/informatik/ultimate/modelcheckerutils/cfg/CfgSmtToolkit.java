@@ -109,8 +109,7 @@ public class CfgSmtToolkit {
 	}
 
 	/**
-	 * Object that provides additional information about concurrency in the program. Returns null if the program is not
-	 * a concurrent program.
+	 * Object that provides additional information about concurrency in the program.
 	 */
 	public ConcurrencyInformation getConcurrencyInformation() {
 		return mConcurrencyInformation;

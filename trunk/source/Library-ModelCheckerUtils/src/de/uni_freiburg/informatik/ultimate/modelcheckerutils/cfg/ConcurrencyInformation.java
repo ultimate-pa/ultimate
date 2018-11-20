@@ -52,6 +52,9 @@ public class ConcurrencyInformation {
 		mJoinTransitions = joinTransitions;
 	}
 
+	/**
+	 * Map is empty if program is not a concurrent program.
+	 */
 	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> getThreadInstanceMap() {
 		return mThreadInstanceMap;
 	}

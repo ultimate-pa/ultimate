@@ -241,7 +241,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final ModifiableGlobalsTable newModGlobTable =
 					constructModifiableGlobalsTable(oldCfgSmtToolkit.getModifiableGlobalsTable());
 
-			if (oldCfgSmtToolkit.getConcurrencyInformation() != null) {
+			if (!oldCfgSmtToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 				throw new UnsupportedOperationException(
 						"Construction of path programs is not yet supported for concurrent programs");
 			}

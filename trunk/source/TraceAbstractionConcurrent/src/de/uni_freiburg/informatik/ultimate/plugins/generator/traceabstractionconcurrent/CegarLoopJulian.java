@@ -396,7 +396,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 		return predicateUnifier -> {
 			final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-			if (ci == null) {
+			if (ci.getThreadInstanceMap().isEmpty()) {
 				return predicateUnifier.getTruePredicate();
 			}
 			final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
