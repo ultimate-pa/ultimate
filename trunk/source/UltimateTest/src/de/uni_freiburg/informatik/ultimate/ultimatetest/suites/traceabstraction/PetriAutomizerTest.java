@@ -87,10 +87,12 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mBoogieToolchains = {
 		"PetriAutomizerBplInline.xml",
+		"AutomizerBplInline.xml",
 	};
 
 	private static final String[] mCToolchains = {
 		"PetriAutomizerCInline.xml",
+		"AutomizerCInline.xml",
 	};
 
 	@Override

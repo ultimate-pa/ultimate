@@ -113,7 +113,7 @@ public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 
 	private static final String[] TOOLCHAINS = {
 //		"AutomizerC.xml",
-//		"AutomizerCInline.xml",
+		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformed.xml",
 		"PetriAutomizerCInline.xml",
 	};
