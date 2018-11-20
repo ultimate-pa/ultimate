@@ -106,7 +106,7 @@ public class IcfgPetrifier {
 				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
 						addThreadInUseViolationVariablesAndErrorLocation);
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
-				threadInstanceMap, newJoinCurrentThreads);
+				threadInstanceMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
 		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
 		final HashRelation<String, String> copyDirectives = ProcedureMultiplier
 				.generateCopyDirectives(threadInstanceMap.values());
@@ -121,16 +121,19 @@ public class IcfgPetrifier {
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads,
 				threadInstanceMap, backtranslator, addThreadInUseViolationEdges);
 
-		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values());
+		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.values(), addThreadInUseViolationEdges);
 		backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
 		mBacktranslator = backtranslator;
 	}
 
 
-	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values) {
+	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values,
+			final boolean addThreadInUseViolationEdges) {
 		final Set<Term> result = new HashSet<>();
 		for (final ThreadInstance ti : values) {
-			result.add(ti.getInUseVar().getTerm());
+			if (addThreadInUseViolationEdges) {
+				result.add(ti.getInUseVar().getTerm());
+			}
 			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
 				result.add(idVar.getTerm());
 			}
