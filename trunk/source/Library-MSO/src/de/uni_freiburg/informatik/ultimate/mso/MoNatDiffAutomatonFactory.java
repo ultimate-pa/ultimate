@@ -327,7 +327,7 @@ public final class MoNatDiffAutomatonFactory {
 	}
 
 	/**
-	 * TODO: Comment.
+	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
 			final AutomataLibraryServices services,
@@ -339,13 +339,11 @@ public final class MoNatDiffAutomatonFactory {
 		result = MoNatDiffAutomatonFactory.emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
 
-		
 		for (final String state : automaton.getStates())
 			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-		
+
 		for (final String state : automaton.getStates()) {
-			//result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-			
+
 			for (final OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
 					.internalSuccessors(state)) {
 

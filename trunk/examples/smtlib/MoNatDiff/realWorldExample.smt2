@@ -10,7 +10,7 @@
 (declare-fun z () Int)
 (declare-fun I () SetOfInt)
 
-; forall y: y = 0 ==> y \in I
+;forall y: y = 0 ==> y \in I
 (assert (forall ((y Int)) (=> (<= y 0) (element y I))))
 
 ; forall x, y: (x <= 23 /\ x \in I /\ y = x + 2) ==> (y \in I)
@@ -23,4 +23,4 @@
 ;(assert (not (= x 0)))
 
 (check-sat)
-(get-model)
+(get-value (I))
