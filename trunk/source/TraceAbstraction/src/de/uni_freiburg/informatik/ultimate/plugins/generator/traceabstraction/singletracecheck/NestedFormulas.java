@@ -140,4 +140,15 @@ public abstract class NestedFormulas<TF, SF> {
 
 	protected abstract TF getOldVarAssignmentFromValidPos(int i);
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		for (int i=0; i<mNestedWord.length(); i++) {
+			sb.append("Position " + i + ": ");
+			sb.append(String.valueOf(mNestedWord.getSymbol(i).getTransformula()));
+			sb.append(System.lineSeparator());
+		}
+		return sb.toString();
+	}
+
 }
