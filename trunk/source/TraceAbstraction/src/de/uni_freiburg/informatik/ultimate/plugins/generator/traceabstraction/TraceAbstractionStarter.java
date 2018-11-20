@@ -139,8 +139,17 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
+		final boolean computeHoareAnnotation;
+		if (taPrefs.computeHoareAnnotation()
+				&& !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
+			computeHoareAnnotation = false;
+		} else {
+			computeHoareAnnotation = taPrefs.computeHoareAnnotation();
+		}
+
 		String settings = "Automizer settings:";
-		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
+		settings += " Hoare:" + computeHoareAnnotation;
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:" + taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
@@ -163,7 +172,7 @@ public class TraceAbstractionStarter {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			iterate(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, csToolkit, predicateFactory,
-					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile);
+					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 		} else {
 			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 			final int numberOfErrorLocs = errNodesOfAllProc.size();
@@ -177,7 +186,7 @@ public class TraceAbstractionStarter {
 				}
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				final Result result = iterate(name, icfg, taPrefs, csToolkit, predicateFactory,
-						traceAbstractionBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile);
+						traceAbstractionBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name, result,
 						finishedErrorLocs, numberOfErrorLocs));
 				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
@@ -195,10 +204,10 @@ public class TraceAbstractionStarter {
 			reportResult(result);
 		}
 
-		mLogger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
+		mLogger.debug("Compute Hoare Annotation: " + computeHoareAnnotation);
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
-		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
+		if (computeHoareAnnotation && mOverallResult != Result.TIMEOUT
 				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult)
 				&& mServices.getProgressMonitorService().continueProcessing()) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
@@ -315,9 +324,11 @@ public class TraceAbstractionStarter {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final boolean computeHoareAnnotation) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop = constructCegarLoop(name, root, taPrefs,
-				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile);
+				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile,
+				computeHoareAnnotation);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		final Result result = basicCegarLoop.iterate();
@@ -330,7 +341,7 @@ public class TraceAbstractionStarter {
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
 
-		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
+		if (computeHoareAnnotation && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 
@@ -357,17 +368,11 @@ public class TraceAbstractionStarter {
 	private BasicCegarLoop<?> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final boolean computeHoareAnnotation) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
-		final boolean computeHoareAnnotation;
-		if (taPrefs.computeHoareAnnotation()
-				&& !root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
-			computeHoareAnnotation = false;
-		} else {
-			computeHoareAnnotation = taPrefs.computeHoareAnnotation();
-		}
+
 
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
