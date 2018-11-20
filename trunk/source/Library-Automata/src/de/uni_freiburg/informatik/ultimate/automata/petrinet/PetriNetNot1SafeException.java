@@ -59,6 +59,10 @@ public class PetriNetNot1SafeException extends AutomataLibraryException {
 		}
 	}
 
+	public Collection<?> getUnsafePlaces() {
+		return mUnsafePlaces;
+	}
+
 
 
 

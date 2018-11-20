@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -324,8 +325,20 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			final BoundedPetriNet<LETTER, IPredicate> net = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
 					mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory);
+			try {
 			mAbstraction = new PetriNet2FiniteAutomaton<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
 					mStateFactoryForRefinement, net).getResult();
+			} catch (final PetriNetNot1SafeException e) {
+				final Collection<?> unsafePlaces = e.getUnsafePlaces();
+				if (unsafePlaces == null) {
+					throw new AssertionError("Unable to find Petri net place that violates 1-safety");
+				} else {
+					final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
+					final String proc = unsafePlace.getProgramPoint().getProcedure();
+					throw new IllegalStateException(
+							"Petrification does not provide enough thread instances for " + proc);
+				}
+			}
 		}
 
 		if (mComputeHoareAnnotation
