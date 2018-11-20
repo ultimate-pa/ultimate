@@ -381,6 +381,9 @@ public class PartialQuantifierElimination {
 		final LBool sat = EliminationTask.areDistinct(script, esp, inputEliminationTask);
 		if (sat == LBool.UNKNOWN) {
 			logger.warn("Trying to double check " + name + " result, but SMT solver's response was UNKNOWN.");
+			logger.warn("Input elimination task: " + inputEliminationTask);
+			logger.warn("ElimStorePlain result: " + esp);
+
 		}
 		return sat != LBool.SAT;
 	}
