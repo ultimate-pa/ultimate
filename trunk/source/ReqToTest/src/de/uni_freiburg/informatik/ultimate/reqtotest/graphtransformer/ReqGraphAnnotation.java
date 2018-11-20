@@ -52,7 +52,9 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 	
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		if (other instanceof ReqGraphAnnotation) {
+		if (other == this) {
+			return this;
+		} else if (other instanceof ReqGraphAnnotation) {
 			mReqIds.addAll(((ReqGraphAnnotation)other).getRequirementIds());
 			mSourceLabels.addAll(((ReqGraphAnnotation)other).getGuards());
 			return this;
