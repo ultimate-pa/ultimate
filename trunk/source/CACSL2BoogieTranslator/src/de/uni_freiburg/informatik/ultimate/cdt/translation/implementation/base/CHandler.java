@@ -2588,6 +2588,9 @@ public class CHandler {
 	 */
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final CType underlyingType, final Expression expr,
 			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
+
+		final IASTNode exprHook = CTranslationUtil.findExpressionHook(hook);
+
 		if (!mIsPrerun) {
 			if (underlyingType instanceof CArray) {
 				throw new AssertionError("on-heap/off-heap bug: array has to be on-heap");
@@ -2602,7 +2605,7 @@ public class CHandler {
 				// expression does not have a corresponding c identifier --> nothing to move on heap
 				continue;
 			}
-			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
+			final SymbolTableValue value = mSymbolTable.findCSymbol(exprHook, cid);
 			if (value == null) {
 				throw new AssertionError("no entry in symbol table for C-ID " + cid);
 			}

@@ -33,7 +33,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -510,5 +513,22 @@ public class CTranslationUtil {
 		} else {
 			throw new AssertionError("missing case");
 		}
+	}
+
+	/**
+	 * The given hook may be a plain expression, in that case it is returned.
+	 * If the given hook is a Compound
+	 *
+	 * @param hook
+	 * @return
+	 */
+	public static IASTNode findExpressionHook(final IASTNode hook) {
+		if (hook instanceof CASTCompoundStatementExpression) {
+			final IASTCompoundStatement cs = ((CASTCompoundStatementExpression) hook).getCompoundStatement();
+			final IASTStatement lastStatement = cs.getStatements()[cs.getStatements().length - 1];
+			return findExpressionHook(lastStatement);
+		}
+
+		return hook;
 	}
 }

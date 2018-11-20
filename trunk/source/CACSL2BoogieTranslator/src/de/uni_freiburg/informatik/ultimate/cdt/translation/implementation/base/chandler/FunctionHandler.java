@@ -536,11 +536,12 @@ public class FunctionHandler {
 			resultBuilder.addStatement(havoc);
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
-					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node);
+					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node.getReturnValue());
 
 			// functions cannot return arrays but only pointers
-			returnValue = mCHandler.decayArrayToPointer(returnValue, loc, node);
-			returnValue = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(returnValue, loc, node);
+			returnValue = mCHandler.decayArrayToPointer(returnValue, loc, node.getReturnValue());
+			returnValue = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(returnValue, loc,
+					node.getReturnValue());
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
