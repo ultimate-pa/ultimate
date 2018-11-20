@@ -55,7 +55,7 @@ file_export_version=3.0
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ to\ procedures\ called\ more\ than\ once=ALWAYS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
 
 
 #Tue Nov 21 08:04:41 CET 2017

@@ -53,7 +53,7 @@ public enum PreferenceItem {
 
 	INLINE_IMPLEMENTED("... calls to implemented procedures",
 			"When to inline calls to implemented procedures.",
-			EnableWhen.ONLY_FOR_CONCURRENT_PROGRAMS, PreferenceType.Combo, EnableWhen.values()),
+			EnableWhen.ALWAYS, PreferenceType.Combo, EnableWhen.values()),
 
 	LABEL_IGNORE_CALLS("Ignore calls ..."),
 
