@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -17,7 +17,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
-public class ThreeValuedAuxVarGen {
+public class AuxVarGen {
+	
+	public final static String DEFINE_PREFIX = "d_";
+	public final static String USE_PREFIX = "u_";
+	public final static String CLOCK_PREFIX = "t_";
 	
 	private final Sort mSortBool;
 	private final Sort mSortReal;
@@ -30,16 +34,16 @@ public class ThreeValuedAuxVarGen {
 	private final Map<TermVariable, List<Term>> mVariableToDefineTerm;
 	private final Map<ReqGuardGraph, Integer> mReqToId;
 	private int mReqId = 0;
-	private final Set<Term> mEffects;
+	private final HashMap<ReqGuardGraph, Term> mEffects;
 	
 	private final Map<ReqGuardGraph,Term> mReqToDefineAnnotation;
 	private final Map<ReqGuardGraph,Term> mReqToNonDefineAnnotation;   
 	
-	public ThreeValuedAuxVarGen(ILogger logger, Script script, ReqSymbolTable reqSymbolTable) {
+	public AuxVarGen(ILogger logger, Script script, ReqSymbolTable reqSymbolTable) {
 		mReqSymbolTable = reqSymbolTable;
 		mLogger = logger;
 		mScript = script;
-		mEffects = new HashSet<>();
+		mEffects = new HashMap<>();
 		mVariableToUseTerm = new LinkedHashMap<>();
 		mVariableToDefineTerm = new LinkedHashMap<>();
 		mReqToDefineAnnotation = new LinkedHashMap<>();
@@ -50,11 +54,13 @@ public class ThreeValuedAuxVarGen {
 	}
 	
 	
-	public void setEffectLabel(ReqGuardGraph req, Term effectTerm) {
+	public void setEffectLabel(ReqGuardGraph req, Term effectEdge) {
 		TermVariable[] idents = {};
-		if(SmtUtils.getDisjuncts(effectTerm).length <= 1) {
-			mEffects.add(effectTerm);
-			idents = effectTerm.getFreeVars();
+		//if there is a disjunct in the effect, disregard the effect.
+		//TODO: disregard intervals or encode intervals as individual partially ordered effects
+		if(SmtUtils.getDisjuncts(effectEdge).length <= 1) {
+			mEffects.put(req, effectEdge);
+			idents = effectEdge.getFreeVars();
 		} 
 		final List<TermVariable> effectVars = getNonInputNonConstantVars(idents);
 		final int reqId = getReqToId(req);
@@ -63,6 +69,12 @@ public class ThreeValuedAuxVarGen {
 		final Term notEffectGuard = SmtUtils.or(mScript, varsToDefineAnnotations(effectVars, reqId));
 		mReqToNonDefineAnnotation.put(req, SmtUtils.not(mScript, notEffectGuard));
 	}	
+	
+	public Collection<TermVariable> getEffectVariables(ReqGuardGraph reqId){
+		List<Term> temp = new ArrayList<Term>();
+		temp.add(mEffects.get(reqId));
+		return SmtUtils.getFreeVars(temp);
+	}
 	
 	private List<TermVariable> getNonInputNonConstantVars(TermVariable[] vars){
 		final List<TermVariable> nonInputNonConstVars = new ArrayList<>();
@@ -107,13 +119,13 @@ public class ThreeValuedAuxVarGen {
 	}
 	
 	public TermVariable generateClockIdent(ReqGuardGraph req) {
-		final String auxIdent = "t_" + Integer.toString(getReqToId(req));
+		final String auxIdent = AuxVarGen.CLOCK_PREFIX + Integer.toString(getReqToId(req));
 		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_REAL);
 		return mScript.variable(auxIdent,  mSortReal);
 	}
 	
 	private Term createUseTerm(TermVariable ident) {
-		final String auxIdent = "u_" + ident.toString();
+		final String auxIdent = AuxVarGen.USE_PREFIX + ident.toString();
 		mReqSymbolTable.addAuxVar(auxIdent,  BoogieType.TYPE_BOOL);
 		return mScript.variable(auxIdent,  mSortBool);
 	}
@@ -138,12 +150,12 @@ public class ThreeValuedAuxVarGen {
 	}
 	
 	private Term createDefineTerm(TermVariable ident, int reqId) {
-		final String auxIdent = "d_" + Integer.toString(reqId) + "_" + ident.toString();
+		final String auxIdent = AuxVarGen.DEFINE_PREFIX + Integer.toString(reqId) + "_" + ident.toString();
 		mReqSymbolTable.addAuxVar(auxIdent,  BoogieType.TYPE_BOOL);
 		return mScript.variable(auxIdent,  mSortBool);
 	}
 	
-	private int getReqToId(ReqGuardGraph req) {
+	public int getReqToId(ReqGuardGraph req) {
 		if (!mReqToId.containsKey(req)) {
 			mReqToId.put(req, mReqId);
 			mReqId++;
@@ -165,19 +177,24 @@ public class ThreeValuedAuxVarGen {
 		return guards;
 	}
 	
-	public List<Term> getOracleGuards(){
-		final List<Term> guards = new ArrayList<>();
-		for(Term effect: mEffects) {
+	/*
+	 * For each requirement, build a negated Term which combines the effect of the requirement and the define guard of the requirement,
+	 * so that the assertion can only be violated if the effect is set, and it is set by the requirement itself.
+	 */
+	public Map<ReqGuardGraph, Term> getOracleAssertions(){
+		final Map<ReqGuardGraph, Term> guards = new HashMap<>();
+		for(ReqGuardGraph reqId: mEffects.keySet()) {
+			Term effect = mEffects.get(reqId);
 			Term use =  effect;
 			for(TermVariable var: effect.getFreeVars()) {
 				if (!mReqSymbolTable.isOutput(var.toString())) {
 					continue;
 				} 
-				use = SmtUtils.and(mScript, use, getUseGuard(var));
+				use = SmtUtils.and(mScript, effect, createDefineAnnotation(var, mReqToId.get(reqId)));
 				
 			}
 			if (use != effect) {
-				guards.add(SmtUtils.not( mScript,use));	
+				guards.put(reqId, SmtUtils.not(mScript, use));	
 			}
 		}
 		return guards;

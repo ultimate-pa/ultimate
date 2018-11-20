@@ -100,6 +100,10 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return isInput(e) || isOutput(e);
 	}
 	
+	public boolean isAuxVar(String v) {
+		return mAuxVars.contains(v);
+	}
+	
 	public Set<String> getHiddenVars(){
 		return mHiddenVars;
 	}

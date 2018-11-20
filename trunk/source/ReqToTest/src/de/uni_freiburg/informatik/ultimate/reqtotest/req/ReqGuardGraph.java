@@ -6,13 +6,18 @@ public class ReqGuardGraph extends ModifiableLabeledEdgesMultigraph<ReqGuardGrap
 	
 	private static final long serialVersionUID = -7450822163861915153L;
 	private final int mNodeLabel;
+	private final String mName;
 	
-	public ReqGuardGraph(int label) {
+	public ReqGuardGraph(int label, String name) {
 		mNodeLabel = label;
+		mName = name;
 	}
 	
 	public int getLabel() {
 		return mNodeLabel;
 	}
 
+	public String getName() {
+		return mName;
+	}
 }

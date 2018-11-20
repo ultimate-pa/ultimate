@@ -73,10 +73,10 @@ public class GraphToBoogie {
 	private final Term2Expression mTerm2Expression;
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
-	private final ThreeValuedAuxVarGen mThreeValuedAuxVarGen;
+	private final AuxVarGen mThreeValuedAuxVarGen;
 	
 	public GraphToBoogie(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage,  ReqSymbolTable symbolTable, ThreeValuedAuxVarGen threeValuedAuxVarGen,
+			final IToolchainStorage storage,  ReqSymbolTable symbolTable, AuxVarGen threeValuedAuxVarGen,
 			List<ReqGuardGraph> requirements, Script scipt, ManagedScript managedScipt) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
@@ -166,11 +166,11 @@ public class GraphToBoogie {
 		return statements.toArray(new Statement[statements.size()]);
 	}
 	
-	private List<Statement> graphToBoogie(ReqGuardGraph req) {
+	private List<Statement> graphToBoogie(ReqGuardGraph reqId) {
 
 		final HashSet<ReqGuardGraph> visited = new HashSet<>();
 		final Queue<ReqGuardGraph> queue = new LinkedList<>();
-		queue.add(req);
+		queue.add(reqId);
 		Statement[] elsePart = new Statement[0];
 		while(queue.size() > 0) {
 			ReqGuardGraph pivoth = queue.poll();
@@ -181,9 +181,11 @@ public class GraphToBoogie {
 					queue.add(successor);
 				}
 				TimedLabel label = pivoth.getOutgoingEdgeLabel(successor);
-				innerIf = generateInnerIf(innerIf, req, successor, label);
+				//generate the inner if (... "then transition to __successor__ if __label__ holds ")
+				innerIf = generateInnerIf(innerIf, reqId, successor, label);
 			}
-			elsePart = new Statement[] {(generateOuterIf(req, pivoth, innerIf, elsePart))};
+			//generate the outer if ("if in location __pivoth__ ...")
+			elsePart = new Statement[] {(generateOuterIf(reqId, pivoth, innerIf, elsePart))};
 		}
 		//TODO this is ugly
 		final List<Statement> statements = new ArrayList<>();
@@ -198,9 +200,9 @@ public class GraphToBoogie {
 		return new IfStatement(mDummyLocation, condition, body, elsePart);
 	} 
 	
-	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph graph, ReqGuardGraph successor, TimedLabel label) {
+	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph reqId, ReqGuardGraph successor, TimedLabel label) {
 		Statement[] body;
-		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(graph), successor.getLabel());	
+		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());	
 		if (label.getReset() != null) {
 			Statement resetClock = generateVarRealAssignment(label.getReset().getName(), 0.0f);
 			body = new Statement[] {resetClock, setPcNextState};
@@ -208,9 +210,12 @@ public class GraphToBoogie {
 			body = new Statement[] {setPcNextState};
 		}
 		final Expression guard = mTerm2Expression.translate(label.getGuard());
-		ReqGraphAnnotation annotation = new ReqGraphAnnotation(graph, label);
-		annotation.annotate(guard);
 		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
+		if (successor.getLabel() > 0) {
+			//Annotate all non-powerset non-initial transitions 
+			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label.getGuard());
+			annotation.annotate(ifStatement);
+		}
 		return new Statement[] {ifStatement};
 	}
 	
@@ -326,17 +331,19 @@ public class GraphToBoogie {
 	
 	private List<Statement> generateTestOracleAssertion(){
 		final List<Statement> oracles = new ArrayList<>();	
-		final List<Term> guards = mThreeValuedAuxVarGen.getOracleGuards();
-		
+				
 		// dummy assertion to mark the program location
 		NamedAttribute attribute = new NamedAttribute(mDummyLocation, TEST_ORACLE_MARKER , new Expression[0] );
-		Statement assume = new AssertStatement(mDummyLocation, new NamedAttribute[] {attribute}, new BooleanLiteral(mDummyLocation, true));	
-		oracles.add(assume);
+		Statement assertion = new AssertStatement(mDummyLocation, new NamedAttribute[] {attribute}, new BooleanLiteral(mDummyLocation, true));	
+		oracles.add(assertion);
 		
-		
-		for(Term guard: guards) {
-			assume = new AssertStatement(mDummyLocation, new NamedAttribute[0], mTerm2Expression.translate(guard));
-			oracles.add(assume);
+		final Map<ReqGuardGraph, Term> guards = mThreeValuedAuxVarGen.getOracleAssertions();
+		for(ReqGuardGraph reqId: guards.keySet()) {
+			Term guard = guards.get(reqId);
+			assertion = new AssertStatement(mDummyLocation, mTerm2Expression.translate(guard));
+			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, guard);
+			annotation.annotate(assertion);
+			oracles.add(assertion);
 		}
 		return oracles;
 	}

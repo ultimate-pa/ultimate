@@ -22,6 +22,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
@@ -31,11 +33,17 @@ public class CounterExampleToTest {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ReqSymbolTable mReqSymbolTable;
+	private final Script mScript;
+	private final AuxVarGen mAuxVarGen;
 	
-	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, ReqSymbolTable reqSymbolTable) {
+	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, ReqSymbolTable reqSymbolTable, 
+			AuxVarGen auxVarGen , Script script) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
+		mScript = script;
+		mAuxVarGen = auxVarGen;
+		
 	}
 	
 	public IResult convertCounterExampleToTest(final IResult result) {
@@ -51,20 +59,33 @@ public class CounterExampleToTest {
 		IProgramExecution<?, ?> translatedPe = mServices.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		
 		List<SystemState> systemStates = new ArrayList<>();
+		List<List<ReqGraphAnnotation>> stepGuards = new ArrayList<>();
+		List<ReqGraphAnnotation> stepGuard = new ArrayList<>();
+		ReqGraphAnnotation oracles = null;
 		for(int i = 0; i < translatedPe.getLength(); i++) {
-			IElement peek = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i)).getTraceElement();
+			AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
+			IElement element = ate.getTraceElement();
 			// retrieve system state
-			if( isTestPurposeAssertion(peek)) {
-				if (translatedPe.getProgramState(i) == null) continue;
+			if( isTestPurposeAssertion(element)) {
+				if (translatedPe.getProgramState(i) == null) {
+					continue;
+				}
 				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i)));
+				stepGuards.add(stepGuard);
+				stepGuard = new ArrayList<>();
 			} 
-			// retrieve variables from all conditions fulfilled
-			if ( translatedPe.getTraceElement(i).getStepInfo().contains(StepInfo.CONDITION_EVAL_TRUE) &&
-					ReqGraphAnnotation.getAnnotation(peek) != null) {
-				mLogger.warn(ReqGraphAnnotation.getAnnotation(peek).getAnnotationsAsMap().get("label"));
+			// retrieve guardAnnotations of encoded automata
+			if ( ate.getStepInfo().contains(StepInfo.CONDITION_EVAL_TRUE) &&
+					ReqGraphAnnotation.getAnnotation(element) != null) {
+					stepGuard.add( ReqGraphAnnotation.getAnnotation(element));
+			}
+			//retrieve oracle annotation
+			if (ReqGraphAnnotation.getAnnotation(element) != null) {
+				oracles = ReqGraphAnnotation.getAnnotation(element);
 			}
 		}
-		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates);
+		mLogger.warn(oracles);
+		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates, stepGuards, oracles, mScript, mReqSymbolTable, mAuxVarGen);
 		return testSequence;
 	}
 	
@@ -112,7 +133,7 @@ public class CounterExampleToTest {
 	}
 	
 	private boolean isDefinedFlagSet(String ident, ProgramState<Expression> state) {
-		String useIdent = "u_" + ident;
+		String useIdent = AuxVarGen.USE_PREFIX + ident;
 		for(Expression e: state.getVariables()) {
 			if(e instanceof IdentifierExpression && ((IdentifierExpression) e).getIdentifier().equals(useIdent)){
 				Collection<Expression> values = state.getValues(e);

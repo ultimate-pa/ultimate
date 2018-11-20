@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations.UnmergeableAnnotationsException;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 
@@ -16,29 +16,29 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	
-	private final ArrayList<ReqGuardGraph> mSourceLocation;
-	private final ArrayList<TimedLabel> mSourceLabel;
+	private final ArrayList<ReqGuardGraph> mReqIds;
+	private final ArrayList<Term> mSourceLabels;
 	
-	public ReqGraphAnnotation(ReqGuardGraph location, TimedLabel label) {
-		mSourceLocation = new ArrayList<ReqGuardGraph>();
-		mSourceLocation.add(location);
-		mSourceLabel = new ArrayList<TimedLabel>();
-		mSourceLabel.add(label);
+	public ReqGraphAnnotation(ReqGuardGraph reqId, Term label) {
+		mReqIds = new ArrayList<ReqGuardGraph>();
+		mReqIds.add(reqId);
+		mSourceLabels = new ArrayList<Term>();
+		mSourceLabels.add(label);
 	}
 	
-	public ArrayList<ReqGuardGraph> getSourceLocation() {
-		return mSourceLocation;
+	public ArrayList<ReqGuardGraph> getRequirementIds() {
+		return mReqIds;
 	}
 	
-	public ArrayList<TimedLabel> getSourceLabel() {
-		return mSourceLabel;
+	public ArrayList<Term> getGuards() {
+		return mSourceLabels;
 	}
 	
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		HashMap<String, Object> values = new HashMap<String, Object>();
-		values.put("location", mSourceLocation);
-		values.put("label", mSourceLabel);
+		values.put("reqId: ", mReqIds);
+		values.put("label: ", mSourceLabels);
 		return values;
 	}
 	
@@ -53,8 +53,8 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
 		if (other instanceof ReqGraphAnnotation) {
-			mSourceLocation.addAll(((ReqGraphAnnotation)other).getSourceLocation());
-			mSourceLabel.addAll(((ReqGraphAnnotation)other).getSourceLabel());
+			mReqIds.addAll(((ReqGraphAnnotation)other).getRequirementIds());
+			mSourceLabels.addAll(((ReqGraphAnnotation)other).getGuards());
 			return this;
 		} else {
 			return super.merge(other);

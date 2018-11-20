@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
-import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ThreeValuedAuxVarGen;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
@@ -71,13 +71,13 @@ public class ReqToTestObserver extends BaseObserver{
 			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, reqSymbolTable, cddToSmt);
 			reqToInOut.requirementToInOut(rawPatterns);
 		}
-		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, reqSymbolTable);
-		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, threeValuedAuxVarGen, mScript, cddToSmt, reqSymbolTable);
+		final AuxVarGen auxVarGen = new AuxVarGen(mLogger, mScript, reqSymbolTable);
+		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, auxVarGen, mScript, cddToSmt, reqSymbolTable);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
-		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, threeValuedAuxVarGen, automata, mScript, mManagedScript);
+		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, auxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 		
-		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable);
+		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen, mScript);
 		final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
 		mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
 		

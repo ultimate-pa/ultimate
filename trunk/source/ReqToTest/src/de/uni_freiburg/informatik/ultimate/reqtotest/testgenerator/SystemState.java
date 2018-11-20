@@ -25,7 +25,7 @@ public class SystemState extends ProgramState<Expression> {
 		mTime = time;
 	}
 	
-	public boolean isInput(Expression e) {
+	private boolean isInput(Expression e) {
 		return mInputVariables.contains(e);
 	}
 
