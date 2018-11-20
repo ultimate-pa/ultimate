@@ -187,7 +187,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));
-		return newState.updateState(newSubState).simplify();
+		return newState.updateState(newSubState);
 	}
 
 	private boolean isInvalidArrayInequality(final ArrayDomainState<STATE> state, final Term assumption) {

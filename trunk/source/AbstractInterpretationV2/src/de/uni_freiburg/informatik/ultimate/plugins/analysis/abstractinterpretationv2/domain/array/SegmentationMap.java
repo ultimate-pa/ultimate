@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -153,8 +152,14 @@ public class SegmentationMap {
 		final Iterator<IProgramVarOrConst> iterator = newEquivalenceClass.iterator();
 		mArrayEqualities.remove(variable);
 		final Segmentation segmentation = mRepresentiveSegmentations.remove(variable);
-		if (iterator.hasNext()) {
+		if (segmentation != null && iterator.hasNext()) {
 			mRepresentiveSegmentations.put(mArrayEqualities.find(iterator.next()), segmentation);
+		}
+	}
+
+	public void removeAll(final Set<IProgramVarOrConst> variables) {
+		for (final IProgramVarOrConst v : variables) {
+			remove(v);
 		}
 	}
 
@@ -201,41 +206,44 @@ public class SegmentationMap {
 		return mArrayEqualities.getAllRepresentatives();
 	}
 
-	// TODO: Different segmentations can share value-variables, how to handle this?
 	public Term getTerm(final ManagedScript managedScript, final Term valueConstraints) {
 		final Script script = managedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
-		final List<Term> boundConstraints = new ArrayList<>();
+		final List<Term> negatedBoundConstraints = new ArrayList<>();
 		final Set<TermVariable> bounds = new HashSet<>();
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final Entry<IProgramVarOrConst, Segmentation> entry : mRepresentiveSegmentations.entrySet()) {
 			final IProgramVarOrConst rep = entry.getKey();
 			final Segmentation segmentation = entry.getValue();
 			final Term repVar = NonrelationalTermUtils.getTermVar(rep);
+			// Add the array equivalences to the term
 			for (final IProgramVarOrConst eq : getEquivalenceClass(rep)) {
-				conjuncts.add(SmtUtils.binaryEquality(script, repVar, NonrelationalTermUtils.getTermVar(eq)));
+				if (!eq.equals(rep)) {
+					conjuncts.add(SmtUtils.binaryEquality(script, repVar, NonrelationalTermUtils.getTermVar(eq)));
+				}
 			}
-			final Sort arraySort = rep.getSort();
-			final Sort boundSort = TypeUtils.getIndexSort(arraySort);
+			final Sort boundSort = TypeUtils.getIndexSort(rep.getSort());
 			for (int i = 0; i < segmentation.size(); i++) {
+				// Add the bound constraints
 				final TermVariable idx = managedScript.constructFreshTermVariable("idx", boundSort);
-				final Term prev = NonrelationalTermUtils.getTermVar(segmentation.getBound(i));
-				final Term next = NonrelationalTermUtils.getTermVar(segmentation.getBound(i + 1));
+				final TermVariable prev = segmentation.getBound(i).getTermVariable();
+				final TermVariable next = segmentation.getBound(i + 1).getTermVariable();
 				if (i > 0) {
-					boundConstraints.add(SmtUtils.leq(script, prev, idx));
+					negatedBoundConstraints.add(SmtUtils.greater(script, prev, idx));
 				}
 				if (i < segmentation.size() - 1) {
-					boundConstraints.add(SmtUtils.less(script, idx, next));
+					negatedBoundConstraints.add(SmtUtils.geq(script, idx, next));
 				}
 				bounds.add(idx);
-				final Term value = NonrelationalTermUtils.getTermVar(segmentation.getValue(i));
+				// Substitute the values by the corresponding select (using idx)
+				final TermVariable value = segmentation.getValue(i).getTermVariable();
 				final Term select = script.term("select", repVar, idx);
 				substitution.put(value, select);
 
 			}
 		}
 		final Term substituted = new Substitution(script, substitution).transform(valueConstraints);
-		final Term body = Util.implies(script, SmtUtils.and(script, boundConstraints), substituted);
+		final Term body = SmtUtils.or(script, SmtUtils.or(script, negatedBoundConstraints), substituted);
 		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
 		conjuncts.add(quantified);
 		return SmtUtils.and(script, conjuncts);
