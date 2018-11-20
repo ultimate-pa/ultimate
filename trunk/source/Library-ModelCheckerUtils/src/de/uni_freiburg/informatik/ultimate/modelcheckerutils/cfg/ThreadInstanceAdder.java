@@ -364,29 +364,41 @@ public class ThreadInstanceAdder {
 	}
 
 	/**
-	 * Construct the {@link ThreadInstance} objects but does not yet add {@link IProgramVar}s and error locations to the
-	 * {@link IIcfg}.
+	 * Construct the {@link ThreadInstance} objects but does not yet add
+	 * {@link IProgramVar}s and error locations to the {@link IIcfg}.
 	 */
-	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructTreadInstances(
+	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
-			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads) {
+			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
+			final boolean addThreadInUseViolationVariablesAndErrorLocation) {
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
 			final String procedureName = fork.getNameOfForkedProcedure();
 			final String threadInstanceId = generateThreadInstanceId(i, procedureName);
-			final BoogieNonOldVar threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
+			final BoogieNonOldVar threadInUseVar;
+			if (addThreadInUseViolationVariablesAndErrorLocation) {
+				threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
+			} else {
+				threadInUseVar = null;
+			}
 			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 					fork.getForkSmtArguments().getThreadIdArguments().getTerms());
 
-			final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(), i,
-					ProcedureErrorType.INUSE_VIOLATION);
-			final IcfgLocation errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
-			ModelUtils.copyAnnotations(fork, errorLocation);
-			// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should introduce an InUseViolation.
-			final Check check = new Check(Spec.ASSERT);
-			check.annotate(errorLocation);
+			final IcfgLocation errorLocation;
+			if (addThreadInUseViolationVariablesAndErrorLocation) {
+				final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(),
+						i, ProcedureErrorType.INUSE_VIOLATION);
+				errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
+				ModelUtils.copyAnnotations(fork, errorLocation);
+				// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
+				// introduce an InUseViolation.
+				final Check check = new Check(Spec.ASSERT);
+				check.annotate(errorLocation);
+			} else {
+				errorLocation = null;
+			}
 			final ThreadInstance ti =
 					new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar, errorLocation);
 			result.put(fork, ti);

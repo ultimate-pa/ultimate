@@ -101,8 +101,10 @@ public class IcfgPetrifier {
 				.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x)
 				.collect(Collectors.toList());
 		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
+		final boolean addThreadInUseViolationVariablesAndErrorLocation = (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap = adder
-				.constructTreadInstances(mPetrifiedIcfg, newForkCurrentThreads);
+				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
+						addThreadInUseViolationVariablesAndErrorLocation);
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
 				threadInstanceMap, newJoinCurrentThreads);
 		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
