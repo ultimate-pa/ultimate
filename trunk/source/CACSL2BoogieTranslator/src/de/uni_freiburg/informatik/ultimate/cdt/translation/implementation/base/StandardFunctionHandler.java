@@ -238,6 +238,10 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
 		fill(map, "pthread_attr_destroy", die);
+		// the following three occur at SV-COMP 2019 only in some pthread-divine benchmarks
+		fill(map, "pthread_key_create", die);
+		fill(map, "pthread_getspecific", die);
+		fill(map, "pthread_setspecific", die);
 
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 
