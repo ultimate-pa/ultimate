@@ -125,6 +125,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  */
 public class InitializationHandler {
 
+	private static final int MINIMAL_BYTESIZE_FOR_USING_CONSTANTARRAYS = 100;
+
 	private final MemoryHandler mMemoryHandler;
 
 	private final ExpressionTranslation mExpressionTranslation;
@@ -221,6 +223,12 @@ public class InitializationHandler {
 		}
 
 		final ExpressionResultBuilder init = new ExpressionResultBuilder();
+
+		{
+			final boolean nondet = initializerInfo != null && initializerInfo.isMakeNondeterministicInitialization();
+			assert !onHeap || !nondet;
+		}
+
 		/*
 		 * C11 6.7.9.21 :
 		 * If there are fewer initializers in a brace-enclosed list than there are elements or members
@@ -232,18 +240,22 @@ public class InitializationHandler {
 		 *    initialized variable is local, i.e., has automatic storage duration)
 		 *
 		 */
-		final boolean nondet = initializerInfo != null && initializerInfo.isMakeNondeterministicInitialization();
-		if (onHeap && !nondet && determineIfSophisticatedDefaultInit(targetCTypeRaw)) {
+
+		final boolean usingOnHeapInitializationViaConstArray =
+				onHeap && useConstantArrayForOnHeapDefaultInit(targetCTypeRaw, hook);
+		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
-					makeDefaultOrNondetInitialization(loc, lhs, targetCTypeRaw, onHeap, false, hook);
+					makeOnHeapDefaultInitializationViaConstArray(loc, (HeapLValue) lhs, targetCTypeRaw);
+//					makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhs, targetCTypeRaw, true, hook);
+//					makeDefaultOrNondetInitialization(loc, lhs, targetCTypeRaw, onHeap, false, hook);
 			init.addAllExceptLrValue(defaultInit);
 		}
 
 
 		{
-			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap, lhs, true,
-					hook);
+			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap,
+					usingOnHeapInitializationViaConstArray, lhs, true, hook);
 			init.addAllExceptLrValue(mainInitCode);
 			if (mainInitCode.hasLRValue()) {
 				init.setLrValue(mainInitCode.getLrValue());
@@ -265,8 +277,10 @@ public class InitializationHandler {
 	 * @return
 	 */
 	private ExpressionResult initRec(final ILocation loc, final CType targetCTypeRaw,
-			final InitializerInfo initInfoIfAny, final boolean onHeap, final LRValue lhsIfAny,
-			final boolean outermostNestedArray, final IASTNode hook) {
+			final InitializerInfo initInfoIfAny, final boolean onHeap,
+			final boolean usingOnHeapInitializationViaConstArray,
+			final LRValue lhsIfAny, final boolean outermostNestedArray, final IASTNode hook) {
+		assert !usingOnHeapInitializationViaConstArray || onHeap;
 		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
@@ -288,10 +302,11 @@ public class InitializationHandler {
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, targetCType, initInfoIfAny, hook);
 		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
-			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap, hook);
+			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
+					usingOnHeapInitializationViaConstArray, hook);
 		} else if (targetCType instanceof CArray) {
 			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
-					determineIfSophisticatedArrayInit(initInfoIfAny), outermostNestedArray, hook);
+					usingOnHeapInitializationViaConstArray, outermostNestedArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -342,7 +357,8 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initCStruct(final ILocation loc, final LRValue lhsIfAny, final CStructOrUnion cStructType,
-			final InitializerInfo initInfo, final boolean onHeap, final IASTNode hook) {
+			final InitializerInfo initInfo, final boolean onHeap, final boolean usingOnHeapInitializationViaConstArray,
+			final IASTNode hook) {
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
 
 		if (initInfo.hasExpressionResult()) {
@@ -391,7 +407,8 @@ public class InitializationHandler {
 				} else {
 					// normal case intitalize recursively with or without intitializer..
 					currentFieldInitialization = initRec(loc, currentFieldUnderlyingType,
-							currentFieldInitializerRawIfAny, onHeap, currentFieldLhs, true, hook);
+							currentFieldInitializerRawIfAny, onHeap, usingOnHeapInitializationViaConstArray,
+							currentFieldLhs, true, hook);
 				}
 			}
 			// add the initialization code
@@ -447,9 +464,11 @@ public class InitializationHandler {
 	 * @return
 	 */
 	private ExpressionResult initCArray(final ILocation loc, final LRValue lhsIfAny, final CArray cArrayType,
-			final InitializerInfo initInfo, final boolean onHeap, final boolean sophisticated,
+			final InitializerInfo initInfo, final boolean onHeap, final boolean usingOnHeapInitializationViaConstArray,
 			final boolean outermostInNestedArray, final IASTNode hook) {
+		assert !usingOnHeapInitializationViaConstArray || onHeap;
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
+
 
 		/*
 		 * Builder where we accumulate all initialization information (Boogie code + LRValue mostly).
@@ -469,9 +488,11 @@ public class InitializationHandler {
 		 */
 		final LRValue arrayLhsToInitialize = obtainLhsToInitialize(loc, lhsIfAny, cArrayType, onHeap, initialization);
 
-		/* Note: we had code for sophisticated default initialization here. This has been moved to initialize(..)
-		 * because it is only done once per variable  TODO: update this comment*/
-		if (!onHeap && sophisticated && outermostInNestedArray) {
+		/* note that the off-heap case is decided locally for each array inside the variable's type while the on-heap
+		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization) */
+		final boolean useConstOffHeapArrayInitialization = !onHeap && outermostInNestedArray
+				&& useConstArrayInitializationForOffHeapArrays(cArrayType);
+		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
 					makeDefaultOrNondetInitialization(loc, arrayLhsToInitialize, cArrayType, onHeap, false, hook);
@@ -497,7 +518,9 @@ public class InitializationHandler {
 				arrayIndexInitInfo = null;
 			}
 
-			if (sophisticated && arrayIndexInitInfo == null) {
+			if ((useConstOffHeapArrayInitialization
+					|| usingOnHeapInitializationViaConstArray)
+					&& arrayIndexInitInfo == null) {
 				// in the "sophisticated" case we have default-initialized all cells up front --> nothing to do here
 				continue;
 			}
@@ -530,7 +553,8 @@ public class InitializationHandler {
 			// generate and add code to initialize the array cell (and possibly its subcells)
 			final ExpressionResult arrayIndexInitialization;
 
-			arrayIndexInitialization = initRec(loc, cellType, arrayIndexInitInfo, onHeap, arrayCellLhs, false, hook);
+			arrayIndexInitialization = initRec(loc, cellType, arrayIndexInitInfo, onHeap,
+					usingOnHeapInitializationViaConstArray, arrayCellLhs, false, hook);
 
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
@@ -545,14 +569,14 @@ public class InitializationHandler {
 
 		final CType cType = cTypeRaw.getUnderlyingType();
 
-		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
+//		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
 
 		/*
 		 * If one of the following conditions holds, we must have an lhs for initialization. <li> we initialize
 		 * something on-heap (we need a start-address to assign to <li> we initialize an array
 		 */
 		if (!onHeap && !(cType instanceof CArray)) {
-			return makeOffHeapDefaultOrNondetInitializationForType(loc, cType, sophisticated, (LocalLValue) lhsIfAny,
+			return makeOffHeapDefaultOrNondetInitializationForType(loc, cType, (LocalLValue) lhsIfAny,
 					nondet, hook);
 		}
 		// array case or on-heap case, using an lhs
@@ -563,12 +587,12 @@ public class InitializationHandler {
 
 		if (onHeap) {
 			final ExpressionResult defaultInit =
-					makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhsToInit, cType, sophisticated, hook);
+					makeNaiveOnHeapDefaultInitializationForType(loc, (HeapLValue) lhsToInit, cType, hook);
 			initialization.addAllExceptLrValue(defaultInit);
 			assert defaultInit.getLrValue() == null : "on-heap initialization does not need a return value";
 		} else {
 			final ExpressionResult defaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc, cType,
-					sophisticated, (LocalLValue) lhsToInit, nondet, hook);
+					(LocalLValue) lhsToInit, nondet, hook);
 			initialization.addAllExceptLrValue(defaultInit);
 			if (defaultInit.getLrValue() != null) {
 				assert lhsToInit == null;
@@ -579,9 +603,21 @@ public class InitializationHandler {
 		return initialization.build();
 	}
 
-	private ExpressionResult makeOnHeapDefaultInitializationForType(final ILocation loc, final HeapLValue baseAddress,
-			final CType cTypeRaw, final boolean sophisticated, final IASTNode hook) {
+	/**
+	 * Constructs field-by-field default initialization code, i.e., does not use constant arrays (this is meant by
+	 * "Naive" here).
+	 *
+	 * @param loc
+	 * @param baseAddress
+	 * @param cTypeRaw
+	 * @param hook
+	 * @return
+	 */
+	private ExpressionResult makeNaiveOnHeapDefaultInitializationForType(final ILocation loc,
+			final HeapLValue baseAddress, final CType cTypeRaw, final IASTNode hook) {
 		final CType cType = cTypeRaw.getUnderlyingType();
+
+
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, cType,
@@ -598,8 +634,8 @@ public class InitializationHandler {
 			for (int i = 0; i < fieldIds.length; i++) {
 				final HeapLValue fieldPointer = constructAddressForStructField(loc, baseAddress, i, hook);
 
-				final ExpressionResult fieldDefaultInit = makeOnHeapDefaultInitializationForType(loc, fieldPointer,
-						cStructType.getFieldTypes()[i], sophisticated, hook);
+				final ExpressionResult fieldDefaultInit = makeNaiveOnHeapDefaultInitializationForType(loc, fieldPointer,
+						cStructType.getFieldTypes()[i], hook);
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 
@@ -610,9 +646,6 @@ public class InitializationHandler {
 			}
 			return initialization.build();
 		} else if (cType instanceof CArray) {
-			if (sophisticated) {
-				return makeSophisticatedOnHeapDefaultInitializationForArray(loc, baseAddress, (CArray) cType);
-			}
 			return makeNaiveOnHeapDefaultInitializationForArray(loc, baseAddress, (CArray) cType, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
@@ -623,14 +656,14 @@ public class InitializationHandler {
 	 *
 	 * @param loc
 	 * @param cTypeRaw
-	 * @param sophisticated
+	 * @param useConstantArrays
 	 * @param lhsToInitIfAny
 	 * @param nondet
 	 *            if this is true, a nondeterministic value is used for initialization otherwise the default value
 	 * @return
 	 */
 	private ExpressionResult makeOffHeapDefaultOrNondetInitializationForType(final ILocation loc, final CType cTypeRaw,
-			final boolean sophisticated, final LocalLValue lhsToInitIfAny, final boolean nondet, final IASTNode hook) {
+			final LocalLValue lhsToInitIfAny, final boolean nondet, final IASTNode hook) {
 		final CType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
@@ -684,10 +717,10 @@ public class InitializationHandler {
 					 * default-inititalized.
 					 */
 					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc,
-							cStructType.getFieldTypes()[i], sophisticated, fieldLhs, true, hook);
+							cStructType.getFieldTypes()[i], fieldLhs, true, hook);
 				} else {
 					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc,
-							cStructType.getFieldTypes()[i], sophisticated, fieldLhs, nondet, hook);
+							cStructType.getFieldTypes()[i], fieldLhs, nondet, hook);
 				}
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
@@ -708,7 +741,7 @@ public class InitializationHandler {
 
 			/* In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type. */
-			if (sophisticated
+			if (useConstArrayInitializationForOffHeapArrays((CArray) cType)
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny,
 						nondet);
@@ -744,14 +777,14 @@ public class InitializationHandler {
 			final HeapLValue arrayAccessLhs = constructAddressForArrayAtIndex(loc, baseAddress, arrayIndex, hook);
 
 			final ExpressionResult arrayIndexInitialization =
-					makeOnHeapDefaultInitializationForType(loc, arrayAccessLhs, cArrayType.getValueType(), false, hook);
+					makeNaiveOnHeapDefaultInitializationForType(loc, arrayAccessLhs, cArrayType.getValueType(), hook);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 		}
 		return initialization.build();
 	}
 
-	private ExpressionResult makeSophisticatedOnHeapDefaultInitializationForArray(final ILocation loc,
-			final HeapLValue baseAddress, final CArray cType) {
+	private ExpressionResult makeOnHeapDefaultInitializationViaConstArray(final ILocation loc,
+			final HeapLValue baseAddress, final CType cType) {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 		final List<Statement> initStatements =
 				mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc, baseAddress, cType);
@@ -780,7 +813,8 @@ public class InitializationHandler {
 					CTranslationUtil.constructArrayAccessLhs(loc, arrayLhsToInitialize, arrayIndex, mTypeSizes);
 
 			final ExpressionResult arrayIndexInitialization = makeOffHeapDefaultOrNondetInitializationForType(loc,
-					innerMostValueType, false, arrayAccessLhs, nondet, hook);
+					innerMostValueType, //false,
+					arrayAccessLhs, nondet, hook);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 		}
 
@@ -789,6 +823,8 @@ public class InitializationHandler {
 
 	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
 			final CArray cArrayType, final LocalLValue lhsToInit, final boolean nondet) {
+		assert mUseConstantArrays;
+
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 
@@ -808,8 +844,6 @@ public class InitializationHandler {
 
 		initialization.addStatement(assignment);
 
-//		initialization.setLrValue(new RValueForArrays(constantArray, cArrayType));
-//		initialization.setLrValue(new RValue(constantArray, cArrayType));
 		return initialization.build();
 	}
 
@@ -963,21 +997,31 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * Determines which kind of initialization code we want to generate. There are two variants
-	 * <li>"naive": We generate a sequence of assignments that initialize each field of the aggregate type object.
-	 * <li>"sophisticated": We first initialize the whole object to default values and then insert assignments that
-	 * initialize the fields that are explicitly mentioned by the initializer. The first step may be performed in
-	 * different ways, for instance by while loops, or by using special SMT default arrays.
-	 * <p>
-	 * Some criteria for when to choose which:
-	 * <li>when "most" of the initialized values are initialized explicitly, we choose "naive", for some threshold
-	 * <li>variable length arrays need "sophisticated"
+//	 * Determines which kind of initialization code we want to generate. There are two variants
+//	 * <li>"naive": We generate a sequence of assignments that initialize each field of the aggregate type object.
+//	 * <li>"sophisticated": We first initialize the whole object to default values and then insert assignments that
+//	 * initialize the fields that are explicitly mentioned by the initializer. The first step may be performed in
+//	 * different ways, for instance by while loops, or by using special SMT default arrays.
+//	 * <p>
+//	 * Some criteria for when to choose which:
+//	 * <li>when "most" of the initialized values are initialized explicitly, we choose "naive", for some threshold
+//	 * <li>variable length arrays need "sophisticated"
+	 *
+	 * This method is about off-heap array initialization. If they contain a primitive, this can be done via a constant
+	 * array, this can be decided e.g. for each sub-array of a struct, thus this should be queried only for arrays, in
+	 * contrast to general aggregate types.
+	 * Background:
+	 * In contrast, on-heap aggregate types are initialized by setting the whole sub-array to a const array once in
+	 *  {@link #initialize(ILocation, LeftHandSide, CType, InitializerResult, boolean, IASTNode)}.
 	 *
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
 	 */
-	private boolean determineIfSophisticatedArrayInit(final InitializerInfo initInfoIfAny) {
-		// TODO implement some heuristics
+	private boolean useConstArrayInitializationForOffHeapArrays(//final InitializerInfo initInfoIfAny,
+			final CArray cType) {
+		// TODO implement some heuristics?
+
+		// make sure that const arrays are only used when the corresponding setting is switched on
 		return mUseConstantArrays;
 	}
 
@@ -986,11 +1030,21 @@ public class InitializationHandler {
 	 * {@link determineIfSophisticatedArrayInit}.
 	 *
 	 * @param targetCType
+	 * @param hook
 	 * @return
 	 */
-	private boolean determineIfSophisticatedDefaultInit(final CType targetCType) {
-		// TODO implement some heuristics
-		return mUseConstantArrays;
+	private boolean useConstantArrayForOnHeapDefaultInit(final CType targetCType, final IASTNode hook) {
+		if (!mUseConstantArrays) {
+			// setting is "off" --> do not use constant arrays at any time
+			return false;
+		}
+
+		// is the memory chunk large enough to justify using constant arrays??
+		final Expression bse = mTypeSetAndOffsetComputer.constructBytesizeExpression(
+				LocationFactory.createIgnoreCLocation(), targetCType, hook);
+		final int byteSize = CTranslationUtil.extractIntegerValue(bse).intValueExact();
+
+		return byteSize >= MINIMAL_BYTESIZE_FOR_USING_CONSTANTARRAYS;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
