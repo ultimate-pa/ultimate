@@ -1160,7 +1160,12 @@ public class CHandler {
 		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
 			final IASTExpression expr = ((IASTFieldDeclarator) node).getBitFieldSize();
-			bitfieldSize = Integer.parseInt(expr.getRawSignature());
+			final ExpressionResult res = (ExpressionResult) main.dispatch(expr);
+
+			assert res.hasNoSideEffects() && res.hasLRValue() : "unexpected, todo: deal with sideeffects";
+
+			final BigInteger bigIntExtracted = CTranslationUtil.extractIntegerValue(res.getLrValue().getValue());
+			bitfieldSize = bigIntExtracted.intValueExact();
 		} else {
 			// we use -1 to indicate that this is no bitfield
 			bitfieldSize = -1;
