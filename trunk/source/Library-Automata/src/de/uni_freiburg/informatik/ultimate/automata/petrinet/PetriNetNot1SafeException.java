@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 
 public class PetriNetNot1SafeException extends AutomataLibraryException {
 
+	private static final long serialVersionUID = -8776962353437660445L;
+
 	private static final String MESSAGE = "Petri net not 1-safe";
 
 	private final Collection<?> mUnsafePlaces;
@@ -52,7 +54,8 @@ public class PetriNetNot1SafeException extends AutomataLibraryException {
 		if (mUnsafePlaces == null) {
 			return super.getMessage();
 		} else {
-			return super.getMessage() + " The following places may contain more than one token." + mUnsafePlaces.toString();
+			return super.getMessage() + " The following places may contain more than one token."
+					+ mUnsafePlaces.toString();
 		}
 	}
 
