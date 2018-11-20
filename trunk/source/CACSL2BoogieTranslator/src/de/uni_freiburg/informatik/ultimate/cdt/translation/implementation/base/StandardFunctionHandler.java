@@ -863,13 +863,19 @@ public class StandardFunctionHandler {
 				startRoutineArguments);
 		builder.addStatements(writeCall);
 
-		// auxvar for fork return value (status code)
-		final CType cType = new CPrimitive(CPrimitive.CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
-		final Expression value = auxvarinfo.getExp();
-		final LRValue val = new RValue(value, cType);
+		final boolean letPthreadCreateAlwaysReturnZero = false;
+		final CPrimitive returnValueCType = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final Expression returnValue;
+		if (letPthreadCreateAlwaysReturnZero) {
+			returnValue = mTypeSizes.constructLiteralForIntegerType(loc, returnValueCType, BigInteger.ZERO);
+		} else {
+			// auxvar for fork return value (status code)
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnValueCType, SFO.AUXVAR.NONDET);
+			builder.addDeclaration(auxvarinfo.getVarDec());
+			builder.addAuxVar(auxvarinfo);
+			returnValue = auxvarinfo.getExp();
+		}
+		final LRValue val = new RValue(returnValue, returnValueCType);
 
 		builder.setLrValue(val);
 		builder.addStatement(fs);
