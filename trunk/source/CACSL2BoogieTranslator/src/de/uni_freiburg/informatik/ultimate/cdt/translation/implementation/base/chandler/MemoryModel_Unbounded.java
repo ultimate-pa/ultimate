@@ -115,7 +115,9 @@ public class MemoryModel_Unbounded extends BaseMemoryModel {
 					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			final boolean alsoUnchecked = DataStructureUtils
 					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
-			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUnchecked));
+			final boolean alsoInit = DataStructureUtils
+					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUnchecked, alsoInit));
 		}
 		return result;
 	}

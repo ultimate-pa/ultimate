@@ -299,7 +299,8 @@ public class InitializationHandler {
 			/*
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
-			return initExpressionWithExpression(loc, lhsIfAny, onHeap, targetCType, initInfoIfAny, hook);
+			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
+					 targetCType, initInfoIfAny, hook);
 		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
@@ -335,7 +336,8 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initExpressionWithExpression(final ILocation loc, final LRValue lhsIfAny,
-			final boolean onHeap, final CType cType, final InitializerInfo initInfo, final IASTNode hook) {
+			final boolean onHeap, final boolean useSelectInsteadOfStoreForOnHeapAssignment, final CType cType,
+			final InitializerInfo initInfo, final IASTNode hook) {
 		assert initInfo.hasExpressionResult();
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
@@ -345,7 +347,8 @@ public class InitializationHandler {
 
 		if (lhsIfAny != null) {
 			// we have a lhs given, insert assignments such that the lhs is initialized
-			final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsIfAny, onHeap, cType,
+			final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsIfAny, onHeap,
+					useSelectInsteadOfStoreForOnHeapAssignment,	cType,
 					initializationValue.getValue(), initInfo.getOverapprs(), hook);
 			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
@@ -363,7 +366,8 @@ public class InitializationHandler {
 
 		if (initInfo.hasExpressionResult()) {
 			// we are initializing through a struct-typed expression, not an initializer list
-			return initExpressionWithExpression(loc, lhsIfAny, onHeap, cStructType, initInfo, hook);
+			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
+					cStructType, initInfo, hook);
 		}
 		// we have an initializer list
 
@@ -569,8 +573,6 @@ public class InitializationHandler {
 
 		final CType cType = cTypeRaw.getUnderlyingType();
 
-//		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
-
 		/*
 		 * If one of the following conditions holds, we must have an lhs for initialization. <li> we initialize
 		 * something on-heap (we need a start-address to assign to <li> we initialize an array
@@ -620,7 +622,7 @@ public class InitializationHandler {
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
-			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, cType,
+			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, true, cType,
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList(), hook);
 			initialization.addStatements(defaultInit);
 			return initialization.build();
@@ -681,8 +683,8 @@ public class InitializationHandler {
 
 			if (lhsToInitIfAny != null) {
 				// we have a lhs given, insert assignments such that the lhs is initialized
-				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, cType,
-						initializationValue.getValue(), Collections.emptyList(), hook);
+				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, false,
+						cType, initializationValue.getValue(), Collections.emptyList(), hook);
 				initializer.addStatements(assigningStatements);
 			} else {
 				initializer.setLrValue(initializationValue);
@@ -896,47 +898,6 @@ public class InitializationHandler {
 		return arrayLhsToInitialize;
 	}
 
-	/**
-	 * Returns a call to the special array initialization procedure. ("off-heap" case) This procedure returns an array
-	 * with the given signature where all cells within the given ranges have been initialized to the default value for
-	 * the given value type.
-	 *
-	 * (Whether the initialization procedure will initialize cells beyond these ranges may vary between different
-	 * implementations of that procedure.)
-	 *
-	 * @param lhs
-	 *            the variable that the return value of the initialization procedure should be assigned to
-	 * @param dimensions
-	 *            the dimensions of the C array to initialize, this specifies both the index types (should be integer)
-	 *            and the ranges for each array dimension.
-	 * @param valueType
-	 *            the type that the entries in the innermost arrays have
-	 * @return
-	 */
-	private Statement getInitializerArrayCall(final LocalLValue lhs, final CArray arrayType) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * Returns a call to the special array initialization procedure. ("on-heap" case) The initialization procedure takes
-	 * as arguments a memory address and signature and range information for an array. The procedure ensures that after
-	 * it has been called all the memory cells belonging to the given array and ranges have been initialized to the
-	 * default value.
-	 *
-	 * (Whether the initialization procedure will initialize cells beyond these ranges may vary between different
-	 * implementations of that procedure.)
-	 *
-	 * @param startAddress
-	 * @param dimensions
-	 * @param valueType
-	 * @return
-	 */
-	private Statement getOnHeapArrayInitializationCall(final Expression startAddress, final CArray arrayType) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	private static void addOverApprToStatementAnnots(final Collection<Overapprox> overappr, final Statement stm) {
 		if (overappr == null) {
 			return;
@@ -956,14 +917,20 @@ public class InitializationHandler {
 	 * Construct assignment statements that make sure that "lhs" gets the value "initializationValue".
 	 */
 	private List<Statement> makeAssignmentStatements(final ILocation loc, final LRValue lhs, final boolean onHeap,
-			final CType cType, final Expression initializationValue, final Collection<Overapprox> overAppr,
-			final IASTNode hook) {
+			final boolean useSelectInsteadOfStoreForOnHeapAssignment, final CType
+			cType, final Expression initializationValue, final
+			Collection<Overapprox> overAppr, final IASTNode hook) {
 		assert lhs != null;
 
 		List<Statement> assigningStatements;
 		if (onHeap) {
-			assigningStatements =
+			if (useSelectInsteadOfStoreForOnHeapAssignment) {
+				assigningStatements =
+					mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
+			} else {
+				assigningStatements =
 					mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true, hook);
+			}
 		} else {
 			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { ((LocalLValue) lhs).getLhs() }, new Expression[] { initializationValue });

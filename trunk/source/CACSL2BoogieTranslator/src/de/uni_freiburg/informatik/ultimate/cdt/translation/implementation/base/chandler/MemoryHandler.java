@@ -172,6 +172,13 @@ public class MemoryHandler {
 		}
 	}
 
+
+	private static enum HeapWriteMode {
+		Store_Checked,
+		Store_Unchecked,
+		Select
+	}
+
 	private static final boolean SUPPORT_FLOATS_ON_HEAP = true;
 	private static final String FLOAT_ON_HEAP_UNSOUND_MESSAGE =
 			"Analysis for floating types on heap by default disabled (soundness first).";
@@ -689,20 +696,49 @@ public class MemoryHandler {
 			final CType valueType, final boolean isStaticInitialization, final IASTNode hook) {
 		final CType realValueType = valueType.getUnderlyingType();
 
+		final HeapWriteMode writeMode =
+				isStaticInitialization ? HeapWriteMode.Store_Unchecked : HeapWriteMode.Store_Checked;
+		return getWriteCall(loc, hlv, value, realValueType, writeMode, hook);
+	}
+
+	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
+			final CType valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+		final CType realValueType = valueType.getUnderlyingType();
+
 		if (realValueType instanceof CPrimitive) {
-			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, isStaticInitialization, hook);
+			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode, hook);
 		} else if (realValueType instanceof CEnum) {
-			return getWriteCallEnum(loc, hlv, value, hook);
+			return getWriteCallEnum(loc, hlv, value, writeMode, hook);
 		} else if (realValueType instanceof CPointer) {
-			return getWriteCallPointer(loc, hlv, value, hook);
+			return getWriteCallPointer(loc, hlv, value, writeMode, hook);
 		} else if (realValueType instanceof CStructOrUnion) {
-			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, isStaticInitialization, hook);
+			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, writeMode, hook);
 		} else if (realValueType instanceof CArray) {
-			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, isStaticInitialization, hook);
+			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, writeMode, hook);
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we don't recognize this type: " + realValueType);
 		}
 	}
+
+	/**
+	 * Like {@link #getWriteCall(ILocation, HeapLValue, Expression, CType, boolean, IASTNode)}, but working under the
+	 * assumption that the to-be-written heap cells are uninitialized so far. Thus we can use "select-constraints"
+	 * instead of "store-constraints" for the heap array.
+	 *
+	 * @param loc
+	 * @param hlv
+	 * @param value
+	 * @param valueType
+	 * @param omit
+	 * @param hook
+	 * @return
+	 */
+	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
+			final CType valueType, final IASTNode hook) {
+		final CType realValueType = valueType.getUnderlyingType();
+		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.Select, hook);
+	}
+
 
 	/**
 	 * Takes a pointer Expression and returns the pointers base address. If it is already given as a struct, then the
@@ -1862,41 +1898,40 @@ public class MemoryHandler {
 	 * @param rda
 	 * @return
 	 */
-	/**
-	 * Note that we do not return a Procedure declaration here anymore because procedure declarations are handled by the
-	 * FunctionHandler (DD: Do you mean {@link ProcedureManager} ??) directly. So the return value will be an empty set,
-	 * or perhaps in the future an implementation, should we ever want one.
-	 *
-	 * @param main
-	 * @param loc
-	 * @param heapDataArrays
-	 * @param heapDataArray
-	 * @param rda
-	 * @return
-	 */
 	private Collection<Procedure> constructWriteProcedure(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
 			final ReadWriteDefinition rda, final IASTNode hook) {
 		if (rda.alsoUnchecked()) {
-			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, true);
+			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Store_Unchecked);
 		}
-		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, false);
+		if (rda.alsoInit()) {
+			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Select);
+		}
+		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Store_Checked);
 		return Collections.emptySet();
 	}
 
 	private void constructSingleWriteProcedure(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
-			final ReadWriteDefinition rda, final boolean unchecked) {
+			final ReadWriteDefinition rda, final HeapWriteMode writeMode) {
 		final String inPtr = "#ptr";
 		final String writtenTypeSize = "#sizeOfWrittenType";
 		final ASTType valueAstType = rda.getASTType();
 
 		// create procedure signature
 		final String procName;
-		if (unchecked) {
-			procName = rda.getUncheckedWriteProcedureName();
-		} else {
+		switch (writeMode) {
+		case Select:
+			procName = rda.getInitWriteProcedureName();
+			break;
+		case Store_Checked:
 			procName = rda.getWriteProcedureName();
+			break;
+		case Store_Unchecked:
+			procName = rda.getUncheckedWriteProcedureName();
+			break;
+		default:
+			throw new AssertionError("todo: update according to new enum contents");
 		}
 
 		final IdentifierExpression inPtrExp =
@@ -1914,7 +1949,7 @@ public class MemoryHandler {
 
 		// specification for memory writes
 		final ArrayList<Specification> swrite = new ArrayList<>();
-		if (!unchecked) {
+		if (writeMode == HeapWriteMode.Store_Checked) {
 			swrite.addAll(constructPointerBaseValidityCheck(loc, inPtr, procName));
 
 			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
@@ -2531,7 +2566,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallArray(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CArray valueType, final boolean isStaticInitialization, final IASTNode hook) {
+			final CArray valueType, final HeapWriteMode writeMode, final IASTNode hook) {
 
 		if (valueType.getValueType().getUnderlyingType() instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
@@ -2571,7 +2606,7 @@ public class MemoryHandler {
 					constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc),
 					valueType.getValueType(), null);
 			stmt.addAll(getWriteCall(loc, arrayCellLValue, arrayAccessRVal.getValue(), arrayAccessRVal.getCType(),
-					isStaticInitialization, hook));
+					writeMode, hook));
 			// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
 			// and no multiplication? Check this more carefully.
 			arrayEntryAddressOffset =
@@ -2584,7 +2619,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallStruct(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CStructOrUnion valueType, final boolean isStaticInitialization, final IASTNode hook) {
+			final CStructOrUnion valueType, final HeapWriteMode writeMode, final IASTNode hook) {
 		final List<Statement> stmt = new ArrayList<>();
 		for (final String fieldId : valueType.getFieldIds()) {
 			final Expression startAddress = hlv.getAddress();
@@ -2600,45 +2635,78 @@ public class MemoryHandler {
 							mExpressionTranslation.getCTypeOfPointerComponents());
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler,
 					constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
-			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, isStaticInitialization, hook));
+			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, writeMode, hook));
 		}
 		return stmt;
 	}
 
 	private List<Statement> getWriteCallPointer(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final IASTNode hook) {
+			final HeapWriteMode writeMode, final IASTNode hook) {
 		mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-		final String writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
+		final String writeCallProcedureName = determineWriteProcedureForPointer(writeMode);// mMemoryModel.getWritePointerProcedureName();
 		return Collections.singletonList(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType(), hook) }));
+	}
+
+	private String determineWriteProcedureForPointer(final HeapWriteMode writeMode)
+			throws AssertionError {
+		final String writeCallProcedureName;
+		switch (writeMode) {
+		case Select:
+			mRequiredMemoryModelFeatures.reportPointerInitWriteRequired();
+			writeCallProcedureName = mMemoryModel.getInitPointerProcedureName();
+			break;
+		case Store_Checked:
+			writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
+			break;
+		case Store_Unchecked:
+			mRequiredMemoryModelFeatures.reportPointerUncheckedWriteRequired();
+			writeCallProcedureName = mMemoryModel.getUncheckedWritePointerProcedureName();
+			break;
+		default:
+			throw new AssertionError("todo: add new enum case");
+		}
+		return writeCallProcedureName;
 	}
 
 	private List<Statement> getWriteCallEnum(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final IASTNode hook) {
+			final HeapWriteMode writeMode, final IASTNode hook) {
 		// treat like INT
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
-		final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(CPrimitives.INT);
+		return getWriteCallPrimitive(loc, hlv, value, new CPrimitive(CPrimitives.INT), writeMode, hook);
+	}
+
+	private List<Statement> getWriteCallPrimitive(final ILocation loc, final HeapLValue hlv, final Expression value,
+			final CPrimitive valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+		checkFloatOnHeapSupport(loc, valueType);
+		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(valueType.getType());
+
+		final String writeCallProcedureName = determineWriteProcedureForPrimitive(valueType, writeMode);
+
 		return Collections.singletonList(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType(), hook) }));
 	}
 
-	private List<Statement> getWriteCallPrimitive(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CPrimitive valueType, final boolean isStaticInitialization, final IASTNode hook) {
-		checkFloatOnHeapSupport(loc, valueType);
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(valueType.getType());
+	private String determineWriteProcedureForPrimitive(final CPrimitive valueType, final HeapWriteMode writeMode)
+			throws AssertionError {
 		final String writeCallProcedureName;
-		if (isStaticInitialization) {
+		switch (writeMode) {
+		case Select:
+			mRequiredMemoryModelFeatures.reportInitWriteRequired(valueType.getType());
+			writeCallProcedureName = mMemoryModel.getInitWriteProcedureName(valueType.getType());
+			break;
+		case Store_Checked:
+			writeCallProcedureName = mMemoryModel.getWriteProcedureName(valueType.getType());
+			break;
+		case Store_Unchecked:
 			mRequiredMemoryModelFeatures.reportUncheckedWriteRequired(valueType.getType());
 			writeCallProcedureName = mMemoryModel.getUncheckedWriteProcedureName(valueType.getType());
-		} else {
-			writeCallProcedureName = mMemoryModel.getWriteProcedureName(valueType.getType());
+			break;
+		default:
+			throw new AssertionError("todo: add new enum case");
 		}
-
-		return Collections.singletonList(
-				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType(), hook) }));
+		return writeCallProcedureName;
 	}
 
 	private MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
@@ -3114,8 +3182,11 @@ public class MemoryHandler {
 	public static final class RequiredMemoryModelFeatures {
 
 		private final Set<CPrimitives> mDataOnHeapRequired;
-		private final Set<CPrimitives> mUncheckedWriteRequired;
+		private final Set<CPrimitives> mDataUncheckedWriteRequired;
+		private final Set<CPrimitives> mDataInitWriteRequired;
 		private boolean mPointerOnHeapRequired;
+		private boolean mPointerUncheckedWriteRequired;
+		private boolean mPointerInitWriteRequired;
 		private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations;
 
 		private final Set<HeapDataArray> mDataOnHeapInitFunctionRequired;
@@ -3123,7 +3194,8 @@ public class MemoryHandler {
 		public RequiredMemoryModelFeatures() {
 			mDataOnHeapRequired = new HashSet<>();
 			mRequiredMemoryModelDeclarations = new HashSet<>();
-			mUncheckedWriteRequired = new HashSet<>();
+			mDataUncheckedWriteRequired = new HashSet<>();
+			mDataInitWriteRequired = new HashSet<>();
 			mDataOnHeapInitFunctionRequired = new HashSet<>();
 		}
 
@@ -3131,13 +3203,28 @@ public class MemoryHandler {
 			mPointerOnHeapRequired = true;
 		}
 
-		public void reportUncheckedWriteRequired(final CPrimitives type) {
-			assert mDataOnHeapRequired.contains(type);
-			mUncheckedWriteRequired.add(type);
+		public void reportPointerUncheckedWriteRequired() {
+			assert mPointerOnHeapRequired;
+			mPointerUncheckedWriteRequired = true;
+		}
+
+		public void reportPointerInitWriteRequired() {
+			assert mPointerOnHeapRequired;
+			mPointerInitWriteRequired = true;
 		}
 
 		public void reportDataOnHeapRequired(final CPrimitives primitive) {
 			mDataOnHeapRequired.add(primitive);
+		}
+
+		public void reportUncheckedWriteRequired(final CPrimitives type) {
+			assert mDataOnHeapRequired.contains(type);
+			mDataUncheckedWriteRequired.add(type);
+		}
+
+		public void reportInitWriteRequired(final CPrimitives type) {
+			assert mDataOnHeapRequired.contains(type);
+			mDataInitWriteRequired.add(type);
 		}
 
 		public void reportDataOnHeapInitFunctionRequired(final HeapDataArray hda) {
@@ -3148,6 +3235,14 @@ public class MemoryHandler {
 			return mPointerOnHeapRequired;
 		}
 
+		public boolean isPointerUncheckedWriteRequired() {
+			return mPointerUncheckedWriteRequired;
+		}
+
+		public boolean isPointerInitRequired() {
+			return mPointerInitWriteRequired;
+		}
+
 		public Set<CPrimitives> getDataOnHeapRequired() {
 			return mDataOnHeapRequired;
 		}
@@ -3156,9 +3251,15 @@ public class MemoryHandler {
 			return mDataOnHeapInitFunctionRequired.contains(hda);
 		}
 
+
 		public Set<CPrimitives> getUncheckedWriteRequired() {
-			return mDataOnHeapRequired;
+			return mDataUncheckedWriteRequired;
 		}
+
+		public Set<CPrimitives> getInitWriteRequired() {
+			return mDataInitWriteRequired;
+		}
+
 
 		public boolean isMemoryModelInfrastructureRequired() {
 			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty()
