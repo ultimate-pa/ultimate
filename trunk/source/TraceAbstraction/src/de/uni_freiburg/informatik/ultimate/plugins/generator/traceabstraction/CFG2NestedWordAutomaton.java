@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private static final boolean DEBUG_STORE_HISTORY = false;
-	private static final boolean ADD_THREAD_USAGE_MONITORS = true;
 
 	private CFG2NestedWordAutomaton() {
 		// do not instantiate
@@ -119,7 +118,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final boolean addThreadUsageMonitors) {
 		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
 		Function<IcfgLocation, IPredicate> predicateProvider;
@@ -127,7 +126,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
 		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
 		return constructPetriNet(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
-				predicateProvider, transitionMapping, predicateFactory);
+				predicateProvider, transitionMapping, predicateFactory, addThreadUsageMonitors);
 	}
 
 	public static <LETTER> String printIcfg(final IUltimateServiceProvider services,
@@ -249,7 +248,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
-			final Function<IIcfgTransition<?>, LETTER> letterProvider, final PredicateFactory predicateFactory) {
+			final Function<IIcfgTransition<?>, LETTER> letterProvider, final PredicateFactory predicateFactory,
+			final boolean addThreadUsageMonitors) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
@@ -271,7 +271,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 
 		final Map<String, IPredicate> threadInstance2notinUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
-		if (ADD_THREAD_USAGE_MONITORS) {
+		if (addThreadUsageMonitors) {
 			final Collection<ThreadInstance> threadInstances = icfg.getCfgSmtToolkit().getConcurrencyInformation()
 					.getThreadInstanceMap().values();
 			for (final ThreadInstance ti : threadInstances) {
@@ -312,7 +312,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
 						Set<IPredicate> predecessors;
 						Set<IPredicate> successors;
-						if (ADD_THREAD_USAGE_MONITORS) {
+						if (addThreadUsageMonitors) {
 							final String threadInstanceName = edge.getSucceedingProcedure();
 							final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
 							final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);
@@ -335,7 +335,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						if (predCurrentThread != null) {
 							Set<IPredicate> predecessors;
 							Set<IPredicate> successors;
-							if (ADD_THREAD_USAGE_MONITORS) {
+							if (addThreadUsageMonitors) {
 								final String threadInstanceName = edge.getPrecedingProcedure();
 								final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
 								final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);

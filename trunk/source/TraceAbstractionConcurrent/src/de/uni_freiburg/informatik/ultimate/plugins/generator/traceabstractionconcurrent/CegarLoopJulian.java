@@ -137,8 +137,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
 						+ " procedure (this is the procedure where all executions start)");
 			}
+			final boolean addThreadUsageMonitors = false;
 			mAbstraction = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
-					mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory);
+					mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 		}
 
 		if (mIteration <= mPref.watchIteration()
