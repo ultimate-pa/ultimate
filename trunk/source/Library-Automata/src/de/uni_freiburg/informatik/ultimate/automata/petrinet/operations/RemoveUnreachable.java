@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
@@ -85,7 +86,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
 
 	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, null);
 	}
 
@@ -100,16 +101,19 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	 *     or automatically when using {@link #RemoveUnreachable(AutomataLibraryServices, BoundedPetriNet)}.
 	 *
 	 * @throws AutomataOperationCanceledException The operation was canceled
+	 * @throws PetriNetNot1SafeException
 	 */
 	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
-			final Set<ITransition<LETTER, PLACE>> reachableTransitions) throws AutomataOperationCanceledException {
+			final Set<ITransition<LETTER, PLACE>> reachableTransitions)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
 		mResult = new CopySubnet<>(services, mOperand, mReachableTransitions).getResult();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> reachableTransitions() throws AutomataOperationCanceledException {
+	private Set<ITransition<LETTER, PLACE>> reachableTransitions()
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		try {
 			final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
 			return reachableTransitions(finPre);

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
@@ -78,7 +79,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
 			final Set<LETTER> userProvidedUniversalSubtrahendLoopers)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
@@ -119,7 +120,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, factory, minuendNet, subtrahendDfa, null);
 	}
 

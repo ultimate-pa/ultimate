@@ -88,10 +88,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
+	 * @throws PetriNetNot1SafeException
 	 */
 	public PetriNetUnfolder(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> operand,
 			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -125,7 +126,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		return mStatistics;
 	}
 
-	private void computeUnfolding() throws AutomataOperationCanceledException {
+	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		boolean someInitialPlaceIsAccepting = false;
 		for (final Condition<LETTER, PLACE> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
 			if (mOperand.isAccepting(c.getPlace())) {
@@ -165,7 +166,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		}
 	}
 
-	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) {
+	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
 		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
 		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());

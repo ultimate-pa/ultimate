@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * or some dead (but not necessarily unreachable) transitions might not be removed.
  * <p>
  * This operation also removes some places that do not contribute to the accepted language.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <LETTER>
@@ -82,13 +83,14 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
-	public RemoveDead(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand)
-			throws AutomataOperationCanceledException {
+	public RemoveDead(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, null);
 	}
 
-	public RemoveDead(AutomataLibraryServices services, BoundedPetriNet<LETTER, PLACE> operand,
-			BranchingProcess<LETTER, PLACE> finPre) throws AutomataOperationCanceledException {
+	public RemoveDead(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
+			final BranchingProcess<LETTER, PLACE> finPre)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mFinPre = finPre;
@@ -96,8 +98,9 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		mResult = new CopySubnet<>(services, mOperand, mVitalTransitions).getResult();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> vitalTransitions() throws AutomataOperationCanceledException {
-		Set<ITransition<LETTER, PLACE>> vitalTransitions = transitivePredecessors(mOperand.getAcceptingPlaces());
+	private Set<ITransition<LETTER, PLACE>> vitalTransitions()
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final Set<ITransition<LETTER, PLACE>> vitalTransitions = transitivePredecessors(mOperand.getAcceptingPlaces());
 
 		if (vitalTransitions.size() == mOperand.getTransitions().size()) {
 			mLogger.debug("Skipping co-relation queries. All transitions lead to accepting places.");
@@ -118,13 +121,13 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		return vitalTransitions;
 	}
 
-	private void ensureFinPreExists() throws AutomataOperationCanceledException {
+	private void ensureFinPreExists() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		if (mFinPre == null) {
 			mLogger.info("Computing finite prefix for " + getOperationName());
 			mFinPre = new FinitePrefix<>(mServices, mOperand).getResult();
 		}
 	}
-	
+
 	private boolean timeout() {
 		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
@@ -177,7 +180,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		}
 		return correct;
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();

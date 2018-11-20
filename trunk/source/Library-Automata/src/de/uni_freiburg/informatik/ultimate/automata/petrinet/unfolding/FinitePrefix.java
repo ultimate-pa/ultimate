@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -54,12 +55,12 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 
 
 	public FinitePrefix(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, false);
 	}
 
 	public FinitePrefix(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, STATE> operand,
-			final boolean sameTransitionCutOff) throws AutomataOperationCanceledException {
+			final boolean sameTransitionCutOff) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 
