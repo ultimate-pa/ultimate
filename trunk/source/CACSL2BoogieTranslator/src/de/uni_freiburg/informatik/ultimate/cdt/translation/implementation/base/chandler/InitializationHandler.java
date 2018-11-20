@@ -125,7 +125,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  */
 public class InitializationHandler {
 
-	private static final int MINIMAL_BYTESIZE_FOR_USING_CONSTANTARRAYS = 100;
+	private static final int MINIMAL_BYTESIZE_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 100;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -1044,7 +1044,7 @@ public class InitializationHandler {
 				LocationFactory.createIgnoreCLocation(), targetCType, hook);
 		final int byteSize = CTranslationUtil.extractIntegerValue(bse).intValueExact();
 
-		return byteSize >= MINIMAL_BYTESIZE_FOR_USING_CONSTANTARRAYS;
+		return byteSize >= MINIMAL_BYTESIZE_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
