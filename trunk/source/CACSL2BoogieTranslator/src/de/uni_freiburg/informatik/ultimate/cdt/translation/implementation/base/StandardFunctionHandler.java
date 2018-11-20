@@ -222,8 +222,8 @@ public class StandardFunctionHandler {
 		}
 
 		/** functions of pthread library **/
-		fill(map, "pthread_create", this::handleFork);
-		fill(map, "pthread_join", this::handleJoin);
+		fill(map, "pthread_create", this::handlePthread_create);
+		fill(map, "pthread_join", this::handlePthread_join);
 		fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
@@ -764,7 +764,7 @@ public class StandardFunctionHandler {
 	/**
 	 * TOOD pthread support
 	 */
-	private Result handleFork(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -885,7 +885,7 @@ public class StandardFunctionHandler {
 	/**
 	 * TOOD pthread support
 	 */
-	private Result handleJoin(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handlePthread_join(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
 		// get arguments
