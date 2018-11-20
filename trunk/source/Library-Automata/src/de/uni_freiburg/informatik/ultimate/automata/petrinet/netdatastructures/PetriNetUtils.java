@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
@@ -89,7 +90,7 @@ public final class PetriNetUtils {
 
 	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>> INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(
 			final AutomataLibraryServices mServices, final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net)
-			throws AutomataOperationCanceledException {
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
 

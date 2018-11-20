@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
@@ -67,9 +68,10 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 	 *            word
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
+	 * @throws PetriNetNot1SafeException
 	 */
 	public Accepts(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand, final Word<LETTER> word)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mWord = word;
@@ -106,7 +108,7 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 	}
 
 	private boolean getResultHelper(final int position, final Marking<LETTER, PLACE> marking)
-			throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
 		}

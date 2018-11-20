@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -154,8 +155,9 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	/**
 	 * Given a marking. Get the state that represents the marking. Add all possible outgoing automaton transitions to
 	 * state. Construct (and enqueue to worklist) successor states if necessary.
+	 * @throws PetriNetNot1SafeException
 	 */
-	private void constructOutgoingTransitions(final Marking<LETTER, PLACE> marking) {
+	private void constructOutgoingTransitions(final Marking<LETTER, PLACE> marking) throws PetriNetNot1SafeException {
 		final PLACE state = getState(marking, false);
 		final Set<ITransition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<LETTER, PLACE> transition : outgoing) {

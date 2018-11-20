@@ -31,7 +31,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -171,11 +173,20 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @param transition
 	 *            The transition.
 	 * @return The marking to which the occurrence of the specified transition leads.
+	 * @throws PetriNetNot1SafeException
 	 */
-	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
+	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
+			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
 		final HashSet<PLACE> resultSet = new HashSet<>(mPlaces);
-		resultSet.removeAll(net.getPredecessors(transition));
-		resultSet.addAll(net.getSuccessors(transition));
+		final Set<PLACE> predecessors = net.getPredecessors(transition);
+		resultSet.removeAll(predecessors);
+		final Set<PLACE> successors = net.getSuccessors(transition);
+		resultSet.addAll(successors);
+		if (mPlaces.size() - predecessors.size() + successors.size() != resultSet.size()) {
+			final List<PLACE> unsafePlaces = mPlaces.stream().filter(x -> !predecessors.contains(x))
+					.filter(successors::contains).collect(Collectors.toList());
+			throw new PetriNetNot1SafeException(getClass(), unsafePlaces);
+		}
 		return new Marking<>(resultSet);
 	}
 
