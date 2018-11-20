@@ -3861,8 +3861,8 @@ public class CHandler {
 				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
 		left = newOps.getFirst();
 		right = newOps.getSecond();
-		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType();
-		assert typeOfResult.equals(left.getLrValue().getCType());
+		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
+		assert typeOfResult.equals(left.getLrValue().getCType().getUnderlyingType());
 		final Expression expr = mExpressionTranslation.constructBinaryBitwiseExpression(loc, op,
 				left.getLrValue().getValue(), typeOfResult, right.getLrValue().getValue(), typeOfResult, hook);
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
