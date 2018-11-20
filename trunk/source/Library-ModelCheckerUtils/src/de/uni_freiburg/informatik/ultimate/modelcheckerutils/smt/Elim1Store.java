@@ -87,13 +87,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>(store aElim storeIndex newValue) by aNew, and
  * <li>(select aElim i) by oldCell_i for each i∈Idx.
  * </ul>
- * Furthermore, we add the following conjuncts for each i∈Idx. 
+ * Furthermore, we add the following conjuncts for each i∈Idx.
  * <ul>
- * <li> (i == storeIndex)==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) 
+ * <li> (i == storeIndex)==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k)
  * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
  * </ul>
- * 
- * Optimizations: 
+ *
+ * Optimizations:
  * <ul>
  * <li> Optim1: We check equality and disequality for each pair of
  * indices and evaluate (dis)equalities in the formula above directly. Each
@@ -101,12 +101,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * to be added as an additional conjunct.
  * <li> Optim2: We do not work with all
  * indices but build equivalence classes and work only with the representatives.
- * (We introduce only one oldCell variable for each equivalence class) 
+ * (We introduce only one oldCell variable for each equivalence class)
  * <li> Optim3: For each index i that is disjoint for the store index we do not introduce the
- * variable oldCell_i, but use aNew[i] instead. 
+ * variable oldCell_i, but use aNew[i] instead.
  * <li> Optim4: For each i∈Idx we check
  * the context if we find some term tEq that is equivalent to oldCell_i. In case
- * we found some we use tEq instead of oldCell_i. 
+ * we found some we use tEq instead of oldCell_i.
  * <li> Optim5: (Only sound in
  * combination with Optim3. For each pair i,k∈Idx that are both disjoint from
  * storeIndex, we can drop the "i == k ==> oldCell_i == oldCell_k" term.
@@ -118,7 +118,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class Elim1Store {
-	
+
 	private static final Comparator<Term> FEWER_VARIABLE_FIRST = new Comparator<Term>() {
 
 		@Override
@@ -138,7 +138,7 @@ public class Elim1Store {
 	private static final boolean APPLY_DOUBLE_CASE_SIMPLIFICATION = true;
 	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
-	
+
 	private static final boolean SELECT_OVER_STORE_PREPROCESSING = false;
 
 
@@ -158,7 +158,7 @@ public class Elim1Store {
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
-		
+
 		if (false && SELECT_OVER_STORE_PREPROCESSING) {
 			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
 			for (final ApplicationTerm selectTerm : allSelectTerms) {
@@ -219,7 +219,7 @@ public class Elim1Store {
 						PqeTechniques.ONLY_DER);
 				newAuxVars.addAll(afterDer.getEliminatees());
 				return new EliminationTask(quantifier, newAuxVars, afterDer.getTerm());
-			} 
+			}
 
 		}
 
@@ -269,13 +269,13 @@ public class Elim1Store {
 				}
 			}
 		}
-		
-		
+
+
 		final List<ArrayStore> stores = extractStores(eliminatee, inputTerm);
 //		if (stores.size() > 1) {
 //			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
 //		}
-		
+
 
 		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				preprocessedInput, context);
@@ -288,7 +288,7 @@ public class Elim1Store {
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
 			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
 		}
-		
+
 
 		for (final ApplicationTerm selectTerm : selectTerms) {
 			final Term selectIndex = getIndexOfSelect(selectTerm);
@@ -314,7 +314,7 @@ public class Elim1Store {
 			final Term selectIndexRepresentative = equalityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
 			allIndexRepresentatives.add(selectIndexRepresentative);
-			// following is needed because we may now construct 
+			// following is needed because we may now construct
 			// a[selectIndexRepresentative] instead of
 			// a[selectIndex]
 			final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
@@ -373,7 +373,7 @@ public class Elim1Store {
 			}
 			newArrayMapping.put(store, newArray);
 		}
-		
+
 //		final Term newArray;
 //		{
 //			if (storeIndex == null) {
@@ -413,7 +413,7 @@ public class Elim1Store {
 		final List<Term> singleCaseJuncts = new ArrayList<>();
 		final List<Term> doubleCaseJuncts = new ArrayList<>();
 
-		
+
 		final Pair<List<Term>, List<Term>> wc = constructWriteConstraints((ArrayList<Term>) selectIndexRepresentatives, equalityInformation,
 					mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier, newArrayMapping, substitutionMapping);
 		singleCaseJuncts.addAll(wc.getFirst());
@@ -427,7 +427,7 @@ public class Elim1Store {
 		doubleCaseJuncts.addAll(cc.getSecond());
 
 
-				
+
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
 		final Term transformedTerm =
@@ -437,7 +437,7 @@ public class Elim1Store {
 				transformedTerm, storedValueInformation, singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, doubleCaseJuncts);
-			final Term doubleCaseTermMod; 
+			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
 				final boolean contextIsDisjunctive = (quantifier == QuantifiedFormula.FORALL);
 				final Term resultWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, context);
@@ -449,7 +449,8 @@ public class Elim1Store {
 			result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, doubleCaseTermMod);
 		}
 		if (Arrays.asList(result.getFreeVars()).contains(eliminatee)) {
-			throw new AssertionError("var is still there: " + eliminatee + " term size " + new DagSizePrinter(result));
+			throw new AssertionError("var is still there: " + eliminatee + " input size " + new DagSizePrinter(result)
+					+ " context size " + new DagSizePrinter(result) + " output size " + new DagSizePrinter(result));
 		}
 		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 		+ " term size " + new DagSizePrinter(result);
@@ -491,7 +492,7 @@ public class Elim1Store {
 			final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
 					esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
 			if (esr.getReductionRatioInPercent() <= 70) {
-				mLogger.info(sizeMessage);				
+				mLogger.info(sizeMessage);
 			} else {
 				mLogger.info(sizeMessage);
 			}
@@ -506,14 +507,14 @@ public class Elim1Store {
 		return resultEt;
 
 	}
-	
 
-	
-	
+
+
+
 	private Term resolveMultiDimensionalSelectOverStore(final MultiDimensionalSelectOverStore mdsos, final Term preprocessedInput, final ManagedScript mgdScript) {
 		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-		
+
 		Term eqConjunction;
 		{
 			final Term eq = ArrayIndex.constructPairwiseEquality(selectIndex, storeIndex, mScript);
@@ -627,7 +628,7 @@ public class Elim1Store {
 				final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 				return newSelect;
 //						oldCellMapping.put(selectIndexRepresentative, newSelect);
-				
+
 			}
 		}
 		return null;
@@ -650,8 +651,8 @@ public class Elim1Store {
 		}
 		return oldCellValue;
 	}
-		
-		
+
+
 		private void checkEqualityStatus(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
 			final List<Term> relationsDetectedViaSolver, final IncrementalPlicationChecker iea, final Term index1,
 			final Term index2) throws AssertionError {
@@ -686,7 +687,7 @@ public class Elim1Store {
 					mLogger.warn("solver failed to check if following not equals relation is implied: "
 							+ eq);
 				}
-	
+
 				if (notEqualsHolds == Validity.VALID) {
 					if (mQuantifier == QuantifiedFormula.EXISTS) {
 						tver.reportDisequality(index1, index2);
@@ -707,7 +708,7 @@ public class Elim1Store {
 
 		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
 				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
-		
+
 			mScript.echo(new QuotedObject("starting to analyze index equalities"));
 			final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
@@ -729,7 +730,7 @@ public class Elim1Store {
 				iea.unlockSolver();
 				return null;
 			}
-			
+
 			final List<Term> allValues = new ArrayList<>();
 			final Map<Term, Term> value2selectIndex = new HashMap<>();
 			final Map<Term, Term> selectIndex2value = new HashMap<>();
@@ -743,8 +744,8 @@ public class Elim1Store {
 				allValues.add(arrayStore.getValue());
 			}
 			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
-			
-			
+
+
 			for (int i = 0; i < allIndicesList.size(); i++) {
 				for (int j = i + 1; j < allIndicesList.size(); j++) {
 					//TODO: try to obtain equal term with few variables
@@ -774,8 +775,8 @@ public class Elim1Store {
 					checkEqualityStatus(mQuantifier, tver, relationsDetectedViaSolver, iea, value1, value2);
 				}
 			}
-			
-			
+
+
 			iea.unlockSolver();
 			mScript.echo(new QuotedObject("finished analysis of index equalities"));
 			return new Pair<>(tver, relationsDetectedViaSolver);
@@ -797,7 +798,7 @@ public class Elim1Store {
 						eq = lsec.checkEquality(index1, index2);
 						if (eq == EqualityStatus.EQUAL) {
 							tver.reportEquality(index1, index2);
-						} else if (eq == EqualityStatus.NOT_EQUAL) { 
+						} else if (eq == EqualityStatus.NOT_EQUAL) {
 							tver.reportDisequality(index1, index2);
 						}
 					}
@@ -819,7 +820,7 @@ public class Elim1Store {
 						eq = lsec.checkEquality(value1, value2);
 						if (eq == EqualityStatus.EQUAL) {
 							tver.reportEquality(value1, value2);
-						} else if (eq == EqualityStatus.NOT_EQUAL) { 
+						} else if (eq == EqualityStatus.NOT_EQUAL) {
 							tver.reportDisequality(value1, value2);
 						}
 					}
@@ -844,8 +845,8 @@ public class Elim1Store {
 		/**
 		 * Add equality information for term that are obtained from context by
 		 * only looking at (dis)eqality terms.
-		 * @return 
-		 * @return true if an inconsitency was detected 
+		 * @return
+		 * @return true if an inconsitency was detected
 		 */
 	private static boolean addComplimentaryEqualityInformation(final Script script, final int quantifier,
 			final Term[] context, final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
@@ -937,7 +938,7 @@ public class Elim1Store {
 			}
 			return result;
 		}
-		
+
 		private List<ArrayStore> extractStores(final TermVariable eliminatee, final Term term) {
 			final List<ArrayStore> result = new ArrayList<>();
 			final Set<ApplicationTerm> stores = new ApplicationTermFinder("store", false).findMatchingSubterms(term);
@@ -955,7 +956,7 @@ public class Elim1Store {
 
 		/**
 		 * <ul>
-		 * <li> ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) 
+		 * <li> ∀k∈Idx. i == k ==> oldCell_i == oldCell_k)
 		 * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
 		 * </ul>
 		 */
@@ -973,18 +974,18 @@ public class Elim1Store {
 					final Term index1 = selectIndices.get(i);
 					final Term index2 = selectIndices.get(j);
 					if (false && selectTermsWithsimilarArray(index2value.get(index1), index2value.get(index2))) {
-						// 2017-11-22 Matthias: Bug report from Marius shows that 
+						// 2017-11-22 Matthias: Bug report from Marius shows that
 						// this is unsound. Maybe we can introduce it again later
 						// but we need the indices on the other array are equivalent
 						// to the indices on this array.
-						
-						// Both old values are represented by a select on a 
+
+						// Both old values are represented by a select on a
 						// similar array (some new aux array).
 						// We omit this conjunct because the congruence
 						// information is already provided by the array theory.
 						continue;
 					}
-		
+
 					final Term indexEqualityTerm;
 					final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index1, index2);
 					switch (eqStatus) {
@@ -1005,7 +1006,7 @@ public class Elim1Store {
 					default:
 						throw new AssertionError();
 					}
-					
+
 					final Term valueEqualityTerm;
 					final Term oldSelect1 = constructOldSelectTerm(mgdScript, eliminatee, index1);
 					final Term oldSelect2 = constructOldSelectTerm(mgdScript, eliminatee, index2);
@@ -1019,7 +1020,7 @@ public class Elim1Store {
 							resultConjuncts1case.add(SmtUtils.not(mgdScript.getScript(), indexEqualityTerm));
 							continue;
 						} else {
-							throw new AssertionError("input was inconsistent");							
+							throw new AssertionError("input was inconsistent");
 						}
 					case UNKNOWN:
 					{
@@ -1032,7 +1033,7 @@ public class Elim1Store {
 						break;
 					default:
 						throw new AssertionError();
-					
+
 					}
 					final Term implication;
 					if (quantifier == QuantifiedFormula.EXISTS) {
@@ -1049,7 +1050,7 @@ public class Elim1Store {
 			}
 			return new Pair<List<Term>, List<Term>>(resultConjuncts1case, resultConjuncts2cases);
 		}
-		
+
 		private static boolean selectTermsWithsimilarArray(final Term term1, final Term term2) {
 			final ArraySelect select1 = ArraySelect.convert(term1);
 			if (select1 == null) {
@@ -1060,13 +1061,13 @@ public class Elim1Store {
 					return false;
 				} else {
 					return select1.getArray() == select2.getArray();
-				}	
+				}
 			}
 		}
 
 		/**
 		 * <ul>
-		 * <li> (i == storeIndex)==> (aNew[i] == newValue) 
+		 * <li> (i == storeIndex)==> (aNew[i] == newValue)
 		 * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
 		 * </ul>
 		 */
@@ -1204,7 +1205,7 @@ public class Elim1Store {
 			if (list.isEmpty()) {
 				return null;
 			} else {
-				
+
 			}
 			Collections.sort(list, FEWER_VARIABLE_FIRST);
 			return list.get(0);
@@ -1357,7 +1358,7 @@ public class Elim1Store {
 			public List<Term> getValueEqualities() {
 				return mValueEqualities;
 			}
-			
+
 
 
 
@@ -1385,11 +1386,11 @@ public class Elim1Store {
 			}
 		}
 
-		
+
 		private interface IEqualityChecker {
 			public EqualityStatus checkEquality(Term term1, Term term2);
 		}
-		
+
 		private class LocalSimplificationsEqualityChecker implements IEqualityChecker {
 
 			@Override
@@ -1403,12 +1404,12 @@ public class Elim1Store {
 					return EqualityStatus.UNKNOWN;
 				}
 			}
-			
+
 		}
-		
-		
+
+
 		private class CheapIncompleteIndexValueAnalyzer {
-			
+
 		}
 
 
