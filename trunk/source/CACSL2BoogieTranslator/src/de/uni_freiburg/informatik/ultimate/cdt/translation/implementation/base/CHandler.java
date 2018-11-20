@@ -2603,6 +2603,9 @@ public class CHandler {
 				continue;
 			}
 			final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
+			if (value == null) {
+				throw new AssertionError("no entry in symbol table for C-ID " + cid);
+			}
 			final CType type = value.getCType().getUnderlyingType();
 			if (type instanceof CArray || type instanceof CStructOrUnion) {
 				addToVariablesOnHeap(value.getDeclarationNode());
