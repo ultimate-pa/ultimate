@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -185,7 +187,8 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			} else if (sat == Validity.INVALID) {
 				final String proc = act.getPrecedingProcedure();
-				assert proc.equals(act.getSucceedingProcedure()) : "internal statement must not change procedure";
+				assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
+						|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
 				if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc)
 						|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
 					return null;
