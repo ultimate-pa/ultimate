@@ -233,7 +233,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_cond_signal", die);
 		fill(map, "pthread_cond_destroy", die);
 		fill(map, "pthread_cond_broadcast", die);
-		fill(map, "pthread_mutex_destroy", die);
+		fill(map, "pthread_mutex_destroy", skip);
 		// the following three occur at SV-COMP 2019 only in one benchmark
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
