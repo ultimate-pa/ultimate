@@ -122,6 +122,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
@@ -382,6 +383,8 @@ public class MainDispatcher implements IDispatcher {
 				result = mCHandler.visit(this, (IASTTypeIdInitializerExpression) n);
 			} else if (n instanceof IASTUnaryExpression) {
 				result = mCHandler.visit(this, (IASTUnaryExpression) n);
+			} else if (n instanceof IGNUASTCompoundStatementExpression) {
+					return mCHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
 			} else if (n instanceof IASTProblemExpression) {
 				result = mCHandler.visit(this, (IASTProblemExpression) n);
 			} else {
