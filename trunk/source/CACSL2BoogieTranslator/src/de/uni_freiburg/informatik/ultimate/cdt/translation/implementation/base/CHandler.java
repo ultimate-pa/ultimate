@@ -1756,19 +1756,20 @@ public class CHandler {
 		}
 		case IASTLiteralExpression.lk_string_literal: {
 			final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
-			final RValue rvalue;
+			final int sizeInBytes = stringLiteral.getByteValues().size();
+			final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
+
+			final RValue auxVarRValue;
 			final AuxVarInfo auxvar;
 			{
-				// subtract two from length for quotes at beginning and end
-				final int arrayLength = stringLiteral.getByteValues().size();
 				final RValue dimension = new RValue(
-						mTypeSizes.constructLiteralForIntegerType(loc,
-								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(arrayLength)),
+						sizeInBytesExpr,
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 				final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 				auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(loc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
+				auxVarRValue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 			// the declaration of the variable that corresponds to a string literal has to be made globally
 			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
@@ -1777,8 +1778,23 @@ public class CHandler {
 			final boolean writeValues =
 					stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 
-			final List<Statement> statements =
-					mMemoryHandler.writeStringToHeap(main, loc, auxvar.getLhs(), stringLiteral, writeValues, node);
+			final List<Statement> statements = new ArrayList<>();
+			{
+				final CallStatement ultimateAllocCall =
+						mMemoryHandler.getMallocCall(sizeInBytesExpr, auxvar.getLhs(), loc);
+				statements.add(ultimateAllocCall);
+
+				if (writeValues) {
+					final ExpressionResult exprRes =
+							mInitHandler.writeStringLiteral(loc, auxVarRValue, stringLiteral, node);
+					assert !exprRes.hasLRValue();
+					assert exprRes.getDeclarations().isEmpty();
+					assert exprRes.getOverapprs().isEmpty();
+					assert exprRes.getAuxVars().isEmpty();
+					assert exprRes.getNeighbourUnionFields().isEmpty();
+					statements.addAll(exprRes.getStatements());
+				}
+			}
 			mStaticObjectsHandler.addStatementsForUltimateInit(statements);
 
 			final List<Overapprox> overapproxList;
@@ -1789,7 +1805,7 @@ public class CHandler {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-			return new StringLiteralResult(rvalue, overapproxList, auxvar, stringLiteral, !writeValues);
+			return new StringLiteralResult(auxVarRValue, overapproxList, auxvar, stringLiteral, !writeValues);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(

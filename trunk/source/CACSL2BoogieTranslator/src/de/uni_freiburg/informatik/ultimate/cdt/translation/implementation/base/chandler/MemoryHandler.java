@@ -98,7 +98,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryModel.ReadWriteDefinition;
@@ -880,40 +879,6 @@ public class MemoryHandler {
 	public void endScope() {
 		mVariablesToBeMalloced.endScope();
 		mVariablesToBeFreed.endScope();
-	}
-
-	/**
-	 * Construct the statements that write a string literal on the heap. (According to 6.4.5 of C11) The first statement
-	 * is a call that allocates the memory The preceding statements write the (integer) values of the string literal to
-	 * the appropriate heap array.
-	 *
-	 * call resultPointer := #Ultimate.alloc(value.length + 1); #memory_int[{ base: resultPointer!base, offset:
-	 * resultPointer!offset + 0 }] := 78; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 1 }] :=
-	 * 101; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 2 }] := 119; #memory_int[{ base:
-	 * resultPointer!base, offset: resultPointer!offset + 3 }] := 0;
-	 *
-	 * 2017-01-06 Matthias: This works for our default memory model. I might not work for all our memory models.
-	 *
-	 * @param writeValues
-	 *            if not set we omit to write values and just allocate memory
-	 */
-	public List<Statement> writeStringToHeap(final IDispatcher main, final ILocation loc,
-			final VariableLHS resultPointer, final CStringLiteral stringLiteral, final boolean writeValues,
-			final IASTNode hook) {
-		final Expression size =
-				mTypeSizes.constructLiteralForIntegerType(loc, mExpressionTranslation.getCTypeOfPointerComponents(),
-						BigInteger.valueOf(stringLiteral.getByteValues().size()));
-		final CallStatement ultimateAllocCall = getMallocCall(size, resultPointer, loc);
-		final List<Statement> result = new ArrayList<>();
-		result.add(ultimateAllocCall);
-		if (writeValues) {
-			for (int i = 0; i < stringLiteral.getByteValues().size(); i++) {
-				final BigInteger valueBigInt = stringLiteral.getByteValues().get(i);
-				final AssignmentStatement statement = writeCharToHeap(main, loc, resultPointer, i, valueBigInt, hook);
-				result.add(statement);
-			}
-		}
-		return result;
 	}
 
 	public Expression constructMutexArrayIdentifierExpression(final ILocation loc) {
@@ -2772,52 +2737,6 @@ public class MemoryHandler {
 		// construct empty mmdi
 		return new MemoryModelDeclarationInfo(mmd);
 	}
-
-	/**
-	 *
-	 * @param main
-	 * @param loc
-	 * @param resultPointer
-	 * @param additionalOffset
-	 * @param valueBigInt
-	 * @param surroundingProcedure
-	 *            the procedure where the AssignmentStatement that is created here will be added to
-	 * @return
-	 */
-	private AssignmentStatement writeCharToHeap(final IDispatcher main, final ILocation loc,
-			final VariableLHS resultPointer, final int additionalOffset, final BigInteger valueBigInt,
-			final IASTNode hook) {
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
-		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
-		// mProcedureManager.addModifiedGlobal(dhp.getVariableLHS());
-		final Expression inputPointer = CTranslationUtil.convertLhsToExpression(resultPointer);
-		final Expression additionalOffsetExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));
-		final Expression pointer = doPointerArithmetic(IASTBinaryExpression.op_plus, loc, inputPointer,
-				new RValue(additionalOffsetExpr, mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(CPrimitives.CHAR), hook);
-		final Expression valueExpr =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.CHAR), valueBigInt);
-		final Expression possiblyExtendedValueExpr;
-		if (dhp.getSize() != 0) {
-			// if heap data array cannot store arbitrary sizes
-			final Integer sizeOfChar = mTypeSizes.getSize(CPrimitives.CHAR);
-			if (sizeOfChar > dhp.getSize()) {
-				throw new AssertionError("char bigger than size of data array");
-			}
-			possiblyExtendedValueExpr =
-					mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8, dhp.getSize() * 8);
-		} else {
-			possiblyExtendedValueExpr = valueExpr;
-
-		}
-
-		final VariableLHS array = dhp.getVariableLHS();
-		final AssignmentStatement statement =
-				constructOneDimensionalArrayUpdate(loc, pointer, array, possiblyExtendedValueExpr);
-		return statement;
-	}
-
 
 	/**
 	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we

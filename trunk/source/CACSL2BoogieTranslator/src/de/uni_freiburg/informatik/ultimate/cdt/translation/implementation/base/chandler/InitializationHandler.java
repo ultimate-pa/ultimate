@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -264,6 +265,18 @@ public class InitializationHandler {
 			}
 		}
 		return init.build();
+	}
+
+	public ExpressionResult writeStringLiteral(final ILocation loc, final RValue auxVarRValue,
+			final CStringLiteral stringLiteral, final IASTNode hook) {
+		final CArray auxVarType = (CArray) auxVarRValue.getCType();
+		assert CTranslationUtil.getConstantFirstDimensionOfArray(auxVarType, mTypeSizes, hook)
+				== stringLiteral.getByteValues().size();
+		final HeapLValue hlv = LRValueFactory.constructHeapLValue(mTypeHandler, auxVarRValue.getValue(), auxVarType, null);
+
+		final InitializerInfo initInfo = constructInitInfoFromCStringLiteral(loc, stringLiteral, auxVarType, hook);
+		return initCArray(loc, hlv, auxVarType, initInfo, true,
+				useConstantArrayForOnHeapDefaultInit(auxVarType, initInfo, hook), true, hook);
 	}
 
 	/**
@@ -1308,6 +1321,29 @@ public class InitializationHandler {
 		return new InitializerInfo(indexInitInfos, new ArrayList<>(rest));
 	}
 
+
+	public InitializerInfo constructInitInfoFromCStringLiteral(final ILocation loc, final CStringLiteral stringLiteral,
+			final CType cType, final IASTNode hook) {
+		final List<InitializerInfo> list = new ArrayList<>();
+
+		// TODO: just CHAR, or do we have to deal with different types of string literals here???
+		final CType charType = new CPrimitive(CPrimitives.CHAR);
+
+		final InitializerResultBuilder stringInitResBuilder = new InitializerResultBuilder();
+		for (final BigInteger val : stringLiteral.getByteValues()) {
+			final InitializerResultBuilder charInitResBuilder = new InitializerResultBuilder();
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+			final IntegerLiteral integerLiteral = ExpressionFactory.createIntegerLiteral(loc, val.toString());
+			erb.setLrValue(new RValue(integerLiteral, charType));
+
+			charInitResBuilder.setRootExpressionResult(erb.build());
+			stringInitResBuilder.addChild(charInitResBuilder.build());
+		}
+		final InitializerResult initializerResult = stringInitResBuilder.build();
+		return constructInitializerInfo(loc, initializerResult, cType, hook);
+	}
+
 	private class RequiredInitializationFeatures {
 
 		private boolean mIsFinished;
@@ -1485,6 +1521,7 @@ public class InitializationHandler {
 			mUnusedListEntries = Collections.emptyList();
 			mMakeNondeterministicInitialization = true;
 		}
+
 
 		private List<InitializerResult> getUnusedListEntries() {
 			return Collections.unmodifiableList(mUnusedListEntries);
