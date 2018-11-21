@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
@@ -35,14 +36,16 @@ public class CounterExampleToTest {
 	private final ReqSymbolTable mReqSymbolTable;
 	private final Script mScript;
 	private final AuxVarGen mAuxVarGen;
+	private final Expression2Term mExpression2Term;
 	
 	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, ReqSymbolTable reqSymbolTable, 
-			AuxVarGen auxVarGen , Script script) {
+			AuxVarGen auxVarGen , Script script, Expression2Term expression2Term) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
 		mScript = script;
 		mAuxVarGen = auxVarGen;
+		mExpression2Term = expression2Term;
 		
 	}
 	
@@ -70,7 +73,7 @@ public class CounterExampleToTest {
 				if (translatedPe.getProgramState(i) == null) {
 					continue;
 				}
-				systemStates.add(generateObservableProgramState((ProgramState<Expression>)translatedPe.getProgramState(i)));
+				systemStates.add(generateSystemState((ProgramState<Expression>)translatedPe.getProgramState(i)));
 				stepGuards.add(stepGuard);
 				stepGuard = new ArrayList<>();
 			} 
@@ -85,7 +88,7 @@ public class CounterExampleToTest {
 			}
 		}
 		mLogger.warn(oracles);
-		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates, stepGuards, oracles, mScript, mReqSymbolTable, mAuxVarGen);
+		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates, stepGuards, oracles, mScript, mReqSymbolTable, mAuxVarGen, mExpression2Term);
 		return testSequence;
 	}
 	
@@ -101,35 +104,23 @@ public class CounterExampleToTest {
 		return false;
 	}
 	
-	private SystemState generateObservableProgramState(final ProgramState<Expression> programState) {
+	private SystemState generateSystemState(final ProgramState<Expression> programState) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
 		LinkedHashSet<Expression> inputs = new LinkedHashSet<>();
-		LinkedHashMap<Expression, Collection<Expression>> reqLocations = new LinkedHashMap<>();
 		double i = 0.0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
-				mReqSymbolTable.isInput(((IdentifierExpression) e).getIdentifier())) {	
+				! mReqSymbolTable.isAuxVar(((IdentifierExpression) e).getIdentifier())) {	
 					observableState.put(e, programState.getValues(e));
 					inputs.add(e);
-			}
-			if (e instanceof IdentifierExpression && 
-				mReqSymbolTable.isOutput(((IdentifierExpression) e).getIdentifier()) &&
-				isDefinedFlagSet(((IdentifierExpression) e).getIdentifier(), programState)) {	
-					observableState.put(e, programState.getValues(e));
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
 				RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
 					i =  Double.parseDouble(ilit.getValue());
 			}
-			if (e instanceof IdentifierExpression && 
-				((IdentifierExpression) e).getIdentifier().startsWith(GraphToBoogie.LOCATION_PREFIX) && 
-				((IdentifierExpression) e).getIdentifier().endsWith(GraphToBoogie.LOCATION_PRIME) &&
-				isLargerZero(((IdentifierExpression) e).getIdentifier(), programState)){
-				reqLocations.put(e, programState.getValues(e));
-			}
 		}
-		return new SystemState(observableState, inputs, reqLocations, i);
+		return new SystemState(observableState, i);
 	}
 	
 	private boolean isDefinedFlagSet(String ident, ProgramState<Expression> state) {

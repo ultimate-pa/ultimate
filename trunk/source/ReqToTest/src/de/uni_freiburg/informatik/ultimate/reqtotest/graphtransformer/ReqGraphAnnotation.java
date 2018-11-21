@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -16,29 +18,27 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	
-	private final ArrayList<ReqGuardGraph> mReqIds;
-	private final ArrayList<Term> mSourceLabels;
+	private final ReqGuardGraph mReqAut;
+	private final Term mSourceLabel;
 	
 	public ReqGraphAnnotation(ReqGuardGraph reqId, Term label) {
-		mReqIds = new ArrayList<ReqGuardGraph>();
-		mReqIds.add(reqId);
-		mSourceLabels = new ArrayList<Term>();
-		mSourceLabels.add(label);
+		mReqAut = reqId;
+		mSourceLabel = label;
 	}
 	
-	public ArrayList<ReqGuardGraph> getRequirementIds() {
-		return mReqIds;
+	public ReqGuardGraph getRequirementAut() {
+		return mReqAut;
 	}
 	
-	public ArrayList<Term> getGuards() {
-		return mSourceLabels;
+	public Term getGuard() {
+		return mSourceLabel;
 	}
 	
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		HashMap<String, Object> values = new HashMap<String, Object>();
-		values.put("reqId: ", mReqIds);
-		values.put("label: ", mSourceLabels);
+		values.put("reqId: ", mReqAut);
+		values.put("label: ", mSourceLabel);
 		return values;
 	}
 	
@@ -55,8 +55,7 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 		if (other == this) {
 			return this;
 		} else if (other instanceof ReqGraphAnnotation) {
-			mReqIds.addAll(((ReqGraphAnnotation)other).getRequirementIds());
-			mSourceLabels.addAll(((ReqGraphAnnotation)other).getGuards());
+			//Only use the back translated version where no merging was done.
 			return this;
 		} else {
 			return super.merge(other);

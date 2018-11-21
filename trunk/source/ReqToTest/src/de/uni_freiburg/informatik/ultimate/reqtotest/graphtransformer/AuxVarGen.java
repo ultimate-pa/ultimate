@@ -72,7 +72,9 @@ public class AuxVarGen {
 	
 	public Collection<TermVariable> getEffectVariables(ReqGuardGraph reqId){
 		List<Term> temp = new ArrayList<Term>();
-		temp.add(mEffects.get(reqId));
+		if (mEffects.containsKey(reqId)) {
+			temp.add(mEffects.get(reqId));
+		}
 		return SmtUtils.getFreeVars(temp);
 	}
 	
