@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -48,15 +48,15 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 /**
  * Preprocessor for array partial quantifier elimination that handles the
  * following DER-like cases.
- * 
+ *
  * Let's assume that arr is the variable that we want to eliminate.
- * 
+ *
  * The term (= arr (store b k v)) is replaced by (= (select arr k') v') if
  * arr==b and replaced by (= arr (store b k' v') if arr!=b. The term (= arr
  * (select b k) is replaced by (= arr (select b k'). In all cases k'==k (resp.
  * v'==v) if arr is not a subterm of arr. In case arr is a subterm of k, we k'
  * is a fresh variable and we set mIntroducedDerPossibility to true.
- * 
+ *
  * The result should be used as follows. If mIntroducedDerPossibility == false
  * the result can be used directly. The variable might still be there but the
  * annoying DER term is gone (sef-update case only)> If
@@ -67,9 +67,9 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  * quantified and we introduced additional conjuncts (resp. disjuncts for
  * universal quantification) of the form k'=k that have to be merged to the
  * operand term of the quantifier elimination.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class DerPreprocessor extends TermTransformer {
 
@@ -241,6 +241,8 @@ public class DerPreprocessor extends TermTransformer {
 			// self-update
 			final Term select = mScript.term("select", array, newIndex);
 			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, newValue);
+		} else if (Arrays.asList(array.getFreeVars()).contains(mEliminatee)) {
+			throw new UnsupportedOperationException("nested self-update not yet implemented: " + array);
 		} else {
 			if (newValue != value || newIndex != index) {
 				mIntroducedDerPossibility = true;
