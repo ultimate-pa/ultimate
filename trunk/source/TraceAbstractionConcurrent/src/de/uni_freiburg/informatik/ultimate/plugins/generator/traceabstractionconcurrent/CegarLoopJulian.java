@@ -394,6 +394,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	@Override
 	public IPreconditionProvider getPreconditionProvider() {
 
+		final boolean threadInUseCheckEnabled = (!mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap()
+				.isEmpty())
+				&& mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet().iterator()
+						.next().getValue().getInUseVar() != null;
+		if (threadInUseCheckEnabled ) {
 		return predicateUnifier -> {
 			final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
 			if (ci.getThreadInstanceMap().isEmpty()) {
@@ -407,6 +412,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
 			return predicateUnifier.getOrConstructPredicate(conjunction);
 		};
+		} else {
+			return super.getPreconditionProvider();
+		}
 	}
 
 }
