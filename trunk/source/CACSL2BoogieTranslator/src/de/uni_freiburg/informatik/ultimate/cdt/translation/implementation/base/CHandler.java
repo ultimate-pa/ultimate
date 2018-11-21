@@ -2546,10 +2546,10 @@ public class CHandler {
 			Expression rhsWithBitfieldTreatment;
 			if (lValue.getBitfieldInformation() != null) {
 				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
-				rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
-						rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth,
-						hook);
+				rhsWithBitfieldTreatment =
+						mExpressionTranslation.eraseBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
+								(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()),
+								bitfieldWidth, hook);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -4206,7 +4206,7 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary..
+		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
 		// /*
 		// * the value of this aux var may never be used outside the translation of this conditional operator.
 		// * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
