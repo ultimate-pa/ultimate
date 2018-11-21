@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -81,10 +82,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  *            {@link #processGreater}?
  *
  *            Model is not always minimal e.g. (assert (element 9 I))?
- *            
- *            final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new MinimizeSevpa<>(AutomataLibrarayServices, new StringFactory(), automaton).getResult();
  * 
- * SmtUtils.toCnf(mUltimateServiceProvider, managedScript, mAssertionTerm, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+ *            final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String>
+ *            minimized = new MinimizeSevpa<>(AutomataLibrarayServices, new
+ *            StringFactory(), automaton).getResult();
+ * 
+ *            SmtUtils.toCnf(mUltimateServiceProvider, managedScript,
+ *            mAssertionTerm,
+ *            XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+ *            
+ * @Solved {@link Union} does not ensure that Int variables are set exactly once.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -97,7 +104,6 @@ public class MoNatDiffScript extends NoopScript {
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private HashMap<Term, Term> mValueTerm = new HashMap<Term, Term>();
-	
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
@@ -124,47 +130,53 @@ public class MoNatDiffScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		
+
 		try {
-		
+
 			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
-	
+
 			IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
-	
+
 			if (!isEmpty.getResult()) {
 				final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
 				final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
-				
+
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
 				MoNatDiffUtils.parseMoNatDiffToInteger(word, terms);
+				
+				mLogger.info("RESULT: SAT");
+				mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word, terms));
+				mLogger.info(automatonToString(automaton, Format.ATS));
+				
 				return LBool.SAT;
 			}
-		
+			
+			mLogger.info("RESULT: UNSAT");
+			mLogger.info(automatonToString(automaton, Format.ATS));
+			
+			return LBool.UNSAT;
+
 		} catch (final Exception e) {
 			mLogger.info(e);
 		}
-		
-		return LBool.UNSAT;
-		
-		// mLogger.info("RESULT: SAT");
-		// mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word, terms));
-		// mLogger.info(automatonToString(automaton, Format.ATS));
 
+		return LBool.UNKNOWN;
 	}
-	
+
+	/**
+	 * TODO: Implement that.
+	 */
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException {
 		for (Term term : terms) {
-			mValueTerm.put(term, term);	
+			mValueTerm.put(term, term);
 		}
-		mLogger.info("Value of " +  mValueTerm);
+		mLogger.info("Value of " + mValueTerm);
 		return mValueTerm;
 	}
 
-	
 	@Override
-	public Model getModel() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -255,11 +267,12 @@ public class MoNatDiffScript extends NoopScript {
 			throws Exception {
 
 		/*
-		final ManagedScript managedScript = new ManagedScript(mUltimateServiceProvider, this);
-		final Term subformula = SmtUtils.toCnf(mUltimateServiceProvider, managedScript, term.getSubformula(),
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info("CNF: " + subformula);
-		*/
+		 * final ManagedScript managedScript = new
+		 * ManagedScript(mUltimateServiceProvider, this); final Term subformula =
+		 * SmtUtils.toCnf(mUltimateServiceProvider, managedScript, term.getSubformula(),
+		 * XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		 * mLogger.info("CNF: " + subformula);
+		 */
 
 		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
@@ -369,6 +382,7 @@ public class MoNatDiffScript extends NoopScript {
 
 			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			
 			result = new Intersect<>(mAutomataLibrarayServices, new StringFactory(), result, tmp).getResult();
 		}
 
@@ -592,30 +606,32 @@ public class MoNatDiffScript extends NoopScript {
 	private void checkEmptiness(final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton)
 			throws AutomataOperationCanceledException {
 
-		
 		IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
 
 		if (!isEmpty.getResult()) {
 			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
 			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
 		}
-		
-//		IsEmpty<MoNatDiffAlphabetSymbol, String> isEmpty;
-//		isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
-//
-//		if (!isEmpty.getResult()) {
-//			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
-//			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
-//			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-//
-//			mLogger.info("RESULT: SAT");
-//			mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word, terms));
-//			
-//			return LBool.SAT;
-//		}
-//		
-//		mLogger.info("RESULT: UNSAT");
-//		return LBool.UNSAT;
+
+		// IsEmpty<MoNatDiffAlphabetSymbol, String> isEmpty;
+		// isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol,
+		// String>(mAutomataLibrarayServices, automaton);
+		//
+		// if (!isEmpty.getResult()) {
+		// final NestedRun<MoNatDiffAlphabetSymbol, String> run =
+		// isEmpty.getNestedRun();
+		// final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
+		// final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+		//
+		// mLogger.info("RESULT: SAT");
+		// mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word,
+		// terms));
+		//
+		// return LBool.SAT;
+		// }
+		//
+		// mLogger.info("RESULT: UNSAT");
+		// return LBool.UNSAT;
 	}
 
 	/**

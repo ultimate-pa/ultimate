@@ -9,8 +9,11 @@
 (declare-fun x () Int)
 (declare-fun y () Int)
 (declare-fun z () Int)
+(declare-fun I () SetOfInt)
 
-(assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
+; (assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
+
+(assert (or (= x 0) (= x 1)))
 
 (check-sat)
 (get-model)
