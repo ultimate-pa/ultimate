@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -125,7 +126,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  */
 public class InitializationHandler {
 
-	private static final int MINIMAL_BYTESIZE_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 100;
+	private static final int MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 10;
+	private static final float MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 0.5f;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -242,7 +244,7 @@ public class InitializationHandler {
 		 */
 
 		final boolean usingOnHeapInitializationViaConstArray =
-				onHeap && useConstantArrayForOnHeapDefaultInit(targetCTypeRaw, hook);
+				onHeap && useConstantArrayForOnHeapDefaultInit(targetCTypeRaw, initializerInfo, hook);
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -495,7 +497,7 @@ public class InitializationHandler {
 		/* note that the off-heap case is decided locally for each array inside the variable's type while the on-heap
 		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization) */
 		final boolean useConstOffHeapArrayInitialization = !onHeap && outermostInNestedArray
-				&& useConstArrayInitializationForOffHeapArrays(cArrayType);
+				&& useConstArrayInitializationForOffHeapArrays(cArrayType, initInfo);
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -743,7 +745,7 @@ public class InitializationHandler {
 
 			/* In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type. */
-			if (useConstArrayInitializationForOffHeapArrays((CArray) cType)
+			if (useConstArrayInitializationForOffHeapArrays((CArray) cType, null)
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny,
 						nondet);
@@ -980,16 +982,30 @@ public class InitializationHandler {
 	 * Background:
 	 * In contrast, on-heap aggregate types are initialized by setting the whole sub-array to a const array once in
 	 *  {@link #initialize(ILocation, LeftHandSide, CType, InitializerResult, boolean, IASTNode)}.
+	 * @param initInfo
 	 *
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
 	 */
 	private boolean useConstArrayInitializationForOffHeapArrays(//final InitializerInfo initInfoIfAny,
-			final CArray cType) {
-		// TODO implement some heuristics?
+			final CArray cType, final InitializerInfo initInfo) {
+		if (!mUseConstantArrays) {
+			// make sure that const arrays are only used when the corresponding setting is switched on
+			return false;
+		}
 
-		// make sure that const arrays are only used when the corresponding setting is switched on
-		return mUseConstantArrays;
+		final float noCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		if (noCells < MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+			return false;
+		}
+
+		final float noInitializerValue = initInfo == null ? noCells : initInfo.getNumberOfValues();
+		final float ratio = noInitializerValue / noCells;
+		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -997,21 +1013,29 @@ public class InitializationHandler {
 	 * {@link determineIfSophisticatedArrayInit}.
 	 *
 	 * @param targetCType
+	 * @param initializerInfo
 	 * @param hook
 	 * @return
 	 */
-	private boolean useConstantArrayForOnHeapDefaultInit(final CType targetCType, final IASTNode hook) {
+	private boolean useConstantArrayForOnHeapDefaultInit(final CType cType, final InitializerInfo initInfo,
+			final IASTNode hook) {
 		if (!mUseConstantArrays) {
-			// setting is "off" --> do not use constant arrays at any time
+			// make sure that const arrays are only used when the corresponding setting is switched on
 			return false;
 		}
 
-		// is the memory chunk large enough to justify using constant arrays??
-		final Expression bse = mTypeSetAndOffsetComputer.constructBytesizeExpression(
-				LocationFactory.createIgnoreCLocation(), targetCType, hook);
-		final int byteSize = CTranslationUtil.extractIntegerValue(bse).intValueExact();
+		final float noCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		if (noCells < MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+			return false;
+		}
 
-		return byteSize >= MINIMAL_BYTESIZE_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT;
+		final float noInitializerValue = initInfo == null ? noCells : initInfo.getNumberOfValues();
+		final float ratio = noInitializerValue / noCells;
+		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
@@ -1493,6 +1517,17 @@ public class InitializationHandler {
 
 		public Collection<Overapprox> getOverapprs() {
 			return mOverApprs;
+		}
+
+		public int getNumberOfValues() {
+			int sum = 0;
+			if (hasExpressionResult()) {
+				sum++;
+			}
+			for (final Entry<Integer, InitializerInfo> en : mElementInitInfos.entrySet()) {
+				sum += en.getValue().getNumberOfValues();
+			}
+			return sum;
 		}
 
 		/**

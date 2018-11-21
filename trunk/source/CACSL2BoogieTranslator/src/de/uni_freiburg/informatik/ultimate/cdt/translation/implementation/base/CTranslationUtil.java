@@ -61,6 +61,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
@@ -530,5 +533,33 @@ public class CTranslationUtil {
 		}
 
 		return hook;
+	}
+
+	public static long countNumberOfPrimitiveElementInType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
+			return 1;
+		} else if (cType instanceof CFunction) {
+			assert false : "this is unexpected, a CFunction that is not wrapped inside a CPointer";
+		 	return 1;
+		} else if (cType instanceof CStructOrUnion && CStructOrUnion.isUnion(cType)) {
+		 	return 1;
+		} else if (cType instanceof CStructOrUnion && !CStructOrUnion.isUnion(cType)) {
+			final CStructOrUnion cStruct = (CStructOrUnion) cType;
+			long sum = 0;
+			for (final CType fieldType : cStruct.getFieldTypes()) {
+				sum += countNumberOfPrimitiveElementInType(fieldType);
+			}
+			return sum;
+		} else if (cType instanceof CArray) {
+			final CArray cArray = (CArray) cType;
+			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType());
+			final BigInteger boundBig = extractIntegerValue(cArray.getBound().getValue());
+			final long bound = boundBig.longValueExact();
+			return innerCount * bound;
+		} else {
+			assert false : "missed cType case?";
+		 	return 1;
+		}
 	}
 }
