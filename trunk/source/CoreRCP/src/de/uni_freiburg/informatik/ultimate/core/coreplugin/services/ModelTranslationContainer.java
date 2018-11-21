@@ -56,11 +56,9 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator) {
-
 		// enforce type compatibility
 		if (mTranslationSequence.size() > 0) {
 			final ITranslator<?, ?, ?, ?, ?, ?> last = mTranslationSequence.getLast();
-
 			if (!isAllowedNext(last, translator)) {
 				throw new IllegalArgumentException(
 						"The supplied ITranslator is not compatible with the existing ones. It has to be compatible with "
@@ -68,7 +66,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 			}
 		}
 		mTranslationSequence.addLast(translator);
-
 	}
 
 	private static boolean isAllowedNext(final ITranslator<?, ?, ?, ?, ?, ?> current,
@@ -214,6 +211,14 @@ class ModelTranslationContainer implements IBacktranslationService {
 		}
 		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
+
+		System.out.println("-----");
+		System.out.println(translator.getClass());
+		System.out.println(programExecution);
+		System.out.println();
+		System.out.println(translated);
+		System.out.println("-----");
+
 		return translateProgramExecution(remaining, translated);
 	}
 

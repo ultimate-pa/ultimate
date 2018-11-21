@@ -93,6 +93,11 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	@Override
 	String toString();
 
+	/**
+	 * @return true if the program execution is for a concurrent program, false otherwise.
+	 */
+	boolean isConcurrent();
+
 	@Override
 	default Iterator<AtomicTraceElement<TE>> iterator() {
 		return new Iterator<AtomicTraceElement<TE>>() {
@@ -154,6 +159,11 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 			@Override
 			public IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider() {
 				return null;
+			}
+
+			@Override
+			public boolean isConcurrent() {
+				return false;
 			}
 		};
 	}

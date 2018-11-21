@@ -174,7 +174,7 @@ public class IcfgProgramExecutionBuilder {
 			final ProgramState<Term> pps = new ProgramState<>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new IcfgProgramExecution(mTrace.asList().stream().map(a -> (IcfgEdge) a).collect(Collectors.toList()),
+		return IcfgProgramExecution.create(mTrace.asList().stream().map(a -> (IcfgEdge) a).collect(Collectors.toList()),
 				partialProgramStateMapping, mBranchEncoders);
 	}
 

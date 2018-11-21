@@ -449,8 +449,8 @@ public class LassoRankerStarter {
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta,
 			final NestedWord<IIcfgTransition<IcfgLocation>> stem,
 			final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
-		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(stem.asList(), Collections.emptyMap());
-		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(loop.asList(), Collections.emptyMap());
+		final IcfgProgramExecution stemExecution = IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
+		final IcfgProgramExecution loopExecution = IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
 		final IcfgEdge hondaEdge = (IcfgEdge) loop.getSymbol(0);
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)

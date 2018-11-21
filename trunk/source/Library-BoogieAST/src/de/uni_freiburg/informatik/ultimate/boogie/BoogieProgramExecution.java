@@ -59,15 +59,19 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	private final List<AtomicTraceElement<BoogieASTNode>> mTrace;
 	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
+	private final boolean mIsConcurrent;
 
-	public BoogieProgramExecution(final List<AtomicTraceElement<BoogieASTNode>> trace) {
-		this(Collections.emptyMap(), trace);
+	public BoogieProgramExecution(final List<AtomicTraceElement<BoogieASTNode>> trace, final boolean isConcurrent) {
+		this(Collections.emptyMap(), trace, isConcurrent);
 	}
 
 	public BoogieProgramExecution(final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			final List<AtomicTraceElement<BoogieASTNode>> trace) {
+			final List<AtomicTraceElement<BoogieASTNode>> trace, final boolean isConcurrent) {
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
+		mIsConcurrent = isConcurrent;
+		assert !isConcurrent || mTrace.stream()
+				.allMatch(a -> a.hasThreadId()) : "Is concurrent but has trace element without thread id";
 	}
 
 	@Override
@@ -117,6 +121,11 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public IBacktranslationValueProvider<BoogieASTNode, Expression> getBacktranslationValueProvider() {
 		return new BoogieBacktranslationValueProvider();
+	}
+
+	@Override
+	public boolean isConcurrent() {
+		return mIsConcurrent;
 	}
 
 	private final class BoogieValuation implements IValuation {
@@ -182,4 +191,5 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			return result;
 		}
 	}
+
 }

@@ -48,19 +48,22 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	private final ProgramState<IASTExpression> mInitialState;
 	private final List<ProgramState<IASTExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
+	private final boolean mIsConcurrent;
 
 	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
-			final Collection<ProgramState<IASTExpression>> programStates) {
+			final Collection<ProgramState<IASTExpression>> programStates, final boolean isConcurrent) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size() : "Need a program state after each atomic trace element";
 		mProgramStates = new ArrayList<>(programStates);
 		mTrace = new ArrayList<>(trace);
 		mInitialState = initialState;
+		mIsConcurrent = isConcurrent;
 	}
 
-	public CACSLProgramExecution(final Collection<AtomicTraceElement<CACSLLocation>> trace) {
+	public CACSLProgramExecution(final Collection<AtomicTraceElement<CACSLLocation>> trace,
+			final boolean isConcurrent) {
 		assert trace != null;
 		mTrace = new ArrayList<>(trace);
 		mProgramStates = new ArrayList<>();
@@ -68,6 +71,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 			mProgramStates.add(null);
 		}
 		mInitialState = null;
+		mIsConcurrent = isConcurrent;
 	}
 
 	@Override
@@ -110,5 +114,10 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	@Override
 	public IBacktranslationValueProvider<CACSLLocation, IASTExpression> getBacktranslationValueProvider() {
 		return new CACSLBacktranslationValueProvider();
+	}
+
+	@Override
+	public boolean isConcurrent() {
+		return mIsConcurrent;
 	}
 }

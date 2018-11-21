@@ -113,6 +113,8 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		addEdgeData(graphWriter, "enterFunction", null, GeneratedWitnessEdge<TE, E>::getEnterFunction);
 		addEdgeData(graphWriter, "returnFrom", null, GeneratedWitnessEdge<TE, E>::getReturnFunction);
 		addEdgeData(graphWriter, "enterLoopHead", "false", edge -> edge.isEnteringLoopHead());
+		addEdgeData(graphWriter, "threadId", null, edge -> edge.getThreadId());
+		addEdgeData(graphWriter, "createThread", null, edge -> edge.getCreatedThreadId());
 
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
@@ -283,6 +285,11 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		@Override
 		public IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider() {
 			return mOriginalProgramExecution.getBacktranslationValueProvider();
+		}
+
+		@Override
+		public boolean isConcurrent() {
+			return mOriginalProgramExecution.isConcurrent();
 		}
 	}
 

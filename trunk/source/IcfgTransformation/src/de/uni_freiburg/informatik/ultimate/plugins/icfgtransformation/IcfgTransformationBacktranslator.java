@@ -93,7 +93,7 @@ public class IcfgTransformationBacktranslator extends
 			}
 		}
 
-		return new IcfgProgramExecution(newTrace, newValues,
+		return IcfgProgramExecution.create(newTrace, newValues,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
 	}
 

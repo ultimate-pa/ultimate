@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -119,21 +120,21 @@ public class InlinerBacktranslator
 		final CallReinserter callReinserter = new CallReinserter();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		for (final BoogieASTNode traceElem : trace) {
-			AtomicTraceElement<BoogieASTNode> atomicTraceElem;
+			final AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = new AtomicTraceElementBuilder<>();
+			ateBuilder.setStepAndElement(traceElem).setToStringFunc(stringProvider);
+
 			if (traceElem instanceof CallStatement) {
 				final CallStatement call = (CallStatement) traceElem;
 				if (knownCalls.contains(call)) {
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
 				knownCalls.add(call);
-				atomicTraceElem = new AtomicTraceElement<>(call, call, StepInfo.PROC_CALL, stringProvider, null, null,
+				ateBuilder.setStepInfo(StepInfo.PROC_CALL).setProcedures(null,
 						((CallStatement) traceElem).getMethodName());
-			} else {
-				atomicTraceElem = new AtomicTraceElement<>(traceElem, stringProvider, null);
 			}
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
 			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls =
-					callReinserter.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping, null);
+					callReinserter.recoverInlinedCallsBefore(ateBuilder.build(), traceElemMapping, null);
 			for (final AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}
@@ -157,7 +158,6 @@ public class InlinerBacktranslator
 				exec) : "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
 
 		final int length = exec.getLength();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		final CallReinserter callReinserter = new CallReinserter();
 		final Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		final List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
@@ -186,8 +186,7 @@ public class InlinerBacktranslator
 					} else {
 						translatedStep = stepMapping.getOriginalNode();
 					}
-					translatedTrace.add(new AtomicTraceElement<>(translatedTraceElem, translatedStep,
-							traceElem.getStepInfo(), stringProvider, traceElem.getRelevanceInformation()));
+					translatedTrace.add(createAtomicTraceElement(traceElem, translatedTraceElem, translatedStep));
 				} else {
 					if (collectedRelevanceInfo == null) {
 						collectedRelevanceInfo = traceElem.getRelevanceInformation();
@@ -214,7 +213,24 @@ public class InlinerBacktranslator
 		}
 		assert checkCallStackTarget(mLogger, translatedTrace) : "callstack broken after backtranslation by "
 				+ getClass().getSimpleName();
-		return new BoogieProgramExecution(translatedStates, translatedTrace);
+		return new BoogieProgramExecution(translatedStates, translatedTrace, exec.isConcurrent());
+	}
+
+	private static AtomicTraceElement<BoogieASTNode> createAtomicTraceElement(
+			final AtomicTraceElement<BoogieASTNode> ate, final BoogieASTNode elem, final BoogieASTNode step) {
+		final AtomicTraceElementBuilder<BoogieASTNode> builder = new AtomicTraceElementBuilder<>();
+		if (ate.hasThreadId()) {
+			builder.setThreadId(ate.getThreadId());
+		}
+		if (ate.hasStepInfo(StepInfo.FORK)) {
+			builder.setForkedThreadId(ate.getForkedThreadId());
+		}
+		builder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
+		builder.setElement(elem);
+		builder.setStep(step);
+		builder.setStepInfo(ate.getStepInfo());
+		builder.setRelevanceInformation(ate.getRelevanceInformation());
+		return builder.build();
 	}
 
 	@Override

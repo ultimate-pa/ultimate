@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
@@ -111,17 +111,24 @@ public class RCFGBacktranslator extends
 		final List<IIcfgTransition<IcfgLocation>> cbTrace = trace;
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
-			if (elem instanceof CodeBlock) {
-				addCodeBlock(elem, atomicTeList, null, null);
-			} else {
+			if (!(elem instanceof CodeBlock)) {
 				throw new AssertionError("unknown rcfg element");
 			}
+			addCodeBlock(elem, null, null, null, atomicTeList, null);
 		}
 		final List<BoogieASTNode> result = new ArrayList<>();
 		for (final AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
 			result.add(ate.getTraceElement());
 		}
 		return result;
+	}
+
+	private void addCodeBlock(final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate,
+			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders) {
+		final IIcfgTransition<IcfgLocation> cb = ate.getTraceElement();
+		final IRelevanceInformation relevanceInformation = ate.getRelevanceInformation();
+		addCodeBlock(cb, relevanceInformation, ate.hasThreadId() ? ate.getThreadId() : null,
+				ate.getStepInfo().contains(StepInfo.FORK) ? ate.getForkedThreadId() : null, trace, branchEncoders);
 	}
 
 	/**
@@ -138,65 +145,76 @@ public class RCFGBacktranslator extends
 	 * determined) we call this method recursively on some branch.
 	 * </ul>
 	 */
-	private void addCodeBlock(final IIcfgTransition<IcfgLocation> cb,
-			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders,
-			final IRelevanceInformation relevanceInformation) {
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
+	private void addCodeBlock(final IIcfgTransition<IcfgLocation> cb, final IRelevanceInformation relevanceInformation,
+			final Integer threadId, final Integer forkedThreadId, final List<AtomicTraceElement<BoogieASTNode>> trace,
+			final Map<TermVariable, Boolean> branchEncoders) {
+
+		final AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = new AtomicTraceElementBuilder<>();
+		ateBuilder.setRelevanceInformation(relevanceInformation);
+		ateBuilder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
+		if (threadId != null) {
+			ateBuilder.setThreadId(threadId);
+		}
+		if (forkedThreadId != null) {
+			ateBuilder.setForkedThreadId(forkedThreadId);
+		}
+		ateBuilder.setProcedures(cb.getPrecedingProcedure(), cb.getSucceedingProcedure());
 		if (cb instanceof Call) {
 			final Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.PROC_CALL);
 		} else if (cb instanceof Return) {
 			final Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
 		} else if (cb instanceof ForkThreadOther) {
 			final Statement st = ((ForkThreadOther) cb).getForkStatement();
-			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for fork.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.FORK);
 		} else if (cb instanceof ForkThreadCurrent) {
 			final Statement st = ((ForkThreadCurrent) cb).getForkStatement();
-			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for fork.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.FORK);
 		} else if (cb instanceof JoinThreadOther) {
 			final Statement st = ((JoinThreadOther) cb).getJoinStatement();
-			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for join.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.JOIN);
 		} else if (cb instanceof JoinThreadCurrent) {
 			final Statement st = ((JoinThreadCurrent) cb).getJoinStatement();
-			// TODO 2018-08-23 Matthias: Maybe introduce new StepInfo for join.
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation,
-					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
+			ateBuilder.setStepAndElement(st);
+			ateBuilder.setStepInfo(StepInfo.JOIN);
 		} else if (cb instanceof Summary) {
 			final Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation));
+			ateBuilder.setStepAndElement(st);
 		} else if (cb instanceof StatementSequence) {
 			final StatementSequence ss = (StatementSequence) cb;
-			for (final Statement statement : ss.getStatements()) {
-				if (mCodeBlock2Statement.containsKey(statement)) {
-					final BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
+			for (final Statement st : ss.getStatements()) {
+				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
+				if (sources != null) {
 					for (final BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<>(source, stringProvider, relevanceInformation));
+						ateBuilder.setStepAndElement(source);
+						trace.add(ateBuilder.build());
 					}
+
 				} else {
-					trace.add(new AtomicTraceElement<>(statement, stringProvider, relevanceInformation));
+					ateBuilder.setStepAndElement(st);
+					trace.add(ateBuilder.build());
 				}
 			}
+			return;
 		} else if (cb instanceof SequentialComposition) {
 			final SequentialComposition seqComp = (SequentialComposition) cb;
 			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
-				addCodeBlock(sccb, trace, branchEncoders, relevanceInformation);
+				addCodeBlock(sccb, relevanceInformation, threadId, forkedThreadId, trace, branchEncoders);
 			}
+			return;
 		} else if (cb instanceof ParallelComposition) {
 			final ParallelComposition parComp = (ParallelComposition) cb;
 			final Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
-				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
+				addCodeBlock(someBranch, relevanceInformation, threadId, forkedThreadId, trace, branchEncoders);
 				final ILocation loc = ILocation.getAnnotation(cb.getSource());
 				mLogger.warn("You are using large block encoding together with an algorithm for which the "
 						+ "backtranslation into program statements is not yet implemented.");
@@ -210,20 +228,24 @@ public class RCFGBacktranslator extends
 			for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 				final boolean taken = branchEncoders.get(entry.getKey());
 				if (taken) {
-					addCodeBlock(entry.getValue(), trace, branchEncoders, relevanceInformation);
+					addCodeBlock(entry.getValue(), relevanceInformation, threadId, forkedThreadId, trace,
+							branchEncoders);
 					return;
 				}
 			}
 			throw new AssertionError("no branch was taken");
 		} else if (cb instanceof GotoEdge) {
+			// skip goto edges
 			return;
 		} else {
 			throw new UnsupportedOperationException("Unsupported CodeBlock: " + cb.getClass().getCanonicalName());
 		}
+		trace.add(ateBuilder.build());
 	}
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
+
 			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 		if (!(programExecution instanceof IcfgProgramExecution)) {
 			throw new IllegalArgumentException();
@@ -239,20 +261,19 @@ public class RCFGBacktranslator extends
 			programStateMapping.put(-1, translateProgramState(rcfgProgramExecution.getInitialProgramState()));
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> codeBlock = rcfgProgramExecution.getTraceElement(i);
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate = rcfgProgramExecution.getTraceElement(i);
 			final Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
-				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getRelevanceInformation());
+				addCodeBlock(ate, trace, null);
 			} else {
-				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i],
-						codeBlock.getRelevanceInformation());
+				addCodeBlock(ate, trace, branchEncoders[i]);
 			}
 			final int posInNewTrace = trace.size() - 1;
 			final ProgramState<Term> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, translateProgramState(programState));
 		}
 		assert checkCallStackTarget(mLogger, trace);
-		return new BoogieProgramExecution(programStateMapping, trace);
+		return new BoogieProgramExecution(programStateMapping, trace, programExecution.isConcurrent());
 	}
 
 	@Override

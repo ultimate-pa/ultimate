@@ -89,7 +89,7 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
 		}
-		final IcfgProgramExecution pex = new IcfgProgramExecution(trace, programStates);
+		final IcfgProgramExecution pex = IcfgProgramExecution.create(trace, programStates);
 
 		final LOC errorLoc = getLast(cex);
 		if (!mUnsafeLocs.add(errorLoc)) {

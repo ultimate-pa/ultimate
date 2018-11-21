@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMulti
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
@@ -175,7 +175,8 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 					// it is a dirty hack that we say whenever our targetnode has an invariant the edge is a
 					// enterLoopHead edge
 					final boolean isEnteringLoopHead = targetWNode.getInvariant() != null;
-					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label, stepInfo, null),
+					edge = fac.createWitnessEdge(
+							new AtomicTraceElementBuilder<TTE>().setStepAndElement(label).setStepInfo(stepInfo).build(),
 							isEnteringLoopHead);
 				}
 

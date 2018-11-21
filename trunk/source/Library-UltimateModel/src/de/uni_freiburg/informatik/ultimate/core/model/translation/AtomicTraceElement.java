@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 
@@ -68,7 +69,13 @@ public class AtomicTraceElement<TE> {
 
 		EXPR_EVAL("EXPR"),
 
-		FUNC_CALL("FCALL");
+		FUNC_CALL("FCALL"),
+
+		FORK("FORK"),
+
+		JOIN("JOIN"),
+
+		;
 
 		private final String mText;
 
@@ -85,82 +92,27 @@ public class AtomicTraceElement<TE> {
 	private final TE mElement;
 	private final TE mStep;
 	private final IToString<TE> mToStringFunc;
-	private EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
+	private final EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
 	private final IRelevanceInformation mRelevanceInformation;
-	private String mPrecedingProcedure;
-	private String mSucceedingProcedure;
+	private final String mPrecedingProcedure;
+	private final String mSucceedingProcedure;
 
-	/**
-	 * Creates an instance where the trace element is evaluated atomically (i.e. {@link #getTraceElement()} ==
-	 * {@link #getStep()}).
-	 */
-	public AtomicTraceElement(final TE element, final IRelevanceInformation relInfo) {
-		this(element, element, StepInfo.NONE, relInfo, null, null);
-	}
+	private final Integer mThreadId;
+	private final Integer mForkedThreadId;
 
-	public AtomicTraceElement(final TE element, final IToString<TE> toStringProvider,
-			final IRelevanceInformation relInfo) {
-		this(element, element, StepInfo.NONE, toStringProvider, relInfo, null, null);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
-			final IRelevanceInformation relInfo) {
-		this(element, step, EnumSet.of(info), relInfo, null, null);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IRelevanceInformation relInfo) {
-		this(element, step, info, a -> a.toString(), relInfo, null, null);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
-		this(element, step, info, toStringProvider, relInfo, null, null);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
-			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
-		this(element, step, EnumSet.of(info), toStringProvider, relInfo, null, null);
-	}
-
-	/**
-	 * Creates an instance where the trace element is not necessarily evaluated atomically (i.e.
-	 * {@link #getTraceElement()} != {@link #getStep()} is allowed)
-	 *
-	 * @param element
-	 * @param step
-	 * @param info
-	 *            provides additional information about the step, e.g. if its a condition that evaluated to true or
-	 *            false, if it is a call or a return, etc.
-	 * @param precedingProcedure
-	 *            if this step is a call or return, the name of the preceding procedure of this step, else null
-	 * @param succeedingProcedure
-	 *            if this step is a call or return, the name of succeeding procedure of this step, else null
-	 */
-	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
-			final IRelevanceInformation relInfo, final String precedingProcedure, final String succeedingProcedure) {
-		this(element, step, EnumSet.of(info), relInfo, precedingProcedure, succeedingProcedure);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
+	private AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
 			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo, final String precedingProcedure,
-			final String succeedingProcedure) {
-		this(element, step, EnumSet.of(info), toStringProvider, relInfo, precedingProcedure, succeedingProcedure);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IRelevanceInformation relInfo, final String precedingProcedure, final String succeedingProcedure) {
-		this(element, step, info, a -> a.toString(), relInfo, precedingProcedure, succeedingProcedure);
-	}
-
-	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo, final String precedingProcedure,
-			final String succeedingProcedure) {
+			final String succeedingProcedure, final Integer threadId, final Integer forkedThreadId) {
 		assert element != null;
 		assert step != null;
 		assert info != null;
 		assert toStringProvider != null;
 		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values";
+		assert info.size() > 0;
+		assert !info.contains(StepInfo.FORK)
+				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id";
+		assert hasAnyStepInfo(info, StepInfo.PROC_CALL, StepInfo.PROC_RETURN) || threadId != null
+				|| precedingProcedure == succeedingProcedure : "You must have same procedures except when you have threads or when this is a call or a return";
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;
@@ -168,6 +120,8 @@ public class AtomicTraceElement<TE> {
 		mSucceedingProcedure = succeedingProcedure;
 		mToStringFunc = toStringProvider;
 		mRelevanceInformation = relInfo;
+		mThreadId = threadId;
+		mForkedThreadId = forkedThreadId;
 	}
 
 	/**
@@ -192,8 +146,43 @@ public class AtomicTraceElement<TE> {
 		return mStepInfo.contains(info);
 	}
 
+	/**
+	 * Check if the step info set contains any of the supplied step infos. If none are supplied, they are contained.
+	 */
+	public boolean hasAnyStepInfo(final AtomicTraceElement.StepInfo... infos) {
+		return hasAnyStepInfo(getStepInfo(), infos);
+	}
+
+	public static boolean hasAnyStepInfo(final EnumSet<StepInfo> set, final AtomicTraceElement.StepInfo... infos) {
+		if (infos == null || infos.length == 0) {
+			return true;
+		}
+		for (final StepInfo info : infos) {
+			if (set.contains(info)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public EnumSet<AtomicTraceElement.StepInfo> getStepInfo() {
 		return EnumSet.copyOf(mStepInfo);
+	}
+
+	public boolean hasThreadId() {
+		return mThreadId != null;
+	}
+
+	public int getThreadId() {
+		return mThreadId.intValue();
+	}
+
+	public boolean isMainThread() {
+		return mThreadId.intValue() == -1;
+	}
+
+	public int getForkedThreadId() {
+		return mForkedThreadId.intValue();
 	}
 
 	public IRelevanceInformation getRelevanceInformation() {
@@ -210,16 +199,197 @@ public class AtomicTraceElement<TE> {
 
 	@Override
 	public String toString() {
-		final String rtr;
+		final StringBuilder sb = new StringBuilder();
 		if (mStepInfo.contains(StepInfo.NONE)) {
-			rtr = mToStringFunc.toString(getTraceElement());
+			sb.append(mToStringFunc.toString(getTraceElement()));
 		} else {
-			rtr = String.format("%s %s", getStepInfo(), mToStringFunc.toString(getStep()));
+			sb.append(getStepInfo());
+			sb.append(" ");
+			sb.append(mToStringFunc.toString(getStep()));
 		}
+
+		if (hasThreadId()) {
+			sb.append(" ");
+			sb.append(getThreadId());
+		}
+
 		final IRelevanceInformation relInfo = getRelevanceInformation();
 		if (relInfo != null) {
-			return rtr + " " + relInfo;
+			sb.append(" ");
+			sb.append(relInfo);
 		}
-		return rtr;
+		return sb.toString();
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static final class AtomicTraceElementBuilder<TE> {
+		private TE mElement;
+		private TE mStep;
+		private IToString<TE> mToStringFunc;
+		private IRelevanceInformation mRelevanceInformation;
+		private String mPrecedingProcedure;
+		private String mSucceedingProcedure;
+		private Integer mThreadId;
+
+		private EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
+		private Integer mForkedThreadId;
+
+		/**
+		 * Create an empty {@link AtomicTraceElementBuilder}
+		 */
+		public AtomicTraceElementBuilder() {
+			mToStringFunc = a -> a.toString();
+			mStepInfo = EnumSet.of(StepInfo.NONE);
+		}
+
+		private AtomicTraceElementBuilder(final AtomicTraceElement<TE> old) {
+			mToStringFunc = old.mToStringFunc;
+			mStepInfo = EnumSet.copyOf(old.mStepInfo);
+			mPrecedingProcedure = old.mPrecedingProcedure;
+			mSucceedingProcedure = old.mSucceedingProcedure;
+			mStep = old.mStep;
+			mElement = old.mElement;
+			mThreadId = old.mThreadId;
+			mRelevanceInformation = old.mRelevanceInformation;
+			mForkedThreadId = old.mForkedThreadId;
+		}
+
+		/**
+		 * Create an {@link AtomicTraceElementBuilder} that is initialized with the values of an
+		 * {@link AtomicTraceElement}.
+		 */
+		public static <TE> AtomicTraceElementBuilder<TE> from(final AtomicTraceElement<TE> old) {
+			return new AtomicTraceElementBuilder<>(old);
+		}
+
+		/**
+		 * Create a new {@link AtomicTraceElementBuilder} by using all information from an {@link AtomicTraceElement}
+		 * except for step and element, which are replaced by the second argument.
+		 */
+		public static <TE> AtomicTraceElementBuilder<TE> fromReplaceElementAndStep(final AtomicTraceElement<?> old,
+				final TE elem) {
+			final AtomicTraceElementBuilder<TE> rtr = new AtomicTraceElementBuilder<TE>().setStepAndElement(elem)
+					.setStepInfo(old.getStepInfo()).setRelevanceInformation(old.getRelevanceInformation())
+					.setProcedures(old.getPrecedingProcedure(), old.getSucceedingProcedure());
+			if (old.hasThreadId()) {
+				rtr.setThreadId(old.getThreadId());
+			}
+			if (old.hasStepInfo(StepInfo.FORK)) {
+				rtr.setForkedThreadId(old.getForkedThreadId());
+			}
+			return rtr;
+		}
+
+		/**
+		 * Create a new {@link AtomicTraceElementBuilder} by using all information from an {@link AtomicTraceElement}
+		 * except for step and element, which are replaced by the second argument.
+		 */
+		public static <TE> AtomicTraceElementBuilder<TE> fromReplaceElementAndStep(final AtomicTraceElement<?> old,
+				final TE elem, final TE step) {
+			final AtomicTraceElementBuilder<TE> rtr = new AtomicTraceElementBuilder<TE>().setElement(elem).setStep(step)
+					.setStepInfo(old.getStepInfo()).setRelevanceInformation(old.getRelevanceInformation())
+					.setProcedures(old.getPrecedingProcedure(), old.getSucceedingProcedure());
+			if (old.hasThreadId()) {
+				rtr.setThreadId(old.getThreadId());
+			}
+			if (old.hasStepInfo(StepInfo.FORK)) {
+				rtr.setForkedThreadId(old.getForkedThreadId());
+			}
+			return rtr;
+		}
+
+		public AtomicTraceElement<TE> build() {
+			return new AtomicTraceElement<>(mElement, mStep, mStepInfo, mToStringFunc, mRelevanceInformation,
+					mPrecedingProcedure, mSucceedingProcedure, mThreadId, mForkedThreadId);
+		}
+
+		public AtomicTraceElementBuilder<TE> setElement(final TE element) {
+			mElement = element;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setStep(final TE step) {
+			mStep = step;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setStepAndElement(final TE step) {
+			mStep = step;
+			mElement = step;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setToStringFunc(final IToString<TE> toStringFunc) {
+			mToStringFunc = Objects.requireNonNull(toStringFunc);
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> addStepInfo(final StepInfo... stepInfo) {
+			if (stepInfo == null || stepInfo.length == 0) {
+				return this;
+			}
+			if (stepInfo.length == 1 && stepInfo[0] == StepInfo.NONE) {
+				mStepInfo = EnumSet.of(StepInfo.NONE);
+				return this;
+			}
+
+			if (mStepInfo.contains(StepInfo.NONE)) {
+				mStepInfo.clear();
+			}
+
+			for (final StepInfo info : stepInfo) {
+				if (info == StepInfo.NONE) {
+					throw new IllegalArgumentException("Cannot combine NONE with any other value");
+				}
+				mStepInfo.add(info);
+			}
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setStepInfo(final StepInfo... stepInfo) {
+			if (stepInfo == null || stepInfo.length == 0) {
+				mStepInfo = EnumSet.of(StepInfo.NONE);
+				return this;
+			}
+			mStepInfo.clear();
+			for (final StepInfo info : stepInfo) {
+				mStepInfo.add(info);
+			}
+			if (mStepInfo.size() > 1 && mStepInfo.contains(StepInfo.NONE)) {
+				throw new IllegalArgumentException("Cannot combine NONE with any other value");
+			}
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setStepInfo(final EnumSet<StepInfo> stepInfo) {
+			return setStepInfo(stepInfo.toArray(new StepInfo[stepInfo.size()]));
+		}
+
+		public AtomicTraceElementBuilder<TE> setRelevanceInformation(final IRelevanceInformation relevanceInformation) {
+			mRelevanceInformation = relevanceInformation;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setProcedures(final String precedingProcedure,
+				final String succeedingProcedure) {
+			mPrecedingProcedure = precedingProcedure;
+			mSucceedingProcedure = succeedingProcedure;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setThreadId(final int threadId) {
+			mThreadId = threadId;
+			return this;
+		}
+
+		public AtomicTraceElementBuilder<TE> setForkedThreadId(final int threadId) {
+			mForkedThreadId = threadId;
+			return this;
+		}
+
 	}
 }

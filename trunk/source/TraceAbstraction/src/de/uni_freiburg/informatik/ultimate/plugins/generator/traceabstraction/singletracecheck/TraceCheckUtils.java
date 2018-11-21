@@ -287,7 +287,7 @@ public final class TraceCheckUtils {
 			computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IIcfgTransition<?>> trace) {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
-		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
+		return IcfgProgramExecution.create(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
 
 	/**

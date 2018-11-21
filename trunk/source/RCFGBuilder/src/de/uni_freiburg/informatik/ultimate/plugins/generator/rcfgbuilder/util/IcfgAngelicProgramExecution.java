@@ -57,4 +57,9 @@ public class IcfgAngelicProgramExecution implements IProgramExecution<IIcfgTrans
 		return mProgramExecution.getBacktranslationValueProvider();
 	}
 
+	@Override
+	public boolean isConcurrent() {
+		return mProgramExecution.isConcurrent();
+	}
+
 }

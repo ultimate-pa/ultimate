@@ -83,6 +83,11 @@ final class ProgramExecutionMock<TE, E> implements IProgramExecution<TE, E> {
 	}
 
 	@Override
+	public boolean isConcurrent() {
+		return false;
+	}
+
+	@Override
 	public IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider() {
 		return new NoBacktranslationValueProvider<>();
 	}

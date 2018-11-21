@@ -27,10 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
@@ -77,11 +77,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
  *
@@ -186,7 +186,6 @@ public class BoogiePreprocessorBacktranslator
 			final IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 
 		for (int i = 0; i < translatedTrace.size(); ++i) {
 			final BoogieASTNode elem = translatedTrace.get(i);
@@ -203,42 +202,34 @@ public class BoogiePreprocessorBacktranslator
 				assert checkProcedureNames(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
-				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
-						ate.getRelevanceInformation()));
+				final Expression cond = stmt.getCondition();
+				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
+				atomicTrace.add(createAtomicTraceElement(ate, stmt, cond, info));
 
 			} else if (elem instanceof IfStatement) {
 				assert checkProcedureNames(elem, ate);
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
-						ate.getRelevanceInformation()));
+				atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we rely on the stepinfo of our
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
-				assert checkProcedureNames(elem, ate) : "Call stack broken";
+				final AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = AtomicTraceElementBuilder.from(ate)
+						.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider()).setStepAndElement(elem);
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
-							ate.getRelevanceInformation()));
-				} else if (ate.hasStepInfo(StepInfo.PROC_CALL) || ate.hasStepInfo(StepInfo.PROC_RETURN)) {
-					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-							ate.getRelevanceInformation(), ate.getPrecedingProcedure(), ate.getSucceedingProcedure()));
-
-				} else if (Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
-					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-							ate.getRelevanceInformation()));
+					atomicTrace.add(ateBuilder.setStepInfo(StepInfo.FUNC_CALL).build());
 				} else {
-					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
-							ate.getRelevanceInformation(), ate.getPrecedingProcedure(), ate.getSucceedingProcedure()));
+					assert checkProcedureNames(elem, ate) : "Call stack broken";
+					atomicTrace.add(ateBuilder.build());
 				}
 			} else {
 				assert checkProcedureNames(elem, ate);
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<>(elem, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(createAtomicTraceElement(ate, elem, elem, ate.getStepInfo()));
 			}
 		}
 
@@ -260,23 +251,61 @@ public class BoogiePreprocessorBacktranslator
 
 		assert checkCallStackTarget(mLogger, actualAtomicTrace) : "callstack broke during translation by "
 				+ getClass().getSimpleName();
-		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
+		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace,
+				programExecution.isConcurrent());
 	}
 
-	private static boolean checkProcedureNames(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
+	private static AtomicTraceElement<BoogieASTNode> createAtomicTraceElement(
+			final AtomicTraceElement<BoogieASTNode> ate, final BoogieASTNode elem, final BoogieASTNode step,
+			final EnumSet<StepInfo> stepInfo) {
+		final AtomicTraceElementBuilder<BoogieASTNode> builder = new AtomicTraceElementBuilder<>();
+		if (ate.hasThreadId()) {
+			builder.setThreadId(ate.getThreadId());
+		}
+		if (ate.hasStepInfo(StepInfo.FORK)) {
+			builder.setForkedThreadId(ate.getForkedThreadId());
+		}
+		builder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
+		builder.setElement(elem);
+		builder.setStep(step);
+		builder.setStepInfo(stepInfo);
+		builder.setRelevanceInformation(ate.getRelevanceInformation());
+
+		return builder.build();
+	}
+
+	private static AtomicTraceElement<BoogieASTNode> createAtomicTraceElement(
+			final AtomicTraceElement<BoogieASTNode> ate, final BoogieASTNode elem, final BoogieASTNode step,
+			final StepInfo info) {
+		return createAtomicTraceElement(ate, elem, step, EnumSet.of(info));
+	}
+
+	private boolean checkProcedureNames(final BoogieASTNode elem, final AtomicTraceElement<BoogieASTNode> ate) {
 		if (elem instanceof CallStatement) {
-			return checkProcedureNames((CallStatement) elem, ate);
+			final boolean rtr = checkProcedureNames((CallStatement) elem, ate);
+			if (!rtr) {
+				mLogger.fatal("Call stack broken at " + ate);
+				return false;
+			}
+			return true;
 		} else if (elem instanceof ForkStatement) {
 			// we cannot say anything about proceeding and succeeding procedures
 			return true;
 		} else if (elem instanceof JoinStatement) {
 			// we cannot say anything about proceeding and succeeding procedures
 			return true;
+		} else if (ate.getPrecedingProcedure() != ate.getSucceedingProcedure()) {
+			mLogger.fatal("Call stack broken at " + ate);
+			return false;
 		}
-		return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
+		return true;
 	}
 
 	private static boolean checkProcedureNames(final CallStatement elem, final AtomicTraceElement<BoogieASTNode> ate) {
+		if (ate.hasThreadId()) {
+			// TODO: is there a correspondence between procedure names and call statements in concurrent contexts?
+			return true;
+		}
 		if (ate.hasStepInfo(StepInfo.PROC_CALL)) {
 			return elem.getMethodName().equals(ate.getSucceedingProcedure());
 		} else if (ate.hasStepInfo(StepInfo.PROC_RETURN)) {
@@ -392,7 +421,7 @@ public class BoogiePreprocessorBacktranslator
 	@Override
 	protected void printBrokenCallStackSource(final List<AtomicTraceElement<BoogieASTNode>> trace, final int i) {
 		mLogger.fatal(new ProgramExecutionFormatter<>(new BoogieBacktranslationValueProvider())
-				.formatProgramExecution(new BoogieProgramExecution(trace.subList(0, i))));
+				.formatProgramExecution(new BoogieProgramExecution(trace.subList(0, i), false)));
 	}
 
 	@Override

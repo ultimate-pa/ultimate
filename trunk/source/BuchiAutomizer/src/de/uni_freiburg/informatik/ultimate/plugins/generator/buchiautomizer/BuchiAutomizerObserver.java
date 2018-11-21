@@ -174,9 +174,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
 			final NestedLassoWord<? extends IIcfgTransition<?>> nestedLassoWord) {
 		final IcfgProgramExecution stemExecution =
-				new IcfgProgramExecution(nestedLassoWord.getStem().asList(), Collections.emptyMap());
+				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap());
 		final IcfgProgramExecution loopExecution =
-				new IcfgProgramExecution(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
+				IcfgProgramExecution.create(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
 		final NonTerminationArgumentResult<IIcfgTransition<IcfgLocation>, Term> result;
 		final IcfgEdge honda1 = (IcfgEdge) nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
@@ -271,10 +271,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution stemPE = new IcfgProgramExecution(counterexample.getStem().getWord().asList(),
+			final IcfgProgramExecution stemPE = IcfgProgramExecution.create(counterexample.getStem().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution loopPE = new IcfgProgramExecution(counterexample.getLoop().getWord().asList(),
+			final IcfgProgramExecution loopPE = IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes = new NonterminatingLassoResult<>(honda, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
@@ -313,7 +313,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution cex =
-					new IcfgProgramExecution(combined, partialProgramStateMapping, new Map[combined.size()]);
+					IcfgProgramExecution.create(combined, partialProgramStateMapping, new Map[combined.size()]);
 			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
 		} else {
@@ -322,10 +322,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution stemPE =
-					new IcfgProgramExecution(stem, partialProgramStateMapping, new Map[stem.size()]);
+					IcfgProgramExecution.create(stem, partialProgramStateMapping, new Map[stem.size()]);
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution loopPE =
-					new IcfgProgramExecution(loop, partialProgramStateMapping, new Map[loop.size()]);
+					IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
 					ltlAnnot.getLTLProperty()));

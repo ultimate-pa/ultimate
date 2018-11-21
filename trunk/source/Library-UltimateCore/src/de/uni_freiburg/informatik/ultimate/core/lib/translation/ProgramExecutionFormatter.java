@@ -59,39 +59,35 @@ public class ProgramExecutionFormatter<TE, E> {
 		final String fillChar = " ";
 
 		final List<String> lineNumerColumn = getLineNumberColumn(execution);
-		final int lineNumberColumnLength = getMaxLength(lineNumerColumn) + 2;
+		final int lineNumberColumnLength = getColumnMaxLength(lineNumerColumn);
 
 		final List<String> stepInfoColum = getStepInfoColum(execution);
-		int stepInfoColumLength = getMaxLength(stepInfoColum) + 2;
+		int stepInfoColumLength = getColumnMaxLength(stepInfoColum);
 		if (stepInfoColumLength < 6) {
 			// because of IVAL+2
 			stepInfoColumLength = 6;
 		}
 
-		final List<String> relevanceInfoColum = getRelevanceInformationColumn(execution);
-		final int relevanceInfoColumnLength;
-		if (relevanceInfoColum == null) {
-			relevanceInfoColumnLength = 0;
-		} else {
-			relevanceInfoColumnLength = getMaxLength(relevanceInfoColum) + 2;
-		}
+		final List<String> threadIdColumn = getThreadIdColumn(execution);
+		final int threadIdColumnLength = getColumnMaxLength(threadIdColumn);
 
+		final List<String> relevanceInfoColum = getRelevanceInformationColumn(execution);
+		final int relevanceInfoColumnLength = getColumnMaxLength(relevanceInfoColum);
+
+		final int valOffset = stepInfoColumLength + relevanceInfoColumnLength + threadIdColumnLength;
 		if (valuation != null) {
 			sb.append(fillWithChar(fillChar, lineNumberColumnLength));
-			addFixedLength(sb, "IVAL", stepInfoColumLength, fillChar);
+			addFixedLength(sb, "IVAL", valOffset, fillChar);
 			sb.append(valuation);
 			sb.append(lineSeparator);
 		}
 
 		for (int i = 0; i < execution.getLength(); i++) {
-			final String lineNumber = lineNumerColumn.get(i);
-			final String stepInfo = stepInfoColum.get(i);
+			addFixedLength(sb, lineNumerColumn, i, lineNumberColumnLength, fillChar);
+			addFixedLength(sb, stepInfoColum, i, stepInfoColumLength, fillChar);
+			addFixedLength(sb, relevanceInfoColum, i, relevanceInfoColumnLength, fillChar);
+			addFixedLength(sb, threadIdColumn, i, threadIdColumnLength, fillChar);
 
-			addFixedLength(sb, lineNumber, lineNumberColumnLength, fillChar);
-			addFixedLength(sb, stepInfo, stepInfoColumLength, fillChar);
-			if (relevanceInfoColum != null) {
-				addFixedLength(sb, relevanceInfoColum.get(i), relevanceInfoColumnLength, fillChar);
-			}
 			final AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
 			appendStepAsString(sb, currentATE, false);
 
@@ -99,7 +95,7 @@ public class ProgramExecutionFormatter<TE, E> {
 			valuation = getValuesAsString(execution.getProgramState(i));
 			if (valuation != null) {
 				sb.append(fillWithChar(fillChar, lineNumberColumnLength));
-				addFixedLength(sb, "VAL", stepInfoColumLength + relevanceInfoColumnLength, fillChar);
+				addFixedLength(sb, "VAL", valOffset, fillChar);
 				sb.append(valuation);
 				sb.append(lineSeparator);
 			}
@@ -171,6 +167,14 @@ public class ProgramExecutionFormatter<TE, E> {
 		sb.append(fillWithChar(fillChar, fillLength - actualString.length()));
 	}
 
+	private static void addFixedLength(final StringBuilder sb, final List<String> column, final int index,
+			final int fillLength, final String fillChar) {
+		if (column == null) {
+			return;
+		}
+		addFixedLength(sb, column.get(index), fillLength, fillChar);
+	}
+
 	private static String fillWithChar(final String string, final int length) {
 		if (length <= 0) {
 			return "";
@@ -182,6 +186,13 @@ public class ProgramExecutionFormatter<TE, E> {
 		return outputBuffer.toString();
 	}
 
+	private static int getColumnMaxLength(final List<String> column) {
+		if (column == null) {
+			return 0;
+		}
+		return getMaxLength(column) + 2;
+	}
+
 	private static int getMaxLength(final List<String> lineNumerColumn) {
 		int max = 0;
 		for (final String s : lineNumerColumn) {
@@ -191,6 +202,18 @@ public class ProgramExecutionFormatter<TE, E> {
 			}
 		}
 		return max;
+	}
+
+	private List<String> getThreadIdColumn(final IProgramExecution<TE, E> execution) {
+		if (!execution.isConcurrent()) {
+			return null;
+		}
+		final List<String> rtr = new ArrayList<>();
+		for (int i = 0; i < execution.getLength(); ++i) {
+			final AtomicTraceElement<TE> elem = execution.getTraceElement(i);
+			rtr.add(String.valueOf(elem.getThreadId()));
+		}
+		return rtr;
 	}
 
 	private List<String> getStepInfoColum(final IProgramExecution<TE, E> execution) {

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslato
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -67,15 +68,12 @@ public class BlockEncodingBacktranslator extends
 	private final ILogger mLogger;
 	private final Set<IIcfgTransition<IcfgLocation>> mIntermediateEdges;
 	/**
-	 * Function that determines how expression (here {@link Term}s) are translated.
-	 * By default we use the identity.
+	 * Function that determines how expression (here {@link Term}s) are translated. By default we use the identity.
 	 */
 	private Function<Term, Term> mTermTranslator = (x -> x);
 	/**
-	 * Set of variables that are removed from {@link ProgramState}s.
-	 * By default we use the empty set.
-	 * (This can be helpful for auxiliary variables that we cannot
-	 * translate).
+	 * Set of variables that are removed from {@link ProgramState}s. By default we use the empty set. (This can be
+	 * helpful for auxiliary variables that we cannot translate).
 	 */
 	private Set<Term> mVariableBlacklist = Collections.emptySet();
 
@@ -91,34 +89,35 @@ public class BlockEncodingBacktranslator extends
 	@SuppressWarnings("unchecked")
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
-			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
-		if (pe == null) {
+			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> oldPe) {
+		if (oldPe == null) {
 			throw new IllegalArgumentException("programExecution is null");
 		}
 
-		if (!(pe instanceof IcfgProgramExecution)) {
-			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + pe.getClass());
+		if (!(oldPe instanceof IcfgProgramExecution)) {
+			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + oldPe.getClass());
 
 		}
-		final IcfgProgramExecution programExecution = ((IcfgProgramExecution) pe);
-		final Map<TermVariable, Boolean>[] oldBranchEncoders = programExecution.getBranchEncoders();
-		assert oldBranchEncoders.length == programExecution.getLength() : "wrong branchencoders";
+		final IcfgProgramExecution oldIcfgPe = ((IcfgProgramExecution) oldPe);
+		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
+		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
 		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+				oldIcfgPe) : "callstack of initial program execution already broken";
 
-		final List<IIcfgTransition<IcfgLocation>> newTrace = new ArrayList<>();
+		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newTrace = new ArrayList<>();
 		final List<ProgramState<Term>> newValues = new ArrayList<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		if (PRINT_MAPPINGS) {
 			mLogger.info("Using the following mapping");
-			for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping.entrySet()) {
+			for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping
+					.entrySet()) {
 				printMapping(entry.getKey(), entry.getValue());
 			}
 		}
 
-		for (int i = 0; i < programExecution.getLength(); ++i) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = programExecution.getTraceElement(i);
+		for (int i = 0; i < oldIcfgPe.getLength(); ++i) {
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
 			final List<IIcfgTransition<IcfgLocation>> mappedEdges = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdges == null || mappedEdges.isEmpty()) {
 				mLogger.warn("Skipped backtranslation of ATE [" + currentATE.getTraceElement().hashCode() + "] "
@@ -127,31 +126,33 @@ public class BlockEncodingBacktranslator extends
 			}
 			final Iterator<IIcfgTransition<IcfgLocation>> iter = mappedEdges.iterator();
 			while (iter.hasNext()) {
-				newTrace.add(iter.next());
+				final IIcfgTransition<IcfgLocation> currentEdge = iter.next();
+				newTrace.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge).build());
 				if (iter.hasNext()) {
 					newValues.add(null);
 					newBranchEncoders.add(null);
 				}
 			}
-			final ProgramState<Term> newProgramState = translateProgramState(programExecution.getProgramState(i));
+			final ProgramState<Term> newProgramState = translateProgramState(oldIcfgPe.getProgramState(i));
 			newValues.add(newProgramState);
 			newBranchEncoders.add(oldBranchEncoders[i]);
 
 		}
 
 		final Map<Integer, ProgramState<Term>> newValuesMap = new HashMap<>();
-		newValuesMap.put(-1, programExecution.getInitialProgramState());
+		newValuesMap.put(-1, oldIcfgPe.getInitialProgramState());
 		for (int i = 0; i < newValues.size(); ++i) {
 			newValuesMap.put(i, newValues.get(i));
 		}
 
 		final IcfgProgramExecution newPe = new IcfgProgramExecution(newTrace, newValuesMap,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent());
 		assert checkCallStackTargetProgramExecution(mLogger, newPe) : "callstack broke during translation";
 		return newPe;
 	}
 
-	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge, final IIcfgTransition<IcfgLocation> originalEdge) {
+	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge,
+			final IIcfgTransition<IcfgLocation> originalEdge) {
 		final List<IIcfgTransition<IcfgLocation>> limboEdges = mEdgeMapping.get(originalEdge);
 		if (limboEdges != null) {
 			// an intermediate edge is replaced by a new edge
@@ -186,7 +187,8 @@ public class BlockEncodingBacktranslator extends
 		mIntermediateEdges.clear();
 	}
 
-	private void printMapping(final IIcfgTransition<IcfgLocation> newEdge, final List<IIcfgTransition<IcfgLocation>> originalEdges) {
+	private void printMapping(final IIcfgTransition<IcfgLocation> newEdge,
+			final List<IIcfgTransition<IcfgLocation>> originalEdges) {
 		mLogger.info(
 				markCodeblock(newEdge) + newEdge.hashCode() + " is mapped to " + getCollectionString(originalEdges));
 	}
@@ -232,7 +234,8 @@ public class BlockEncodingBacktranslator extends
 	@Deprecated
 	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getEdgeMapping() {
 		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> rtr = new HashMap<>();
-		for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping.entrySet()) {
+		for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mEdgeMapping
+				.entrySet()) {
 			if (entry.getValue().size() > 1) {
 				throw new UnsupportedOperationException(
 						"The new edge " + entry.getKey() + " is mapped to multiple edges");
@@ -248,7 +251,7 @@ public class BlockEncodingBacktranslator extends
 		final List<IIcfgTransition<IcfgLocation>> teList =
 				trace.stream().limit(breakpointIndex).map(a -> a.getTraceElement()).collect(Collectors.toList());
 		mLogger.fatal(new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider())
-				.formatProgramExecution(new IcfgProgramExecution(teList, Collections.emptyMap())));
+				.formatProgramExecution(IcfgProgramExecution.create(teList, Collections.emptyMap())));
 	}
 
 	@Override
@@ -266,7 +269,6 @@ public class BlockEncodingBacktranslator extends
 		final Term result = mTermTranslator.apply(expression);
 		return result;
 	}
-
 
 	@Override
 	public ProgramState<Term> translateProgramState(final ProgramState<Term> oldProgramState) {
@@ -291,9 +293,5 @@ public class BlockEncodingBacktranslator extends
 	public void setVariableBlacklist(final Set<Term> variableBlacklist) {
 		mVariableBlacklist = variableBlacklist;
 	}
-
-
-
-
 
 }

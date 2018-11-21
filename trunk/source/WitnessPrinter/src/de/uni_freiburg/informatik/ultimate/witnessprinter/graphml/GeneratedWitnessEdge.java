@@ -211,4 +211,18 @@ public class GeneratedWitnessEdge<TE, E> {
 		return "L" + getStartLineNumber() + "-L" + getEndLineNumber();
 	}
 
+	public String getThreadId() {
+		if (mATE.hasThreadId()) {
+			return String.valueOf(mATE.getThreadId());
+		}
+		return null;
+	}
+
+	public String getCreatedThreadId() {
+		if (mATE.hasStepInfo(StepInfo.FORK)) {
+			return String.valueOf(mATE.getForkedThreadId());
+		}
+		return null;
+	}
+
 }

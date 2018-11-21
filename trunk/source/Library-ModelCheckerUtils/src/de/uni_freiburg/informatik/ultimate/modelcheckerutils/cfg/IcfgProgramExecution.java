@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,12 +38,17 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.NoBacktranslationVal
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -58,52 +65,143 @@ public class IcfgProgramExecution implements IProgramExecution<IIcfgTransition<I
 	private final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> mTrace;
 	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
+	private final boolean mIsConcurrent;
 
-	@SuppressWarnings("unchecked")
-	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
-			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
-		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
-	}
-
-	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
+	public IcfgProgramExecution(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
-			final Map<TermVariable, Boolean>[] branchEncoders) {
-		this(trace, partialProgramStateMapping, branchEncoders, null);
-	}
-
-	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
-			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
-			final Map<TermVariable, Boolean>[] branchEncoders, final List<IRelevanceInformation> relevanceInformation) {
-		assert trace != null;
+			final Map<TermVariable, Boolean>[] branchEncoders, final boolean isConcurrent) {
 		assert partialProgramStateMapping != null;
 		assert branchEncoders != null;
-		assert relevanceInformation == null || trace.size() == relevanceInformation.size() : "incompatible sizes";
+		assert trace != null;
+		assert partialProgramStateMapping.size() - 1 <= trace.size();
 
-		// a list of boogieastnodes is a trace that consists of atomic
-		// statements.
-		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> atomictrace = new ArrayList<>();
-		for (int i = 0; i < trace.size(); i++) {
-			final IIcfgTransition<IcfgLocation> te = (IIcfgTransition<IcfgLocation>) trace.get(i);
-			final IRelevanceInformation ri;
-			if (relevanceInformation == null) {
-				ri = null;
-			} else {
-				ri = relevanceInformation.get(i);
-			}
-			if (te instanceof IIcfgCallTransition<?>) {
-				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_CALL, ri, te.getPrecedingProcedure(),
-						te.getSucceedingProcedure()));
-			} else if (te instanceof IIcfgReturnTransition<?, ?>) {
-				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_RETURN, ri, te.getPrecedingProcedure(),
-						te.getSucceedingProcedure()));
-			} else {
-				atomictrace.add(new AtomicTraceElement<>(te, ri));
-			}
-		}
-
-		mTrace = atomictrace;
+		mIsConcurrent = isConcurrent;
+		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
 		mBranchEncoders = branchEncoders;
+	}
+
+	public static IcfgProgramExecution create(final List<? extends IIcfgTransition<?>> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
+			final Map<TermVariable, Boolean>[] branchEncoders) {
+		return create(trace, partialProgramStateMapping, branchEncoders, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static IcfgProgramExecution create(final List<? extends IIcfgTransition<?>> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
+		return create(trace, partialProgramStateMapping,
+				new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
+	}
+
+	public static IcfgProgramExecution create(final List<? extends IIcfgTransition<?>> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
+			final Map<TermVariable, Boolean>[] branchEncoders, final List<IRelevanceInformation> relevanceInformation) {
+		final boolean isConcurrent = isConcurrent(trace);
+		final Map<String, Integer> threadIdMap;
+		final int[] threadIds;
+		if (isConcurrent) {
+			threadIdMap = createThreadIds(trace);
+			threadIds = createThreadIdsFromMap(trace, threadIdMap);
+		} else {
+			threadIdMap = null;
+			threadIds = null;
+		}
+		return new IcfgProgramExecution(createATESequence(trace, relevanceInformation, threadIdMap, threadIds),
+				partialProgramStateMapping, branchEncoders, threadIds != null);
+	}
+
+	private static int[] createThreadIdsFromMap(final List<? extends IIcfgTransition<?>> trace,
+			final Map<String, Integer> threadIdMap) {
+		final int[] rtr = new int[trace.size()];
+		int i = 0;
+		for (final IIcfgTransition<?> trans : trace) {
+			final Integer id = threadIdMap.get(trans.getPrecedingProcedure());
+			rtr[i] = id;
+			++i;
+		}
+
+		return rtr;
+	}
+
+	private static boolean isConcurrent(final List<? extends IIcfgTransition<?>> trace) {
+		return trace.stream().anyMatch(a -> a instanceof IIcfgForkTransitionThreadOther<?>
+				|| a instanceof IIcfgJoinTransitionThreadOther<?> || a instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| a instanceof IIcfgJoinTransitionThreadCurrent<?>);
+	}
+
+	private static final Map<String, Integer> createThreadIds(final List<? extends IIcfgTransition<?>> trace) {
+		int nextThreadId = -1;
+		final Map<String, Integer> threadIdMap = new HashMap<>();
+		for (final IIcfgTransition<?> trans : trace) {
+			Integer id = threadIdMap.get(trans.getPrecedingProcedure());
+			if (id == null) {
+				id = nextThreadId;
+				nextThreadId++;
+				threadIdMap.put(trans.getPrecedingProcedure(), id);
+			}
+		}
+		return threadIdMap;
+	}
+
+	/**
+	 * Convert a sequence of {@link IIcfgTransition}s and a sequence of {@link IRelevanceInformation}s together with
+	 * matching thread ids to a sequence of {@link AtomicTraceElement}s.
+	 *
+	 * @param mThreadIds2
+	 *
+	 */
+	private static List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> createATESequence(
+			final List<? extends IIcfgTransition<?>> trace, final List<IRelevanceInformation> relevanceInformation,
+			final Map<String, Integer> threadIdMap, final int[] threadIds) {
+		assert trace != null;
+		assert relevanceInformation == null || trace.size() == relevanceInformation.size() : "incompatible sizes";
+		assert threadIds == null || threadIds.length == trace.size();
+		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> translatedAtes = new ArrayList<>();
+		for (int i = 0; i < trace.size(); i++) {
+			@SuppressWarnings("unchecked")
+			final IIcfgTransition<IcfgLocation> te = (IIcfgTransition<IcfgLocation>) trace.get(i);
+			final AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>> ateBuilder =
+					new AtomicTraceElementBuilder<>();
+			ateBuilder.setStepAndElement(te);
+			ateBuilder.setProcedures(te.getPrecedingProcedure(), te.getSucceedingProcedure());
+			if (threadIdMap != null) {
+				ateBuilder.setThreadId(threadIds[i]);
+			}
+			if (relevanceInformation != null) {
+				ateBuilder.setRelevanceInformation(relevanceInformation.get(i));
+			}
+
+			if (te instanceof IIcfgForkTransitionThreadOther<?>) {
+				if (threadIdMap != null) {
+					final Integer forkedProcedureId = threadIdMap.get(te.getTarget().getProcedure());
+					assert forkedProcedureId != null;
+					ateBuilder.setForkedThreadId(forkedProcedureId);
+				}
+				ateBuilder.setStepInfo(StepInfo.FORK);
+				assert threadIdMap != null;
+			} else if (te instanceof IIcfgForkTransitionThreadCurrent<?>) {
+				if (threadIdMap != null) {
+					final Integer forkedProcedureId = threadIdMap.get(te.getTarget().getProcedure());
+					assert forkedProcedureId != null;
+					ateBuilder.setForkedThreadId(forkedProcedureId);
+				}
+				ateBuilder.setStepInfo(StepInfo.FORK);
+				assert threadIdMap != null;
+			} else if (te instanceof IIcfgJoinTransitionThreadOther<?>) {
+				ateBuilder.setStepInfo(StepInfo.JOIN);
+				assert threadIdMap != null;
+			} else if (te instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+				ateBuilder.setStepInfo(StepInfo.JOIN);
+				assert threadIdMap != null;
+			} else if (te instanceof IIcfgCallTransition<?>) {
+				ateBuilder.setStepInfo(StepInfo.PROC_CALL);
+			} else if (te instanceof IIcfgReturnTransition<?, ?>) {
+				ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
+			}
+			translatedAtes.add(ateBuilder.build());
+		}
+		return translatedAtes;
 	}
 
 	public Map<TermVariable, Boolean>[] getBranchEncoders() {
@@ -155,17 +253,27 @@ public class IcfgProgramExecution implements IProgramExecution<IIcfgTransition<I
 	}
 
 	public IcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
-		final List<IIcfgTransition<IcfgLocation>> edgeSequence = new ArrayList<>();
-		for (final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate : mTrace) {
-			edgeSequence.add(ate.getTraceElement());
+		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newAtes = new ArrayList<>();
+		final Iterator<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> iter = mTrace.iterator();
+		final Iterator<IRelevanceInformation> relIter = relevanceInformation.iterator();
+		boolean isConcurrent = false;
+		while (iter.hasNext()) {
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate =
+					AtomicTraceElementBuilder.from(iter.next()).setRelevanceInformation(relIter.next()).build();
+			isConcurrent = isConcurrent || ate.hasThreadId();
+			newAtes.add(ate);
 		}
-		return new IcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
-				relevanceInformation);
+		return new IcfgProgramExecution(newAtes, mPartialProgramStateMapping, mBranchEncoders, isConcurrent);
 	}
 
 	@Override
 	public IBacktranslationValueProvider<IIcfgTransition<IcfgLocation>, Term> getBacktranslationValueProvider() {
 		return new NoBacktranslationValueProvider<>();
+	}
+
+	@Override
+	public boolean isConcurrent() {
+		return mIsConcurrent;
 	}
 
 }
