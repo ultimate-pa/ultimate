@@ -48,7 +48,7 @@ This archive also contains binaries for the following theorem provers.
      MathSAT5 version 50d9330d8efd 
      (Nov 16 2017 22:36:38, gmp 5.1.3, gcc 4.8.4, 64-bit)
 
-For each of these binaries, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
+For each of these theorem provers, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
 mathsat-LICENSE) can be found in our archive. Please consult these files for additional 
 restrictions regarding your application. If these restrictions apply, you must delete 
 the corresponding binaries. This might not necessarily affect your application. 
