@@ -13,25 +13,45 @@ Alexander Nutz (nutz@informatik.uni-freiburg.de)
 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 Christian Schilling (schillic@informatik.uni-freiburg.de)
 
-This archive also contains binaries for different theorem provers:
+This archive also contains binaries for the following theorem provers.
  * Z3 (https://github.com/Z3Prover/z3) 
-   - Linux
+   - Linux (z3)
      z3-4.8.3-master-fb1287155 (2018-11-18)
-   - Windows
+   - Windows (z3.exe)
      master f699ac0353a57cdd0622b0071babfbfad7b8463a (2018-11-06)
+
  * CVC4 (http://cvc4.cs.nyu.edu/)
-   cvcnyu is an old build, version 1.5-prerelease, subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
-   cvcnyu.exe is an old build, version 1.5-prerelease, subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
-   cvc is a development build, version 1.6-prerelease, git master 06f9525d (with modifications), compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
-   cvc.exe is a development build, version 1.6-prerelease, git master 06f9525d (with modifications), compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
+   - Linux 
+     - cvcnyu is an old build, 
+       version 1.5-prerelease, 
+       subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), 
+       compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
+     - cvc is a development build, 
+       version 1.6-prerelease, 
+       git master 06f9525d (with modifications), 
+       compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
+   - Windows
+     - cvcnyu.exe is an old build, 
+       version 1.5-prerelease, 
+       subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), 
+       compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
+     - cvc.exe is a development build, 
+       version 1.6-prerelease, 
+       git master 06f9525d (with modifications), 
+       compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
 
  * MathSAT5 (http://mathsat.fbk.eu)  
-   - Windows
+   - Windows (mathsat.exe, mpir.dll)
      MathSAT5 version 50d9330d8efd 
      (Nov 16 2017 22:42:29, gmp 5.0.1, gcc 6.3.0, 64-bit)
-   - Linux 
+   - Linux (mathsat)
      MathSAT5 version 50d9330d8efd 
      (Nov 16 2017 22:36:38, gmp 5.1.3, gcc 4.8.4, 64-bit)
+
+For each of these binaries, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
+mathsat-LICENSE) can be found in our archive. Please consult these files for additional 
+restrictions regarding your application. If these restrictions apply, you must delete 
+the corresponding binaries. This might not necessarily affect your application. 
 
 -------------------------------------------------------------------------------
 
