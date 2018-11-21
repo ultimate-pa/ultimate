@@ -1978,7 +1978,8 @@ public class MemoryHandler {
 		}
 
 		final Set<VariableLHS> modifiedGlobals = useSelectInsteadOfStore ?
-				Collections.emptySet() : Collections.singleton(heapDataArray.getVariableLHS());
+				Collections.emptySet() :
+					heapDataArrays.stream().map(hda -> hda.getVariableLHS()).collect(Collectors.toSet());
 
 		if (floating2bitvectorTransformationNeeded && !mSettings.useFpToIeeeBvExtension()) {
 			final Expression returnValueAsBitvector = ExpressionFactory.constructIdentifierExpression(loc,
@@ -2021,8 +2022,12 @@ public class MemoryHandler {
 				conjuncts.add(constructHeapArrayUpdateForWriteEnsures(loc, value, valueModification, inPtrExp,
 						ptrModification, other, useSelectInsteadOfStore));
 			} else {
-				conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, inPtrExp, ptrModification, other,
-						useSelectInsteadOfStore));
+				if (useSelectInsteadOfStore) {
+					// do nothing (no need to havoc an uninitialized memory cell)
+				} else {
+					conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, inPtrExp, ptrModification,
+							other));
+				}
 			}
 
 		}
@@ -2156,14 +2161,10 @@ public class MemoryHandler {
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
 	private static Expression constructHeapArrayHardlyModifiedForWriteEnsures(final ILocation loc,
 			final IdentifierExpression ptrExpr, final Function<Expression, Expression> ptrModification,
-			final HeapDataArray hda, final boolean useSelectInsteadOfStore) {
+			final HeapDataArray hda) {
 		final Expression memArray = hda.getIdentifierExpression();
 		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
-		if (useSelectInsteadOfStore) {
-			return ensuresArrayHasValue(loc, aae, ptrModification.apply(ptrExpr), memArray);
-		} else {
-			return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
-		}
+		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
 	}
 
 	/**
