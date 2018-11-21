@@ -1538,8 +1538,7 @@ public class CHandler {
 			final IASTTypeId typeId = node.getTypeId();
 			final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
 			mCurrentDeclaredTypes.push(declSpecifierResult);
-			final DeclaratorResult declaratorResult =
-					(DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
+			final DeclaratorResult declaratorResult = (DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
 			mCurrentDeclaredTypes.pop();
 
 			final CDeclaration cDeclaration = declaratorResult.getDeclaration();
@@ -1553,16 +1552,16 @@ public class CHandler {
 		{
 			final IASTInitializer initializer = node.getInitializer();
 			ir = (InitializerResult) main.dispatch(initializer);
-		 }
+		}
 
 		final boolean isAddressTaken = (node.getParent() instanceof IASTUnaryExpression)
-					&&  ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
+				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
 		// catch simple case
 		if (!isAddressTaken) {
 			if (cType instanceof CPrimitive || cType instanceof CEnum) {
 				final CPrimitive cPrim = (CPrimitive) cType;
-				final ExpressionResult exprRes = mExprResultTransformer.switchToRValueIfNecessary(
-						InitializerResult.getFirstValueInInitializer(ir), loc, node);
+				final ExpressionResult exprRes = mExprResultTransformer
+						.switchToRValueIfNecessary(InitializerResult.getFirstValueInInitializer(ir), loc, node);
 				assert exprRes.hasLRValue();
 				final ExpressionResult converted = mExprResultTransformer.convert(loc, exprRes, cType);
 
@@ -1571,7 +1570,8 @@ public class CHandler {
 				// used to check if rVal is a constant
 				final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
 
-				if (converted.hasNoSideEffects() && intVal != null && cPrim.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+				if (converted.hasNoSideEffects() && intVal != null
+						&& cPrim.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 					// ExpressionResult is just an integer constant
 					return converted;
 				}
@@ -1596,9 +1596,10 @@ public class CHandler {
 		 * @formatter:on
 		 */
 
-		/* find out the size of the memory block that the compound literal takes, there are two cases
-		 *  - incomplete array declarator: (e.g. (int [])): then the size depends on the initializer
-		 *  - otherwise: the size is given by the CType
+		/*
+		 * find out the size of the memory block that the compound literal takes, there are two cases - incomplete array
+		 * declarator: (e.g. (int [])): then the size depends on the initializer - otherwise: the size is given by the
+		 * CType
 		 */
 		final Expression size = mTypeSizeComputer.constructBytesizeExpression(loc, cType, node);
 
@@ -1610,11 +1611,13 @@ public class CHandler {
 		final AuxVarInfo aux;
 		{
 
-			/* note: it seems ok to make the aux declaration local to Ultimate.Init, since the compound literal cannot
-			 *  be from another point in the program. (this is in contrast e.g. to on heap variables, which
-			 *  aux is somewhat similar to) */
-			final DeclarationInformation declInfo = mProcedureManager.isGlobalScope()
-					? new DeclarationInformation(StorageClass.LOCAL, SFO.INIT)
+			/*
+			 * note: it seems ok to make the aux declaration local to Ultimate.Init, since the compound literal cannot
+			 * be from another point in the program. (this is in contrast e.g. to on heap variables, which aux is
+			 * somewhat similar to)
+			 */
+			final DeclarationInformation declInfo =
+					mProcedureManager.isGlobalScope() ? new DeclarationInformation(StorageClass.LOCAL, SFO.INIT)
 							: new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
 
 			aux = mAuxVarInfoBuilder.constructAuxVarInfoForBlockScope(loc, pointerType, SFO.AUXVAR.COMPOUNDLITERAL,
@@ -1622,7 +1625,6 @@ public class CHandler {
 			builder.addDeclaration(aux.getVarDec());
 			// do not add aux var to builder for havoccing here (havoccing is done after freeing at endScope
 		}
-
 
 		// add malloc/free
 		{
@@ -1632,16 +1634,15 @@ public class CHandler {
 				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singleton(malloc));
 
 			} else {
-				final LocalLValueILocationPair llvp =
-						new LocalLValueILocationPair(llv, loc);
-				// malloc auxvar; note that in contrast to on-heap variables, this malloc must only happen at the beginning
-				//  of the scope, not each time the declaration point of the variable/this compound literal is reached
+				final LocalLValueILocationPair llvp = new LocalLValueILocationPair(llv, loc);
+				// malloc auxvar; note that in contrast to on-heap variables, this malloc must only happen at the
+				// beginning
+				// of the scope, not each time the declaration point of the variable/this compound literal is reached
 				mMemoryHandler.addVariableToBeMalloced(llvp);
 				// schedule aux to be freed at scope end
 				mMemoryHandler.addVariableToBeFreed(llvp);
 			}
 		}
-
 
 		// write the contents of the compound literal to the memory location designated by aux
 		final ExpressionResult initialization = mInitHandler.initialize(loc, aux.getLhs(), cType, ir, true, node);
@@ -1657,8 +1658,8 @@ public class CHandler {
 			final ExpressionResult rex = (ExpressionResult) main.dispatch(node.getChildren()[0]);
 			return mExprResultTransformer.switchToRValueIfNecessary(rex, mLocationFactory.createCLocation(node), node);
 		}
-		throw new UnsupportedOperationException("Cannot understand initializer that has more than two children."
-				+ node.getRawSignature());
+		throw new UnsupportedOperationException(
+				"Cannot understand initializer that has more than two children." + node.getRawSignature());
 	}
 
 	public Result visit(final IDispatcher main, final IASTInitializerList node) {
@@ -1754,59 +1755,8 @@ public class CHandler {
 			final RValue rVal = mExpressionTranslation.translateIntegerLiteral(loc, val);
 			return new ExpressionResult(rVal);
 		}
-		case IASTLiteralExpression.lk_string_literal: {
-			final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
-			final int sizeInBytes = stringLiteral.getByteValues().size();
-			final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
-
-			final RValue auxVarRValue;
-			final AuxVarInfo auxvar;
-			{
-				final RValue dimension = new RValue(
-						sizeInBytesExpr,
-						mExpressionTranslation.getCTypeOfPointerComponents());
-				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
-				final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-				auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(loc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-				auxVarRValue = new RValueForArrays(auxvar.getExp(), arrayType);
-			}
-			// the declaration of the variable that corresponds to a string literal has to be made globally
-			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
-
-			// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-			final boolean writeValues =
-					stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
-
-			final List<Statement> statements = new ArrayList<>();
-			{
-				final CallStatement ultimateAllocCall =
-						mMemoryHandler.getMallocCall(sizeInBytesExpr, auxvar.getLhs(), loc);
-				statements.add(ultimateAllocCall);
-
-				if (writeValues) {
-					final ExpressionResult exprRes =
-							mInitHandler.writeStringLiteral(loc, auxVarRValue, stringLiteral, node);
-					assert !exprRes.hasLRValue();
-					assert exprRes.getDeclarations().isEmpty();
-					assert exprRes.getOverapprs().isEmpty();
-					assert exprRes.getAuxVars().isEmpty();
-					assert exprRes.getNeighbourUnionFields().isEmpty();
-					statements.addAll(exprRes.getStatements());
-				}
-			}
-			mStaticObjectsHandler.addStatementsForUltimateInit(statements);
-
-			final List<Overapprox> overapproxList;
-			if (writeValues) {
-				overapproxList = Collections.emptyList();
-			} else {
-				final Overapprox overapprox = new Overapprox("large string literal", loc);
-				overapproxList = new ArrayList<>();
-				overapproxList.add(overapprox);
-			}
-			return new StringLiteralResult(auxVarRValue, overapproxList, auxvar, stringLiteral, !writeValues);
-		}
+		case IASTLiteralExpression.lk_string_literal:
+			return handleStringLiteralExpression(loc, main, node);
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(
 					new RValue(ExpressionFactory.createBooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
@@ -1817,6 +1767,65 @@ public class CHandler {
 			final String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private Result handleStringLiteralExpression(final ILocation loc, final IDispatcher main,
+			final IASTLiteralExpression node) {
+		// Note: We can either use loc here or create a new ignore-loc s.t. the string literal assignment will not be
+		// shown in the backtranslation
+		final ILocation actualLoc;
+		if (true) {
+			actualLoc = LocationFactory.createIgnoreCLocation(node);
+		} else {
+			actualLoc = loc;
+		}
+
+		final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
+		final int sizeInBytes = stringLiteral.getByteValues().size();
+		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
+
+		final RValue auxVarRValue;
+		final AuxVarInfo auxvar;
+
+		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
+		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
+		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+		auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
+		auxVarRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+		// the declaration of the variable that corresponds to a string literal has to be made globally
+		mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
+
+		// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
+		final boolean writeValues =
+				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+
+		final List<Statement> statements = new ArrayList<>();
+		final CallStatement ultimateAllocCall =
+				mMemoryHandler.getMallocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc);
+		statements.add(ultimateAllocCall);
+
+		if (writeValues) {
+			final ExpressionResult exprRes =
+					mInitHandler.writeStringLiteral(actualLoc, auxVarRValue, stringLiteral, node);
+			assert !exprRes.hasLRValue();
+			assert exprRes.getDeclarations().isEmpty();
+			assert exprRes.getOverapprs().isEmpty();
+			assert exprRes.getAuxVars().isEmpty();
+			assert exprRes.getNeighbourUnionFields().isEmpty();
+			statements.addAll(exprRes.getStatements());
+		}
+		mStaticObjectsHandler.addStatementsForUltimateInit(statements);
+
+		final List<Overapprox> overapproxList;
+		if (writeValues) {
+			overapproxList = Collections.emptyList();
+		} else {
+			final Overapprox overapprox = new Overapprox("large string literal", actualLoc);
+			overapproxList = new ArrayList<>();
+			overapproxList.add(overapprox);
+		}
+		return new StringLiteralResult(auxVarRValue, overapproxList, auxvar, stringLiteral, !writeValues);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
@@ -4263,21 +4272,18 @@ public class CHandler {
 	}
 
 	/**
-	 * Convert a null pointer constant into a pointer a given pointer type. A null
-	 * pointer constant can be (at least in our translation) a "0" that has integer
-	 * type or something that has pointer type.
-	 * TODO 2018-11-17 Matthias: I think we need this method an cannot apply the
-	 * usual conversion since the usual restrictions for pointer-to-pointer
-	 * conversions might be too strict.
-	 * Furthermore, if (in the future) we take the type information from eclipse
-	 * CDT we might be immediately able to identify the correct type of a "0"
-	 * in the code.
+	 * Convert a null pointer constant into a pointer a given pointer type. A null pointer constant can be (at least in
+	 * our translation) a "0" that has integer type or something that has pointer type. TODO 2018-11-17 Matthias: I
+	 * think we need this method an cannot apply the usual conversion since the usual restrictions for
+	 * pointer-to-pointer conversions might be too strict. Furthermore, if (in the future) we take the type information
+	 * from eclipse CDT we might be immediately able to identify the correct type of a "0" in the code.
 	 *
 	 */
-	private ExpressionResult convertNullPointerConstantToPointer(final ILocation loc, ExpressionResult nullPointerConstant,
-			final CPointer desiredResultType) {
+	private ExpressionResult convertNullPointerConstantToPointer(final ILocation loc,
+			ExpressionResult nullPointerConstant, final CPointer desiredResultType) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
-			nullPointerConstant = mExpressionTranslation.convertIntToPointer(loc, nullPointerConstant, desiredResultType);
+			nullPointerConstant =
+					mExpressionTranslation.convertIntToPointer(loc, nullPointerConstant, desiredResultType);
 		} else {
 			assert (nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer);
 		}
