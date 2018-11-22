@@ -16,4 +16,4 @@
 (assert (or (> y 11) (= x 1)))
 
 (check-sat)
-(get-value (x y))
+(get-value (x))

@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * Not what we were looking for.
+ * TODO: Comment.
  * 
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -25,6 +25,7 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 
 	static final String EMPTY = "€";
 	static final String STATE = "q";
+	static final String SINK = "∅SinkState";
 	BigInteger mCounter;
 
 	public MoNatDiffStringFactory() {
@@ -43,7 +44,7 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 
 	@Override
 	public String createSinkStateContent() {
-		return "∅SinkState";
+		return SINK;
 	}
 
 	@Override

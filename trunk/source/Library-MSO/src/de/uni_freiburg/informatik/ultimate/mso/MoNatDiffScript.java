@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -105,7 +104,7 @@ public class MoNatDiffScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
-	private Map<Term, List<Term>> mModel;
+	private Map<Term, Set<Term>> mModel;
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
@@ -176,8 +175,13 @@ public class MoNatDiffScript extends NoopScript {
 			return values;
 
 		for (final Term term : terms) {
+			final Set<Term> value = mModel.get(term);
+			
+			if (value == null)
+				continue;
+			
 			if (SmtSortUtils.isIntSort(term.getSort()))
-				values.put(term, mModel.get(term).get(0));
+				values.put(term, value.iterator().next());
 		}
 
 		return values;
@@ -192,7 +196,7 @@ public class MoNatDiffScript extends NoopScript {
 	 * Traverses term in post order.
 	 *
 	 * @throws AutomataLibraryException
-	 *             iff pi = 4.
+	 *             iff π = 4.
 	 */
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> traversePostOrder(final Term term) throws Exception {
 		mLogger.info("Traverse term: " + term);
@@ -618,26 +622,6 @@ public class MoNatDiffScript extends NoopScript {
 			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
 			final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
 		}
-
-		// IsEmpty<MoNatDiffAlphabetSymbol, String> isEmpty;
-		// isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol,
-		// String>(mAutomataLibrarayServices, automaton);
-		//
-		// if (!isEmpty.getResult()) {
-		// final NestedRun<MoNatDiffAlphabetSymbol, String> run =
-		// isEmpty.getNestedRun();
-		// final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
-		// final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-		//
-		// mLogger.info("RESULT: SAT");
-		// mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word,
-		// terms));
-		//
-		// return LBool.SAT;
-		// }
-		//
-		// mLogger.info("RESULT: UNSAT");
-		// return LBool.UNSAT;
 	}
 
 	/**

@@ -16,6 +16,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * TODO: Comment.
+ * 
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */

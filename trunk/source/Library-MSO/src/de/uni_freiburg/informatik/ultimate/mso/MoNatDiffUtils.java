@@ -5,10 +5,8 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,6 +23,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
+ * TODO: Comment.
+ * 
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -212,20 +212,22 @@ public final class MoNatDiffUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
-	public static Map<Term, List<Term>> parseMoNatDiffToTerm(final Script script,
+	public static Map<Term, Set<Term>> parseMoNatDiffToTerm(final Script script,
 			final Word<MoNatDiffAlphabetSymbol> word, final Term... terms) {
 
-		final Map<Term, List<Term>> result = new HashMap<Term, List<Term>>();
+		final Map<Term, Set<Term>> result = new HashMap<Term, Set<Term>>();
 
 		for (final Term term : terms)
-			result.put(term, new ArrayList<Term>());
+			result.put(term, new HashSet<Term>());
 
 		for (int i = 0; i < word.length(); i++) {
 			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
 
 			for (final Term term : terms) {
-				if (symbol.getMap().get(term))
-					result.get(term).add(SmtUtils.constructIntValue(script, BigInteger.valueOf(i)));
+				if (symbol.getMap().get(term)) {
+					final Term value = SmtUtils.constructIntValue(script, BigInteger.valueOf(i));
+					result.get(term).add(value);
+				}
 			}
 		}
 
