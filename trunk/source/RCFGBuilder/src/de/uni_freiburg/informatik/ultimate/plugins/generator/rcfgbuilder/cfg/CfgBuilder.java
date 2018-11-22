@@ -147,12 +147,12 @@ public class CfgBuilder {
 
 	private final Boogie2SMT mBoogie2Smt;
 	private final BoogieDeclarations mBoogieDeclarations;
-	TransFormulaAdder mTransFormulaAdder;
+	private TransFormulaAdder mTransFormulaAdder;
 
-	Collection<Summary> mImplementationSummarys = new ArrayList<>();
+	private final Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
-	Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mForkCurrentThreads = new HashMap<>();
-	List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinCurrentThreads = new ArrayList<>();
+	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mForks = new HashMap<>();
+	private final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoins = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
 
@@ -204,7 +204,7 @@ public class CfgBuilder {
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
 
-		final ConcurrencyInformation ci = new ConcurrencyInformation(mForkCurrentThreads, mJoinCurrentThreads);
+		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, mJoins);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
@@ -1304,7 +1304,7 @@ public class CfgBuilder {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, true);
 				final IIcfgElement cb = forkCurrentThreadEdge;
 				ModelUtils.copyAnnotations(st, cb);
-				mForkCurrentThreads.put(forkCurrentThreadEdge, null);
+				mForks.put(forkCurrentThreadEdge, null);
 			} else {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, false);
 				final IIcfgElement cb = forkCurrentThreadEdge;
@@ -1345,7 +1345,7 @@ public class CfgBuilder {
 					mCbf.constructJoinCurrentThread(locNode, joinCurrentNode, st);
 			final IIcfgElement cb = joinCurrentThreadEdge;
 			ModelUtils.copyAnnotations(st, cb);
-			mJoinCurrentThreads.add(joinCurrentThreadEdge);
+			mJoins.add(joinCurrentThreadEdge);
 
 			mEdges.add(joinCurrentThreadEdge);
 			mCurrent = joinCurrentNode;
