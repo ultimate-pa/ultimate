@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -75,6 +76,34 @@ public class StoreChainTest {
 
 		mScript.setLogic(Logics.ALL);
 	}
+
+
+	@Test
+	public void test0() {
+
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv8);
+
+		mScript.declareFun("idx1", new Sort[0], bv32);
+		mScript.declareFun("val", new Sort[0], bv8);
+
+		final String formulaAsString =
+				"(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store a idx1 (_ bv5 8)) a) (= (select a idx1) val)))";
+
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info(formulaAsTerm);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info(result);
+
+		final String expectedResultAsString = "(= (_ bv5 8) val)";
+		final Term expectedResult = TermParseUtils.parseTerm(mScript, expectedResultAsString);
+		Assert.assertTrue(expectedResult.equals(result));
+
+	}
+
+
 
 	@Test
 	public void test1() {
