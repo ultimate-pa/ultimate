@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -107,7 +106,6 @@ public class MoNatDiffScript extends NoopScript {
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, List<Term>> mModel;
-	private final HashMap<Term, Term> mValueTerm = new HashMap<Term, Term>();
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
@@ -172,12 +170,17 @@ public class MoNatDiffScript extends NoopScript {
 	 */
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException {
+		final Map<Term, Term> values = new HashMap<Term, Term>();
+
+		if (mModel == null)
+			return values;
+
 		for (final Term term : terms) {
 			if (SmtSortUtils.isIntSort(term.getSort()))
-				mValueTerm.put(term, mModel.get(term).get(0));
+				values.put(term, mModel.get(term).get(0));
 		}
-		
-		return mValueTerm;
+
+		return values;
 	}
 
 	@Override
@@ -340,7 +343,7 @@ public class MoNatDiffScript extends NoopScript {
 		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct not φ: " + term);
 
-		result = new Complement<>(mAutomataLibrarayServices, new StringFactory(), result).getResult();
+		result = new Complement<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
 		if (result.getAlphabet().isEmpty())
 			return result;
 
@@ -353,15 +356,13 @@ public class MoNatDiffScript extends NoopScript {
 			varAutomaton = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton,
 					result.getAlphabet(), true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new StringFactory(), result, varAutomaton).getResult();
+			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, varAutomaton)
+					.getResult();
 		}
 
-		final boolean minimize = true;
-		if (minimize) {
-			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new MinimizeSevpa<>(
-					mAutomataLibrarayServices, new StringFactory(), result).getResult();
-			result = minimized;
-		}
+		// TODO: Find best place for minimization.
+		final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized;
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
 
 		return result;
 	}
@@ -388,7 +389,7 @@ public class MoNatDiffScript extends NoopScript {
 			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new StringFactory(), result, tmp).getResult();
+			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
 
 		return result;
