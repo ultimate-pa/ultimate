@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -1322,19 +1321,30 @@ public class InitializationHandler {
 	}
 
 
+	/**
+	 *
+	 * See also {@link CStringLiteral} for dealing with different string literals, e.g. "wide string literals".
+	 *
+	 * @param loc
+	 * @param stringLiteral
+	 * @param cType
+	 * @param hook
+	 * @return
+	 */
 	public InitializerInfo constructInitInfoFromCStringLiteral(final ILocation loc, final CStringLiteral stringLiteral,
 			final CType cType, final IASTNode hook) {
 		final List<InitializerInfo> list = new ArrayList<>();
 
-		// TODO: just CHAR, or do we have to deal with different types of string literals here???
-		final CType charType = new CPrimitive(CPrimitives.CHAR);
+		/* It seems that the business regarding different types of string literals (e.g. wide string literals) is all
+		 * dealt with through CStringLiteral. In that case, it is ok, to use just char here. */
+		final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
 
 		final InitializerResultBuilder stringInitResBuilder = new InitializerResultBuilder();
 		for (final BigInteger val : stringLiteral.getByteValues()) {
 			final InitializerResultBuilder charInitResBuilder = new InitializerResultBuilder();
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 
-			final IntegerLiteral integerLiteral = ExpressionFactory.createIntegerLiteral(loc, val.toString());
+			final Expression integerLiteral = mTypeSizes.constructLiteralForIntegerType(loc, charType, val);
 			erb.setLrValue(new RValue(integerLiteral, charType));
 
 			charInitResBuilder.setRootExpressionResult(erb.build());
