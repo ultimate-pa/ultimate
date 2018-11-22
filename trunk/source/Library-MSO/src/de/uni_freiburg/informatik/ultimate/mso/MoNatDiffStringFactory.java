@@ -57,7 +57,7 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 	}
 
 	/**
-	 * TODO: Returns a unique string.
+	 * TODO: Returns an unique string.
 	 */
 	private String newString() {
 		final StringBuilder builder = new StringBuilder();
