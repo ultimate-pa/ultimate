@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.List;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
@@ -103,6 +106,7 @@ public class MoNatDiffScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
+	private NestedWord<MoNatDiffAlphabetSymbol> mWord;
 	private HashMap<Term, Term> mValueTerm = new HashMap<Term, Term>();
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
@@ -130,7 +134,7 @@ public class MoNatDiffScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-
+		
 		try {
 
 			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
@@ -139,13 +143,13 @@ public class MoNatDiffScript extends NoopScript {
 
 			if (!isEmpty.getResult()) {
 				final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
-				final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
+				mWord= run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				MoNatDiffUtils.parseMoNatDiffToInteger(word, terms);
+				MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms);
 				
 				mLogger.info("RESULT: SAT");
-				mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(word, terms));
+				mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms));
 				mLogger.info(automatonToString(automaton, Format.ATS));
 				
 				return LBool.SAT;
@@ -168,10 +172,11 @@ public class MoNatDiffScript extends NoopScript {
 	 */
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException {
-		for (Term term : terms) {
-			mValueTerm.put(term, term);
+		for (Term term : terms)
+		{
+			if (SmtSortUtils.isIntSort(term.getSort()))
+				mValueTerm.put(term, MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms).get(term).get(0));
 		}
-		mLogger.info("Value of " + mValueTerm);
 		return mValueTerm;
 	}
 

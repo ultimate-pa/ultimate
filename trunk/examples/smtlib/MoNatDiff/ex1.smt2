@@ -16,4 +16,4 @@
 (assert (or (= x 0) (= x 1)))
 
 (check-sat)
-(get-model)
+(get-value (x))

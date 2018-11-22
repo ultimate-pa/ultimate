@@ -4,6 +4,7 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -211,20 +213,20 @@ public final class MoNatDiffUtils {
 	 * Returns a map which holds all terms and their integer values parsed from
 	 * given word.
 	 */
-	public static Map<Term, List<Integer>> parseMoNatDiffToInteger(final Word<MoNatDiffAlphabetSymbol> word,
+	public static Map<Term, List<Term>> parseMoNatDiffToInteger(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
 			final Term... terms) {
 
-		final Map<Term, List<Integer>> result = new HashMap<Term, List<Integer>>();
+		final Map<Term, List<Term>> result = new HashMap<Term, List<Term>>();
 
 		for (final Term term : terms)
-			result.put(term, new ArrayList<Integer>());
+			result.put(term, new ArrayList<Term>());
 
 		for (int i = 0; i < word.length(); i++) {
 			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
 
 			for (final Term term : terms) {
 				if (symbol.getMap().get(term))
-					result.get(term).add(i);
+					result.get(term).add(SmtUtils.constructIntValue(script, BigInteger.valueOf(i)));
 			}
 		}
 
