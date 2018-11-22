@@ -27,13 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.util.List;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -93,8 +92,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  *            SmtUtils.toCnf(mUltimateServiceProvider, managedScript,
  *            mAssertionTerm,
  *            XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
- *            
- * @Solved {@link Union} does not ensure that Int variables are set exactly once.
+ * 
+ * @Solved {@link Union} does not ensure that Int variables are set exactly
+ *         once.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -106,8 +106,8 @@ public class MoNatDiffScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
-	private NestedWord<MoNatDiffAlphabetSymbol> mWord;
-	private HashMap<Term, Term> mValueTerm = new HashMap<Term, Term>();
+	private Map<Term, List<Term>> mModel;
+	private final HashMap<Term, Term> mValueTerm = new HashMap<Term, Term>();
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
@@ -134,30 +134,30 @@ public class MoNatDiffScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		
+
 		try {
 
-			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
+			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
 
-			IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
+			final IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
 
 			if (!isEmpty.getResult()) {
 				final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();
-				mWord= run.getWord();
+				final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms);
-				
+				mModel = MoNatDiffUtils.parseMoNatDiffToInteger(this, word, terms);
+
 				mLogger.info("RESULT: SAT");
-				mLogger.info("MODEL: " + MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms));
+				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
-				
+
 				return LBool.SAT;
 			}
-			
+
 			mLogger.info("RESULT: UNSAT");
 			mLogger.info(automatonToString(automaton, Format.ATS));
-			
+
 			return LBool.UNSAT;
 
 		} catch (final Exception e) {
@@ -168,15 +168,15 @@ public class MoNatDiffScript extends NoopScript {
 	}
 
 	/**
-	 * TODO: Implement that.
+	 * TODO: Implement for Sets.
 	 */
 	@Override
-	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException {
-		for (Term term : terms)
-		{
+	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException {
+		for (final Term term : terms) {
 			if (SmtSortUtils.isIntSort(term.getSort()))
-				mValueTerm.put(term, MoNatDiffUtils.parseMoNatDiffToInteger(this, mWord, terms).get(term).get(0));
+				mValueTerm.put(term, mModel.get(term).get(0));
 		}
+		
 		return mValueTerm;
 	}
 
@@ -387,7 +387,7 @@ public class MoNatDiffScript extends NoopScript {
 
 			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
-			
+
 			result = new Intersect<>(mAutomataLibrarayServices, new StringFactory(), result, tmp).getResult();
 		}
 
@@ -611,7 +611,7 @@ public class MoNatDiffScript extends NoopScript {
 	private void checkEmptiness(final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton)
 			throws AutomataOperationCanceledException {
 
-		IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
+		final IsEmpty isEmpty = new IsEmpty<MoNatDiffAlphabetSymbol, String>(mAutomataLibrarayServices, automaton);
 
 		if (!isEmpty.getResult()) {
 			final NestedRun<MoNatDiffAlphabetSymbol, String> run = isEmpty.getNestedRun();

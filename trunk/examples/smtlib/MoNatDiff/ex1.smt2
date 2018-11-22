@@ -13,7 +13,7 @@
 
 ; (assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
 
-(assert (or (= x 0) (= x 1)))
+(assert (or (> y 11) (= x 1)))
 
 (check-sat)
-(get-value (x))
+(get-value (x y))
