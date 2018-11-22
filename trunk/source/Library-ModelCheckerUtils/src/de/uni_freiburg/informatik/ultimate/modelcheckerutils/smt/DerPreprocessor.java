@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -273,6 +276,21 @@ public class DerPreprocessor extends TermTransformer {
 		// TODO: let Prenex transformer deal with non-NNF terms and remove the
 		// following line
 		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
+		return result;
+	}
+
+	/**
+	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula
+	 * ((idx != oi_1) /\ ... /\ (idx != oi_n)) ==> ((select arr idx) = value)
+	 */
+	private Term constructDisjointIndexImplication(final Term idx, final List<Term> otherIndices, final Term value,
+			final Term arr) {
+		final Term select = SmtUtils.select(mScript, arr, idx);
+		final Term selectEqualsValue = SmtUtils.binaryEquality(mScript, select, value);
+		final List<Term> conjuncts = otherIndices.stream().map(x -> SmtUtils.distinct(mScript, idx, x))
+				.collect(Collectors.toList());
+		final Term conjunction = SmtUtils.and(mScript, conjuncts);
+		final Term result = SmtUtils.implies(mScript, conjunction, selectEqualsValue);
 		return result;
 	}
 
