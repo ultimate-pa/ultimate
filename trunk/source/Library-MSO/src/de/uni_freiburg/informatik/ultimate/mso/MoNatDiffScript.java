@@ -146,7 +146,7 @@ public class MoNatDiffScript extends NoopScript {
 				final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				mModel = MoNatDiffUtils.parseMoNatDiffToInteger(this, word, terms);
+				mModel = MoNatDiffUtils.parseMoNatDiffToTerm(this, word, terms);
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);

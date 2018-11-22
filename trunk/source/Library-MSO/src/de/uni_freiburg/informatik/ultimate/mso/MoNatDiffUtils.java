@@ -210,11 +210,10 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns a map which holds all terms and their integer values parsed from
-	 * given word.
+	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
-	public static Map<Term, List<Term>> parseMoNatDiffToInteger(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
-			final Term... terms) {
+	public static Map<Term, List<Term>> parseMoNatDiffToTerm(final Script script,
+			final Word<MoNatDiffAlphabetSymbol> word, final Term... terms) {
 
 		final Map<Term, List<Term>> result = new HashMap<Term, List<Term>>();
 
