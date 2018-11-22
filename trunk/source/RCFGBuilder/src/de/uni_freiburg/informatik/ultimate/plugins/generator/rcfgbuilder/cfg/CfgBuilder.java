@@ -42,6 +42,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -106,6 +107,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debug
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -751,6 +753,11 @@ public class CfgBuilder {
 				gotoEdge.setSource(null);
 				gotoEdge.setTarget(null);
 				child.removeIncoming(gotoEdge);
+				final ILocation loc = mother.getBoogieASTNode().getLocation();
+				final StatementSequence gotoSelfloopSubstitute = mCbf.constructStatementSequence(mother, child,
+						new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true)));
+				gotoSelfloopSubstitute.setTransitionFormula(
+						TransFormulaBuilder.getTrivialTransFormula(mBoogie2Smt.getManagedScript()));
 				mLogger.debug("GotoEdge was selfloop");
 				return true;
 			}
