@@ -166,6 +166,8 @@ public class CfgBuilder {
 
 	private final CodeBlockFactory mCbf;
 
+	private int mRemovedAssumeTrueStatements = 0;
+
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
@@ -275,6 +277,7 @@ public class CfgBuilder {
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
+		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assue(true) statements.");
 		return icfg;
 	}
 
@@ -445,6 +448,19 @@ public class CfgBuilder {
 
 	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> getBacktranslator() {
 		return mRcfgBacktranslator;
+	}
+
+	private static boolean isAssumeTrueStatement(final Statement st) {
+		if (st instanceof AssumeStatement) {
+			final AssumeStatement as = (AssumeStatement) st;
+			if (as.getFormula() instanceof BooleanLiteral) {
+				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
+				if (bl.getValue()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -833,7 +849,7 @@ public class CfgBuilder {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				ModelUtils.copyAnnotations(spec, st);
 				mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
-				processAssuAssiHavoStatement(st, Origin.ENSURES);
+				startNewStatementSequenceAndAddStatement(st, Origin.ENSURES);
 				mLastStmt = st;
 			}
 			final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(mCurrentProcedureName);
@@ -984,6 +1000,10 @@ public class CfgBuilder {
 			if (mDeadcode) {
 				return;
 			}
+			if (isAssumeTrueStatement(st)) {
+				mRemovedAssumeTrueStatements++;
+				return;
+			}
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
@@ -1005,6 +1025,7 @@ public class CfgBuilder {
 			}
 
 		}
+
 
 		private void startNewStatementSequenceAndAddStatement(final Statement st, final Origin origin) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
