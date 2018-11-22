@@ -4,6 +4,8 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
@@ -14,6 +16,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  */
 public class MoNatDiffStringFactory implements IIntersectionStateFactory<String> {
 	
+	BigInteger mCounter;
+	
+	public MoNatDiffStringFactory() {
+		mCounter = BigInteger.ZERO;
+	}
+	
 	@Override
 	public String createEmptyStackState() {
 		return "€";
@@ -21,9 +29,9 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 	
 	@Override
 	public String intersection(final String state1, final String state2) {
-		final StringBuilder builder = new StringBuilder();
-		builder.append(state1).append(state2);
+		final String str = mCounter.toString();
+		mCounter.add(BigInteger.ONE);
 				
-		return builder.toString();
+		return str;
 	}
 }
