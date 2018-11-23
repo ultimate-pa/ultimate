@@ -583,6 +583,11 @@ public class CfgBuilder {
 							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
+				if (isAssumeTrueStatement(st)) {
+					mRemovedAssumeTrueStatements++;
+					return;
+				}
+
 				final ILocation loc = st.getLocation();
 				assert loc != null : "location of the following statement is null " + st;
 
@@ -998,10 +1003,6 @@ public class CfgBuilder {
 
 		private void processAssuAssiHavoStatement(final Statement st, final Origin origin) {
 			if (mDeadcode) {
-				return;
-			}
-			if (isAssumeTrueStatement(st)) {
-				mRemovedAssumeTrueStatements++;
 				return;
 			}
 			if (mCurrent instanceof BoogieIcfgLocation) {
