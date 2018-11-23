@@ -3441,10 +3441,14 @@ public class CHandler {
 
 			for (final CDeclaration cd : rd.getDeclarations()) {
 
-				if (cd.getType().isIncomplete()) {
+				if (cd.getType().isIncomplete() && !cd.isOnHeap()) {
 					/*
 					 * type of this (variable) declaration is incomplete at the end of the file -- omit the declaration
 					 * from Boogie program
+					 *
+					 * EDIT (alex Nov '18): additional constraint for omission: only omit if object is not on heap. If
+					 *  it is on heap, then the corresponding pointer may still be used, even if the type is never
+					 *  completed (if the declaration has storage class extern).
 					 */
 					continue;
 				}
