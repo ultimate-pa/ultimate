@@ -27,18 +27,18 @@ This archive also contains binaries for the following theorem provers.
        subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), 
        compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
      - cvc4 is a development build, 
-       version 1.6-prerelease, 
-       git master 06f9525d (with modifications), 
-       compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
+       version 1.7-prerelease,
+       git master 391ab9df
+       compiled with GCC version 5.4.0 20160609 on Nov 23 2018 03:32:38
    - Windows
      - cvc4nyu.exe is an old build, 
        version 1.5-prerelease, 
        subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), 
        compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
      - cvc4.exe is a development build, 
-       version 1.6-prerelease, 
-       git master 06f9525d (with modifications), 
-       compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
+       version 1.7-prerelease
+       compiled with GCC version 5.3.1 20160211 on Nov 23 2018 13:17:28
+       Note that this version does not output the git hash, but it should be the same as the Linux version
 
  * MathSAT5 (http://mathsat.fbk.eu)  
    - Windows (mathsat.exe, mpir.dll)

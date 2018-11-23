@@ -20,7 +20,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=cvc4nyu --tear-down-incremental --rewrite-divk --print-success --lang smt --tlimit-per\=12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=cvc4 --incremental --rewrite-divk --print-success --lang smt --tlimit-per\=12000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=AUFLIRA
 #Sat Oct 18 16:33:01 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
