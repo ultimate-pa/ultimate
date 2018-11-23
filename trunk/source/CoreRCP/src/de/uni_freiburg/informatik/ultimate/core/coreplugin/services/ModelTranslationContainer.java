@@ -212,12 +212,12 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
 
-		System.out.println("-----");
-		System.out.println(translator.getClass());
-		System.out.println(programExecution);
-		System.out.println();
-		System.out.println(translated);
-		System.out.println("-----");
+		// System.out.println("-----");
+		// System.out.println(translator.getClass());
+		// System.out.println(programExecution);
+		// System.out.println();
+		// System.out.println(translated);
+		// System.out.println("-----");
 
 		return translateProgramExecution(remaining, translated);
 	}
