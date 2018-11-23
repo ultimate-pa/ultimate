@@ -854,7 +854,7 @@ public class CfgBuilder {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				ModelUtils.copyAnnotations(spec, st);
 				mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
-				startNewStatementSequenceAndAddStatement(st, Origin.ENSURES);
+				processAssuAssiHavoStatement(st, Origin.ENSURES);
 				mLastStmt = st;
 			}
 			final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(mCurrentProcedureName);
