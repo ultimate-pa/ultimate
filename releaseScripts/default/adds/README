@@ -22,20 +22,20 @@ This archive also contains binaries for the following theorem provers.
 
  * CVC4 (http://cvc4.cs.nyu.edu/)
    - Linux 
-     - cvcnyu is an old build, 
+     - cvc4nyu is an old build, 
        version 1.5-prerelease, 
        subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), 
        compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
-     - cvc is a development build, 
+     - cvc4 is a development build, 
        version 1.6-prerelease, 
        git master 06f9525d (with modifications), 
        compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
    - Windows
-     - cvcnyu.exe is an old build, 
+     - cvc4nyu.exe is an old build, 
        version 1.5-prerelease, 
        subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), 
        compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
-     - cvc.exe is a development build, 
+     - cvc4.exe is a development build, 
        version 1.6-prerelease, 
        git master 06f9525d (with modifications), 
        compiled with GCC version 5.4.0 20160609 on Jun 17 2018 03:34:26
