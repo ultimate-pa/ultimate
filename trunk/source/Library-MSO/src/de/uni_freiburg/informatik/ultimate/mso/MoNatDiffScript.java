@@ -165,7 +165,7 @@ public class MoNatDiffScript extends NoopScript {
 	}
 
 	/**
-	 * TODO: Implement for Sets.
+	 * TODO: Implement for Sets. (hacked for now)
 	 */
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException {
@@ -182,6 +182,9 @@ public class MoNatDiffScript extends NoopScript {
 			
 			if (SmtSortUtils.isIntSort(term.getSort()))
 				values.put(term, value.iterator().next());
+			
+			if (MoNatDiffUtils.isSetOfIntSort(term.getSort()))
+				values.put(term, term.getSort().getTheory().constant(value, term.getSort()));
 		}
 
 		return values;
