@@ -3,13 +3,13 @@
 <benchmark tool="ultimateautomizer" timelimit="240s" hardtimelimit="240s" memlimit="8GB" cpuCores="2">
  
   <rundefinition name="Bitvector">
-          <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+          <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline_WitnessPrinter.xml</option>
           <option name="-ea" />
 	      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </rundefinition>
 
   <rundefinition name="Default">
-          <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+          <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline_WitnessPrinter.xml</option>
           <option name="-ea" />
 		  <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   </rundefinition>
