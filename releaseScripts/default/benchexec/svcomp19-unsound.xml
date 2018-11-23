@@ -6,7 +6,7 @@
     <tasks name="Memsafety-32bit">
         <include>../../../trunk/examples/svcomp/memsafety-ext3/freeAlloca_false-valid-free.c</include>
         <include>../../../trunk/examples/svcomp/memsafety-ext3/naturalNumbers1_false-valid-deref.c</include>
-        <propertyfile>../../../trunk/examples/svcomp/MemSafety.prp</propertyfile>
+        <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
         <option name="--architecture">32bit</option>
     </tasks>
 
@@ -18,7 +18,7 @@
         <include>../../../trunk/examples/svcomp/heap-manipulation/tree_false-unreach-call_false-valid-memcleanup.i</include>
         <include>../../../trunk/examples/svcomp/loop-invariants/bin-suffix-5_true-unreach-call_true-valid-memsafety_true-no-overflow_false-termination.c</include>
         <include>../../../trunk/examples/svcomp/loops/s3_false-unreach-call.i</include>
-        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+        <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
         <option name="--architecture">32bit</option>
 	</tasks>
 
@@ -57,7 +57,7 @@
         <include>../../../trunk/examples/svcomp/ldv-validator-v0.8/linux-stable-a450319-1-144_1a-drivers--input--tablet--acecad.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c</include>
         <include>../../../trunk/examples/svcomp/ldv-validator-v0.8/linux-stable-a450319-1-144_2a-drivers--input--tablet--acecad.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c</include>
 
-        <propertyfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.prp</propertyfile>
+        <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
         <option name="--architecture">64bit</option>
 	</tasks>
 
