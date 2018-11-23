@@ -585,7 +585,7 @@ public class CfgBuilder {
 
 				if (isAssumeTrueStatement(st)) {
 					mRemovedAssumeTrueStatements++;
-					return;
+					continue;
 				}
 
 				final ILocation loc = st.getLocation();
