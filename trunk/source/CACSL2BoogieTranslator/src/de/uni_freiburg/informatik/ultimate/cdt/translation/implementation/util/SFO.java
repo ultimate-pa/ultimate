@@ -201,6 +201,8 @@ public final class SFO {
 	 */
 	public static final String ALLOC = "#Ultimate.alloc";
 
+	public static final String MEMINIT = "#Ultimate.meminit";
+
 	public static final String C_MEMCPY = "#Ultimate.C_memcpy";
 
 	public static final String C_MEMMOVE = "#Ultimate.C_memmove";
@@ -210,6 +212,7 @@ public final class SFO {
 	public static final String C_STRCPY = "#Ultimate.C_strcpy";
 
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
+
 
 
 	/**

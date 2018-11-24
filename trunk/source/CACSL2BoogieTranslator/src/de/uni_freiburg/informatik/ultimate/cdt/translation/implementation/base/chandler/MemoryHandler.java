@@ -142,7 +142,10 @@ public class MemoryHandler {
 
 		Ultimate_Dealloc(SFO.DEALLOC),
 
-		Ultimate_MemInit("#Ultimate.meminit"),
+		/**
+		 * (used for calloc)
+		 */
+		Ultimate_MemInit(SFO.MEMINIT),
 
 		C_Memcpy(SFO.C_MEMCPY),
 
@@ -169,6 +172,67 @@ public class MemoryHandler {
 		public String getName() {
 			return mName;
 		}
+
+		/**
+		 *
+		 * @param rmmf
+		 * @param settings
+		 * @return true iff the method execution made a change in rmmf
+		 */
+		boolean resolveDependencies(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+			if (this == MemoryModelDeclarations.C_Memcpy || this == MemoryModelDeclarations.C_Memmove) {
+				return memcpyOrMemmoveRequirements(rmmf);
+			} else if (this == MemoryModelDeclarations.C_Memset) {
+				return false;
+			} else if (this == MemoryModelDeclarations.Ultimate_MemInit) {
+				return meminitRequirements(rmmf, settings);
+			} else if (this == MemoryModelDeclarations.C_StrCpy) {
+				return strcpyRequirements(rmmf, settings);
+			} else {
+				return false;
+			}
+		}
+
+		private boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+			boolean changedSomething = false;
+			for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+				changedSomething |= rmmf.reportUncheckedWriteRequired(prim);
+			}
+			if (rmmf.mPointerOnHeapRequired) {
+				changedSomething |= rmmf.reportPointerUncheckedWriteRequired();
+			}
+			return changedSomething;
+		}
+
+		private boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf,
+				final TranslationSettings settings) {
+			boolean changedSomething = false;
+			if (settings.useConstantArrays()) {
+				for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+					changedSomething |= rmmf.reportDataOnHeapInitFunctionRequired(prim);
+				}
+				if (rmmf.isPointerOnHeapRequired()) {
+					changedSomething |= rmmf.reportPointerOnHeapInitFunctionRequired();
+				}
+			}
+			/*
+			 * at the moment meminit is using manual assignments, not write calls, that should perhaps be changed
+			 *  --> and then we need to add the corresponding code here, like e.g. for memmove
+			 */
+			return changedSomething;
+		}
+
+		boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
+			boolean changedSomething = false;
+			for (final CPrimitives prim : mmf.mDataOnHeapRequired) {
+				changedSomething |= mmf.reportUncheckedWriteRequired(prim);
+			}
+			if (mmf.mPointerOnHeapRequired) {
+				changedSomething |= mmf.reportPointerUncheckedWriteRequired();
+			}
+			return changedSomething;
+		}
+
 	}
 
 
@@ -274,7 +338,7 @@ public class MemoryHandler {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mSettings = settings;
 
-		mRequiredMemoryModelFeatures = prerunMemoryHandler.mRequiredMemoryModelFeatures;
+		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();//prerunMemoryHandler.mRequiredMemoryModelFeatures;
 		mBooleanArrayHelper = prerunMemoryHandler.mBooleanArrayHelper;
 		mMemoryModel = prerunMemoryHandler.mMemoryModel;
 		mVariablesToBeMalloced = prerunMemoryHandler.mVariablesToBeMalloced;
@@ -310,13 +374,16 @@ public class MemoryHandler {
 	 *            location to use for declarations. Usually this will be the location of the TranslationUnit.
 	 * @return a set of declarations.
 	 */
-	public ArrayList<Declaration> declareMemoryModelInfrastructure(final CHandler main, final ILocation tuLoc,
+	public List<Declaration> declareMemoryModelInfrastructure(final CHandler main, final ILocation tuLoc,
 			final IASTNode hook) {
-		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()
 				&& mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().isEmpty()) {
-			return decl;
+			return Collections.emptyList();
 		}
+
+		mRequiredMemoryModelFeatures.finish(mSettings);
+
+		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		decl.add(constructNullPointerConstant());
 		decl.add(constructValidArrayDeclaration());
@@ -332,10 +399,20 @@ public class MemoryHandler {
 				decl.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray, hook));
 				decl.addAll(constructReadProcedures(main, tuLoc, heapDataArray, hook));
 
-				if (mRequiredMemoryModelFeatures.isDataOnHeapInitFunctionRequired(heapDataArray)) {
-					declareDataOnHeapInitFunction(heapDataArray);
+			}
+		}
+
+		{
+			// add init function (interface to smt const arrays)
+			for (final CPrimitives prim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
+				if (mRequiredMemoryModelFeatures.isDataOnHeapInitFunctionRequired(prim)) {
+					declareDataOnHeapInitFunction(mMemoryModel.getDataHeapArray(prim));
 				}
 			}
+			if (mRequiredMemoryModelFeatures.isPointerOnHeapInitFunctionRequired()) {
+				declareDataOnHeapInitFunction(mMemoryModel.getPointerHeapArray());
+			}
+
 		}
 
 		decl.addAll(declareDeallocation(main, tuLoc, hook));
@@ -1771,9 +1848,6 @@ public class MemoryHandler {
 		// make the specifications
 		final ArrayList<Specification> specs = new ArrayList<>();
 
-		// EDIT: the function handler should completely deal with modifies clauses if we announce them correctly
-		// add modifies spec
-
 		// add requires #valid[#ptr!base];
 		specs.addAll(constructPointerBaseValidityCheck(ignoreLoc, inParamPtr, procName));
 
@@ -2835,19 +2909,19 @@ public class MemoryHandler {
 			if (baseType instanceof CPointer) {
 				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
-				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
 				relevantHeapArrays.add(hda);
 			} else if (baseType instanceof CPrimitive) {
 				final CPrimitives primitive = ((CPrimitive) baseType).getType();
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
-				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
 				relevantHeapArrays.add(hda);
 			} else if (baseType instanceof CEnum) {
 				final CPrimitives primitive = CPrimitives.INT;
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
-				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(hda);
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
 				relevantHeapArrays.add(hda);
 			} else {
 				throw new AssertionError("unforseen case");
@@ -3130,7 +3204,30 @@ public class MemoryHandler {
 		}
 	}
 
+	/**
+	 *
+	 *
+	 * Note that this class has two freezing mechanisms. (Here, freezing means that at some point we set a flag and
+	 *  after that nothing may change anymore in the class members associated with the flag.)
+	 * <li> One for the query if any memory model features are required (PostProcessor queries this because it needs to
+	 *  know for the init procedure.).
+	 * <li> At the start of {@link MemoryHandler#declareMemoryModelInfrastructure(CHandler, ILocation, IASTNode)},
+	 *  the method {@link RequiredMemoryModelFeatures#finish()} is called. This method resolves dependencies between the
+	 *  different memory model features (e.g. memcpy requires write_unchecked procedures for all heap data arrays),
+	 *   afterwards it freezes those features.
+	 *
+	 * Background:
+	 *  There are different dependencies between features recorded in this class.
+	 *  Simple ones are resolved immediately (e.g. reportPointerUncheckedWriteRequired, triggers
+	 *   reportPointerOnHeapRequired).
+	 *  Others are resolved during finish().
+	 */
 	public static final class RequiredMemoryModelFeatures {
+
+		/**
+		 * This flag must be set if any of the memory model features are required.
+		 */
+		private boolean mMemoryModelInfrastructureRequired;
 
 		private final Set<CPrimitives> mDataOnHeapRequired;
 		private final Set<CPrimitives> mDataUncheckedWriteRequired;
@@ -3140,7 +3237,19 @@ public class MemoryHandler {
 		private boolean mPointerInitWriteRequired;
 		private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations;
 
-		private final Set<HeapDataArray> mDataOnHeapInitFunctionRequired;
+		/**
+		 * Set of HeapDataArrays for which constant array initialization is required.
+		 * (for those we create a Boogie function with smtdefined attribute..)
+		 */
+		private final Set<CPrimitives> mDataOnHeapInitFunctionRequired;
+		private boolean mPointerOnHeapInitFunctionRequired;
+
+		/**
+		 * Once this flag is set, no member of this class may be changed anymore.
+		 */
+		private boolean mIsFrozen;
+
+		private boolean mMemoryModelInfrastructureRequiredHasBeenQueried;
 
 		public RequiredMemoryModelFeatures() {
 			mDataOnHeapRequired = new HashSet<>();
@@ -3150,79 +3259,196 @@ public class MemoryHandler {
 			mDataOnHeapInitFunctionRequired = new HashSet<>();
 		}
 
-		public void reportPointerOnHeapRequired() {
+		public boolean requireMemoryModelInfrastructure() {
+			if (mMemoryModelInfrastructureRequired) {
+				return false;
+			}
+			if (mMemoryModelInfrastructureRequiredHasBeenQueried) {
+				throw new AssertionError("someone already asked if memory model infrastructure was required and we "
+						+ "said no");
+			}
+			mMemoryModelInfrastructureRequired = true;
+			require(MemoryModelDeclarations.Ultimate_Length);
+			require(MemoryModelDeclarations.Ultimate_Valid);
+			return true;
+		}
+
+		public boolean reportPointerOnHeapRequired() {
+			if (mPointerOnHeapRequired) {
+				return false;
+			}
+			checkNotFrozen();
+			requireMemoryModelInfrastructure();
 			mPointerOnHeapRequired = true;
+			return true;
 		}
 
-		public void reportPointerUncheckedWriteRequired() {
-			assert mPointerOnHeapRequired;
+		public boolean reportPointerUncheckedWriteRequired() {
+			if (mPointerUncheckedWriteRequired) {
+				return false;
+			}
+			checkNotFrozen();
+			reportPointerOnHeapRequired();
 			mPointerUncheckedWriteRequired = true;
+			return true;
 		}
 
-		public void reportPointerInitWriteRequired() {
-			assert mPointerOnHeapRequired;
+		public boolean reportPointerInitWriteRequired() {
+			if (mPointerInitWriteRequired) {
+				return false;
+			}
+			checkNotFrozen();
+			reportPointerOnHeapRequired();
 			mPointerInitWriteRequired = true;
+			return true;
 		}
 
-		public void reportDataOnHeapRequired(final CPrimitives primitive) {
+		public boolean reportDataOnHeapRequired(final CPrimitives primitive) {
+			if (mDataOnHeapRequired.contains(primitive)) {
+				return false;
+			}
+			checkNotFrozen();
+			requireMemoryModelInfrastructure();
 			mDataOnHeapRequired.add(primitive);
+			return true;
 		}
 
-		public void reportUncheckedWriteRequired(final CPrimitives type) {
-			assert mDataOnHeapRequired.contains(type);
-			mDataUncheckedWriteRequired.add(type);
+		public boolean reportUncheckedWriteRequired(final CPrimitives primitive) {
+			if (mDataUncheckedWriteRequired.contains(primitive)) {
+				return false;
+			}
+			checkNotFrozen();
+			reportDataOnHeapRequired(primitive);
+			mDataUncheckedWriteRequired.add(primitive);
+			return true;
 		}
 
-		public void reportInitWriteRequired(final CPrimitives type) {
-			assert mDataOnHeapRequired.contains(type);
-			mDataInitWriteRequired.add(type);
+		public boolean reportInitWriteRequired(final CPrimitives prim) {
+			if (mDataInitWriteRequired.contains(prim)) {
+				return false;
+			}
+			checkNotFrozen();
+			reportDataOnHeapRequired(prim);
+			mDataInitWriteRequired.add(prim);
+			return true;
 		}
 
-		public void reportDataOnHeapInitFunctionRequired(final HeapDataArray hda) {
-			mDataOnHeapInitFunctionRequired.add(hda);
+		public boolean reportDataOnHeapInitFunctionRequired(final CPrimitives prim) {
+			if (mDataOnHeapInitFunctionRequired.contains(prim)) {
+				return false;
+			}
+			checkNotFrozen();
+			reportDataOnHeapRequired(prim);
+			mDataOnHeapInitFunctionRequired.add(prim);
+			return true;
+		}
+
+		public boolean reportPointerOnHeapInitFunctionRequired() {
+			if (mPointerOnHeapInitFunctionRequired) {
+				return false;
+			}
+			checkNotFrozen();
+			reportPointerOnHeapRequired();
+			mPointerOnHeapInitFunctionRequired = true;
+			return true;
 		}
 
 		public boolean isPointerOnHeapRequired() {
+			checkIsFrozen();
 			return mPointerOnHeapRequired;
 		}
 
 		public boolean isPointerUncheckedWriteRequired() {
+			checkIsFrozen();
 			return mPointerUncheckedWriteRequired;
 		}
 
 		public boolean isPointerInitRequired() {
+			checkIsFrozen();
 			return mPointerInitWriteRequired;
 		}
 
 		public Set<CPrimitives> getDataOnHeapRequired() {
+			checkIsFrozen();
 			return mDataOnHeapRequired;
 		}
 
-		public boolean isDataOnHeapInitFunctionRequired(final HeapDataArray hda) {
-			return mDataOnHeapInitFunctionRequired.contains(hda);
+		public boolean isPointerOnHeapInitFunctionRequired() {
+			checkIsFrozen();
+			return mPointerOnHeapInitFunctionRequired;
+		}
+
+		public boolean isDataOnHeapInitFunctionRequired(final CPrimitives prim) {
+			checkIsFrozen();
+			return mDataOnHeapInitFunctionRequired.contains(prim);
 		}
 
 
 		public Set<CPrimitives> getUncheckedWriteRequired() {
+			checkIsFrozen();
 			return mDataUncheckedWriteRequired;
 		}
 
 		public Set<CPrimitives> getInitWriteRequired() {
+			checkIsFrozen();
 			return mDataInitWriteRequired;
 		}
 
 
 		public boolean isMemoryModelInfrastructureRequired() {
-			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty()
-					|| !getRequiredMemoryModelDeclarations().isEmpty();
+			mMemoryModelInfrastructureRequiredHasBeenQueried = true;
+			return mMemoryModelInfrastructureRequired;
 		}
 
+		/**
+		 *
+		 * @param mmdecl
+		 * @return true if a change was made
+		 */
 		public boolean require(final MemoryModelDeclarations mmdecl) {
+			if (mRequiredMemoryModelDeclarations.contains(mmdecl)) {
+				// mmdecl has already been added -- nothing to do
+				return false;
+			}
+			checkNotFrozen();
+			requireMemoryModelInfrastructure();
 			return mRequiredMemoryModelDeclarations.add(mmdecl);
 		}
 
 		public Set<MemoryModelDeclarations> getRequiredMemoryModelDeclarations() {
+			checkIsFrozen();
 			return Collections.unmodifiableSet(mRequiredMemoryModelDeclarations);
+		}
+
+		/**
+		 * <ul>
+		 *  <li>
+		 *  <li> make all members of this class unmodifiable from this point on
+		 * </ul>
+		 * @param settings
+		 */
+		public void finish(final TranslationSettings settings) {
+			boolean changedSomething = true;
+			while (changedSomething) {
+				changedSomething = false;
+				for (final MemoryModelDeclarations mmdecl : mRequiredMemoryModelDeclarations) {
+					changedSomething |=	mmdecl.resolveDependencies(this, settings);
+				}
+			}
+			mIsFrozen = true;
+		}
+
+		private void checkIsFrozen() {
+			if (!mIsFrozen) {
+				throw new AssertionError("attempt to query before this has been frozen -- results might be wrong");
+			}
+		}
+
+		private void checkNotFrozen() {
+			if (mIsFrozen) {
+				throw new AssertionError("attempt to modify, although this has been frozen already, perhaps we need to "
+						+ "update MemoryModelDeclarations.resolveDependencies(..)");
+			}
 		}
 	}
 

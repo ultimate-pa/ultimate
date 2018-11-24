@@ -336,5 +336,4 @@ public class CPrimitive extends CType {
 		}
 		return false;
 	}
-
 }
