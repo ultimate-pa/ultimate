@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.NestedArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
@@ -214,10 +213,12 @@ public class DerPreprocessor extends TermTransformer {
 	}
 
 	private Term constructReplacement(final Term otherSide) {
-		final ArrayStore arrayStore = ArrayStore.convert(otherSide);
-		if (arrayStore != null) {
-			return constructReplacementForStoreCase(arrayStore.getArray(), arrayStore.getIndex(),
-					arrayStore.getValue());
+		if (!Arrays.asList(otherSide.getFreeVars()).contains(mEliminatee)) {
+			throw new AssertionError("This case should habe been handled by DER");
+		}
+		final NestedArrayStore nas = NestedArrayStore.convert(otherSide);
+		if (nas != null) {
+			return constructReplacementForStoreCase(nas);
 		}
 		final ArraySelect arraySelect = ArraySelect.convert(otherSide);
 		if (arraySelect != null) {
@@ -226,37 +227,55 @@ public class DerPreprocessor extends TermTransformer {
 		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
 	}
 
-	private Term constructReplacementForStoreCase(final Term array, final Term index, final Term value) {
-		final Term newIndex;
-		if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
-			newIndex = mAuxVarCc.getOrConstruct(index);
-		} else {
-			newIndex = index;
+	private Term constructReplacementForStoreCase(final NestedArrayStore nas) {
+		final List<Term> newIndices = constructReplacementsIfNeeded(nas.getIndices());
+		final List<Term> newValues = constructReplacementsIfNeeded(nas.getValues());
+		if (newIndices != nas.getIndices() || newValues != nas.getValues()) {
+			mIntroducedDerPossibility = true;
 		}
-		final Term newValue;
-		if (Arrays.asList(value.getFreeVars()).contains(mEliminatee)) {
-			newValue = mAuxVarCc.getOrConstruct(value);
-		} else {
-			newValue = value;
-		}
-		Term result;
-		if (array.equals(mEliminatee)) {
-			// self-update
-			final Term select = mScript.term("select", array, newIndex);
-			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, newValue);
-		} else if (Arrays.asList(array.getFreeVars()).contains(mEliminatee)) {
-			throw new UnsupportedOperationException("nested self-update not yet implemented: " + array);
-		} else {
-			if (newValue != value || newIndex != index) {
-				mIntroducedDerPossibility = true;
+		final Term result;
+		if (nas.getArray().equals(mEliminatee)) {
+			// is (possibly nested) self-update
+			final LinkedList<Term> indices = new LinkedList<>(newIndices);
+			final LinkedList<Term> values = new LinkedList<>(newValues);
+			final Term[] resultDualFiniteJuncts = new Term[indices.size()];
+			for (int i = 0; i < newIndices.size(); i++) {
+				final Term innermostIndex = indices.removeFirst();
+				final Term innermostValue = values.removeFirst();
+				resultDualFiniteJuncts[i] = constructDisjointIndexImplication(innermostIndex, indices, innermostValue,
+						mEliminatee);
 			}
-			final Term store = mScript.term("store", array, newIndex, newValue);
-			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
+			assert indices.isEmpty();
+			values.isEmpty();
+			result = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, resultDualFiniteJuncts);
+		} else {
+			if (Arrays.asList(nas.getArray().getFreeVars()).contains(mEliminatee)) {
+				throw new UnsupportedOperationException(
+						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
+			}
+			result = new NestedArrayStore(nas.getArray(), newIndices, newValues).toTerm(mScript);
 		}
-		// TODO: let Prenex transformer deal with non-NNF terms and remove the
-		// following line
-		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
 		return result;
+	}
+
+	private List<Term> constructReplacementsIfNeeded(final List<Term> indices) {
+		final List<Term> newIndices = new ArrayList<>();
+		boolean replacementMade = false;
+		for (final Term index : indices) {
+			Term newIndex;
+			if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
+				newIndex = mAuxVarCc.getOrConstruct(index);
+				replacementMade = true;
+			} else {
+				newIndex = index;
+			}
+			newIndices.add(newIndex);
+		}
+		if (replacementMade) {
+			return newIndices;
+		} else {
+			return indices;
+		}
 	}
 
 	private Term constructReplacementForSelectCase(final Term array, final Term index) {
@@ -282,15 +301,21 @@ public class DerPreprocessor extends TermTransformer {
 	/**
 	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula
 	 * ((idx != oi_1) /\ ... /\ (idx != oi_n)) ==> ((select arr idx) = value)
+	 * for existential quantification and the formula
+	 * (not ((idx == oi_1) \/ ... \/ (idx == oi_n))) /\ ((select arr idx) != value)
+	 * for universal quantification.
 	 */
 	private Term constructDisjointIndexImplication(final Term idx, final List<Term> otherIndices, final Term value,
 			final Term arr) {
 		final Term select = SmtUtils.select(mScript, arr, idx);
-		final Term selectEqualsValue = SmtUtils.binaryEquality(mScript, select, value);
-		final List<Term> conjuncts = otherIndices.stream().map(x -> SmtUtils.distinct(mScript, idx, x))
+		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, value);
+		final List<Term> dualFiniteJuncts = otherIndices.stream()
+				.map(x -> QuantifierUtils.applyAntiDerOperator(mScript, mQuantifier, idx, x))
 				.collect(Collectors.toList());
-		final Term conjunction = SmtUtils.and(mScript, conjuncts);
-		final Term result = SmtUtils.implies(mScript, conjunction, selectEqualsValue);
+		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier,
+				dualFiniteJuncts);
+		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, mQuantifier,
+				SmtUtils.not(mScript, dualFiniteJunction), selectEqualsValue);
 		return result;
 	}
 
