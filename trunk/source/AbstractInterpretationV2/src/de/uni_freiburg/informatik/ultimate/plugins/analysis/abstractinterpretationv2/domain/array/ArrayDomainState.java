@@ -955,6 +955,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (isBottom()) {
 			return script.term("false");
 		}
+		// If there are no arrays, just return the term of the substate
+		if (mSegmentationMap.getAllRepresentatives().isEmpty()) {
+			return getSubTerm();
+		}
 		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
 		final Term filteredTerm = SmtUtils.filterFormula(getSubTerm(), values, script);
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), filteredTerm);

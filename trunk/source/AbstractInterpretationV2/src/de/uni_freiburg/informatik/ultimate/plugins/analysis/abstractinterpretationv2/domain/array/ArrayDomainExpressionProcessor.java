@@ -40,7 +40,6 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final List<Term> constraints = new ArrayList<>();
 		ArrayDomainState<STATE> tmpState = state;
 		final Script script = mToolkit.getScript();
-		// TODO: Replace array (in)equalities
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, true)) {
 			final Term selectTerm = select.getSelectTerm();
 			Term currentTerm = select.getArray();
@@ -81,9 +80,13 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 	}
 
 	public ArrayDomainState<STATE> processAssume(final ArrayDomainState<STATE> state, final Expression assumption) {
+		final Term term = mToolkit.getTerm(assumption);
+		if (SmtUtils.isArrayFree(term)) {
+			return state.updateState(mToolkit.handleAssumptionBySubdomain(state.getSubState(), term));
+		}
 		ArrayDomainState<STATE> returnState = state;
-		final Term cnf = SmtUtils.toCnf(mToolkit.getServices(), mToolkit.getManagedScript(),
-				mToolkit.getTerm(assumption), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term cnf = SmtUtils.toCnf(mToolkit.getServices(), mToolkit.getManagedScript(), term,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		for (final Term t : SmtUtils.getConjuncts(cnf)) {
 			if (returnState.isBottom()) {
 				break;
@@ -95,14 +98,25 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 
 	private ArrayDomainState<STATE> processAssumeTerm(final ArrayDomainState<STATE> state, final Term assumption) {
 		assert !SmtUtils.isFunctionApplication(assumption, "and");
+		final Script script = mToolkit.getScript();
 		if (SmtUtils.isFunctionApplication(assumption, "or")) {
 			ArrayDomainState<STATE> returnState = mToolkit.createBottomState();
+			final List<Term> arrayFreeDisjuncts = new ArrayList<>();
 			for (final Term t : ((ApplicationTerm) assumption).getParameters()) {
-				returnState = returnState.union(processAssumeTerm(state, t));
+				if (SmtUtils.isArrayFree(t)) {
+					arrayFreeDisjuncts.add(t);
+				} else {
+					final ArrayDomainState<STATE> postState = processAssumeTerm(state, t).simplify();
+					returnState = returnState.union(postState);
+				}
 			}
-			return returnState;
+			if (arrayFreeDisjuncts.isEmpty()) {
+				return returnState;
+			}
+			final ArrayDomainState<STATE> postState = state.updateState(
+					mToolkit.handleAssumptionBySubdomain(state.getSubState(), SmtUtils.or(script, arrayFreeDisjuncts)));
+			return returnState.union(postState);
 		}
-		final Script script = mToolkit.getScript();
 		// Handle array-equalities
 		if (SmtUtils.isFunctionApplication(assumption, "=")) {
 			final Term[] params = ((ApplicationTerm) assumption).getParameters();
@@ -184,7 +198,11 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			newSegmentationMap.put(arrayVar, segmentationPair.getSecond());
 			newState = newState.updateState(newSegmentationMap);
 		}
-		constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
+		if (substitution.isEmpty()) {
+			constraints.add(assumption);
+		} else {
+			constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
+		}
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));
 		return newState.updateState(newSubState);

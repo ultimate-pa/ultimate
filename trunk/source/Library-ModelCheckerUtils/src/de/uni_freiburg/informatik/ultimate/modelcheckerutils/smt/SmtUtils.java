@@ -790,19 +790,14 @@ public final class SmtUtils {
 	 * Returns true, iff the term contains an application of the given functionName
 	 */
 	public static boolean containsFunctionApplication(final Term term, final String functionName) {
-		return containsFunctionApplication(term, Arrays.asList(functionName));
+		return !new ApplicationTermFinder(functionName, true).findMatchingSubterms(term).isEmpty();
 	}
 
 	/**
 	 * Returns true, iff the term contains an application of at least one of the the given functionNames
 	 */
-	public static boolean containsFunctionApplication(final Term term, final Iterable<String> functionNames) {
-		for (final String f : functionNames) {
-			if (!new ApplicationTermFinder(f, true).findMatchingSubterms(term).isEmpty()) {
-				return true;
-			}
-		}
-		return false;
+	public static boolean containsFunctionApplication(final Term term, final Collection<String> functionNames) {
+		return !new ApplicationTermFinder(new HashSet<>(functionNames), true).findMatchingSubterms(term).isEmpty();
 	}
 
 	public static boolean containsArrayVariables(final Term... terms) {
