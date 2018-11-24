@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 
 /**
  * TODO: Comment.
@@ -20,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>, ISinkStateFactory<String>,
+public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>, ISinkStateFactory<String>,
 		IDeterminizeStateFactory<String>, IMinimizationStateFactory<String> {
 
 	static final String EMPTY = "€";
@@ -39,6 +40,10 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 
 	@Override
 	public String intersection(final String state1, final String state2) {
+		return newString();
+	}
+	
+	public String union(final String state1, final String state2) {
 		return newString();
 	}
 

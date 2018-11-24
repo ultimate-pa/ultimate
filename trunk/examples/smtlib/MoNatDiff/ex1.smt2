@@ -14,12 +14,12 @@
 
 ; (assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
 
-(assert (element 5 I))
-(assert (element 1 I))
-(assert (element 7 I))
-(assert (element 3 I))
-(assert (element 2 I))
-(assert (or (> x 5) (< x 6)))
-
+;(assert (element 5 I))
+;(assert (element 1 I))
+;(assert (element 7 I))
+;(assert (element 3 I))
+;(assert (element 2 I))
+(assert (or (> x 5) (element 2 I)))
+(assert (not (element 2 I)))
 (check-sat)
 (get-value (x J I y))

@@ -263,6 +263,8 @@ public final class MoNatDiffUtils {
 
 		for (Term term : values.keySet()) {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
+				assert(values.get(term) != null && values.get(term).size() == 1);
+				
 				BigInteger value = values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}

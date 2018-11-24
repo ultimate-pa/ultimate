@@ -409,13 +409,33 @@ public class MoNatDiffScript extends NoopScript {
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
 			throws Exception {
 
-		final Term[] terms = new Term[term.getParameters().length];
-		for (int i = 0; i < term.getParameters().length; i++)
-			terms[i] = SmtUtils.not(this, term.getParameters()[i]);
+		/*
+		 * final Term[] terms = new Term[term.getParameters().length]; for (int i = 0; i
+		 * < term.getParameters().length; i++) terms[i] = SmtUtils.not(this,
+		 * term.getParameters()[i]);
+		 * 
+		 * final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
+		 * 
+		 * return traversePostOrder(conjunction);
+		 */
 
-		final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
+		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
+		mLogger.info("Construct φ and ψ (0): " + term);
 
-		return traversePostOrder(conjunction);
+		for (int i = 1; i < term.getParameters().length; i++) {
+			INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> tmp = traversePostOrder(term.getParameters()[i]);
+			mLogger.info("Construct φ and ψ (" + i + "): " + term);
+
+			Set<MoNatDiffAlphabetSymbol> symbols;
+			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+
+			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+
+			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
+		}
+		
+		return result;
 	}
 
 	/**
