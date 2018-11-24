@@ -594,30 +594,6 @@ public class PostProcessor {
 
 		final ArrayList<VariableDeclaration> initDecl = new ArrayList<>();
 
-		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
-
-			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
-			final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
-			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc,
-					zero, mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
-			initStatements.add(0, assignment);
-
-			// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
-			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			initStatements.add(0,
-					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-									new String[] { "base", "offset" },
-									new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-											mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-											mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-													mExpressionTranslation.getCTypeOfPointerComponents(),
-													BigInteger.ZERO) }) }));
-		}
-
 		/*
 		 * We need to follow some order when addin the statements to init. Current strategy: <li> First come all the
 		 * statements that have been added via {@link StaticObjectsHandler.addStatementsForUltimateInit} manually. <li>
@@ -670,6 +646,32 @@ public class PostProcessor {
 				}
 			}
 		}
+
+		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+
+			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
+			final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
+			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc,
+					zero, mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
+			initStatements.add(0, assignment);
+
+			// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
+			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
+					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			initStatements.add(0,
+					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
+							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
+									new String[] { "base", "offset" },
+									new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+											mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
+											mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+													mExpressionTranslation.getCTypeOfPointerComponents(),
+													BigInteger.ZERO) }) }));
+		}
+
+
 
 		mStaticObjectsHandler.freeze();
 		initStatements.addAll(mStaticObjectsHandler.getStatementsForUltimateInit());
