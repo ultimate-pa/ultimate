@@ -5,22 +5,28 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 
 /**
  * TODO: Comment.
@@ -30,11 +36,35 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public final class MoNatDiffUtils {
 
+	public static final String SET_OF_INT_SORT = "SetOfInt";
+
+	/**
+	 * TODO: Comment.
+	 */
+	public static Sort getSetOfIntSort(final Script script) {
+		return script.sort(SET_OF_INT_SORT);
+	}
+
+	/**
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See
+	 * {@link UltimateNormalFormUtils}.
+	 */
+	public static Term constructSetOfIntValue(final Script script, Set<BigInteger> numbers) {
+		Set<Term> terms = new HashSet<Term>();
+
+		for (BigInteger number : numbers) {
+			terms.add(SmtUtils.constructIntValue(script, number));
+		}
+
+		return MoNatDiffUtils.getSetOfIntSort(script).getTheory().constant(terms,
+				MoNatDiffUtils.getSetOfIntSort(script));
+	}
+
 	/**
 	 * Returns true if sort is SetOfInt.
 	 */
 	public static boolean isSetOfIntSort(final Sort sort) {
-		return sort.getName().equals("SetOfInt");
+		return sort.getName().equals(SET_OF_INT_SORT);
 	}
 
 	/**
@@ -212,23 +242,33 @@ public final class MoNatDiffUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
-	public static Map<Term, Set<Term>> parseMoNatDiffToTerm(final Script script,
-			final Word<MoNatDiffAlphabetSymbol> word, final Term... terms) {
+	public static Map<Term, Term> parseMoNatDiffToTerm(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
+			final Term... terms) {
 
-		final Map<Term, Set<Term>> result = new HashMap<Term, Set<Term>>();
+		Map<Term, Term> result = new HashMap<Term, Term>();
+		final Map<Term, Set<BigInteger>> values = new HashMap<Term, Set<BigInteger>>();
 
 		for (final Term term : terms)
-			result.put(term, new HashSet<Term>());
+			values.put(term, new HashSet<BigInteger>());
 
 		for (int i = 0; i < word.length(); i++) {
 			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
 
 			for (final Term term : terms) {
 				if (symbol.getMap().get(term)) {
-					final Term value = SmtUtils.constructIntValue(script, BigInteger.valueOf(i));
-					result.get(term).add(value);
+					values.get(term).add(BigInteger.valueOf(i));
 				}
 			}
+		}
+
+		for (Term term : values.keySet()) {
+			if (SmtSortUtils.isIntSort(term.getSort())) {
+				BigInteger value = values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				result.put(term, SmtUtils.constructIntValue(script, value));
+			}
+
+			if (MoNatDiffUtils.isSetOfIntSort(term.getSort()))
+				result.put(term, MoNatDiffUtils.constructSetOfIntValue(script, values.get(term)));
 		}
 
 		return result;

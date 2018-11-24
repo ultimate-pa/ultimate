@@ -27,11 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -104,7 +106,7 @@ public class MoNatDiffScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
-	private Map<Term, Set<Term>> mModel;
+	private Map<Term, Term> mModel;
 
 	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
@@ -164,9 +166,6 @@ public class MoNatDiffScript extends NoopScript {
 		return LBool.UNKNOWN;
 	}
 
-	/**
-	 * TODO: Implement for Sets. (hacked for now)
-	 */
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException {
 		final Map<Term, Term> values = new HashMap<Term, Term>();
@@ -175,16 +174,16 @@ public class MoNatDiffScript extends NoopScript {
 			return values;
 
 		for (final Term term : terms) {
-			final Set<Term> value = mModel.get(term);
-			
-			if (value == null)
-				continue;
-			
-			if (SmtSortUtils.isIntSort(term.getSort()))
-				values.put(term, value.iterator().next());
-			
-			if (MoNatDiffUtils.isSetOfIntSort(term.getSort()))
-				values.put(term, term.getSort().getTheory().constant(value, term.getSort()));
+			Term value = mModel.get(term);
+
+			if (value == null) {
+				if (SmtSortUtils.isIntSort(term.getSort()))
+					value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
+
+				if (MoNatDiffUtils.isSetOfIntSort(term.getSort()))
+					value = MoNatDiffUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
+			}
+			values.put(term, value);
 		}
 
 		return values;
