@@ -208,10 +208,11 @@ public class MemoryHandler {
 				final TranslationSettings settings) {
 			boolean changedSomething = false;
 			if (settings.useConstantArrays()) {
+				// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 				for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
 					changedSomething |= rmmf.reportDataOnHeapInitFunctionRequired(prim);
 				}
-				if (rmmf.isPointerOnHeapRequired()) {
+				if (rmmf.mPointerOnHeapRequired) {
 					changedSomething |= rmmf.reportPointerOnHeapInitFunctionRequired();
 				}
 			}
@@ -224,6 +225,7 @@ public class MemoryHandler {
 
 		boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
 			boolean changedSomething = false;
+				// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 			for (final CPrimitives prim : mmf.mDataOnHeapRequired) {
 				changedSomething |= mmf.reportUncheckedWriteRequired(prim);
 			}
@@ -376,12 +378,12 @@ public class MemoryHandler {
 	 */
 	public List<Declaration> declareMemoryModelInfrastructure(final CHandler main, final ILocation tuLoc,
 			final IASTNode hook) {
-		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()
-				&& mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().isEmpty()) {
+		mRequiredMemoryModelFeatures.finish(mSettings);
+
+		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()) {
 			return Collections.emptyList();
 		}
 
-		mRequiredMemoryModelFeatures.finish(mSettings);
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
