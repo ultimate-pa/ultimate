@@ -31,9 +31,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 public final class SmtTestUtils {
 
@@ -120,5 +123,13 @@ public final class SmtTestUtils {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Returns true iff the solver (script) is able to prove that the terms t1 and
+	 * t2 are logically equivalent.
+	 */
+	public static boolean areEquivalent(final Script script, final Term t1, final Term t2) {
+		return Util.checkSat(script, script.term("distinct", t1, t2)) == LBool.UNSAT;
 	}
 }

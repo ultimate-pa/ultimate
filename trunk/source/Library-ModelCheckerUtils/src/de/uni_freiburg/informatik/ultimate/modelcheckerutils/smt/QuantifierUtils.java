@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class QuantifierUtils {
-	
+
 	private QuantifierUtils() {
 		// do not instantiate
 	}
@@ -153,8 +153,8 @@ public class QuantifierUtils {
 		}
 		return xjunctsOuter;
 	}
-	
-	
+
+
 	public static Term getNeutralElement(final Script script, final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return script.term("false");
@@ -164,7 +164,7 @@ public class QuantifierUtils {
 			throw new AssertionError("unknown quantifier");
 		}
 	}
-	
+
 	public static Term getAbsorbingElement(final Script script, final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return script.term("true");
@@ -174,10 +174,10 @@ public class QuantifierUtils {
 			throw new AssertionError("unknown quantifier");
 		}
 	}
-	
-	
+
+
 	/**
-	 * Transform to DNF for existential quantifier, 
+	 * Transform to DNF for existential quantifier,
 	 * transform to CNF for universal quantifier.
 	 */
 	public static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
@@ -204,7 +204,7 @@ public class QuantifierUtils {
 		}
 	}
 
-	
+
 	public static String getDualBooleanConnective(final String booleanConnective) {
 		if (booleanConnective.equals("and")) {
 			return "or";
@@ -214,9 +214,9 @@ public class QuantifierUtils {
 			throw new AssertionError("unsupported connective " + booleanConnective);
 		}
 	}
-	
-	
-	public static int getDualQuantifier(int quantifier) {
+
+
+	public static int getDualQuantifier(final int quantifier) {
 		if (quantifier == 0) {
 			return 1;
 		} else if (quantifier == 1) {
@@ -226,5 +226,9 @@ public class QuantifierUtils {
 		}
 	}
 
-	
+	public static boolean isQuantifierFree(final Term term) {
+		return new SubtermPropertyChecker(x -> !(term instanceof QuantifiedFormula)).isPropertySatisfied(term);
+	}
+
+
 }
