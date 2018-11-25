@@ -80,6 +80,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
 		// repeat the following until no variable was eliminated
+		Set<TermVariable> freeVarsInResultAtoms = SmtUtils.getFreeVars(Arrays.asList(resultAtoms));
 		do {
 			someVariableWasEliminated = false;
 			final Iterator<TermVariable> it = eliminatees.iterator();
@@ -89,7 +90,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 							+ " quantified variables from " + inputAtoms.length + " xjuncts");
 				}
 				final TermVariable tv = it.next();
-				if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
+				if (!freeVarsInResultAtoms.contains(tv)) {
 					// case where var does not occur
 					it.remove();
 					continue;
@@ -97,6 +98,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				final Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
 				if (withoutTv != null) {
 					resultAtoms = withoutTv;
+					freeVarsInResultAtoms = SmtUtils.getFreeVars(Arrays.asList(resultAtoms));
 					it.remove();
 					someVariableWasEliminated = true;
 				}
@@ -127,11 +129,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
-				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i]) : "Term not in UltimateNormalForm";
+				assert UltimateNormalFormUtils
+						.respectsUltimateNormalForm(resultAtoms[i]) : "Term not in UltimateNormalForm";
 			}
 			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
 				resultAtoms[i - 1] = substituteAndNormalize(substitution, inputAtoms[i]);
-				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i - 1]) : "Term not in UltimateNormalForm";
+				assert UltimateNormalFormUtils
+						.respectsUltimateNormalForm(resultAtoms[i - 1]) : "Term not in UltimateNormalForm";
 			}
 		}
 		return resultAtoms;
