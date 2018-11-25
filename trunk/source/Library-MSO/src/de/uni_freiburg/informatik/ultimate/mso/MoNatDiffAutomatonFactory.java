@@ -127,6 +127,78 @@ public final class MoNatDiffAutomatonFactory {
 	}
 
 	/**
+	 * TODO: Test Automaton for x - y < c, for x, c > 0, y < 0
+	 */
+	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> testAutomaton(
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational c) {
+
+		int cInt = SmtUtils.toInt(c).intValueExact();
+		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MoNatDiffAlphabetSymbol xy00, xy01, xy10, xy11;
+		xy00 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
+		xy01 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
+		xy10 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
+		xy11 = new MoNatDiffAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+
+		// No accepting run if c < 3.
+		if (cInt < 3)
+			return falseAutomaton(services);
+		
+		// add states for the branches
+		for (int i = 0; i <= (cInt - 2); i++) {
+			String prevState = "s" + (i - 1);
+			String state = "s" + i;
+			automaton.addState(false, false, state);
+			
+			if (i > 0)
+				automaton.addInternalTransition(prevState, xy00, state);
+		}
+		
+		// add transitions that are always there
+				automaton.addInternalTransition("init", xy00, "s0");
+
+		// add x-states and transitions
+		for(int i = 1; i <= (cInt - 2); i++) {
+			for (int j = 1; j <= 2*cInt-4*i-1; j++) {
+				String prevStateX = "x" + i + (j - 1);
+				String stateX = "x" + i + j;
+				automaton.addState(false, false, stateX);
+				
+				if (j%2 == 1)
+					automaton.addInternalTransition(stateX, xy01, "final");
+				
+				if (j == 1)
+					automaton.addInternalTransition("s" + (2 * i - 1), xy10, stateX);
+				else
+					automaton.addInternalTransition(prevStateX, xy00, stateX);
+			}
+		}
+				
+		// y-states and transitions
+		for (int i = 1; i <= (cInt - 2); i++) {
+			for (int j = 1; j <= 2*cInt - 4*i - 3; j++) {
+				String prevStateY = "y" + i + (j - 1);
+				String stateY = "y" + i + j;
+				automaton.addState(false, false, stateY);
+				
+				if (j%2 == 1)
+					automaton.addInternalTransition(stateY, xy10, "final");
+
+				if (j == 1)
+					automaton.addInternalTransition("s" + (2 * i), xy01, stateY);
+				else 
+					automaton.addInternalTransition(prevStateY, xy00, stateY);
+			}
+		}
+		
+		return automaton;
+	}
+
+	/**
 	 * Constructs an automaton that represents "x-y < c".
 	 * 
 	 * @throws IllegalArgumentException
@@ -327,7 +399,8 @@ public final class MoNatDiffAutomatonFactory {
 	}
 
 	/**
-	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
+	 * Constructs a copy of the given automaton with the extended or reduced
+	 * alphabet.
 	 */
 	public static NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> reconstruct(
 			final AutomataLibraryServices services,

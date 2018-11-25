@@ -151,6 +151,14 @@ public class MoNatDiffScript extends NoopScript {
 				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
 
+				// Test Automaton with int numbers
+				mLogger.info("------------------------------------Test---------------------------------");
+				Rational cRational = Rational.valueOf(4, 1);
+				Term xTerm = SmtUtils.buildNewConstant(this, "a", "Int");
+				Term yTerm = SmtUtils.buildNewConstant(this, "b", "Int");
+				mLogger.info(automatonToString(MoNatDiffAutomatonFactory.testAutomaton(mAutomataLibrarayServices, xTerm, yTerm, cRational), Format.ATS));
+				mLogger.info("------------------------------------Test-Ende---------------------------------");
+				
 				return LBool.SAT;
 			}
 
