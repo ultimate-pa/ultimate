@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
+    <rundefinition name="sv-comp19-unsound"></rundefinition>
+    <option name="--full-output"/>
+
+    <tasks name="Memsafety-32bit">
+        <include>../../../trunk/examples/svcomp/memsafety-ext3/freeAlloca_false-valid-free.c</include>
+        <include>../../../trunk/examples/svcomp/memsafety-ext3/naturalNumbers1_false-valid-deref.c</include>
+        <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+        <option name="--architecture">32bit</option>
+    </tasks>
+
+	<tasks name="ReachSafety-32bit">
+        <include>../../../trunk/examples/svcomp/floats-esbmc-regression/copysign_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/floats-esbmc-regression/isunordered_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/heap-manipulation/tree_false-unreach-call_false-valid-memcleanup.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14-races/linux-3.14--drivers--net--irda--nsc-ircc.ko_false-unreach-call.cil.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14-races/linux-3.14--drivers--net--irda--w83977af_ir.ko_false-unreach-call.cil.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14-races/linux-3.14--drivers--spi--spi-tegra20-slink.ko_false-unreach-call.cil.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14-races/linux-3.14--drivers--usb--misc--adutux.ko_false-unreach-call.cil.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14-races/linux-3.14--drivers--usb--misc--iowarrior.ko_false-unreach-call.cil.i</include>
+        <include>../../../trunk/examples/svcomp/loop-invariants/bin-suffix-5_true-unreach-call_true-valid-memsafety_true-no-overflow_false-termination.c</include>
+        <include>../../../trunk/examples/svcomp/loops/ludcmp_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/loops/s3_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-atomic/read_write_lock_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/bigshot_s2_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/bigshot_s_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-divine/ring_1w1r_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-divine/ring_2w1r_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-ext/27_Boop_simple_vf_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-ext/28_buggy_simple_loop1_vf_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/lazy01_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-lit/fkp2013_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-lit/fkp2013_variant_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-nondet/nondet-loop-bound_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-nondet/nondet-loop-bound-variant_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/queue_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/queue_longer_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/queue_longest_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/stack_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/stack_longer_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread/stack_longest_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-wmm/rfi000_tso.oepc_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-wmm/rfi000_tso.opt_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/pthread-wmm/rfi003_tso.oepc_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_clnt.blast.01_false-unreach-call.i.cil.c</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_srvr.blast.15_false-unreach-call.i.cil.c</include>
+
+        <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+        <option name="--architecture">32bit</option>
+	</tasks>
+
+    <tasks name="ReachSafety-64bit">
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.0/usb_urb-drivers-hid-usbhid-usbmouse.ko_false-unreach-call.cil.out.i.pp.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.14/linux-3.14__linux-drivers-clk1__drivers-net-can-mcp251x_false-unreach-call.cil.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_safes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--lapbether.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--ethernet--8390--8390.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--usb--cx82310_eth.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--usb--gl620a.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--hdlc_x25.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--iio--accel--kxcjk-1013.ko_false-unreach-call.cil.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-08_1a-drivers--iio--accel--kxcjk-1013.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-08_1a-drivers--iio--imu--inv_mpu6050--inv-mpu6050.ko-entry_point_false-unreach-call.cil.out.c</include>
+
+        <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+        <option name="--architecture">64bit</option>
+	</tasks>
+</benchmark>
