@@ -193,7 +193,6 @@ public class Statements2TransFormula {
 			formula = mAssumes;
 		}
 		formula = mBoogie2SMT.getSmtSymbols().inline(mScript, formula);
-		formula = eliminateAuxVars(formula, mAuxVars);
 
 		Infeasibility infeasibility = null;
 		if (simplify) {
@@ -293,6 +292,9 @@ public class Statements2TransFormula {
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
 			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
+			if (!mAuxVars.isEmpty()) {
+				mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+			}
 			if (s_ComputeAsserts) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
@@ -322,6 +324,9 @@ public class Statements2TransFormula {
 		final Term f = tlres.getTerm();
 
 		mAssumes = SmtUtils.and(mScript, f, mAssumes);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		if (s_ComputeAsserts) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
@@ -336,6 +341,10 @@ public class Statements2TransFormula {
 			final Term f = tlres.getTerm();
 
 			mAssumes = SmtUtils.and(mScript, f, mAssumes);
+			if (!mAuxVars.isEmpty()) {
+				mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+			}
+
 			mAsserts = SmtUtils.and(mScript, f, mAsserts);
 			assert assertTermContainsNoNull(mAssumes);
 		} else {
@@ -433,6 +442,9 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
+				if (!mAuxVars.isEmpty()) {
+					mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+				}
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -455,6 +467,9 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
+				if (!mAuxVars.isEmpty()) {
+					mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+				}
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -659,7 +674,7 @@ public class Statements2TransFormula {
 	 *            set of free variables occurring in input
 	 * @return
 	 */
-	private Term eliminateAuxVars(final Term input, final Set<TermVariable> auxVars) {
+	private Term eliminateAuxVarsViaDer(final Term input, final Set<TermVariable> auxVars) {
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 		final Term result = SmtUtils.and(mScript,
 				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
@@ -780,6 +795,9 @@ public class Statements2TransFormula {
 		}
 		assert arguments.length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -810,6 +828,9 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -838,6 +859,9 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -874,6 +898,9 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		return getTransFormula(false, true, simplicationTechnique);
 	}
 
@@ -904,6 +931,9 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
+		if (!mAuxVars.isEmpty()) {
+			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
+		}
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
