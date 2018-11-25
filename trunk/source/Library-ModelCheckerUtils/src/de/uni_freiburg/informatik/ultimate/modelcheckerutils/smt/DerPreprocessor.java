@@ -253,7 +253,8 @@ public class DerPreprocessor extends TermTransformer {
 				throw new UnsupportedOperationException(
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
-			result = new NestedArrayStore(nas.getArray(), newIndices, newValues).toTerm(mScript);
+			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier,
+					new NestedArrayStore(nas.getArray(), newIndices, newValues).toTerm(mScript), mEliminatee);
 		}
 		return result;
 	}
