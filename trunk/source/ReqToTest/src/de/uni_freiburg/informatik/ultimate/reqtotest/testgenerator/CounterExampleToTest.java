@@ -34,18 +34,14 @@ public class CounterExampleToTest {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ReqSymbolTable mReqSymbolTable;
-	private final Script mScript;
 	private final AuxVarGen mAuxVarGen;
-	private final Expression2Term mExpression2Term;
 	
 	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, ReqSymbolTable reqSymbolTable, 
-			AuxVarGen auxVarGen , Script script, Expression2Term expression2Term) {
+			AuxVarGen auxVarGen) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
-		mScript = script;
 		mAuxVarGen = auxVarGen;
-		mExpression2Term = expression2Term;
 		
 	}
 	
@@ -88,7 +84,7 @@ public class CounterExampleToTest {
 			}
 		}
 		mLogger.warn(oracles);
-		TestGeneratorResult testSequence = new TestGeneratorResult(systemStates, stepGuards, oracles, mScript, mReqSymbolTable, mAuxVarGen, mExpression2Term);
+		TestGeneratorResult testSequence = new TestGeneratorResult(mLogger, systemStates, stepGuards, oracles, mReqSymbolTable, mAuxVarGen);
 		return testSequence;
 	}
 	

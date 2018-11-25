@@ -87,7 +87,7 @@ public class ReqToTestObserver extends BaseObserver{
 				boogie2Smt.getBoogie2SmtSymbolTable() , 
 				new DefaultOperationTranslator(boogie2Smt.getBoogie2SmtSymbolTable(), mScript),
 				mManagedScript);
-		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen, mScript, expression2Term);
+		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen);
 		final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
 		mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
 		

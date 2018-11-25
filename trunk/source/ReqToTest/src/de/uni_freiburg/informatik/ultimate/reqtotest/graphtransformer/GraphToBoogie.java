@@ -173,19 +173,19 @@ public class GraphToBoogie {
 		queue.add(reqId);
 		Statement[] elsePart = new Statement[0];
 		while(queue.size() > 0) {
-			ReqGuardGraph pivoth = queue.poll();
-			visited.add(pivoth);
+			ReqGuardGraph sourceLocation = queue.poll();
+			visited.add(sourceLocation);
 			Statement[] innerIf = new Statement[] {new AssumeStatement(mDummyLocation, new BooleanLiteral(mDummyLocation, false))};
-			for(ReqGuardGraph successor: pivoth.getOutgoingNodes()) {
-				if(!visited.contains(successor) && !queue.contains(successor)) {
-					queue.add(successor);
+			for(ReqGuardGraph successorLocation: sourceLocation.getOutgoingNodes()) {
+				if(!visited.contains(successorLocation) && !queue.contains(successorLocation)) {
+					queue.add(successorLocation);
 				}
-				TimedLabel label = pivoth.getOutgoingEdgeLabel(successor);
-				//generate the inner if (... "then transition to __successor__ if __label__ holds ")
-				innerIf = generateInnerIf(innerIf, reqId, successor, label);
+				TimedLabel label = sourceLocation.getOutgoingEdgeLabel(successorLocation);
+				//generate the inner if (... "then transition to __successorLocation__ if __label__ holds ")
+				innerIf = generateInnerIf(innerIf, reqId, sourceLocation, successorLocation, label);
 			}
-			//generate the outer if ("if in location __pivoth__ ...")
-			elsePart = new Statement[] {(generateOuterIf(reqId, pivoth, innerIf, elsePart))};
+			//generate the outer if ("if in location __sourceLocation__ ...")
+			elsePart = new Statement[] {(generateOuterIf(reqId, sourceLocation, innerIf, elsePart))};
 		}
 		//TODO this is ugly
 		final List<Statement> statements = new ArrayList<>();
@@ -200,7 +200,7 @@ public class GraphToBoogie {
 		return new IfStatement(mDummyLocation, condition, body, elsePart);
 	} 
 	
-	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph reqId, ReqGuardGraph successor, TimedLabel label) {
+	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph reqId, ReqGuardGraph source, ReqGuardGraph successor, TimedLabel label) {
 		Statement[] body;
 		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());	
 		if (label.getReset() != null) {
@@ -213,7 +213,7 @@ public class GraphToBoogie {
 		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
 		if (successor.getLabel() > 0) {
 			//Annotate all non-powerset non-initial transitions 
-			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label.getGuard());
+			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label.getGuard(), source);
 			annotation.annotate(ifStatement);
 		}
 		return new Statement[] {ifStatement};
@@ -341,8 +341,8 @@ public class GraphToBoogie {
 		for(ReqGuardGraph reqId: guards.keySet()) {
 			Term guard = guards.get(reqId);
 			assertion = new AssertStatement(mDummyLocation, mTerm2Expression.translate(guard));
-			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, guard);
-			annotation.annotate(assertion);
+			//ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, guard);
+			//annotation.annotate(assertion);
 			oracles.add(assertion);
 		}
 		return oracles;

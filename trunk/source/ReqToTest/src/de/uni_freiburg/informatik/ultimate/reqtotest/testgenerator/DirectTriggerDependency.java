@@ -8,15 +8,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 
-public class ReqTriggerDependency extends ModifiableLabeledEdgesMultigraph<ReqTriggerDependency, Set<? extends Term>> {
+public class DirectTriggerDependency extends ModifiableLabeledEdgesMultigraph<DirectTriggerDependency, Set<? extends Term>> {
 
 	private static final long serialVersionUID = 5734209642364260026L;
 	
-	private ReqGuardGraph mReqAut;
-	private Set<TermVariable> mInputs = new HashSet<TermVariable>();
-	private Set<TermVariable> mOutputs = new HashSet<TermVariable>();
+	protected ReqGuardGraph mReqAut;
+	protected Set<TermVariable> mInputs = new HashSet<TermVariable>();
+	protected Set<TermVariable> mOutputs = new HashSet<TermVariable>();
 	
-	public ReqTriggerDependency(ReqGuardGraph reqAut) {
+	public DirectTriggerDependency(ReqGuardGraph reqAut) {
 		mReqAut = reqAut;
 	}
 	

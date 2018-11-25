@@ -20,10 +20,12 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 	
 	private final ReqGuardGraph mReqAut;
 	private final Term mSourceLabel;
+	private final ReqGuardGraph mSource;
 	
-	public ReqGraphAnnotation(ReqGuardGraph reqId, Term label) {
+	public ReqGraphAnnotation(ReqGuardGraph reqId, Term label, ReqGuardGraph source) {
 		mReqAut = reqId;
 		mSourceLabel = label;
+		mSource = source;
 	}
 	
 	public ReqGuardGraph getRequirementAut() {
@@ -32,6 +34,10 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 	
 	public Term getGuard() {
 		return mSourceLabel;
+	}
+	
+	public ReqGuardGraph getSourceLocation() {
+		return mSource;
 	}
 	
 	@Override

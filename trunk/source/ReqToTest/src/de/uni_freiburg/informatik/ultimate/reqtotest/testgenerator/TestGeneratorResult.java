@@ -10,13 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
@@ -26,36 +24,122 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 public class TestGeneratorResult implements IResult  {
 	
 	private final List<SystemState> mTestStates;
-	private final List<List<ReqGraphAnnotation>> mStepGuards;
-	private final Term mOracle;
-	private final ReqGuardGraph mOracleReq;
-	private final Script mScript;
+	private final List<List<ReqGraphAnnotation>> mStepsAnnotations;
+	private final List<Map<ReqGuardGraph, DirectTriggerDependency>> mDependenciesGraphNodes = new ArrayList<>();
 	private final AuxVarGen mAuxVarGen;
 	private final ReqSymbolTable mReqSymbolTable;
-	private final Expression2Term mExpression2Term;
+	private final ILogger mLogger;
 	
-	public TestGeneratorResult (List<SystemState> testStates, List<List<ReqGraphAnnotation>> stepGuards, 
-			ReqGraphAnnotation oracleAnnotation, Script script, ReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen,
-			Expression2Term expression2Term) {
+	public TestGeneratorResult (ILogger logger, List<SystemState> testStates, List<List<ReqGraphAnnotation>> stepsAnnotations, 
+			ReqGraphAnnotation oracleAnnotation, ReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen) {
 		mTestStates = testStates;
-		mScript = script;
-		mStepGuards = stepGuards;
+		mStepsAnnotations = stepsAnnotations;
 		mAuxVarGen = auxVarGen;
 		mReqSymbolTable = reqSymbolTable;
-		mOracle = SmtUtils.and(mScript, oracleAnnotation.getGuard());
-		mOracleReq = oracleAnnotation.getRequirementAut();
-		mExpression2Term = expression2Term;
+		mLogger = logger;
+		calculateDependencyGraph();	
+	}
+	
+
+	private void calculateDependencyGraph() {
+		
+		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes;
+		Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencyNodes = new HashMap<>();
+		for(List<ReqGraphAnnotation> stepAnnotations: mStepsAnnotations) {
+			stepDependencyNodes = calculateDependencyGraphStep(stepAnnotations, lastStepDependencyNodes);
+			mDependenciesGraphNodes.add(stepDependencyNodes);
+			lastStepDependencyNodes = stepDependencyNodes;
+		}
+		
+	}
+	
+	/*
+	 * Calculate relations between Requiremens in one test step.
+	 * A relation looks like req1 ---- var1,var2 ----> req2, read as req2's trigger vars depend on effects var1, var2 set by req1.
+	 */
+	private Map<ReqGuardGraph, DirectTriggerDependency> calculateDependencyGraphStep(List<ReqGraphAnnotation> stepAnnotations, 
+			Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencies) {
+		//generate Nodes for every requirement 
+		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes = new HashMap<>();
+		for(ReqGraphAnnotation annotation: stepAnnotations) {
+			ReqGuardGraph reqAut = annotation.getRequirementAut();
+			DirectTriggerDependency dependencyNode = new DirectTriggerDependency(reqAut);
+			stepDependencyNodes.put(reqAut, dependencyNode);
+		}
+		//find dependees justifying every annotation
+		for(ReqGraphAnnotation annotation: stepAnnotations) {
+			DirectTriggerDependency dependencyNode = stepDependencyNodes.get(annotation.getRequirementAut());
+			connectEffectDependencies(dependencyNode, stepDependencyNodes, annotation, stepAnnotations);
+			connectInputDependencies(dependencyNode, annotation);
+			connectOutput(dependencyNode, annotation);
+			connectInterStepDependency(dependencyNode, lastStepDependencies, annotation);
+		}
+		return stepDependencyNodes;
+	}
+	
+	private void connectInterStepDependency(DirectTriggerDependency dependencyNode, Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencyNodes,
+			ReqGraphAnnotation toJustifyAnnotation) {
+		if(toJustifyAnnotation.getSourceLocation().getLabel() > 0) {
+			//if source.label > 0 there must have already been a useful transition in the last step.
+			DirectTriggerDependency lastStepDepNode = lastStepDependencyNodes.get(toJustifyAnnotation.getRequirementAut());
+			mLogger.warn(String.format("connecting intra-step dependency %s for source locations %d", toJustifyAnnotation.getRequirementAut().getName(), 
+					toJustifyAnnotation.getSourceLocation().getLabel()));
+			dependencyNode.connectOutgoing(lastStepDepNode, new HashSet<TermVariable>());
+		}
+	}
+	
+	private void connectEffectDependencies(DirectTriggerDependency dependencyNode, Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes,
+			ReqGraphAnnotation toJustifyAnnotation, List<ReqGraphAnnotation> stepAnnotations) {
+		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		for(ReqGraphAnnotation annotation: stepAnnotations) {
+			if(annotation == toJustifyAnnotation) {
+				continue;
+			}
+			Set<TermVariable> varsJustifyable = SmtUtils.getFreeVars( Arrays.asList(annotation.getGuard()) );
+			varsJustifyable.retainAll(mAuxVarGen.getEffectVariables(annotation.getRequirementAut()));
+			HashSet<TermVariable> justifications = new HashSet<>(varsToJustify);
+			justifications.retainAll(varsJustifyable);
+			if (justifications.size() > 0) {
+				DirectTriggerDependency justifyingReqNode = stepDependencyNodes.get(annotation.getRequirementAut());
+				mLogger.warn(String.format("connecting dependency %s, %s, %s", toJustifyAnnotation.getRequirementAut().getName(), 
+						justifications.toString(), annotation.getRequirementAut().getName()));
+				dependencyNode.connectOutgoing(justifyingReqNode, justifications);
+			}
+			
+		}
+	}
+	
+	private void connectInputDependencies(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
+		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		Set<String> inputVariables = mReqSymbolTable.getInputVars();
+		Set<TermVariable> justifyingInputs = new HashSet<TermVariable>();
+		for(TermVariable var: varsToJustify) {
+			if(inputVariables.contains(var.getName())) {
+				justifyingInputs.add(var);
+			}
+		}
+		dependencyNode.addInputs(justifyingInputs);	
+	}
+	
+	private void connectOutput(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
+		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		Set<String> inputVariables = mReqSymbolTable.getOutputVars();
+		Set<TermVariable> outputs = new HashSet<TermVariable>();
+		for(TermVariable var: varsToJustify) {
+			if(inputVariables.contains(var.getName())) {
+				outputs.add(var);
+			}
+		}
+		dependencyNode.addOutputs(outputs);	
 	}
 
 	@Override
 	public String getPlugin() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getShortDescription() {
-		// TODO Auto-generated method stub
 		return toString();
 	}
 
@@ -64,125 +148,40 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("Test Vector:"+System.getProperty("line.separator"));
-		
-		for(int i = 0; i < mStepGuards.size(); i++) {
-			//steps
-			sb.append(testStepToString(i));
-		}
-		return sb.toString();
-	}
-	
-	private String testStepToString(int i) {
-		StringBuilder sb = new StringBuilder();
-		//sb.append(mTestStates.get(i) + System.getProperty("line.separator"));			
-			//labels
-		sb.append("----| Step: t ");
-		sb.append(Double.toString(mTestStates.get(i).getTimeStep()));
-		sb.append("|-------------------------------------------------------------------------------------------");
-		sb.append(System.getProperty("line.separator"));
-		Map<ReqGuardGraph, ReqTriggerDependency>  dependencies = calculateStepDependencies(mStepGuards.get(i));
-		for(ReqGuardGraph triggeredReqAut: dependencies.keySet()){
-			ReqTriggerDependency peek = dependencies.get(triggeredReqAut);
-			//TODO poject out inputs
-			//sb.append(SmtUtils.getFreeVars(rgg.getGuards()).retainAll(mReqSymbolTable.getInputVars()));
-			for(ReqTriggerDependency effectReqNode: peek.getOutgoingNodes()) {
-				ReqGuardGraph tiggeringReqAut = effectReqNode.getReqAut();
-				sb.append(tiggeringReqAut.getName());
-				sb.append("(");
-				Set<TermVariable> ts = SmtUtils.getFreeVars((Collection<Term>) dependencies.get(triggeredReqAut).getOutgoingEdgeLabel(effectReqNode));
-				for(TermVariable v: ts) {
-					sb.append(getValueOfState(i,v));
-				}
-				sb.append(" ) ");
-			}
-			Set<String> inputVarNames = mReqSymbolTable.getInputVars();
-			for(TermVariable v : peek.getInputs()) {
-				if(inputVarNames.contains(v.getName())) {
-					sb.append(getValueOfState(i,v));
-				}
-			}
-			sb.append(" ----> ");
-			sb.append(peek.getReqAut().getName());
-			sb.append(" (");
-			for(TermVariable v : peek.getOutputs()) {
-					sb.append(getValueOfState(i,v));
-			}
-			sb.append(") ");
-			sb.append(System.getProperty("line.separator"));
-		}
-		sb.append(System.getProperty("line.separator"));
-		return sb.toString();
-	}
-	
-	
-	
-	private Map<ReqGuardGraph, ReqTriggerDependency> calculateStepDependencies(List<ReqGraphAnnotation> annotations) {
-		//prepare nodes
-		Map<ReqGuardGraph, ReqTriggerDependency> reqNodes = new HashMap<>();
-		for(ReqGraphAnnotation annotation: annotations) {
-			reqNodes.put(annotation.getRequirementAut(), new ReqTriggerDependency(annotation.getRequirementAut()));
-		}
-		//build graph
-		for(ReqGraphAnnotation annotation: annotations) {
-			findDependencies(annotation.getRequirementAut(), annotation.getGuard(), annotations, reqNodes);
-		}
-		return reqNodes;
-	}	
-	
-	//Find the labels of reqs that set dependand's inputs
-	private void findDependencies(ReqGuardGraph dependandReqAut, Term dependandTerm, 
-			List<ReqGraphAnnotation> stepAnnotations, Map<ReqGuardGraph, ReqTriggerDependency> reqNodes) {
-		Map<String, ReqGraphAnnotation> dependees = new HashMap<>();
-		Set<TermVariable> triggerVar = new HashSet<>();
-		ReqTriggerDependency dependand = reqNodes.get(dependandReqAut); 
-		// get all trigger (!) variables
-		for(TermVariable var: SmtUtils.getFreeVars(Arrays.asList(dependandTerm))) {
-			if(! mReqSymbolTable.isAuxVar(var.toString()) && ! mAuxVarGen.getEffectVariables(dependandReqAut).contains(var)) {
-				triggerVar.add(var);
-			}
-		}
-		// find justification for trigger
-		for(ReqGraphAnnotation stepAnnotation: stepAnnotations) {
-			ReqGuardGraph reqId = stepAnnotation.getRequirementAut();
-			Term edge = stepAnnotation.getGuard();
-			Set<Term> justifiedTriggers = new HashSet<>();
-			for(TermVariable effect: mAuxVarGen.getEffectVariables(reqId)) {
-				if(triggerVar.contains(effect) && SmtUtils.getFreeVars(Arrays.asList(edge)).contains(effect) ) {
-					triggerVar.remove(effect);
-					justifiedTriggers.add(effect);
-				}
-			}
-			if(justifiedTriggers.size() > 0) {
-				ReqTriggerDependency targetDepNode = reqNodes.get(stepAnnotation.getRequirementAut());
-				dependand.addOutgoingNode(targetDepNode, justifiedTriggers);
-			}
-			Set<TermVariable> inputs = SmtUtils.getFreeVars(Arrays.asList(edge));
-			inputs.removeAll(justifiedTriggers);
-			dependand.addInputs(inputs);
-			Set<TermVariable> outputs = SmtUtils.getFreeVars(Arrays.asList(edge));
-			outputs.retainAll(mAuxVarGen.getEffectVariables(dependandReqAut));
-			dependand.addOutputs(outputs);
-		}
-	}
-	
-	private String getValueOfState(int i, TermVariable v) {
-		String ident = v.getName();
-		Collection<Expression> values = mTestStates.get(i).getValues(ident);
-		return formatAssignment(ident, values);
-	}
-	
-	private String formatAssignment(String ident, Collection<Expression> values) {
-		StringBuilder sb = new StringBuilder();
-		sb.append( ident);
-		sb.append( "=" );
-		for(Expression value: values) {
-			sb.append( BoogiePrettyPrinter.print(value));
-		}
-		sb.append("; ");
-		return sb.toString();
-	}
-	
 
+		sb.append(getStepTestPlan());
+		return sb.toString();
+	}
+	
+	private String getStepTestPlan() {
+		StringBuilder sb = new StringBuilder();
+		for(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes: mDependenciesGraphNodes) {
+			sb.append("----| Step: t ");
+			//TODO time (sb.append(Double.toString(mTestStates.get(i).getTimeStep()));)
+			sb.append("|-------------------------------------------------------------------------------------------");
+			sb.append(System.getProperty("line.separator"));
+			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
+				DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+				for(DirectTriggerDependency dependeeNode: dependencyNode.getOutgoingNodes()) {
+					sb.append(dependeeNode.getReqAut().getName());
+					sb.append("----------");
+					sb.append(dependencyNode.getOutgoingEdgeLabel(dependeeNode).toString());
+					sb.append("---------->");
+					sb.append(dependencyNode.getReqAut().getName());
+					sb.append(System.getProperty("line.separator"));
+				}
+				if(dependencyNode.getInputs().size() > 0 || dependencyNode.getOutputs().size() > 0) {
+					sb.append(dependencyNode.getInputs().toString());
+					sb.append("----------(");
+					sb.append(dependencyNode.getReqAut().getName());
+					sb.append(")---------->");
+					sb.append(dependencyNode.getOutputs().toString());	
+					sb.append(System.getProperty("line.separator"));
+				}
+			}
+		}
+		return sb.toString();
+	}
 	
 	public String toString() {
 		return "Fount Test for oracle: " + mTestStates.get(mTestStates.size()-1).toOracleString() ;
