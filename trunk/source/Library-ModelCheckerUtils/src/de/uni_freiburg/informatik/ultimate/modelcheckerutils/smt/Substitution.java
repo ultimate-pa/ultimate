@@ -80,8 +80,9 @@ public class Substitution extends TermTransformer {
 
 	@Override
 	protected void convert(Term term) {
-		if (mScopedSubstitutionMapping.containsKey(term)) {
-			setResult(mScopedSubstitutionMapping.get(term));
+		final Term mappedTerm = mScopedSubstitutionMapping.get(term);
+		if (mappedTerm != null) {
+			setResult(mappedTerm);
 		} else {
 			if (term instanceof QuantifiedFormula) {
 				mScopedSubstitutionMapping.beginScope();
