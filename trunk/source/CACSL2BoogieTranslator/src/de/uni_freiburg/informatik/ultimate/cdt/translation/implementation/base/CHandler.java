@@ -1196,9 +1196,14 @@ public class CHandler {
 		}
 		final IBinding binding = node.getName().resolveBinding();
 		if (binding instanceof CVariable) {
-			final IASTNode def = ((CVariable) binding).getDefinition();
-			if (def != null) {
-				return mVariablesOnHeap.contains(def.getParent());
+			final IASTNode[] decls = ((CVariable) binding).getDeclarations();
+			// check if any of the declarations of this var are on heap, because then, all have to be on heap
+			if (decls != null && decls.length > 0) {
+				for (final IASTNode decl : decls) {
+					if (mVariablesOnHeap.contains(decl.getParent())) {
+						return true;
+					}
+				}
 			}
 		}
 		return false;
@@ -1554,7 +1559,7 @@ public class CHandler {
 			ir = (InitializerResult) main.dispatch(initializer);
 		}
 
-		final boolean isAddressTaken = (node.getParent() instanceof IASTUnaryExpression)
+		final boolean isAddressTaken = node.getParent() instanceof IASTUnaryExpression
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
 		// catch simple case
 		if (!isAddressTaken) {
@@ -3447,8 +3452,8 @@ public class CHandler {
 					 * from Boogie program
 					 *
 					 * EDIT (alex Nov '18): additional constraint for omission: only omit if object is not on heap. If
-					 *  it is on heap, then the corresponding pointer may still be used, even if the type is never
-					 *  completed (if the declaration has storage class extern).
+					 * it is on heap, then the corresponding pointer may still be used, even if the type is never
+					 * completed (if the declaration has storage class extern).
 					 */
 					continue;
 				}
@@ -4289,7 +4294,7 @@ public class CHandler {
 			nullPointerConstant =
 					mExpressionTranslation.convertIntToPointer(loc, nullPointerConstant, desiredResultType);
 		} else {
-			assert (nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer);
+			assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		}
 		return nullPointerConstant;
 	}
