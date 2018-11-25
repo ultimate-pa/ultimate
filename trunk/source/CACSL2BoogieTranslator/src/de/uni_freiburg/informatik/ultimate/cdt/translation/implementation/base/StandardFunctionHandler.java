@@ -495,6 +495,7 @@ public class StandardFunctionHandler {
 
 		// from fenv.h
 		fill(map, "fegetround", this::handleBuiltinFegetround);
+		fill(map, "fesetround", this::handleBuiltinFesetround);
 
 		checkFloatSupport(map, dieFloat);
 
@@ -1102,6 +1103,24 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 0, name, arguments);
 
 		final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
+
+		return new ExpressionResultBuilder().setLrValue(rvalue).build();
+
+	}
+
+	private Result handleBuiltinFesetround(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult decayedArgument =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult convertedArgument =
+				mExpressionTranslation.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
+		final ExpressionResult arg = convertedArgument;
+
+		final RValue rvalue = mExpressionTranslation.constructBuiltinFesetround(loc, (RValue) arg.getLrValue());
 
 		return new ExpressionResultBuilder().setLrValue(rvalue).build();
 

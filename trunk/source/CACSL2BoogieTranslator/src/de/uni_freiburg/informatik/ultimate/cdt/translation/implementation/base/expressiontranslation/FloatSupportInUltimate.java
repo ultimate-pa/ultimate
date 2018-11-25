@@ -118,7 +118,8 @@ public class FloatSupportInUltimate {
 			"isnormal",
 
 			// from fenv.h
-			"fegetround"
+			"fegetround",
+			"fesetround",
 	};
 
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
@@ -287,7 +288,6 @@ public class FloatSupportInUltimate {
 			"feraiseexcept",
 			"fesetexceptflag",
 			"fetestexcept",
-			"fesetround",
 			"fegetenv",
 			"feholdexcept",
 			"fesetenv",

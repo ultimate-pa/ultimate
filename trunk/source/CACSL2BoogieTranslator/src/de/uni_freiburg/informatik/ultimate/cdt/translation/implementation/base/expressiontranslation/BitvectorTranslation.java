@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -157,7 +158,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	private final IdentifierExpression mActiveRoundingMode;
+	private IdentifierExpression mActiveRoundingMode;
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
@@ -1244,7 +1245,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 		switch (((IdentifierExpression) getRoundingMode()).getIdentifier()) {
 		case "~roundTowardZero":
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			break;
 		case "~roundNearestTiesToEven":
 			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
@@ -1261,6 +1262,31 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 
 		return new RValue(resultExpression, resultCType);
+	}
+
+	@Override
+	public RValue constructBuiltinFesetround(final ILocation loc, final RValue argument) {
+		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+
+		final Expression returnExpression;
+
+		if (((BitvecLiteral) argument.getValue()).getValue().equals("0")) {
+			mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("1")) {
+			mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("2")) {
+			mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("3")) {
+			mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+		} else {
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
+		}
+
+		return new RValue(returnExpression, cPrimitive);
 	}
 
 	@Override

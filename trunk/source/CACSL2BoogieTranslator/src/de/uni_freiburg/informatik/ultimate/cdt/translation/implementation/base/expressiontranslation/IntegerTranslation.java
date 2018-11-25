@@ -943,4 +943,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("Operation is not supported in non-bitprecise translation");
 	}
 
+	@Override
+	public RValue constructBuiltinFesetround(final ILocation loc, final RValue argument) {
+		throw new UnsupportedOperationException("Operation is not supported in non-bitprecise translation");
+	}
+
 }
