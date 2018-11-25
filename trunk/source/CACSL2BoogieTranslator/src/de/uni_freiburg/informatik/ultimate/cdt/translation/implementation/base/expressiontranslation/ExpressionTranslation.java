@@ -579,6 +579,30 @@ public abstract class ExpressionTranslation {
 
 	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
 
+	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
+		if (!cPrimitive.isFloatingType()) {
+			throw new IllegalArgumentException("can only create NaN for floating types");
+		}
+		final String s;
+		switch (cPrimitive.getType()) {
+		case FLOAT: {
+			s = "nanf";
+			break;
+		}
+		case DOUBLE: {
+			s = "nan";
+			break;
+		}
+		case LONGDOUBLE: {
+			s = "nanl";
+			break;
+		}
+		default:
+			throw new IllegalArgumentException("can only create NaN for floating types");
+		}
+		return createNanOrInfinity(loc, s);
+	}
+
 	public abstract Expression getRoundingMode();
 
 	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,

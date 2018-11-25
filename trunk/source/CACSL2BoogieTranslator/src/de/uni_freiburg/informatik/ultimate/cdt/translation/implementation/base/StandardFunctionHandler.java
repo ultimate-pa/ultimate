@@ -1391,36 +1391,27 @@ public class StandardFunctionHandler {
 		return mCHandler.handleRelationalOperators(loc, op, rl, rr);
 	}
 
+	/**
+	 * According to 7.12.14.6 of C11 the isunordered macro returns 1 if its
+	 * arguments are unordered and 0 otherwise. The meaning of "unordered" is
+	 * defined in 7.12.14. Two floating point values are unordered if at least one
+	 * of the two is a NaN value.
+	 */
 	private Result handleFloatBuiltinIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		/*
-		 * http://en.cppreference.com/w/c/numeric/math/isunordered
-		 *
-		 * int isunordered (real-floating x, real-floating y)
-		 *
-		 * This macro determines whether its arguments are unordered. In other words, it is true if x or y are NaN, and
-		 * false otherwise.
-		 *
-		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		ExpressionResult leftRvaluedResult =
+		final ExpressionResult leftRvaluedResult =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
-		ExpressionResult rightRvaluedResult =
+		final ExpressionResult rightRvaluedResult =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
-		final ExpressionResult nanLResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
-		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
-
-		final Pair<ExpressionResult, ExpressionResult> newOps =
-				mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
-		leftRvaluedResult = newOps.getFirst();
-		rightRvaluedResult = newOps.getSecond();
-
+		final ExpressionResult nanLResult = mExpressionTranslation.createNan(loc,
+				(CPrimitive) leftRvaluedResult.getLrValue().getCType());
+		final ExpressionResult nanRResult = mExpressionTranslation.createNan(loc,
+				(CPrimitive) rightRvaluedResult.getLrValue().getCType());
 		final Expression leftExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
-
-		mExpressionTranslation.usualArithmeticConversions(loc, nanRResult, rightRvaluedResult);
 		final Expression rightExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
