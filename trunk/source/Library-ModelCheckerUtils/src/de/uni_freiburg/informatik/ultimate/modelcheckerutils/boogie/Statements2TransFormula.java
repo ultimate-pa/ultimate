@@ -292,11 +292,11 @@ public class Statements2TransFormula {
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
 			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
-			eliminateAuxVarsViaDer();
 			if (s_ComputeAsserts) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
 		}
+		eliminateAuxVarsViaDer();
 	}
 
 	private void addHavoc(final HavocStatement havoc) {
@@ -653,13 +653,10 @@ public class Statements2TransFormula {
 	}
 
 	/**
-	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of auxVars. Returns a term that is
-	 * equivalent to ∃x_1,...,∃x_n input and remove {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
-	 * NaiveDestructiveEqualityResolution.
-	 *
-	 * Returns term that is equisatisfiable to input. If a x is free variable
-	 *
-	 * @return
+	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of
+	 * auxVars. Returns a term that is equivalent to ∃x_1,...,∃x_n input and remove
+	 * {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
+	 * Destructive Equality Resolution {@link XnfDer}.
 	 */
 	private void eliminateAuxVarsViaDer() {
 		if (mAuxVars.isEmpty()) {
@@ -668,7 +665,6 @@ public class Statements2TransFormula {
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 		mAssumes = SmtUtils.and(mScript,
 				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(mAssumes), mAuxVars));
-		mAuxVars.clear();
 	}
 
 	/**
