@@ -292,9 +292,7 @@ public class Statements2TransFormula {
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
 			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
-			if (!mAuxVars.isEmpty()) {
-				mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-			}
+			eliminateAuxVarsViaDer();
 			if (s_ComputeAsserts) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
@@ -324,9 +322,7 @@ public class Statements2TransFormula {
 		final Term f = tlres.getTerm();
 
 		mAssumes = SmtUtils.and(mScript, f, mAssumes);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		if (s_ComputeAsserts) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
@@ -341,9 +337,7 @@ public class Statements2TransFormula {
 			final Term f = tlres.getTerm();
 
 			mAssumes = SmtUtils.and(mScript, f, mAssumes);
-			if (!mAuxVars.isEmpty()) {
-				mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-			}
+			eliminateAuxVarsViaDer();
 
 			mAsserts = SmtUtils.and(mScript, f, mAsserts);
 			assert assertTermContainsNoNull(mAssumes);
@@ -442,9 +436,7 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
-				if (!mAuxVars.isEmpty()) {
-					mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-				}
+				eliminateAuxVarsViaDer();
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -467,9 +459,7 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
-				if (!mAuxVars.isEmpty()) {
-					mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-				}
+				eliminateAuxVarsViaDer();
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -669,16 +659,16 @@ public class Statements2TransFormula {
 	 *
 	 * Returns term that is equisatisfiable to input. If a x is free variable
 	 *
-	 * @param input
-	 * @param auxVars
-	 *            set of free variables occurring in input
 	 * @return
 	 */
-	private Term eliminateAuxVarsViaDer(final Term input, final Set<TermVariable> auxVars) {
+	private void eliminateAuxVarsViaDer() {
+		if (mAuxVars.isEmpty()) {
+			return;
+		}
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
-		final Term result = SmtUtils.and(mScript,
-				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
-		return result;
+		mAssumes = SmtUtils.and(mScript,
+				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(mAssumes), mAuxVars));
+		mAuxVars.clear();
 	}
 
 	/**
@@ -693,7 +683,7 @@ public class Statements2TransFormula {
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result;
-		if (qvs.isEmpty() || (qvs.get(0).getQuantifier() == QuantifiedFormula.FORALL)) {
+		if (qvs.isEmpty() || qvs.get(0).getQuantifier() == QuantifiedFormula.FORALL) {
 			result = pnf;
 		} else {
 			if (qvs.size() > 1) {
@@ -795,9 +785,7 @@ public class Statements2TransFormula {
 		}
 		assert arguments.length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -828,9 +816,7 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -859,9 +845,7 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
@@ -898,9 +882,7 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		return getTransFormula(false, true, simplicationTechnique);
 	}
 
@@ -931,9 +913,7 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		if (!mAuxVars.isEmpty()) {
-			mAssumes = eliminateAuxVarsViaDer(mAssumes, mAuxVars);
-		}
+		eliminateAuxVarsViaDer();
 		return getTransFormula(false, true, simplificationTechnique);
 	}
 
