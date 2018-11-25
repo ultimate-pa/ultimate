@@ -227,7 +227,7 @@ public class PostProcessor {
 		if (mSettings.isBitvectorTranslation()) {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc));
 
-			if ((mTypeHandler).areFloatingTypesNeeded()) {
+			if (mTypeHandler.areFloatingTypesNeeded()) {
 				decl.addAll(declareFloatDataTypes(loc));
 			}
 
@@ -330,9 +330,11 @@ public class PostProcessor {
 				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 						new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
 				final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
-				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
-								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
+				attributes[1] =
+						new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
+								new Expression[] {
+										ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
+										ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 			}
 			final String identifier = "C_" + cPrimitive.name();
 			final String[] typeParams = new String[0];
@@ -422,7 +424,7 @@ public class PostProcessor {
 
 		mProcedureManager.beginProcedureScope(mCHandler, mProcedureManager.getProcedureInfo(dispatchingProcedureName));
 
-		final boolean resultTypeIsVoid = (funcSignature.getReturnType() == null);
+		final boolean resultTypeIsVoid = funcSignature.getReturnType() == null;
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -646,7 +648,6 @@ public class PostProcessor {
 				}
 			}
 		}
-
 		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 
 			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
@@ -661,17 +662,20 @@ public class PostProcessor {
 			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
 					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			initStatements.add(0,
-					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-									new String[] { "base", "offset" },
-									new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-											mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-											mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-													mExpressionTranslation.getCTypeOfPointerComponents(),
-													BigInteger.ZERO) }) }));
+					StatementFactory
+							.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
+									new Expression[] {
+											ExpressionFactory.constructStructConstructor(translationUnitLoc,
+													new String[] { "base", "offset" }, new Expression[] {
+															mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+																	mExpressionTranslation
+																			.getCTypeOfPointerComponents(),
+																	BigInteger.ZERO),
+															mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+																	mExpressionTranslation
+																			.getCTypeOfPointerComponents(),
+																	BigInteger.ZERO) }) }));
 		}
-
-
 
 		mStaticObjectsHandler.freeze();
 		initStatements.addAll(mStaticObjectsHandler.getStatementsForUltimateInit());
