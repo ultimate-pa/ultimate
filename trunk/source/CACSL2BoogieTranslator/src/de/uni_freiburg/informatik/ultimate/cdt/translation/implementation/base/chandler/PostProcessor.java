@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -681,6 +683,11 @@ public class PostProcessor {
 		initStatements.addAll(mStaticObjectsHandler.getStatementsForUltimateInit());
 		initStatements.addAll(staticObjectInitStatements);
 
+		// because we process declarations out of order in CHandler , we need to reorder them here
+		final Comparator<? super BoogieASTNode> c =
+				(o1, o2) -> Integer.compare(o1.getLocation().getStartLine(), o2.getLocation().getStartLine());
+		initDecl.sort(c);
+		initStatements.sort(c);
 		/*
 		 * note that we only have to deal with the implementation part of the procedure, the declaration is managed by
 		 * the FunctionHandler
