@@ -768,8 +768,8 @@ public class StandardFunctionHandler {
 	/**
 	 * TOOD pthread support
 	 */
-	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
+	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
@@ -839,14 +839,14 @@ public class StandardFunctionHandler {
 		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
 			heapLValue = (HeapLValue) argThreadIdPointer.getLrValue();
 		} else {
-			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
-					argThreadIdPointer.getLrValue().getValue(), argThreadIdPointer.getLrValue().getCType(), false, null);
+			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argThreadIdPointer.getLrValue().getValue(),
+					argThreadIdPointer.getLrValue().getCType(), false, null);
 		}
 
 		final Expression threadId = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG),
 				BigInteger.valueOf(mPthreadCreateCounter++));
-		final List<Statement> writeCall = mMemoryHandler.getWriteCall(loc, heapLValue, threadId,
-				new CPrimitive(CPrimitives.ULONG), false, node);
+		final List<Statement> writeCall =
+				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, new CPrimitive(CPrimitives.ULONG), false, node);
 
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
@@ -858,13 +858,11 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "pthread_create calls function with more than one argument");
 		}
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId },
-				methodName, forkArguments);
+		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId }, methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine,
-				startRoutineArguments);
+		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine, startRoutineArguments);
 		builder.addStatements(writeCall);
 
 		final boolean letPthreadCreateAlwaysReturnZero = false;
@@ -874,7 +872,8 @@ public class StandardFunctionHandler {
 			returnValue = mTypeSizes.constructLiteralForIntegerType(loc, returnValueCType, BigInteger.ZERO);
 		} else {
 			// auxvar for fork return value (status code)
-			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnValueCType, SFO.AUXVAR.NONDET);
+			final AuxVarInfo auxvarinfo =
+					mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnValueCType, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvarinfo.getVarDec());
 			builder.addAuxVar(auxvarinfo);
 			returnValue = auxvarinfo.getExp();
@@ -889,8 +888,8 @@ public class StandardFunctionHandler {
 	/**
 	 * TOOD pthread support
 	 */
-	private Result handlePthread_join(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
+	private Result handlePthread_join(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
 
 		// get arguments
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -1392,10 +1391,16 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * According to 7.12.14.6 of C11 the isunordered macro returns 1 if its
-	 * arguments are unordered and 0 otherwise. The meaning of "unordered" is
-	 * defined in 7.12.14. Two floating point values are unordered if at least one
-	 * of the two is a NaN value.
+	 * Handle the following macro. <code>int isunordered (real-floating x, real-floating y)</code>
+	 * 
+	 * This macro determines whether its arguments are unordered. It is 1 if x or y are NaN, and 0 otherwise.
+	 * 
+	 * According to 7.12.14.6 of C11 the isunordered macro returns 1 if its arguments are unordered and 0 otherwise. The
+	 * meaning of "unordered" is defined in 7.12.14. Two floating point values are unordered if at least one of the two
+	 * is a NaN value.
+	 * 
+	 * See also http://en.cppreference.com/w/c/numeric/math/isunordered
+	 *
 	 */
 	private Result handleFloatBuiltinIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -1406,10 +1411,10 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
 		final ExpressionResult rightRvaluedResult =
 				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[1]);
-		final ExpressionResult nanLResult = mExpressionTranslation.createNan(loc,
-				(CPrimitive) leftRvaluedResult.getLrValue().getCType());
-		final ExpressionResult nanRResult = mExpressionTranslation.createNan(loc,
-				(CPrimitive) rightRvaluedResult.getLrValue().getCType());
+		final ExpressionResult nanLResult =
+				mExpressionTranslation.createNan(loc, (CPrimitive) leftRvaluedResult.getLrValue().getCType());
+		final ExpressionResult nanRResult =
+				mExpressionTranslation.createNan(loc, (CPrimitive) rightRvaluedResult.getLrValue().getCType());
 		final Expression leftExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
 		final Expression rightExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
