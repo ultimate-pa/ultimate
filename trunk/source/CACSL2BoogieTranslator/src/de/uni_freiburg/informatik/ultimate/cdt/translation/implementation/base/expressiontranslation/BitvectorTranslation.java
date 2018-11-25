@@ -942,7 +942,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			return new RValue(convertExpr, longResultType);
 		} else if ("llround".equals(floatFunction.getFunctionName())) {
-			// TODO fix result type. fp.to_sbv. smt function to convert to long long??
+
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.roundToIntegral";
@@ -954,6 +954,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 
+			// TODO fix result type. fp.to_sbv. smt function to convert to long long??
 			final CPrimitive longLongResultType = new CPrimitive(CPrimitives.LONGLONG);
 			final String smtConvertTypeFunctionName = "fp.to_sbv";
 			final String ConvertBoogieFunctionName = SFO.getBoogieFunctionName(smtConvertTypeFunctionName, resultType);
@@ -1146,6 +1147,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					negative, absoluteValue.getValue());
 			return new RValue(resultExpr, resultType);
 		case "fdim":
+
+			final FloatFunction isNaN = FloatFunction.decode("isnan");
+
+			// if (first || second) is NaN -> NaN
+			final RValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, first);
+			final RValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, second);
+
 			// if first>second, first - second, else +0
 			final CPrimitive typeFirst = (CPrimitive) first.getCType().getUnderlyingType();
 			final CPrimitive typeSecond = (CPrimitive) second.getCType().getUnderlyingType();
@@ -1160,7 +1168,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			final Expression resultExprFdim =
 					ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
-			return new RValue(resultExprFdim, typeFirst);
+
+			final Expression secondNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
+					secondIsNaN.getValue(), second.getValue(), resultExprFdim);
+
+			final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc, firstIsNaN.getValue(),
+					first.getValue(), secondNaNExpr);
+
+			return new RValue(firstNaNExpr, typeFirst);
 
 		default:
 			throw new UnsupportedOperationException(
