@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -40,18 +40,21 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Check if term contains given subterm.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class ContainsSubterm extends NonRecursive {
-	
+
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
-	
+
 	class MyWalker extends TermWalker {
-		MyWalker(Term term) { super(term); }
-		
+		MyWalker(final Term term) {
+			super(term);
+		}
+
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			if (mFoundInCurrentSeach) {
 				// do nothing
 			} else {
@@ -68,52 +71,53 @@ public class ContainsSubterm extends NonRecursive {
 			}
 		}
 
-
-
-
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// cannot descend
 		}
+
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
+
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
 			}
 		}
+
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new UnsupportedOperationException();
 		}
+
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			walker.enqueueWalker(new MyWalker(term.getSubformula()));
 		}
+
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			// cannot descend
 		}
 	}
-	
+
 	private final Term mGivenSubterm;
 	private boolean mFoundInCurrentSeach;
-	
-	public ContainsSubterm(Term givenSubterm) {
+
+	public ContainsSubterm(final Term givenSubterm) {
 		super();
 		mGivenSubterm = givenSubterm;
 	}
 
 	/**
-	 * Returns true iff this term contains the subterm of this ContainsSubterm 
-	 * object.
+	 * Returns true iff this term contains the subterm of this ContainsSubterm object.
 	 */
-	public boolean containsSubterm(Term term) {
+	public boolean containsSubterm(final Term term) {
 		mFoundInCurrentSeach = false;
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new MyWalker(term));

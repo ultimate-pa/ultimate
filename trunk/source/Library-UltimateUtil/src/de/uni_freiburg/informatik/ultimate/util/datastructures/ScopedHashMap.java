@@ -37,23 +37,22 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
 
-
 /**
- * A scoped hash map is useful for symbol tables. With beginScope() a new
- * scope is started.  All modifications to the table are reversed when
- * the scope is ended with endScope().
+ * A scoped hash map is useful for symbol tables. With beginScope() a new scope is started. All modifications to the
+ * table are reversed when the scope is ended with endScope().
  *
- * You can also get a key, entry, or value collection of the currently
- * active scope.  This will only iterate the keys/values set since the last
- * beginScope() call.  Removing an entry will restore the value that was
- * previously set on the outer scope.
+ * You can also get a key, entry, or value collection of the currently active scope. This will only iterate the
+ * keys/values set since the last beginScope() call. Removing an entry will restore the value that was previously set on
+ * the outer scope.
  *
  * Note that it is forbidden to store null values into a scoped hash map.
  *
  * @author Jochen Hoenicke
  *
- * @param <K> Key type
- * @param <V> Value type
+ * @param <K>
+ *            Key type
+ * @param <V>
+ *            Value type
  */
 public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap<K, V> {
 
@@ -107,7 +106,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		}
 	}
 
-	void undoEntry(final Entry<K,V> old) {
+	void undoEntry(final Entry<K, V> old) {
 		if (old.getValue() == null) {
 			mMap.remove(old.getKey());
 		} else {
@@ -292,14 +291,14 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	}
 
 	@Override
-	public Set<Entry<K,V>> entrySet() {
-		return new AbstractSet<Entry<K,V>>() {
+	public Set<Entry<K, V>> entrySet() {
+		return new AbstractSet<Entry<K, V>>() {
 
 			@Override
-			public Iterator<Entry<K,V>> iterator() {
-				return new Iterator<Entry<K,V>>() {
-					private final Iterator<Entry<K,V>> mBacking = getMap().entrySet().iterator();
-					private Entry<K,V> mLast;
+			public Iterator<Entry<K, V>> iterator() {
+				return new Iterator<Entry<K, V>>() {
+					private final Iterator<Entry<K, V>> mBacking = getMap().entrySet().iterator();
+					private Entry<K, V> mLast;
 
 					@Override
 					public boolean hasNext() {
@@ -307,7 +306,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 					}
 
 					@Override
-					public Entry<K,V> next() {
+					public Entry<K, V> next() {
 						return mLast = mBacking.next();
 					}
 
@@ -355,8 +354,11 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 	/**
 	 * Checks if the key was overwritten in the given scope.
-	 * @param key   the key to check for.
-	 * @param scope the scope number; must not be 0 for the outer most scope.
+	 * 
+	 * @param key
+	 *            the key to check for.
+	 * @param scope
+	 *            the scope number; must not be 0 for the outer most scope.
 	 * @return true if the key was overwritten in the given scope.
 	 */
 	public boolean overwritesKeyInScope(final Object key, final int scope) {
