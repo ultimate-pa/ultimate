@@ -163,8 +163,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
-		// TODO: Depending on the setting, either set this to one of the constants or to the global variable.
-		mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
+		mActiveRoundingMode = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
 	}
 
 	@Override
