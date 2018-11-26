@@ -102,8 +102,8 @@ public class Statements2TransFormula {
 	 * Compute Formulas that encode violation of one of the added assert statements. This feature was used in Evrens old
 	 * CFG.
 	 */
-	private final static boolean s_ComputeAsserts = false;
-	private final static String s_ComputeAssertsNotAvailable = "computation of asserts not available";
+	private final static boolean COMPUTE_ASSERTS = false;
+	private final static String MSG_COMPUTE_ASSERTS_NOT_AVAILABLE = "computation of asserts not available";
 	/**
 	 * Try to replace existential quantification by auxiliary variables. Therefore we bring all terms in prenex normal
 	 * form (PNF). If the first quantifier is ∃ we remove it and add the corresponding variables as auxiliary variables.
@@ -161,7 +161,7 @@ public class Statements2TransFormula {
 		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
 		mConstOnlyIdentifierTranslator = mBoogie2SMT.new ConstOnlyIdentifierTranslator();
-		if (s_ComputeAsserts) {
+		if (COMPUTE_ASSERTS) {
 			mAsserts = mScript.term("true");
 		}
 	}
@@ -292,7 +292,7 @@ public class Statements2TransFormula {
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
 			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
-			if (s_ComputeAsserts) {
+			if (COMPUTE_ASSERTS) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
 		}
@@ -323,13 +323,14 @@ public class Statements2TransFormula {
 
 		mAssumes = SmtUtils.and(mScript, f, mAssumes);
 		eliminateAuxVarsViaDer();
-		if (s_ComputeAsserts) {
+		if (COMPUTE_ASSERTS) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void addAssert(final AssertStatement assertstmt) {
-		if (s_ComputeAsserts) {
+		if (COMPUTE_ASSERTS) {
 			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
@@ -342,11 +343,11 @@ public class Statements2TransFormula {
 			mAsserts = SmtUtils.and(mScript, f, mAsserts);
 			assert assertTermContainsNoNull(mAssumes);
 		} else {
-			throw new AssertionError(s_ComputeAssertsNotAvailable);
+			throw new AssertionError(MSG_COMPUTE_ASSERTS_NOT_AVAILABLE);
 		}
 	}
 
-	private boolean assertTermContainsNoNull(final Term result) {
+	private static boolean assertTermContainsNoNull(final Term result) {
 		// toString crashes if the result contains a null element
 		return result.toString() instanceof Object;
 	}
@@ -437,7 +438,7 @@ public class Statements2TransFormula {
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
 				eliminateAuxVarsViaDer();
-				if (s_ComputeAsserts) {
+				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
 					} else {
@@ -460,7 +461,7 @@ public class Statements2TransFormula {
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
 				eliminateAuxVarsViaDer();
-				if (s_ComputeAsserts) {
+				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
 					} else {
@@ -529,10 +530,9 @@ public class Statements2TransFormula {
 			final IProgramVar bv = getBoogieVar(id, declInfo, isOldContext, boogieASTNode);
 			if (bv == null) {
 				return null;
-			} else {
-				final TermVariable tv = getOrConstuctCurrentRepresentative(bv);
-				return tv;
 			}
+			final TermVariable tv = getOrConstuctCurrentRepresentative(bv);
+			return tv;
 		}
 
 		abstract protected IProgramVar getBoogieVar(String id, DeclarationInformation declInfo, boolean isOldContext,
@@ -565,7 +565,7 @@ public class Statements2TransFormula {
 	}
 
 	public class GlobalVarTranslatorWithInOutVarManagement extends IdentifierTranslatorWithInOutVarManagement {
-		private final String mCurrentProcedure;
+		private final String mInnerCurrentProcedure;
 		/**
 		 * Translate all variables to the non old global variable, independent of the context. This feature is not used
 		 * at the moment. Maybe we can drop it.
@@ -574,9 +574,9 @@ public class Statements2TransFormula {
 		private final Set<String> mModifiableByCurrentProcedure;
 
 		public GlobalVarTranslatorWithInOutVarManagement(final String currentProcedure, final boolean allNonOld) {
-			mCurrentProcedure = currentProcedure;
+			mInnerCurrentProcedure = currentProcedure;
 			mAllNonOld = allNonOld;
-			mModifiableByCurrentProcedure = mBoogieDeclarations.getModifiedVars().get(mCurrentProcedure);
+			mModifiableByCurrentProcedure = mBoogieDeclarations.getModifiedVars().get(mInnerCurrentProcedure);
 
 		}
 
@@ -646,16 +646,14 @@ public class Statements2TransFormula {
 			final IProgramVar bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
 			if (bv == null) {
 				return null;
-			} else {
-				return mSubstitution.get(bv);
 			}
+			return mSubstitution.get(bv);
 		}
 	}
 
 	/**
-	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of
-	 * auxVars. Returns a term that is equivalent to ∃x_1,...,∃x_n input and remove
-	 * {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
+	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of auxVars. Returns a term that is
+	 * equivalent to ∃x_1,...,∃x_n input and remove {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
 	 * Destructive Equality Resolution {@link XnfDer}.
 	 */
 	private void eliminateAuxVarsViaDer() {
@@ -684,10 +682,9 @@ public class Statements2TransFormula {
 		} else {
 			if (qvs.size() > 1) {
 				throw new UnsupportedOperationException("support for alternating quantifiers not yet implemented");
-			} else {
-				auxVars.addAll(qvs.get(0).getVariables());
-				result = qs.getInnerTerm();
 			}
+			auxVars.addAll(qvs.get(0).getVariables());
+			result = qs.getInnerTerm();
 		}
 		return result;
 	}
@@ -925,7 +922,7 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	public class TranslationResult {
+	public static final class TranslationResult {
 		private final UnmodifiableTransFormula mTransFormula;
 		private final Map<String, ILocation> mOverapproximations;
 
