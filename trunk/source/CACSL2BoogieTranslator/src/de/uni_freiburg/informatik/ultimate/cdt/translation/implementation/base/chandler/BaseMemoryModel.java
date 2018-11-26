@@ -75,6 +75,10 @@ public abstract class BaseMemoryModel {
 		return READ_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	public final String getUncheckedReadProcedureName(final CPrimitives primitive) {
+		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
+	}
+
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
@@ -87,10 +91,14 @@ public abstract class BaseMemoryModel {
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + getProcedureSuffix(primitive);
 	}
 
-
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + hda.getName();
+	}
+
+	public final String getUncheckedReadPointerProcedureName() {
+		final HeapDataArray hda = mPointerArray;
+		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
 	public final String getWritePointerProcedureName() {
@@ -135,7 +143,9 @@ public abstract class BaseMemoryModel {
 						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
 								getPointerHeapArray().getASTType(), Collections.emptySet(),
 								requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
-								requiredMemoryModelFeatures.isPointerInitRequired()));
+								requiredMemoryModelFeatures.isPointerInitRequired(),
+								requiredMemoryModelFeatures.isPointerUncheckedReadRequired()
+								));
 			}
 			return Collections.emptyList();
 		}
@@ -155,24 +165,32 @@ public abstract class BaseMemoryModel {
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
 		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
-		private final boolean mAlsoUnchecked;
+		private final boolean mAlsoUncheckedWrite;
 		private final boolean mAlsoInit;
+		private final boolean mAlsoUncheckedRead;
 
 		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType astType,
-				final Set<CPrimitives> primitives, final boolean alsoUnchecked, final boolean alsoInit) {
+				final Set<CPrimitives> primitives, final boolean alsoUncheckedWrite, final boolean alsoInit,
+				final boolean alsoUncheckedRead) {
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
 			mASTType = astType;
 			mPrimitives = primitives;
 			mCPrimitiveCategory =
 					primitives.stream().map(CPrimitives::getPrimitiveCategory).collect(Collectors.toSet());
-			mAlsoUnchecked = alsoUnchecked;
+			mAlsoUncheckedWrite = alsoUncheckedWrite;
 			mAlsoInit = alsoInit;
+			mAlsoUncheckedRead = alsoUncheckedRead;
 		}
 
 		public String getReadProcedureName() {
 			return READ_PROCEDURE_PREFIX + mProcedureSuffix;
 		}
+
+		public String getUncheckedReadProcedureName() {
+			return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + mProcedureSuffix;
+		}
+
 
 		public String getWriteProcedureName() {
 			return WRITE_PROCEDURE_PREFIX + mProcedureSuffix;
@@ -189,8 +207,8 @@ public abstract class BaseMemoryModel {
 		/**
 		 * @return if true, we also need the unchecked variant of the write definition.
 		 */
-		public boolean alsoUnchecked() {
-			return mAlsoUnchecked;
+		public boolean alsoUncheckedWrite() {
+			return mAlsoUncheckedWrite;
 		}
 
 		/**
@@ -198,6 +216,13 @@ public abstract class BaseMemoryModel {
 		 */
 		public boolean alsoInit() {
 			return mAlsoInit;
+		}
+
+		/**
+		 * @return if true, we also need the unchecked variant of the read definition.
+		 */
+		public boolean alsoUncheckedRead() {
+			return mAlsoUncheckedRead;
 		}
 
 		public int getBytesize() {
@@ -219,8 +244,9 @@ public abstract class BaseMemoryModel {
 		@Override
 		public String toString() {
 			return "ReadWriteDefinition [mProcedureSuffix=" + mProcedureSuffix + ", mBytesize=" + mBytesize
-					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + ", alsoUnchecked=" + mAlsoUnchecked
-					+ ", alsoInit=" + mAlsoInit + "]";
+					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + ", mCPrimitiveCategory="
+					+ mCPrimitiveCategory + ", mAlsoUncheckedWrite=" + mAlsoUncheckedWrite + ", mAlsoInit=" + mAlsoInit
+					+ ", mAlsoUncheckedRead=" + mAlsoUncheckedRead + "]";
 		}
 	}
 
