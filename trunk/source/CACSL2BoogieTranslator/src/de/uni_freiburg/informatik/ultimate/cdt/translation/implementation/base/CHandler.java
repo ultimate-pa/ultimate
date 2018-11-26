@@ -1200,6 +1200,10 @@ public class CHandler {
 			// check if any of the declarations of this var are on heap, because then, all have to be on heap
 			if (decls != null && decls.length > 0) {
 				for (final IASTNode decl : decls) {
+					if (decl == null) {
+						// DD: Bug in CDT sometimes yields null in this array
+						continue;
+					}
 					if (mVariablesOnHeap.contains(decl.getParent())) {
 						return true;
 					}
