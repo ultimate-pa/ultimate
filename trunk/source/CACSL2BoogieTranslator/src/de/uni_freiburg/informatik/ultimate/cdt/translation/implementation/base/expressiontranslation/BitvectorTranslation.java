@@ -76,7 +76,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	/**
 	 * Describes the SMT constants we use to represent the rounding mode of floating point operations.
 	 *
-	 * Based on http://www.cprover.org/SMT-LIB-Float/smt-fpa.pdf Section 3.2
+	 * Based on http://www.cprover.org/SMT-LIB-Float/smt-fpa.pdf Section 3.2 and
+	 * http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
