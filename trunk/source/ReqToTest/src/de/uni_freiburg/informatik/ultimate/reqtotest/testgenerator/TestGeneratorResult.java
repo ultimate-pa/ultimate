@@ -2,18 +2,14 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
@@ -38,6 +34,7 @@ public class TestGeneratorResult implements IResult  {
 		mReqSymbolTable = reqSymbolTable;
 		mLogger = logger;
 		calculateDependencyGraph();	
+		trimTestPlan();
 	}
 	
 
@@ -82,8 +79,6 @@ public class TestGeneratorResult implements IResult  {
 		if(toJustifyAnnotation.getSourceLocation().getLabel() > 0) {
 			//if source.label > 0 there must have already been a useful transition in the last step.
 			DirectTriggerDependency lastStepDepNode = lastStepDependencyNodes.get(toJustifyAnnotation.getRequirementAut());
-			mLogger.warn(String.format("connecting intra-step dependency %s for source locations %d", toJustifyAnnotation.getRequirementAut().getName(), 
-					toJustifyAnnotation.getSourceLocation().getLabel()));
 			dependencyNode.connectOutgoing(lastStepDepNode, new HashSet<TermVariable>());
 		}
 	}
@@ -101,8 +96,6 @@ public class TestGeneratorResult implements IResult  {
 			justifications.retainAll(varsJustifyable);
 			if (justifications.size() > 0) {
 				DirectTriggerDependency justifyingReqNode = stepDependencyNodes.get(annotation.getRequirementAut());
-				mLogger.warn(String.format("connecting dependency %s, %s, %s", toJustifyAnnotation.getRequirementAut().getName(), 
-						justifications.toString(), annotation.getRequirementAut().getName()));
 				dependencyNode.connectOutgoing(justifyingReqNode, justifications);
 			}
 			
@@ -132,6 +125,27 @@ public class TestGeneratorResult implements IResult  {
 		}
 		dependencyNode.addOutputs(outputs);	
 	}
+	
+	
+	private void trimTestPlan() {
+		for(int step = mDependenciesGraphNodes.size()-1; step >= 0 ; step--) {
+			mLogger.warn("Pruing  ..." + Integer.toString(step));
+			Set<ReqGuardGraph> keepNodes = new HashSet<>();
+			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
+			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
+				DirectTriggerDependency depNode = stepDependencyGraphNodes.get(reqAut);
+				mLogger.warn("Calc ..." + Integer.toString(step));
+				mLogger.warn("Outdegreee              ..." + Integer.toString(depNode.getIncomingNodes().size()));
+				if(depNode.getIncomingNodes().size() > 0 && depNode.getOutputs().size() > 0) {
+					for(DirectTriggerDependency targetNode: depNode.getOutgoingNodes()) {
+						mLogger.warn("Disconnecting ..." + targetNode.getReqAut().getName());
+					}
+					keepNodes.add(reqAut);
+				}
+			}
+			stepDependencyGraphNodes.keySet().removeAll(keepNodes);
+		}
+	}
 
 	@Override
 	public String getPlugin() {
@@ -149,42 +163,80 @@ public class TestGeneratorResult implements IResult  {
 		
 		sb.append("Test Vector:"+System.getProperty("line.separator"));
 
-		sb.append(getStepTestPlan());
+		sb.append(getStepsTestPlan());
 		return sb.toString();
 	}
 	
-	private String getStepTestPlan() {
+	private Set<TermVariable> getOracleTermVars(){
+		Set<TermVariable> oracleVars = new HashSet<>();
+		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(mDependenciesGraphNodes.size()-1);
+		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
+			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+			if(dependencyNode.getOutputs().size() > 0) {
+				oracleVars.addAll(dependencyNode.getOutputs());
+			}
+		}
+		return oracleVars;
+	}
+	
+	private String getStepsTestPlan() {
 		StringBuilder sb = new StringBuilder();
-		for(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes: mDependenciesGraphNodes) {
+		for(int step = 0; step < mDependenciesGraphNodes.size(); step++) {
+			SystemState state = mTestStates.get(step);
 			sb.append("----| Step: t ");
-			//TODO time (sb.append(Double.toString(mTestStates.get(i).getTimeStep()));)
+			sb.append(Double.toString(mTestStates.get(step).getTimeStep()));
 			sb.append("|-------------------------------------------------------------------------------------------");
 			sb.append(System.getProperty("line.separator"));
-			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
-				DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
-				for(DirectTriggerDependency dependeeNode: dependencyNode.getOutgoingNodes()) {
-					sb.append(dependeeNode.getReqAut().getName());
-					sb.append("----------");
-					sb.append(dependencyNode.getOutgoingEdgeLabel(dependeeNode).toString());
-					sb.append("---------->");
-					sb.append(dependencyNode.getReqAut().getName());
-					sb.append(System.getProperty("line.separator"));
-				}
-				if(dependencyNode.getInputs().size() > 0 || dependencyNode.getOutputs().size() > 0) {
-					sb.append(dependencyNode.getInputs().toString());
-					sb.append("----------(");
-					sb.append(dependencyNode.getReqAut().getName());
-					sb.append(")---------->");
-					sb.append(dependencyNode.getOutputs().toString());	
-					sb.append(System.getProperty("line.separator"));
-				}
-			}
+			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
+			sb.append(getStepTestPlan(stepDependencyGraphNodes, state));
 		}
 		return sb.toString();
 	}
+
+	
+	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state) {
+		StringBuilder sbin = new StringBuilder();
+		StringBuilder sbtrans = new StringBuilder();
+		StringBuilder sbout = new StringBuilder();
+		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
+			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+			mLogger.warn(dependencyNode.getIncomingNodes());
+			//inputs
+			if(dependencyNode.getInputs().size() > 0) {
+				sbin.append("Input ---------- (");
+				sbin.append(state.getVarSetToValueSet(dependencyNode.getInputs()));
+				sbin.append(") ----------> ");
+				sbin.append(dependencyNode.getReqAut().getName());	
+				sbin.append(System.getProperty("line.separator"));
+			}
+			//direct trigger dep.
+			for(DirectTriggerDependency dependeeNode: dependencyNode.getOutgoingNodes()) {
+				if (dependencyNode.getOutgoingEdgeLabel(dependeeNode).size() > 0) {
+					sbtrans.append(dependeeNode.getReqAut().getName());
+				} else {
+					continue;
+				}
+				sbtrans.append("---------- (");
+				sbtrans.append(state.getVarSetToValueSet((Set<TermVariable>) dependencyNode.getOutgoingEdgeLabel(dependeeNode)));
+				sbtrans.append(") ----------> ");
+				sbtrans.append(dependencyNode.getReqAut().getName());
+				sbtrans.append(System.getProperty("line.separator"));
+			}
+			//Outputs
+			if(dependencyNode.getOutputs().size() > 0) {
+				sbout.append(dependencyNode.getReqAut().getName());
+				sbout.append("---------- (");
+				sbout.append(state.getVarSetToValueSet(dependencyNode.getOutputs()));
+				sbout.append(") ----------> Output");	
+				sbout.append(System.getProperty("line.separator"));
+			}
+		}
+		return sbin.append(sbtrans).append(sbout).toString();
+	}
+	
 	
 	public String toString() {
-		return "Fount Test for oracle: " + mTestStates.get(mTestStates.size()-1).toOracleString() ;
+		return String.format("Found Test for: %s", getOracleTermVars());
 	}
 	
 }

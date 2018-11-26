@@ -1,0 +1,34 @@
+Input I_1 IS bool
+Output O_1 IS bool
+Internal H_1 IS bool
+Internal H_2 IS bool
+Internal H_3 IS bool
+Internal Distractor_1 IS bool
+Internal Distractor_2 IS bool
+
+
+
+HL_1: Globally, it is always the case that if 
+"I_1" holds, then 
+"H_1" holds after at most "10" time units
+
+HL_2: Globally, it is always the case that if 
+"H_1" holds, then 
+"H_2" holds after at most "10" time units
+
+HL_D1: Globally, it is always the case that if 
+"H_1" holds, then 
+"Distractor_1" holds after at most "10" time units
+
+HL_D2: Globally, it is always the case that if 
+"Distractor_1" holds, then 
+"Distractor_2" holds after at most "10" time units
+
+HL_3: Globally, it is always the case that if 
+"H_2" holds, then 
+"H_3" holds after at most "10" time units
+
+HL_4: Globally, it is always the case that if 
+"H_3" holds, then 
+"O_1" holds after at most "10" time units
+

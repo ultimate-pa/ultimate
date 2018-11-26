@@ -15,16 +15,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.DefaultOperationTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
-import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
@@ -80,13 +78,6 @@ public class ReqToTestObserver extends BaseObserver{
 		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, auxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 		
-		TypeSortTranslator typeSortTranslator =
-				new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript, mServices);
-		Expression2Term expression2Term = new Expression2Term(mServices, mScript, 
-				typeSortTranslator, 
-				boogie2Smt.getBoogie2SmtSymbolTable() , 
-				new DefaultOperationTranslator(boogie2Smt.getBoogie2SmtSymbolTable(), mScript),
-				mManagedScript);
 		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen);
 		final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
 		mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
