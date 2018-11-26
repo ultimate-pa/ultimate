@@ -519,10 +519,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 
-		// TODO double check if the type and location of roundingMode are well-chosen,
-		// also see the constructor
-		// BitvectorTranslation(..) for an analogous case
-		final IdentifierExpression roundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
+		final IdentifierExpression roundingMode = (IdentifierExpression) getRoundingMode();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { roundingMode, oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
@@ -924,48 +921,33 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.roundToIntegral";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
-
-			declareFloatingPointFunction(loc, smtFunctionName, false, true, resultType, argumentType);
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 
-			final CPrimitive longResultType = new CPrimitive(CPrimitives.LONG);
-			final String smtConvertTypeFunctionName = "fp.to_sbv";
-			final String ConvertBoogieFunctionName = SFO.getBoogieFunctionName(smtConvertTypeFunctionName, resultType);
-			declareFloatingPointFunction(loc, smtConvertTypeFunctionName, false, true, longResultType, resultType);
-			final Expression convertExpr =
-					ExpressionFactory.constructFunctionApplication(loc, ConvertBoogieFunctionName,
-							new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), expr },
-							mTypeHandler.getBoogieTypeForCType(longResultType));
+			final RValue rval = new RValue(expr, resultType);
+			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return new RValue(convertExpr, longResultType);
+			return (RValue) convertFloatToInt_NonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue();
 		} else if ("llround".equals(floatFunction.getFunctionName())) {
-
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final String smtFunctionName = "fp.roundToIntegral";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
-
-			declareFloatingPointFunction(loc, smtFunctionName, false, false, resultType, argumentType);
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 
-			// TODO fix result type. fp.to_sbv. smt function to convert to long long??
-			final CPrimitive longLongResultType = new CPrimitive(CPrimitives.LONGLONG);
-			final String smtConvertTypeFunctionName = "fp.to_sbv";
-			final String ConvertBoogieFunctionName = SFO.getBoogieFunctionName(smtConvertTypeFunctionName, resultType);
-			declareFloatingPointFunction(loc, smtConvertTypeFunctionName, false, true, longLongResultType, resultType);
-			final Expression convertExpr =
-					ExpressionFactory.constructFunctionApplication(loc, ConvertBoogieFunctionName,
-							new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), expr },
-							mTypeHandler.getBoogieTypeForCType(longLongResultType));
+			final RValue rval = new RValue(expr, resultType);
+			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return new RValue(convertExpr, longLongResultType);
+			return (RValue) convertFloatToInt_NonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG))
+					.getLrValue();
 		} else if ("floor".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
