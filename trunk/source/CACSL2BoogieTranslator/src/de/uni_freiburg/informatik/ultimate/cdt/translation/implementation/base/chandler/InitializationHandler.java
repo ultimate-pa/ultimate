@@ -228,7 +228,9 @@ public class InitializationHandler {
 
 		{
 			final boolean nondet = initializerInfo != null && initializerInfo.isMakeNondeterministicInitialization();
-			assert !onHeap || !nondet;
+			assert !onHeap || !nondet || !initializerInfo.getOverapprs().isEmpty() : "on heap variables get "
+					+ "intitialized to 0, so they are never nondeterministically initialized, except when they are"
+					+ "overapproximated string literals";
 		}
 
 		/*
