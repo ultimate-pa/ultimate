@@ -227,7 +227,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_FP_ROUNDING_MODE_ENABLE_FESETROUND, DESC_FP_ROUNDING_MODE_ENABLE_FESETROUND,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_INITIAL, DEF_FP_ROUNDING_MODE_INITIAL,
-						DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo, SmtRoundingMode.values()),
+						DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo, FloatingPointRoundingMode.values()),
 
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 
