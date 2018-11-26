@@ -352,7 +352,7 @@ public final class SmtUtils {
 		assert a.getSort().isArraySort();
 		Term result = a;
 		for (int i = 0; i < index.size(); i++) {
-			result = script.term("select", result, index.get(i));
+			result = SmtUtils.select(script, result, index.get(i));
 		}
 		return result;
 	}
@@ -369,7 +369,7 @@ public final class SmtUtils {
 		Term result = value;
 		for (int i = index.size() - 1; i >= 0; i--) {
 			final Term selectUpToI = multiDimensionalSelect(script, a, index.getFirst(i));
-			result = script.term("store", selectUpToI, index.get(i), result);
+			result = SmtUtils.store(script, selectUpToI, index.get(i), result);
 		}
 		return result;
 	}
@@ -746,7 +746,7 @@ public final class SmtUtils {
 	 * @return ("=" ("select" array index) value)
 	 */
 	private static Term setArrayCellValue(final Script script, final Term array, final Term index, final Term value) {
-		final Term select = script.term("select", array, index);
+		final Term select = SmtUtils.select(script, array, index);
 		return SmtUtils.binaryEquality(script, select, value);
 	}
 

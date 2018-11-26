@@ -290,7 +290,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (newIndex != index) {
 			mIntroducedDerPossibility = true;
 		}
-		final Term store = mScript.term("select", array, newIndex);
+		final Term store = SmtUtils.select(mScript, array, newIndex);
 		result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
 
 		// TODO: let Prenex transformer deal with non-NNF terms and remove the

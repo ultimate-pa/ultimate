@@ -625,7 +625,7 @@ public class Elim1Store {
 					storeIndex) == EqualityStatus.NOT_EQUAL) {
 				final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndexRepresentative);
 				final Term newAuxArray = entry.getValue();
-				final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+				final Term newSelect = SmtUtils.select(mMgdScript.getScript(), newAuxArray, replacementSelectIndex);
 				return newSelect;
 //						oldCellMapping.put(selectIndexRepresentative, newSelect);
 
@@ -921,7 +921,7 @@ public class Elim1Store {
 			final Term indexRepresentative = equalityInformation.getRepresentative(entry.getKey().getIndex());
 			final Term replacementIndex = indexMapping.get(indexRepresentative);
 			storedValueInformation.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), quantifier,
-					mScript.term("select", entry.getValue(), replacementIndex),
+					SmtUtils.select(mScript, entry.getValue(), replacementIndex),
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
 							.transform(entry.getKey().getValue())));
 		}
@@ -1093,7 +1093,7 @@ public class Elim1Store {
 					assert !occursIn(eliminatee, replacementSelectIndex) : "var is still there";
 					final Term indexEquality = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 							quantifier, replacementStoreIndex, replacementSelectIndex);
-					final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+					final Term newSelect = SmtUtils.select(mgdScript.getScript(), newAuxArray, replacementSelectIndex);
 					final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(storeValue);
 					final Term newValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 							quantifier, newSelect, storeValueReplacement);
@@ -1309,8 +1309,8 @@ public class Elim1Store {
 			}
 
 			public boolean isDistinguishworthyIndexPair(final Term index1, final Term index2) {
-				final Term select1 = mMgdScript.getScript().term("select", mEliminatee, index1);
-				final Term select2 = mMgdScript.getScript().term("select", mEliminatee, index2);
+				final Term select1 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index1);
+				final Term select2 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index2);
 				final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), select1, select2);
 				final Validity cellEqVal = mIncrementalPlicationChecker.checkPlication(eq);
 				if (cellEqVal == Validity.VALID) {

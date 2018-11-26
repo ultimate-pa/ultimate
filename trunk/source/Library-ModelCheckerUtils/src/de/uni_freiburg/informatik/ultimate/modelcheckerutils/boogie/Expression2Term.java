@@ -176,7 +176,7 @@ public class Expression2Term {
 			Term result = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length; i++) {
 				final Term indexiTerm = translate(indices[i]);
-				result = mScript.term("select", result, indexiTerm);
+				result = SmtUtils.select(mScript, result, indexiTerm);
 			}
 			return result;
 
@@ -191,12 +191,12 @@ public class Expression2Term {
 			arrayBeforeIndex[0] = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length - 1; i++) {
 				indexTerm[i] = translate(indices[i]);
-				arrayBeforeIndex[i + 1] = mScript.term("select", arrayBeforeIndex[i], indexTerm[i]);
+				arrayBeforeIndex[i + 1] = SmtUtils.select(mScript, arrayBeforeIndex[i], indexTerm[i]);
 			}
 			indexTerm[indices.length - 1] = translate(indices[indices.length - 1]);
 			Term result = translate(arrexp.getValue());
 			for (int i = indices.length - 1; i >= 0; i--) {
-				result = mScript.term("store", arrayBeforeIndex[i], indexTerm[i], result);
+				result = SmtUtils.store(mScript, arrayBeforeIndex[i], indexTerm[i], result);
 			}
 			assert (result != null);
 			assert resultContainsNoNull(result);

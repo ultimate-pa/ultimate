@@ -899,7 +899,7 @@ public final class TransFormulaUtils {
 						final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
 						final Term array = appTerm.getParameters()[0];
 						final Term index = appTerm.getParameters()[1];
-						final Term newSelect = mgdScript.getScript().term("store", array, index, aux);
+						final Term newSelect = SmtUtils.store(mgdScript.getScript(), array, index, aux);
 						substitutionMapping.put(appTerm, newSelect);
 						auxVars.add(aux);
 					}

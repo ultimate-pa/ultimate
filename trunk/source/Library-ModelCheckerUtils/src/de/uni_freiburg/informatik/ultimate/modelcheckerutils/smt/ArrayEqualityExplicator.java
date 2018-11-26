@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * Preprocessing step for partial array quantifier elimination.
  * If we have a term of the form
  *     arr1 != arr2
- * (the negation of the form where we can apply DER) we replace it by 
+ * (the negation of the form where we can apply DER) we replace it by
  *     ∃ aux. arr1[aux] != arr2[aux]
  * (Analogously for universal quantification.)
- * Presumes that the input has NNF. Provides all auxiliary variables that 
+ * Presumes that the input has NNF. Provides all auxiliary variables that
  * have been introduced.
  * @author Matthias Heizmann
- * 
+ *
  */
 public class ArrayEqualityExplicator extends TermTransformer {
 
@@ -155,8 +155,8 @@ public class ArrayEqualityExplicator extends TermTransformer {
 		final Sort indexSort = mEliminatee.getSort().getArguments()[0];
 		final TermVariable auxIndex = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, indexSort);
 		mNewAuxVars.add(auxIndex);
-		final Term lhsSelect = mScript.term("select", lhsArray, auxIndex);
-		final Term rhsSelect = mScript.term("select", rhsArray, auxIndex);
+		final Term lhsSelect = SmtUtils.select(mScript, lhsArray, auxIndex);
+		final Term rhsSelect = SmtUtils.select(mScript, rhsArray, auxIndex);
 		final Term result = mScript.term("=", lhsSelect, rhsSelect);
 		return result;
 	}
