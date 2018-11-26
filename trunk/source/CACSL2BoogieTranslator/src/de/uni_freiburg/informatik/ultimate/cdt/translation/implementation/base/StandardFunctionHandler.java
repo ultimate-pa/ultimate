@@ -602,7 +602,8 @@ public class StandardFunctionHandler {
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 		fill(map, "atexit", die);
 		fill(map, "at_quick_exit", die);
-		fill(map, "exit", die);
+		// TODO: Find out what SVCOMP expects from exit()
+		// fill(map, "exit", die);
 		fill(map, "_Exit", die);
 		fill(map, "getenv", die);
 		fill(map, "quick_exit", die);
