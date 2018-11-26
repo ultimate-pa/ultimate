@@ -385,12 +385,12 @@ public class CfgBuilder {
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		overapproximations.putAll(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
-		if (!overapproximations.isEmpty()) {
-			new Overapprox(overapproximations).annotate(edge);
-		}
 
 		final Call call = mCbf.constructCall(callerNode, calleeEntryLoc, st);
 		call.setTransitionFormula(arguments2InParams.getTransFormula());
+		if (!overapproximations.isEmpty()) {
+			new Overapprox(overapproximations).annotate(call);
+		}
 
 		final BoogieIcfgLocation returnNode = (BoogieIcfgLocation) edge.getTarget();
 		final BoogieIcfgLocation calleeExitLoc = mIcfg.getProcedureExitNodes().get(callee);
