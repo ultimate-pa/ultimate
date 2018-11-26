@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -243,8 +244,6 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_getspecific", die);
 		fill(map, "pthread_setspecific", die);
 
-		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
-
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
@@ -255,13 +254,9 @@ public class StandardFunctionHandler {
 		fill(map, "__memmove", this::handleMemmove);
 		fill(map, "memmove", this::handleMemmove);
 
-		fill(map, "malloc", this::handleAlloc);
 		fill(map, "alloca", this::handleAlloc);
 		fill(map, "__builtin_alloca", this::handleAlloc);
-		fill(map, "calloc", this::handleCalloc);
 		fill(map, "memset", this::handleMemset);
-		fill(map, "free", this::handleFree);
-		fill(map, "realloc", die);
 
 		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
@@ -281,7 +276,7 @@ public class StandardFunctionHandler {
 		 * are diagnosed when the -Wframe-address option is in effect. Such calls should only be made in debugging
 		 * situations."
 		 *
-		 * Current solution: replace call by a havocced aux variable.
+		 * Current solution: replace call by a havoced aux variable.
 		 */
 		fill(map, "__builtin_return_address", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 1, new CPointer(new CPrimitive(CPrimitives.VOID))));
@@ -497,6 +492,174 @@ public class StandardFunctionHandler {
 		// from fenv.h
 		fill(map, "fegetround", this::handleBuiltinFegetround);
 		fill(map, "fesetround", this::handleBuiltinFesetround);
+
+		/** Begin <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
+		/**
+		 * 7.22.1 Numeric conversion functions
+		 *
+		 * 7.22.1.1 The atof function
+		 *
+		 * 7.22.1.2 The atoi, atol, and atoll functions
+		 *
+		 * The functions atof, atoi, atol, and atoll ... If the value of the result cannot be represented, the behavior
+		 * is undefined.
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/atof
+		 *
+		 * double value corresponding to the contents of str on success. If the converted value falls out of range of
+		 * the return type, the return value is undefined. If no conversion can be performed, 0.0 is returned.
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/atoi
+		 *
+		 * Integer value corresponding to the contents of str on success. If the converted value falls out of range of
+		 * corresponding return type, the return value is undefined. If no conversion can be performed, ​0​ is returned.
+		 *
+		 * We handle this by overapproximation and do not check for undefined behavior.
+		 */
+		fill(map, "atof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.DOUBLE)));
+		fill(map, "atoi", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "atol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.LONG)));
+		fill(map, "atoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.LONGLONG)));
+
+		/**
+		 * 7.22.1.3 The strtod, strtof, and strtold functions
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/strtof
+		 *
+		 * Interprets a floating-point value in a byte string pointed to by str. 2 arguments: pointer to the
+		 * null-terminated byte string to be interpreted and pointer to a pointer to character.
+		 *
+		 * Floating-point value corresponding to the contents of str on success. If the converted value falls out of
+		 * range of corresponding return type, range error occurs and HUGE_VAL, HUGE_VALF or HUGE_VALL is returned. If
+		 * no conversion can be performed, ​0​ is returned.
+		 *
+		 * We handle this by overapproximation and do not check of range errors.
+		 *
+		 */
+		fill(map, "strtof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.FLOAT)));
+		fill(map, "strtod", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.DOUBLE)));
+		fill(map, "strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.LONGDOUBLE)));
+
+		/**
+		 * 7.22.2.1 The rand function
+		 *
+		 * see https://en.cppreference.com/w/c/numeric/random/rand
+		 *
+		 * Pseudo-random integer value between ​0​ and RAND_MAX, inclusive. The value of the RAND_MAX macro shall be at
+		 * least 32767.
+		 *
+		 * We handle this similar to handleVerifierNonDet, but we limit the return type to positive range of int.
+		 *
+		 * We ignore seeding with srand.
+		 */
+		fill(map, "rand", this::handleRand);
+
+		/**
+		 * 7.22.2.2 The srand function
+		 *
+		 * see https://en.cppreference.com/w/c/numeric/random/srand
+		 *
+		 * The srand function uses the argument as a seed for a new sequence of pseudo-random numbers to be returned by
+		 * subsequent calls to rand.
+		 *
+		 * We can safely skip this function.
+		 */
+		fill(map, "srand", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
+
+		/**
+		 * 7.22.3 Memory management functions
+		 *
+		 * 7.22.3.1 The aligned_alloc function, 7.22.3.2 The calloc function, 7.22.3.3 The free function, 7.22.3.4 The
+		 * malloc function, 7.22.3.5 The realloc function
+		 */
+		fill(map, "aligned_alloc", die);
+		fill(map, "calloc", this::handleCalloc);
+		fill(map, "free", this::handleFree);
+		fill(map, "malloc", this::handleAlloc);
+		fill(map, "realloc", die);
+
+		/**
+		 * @formatter:off
+		 * 7.22.4 Communication with the environment
+		 *
+		 * 7.22.4.1 The abort function
+		 * 7.22.4.2 The atexit function
+		 * 7.22.4.3 The at_quick_exit function
+		 * 7.22.4.4 The exit function
+		 * 7.22.4.5 The _Exit function
+		 * 7.22.4.6 The getenv function
+		 * 7.22.4.7 The quick_exit function
+		 * 7.22.4.8 The system function
+		 * @formatter:on
+		 */
+		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
+		fill(map, "atexit", die);
+		fill(map, "at_quick_exit", die);
+		fill(map, "exit", die);
+		fill(map, "_Exit", die);
+		fill(map, "getenv", die);
+		fill(map, "quick_exit", die);
+		fill(map, "system", die);
+
+		/**
+		 * @formatter:off
+		 * 7.22.5 Searching and sorting utilities
+		 *
+		 * 7.22.5.1 The bsearch function
+		 * 7.22.5.2 The qsort function
+		 * @formatter:on
+		 */
+		fill(map, "bsearch", die);
+		fill(map, "qsort", die);
+
+		/**
+		 * @formatter:off
+		 * 7.22.6 Integer arithmetic functions
+		 *
+		 * 7.22.6.1 The abs, labs and llabs functions
+		 * 7.22.6.2 The div, ldiv, and lldiv functions
+		 * @formatter:on
+		 */
+		fill(map, "abs", die);
+		fill(map, "labs", die);
+		fill(map, "llabs", die);
+		fill(map, "div", die);
+		fill(map, "ldiv", die);
+		fill(map, "lldiv", die);
+
+		/**
+		 * @formatter:off
+		 * 7.22.7 Multibyte/wide character conversion functions
+		 *
+		 * 7.22.7.1 The mblen function
+		 * 7.22.7.2 The mbtowc function
+		 * 7.22.7.3 The wctomb function
+		 *
+		 * @formatter:on
+		 */
+		fill(map, "mblen", die);
+		fill(map, "mbtowc", die);
+		fill(map, "wctomb", die);
+
+		/**
+		 * @formatter:off
+		 * 7.22.8 Multibyte/wide string conversion functions
+		 *
+		 * 7.22.8.1 The mbstowcs function
+		 * 7.22.8.2 The wcstombs function
+		 * @formatter:on
+		 */
+		fill(map, "mbstowcs", die);
+		fill(map, "wcstombs", die);
+
+		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
 
@@ -1305,6 +1468,37 @@ public class StandardFunctionHandler {
 		return resultBuilder.build();
 	}
 
+	private Result handleRand(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 0, name, node);
+
+		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+		resultBuilder.addAuxVar(auxvarinfo);
+
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+		resultBuilder.setLrValue(returnValue);
+
+		final Expression expr = returnValue.getValue();
+		final Expression minValue = mTypeSizes.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+		final Expression maxValue =
+				mTypeSizes.constructLiteralForIntegerType(loc, cType, mTypeSizes.getMaxValueOfPrimitiveType(cType));
+
+		final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, minValue, cType, expr, cType);
+		final Expression smallerMaxValue = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, expr, cType, maxValue, cType);
+		final AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc,
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		resultBuilder.addStatement(inRange);
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
+		return resultBuilder.build();
+	}
+
 	private Result handleVerifierAssume(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		// according to SV-Comp specification assume takes only one argument, but the code allows more than one
@@ -1412,13 +1606,13 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handle the following macro. <code>int isunordered (real-floating x, real-floating y)</code>
-	 * 
+	 *
 	 * This macro determines whether its arguments are unordered. It is 1 if x or y are NaN, and 0 otherwise.
-	 * 
+	 *
 	 * According to 7.12.14.6 of C11 the isunordered macro returns 1 if its arguments are unordered and 0 otherwise. The
 	 * meaning of "unordered" is defined in 7.12.14. Two floating point values are unordered if at least one of the two
 	 * is a NaN value.
-	 * 
+	 *
 	 * See also http://en.cppreference.com/w/c/numeric/math/isunordered
 	 *
 	 */
@@ -1611,6 +1805,24 @@ public class StandardFunctionHandler {
 		throw new UnsupportedSyntaxException(loc, "Unsupported function from " + lib + ": " + functionName);
 	}
 
+	/**
+	 * Handle a function call by dispatching all arguments and then calling a function with no arguments that has the
+	 * name of the function and is marked with the {@link Overapprox} annotation.
+	 *
+	 * @param main
+	 *            the current dispatcher
+	 * @param node
+	 *            the function call expression
+	 * @param loc
+	 *            the location of the call
+	 * @param methodName
+	 *            the name of the method
+	 * @param numberOfArgs
+	 *            the number of arguments
+	 * @param resultType
+	 *            the return type
+	 * @return An {@link ExpressionResult} representing the effect of the call
+	 */
 	private Result handleByOverapproximation(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String methodName, final int numberOfArgs, final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -1625,6 +1837,22 @@ public class StandardFunctionHandler {
 		results.add(overapproxCall);
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
 				.build();
+	}
+
+	/**
+	 * We handle a function call by dispatching all arguments, but we then ignore the call completely.
+	 *
+	 * Useful for void functions that do nothing.
+	 */
+	private Result handleVoidFunctionBySkipAndDispatch(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String methodName, final int numberOfArgs) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, numberOfArgs, methodName, arguments);
+		final List<ExpressionResult> results = new ArrayList<>();
+		for (final IASTInitializerClause argument : arguments) {
+			results.add((ExpressionResult) main.dispatch(argument));
+		}
+		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
 	private Result handleByOverapproximationWithoutDispatch(final IDispatcher main,
@@ -1660,9 +1888,14 @@ public class StandardFunctionHandler {
 	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,
 			final IASTInitializerClause[] arguments) {
 		if (arguments.length != expectedArgs) {
-			throw new IncorrectSyntaxException(loc,
-					name + " has only " + expectedArgs + " arguments, but was called with " + arguments.length);
+			throw new IncorrectSyntaxException(loc, name + " is expected to have " + expectedArgs
+					+ " arguments, but was called with " + arguments.length);
 		}
+	}
+
+	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,
+			final IASTFunctionCallExpression call) {
+		checkArguments(loc, 0, name, call.getArguments());
 	}
 
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {

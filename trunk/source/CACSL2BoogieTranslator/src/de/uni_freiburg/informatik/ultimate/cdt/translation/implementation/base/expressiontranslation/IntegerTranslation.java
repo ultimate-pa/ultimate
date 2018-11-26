@@ -605,25 +605,34 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
-			final List<Statement> stmt) {
-		if (mSettings.assumeNondeterministicValuesInRange() && cType.getUnderlyingType().isIntegerType()) {
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
-			if (!mTypeSizes.isUnsigned(cPrimitive)) {
-				stmt.add(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
-			}
+			final List<Statement> stmts) {
+		final AssumeStatement stmt = constructAssumeInRangeStatementOrNull(loc, expr, cType);
+		if (stmt != null) {
+			stmts.add(stmt);
 		}
 	}
 
 	@Override
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final ExpressionResultBuilder expressionResultBuilder) {
-		if (mSettings.assumeNondeterministicValuesInRange() && cType.getUnderlyingType().isIntegerType()) {
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
-			if (!mTypeSizes.isUnsigned(cPrimitive)) {
-				expressionResultBuilder
-						.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
-			}
+		final AssumeStatement stmt = constructAssumeInRangeStatementOrNull(loc, expr, cType);
+		if (stmt != null) {
+			expressionResultBuilder.addStatement(stmt);
 		}
+	}
+
+	private AssumeStatement constructAssumeInRangeStatementOrNull(final ILocation loc, final Expression expr,
+			final CType type) {
+		if (!mSettings.assumeNondeterministicValuesInRange() || !type.getUnderlyingType().isIntegerType()) {
+			// only integer types can be out of range
+			return null;
+		}
+		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(type.getUnderlyingType());
+		if (mTypeSizes.isUnsigned(cPrimitive)) {
+			// only signed types can be out of range
+			return null;
+		}
+		return constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive);
 	}
 
 	/**

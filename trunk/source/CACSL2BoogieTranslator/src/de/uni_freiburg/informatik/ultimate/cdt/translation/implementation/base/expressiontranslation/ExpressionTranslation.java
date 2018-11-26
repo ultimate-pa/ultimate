@@ -523,7 +523,6 @@ public abstract class ExpressionTranslation {
 			ExpressionResultBuilder expressionResultBuilder);
 
 	public Expression constructNullPointer(final ILocation loc) {
-		// return new IdentifierExpression(loc, SFO.NULL);
 		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
 	}
 
