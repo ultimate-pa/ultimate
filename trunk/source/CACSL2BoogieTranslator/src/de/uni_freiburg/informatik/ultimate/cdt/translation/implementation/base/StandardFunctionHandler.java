@@ -261,6 +261,7 @@ public class StandardFunctionHandler {
 		fill(map, "calloc", this::handleCalloc);
 		fill(map, "memset", this::handleMemset);
 		fill(map, "free", this::handleFree);
+		fill(map, "realloc", die);
 
 		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
