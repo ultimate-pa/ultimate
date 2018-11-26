@@ -9,7 +9,6 @@
     
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
-	<includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays-new.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
