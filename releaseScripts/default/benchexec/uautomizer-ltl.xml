@@ -3,7 +3,7 @@
 <benchmark tool="ultimateautomizer"
            timelimit="900"
            hardtimelimit="900"
-           memlimit="12GB"
+           memlimit="12GiB"
            cpuCores="4">
 
   <rundefinition name="LTL">  </rundefinition>

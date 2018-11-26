@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
-<benchmark tool="ultimateautomizer" timelimit="240s" hardtimelimit="240s" memlimit="8GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" timelimit="240s" hardtimelimit="240s" memlimit="8GiB" cpuCores="2">
  
   <rundefinition name="Bitvector">
           <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline_WitnessPrinter.xml</option>

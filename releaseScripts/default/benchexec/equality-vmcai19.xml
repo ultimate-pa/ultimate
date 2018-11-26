@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="20GB" timelimit="1800" hardtimelimit="1800" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="20GiB" timelimit="1800" hardtimelimit="1800" cpuCores="2">
     <option name="--generate-csv" />
     <option name="--csv-dir">csv</option>
     
