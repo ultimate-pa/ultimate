@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private static final String BOUND_NAME = "b";
 	private static final String VALUE_NAME = "v";
+	private static final String AUX_NAME = "aux";
 
 	private final IAbstractDomain<STATE, IcfgEdge> mSubDomain;
 	private final BoogieVarFactory mBoogieVarFactory;
@@ -90,7 +91,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mServices = services;
 	}
 
-	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
+	private TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
 		final TemporaryBoogieVar result = mBoogieVarFactory.createFreshBoogieVar(name, type);
 		mCreatedVars.add(result);
 		mVariableProvider.addTemporaryVariable(result);
@@ -103,6 +104,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public TemporaryBoogieVar createValueVar(final IBoogieType type) {
 		return createVariable(VALUE_NAME, type);
+	}
+
+	public TemporaryBoogieVar createAuxVar(final IBoogieType type) {
+		return createVariable(AUX_NAME, type);
 	}
 
 	public ManagedScript getManagedScript() {

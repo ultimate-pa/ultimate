@@ -52,7 +52,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				final int min = bounds.getFirst();
 				final int max = bounds.getSecond();
 				final IProgramVar auxVar =
-						mToolkit.createVariable("aux", mToolkit.getType(TypeUtils.getValueSort(currentTerm.getSort())));
+						mToolkit.createAuxVar(mToolkit.getType(TypeUtils.getValueSort(currentTerm.getSort())));
 				if (auxVar.getSort().isArraySort()) {
 					final List<Term> disjuncts = new ArrayList<>();
 					for (int i = min; i < max; i++) {
@@ -184,7 +184,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			final Term selectTerm = select.getSelectTerm();
 			final Pair<ArrayDomainState<STATE>, Term> oldValueResult = processTerm(newState, selectTerm);
 			final Term oldValue = oldValueResult.getSecond();
-			final IProgramVar auxVar = mToolkit.createVariable("aux", mToolkit.getType(selectTerm.getSort()));
+			final IProgramVar auxVar = mToolkit.createAuxVar(mToolkit.getType(selectTerm.getSort()));
 			final TermVariable auxVarTv = auxVar.getTermVariable();
 			substitution.put(selectTerm, auxVarTv);
 			constraints.add(SmtUtils.binaryEquality(script, auxVarTv, oldValue));

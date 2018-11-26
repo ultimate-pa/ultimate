@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
@@ -1232,25 +1231,18 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			}
 			return areVariablesEquivalent(values1.get(max), values2.get(max));
 		}
-		final Script script = mToolkit.getScript();
-		final TermVariable v1Tv = v1.getTermVariable();
-		final TermVariable v2Tv = v2.getTermVariable();
-		final Term v1Term = SmtUtils.filterFormula(getSubTerm(), Collections.singleton(v1Tv), script);
-		final Term v2Term = SmtUtils.filterFormula(getSubTerm(), Collections.singleton(v2Tv), script);
-		final Substitution substitution =
-				new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(v1Tv, v2Tv));
-		final Term v1Substituted = substitution.transform(v1Term);
-		final Term v2Substituted = substitution.transform(v2Term);
-		return SmtUtils.areFormulasEquivalent(v1Substituted, v2Substituted, script);
-		// TODO: Use this instead
-		// final String string1 = getSortedTermString(v1Substituted);
-		// final String string2 = getSortedTermString(v2Substituted);
-		// return string1.equals(string2);
-	}
-
-	private String getSortedTermString(final Term term) {
-		final Term commuHash = new CommuhashNormalForm(mToolkit.getServices(), mToolkit.getScript()).transform(term);
-		return commuHash.toString();
+		final IBoogieType type = mToolkit.getType(v1.getSort());
+		final IProgramVar aux1 = mToolkit.createAuxVar(type);
+		final IProgramVar aux2 = mToolkit.createAuxVar(type);
+		final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars1 = new HashMap<>();
+		old2newVars1.put(v1, aux1);
+		old2newVars1.put(v2, aux2);
+		final STATE renamedState1 = mSubState.renameVariables(old2newVars1);
+		final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars2 = new HashMap<>();
+		old2newVars2.put(v1, aux2);
+		old2newVars2.put(v2, aux1);
+		final STATE renamedState2 = mSubState.renameVariables(old2newVars2);
+		return renamedState1.isEqualTo(renamedState2);
 	}
 
 	public ArrayDomainState<STATE> simplify() {
