@@ -406,7 +406,7 @@ public class Svcomp19FoldersBitfieldsMemsafety extends AbstractTraceAbstractionT
 	 */
 	@Override
 	public long getTimeout() {
-		return 20 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -414,13 +414,13 @@ public class Svcomp19FoldersBitfieldsMemsafety extends AbstractTraceAbstractionT
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-			"svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
-			"svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf",
+			"default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
+			"default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf",
 		};
 
 	private static final String[] SETTINGS_64BIT = {
-			"svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf",
-			"svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf",
+			"default/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf",
+			"default/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf",
 		};
 
 
