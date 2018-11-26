@@ -84,36 +84,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-		/**
-		 * Round towards the nearest, tie to even.
-		 */
-		RNE("roundNearestTiesToEven"),
+	/**
+	 * Round towards the nearest, tie to even.
+	 */
+	RNE("roundNearestTiesToEven"),
 
-		/**
-		 * Round toward nearest, tie to away.
-		 */
-		RNA("roundNearestTiesToAway"),
+	/**
+	 * Round toward nearest, tie to away.
+	 */
+	RNA("roundNearestTiesToAway"),
 
-		/**
-		 * Round toward positive.
-		 *
-		 * In this mode, a number r is rounded to the least upper floating-point bound.
-		 */
-		RTP("roundTowardPositive"),
+	/**
+	 * Round toward positive.
+	 *
+	 * In this mode, a number r is rounded to the least upper floating-point bound.
+	 */
+	RTP("roundTowardPositive"),
 
-		/**
-		 * Round toward negative.
-		 *
-		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-		 */
-		RTN("roundTowardNegative"),
+	/**
+	 * Round toward negative.
+	 *
+	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+	 */
+	RTN("roundTowardNegative"),
 
-		/**
-		 * Round toward zero.
-		 *
-		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-		 */
-		RTZ("roundTowardZero");
+	/**
+	 * Round toward zero.
+	 *
+	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+	 */
+	RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -1247,27 +1247,30 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public RValue constructBuiltinFesetround(final ILocation loc, final RValue argument) {
-		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-
 		final Expression returnExpression;
+		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+		if (mSettings.isFesetroundEnabled()) {
+			if (((BitvecLiteral) argument.getValue()).getValue().equals("0")) {
+				mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
+				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("1")) {
+				mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
+				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("2")) {
+				mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
+				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("3")) {
+				mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
+				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			} else {
+				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
+			}
 
-		if (((BitvecLiteral) argument.getValue()).getValue().equals("0")) {
-			mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("1")) {
-			mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("2")) {
-			mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		} else if (((BitvecLiteral) argument.getValue()).getValue().equals("3")) {
-			mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		} else {
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
+			return new RValue(returnExpression, cPrimitive);
 		}
-
+		returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 		return new RValue(returnExpression, cPrimitive);
+
 	}
 
 	@Override
