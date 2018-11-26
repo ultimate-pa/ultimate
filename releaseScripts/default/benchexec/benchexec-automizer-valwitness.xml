@@ -3,7 +3,7 @@
 <benchmark tool="ultimateautomizer"
            timelimit="60"
            hardtimelimit="75"
-           memlimit="8GiB"
+           memlimit="8GB"
            cpuCores="4">
 
 	<rundefinition name="Test"></rundefinition>

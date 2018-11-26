@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="16GiB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
+<benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
     <rundefinition name="sv-comp19-unsound"></rundefinition>
     <option name="--full-output"/>
 

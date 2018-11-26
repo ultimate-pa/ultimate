@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="6GiB" timelimit="360" hardtimelimit="112" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="360" hardtimelimit="112" cpuCores="2">
 
 
     <rundefinition name="Automizer">

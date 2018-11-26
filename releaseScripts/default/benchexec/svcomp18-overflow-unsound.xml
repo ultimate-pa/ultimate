@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="6GiB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
 
     <rundefinition name="Overflow">
         <propertyfile>../../../trunk/examples/svcomp/NoOverflows.prp</propertyfile>

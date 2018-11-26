@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="2GiB" timelimit="20" hardtimelimit="20" cpuCores="1">
+<benchmark tool="ultimateautomizer" memlimit="2GB" timelimit="20" hardtimelimit="20" cpuCores="1">
 
     <rundefinition name="Automizer">
         <propertyfile>../../../trunk/examples/svcomp/Termination.prp</propertyfile>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
-<benchmark tool="ultimateautomizer" timelimit="120s" hardtimelimit="120s" memlimit="4GiB" cpuCores="1">
+<benchmark tool="ultimateautomizer" timelimit="120s" hardtimelimit="120s" memlimit="4GB" cpuCores="1">
  
   <rundefinition name="Bitvector">
           <option name="-tc">../../../trunk/examples/toolchains/C-BPP.xml</option>

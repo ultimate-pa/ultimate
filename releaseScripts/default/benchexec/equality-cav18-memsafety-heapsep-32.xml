@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="6GiB" timelimit="180" hardtimelimit="200" cpuCores="4">
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="180" hardtimelimit="200" cpuCores="4">
 
     <option name="--generate-csv" />
     <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>

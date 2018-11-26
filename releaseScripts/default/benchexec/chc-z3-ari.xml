@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="z3" memlimit="4GiB" timelimit="90" hardtimelimit="112" cpuCores="2">
+<benchmark tool="z3" memlimit="4GB" timelimit="90" hardtimelimit="112" cpuCores="2">
 	<rundefinition name="CHC-z3-ari">
 <option name="fixedpoint.engine=spacer" />		
 		<tasks name="CHC">

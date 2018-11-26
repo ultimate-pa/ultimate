@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GiB" timelimit="600" hardtimelimit="600" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="600" cpuCores="2">
     
     <option name="--traceabstraction.dump.automata.to.the.following.directory">dump</option>
     <option name="--rcfgbuilder.size.of.a.code.block">SingleStatement</option>
