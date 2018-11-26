@@ -322,10 +322,10 @@ public class Statements2TransFormula {
 		final Term f = tlres.getTerm();
 
 		mAssumes = SmtUtils.and(mScript, f, mAssumes);
-		eliminateAuxVarsViaDer();
 		if (COMPUTE_ASSERTS) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
+		eliminateAuxVarsViaDer();
 	}
 
 	@SuppressWarnings("unused")
@@ -437,7 +437,6 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
-				eliminateAuxVarsViaDer();
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -460,7 +459,6 @@ public class Statements2TransFormula {
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = SmtUtils.and(mScript, f, mAssumes);
-				eliminateAuxVarsViaDer();
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -470,6 +468,7 @@ public class Statements2TransFormula {
 				}
 			}
 		}
+		eliminateAuxVarsViaDer();
 	}
 
 	private void addForkCurrentThread(final ForkStatement fork) {
