@@ -169,7 +169,8 @@ public final class TranslationSettings {
 	}
 
 	public boolean useBitpreciseBitfields() {
-		return mBitpreciseBitfields;
+//		return mBitpreciseBitfields;
+		throw new AssertionError("Bitfield setting currently disabled");
 	}
 
 	public MemoryModel getMemoryModelPreference() {

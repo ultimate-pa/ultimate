@@ -440,12 +440,6 @@ public class TypeHandler implements ITypeHandler {
 				for (final CDeclaration declaration : rdec.getDeclarations()) {
 					fNames.add(declaration.getName());
 					fTypes.add(declaration.getType());
-					if (mTranslationSettings.useBitpreciseBitfields()) {
-						if (declaration.getBitfieldSize() != -1) {
-							final String msg = "bitfield implementation not yet bitprecise (soundness first)";
-							throw new UnsupportedSyntaxException(loc, msg);
-						}
-					}
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
