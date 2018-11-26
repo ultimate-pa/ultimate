@@ -672,8 +672,8 @@ public class NestedInterpolantsBuilder {
 
 		private Term constructImplication() {
 			final Term arraysDistinct = mMgdScriptCfg.getScript().term("distinct", mFirstArray, mSecondArray);
-			final Term firstSelect = mMgdScriptCfg.getScript().term("select", mFirstArray, mReplacementTermVariable);
-			final Term secondSelect = mMgdScriptCfg.getScript().term("select", mSecondArray, mReplacementTermVariable);
+			final Term firstSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mFirstArray, mReplacementTermVariable);
+			final Term secondSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray, mReplacementTermVariable);
 			final Term selectDistinct = mMgdScriptCfg.getScript().term("distinct", firstSelect, secondSelect);
 			final Term implication = Util.implies(mMgdScriptCfg.getScript(), arraysDistinct, selectDistinct);
 			return implication;
