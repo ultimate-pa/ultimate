@@ -83,9 +83,7 @@ public final class ISOIEC9899TC3 {
 			"ul", "uL", "Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
 
 	public enum IntegerConstantType {
-		OCTAL(8),
-		DECIMAL(10),
-		HEXADECIMAL(16);
+		OCTAL(8), DECIMAL(10), HEXADECIMAL(16);
 
 		private final int mBase;
 
@@ -98,13 +96,10 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 
-	
 	/**
-	 * Takes as input a string from the source character set (characters that
-	 * can occur in strings of source file, e.g., no line feed).
-	 * Returns a sequence of numerical values of the corresponding characters
-	 * of the execution character set. Multibyte characters occupy only one
-	 * cell in the resulting list.
+	 * Takes as input a string from the source character set (characters that can occur in strings of source file, e.g.,
+	 * no line feed). Returns a sequence of numerical values of the corresponding characters of the execution character
+	 * set. Multibyte characters occupy only one cell in the resulting list.
 	 */
 	public static List<BigInteger> parseCharacterSequence(final String sourceCharacterSequence) {
 		final List<BigInteger> result = new ArrayList<>();
@@ -118,10 +113,9 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Takes as input a string from the source character set (characters that
-	 * can occur in strings of source file, e.g., no line feed). Returns a pair
-	 * where the first element is the numerical value of the first character and
-	 * the second element is the remaining string.
+	 * Takes as input a string from the source character set (characters that can occur in strings of source file, e.g.,
+	 * no line feed). Returns a pair where the first element is the numerical value of the first character and the
+	 * second element is the remaining string.
 	 */
 	public static Pair<BigInteger, String> parseCharacterSequenceHelper(final String sourceCharacterSequence) {
 		final int numericalValue;
@@ -174,8 +168,8 @@ public final class ISOIEC9899TC3 {
 			case '5':
 			case '6':
 			case '7':
-				final int lastSuccessiveOctalCharacter = lastsuccessiveMatchStartingFrom(1, sourceCharacterSequence,
-						c -> isOctalDigit(c));
+				final int lastSuccessiveOctalCharacter =
+						lastsuccessiveMatchStartingFrom(1, sourceCharacterSequence, c -> isOctalDigit(c));
 				// octal sequences consist only of up to three digits
 				final int lastPositionOfThisOcalSequence;
 				if (lastSuccessiveOctalCharacter >= 4) {
@@ -188,8 +182,8 @@ public final class ISOIEC9899TC3 {
 				remainingCharacterSequence = sourceCharacterSequence.substring(lastPositionOfThisOcalSequence + 1);
 				break;
 			case 'x':
-				final int lastSuccessiveHexCharacter = lastsuccessiveMatchStartingFrom(2, sourceCharacterSequence,
-						c -> isHexadecimalDigit(c));
+				final int lastSuccessiveHexCharacter =
+						lastsuccessiveMatchStartingFrom(2, sourceCharacterSequence, c -> isHexadecimalDigit(c));
 				final String hexadecimalSequence = sourceCharacterSequence.substring(2, lastSuccessiveHexCharacter + 1);
 				numericalValue = Integer.valueOf(hexadecimalSequence, 16);
 				remainingCharacterSequence = sourceCharacterSequence.substring(lastSuccessiveHexCharacter + 1);
@@ -210,24 +204,22 @@ public final class ISOIEC9899TC3 {
 				throw new UnsupportedOperationException();
 			}
 		}
-		return new Pair<BigInteger, String>(BigInteger.valueOf(numericalValue), remainingCharacterSequence);
+		return new Pair<>(BigInteger.valueOf(numericalValue), remainingCharacterSequence);
 	}
-	
-	
+
 	/**
-	 * Returns largest index i\>= startPost such all characters between 
-	 * startPos and i (starPos and i included) satisfy the predicate p.
-	 * Returns startpos-1 if the character at startPost does not satisfy p.
+	 * Returns largest index i\>= startPost such all characters between startPos and i (starPos and i included) satisfy
+	 * the predicate p. Returns startpos-1 if the character at startPost does not satisfy p.
 	 */
 	static int lastsuccessiveMatchStartingFrom(final int startPos, final String str, final Predicate<Character> p) {
-		for (int i=startPos; i<str.length(); i++) {
+		for (int i = startPos; i < str.length(); i++) {
 			if (!p.test(str.charAt(i))) {
 				return i - 1;
 			}
 		}
 		return str.length() - 1;
 	}
-	
+
 	static boolean isOctalDigit(final char c) {
 		switch (c) {
 		case '0':
@@ -243,7 +235,7 @@ public final class ISOIEC9899TC3 {
 			return false;
 		}
 	}
-	
+
 	static boolean isHexadecimalDigit(final char c) {
 		switch (c) {
 		case '0':
@@ -273,11 +265,10 @@ public final class ISOIEC9899TC3 {
 			return false;
 		}
 	}
-	
+
 	/**
-	 * Convert sequence of characters of the execution alphabet (given as a
-	 * sequence of their numerical values) to a sequence of bytes. This step of
-	 * the translation is largely implementation defined and we try to mimic the
+	 * Convert sequence of characters of the execution alphabet (given as a sequence of their numerical values) to a
+	 * sequence of bytes. This step of the translation is largely implementation defined and we try to mimic the
 	 * behavior of GCC.
 	 */
 	public static List<BigInteger> convertCharacterSequenceToByteSequence(final List<BigInteger> characterSequence,
@@ -296,12 +287,10 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Although integer character constants have type 'int', C11 says in
-	 * 6.4.4.4.10 that the values for single byte characters have to be in the
-	 * value of 'char'. This means that (as explained in C11 6.4.4.4.13) if char
-	 * is equivalent to unsigned char then \xFF has the value 255 and if char is
-	 * equivalent to signed char then \xFF has the value -1. This methods
-	 * implements a corresponding conversion.
+	 * Although integer character constants have type 'int', C11 says in 6.4.4.4.10 that the values for single byte
+	 * characters have to be in the value of 'char'. This means that (as explained in C11 6.4.4.4.13) if char is
+	 * equivalent to unsigned char then \xFF has the value 255 and if char is equivalent to signed char then \xFF has
+	 * the value -1. This methods implements a corresponding conversion.
 	 */
 	public static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
 			final BigInteger numericalValue) throws AssertionError {
@@ -322,11 +311,9 @@ public final class ISOIEC9899TC3 {
 		}
 		return byteValue;
 	}
-	
-	
+
 	/**
-	 * Parses FloatingPoint constants according to <a
-	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+	 * Parses FloatingPoint constants according to <a href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.2.
 	 *
 	 * @param loc
@@ -350,8 +337,7 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Given a suffix-free decimal value, compute a BigDecimal representation of
-	 * this value.
+	 * Given a suffix-free decimal value, compute a BigDecimal representation of this value.
 	 */
 	private static BigDecimal getDecimalForm(final String suffixFreeValue) {
 		final BigDecimal floatVal;
@@ -370,8 +356,7 @@ public final class ISOIEC9899TC3 {
 			if (hexValue.contains(".")) {
 				final int dotPosition = hexValue.indexOf('.');
 				suffixLength = hexValue.substring(dotPosition + 1).length();
-				hexValue =
-						hexValue.substring(0, dotPosition) + hexValue.substring(dotPosition + 1);
+				hexValue = hexValue.substring(0, dotPosition) + hexValue.substring(dotPosition + 1);
 			}
 			final BigInteger hexValueToDecimalValue = new BigInteger(hexValue, 16);
 			BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
@@ -429,10 +414,8 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Check if value has float suffix.
-	 * Return Pair whose first entry is a suffix-free float value and whose
-	 * second entry is the float suffix. Use null as second if floatSuffix is
-	 * null.
+	 * Check if value has float suffix. Return Pair whose first entry is a suffix-free float value and whose second
+	 * entry is the float suffix. Use null as second if floatSuffix is null.
 	 */
 	private static Pair<String, String> checkForFloatSuffix(final String floatValue) {
 		// if there is a float-suffix: throw it away
@@ -449,8 +432,7 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Parses Integer constants according to <a
-	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+	 * Parses Integer constants according to <a href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.1.
 	 *
 	 * @param valueWithSuffixes
@@ -458,22 +440,18 @@ public final class ISOIEC9899TC3 {
 	 * @param loc
 	 *            the location
 	 * @param bitvectorTranslation
-	 *            if true the Expression of the resulting RValue is a bitvecor
-	 *            if false the Expression is an int.
+	 *            if true the Expression of the resulting RValue is a bitvecor if false the Expression is an int.
 	 * @param typeSizeConstants
-	 *            object that contains information about the size of
-	 *            primitive types.
+	 *            object that contains information about the size of primitive types.
 	 * @return the parsed value
 	 */
 	public static RValue handleIntegerConstant(final String valueWithPrefixAndSuffix, final ILocation loc,
-			final boolean bitvectorTranslation,
-			final TypeSizes typeSizeConstants) {
+			final boolean bitvectorTranslation, final TypeSizes typeSizeConstants) {
 		try {
 			final IntegerConstant ic = new IntegerConstant(valueWithPrefixAndSuffix);
 			final CPrimitive cType = determineCType(ic, typeSizeConstants);
-			final Expression resultLiteral = constructLiteralForCIntegerLiteral(
-					loc, bitvectorTranslation, typeSizeConstants, cType,
-					ic.getValue());
+			final Expression resultLiteral = constructLiteralForCIntegerLiteral(loc, bitvectorTranslation,
+					typeSizeConstants, cType, ic.getValue());
 			return new RValue(resultLiteral, cType);
 		} catch (final NumberFormatException nfe) {
 			final String msg = "Unable to translate int! " + nfe.getMessage();
@@ -481,10 +459,8 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 
-	public static Expression constructLiteralForCIntegerLiteral(
-			final ILocation loc, final boolean bitvectorTranslation,
-			final TypeSizes typeSizeConstants, final CPrimitive cType,
-			BigInteger value) {
+	public static Expression constructLiteralForCIntegerLiteral(final ILocation loc, final boolean bitvectorTranslation,
+			final TypeSizes typeSizeConstants, final CPrimitive cType, BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
 			final int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
@@ -562,9 +538,8 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Get the types that a given integer type can have.
-	 * Returns the types in the correct order according to 6.4.4.1.5 of the
-	 * C11 standard.
+	 * Get the types that a given integer type can have. Returns the types in the correct order according to 6.4.4.1.5
+	 * of the C11 standard.
 	 */
 	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
 		if (ic.hasUnsignedSuffix()) {
@@ -575,28 +550,24 @@ public final class ISOIEC9899TC3 {
 			} else {
 				return new CPrimitives[] { CPrimitives.UINT, CPrimitives.ULONG, CPrimitives.ULONGLONG };
 			}
-		} else {
-			if (ic.hasLongLongSuffix()) {
-				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
-					return new CPrimitives[] { CPrimitives.LONGLONG };
-				} else {
-					return new CPrimitives[] { CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
-				}
-			} else if (ic.hasLongSuffix()) {
-				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
-					return new CPrimitives[] { CPrimitives.LONG, CPrimitives.LONGLONG };
-				} else {
-					return new CPrimitives[] { CPrimitives.LONG, CPrimitives.ULONG, CPrimitives.LONGLONG,
-							CPrimitives.ULONGLONG };
-				}
-			} else {
-				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
-					return new CPrimitives[] { CPrimitives.INT, CPrimitives.LONG, CPrimitives.LONGLONG };
-				} else {
-					return new CPrimitives[] { CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
-							CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
-				}
+		}
+		if (ic.hasLongLongSuffix()) {
+			if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+				return new CPrimitives[] { CPrimitives.LONGLONG };
 			}
+			return new CPrimitives[] { CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
+		} else if (ic.hasLongSuffix()) {
+			if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+				return new CPrimitives[] { CPrimitives.LONG, CPrimitives.LONGLONG };
+			}
+			return new CPrimitives[] { CPrimitives.LONG, CPrimitives.ULONG, CPrimitives.LONGLONG,
+					CPrimitives.ULONGLONG };
+		} else {
+			if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+				return new CPrimitives[] { CPrimitives.INT, CPrimitives.LONG, CPrimitives.LONGLONG };
+			}
+			return new CPrimitives[] { CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
+					CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
 		}
 	}
 
@@ -609,9 +580,9 @@ public final class ISOIEC9899TC3 {
 				return cPrimitive;
 			}
 		}
-		throw new IllegalArgumentException("Unable to represent " + ic.getValue()
-				+ " using any of the given types. This is probably undefined"
-				+ " or we need extended integer types. See 6.4.4.1 in the C standard");
+		throw new IllegalArgumentException(
+				"Unable to represent " + ic.getValue() + " using any of the given types. This is probably undefined"
+						+ " or we need extended integer types. See 6.4.4.1 in the C standard");
 	}
 
 	public static class FloatingPointLiteral {
