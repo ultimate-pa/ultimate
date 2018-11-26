@@ -331,13 +331,6 @@ public class CACSL2BoogieBacktranslator
 				oldPE.isConcurrent());
 	}
 
-	private static AtomicTraceElement<CACSLLocation> createAtomicTraceElement(
-			final AtomicTraceElement<BoogieASTNode> oldAte, final CACSLLocation elem, final CACSLLocation step,
-			final EnumSet<StepInfo> stepInfo, final IRelevanceInformation relInfo) {
-		return AtomicTraceElementBuilder.fromReplaceElementAndStep(oldAte, elem, step).setStepInfo(stepInfo)
-				.setRelevanceInformation(relInfo).build();
-	}
-
 	/**
 	 * @return true if the supplied {@link AtomicTraceElement} is a havoc statement that havocs temporary variables.
 	 *         Expects that ate represents a havoc statement.
@@ -466,10 +459,17 @@ public class CACSL2BoogieBacktranslator
 			if (nextIndex != -1) {
 				// there is a valid next ATE
 				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(nextIndex);
-				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-					final IRelevanceInformation relevanceInfo = getCombinedRelevanceInfo(currentATE, nextATE);
-					translatedAtoTraceElems.add(createAtomicTraceElement(currentATE, cloc, cloc,
-							EnumSet.of(StepInfo.FUNC_CALL), relevanceInfo));
+				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN) && haveSameThreadId(currentATE, nextATE)) {
+					assert !currentATE.hasStepInfo(StepInfo.FORK) && !nextATE.hasStepInfo(StepInfo.FORK);
+					final AtomicTraceElementBuilder<CACSLLocation> ateBuilder = new AtomicTraceElementBuilder<>();
+					ateBuilder.addStepInfo(StepInfo.FUNC_CALL);
+					ateBuilder.setRelevanceInformation(getCombinedRelevanceInfo(currentATE, nextATE));
+					ateBuilder.setStepAndElement(cloc);
+					ateBuilder.setProcedures(currentATE.getPrecedingProcedure(), nextATE.getSucceedingProcedure());
+					if (currentATE.hasThreadId()) {
+						ateBuilder.setThreadId(currentATE.getThreadId());
+					}
+					translatedAtoTraceElems.add(ateBuilder.build());
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(nextIndex)));
 					assert checkCallStackTarget(mLogger,
 							translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
@@ -518,6 +518,32 @@ public class CACSL2BoogieBacktranslator
 		assert checkCallStackTarget(mLogger,
 				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
 		return index;
+	}
+
+	private static boolean haveSameThreadId(final AtomicTraceElement<?>... ates) {
+		if (ates == null || ates.length < 2) {
+			return true;
+		}
+		int haveThreadId = 0;
+		for (final AtomicTraceElement<?> ate : ates) {
+			if (ate.hasThreadId()) {
+				haveThreadId++;
+			}
+		}
+		if (haveThreadId == 0) {
+			return true;
+		}
+		if (haveThreadId != ates.length) {
+			throw new AssertionError("Mixed AtomicTraceElements");
+		}
+
+		final int threadId = ates[0].getThreadId();
+		for (final AtomicTraceElement<?> ate : ates) {
+			if (threadId != ate.getThreadId()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static int getNextValidIndex(final IProgramExecution<BoogieASTNode, Expression> programExecution,

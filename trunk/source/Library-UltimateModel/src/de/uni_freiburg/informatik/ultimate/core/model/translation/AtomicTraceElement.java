@@ -107,12 +107,14 @@ public class AtomicTraceElement<TE> {
 		assert step != null;
 		assert info != null;
 		assert toStringProvider != null;
-		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values";
+		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values: "
+				+ element;
 		assert info.size() > 0;
 		assert !info.contains(StepInfo.FORK)
-				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id";
+				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id: " + element;
 		assert hasAnyStepInfo(info, StepInfo.PROC_CALL, StepInfo.PROC_RETURN) || threadId != null
-				|| precedingProcedure == succeedingProcedure : "You must have same procedures except when you have threads or when this is a call or a return";
+				|| precedingProcedure == succeedingProcedure : "You must have same procedures except when you have threads or when this is a call or a return: "
+						+ element;
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;
