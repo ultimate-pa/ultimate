@@ -145,7 +145,7 @@ public final class ModelUtils {
 				a -> !Arrays.stream(clazzes).anyMatch(b -> b.isAssignableFrom(a.getClass())));
 	}
 
-	private static void copyAnnotationsFiltered(final IElement oldE, final IElement newE,
+	public static void copyAnnotationsFiltered(final IElement oldE, final IElement newE,
 			final Predicate<IAnnotations> filter) {
 		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
 		if (oldAnnots == null) {

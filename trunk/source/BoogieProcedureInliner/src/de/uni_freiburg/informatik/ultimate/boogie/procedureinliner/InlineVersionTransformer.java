@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -1056,6 +1057,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		final AssumeStatement rtr = new AssumeStatement(callLocation,
 				new NamedAttribute[] { new NamedAttribute(callLocation, attrName, new Expression[] {}) },
 				new BooleanLiteral(callLocation, true));
+		if (!isReturn) {
+			ModelUtils.copyAnnotationsFiltered(callStmt, rtr, annot -> annot instanceof Overapprox);
+		}
 		addBacktranslation(rtr, null);
 		new InlinedCallAnnotation(callStmt, isReturn).annotate(rtr);
 		return rtr;
