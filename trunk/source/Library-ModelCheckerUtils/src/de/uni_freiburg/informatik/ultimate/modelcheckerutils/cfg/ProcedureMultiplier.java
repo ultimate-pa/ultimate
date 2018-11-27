@@ -198,6 +198,7 @@ public class ProcedureMultiplier {
 							final IcfgInternalTransition newInternalEdge =
 									icfgEdgeFactory.createInternalTransition(source, target, payload, transFormula);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
+							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
 							source.addOutgoing(newInternalEdge);
 							target.addIncoming(newInternalEdge);
 						} else if (outEdge instanceof IcfgForkThreadCurrentTransition) {
@@ -216,6 +217,7 @@ public class ProcedureMultiplier {
 									icfgEdgeFactory.createForkThreadCurrentTransition(source, target, payload,
 											transFormula, newForkSmtArguments, oldForkEdge.getNameOfForkedProcedure());
 							backtranslator.mapEdges(newForkEdge, oldForkEdge);
+							ModelUtils.copyAnnotations(oldForkEdge, newForkEdge);
 							source.addOutgoing(newForkEdge);
 							target.addIncoming(newForkEdge);
 							// add to thread instance mapping
@@ -239,6 +241,7 @@ public class ProcedureMultiplier {
 									icfgEdgeFactory.createJoinThreadCurrentTransition(source, target, payload,
 											transFormula, newForkSmtArguments);
 							backtranslator.mapEdges(newJoinEdge, oldJoinEdge);
+							ModelUtils.copyAnnotations(oldJoinEdge, newJoinEdge);
 							source.addOutgoing(newJoinEdge);
 							target.addIncoming(newJoinEdge);
 							// add to join list
