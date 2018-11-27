@@ -244,6 +244,10 @@ public class TypeSizeAndOffsetComputer {
 		return result;
 	}
 
+	/**
+	 * Returns the size of a CStructOrUnion and as a side-effects computes the
+	 * {@link Offset}s for each member to the {@code mStructOffsets} array.
+	 */
 	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStructOrUnion cStruct,
 			final IASTNode hook) {
 		if (cStruct.isIncomplete()) {
