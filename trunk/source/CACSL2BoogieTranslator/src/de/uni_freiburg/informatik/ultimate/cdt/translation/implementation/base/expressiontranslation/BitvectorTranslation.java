@@ -1118,6 +1118,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case "remainder":
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 		case "fmod":
+			/**
+			 * 7.12.10.1 The fmod functions
+			 *
+			 * The fmod functions compute the floating-point remainder of x/y.
+			 *
+			 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has
+			 * the same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error
+			 * occurs or the fmod functions return zero is implementation- defined.
+			 */
 			// fmod guarantees that the return value is the same sign as the first argument (x)
 			// copies the sign of firts element to remainder value
 			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
@@ -1128,11 +1137,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
 			final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
 
-			final Expression isNegativeSecond;
 			final String smtNegativeFunctionName = "fp.isNegative";
 			final RValue secondNegativeRvalue =
 					constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-			isNegativeSecond = secondNegativeRvalue.getValue();
+			final Expression isNegativeSecond = secondNegativeRvalue.getValue();
 			final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
 			final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
 					absoluteValue.getValue(), resultType);
