@@ -87,13 +87,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_FP_ROUNDING_MODE_INITIAL =
 			"Use the specified rounding mode as initial float rounding mode.";
 	private static final FloatingPointRoundingMode DEF_FP_ROUNDING_MODE_INITIAL =
-			FloatingPointRoundingMode.FE_TOWARDZERO;
+			FloatingPointRoundingMode.FE_TONEAREST;
 
 	public static final String LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND = "Let fesetround change the rounding mode";
 	private static final boolean DEF_FP_ROUNDING_MODE_ENABLE_FESETROUND = false;
 	private static final String DESC_FP_ROUNDING_MODE_ENABLE_FESETROUND =
 			"If enabled, fesetround can change the current rounding mode. If disabled, fesetround does nothing and "
-					+ "always returns non-zero.";
+					+ "always returns non-zero (no success).";
 
 	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
 
