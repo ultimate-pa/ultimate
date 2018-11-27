@@ -768,6 +768,9 @@ public class StandardFunctionHandler {
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, strCpyMmDecl.getName(),
 				new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue() });
+		for (final Overapprox oa : resultBuilder.getOverappr()) {
+			oa.annotate(call);
+		}
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
 		resultBuilder.addStatement(call);
