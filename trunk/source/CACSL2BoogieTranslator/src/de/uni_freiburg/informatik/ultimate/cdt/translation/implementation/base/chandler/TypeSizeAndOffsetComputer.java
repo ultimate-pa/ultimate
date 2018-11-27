@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -259,10 +258,10 @@ public class TypeSizeAndOffsetComputer {
 		final List<SizeTValue> fieldTypeSizes = new ArrayList<>();
 		for (int i = 0; i < cStruct.getFieldCount(); i++) {
 			final CType fieldType = cStruct.getFieldTypes()[i];
-			if (cStruct.getBitFieldWidths().get(i) != -1) {
-				final String msg = "bitfield implementation not yet bitprecise (soundness first)";
-				throw new UnsupportedSyntaxException(loc, msg);
-			}
+//			if (cStruct.getBitFieldWidths().get(i) != -1) {
+//				final String msg = "bitfield implementation not yet bitprecise (soundness first)";
+//				throw new UnsupportedSyntaxException(loc, msg);
+//			}
 
 			final Expression offset;
 			if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
