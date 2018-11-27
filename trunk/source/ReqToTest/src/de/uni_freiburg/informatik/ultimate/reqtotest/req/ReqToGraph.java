@@ -295,7 +295,7 @@ public class ReqToGraph {
 															SmtUtils.and(mScript, R, uR, ndS, clockGuardLess),
 															SmtUtils.and(mScript, R, uR, S, dS, clockGuardGeq))
 																)));
-			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS, clockGuardGeq)));
+			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS, clockGuardEq)));
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, 
 													SmtUtils.or(mScript, 
 															SmtUtils.and(mScript, uR, nR),
