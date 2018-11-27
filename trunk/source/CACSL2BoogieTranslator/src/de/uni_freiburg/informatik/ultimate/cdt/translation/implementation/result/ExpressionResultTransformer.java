@@ -726,10 +726,10 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
-				return mExprTrans.convertIntToFloat(loc, rexp, newType);
+				return mExprTrans.convertIfNecessary(loc, rexp, newType);
 			}
 			if (cPrimitive.isRealFloatingType()) {
-				return mExprTrans.convertFloatToFloat(loc, rexp, newType);
+				return mExprTrans.convertIfNecessary(loc, rexp, newType);
 			}
 			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
@@ -740,7 +740,7 @@ public class ExpressionResultTransformer {
 			throw new IncorrectSyntaxException(loc, "cannot convert pointer to float");
 		}
 		if (oldType instanceof CEnum) {
-			return mExprTrans.convertIntToFloat(loc, rexp, newType);
+			return mExprTrans.convertIfNecessary(loc, rexp, newType);
 		}
 		if (oldType instanceof CArray) {
 			throw new AssertionError("cannot convert from CArray");
