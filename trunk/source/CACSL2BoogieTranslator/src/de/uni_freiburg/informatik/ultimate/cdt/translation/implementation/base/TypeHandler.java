@@ -1097,4 +1097,9 @@ public class TypeHandler implements ITypeHandler {
 	public void registerNamedIncompleteType(final String incompleteType, final String named) {
 		mNamedIncompleteTypes.addPair(incompleteType, named);
 	}
+
+	@Override
+	public CType getCTypeForSizeT() {
+		return new CPrimitive(CPrimitives.UINT);
+	}
 }
