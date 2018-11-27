@@ -37,9 +37,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
  */
 public class TraceCheckReasonUnknown {
 
-	private static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
-	private static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
-
+	/**
+	 * Reasons for {@link TraceCheckReasonUnknown}.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	public enum Reason {
 		/**
 		 * Solver response was 'unknown' because of timeout. Often we are not able to detect the reason and hence
@@ -154,6 +156,11 @@ public class TraceCheckReasonUnknown {
 		ALL
 	}
 
+	private static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
+	private static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
+	private static final String CVC4_CONST_ARRAY_WRITE_CHAIN_CONNECTION_MESSAGE =
+			"Array theory solver does not yet support write-chains connecting two different constant arrays";
+
 	private final Reason mReason;
 	private final Exception mException;
 	private final ExceptionHandlingCategory mExceptionHandlingCategory;
@@ -188,6 +195,10 @@ public class TraceCheckReasonUnknown {
 		} else if (message.equals(SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE)) {
 			// SMTInterpol does not support non-linear arithmetic
 			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.equals(CVC4_CONST_ARRAY_WRITE_CHAIN_CONNECTION_MESSAGE)) {
+			// CVC4 crashes because two const-arrays are connected in a write chain
+			reason = Reason.SOLVER_CRASH_OTHER;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else if (message.startsWith("Cannot handle literal")) {
 			// SMTInterpol cannot handle quantifiers
