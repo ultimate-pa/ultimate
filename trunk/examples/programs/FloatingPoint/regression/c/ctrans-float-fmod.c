@@ -10,7 +10,9 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-	__VERIFIER_assert(fmod(5.1, 3) == 2.1);
+    double rtr;
+    rtr = fmod(5.1, 3.0);
+	__VERIFIER_assert(rtr == 2.1);
 	__VERIFIER_assert(fmod(-5.1, 3) == -2.1);
 	__VERIFIER_assert(fmod(5.1, -3) == 2.1);
 	__VERIFIER_assert(fmod(-5.1, -3) == -2.1);

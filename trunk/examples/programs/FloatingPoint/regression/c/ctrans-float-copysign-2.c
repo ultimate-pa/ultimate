@@ -6,13 +6,19 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-  __VERIFIER_assert(copysign(1.0, +2.0) == 1.0);
-  __VERIFIER_assert(copysign(1.0, -2.0) == -1.0);
-  __VERIFIER_assert(copysign(-1.0, +2.0) == 1.0);
-  __VERIFIER_assert(copysign(-1.0, -2.0) == -1.0);
+  double x; 
+  x = copysign(1.0, +2.0);
+  __VERIFIER_assert(x == 1.0);
+  x = copysign(1.0, -2.0);
+  __VERIFIER_assert(x == -1.0);
+  x = copysign(-1.0, +2.0);
+  __VERIFIER_assert(x == 1.0);
+  x = copysign(-1.0, -2.0);
+  __VERIFIER_assert(x == -1.0);
+  x = copysign(INFINITY, -2.0);
+  __VERIFIER_assert(x == -INFINITY);
 
-  __VERIFIER_assert(copysign(INFINITY, -2.0) == -INFINITY);
-
-  double snan = copysign(NAN, -2.0);
-  __VERIFIER_assert(isnan(snan) && signbit(snan));
+  x = copysign(NAN, -2.0);
+  __VERIFIER_assert(isnan(x));
+  __VERIFIER_assert(signbit(x));
 }
