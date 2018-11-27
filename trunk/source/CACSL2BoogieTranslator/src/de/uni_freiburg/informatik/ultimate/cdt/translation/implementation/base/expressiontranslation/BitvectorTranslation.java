@@ -987,16 +987,18 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			// http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml
 			// Check how sin in calculated in c source. I believe it is approximated with a polynomial
 			// See Taylor's theorem
-			checkIsFloatPrimitive(argument);
-			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final String smtFunctionName = "fp.sin";
-			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType);
-			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
-			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
-			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), argument.getValue() },
-					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			throw new UnsupportedOperationException(
+					"not yet supported float operation " + floatFunction.getFunctionName());
+			/*
+			 * checkIsFloatPrimitive(argument); final CPrimitive argumentType = (CPrimitive)
+			 * argument.getCType().getUnderlyingType(); final String smtFunctionName = "fp.sin";
+			 * declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, argumentType); final String
+			 * boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType); final CPrimitive
+			 * resultType = (CPrimitive) argument.getCType().getUnderlyingType(); final Expression expr =
+			 * ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] {
+			 * getRoundingMode(), argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType)); return new
+			 * RValue(expr, resultType);
+			 */
 		} else if ("fabs".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
