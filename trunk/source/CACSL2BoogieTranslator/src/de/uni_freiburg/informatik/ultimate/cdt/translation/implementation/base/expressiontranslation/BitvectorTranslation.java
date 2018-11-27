@@ -84,36 +84,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-	/**
-	 * Round towards the nearest, tie to even.
-	 */
-	RNE("roundNearestTiesToEven"),
+		/**
+		 * Round towards the nearest, tie to even.
+		 */
+		RNE("roundNearestTiesToEven"),
 
-	/**
-	 * Round toward nearest, tie to away.
-	 */
-	RNA("roundNearestTiesToAway"),
+		/**
+		 * Round toward nearest, tie to away.
+		 */
+		RNA("roundNearestTiesToAway"),
 
-	/**
-	 * Round toward positive.
-	 *
-	 * In this mode, a number r is rounded to the least upper floating-point bound.
-	 */
-	RTP("roundTowardPositive"),
+		/**
+		 * Round toward positive.
+		 *
+		 * In this mode, a number r is rounded to the least upper floating-point bound.
+		 */
+		RTP("roundTowardPositive"),
 
-	/**
-	 * Round toward negative.
-	 *
-	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-	 */
-	RTN("roundTowardNegative"),
+		/**
+		 * Round toward negative.
+		 *
+		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+		 */
+		RTN("roundTowardNegative"),
 
-	/**
-	 * Round toward zero.
-	 *
-	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-	 */
-	RTZ("roundTowardZero");
+		/**
+		 * Round toward zero.
+		 *
+		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+		 */
+		RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -1250,27 +1250,28 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression returnExpression;
 		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 		if (mSettings.isFesetroundEnabled()) {
-			if (((BitvecLiteral) argument.getValue()).getValue().equals("0")) {
+			final String value = ((BitvecLiteral) argument.getValue()).getValue();
+			final BigInteger returnExprValue;
+			if ("0".equals(value)) {
 				mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
-				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("1")) {
+				returnExprValue = BigInteger.ZERO;
+			} else if ("1".equals(value)) {
 				mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
-				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("2")) {
+				returnExprValue = BigInteger.ZERO;
+			} else if ("2".equals(value)) {
 				mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
-				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-			} else if (((BitvecLiteral) argument.getValue()).getValue().equals("3")) {
+				returnExprValue = BigInteger.ZERO;
+			} else if ("3".equals(value)) {
 				mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
-				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+				returnExprValue = BigInteger.ZERO;
 			} else {
-				returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
+				returnExprValue = BigInteger.ONE;
 			}
-
-			return new RValue(returnExpression, cPrimitive);
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, returnExprValue);
+		} else {
+			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 		}
-		returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 		return new RValue(returnExpression, cPrimitive);
-
 	}
 
 	@Override
