@@ -463,6 +463,11 @@ public class CfgBuilder {
 		return false;
 	}
 
+	private static boolean isOverapproximation(final Statement st) {
+		final Overapprox oa = Overapprox.getAnnotation(st);
+		return (oa != null);
+	}
+
 	/**
 	 * Build control flow graph of single procedures.
 	 *
@@ -583,7 +588,7 @@ public class CfgBuilder {
 							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
-				if (isAssumeTrueStatement(st)) {
+				if (isAssumeTrueStatement(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
