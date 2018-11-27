@@ -518,7 +518,16 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 
-		final IdentifierExpression roundingMode = (IdentifierExpression) getRoundingMode();
+		// floating-point to integer implicit conversion and casts are not affected by the current rounding mode. They
+		// round always towards zero.
+		/**
+		 * 6.3.1.4 Real floating and integer
+		 *
+		 * When a finite value of real floating type is converted to an integer type other than _Bool, the fractional
+		 * part is discarded (i.e., the value is truncated toward zero). If the value of the integral part cannot be
+		 * represented by the integer type, the behavior is undefined.
+		 */
+		final IdentifierExpression roundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { roundingMode, oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
