@@ -1573,10 +1573,11 @@ public class StandardFunctionHandler {
 
 		final CPrimitive typeDeterminedByName = floatFunction.getType();
 		if (typeDeterminedByName != null) {
+			final List<ExpressionResult> newRtr = new ArrayList<>();
 			for (final ExpressionResult arg : rtr) {
-				mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
+				newRtr.add(mExpressionTranslation.convertIfNecessary(loc, arg, typeDeterminedByName));
 			}
-
+			return newRtr;
 		}
 		return rtr;
 	}
