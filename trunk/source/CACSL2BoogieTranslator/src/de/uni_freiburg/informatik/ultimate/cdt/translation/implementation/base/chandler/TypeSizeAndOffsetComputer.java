@@ -496,4 +496,74 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
+	private class Offset {
+		private final SizeTValue_Integer mAddressOffset;
+		private final int mStartBit;
+		private final int mBitsize;
+		public Offset(final SizeTValue_Integer addressOffset, final int startBit, final int bitsize) {
+			super();
+			mAddressOffset = addressOffset;
+			mStartBit = startBit;
+			mBitsize = bitsize;
+			assert (startBit == -1 && bitsize == -1) || (startBit > 0 && bitsize > 0);
+		}
+		public SizeTValue_Integer getAddressOffset() {
+			return mAddressOffset;
+		}
+		public int getStartBit() {
+			return mStartBit;
+		}
+		public int getBitsize() {
+			return mBitsize;
+		}
+		public boolean isAlignedToByte() {
+			return getStartBit() == -1;
+		}
+	}
+
+	private Offset computeMemberOffset(final Offset offsetprecedingMember, final CType memberType,
+			final int bitfieldSize, final ILocation loc, final IASTNode hook) {
+		final Offset result;
+		if (bitfieldSize == -1 && offsetprecedingMember.getStartBit() != -1) {
+			final SizeTValue_Integer nextAddress = computeNextAddressWithPadding(offsetprecedingMember);
+			result = new Offset(nextAddress, -1, -1);
+		} else if (bitfieldSize == -1 && offsetprecedingMember.getStartBit() == -1) {
+			final SizeTValue size = computeSize(loc, memberType, hook);
+			if (!(size instanceof SizeTValue_Integer)) {
+				throw new AssertionError("only flexible array member at the end can have non-constant size");
+			}
+			result = new Offset(new SizeTValue_Integer(offsetprecedingMember.getAddressOffset().getInteger()
+					.add(((SizeTValue_Integer) size).getInteger())), -1, -1);
+		} else if (bitfieldSize != -1 && offsetprecedingMember.getStartBit() == -1) {
+			result = new Offset(offsetprecedingMember.getAddressOffset(), 0, bitfieldSize);
+		} else if (bitfieldSize != -1 && offsetprecedingMember.getStartBit() == -1) {
+			final int newStartBit = offsetprecedingMember.getStartBit() + offsetprecedingMember.getBitsize();
+			if (newStartBit == 8) {
+				result = new Offset(
+						new SizeTValue_Integer(
+								offsetprecedingMember.getAddressOffset().getInteger().add(BigInteger.ONE)),
+						0, bitfieldSize);
+			} else if (newStartBit > 8) {
+				throw new AssertionError("large bitfields not yet supported");
+			} else {
+				assert newStartBit > 0;
+				result = new Offset(offsetprecedingMember.getAddressOffset(), newStartBit, bitfieldSize);
+			}
+		} else {
+			throw new AssertionError("illegal case");
+		}
+		return result;
+	}
+
+
+	private SizeTValue_Integer computeNextAddressWithPadding(final Offset offset) {
+		if (offset.getStartBit() == -1) {
+			throw new AssertionError("No bitfield, no padding.");
+		}
+		final int lastOccupiedBit = offset.getStartBit() + offset.getBitsize();
+		final int additionalByes = lastOccupiedBit / 8;
+		return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
+
+	}
+
 }
