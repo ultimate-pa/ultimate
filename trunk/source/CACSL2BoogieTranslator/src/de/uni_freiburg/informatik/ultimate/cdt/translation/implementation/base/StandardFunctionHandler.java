@@ -590,9 +590,11 @@ public class StandardFunctionHandler {
 		 * 7.22.4 Communication with the environment
 		 *
 		 * 7.22.4.1 The abort function
+		 *   see https://en.cppreference.com/w/c/program/abort
 		 * 7.22.4.2 The atexit function
 		 * 7.22.4.3 The at_quick_exit function
 		 * 7.22.4.4 The exit function
+		 *   see https://en.cppreference.com/w/c/program/exit
 		 * 7.22.4.5 The _Exit function
 		 * 7.22.4.6 The getenv function
 		 * 7.22.4.7 The quick_exit function
@@ -600,10 +602,9 @@ public class StandardFunctionHandler {
 		 * @formatter:on
 		 */
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
+		fill(map, "exit", (main, node, loc, name) -> handleAbort(loc));
 		fill(map, "atexit", die);
 		fill(map, "at_quick_exit", die);
-		// TODO: Find out what SVCOMP expects from exit()
-		// fill(map, "exit", die);
 		fill(map, "_Exit", die);
 		fill(map, "getenv", die);
 		fill(map, "quick_exit", die);
