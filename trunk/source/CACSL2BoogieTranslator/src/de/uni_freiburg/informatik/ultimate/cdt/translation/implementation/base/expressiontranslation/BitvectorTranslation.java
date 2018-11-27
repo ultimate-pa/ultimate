@@ -1084,16 +1084,17 @@ public class BitvectorTranslation extends ExpressionTranslation {
 											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		} else if ("signbit".equals(floatFunction.getFunctionName())) {
-			final Expression isNegative;
-			final String smtFunctionName = "fp.isNegative";
-			final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
-			isNegative = rvalue.getValue();
-
-			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
-					mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
-					mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
-			return new RValue(resultExpr, cPrimitive);
+			// TODO: Handle negative NaN correctly
+			// final Expression isNegative;
+			// final String smtFunctionName = "fp.isNegative";
+			// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
+			// isNegative = rvalue.getValue();
+			//
+			// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
+			// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
+			// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
+			// return new RValue(resultExpr, cPrimitive);
 		}
 		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
 	}
@@ -1116,7 +1117,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case "fmax":
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max");
 		case "remainder":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
+			// TODO: Remove until unsoundness can be investigated
+			break;
+		// return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 		case "fmod":
 			/**
 			 * 7.12.10.1 The fmod functions
@@ -1132,23 +1135,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
 			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first);
-		case "copysign":
-			// if second is negative, return arithneg of abs(first), else return abs(first)
-			final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
-			final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
-
-			final String smtNegativeFunctionName = "fp.isNegative";
-			final RValue secondNegativeRvalue =
-					constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-			final Expression isNegativeSecond = secondNegativeRvalue.getValue();
-			final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
-			final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
-					absoluteValue.getValue(), resultType);
-			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
-					negative, absoluteValue.getValue());
-			return new RValue(resultExpr, resultType);
 		case "fdim":
-
 			final FloatFunction isNaN = FloatFunction.decode("isnan");
 
 			// if (first || second) is NaN -> NaN
@@ -1177,17 +1164,31 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					first.getValue(), secondNaNExpr);
 
 			return new RValue(firstNaNExpr, typeFirst);
-
+		case "copysign":
+			// TODO: Handle negative NaN, check unsoundness
+			// if second is negative, return arithneg of abs(first), else return abs(first)
+			// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
+			// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
+			//
+			// final String smtNegativeFunctionName = "fp.isNegative";
+			// final RValue secondNegativeRvalue =
+			// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
+			// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
+			// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
+			// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
+			// absoluteValue.getValue(), resultType);
+			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
+			// negative, absoluteValue.getValue());
+			// return new RValue(resultExpr, resultType);
+			break;
 		default:
-			throw new UnsupportedOperationException(
-					"not yet supported float operation " + floatFunction.getFunctionName());
+			break;
 		}
-
+		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
 	}
 
 	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
 			final String smtFunctionName) {
-
 		return delegateOtherBinaryFloatOperationToSmt(loc, first, second, smtFunctionName, false);
 	}
 
