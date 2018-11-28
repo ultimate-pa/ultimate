@@ -178,6 +178,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -1640,7 +1641,7 @@ public class CHandler {
 		{
 			final LocalLValue llv = new LocalLValue(aux.getLhs(), cType, null);
 			if (mProcedureManager.isGlobalScope()) {
-				final CallStatement malloc = mMemoryHandler.getMallocCall(llv, loc, node);
+				final CallStatement malloc = mMemoryHandler.getUltimateMemAllocCall(llv, loc, node, MemoryArea.STACK);
 				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singleton(malloc));
 
 			} else {
@@ -1812,7 +1813,7 @@ public class CHandler {
 
 		final List<Statement> statements = new ArrayList<>();
 		final CallStatement ultimateAllocCall =
-				mMemoryHandler.getMallocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc);
+				mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc, MemoryArea.STACK);
 		statements.add(ultimateAllocCall);
 
 		if (writeValues) {
@@ -2813,7 +2814,7 @@ public class CHandler {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 					// old solution: havoc via an auxvar, new solution (below):
 					// just malloc at the right place (much shorter for arrays and structs..)
-					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
+					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, node, MemoryArea.STACK));
 					mMemoryHandler.addVariableToBeFreed(
 							new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 				}
@@ -2830,7 +2831,7 @@ public class CHandler {
 				if (onHeap) {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 					mMemoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llVal, loc));
-					erb.addStatement(mMemoryHandler.getMallocCall(llVal, loc, node));
+					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, node, MemoryArea.STACK));
 				}
 				erb.addAllExceptLrValueAndHavocAux(initRex);
 				result = erb.build();

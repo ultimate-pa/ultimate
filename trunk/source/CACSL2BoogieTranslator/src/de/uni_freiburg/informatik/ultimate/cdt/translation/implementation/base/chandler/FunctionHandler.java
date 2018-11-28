@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager.BoogieProcedureInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -948,7 +949,8 @@ public class FunctionHandler {
 					final ExpressionResult assign = mCHandler.makeAssignment(igLoc, hlv, Collections.emptyList(),
 							new ExpressionResultBuilder().setLrValue(new RValue(rhsId, cvar)).build(), paramDec);
 
-					resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc, paramDec));
+					resultBuilder.addStatement(
+							memoryHandler.getUltimateMemAllocCall(llv, igLoc, paramDec, MemoryArea.STACK));
 					resultBuilder.addAllExceptLrValue(assign);
 				} else {
 					final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,

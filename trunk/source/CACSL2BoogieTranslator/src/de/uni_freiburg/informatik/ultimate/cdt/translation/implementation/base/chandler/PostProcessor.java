@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
@@ -631,7 +632,8 @@ public class PostProcessor {
 
 					if (mCHandler.isHeapVar(id)) {
 						final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-						staticObjectInitStatements.add(mMemoryHandler.getMallocCall(llVal, currentDeclsLoc, hook));
+						staticObjectInitStatements.add(
+								mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook, MemoryArea.STACK));
 						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
 					}
 

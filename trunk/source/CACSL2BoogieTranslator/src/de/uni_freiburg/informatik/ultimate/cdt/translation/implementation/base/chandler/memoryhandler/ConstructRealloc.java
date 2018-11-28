@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.HeapDataArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -173,7 +174,8 @@ public final class ConstructRealloc {
 					BinaryExpression.Operator.COMPEQ,
 					ptrIdExprImpl,
 					mExpressionTranslation.constructNullPointer(ignoreLoc));
-			final Statement mallocCallStm = mMemoryHandler.getMallocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc);
+			final Statement mallocCallStm = mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl,
+					ignoreLoc, MemoryArea.HEAP);
 			final Statement returnStm = new ReturnStatement(ignoreLoc);
 			bodyStmt.add(StatementFactory.constructIfStatement(ignoreLoc, condition,
 					new Statement[] { mallocCallStm, returnStm },
@@ -189,7 +191,7 @@ public final class ConstructRealloc {
 		bodyStmt.add(mMemoryHandler.getDeallocCall(new RValue(ptrIdExprImpl, voidPointerType), ignoreLoc));
 
 		// res := malloc(size)
-		bodyStmt.add(mMemoryHandler.getMallocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc));
+		bodyStmt.add(mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP));
 
 		// mem~X[res.base] := mem~X[ptr.base]
 		for (final CPrimitives prim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {

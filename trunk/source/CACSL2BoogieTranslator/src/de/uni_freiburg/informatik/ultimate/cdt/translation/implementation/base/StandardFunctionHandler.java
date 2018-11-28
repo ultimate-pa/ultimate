@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -1428,7 +1429,7 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		result.addDeclaration(auxvar.getVarDec());
-		result.addStatement(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
+		result.addStatement(mMemoryHandler.getUltimateMemAllocCall(product, auxvar.getLhs(), loc, MemoryArea.HEAP));
 		result.addStatement(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.getLrValue().getValue(),
 				size.getLrValue().getValue(), product, auxvar.getExp()));
 		result.setLrValue(new RValue(auxvar.getExp(), resultType));
@@ -1477,7 +1478,8 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addDeclaration(auxvar.getVarDec());
-		erb.addStatement(mMemoryHandler.getMallocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc));
+		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc,
+				MemoryArea.STACK));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the

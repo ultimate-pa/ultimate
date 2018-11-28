@@ -261,6 +261,11 @@ public class MemoryHandler {
 
 	}
 
+	public static enum MemoryArea {
+		STACK,
+		HEAP,
+	}
+
 
 	private static enum HeapWriteMode {
 		Store_Checked,
@@ -674,22 +679,14 @@ public class MemoryHandler {
 				MemoryModelDeclarations.Ultimate_Dealloc.getName(), new Expression[] { lrVal.getValue() });
 	}
 
-	/**
-	 *
-	 * @param callerName
-	 *            name of the calling procedure
-	 */
-	public CallStatement getMallocCall(final LocalLValue resultPointer, final ILocation loc, final IASTNode hook) {
-		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType(), hook), (VariableLHS) resultPointer.getLhs(),
-				loc);
+	public CallStatement getUltimateMemAllocCall(final LocalLValue resultPointer, final ILocation loc,
+			final IASTNode hook, final MemoryArea memArea) {
+		return getUltimateMemAllocCall(calculateSizeOf(loc, resultPointer.getCType(), hook),
+				(VariableLHS) resultPointer.getLhs(), loc, memArea);
 	}
 
-	/**
-	 *
-	 * @param surroundingProcedure
-	 *            name of the procedure that the generated statements will be added to.
-	 */
-	public CallStatement getMallocCall(final Expression size, final VariableLHS returnedValue, final ILocation loc) {
+	public CallStatement getUltimateMemAllocCall(final Expression size, final VariableLHS returnedValue,
+			final ILocation loc, final MemoryArea memArea) {
 		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Alloc);
 		final CallStatement result =
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValue },
@@ -915,7 +912,7 @@ public class MemoryHandler {
 	public List<Statement> insertMallocs(final List<Statement> block, final IASTNode hook) {
 		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
-			mallocs.add(this.getMallocCall(llvp.llv, llvp.loc, hook));
+			mallocs.add(this.getUltimateMemAllocCall(llvp.llv, llvp.loc, hook, MemoryArea.STACK));
 		}
 		final List<Statement> frees = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
