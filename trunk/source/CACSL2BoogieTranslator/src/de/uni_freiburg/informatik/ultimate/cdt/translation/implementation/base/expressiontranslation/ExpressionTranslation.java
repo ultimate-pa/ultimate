@@ -631,10 +631,6 @@ public abstract class ExpressionTranslation {
 
 	}
 
-	public abstract RValue constructBuiltinFegetround(final ILocation loc);
-
-	public abstract RValue constructBuiltinFesetround(final ILocation loc, final RValue argument);
-
 	/**
 	 * Translate string representation of a C literal to a string representation that is allowed in Boogie identifiers.
 	 *

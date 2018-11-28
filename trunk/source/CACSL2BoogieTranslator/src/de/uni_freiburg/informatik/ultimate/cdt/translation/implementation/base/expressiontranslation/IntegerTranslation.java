@@ -946,15 +946,4 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String[] bitvectorFunctions) {
 		throw new UnsupportedOperationException();
 	}
-
-	@Override
-	public RValue constructBuiltinFegetround(final ILocation loc) {
-		throw new UnsupportedOperationException("Operation is not supported in non-bitprecise translation");
-	}
-
-	@Override
-	public RValue constructBuiltinFesetround(final ILocation loc, final RValue argument) {
-		throw new UnsupportedOperationException("Operation is not supported in non-bitprecise translation");
-	}
-
 }

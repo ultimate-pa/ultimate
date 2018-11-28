@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -158,7 +157,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	private IdentifierExpression mActiveRoundingMode;
+	private final IdentifierExpression mActiveRoundingMode;
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
@@ -1233,65 +1232,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { argument.getValue() }, BoogieType.TYPE_BOOL);
 		return new RValue(expr, resultCType, true);
-	}
-
-	@Override
-	public RValue constructBuiltinFegetround(final ILocation loc) {
-		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
-		// https://en.cppreference.com/w/c/numeric/fenv/feround
-
-		final CPrimitive resultCType = new CPrimitive(CPrimitives.INT);
-		Expression resultExpression;
-		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-
-		switch (((IdentifierExpression) getRoundingMode()).getIdentifier()) {
-		case "~roundTowardZero":
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
-			break;
-		case "~roundNearestTiesToEven":
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-			break;
-		case "~roundTowardPositive":
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("2"));
-			break;
-		case "~roundTowardNegative":
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("3"));
-			break;
-		default:
-			resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("-1"));
-			break;
-		}
-
-		return new RValue(resultExpression, resultCType);
-	}
-
-	@Override
-	public RValue constructBuiltinFesetround(final ILocation loc, final RValue argument) {
-		final Expression returnExpression;
-		final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-		if (mSettings.isFesetroundEnabled()) {
-			final String value = ((BitvecLiteral) argument.getValue()).getValue();
-			final BigInteger returnExprValue;
-			if ("0".equals(value)) {
-				mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
-				returnExprValue = BigInteger.ZERO;
-			} else if ("1".equals(value)) {
-				mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
-				returnExprValue = BigInteger.ZERO;
-			} else if ("2".equals(value)) {
-				mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
-				returnExprValue = BigInteger.ZERO;
-			} else if ("3".equals(value)) {
-				mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
-				returnExprValue = BigInteger.ZERO;
-			} else {
-				returnExprValue = BigInteger.ONE;
-			}
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, returnExprValue);
-		} else {
-			returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		}
-		return new RValue(returnExpression, cPrimitive);
 	}
 
 	@Override
