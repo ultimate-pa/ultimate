@@ -11,9 +11,17 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 
 	private static final long serialVersionUID = 94683849463494167L;
 	private final int mNodeLabel;
+	private Set<GuardGraph> mConcatNodes;
+	private int mLabel = 0;
 	
 	public GuardGraph(int label) {
 		mNodeLabel = label;
+	}
+	
+	public GuardGraph(Set<GuardGraph> nodes) {
+		mNodeLabel = mLabel;
+		mLabel++;
+		mConcatNodes = nodes;
 	}
 
 	public int getLabel() {

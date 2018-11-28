@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.BuchiGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.GuardGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.InputDetSuccConstruction;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.PowersetConstruction;
 
 public class ReqToTestPowersetObserver extends BaseObserver{
@@ -62,7 +63,7 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt);
 		final List<GuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
 		final GuardGraph setAutomaton = new PowersetConstruction(mLogger, automata, mScript).getProduct();
-		
+		final GuardGraph inputDetAutomaton = new InputDetSuccConstruction(mLogger, setAutomaton, mScript, symbolTable.getInputVars()).getAutomaton();
 		// TODO remove this; just for debug
 		mLogger.warn(setAutomaton);
 		/*
