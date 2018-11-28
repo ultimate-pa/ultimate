@@ -583,7 +583,7 @@ public class StandardFunctionHandler {
 		fill(map, "calloc", this::handleCalloc);
 		fill(map, "free", this::handleFree);
 		fill(map, "malloc", this::handleAlloc);
-		fill(map, "realloc", die);
+		fill(map, "realloc", this::handleRealloc);
 
 		/**
 		 * @formatter:off
@@ -749,7 +749,7 @@ public class StandardFunctionHandler {
 	private Result handleStrCpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_StrCpy;
+		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_Realloc;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
@@ -1418,6 +1418,58 @@ public class StandardFunctionHandler {
 			erb.clearAuxVars();
 		}
 		return erb.build();
+	}
+
+	/**
+	 *
+	 * signature:
+	 * void *realloc(void *ptr, size_t size);
+	 *
+	 * for reference: C11 7.22.3.5
+	 *
+	 * @param main
+	 * @param node
+	 * @param loc
+	 * @param methodName
+	 * @return
+	 */
+	private Result handleRealloc(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String methodName) {
+		final MemoryModelDeclarations reallocMmDecl = MemoryModelDeclarations.C_Realloc;
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, methodName, arguments);
+
+		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ExpressionResult ptr = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[0], voidPointerType);
+
+		final ExpressionResult size = mExprResultTransformer.dispatchDecaySwitchToRValueConvertFunctionArgument(main,
+				loc, arguments[1], mTypeSizeComputer.getSizeT());
+
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		resultBuilder.addAllExceptLrValue(ptr);
+		resultBuilder.addAllExceptLrValue(size);
+
+		final AuxVarInfo auxvarinfo =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, ptr.getLrValue().getCType(), SFO.AUXVAR.REALLOCRES);
+
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
+				new VariableLHS[] { auxvarinfo.getLhs() }, reallocMmDecl.getName(),
+				new Expression[] { ptr.getLrValue().getValue(), size.getLrValue().getValue() });
+
+		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addStatement(call);
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
+
+		// add marker for global declaration to memory handler
+		mMemoryHandler.requireMemoryModelFeature(reallocMmDecl);
+
+		// add required information to function handler.
+		mProcedureManager.registerProcedure(reallocMmDecl.getName());
+
+		return resultBuilder.build();
 	}
 
 	private Result handleBuiltinExpect(final IDispatcher main, final IASTFunctionCallExpression node,

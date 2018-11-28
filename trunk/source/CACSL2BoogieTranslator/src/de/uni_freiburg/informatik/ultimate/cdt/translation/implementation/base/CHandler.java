@@ -2268,7 +2268,7 @@ public class CHandler {
 
 			return new ExpressionResult(
 					new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
-							mTypeHandler.getCTypeForSizeT()));
+							mTypeSizeComputer.getSizeT()));
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -2313,7 +2313,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_sizeof:
 			final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
 			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeHandler.getCTypeForSizeT()),
+					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeSizeComputer.getSizeT()),
 					Collections.emptySet());
 		case IASTUnaryExpression.op_star: {
 			return handleIndirectionOperator(operand, loc, node);

@@ -103,6 +103,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructRealloc;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -157,6 +159,8 @@ public class MemoryHandler {
 
 		C_StrCpy(SFO.C_STRCPY),
 
+		C_Realloc(SFO.C_REALLOC),
+
 		Ultimate_Length(SFO.LENGTH),
 
 		Ultimate_Pthreads_Mutex("#PthreadsMutex"),
@@ -190,14 +194,30 @@ public class MemoryHandler {
 				return meminitRequirements(rmmf, settings);
 			} else if (this == MemoryModelDeclarations.C_StrCpy) {
 				return strcpyRequirements(rmmf, settings);
+			} else if (this == MemoryModelDeclarations.C_Realloc) {
+				return reallocRequirements(rmmf, settings);
 			} else {
 				return false;
 			}
 		}
 
+		private boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
+				final TranslationSettings settings) {
+			boolean changedSomething = false;
+			changedSomething |= rmmf.requireMemoryModelInfrastructure();
+			changedSomething |= rmmf.require(MemoryModelDeclarations.Ultimate_Dealloc);
+			for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+				changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
+			}
+			if (rmmf.mPointerOnHeapRequired) {
+				changedSomething |= rmmf.reportPointerOnHeapStoreFunctionRequired();
+			}
+			return changedSomething;
+		}
+
 		private boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
 			boolean changedSomething = false;
-			for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+			for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
 				changedSomething |= rmmf.reportUncheckedWriteRequired(prim);
 			}
 			if (rmmf.mPointerOnHeapRequired) {
@@ -211,7 +231,7 @@ public class MemoryHandler {
 			boolean changedSomething = false;
 			if (settings.useConstantArrays()) {
 				// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
-				for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+				for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
 					changedSomething |= rmmf.reportDataOnHeapInitFunctionRequired(prim);
 				}
 				if (rmmf.mPointerOnHeapRequired) {
@@ -228,7 +248,7 @@ public class MemoryHandler {
 		boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
 			boolean changedSomething = false;
 			// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
-			for (final CPrimitives prim : mmf.mDataOnHeapRequired) {
+			for (final CPrimitives prim : new HashSet<>(mmf.mDataOnHeapRequired)) {
 				changedSomething |= mmf.reportUncheckedWriteRequired(prim);
 				changedSomething |= mmf.reportUncheckedReadRequired(prim);
 			}
@@ -409,6 +429,21 @@ public class MemoryHandler {
 		}
 
 		{
+			// add store function (to be able to assign subarrays at pointer base addresses)
+			for (final CPrimitives prim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
+				if (mRequiredMemoryModelFeatures.isDataOnHeapStoreFunctionRequired(prim)) {
+					declareDataOnHeapStoreFunction(mMemoryModel.getDataHeapArray(prim));
+					declareDataOnHeapSelectFunction(mMemoryModel.getDataHeapArray(prim));
+				}
+			}
+			if (mRequiredMemoryModelFeatures.isPointerOnHeapStoreFunctionRequired()) {
+				declareDataOnHeapStoreFunction(mMemoryModel.getPointerHeapArray());
+				declareDataOnHeapSelectFunction(mMemoryModel.getPointerHeapArray());
+			}
+		}
+
+
+		{
 			// add init function (interface to smt const arrays)
 			for (final CPrimitives prim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
 				if (mRequiredMemoryModelFeatures.isDataOnHeapInitFunctionRequired(prim)) {
@@ -418,7 +453,6 @@ public class MemoryHandler {
 			if (mRequiredMemoryModelFeatures.isPointerOnHeapInitFunctionRequired()) {
 				declareDataOnHeapInitFunction(mMemoryModel.getPointerHeapArray());
 			}
-
 		}
 
 		decl.addAll(declareDeallocation(main, tuLoc, hook));
@@ -440,7 +474,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memcpy)) {
-			final constructMemcpyOrMemmoveNonPointerLoopAssignment cmcom = new constructMemcpyOrMemmoveNonPointerLoopAssignment(this, mProcedureManager,
+			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes);
 			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memcpy, hook));
@@ -448,7 +482,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memmove)) {
-			final constructMemcpyOrMemmoveNonPointerLoopAssignment cmcom = new constructMemcpyOrMemmoveNonPointerLoopAssignment(this, mProcedureManager,
+			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes);
 			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memmove, hook));
@@ -459,6 +493,13 @@ public class MemoryHandler {
 			decl.addAll(declareStrCpy(main, heapDataArrays, hook));
 		}
 
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.C_Realloc)) {
+			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager,
+					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
+					mTypeSizes);
+			decl.addAll(cr.declareRealloc(main, heapDataArrays, hook));
+		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_Pthreads_Mutex)) {
@@ -1237,7 +1278,7 @@ public class MemoryHandler {
 	 * @param loopCounterAux
 	 * @return
 	 */
-	private Expression constructBoundExitCondition(final Expression loopBoundVariableExpr, final AuxVarInfo loopCounterAux) {
+	public Expression constructBoundExitCondition(final Expression loopBoundVariableExpr, final AuxVarInfo loopCounterAux) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final Expression condition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
 				IASTBinaryExpression.op_lessThan, loopCounterAux.getExp(), mTypeSizeAndOffsetComputer.getSizeT(),
@@ -1496,7 +1537,7 @@ public class MemoryHandler {
 	 * @param loopBody
 	 * @return
 	 */
-	private ArrayList<Statement> constructCountingLoop(final Expression condition,
+	public ArrayList<Statement> constructCountingLoop(final Expression condition,
 			final AuxVarInfo loopCounterAux, final Expression loopCounterIncrementExpr, final List<Statement> loopBody,
 			final String surroundingProcedure) {
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -2148,7 +2189,7 @@ public class MemoryHandler {
 	 *            name of pointer whose base address is checked
 	 * @return A list containing the created specification
 	 */
-	private List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
 		if (mSettings.getPointerTargetFullyAllocatedMode() == PointerCheckMode.IGNORE) {
 			// add nothing
@@ -2228,7 +2269,7 @@ public class MemoryHandler {
 	 *            name of the procedure where the specifications will be added
 	 * @return A list containing the created specifications.
 	 */
-	private List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
 		if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.IGNORE) {
 			// add nothing
@@ -2826,22 +2867,200 @@ public class MemoryHandler {
 								)});
 	}
 
+
 	private String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + "initToZeroAtPointerBaseAddress~" + relevantHeapArray.getName();
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.INIT_TO_ZERO_AT_ADDRESS + relevantHeapArray.getName();
+	}
+
+	public String getNameOfHeapStoreFunction(final HeapDataArray relevantHeapArray) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.STORE_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
+	}
+
+	public String getNameOfHeapSelectFunction(final HeapDataArray relevantHeapArray) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.SELECT_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
+	}
+
+
+	/**
+	 * (workaround that is necessary because or memory arrays are multidimensional instead of nested)
+	 *
+	 * @param heapDataArray
+	 */
+	private void declareDataOnHeapStoreFunction(final HeapDataArray heapDataArray) {
+
+		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
+		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
+
+		// compute zeros of matching type
+		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
+		final BoogieType flattenedType = StructExpanderUtil.flattenType(heapContentBoogieType, new HashMap<>(),
+				new HashMap<>());
+
+		final String[] subarraysToStore;
+		if (flattenedType instanceof BoogieStructType) {
+			final BoogieStructType bst = (BoogieStructType) flattenedType;
+			subarraysToStore = new String[bst.getFieldCount()];
+
+			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
+				final String param = FunctionDeclarations.constructNameForFunctionInParam(2);
+				subarraysToStore[fieldNr] = param
+							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr];
+			}
+		} else {
+//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
+			final String param = FunctionDeclarations.constructNameForFunctionInParam(2);
+			subarraysToStore = new String[] { param };
+		}
+
+
+		final Attribute[] attributes =
+				constructExpandAndSmtDefinedAttributesForSubArrayStore(heapDataArray, subarraysToStore);
+
+		final BoogieType hdaBoogieType = (BoogieType) heapDataArray.getIdentifierExpression().getType();
+
+		final BoogieType innerArrayBoogieType =
+					BoogieType.createArrayType(0,
+							new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+							heapContentBoogieType);
+
+		// register the FunctionDeclaration so it will be added at the end of translation
+		mExpressionTranslation.getFunctionDeclarations()
+			.declareFunction(ignoreLoc,
+				getNameOfHeapStoreFunction(heapDataArray),
+				attributes,
+				hdaBoogieType.toASTType(ignoreLoc),
+				hdaBoogieType.toASTType(ignoreLoc),
+				astTypeOfPointerComponents,
+				innerArrayBoogieType.toASTType(ignoreLoc)
+				);
+	}
+
+	/**
+	 * Selects a subarray of the two dimensional heap array
+	 *
+	 * @param heapDataArray
+	 */
+	private void declareDataOnHeapSelectFunction(final HeapDataArray heapDataArray) {
+		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
+		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
+
+		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
+		final BoogieType hdaBoogieType = (BoogieType) heapDataArray.getIdentifierExpression().getType();
+
+		final BoogieType flattenedType = StructExpanderUtil.flattenType(heapContentBoogieType, new HashMap<>(),
+				new HashMap<>());
+		final BoogieType innerArrayBoogieType =
+					BoogieType.createArrayType(0,
+							new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+							heapContentBoogieType);
+
+		final String[] subarraysToStore;
+		if (flattenedType instanceof BoogieStructType) {
+			final BoogieStructType bst = (BoogieStructType) flattenedType;
+			subarraysToStore = new String[bst.getFieldCount()];
+
+			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
+				final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
+				subarraysToStore[fieldNr] = param;
+			}
+		} else {
+//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
+			final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
+			subarraysToStore = new String[] { param };
+		}
+
+//		final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
+
+		final Attribute[] attributes =
+				constructExpandAndSmtDefinedAttributesForSubArraySelect(heapDataArray, subarraysToStore);
+
+		mExpressionTranslation.getFunctionDeclarations()
+			.declareFunction(ignoreLoc,
+				getNameOfHeapSelectFunction(heapDataArray),
+				attributes,
+				innerArrayBoogieType.toASTType(ignoreLoc),
+				hdaBoogieType.toASTType(ignoreLoc),
+				astTypeOfPointerComponents
+				);
+
 	}
 
 	private void declareDataOnHeapInitFunction(final HeapDataArray heapDataArray) {
 
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-		final List<Attribute> attributeList = new ArrayList<>();
-
 		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
 		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
-		final BoogieType boogieTypeOfPointerComponents =
+		final BoogieType boogieTypeOfPointerComponents1 =
 				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents);
-		final String smtSortOfPointerComponents =
-				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents);
+		final String smtSortOfPointerComponents1 =
+				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents1);
+
+		// compute zeros of matching type
+		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
+		final BoogieType flattenedType = StructExpanderUtil.flattenType(heapContentBoogieType, new HashMap<>(),
+				new HashMap<>());
+
+		final String[] subarraysToStore;
+		if (flattenedType instanceof BoogieStructType) {
+			final BoogieStructType bst = (BoogieStructType) flattenedType;
+			subarraysToStore = new String[bst.getFieldCount()];
+
+			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
+				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
+//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+//				subarraysToStore[fieldNr] = zero;
+				subarraysToStore[fieldNr] = String.format("((as const (Array %s %s)) %s)",
+						smtSortOfPointerComponents1,
+						contentType,
+						zero);
+			}
+		} else {
+			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
+
+			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
+
+			final String subarrayToStore = String.format("((as const (Array %s %s)) %s)",
+						smtSortOfPointerComponents1,
+						contentType,
+						zero);
+
+			subarraysToStore = new String[] { subarrayToStore };
+		}
+
+		final Attribute[] attributes =
+				constructExpandAndSmtDefinedAttributesForSubArrayStore(heapDataArray, subarraysToStore);
+
+		// register the FunctionDeclaration so it will be added at the end of translation
+		mExpressionTranslation.getFunctionDeclarations()
+			.declareFunction(ignoreLoc,
+				getNameOfHeapInitFunction(heapDataArray),
+				attributes,
+				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
+				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
+				astTypeOfPointerComponents
+				);
+
+	}
+
+	private Attribute[] constructExpandAndSmtDefinedAttributesForSubArrayStore(final HeapDataArray heapDataArray,
+			final String... subArrayToStore) {
+		final Attribute[] attributes;
+		final List<Attribute> attributeList = new ArrayList<>();
+
+		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
+		final CPrimitive cTypeOfPointerComponents1 = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
+		final BoogieType boogieTypeOfPointerComponents1 =
+				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
+		final String smtSortOfPointerComponents1 =
+				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents1);
+
 
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
@@ -2855,68 +3074,141 @@ public class MemoryHandler {
 
 				// add expand attribute
 				final NamedAttribute expandAttribute = new NamedAttribute(
-						ignoreLoc,
+						ignoreLoc1,
 						StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT,
 						new Expression[] {
-								ExpressionFactory.createStringLiteral(ignoreLoc, bst.getFieldIds()[fieldNr])
+								ExpressionFactory.createStringLiteral(ignoreLoc1, bst.getFieldIds()[fieldNr])
 						});
 				attributeList.add(expandAttribute);
 
-				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
+				//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
 
 				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
 
-				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+				final String smtDefinition = String.format("(store %s %s %s)",
 						FunctionDeclarations.constructNameForFunctionInParam(0)
 							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
 						FunctionDeclarations.constructNameForFunctionInParam(1),
-						smtSortOfPointerComponents,
-						contentType,
-						zero);
+//						smtSortOfPointerComponents1,
+//						contentType,
+						subArrayToStore[fieldNr]
+//							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr]
+						);
 
 				final NamedAttribute namedAttribute = new NamedAttribute(
-						ignoreLoc,
+						ignoreLoc1,
 						FunctionDeclarations.SMTDEFINED_IDENTIFIER,
 						new Expression[] {
-								ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+								ExpressionFactory.createStringLiteral(ignoreLoc1, smtDefinition)
 						});
 				attributeList.add(namedAttribute);
 			}
 		} else {
 
-			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
+			//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
 			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
 
-			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+//			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+			final String smtDefinition = String.format("(store %s %s %s)",
 					FunctionDeclarations.constructNameForFunctionInParam(0),
 					FunctionDeclarations.constructNameForFunctionInParam(1),
-					smtSortOfPointerComponents,
-					contentType,
-					zero);
+//					smtSortOfPointerComponents1,
+//					contentType,
+					subArrayToStore[0]);
 
 			final NamedAttribute namedAttribute = new NamedAttribute(
-					ignoreLoc,
+					ignoreLoc1,
 					FunctionDeclarations.SMTDEFINED_IDENTIFIER,
 					new Expression[] {
-							ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition)
+							ExpressionFactory.createStringLiteral(ignoreLoc1, smtDefinition)
 					});
 			attributeList.add(namedAttribute);
 		}
 
-		final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
+		attributes = attributeList.toArray(new Attribute[attributeList.size()]);
+		return attributes;
+	}
 
-		// register the FunctionDeclaration so it will be added at the end of translation
+	private Attribute[] constructExpandAndSmtDefinedAttributesForSubArraySelect(final HeapDataArray heapDataArray,
+			final String... indices) {
+		final Attribute[] attributes;
+		final List<Attribute> attributeList = new ArrayList<>();
 
-		mExpressionTranslation.getFunctionDeclarations()
-			.declareFunction(ignoreLoc,
-				getNameOfHeapInitFunction(heapDataArray),
-				//new Attribute[] { namedAttribute},
-				attributes,
-				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
-				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
-				astTypeOfPointerComponents
-				);
+		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
+		final CPrimitive cTypeOfPointerComponents1 = mExpressionTranslation.getCTypeOfPointerComponents();
 
+		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
+		final BoogieType boogieTypeOfPointerComponents1 =
+				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
+		final String smtSortOfPointerComponents1 =
+				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents1);
+
+
+
+		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
+		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types
+		final BoogieType flattenedType = StructExpanderUtil.flattenType(heapContentBoogieType, new HashMap<>(), new HashMap<>());
+
+		if (flattenedType instanceof BoogieStructType) {
+			final BoogieStructType bst = (BoogieStructType) flattenedType;
+
+			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
+
+				// add expand attribute
+				final NamedAttribute expandAttribute = new NamedAttribute(
+						ignoreLoc1,
+						StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc1, bst.getFieldIds()[fieldNr])
+						});
+				attributeList.add(expandAttribute);
+
+				//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
+
+				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
+
+//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+				final String smtDefinition = String.format("(select %s %s)",
+						FunctionDeclarations.constructNameForFunctionInParam(0)
+						+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
+						FunctionDeclarations.constructNameForFunctionInParam(1),
+//						smtSortOfPointerComponents1,
+//						contentType,
+						indices[fieldNr]);
+
+				final NamedAttribute namedAttribute = new NamedAttribute(
+						ignoreLoc1,
+						FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+						new Expression[] {
+								ExpressionFactory.createStringLiteral(ignoreLoc1, smtDefinition)
+						});
+				attributeList.add(namedAttribute);
+			}
+		} else {
+
+			//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
+			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
+
+//			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
+			final String smtDefinition = String.format("(select %s %s)",
+					FunctionDeclarations.constructNameForFunctionInParam(0),
+					FunctionDeclarations.constructNameForFunctionInParam(1),
+//					smtSortOfPointerComponents1,
+//					contentType,
+					indices[0]);
+
+			final NamedAttribute namedAttribute = new NamedAttribute(
+					ignoreLoc1,
+					FunctionDeclarations.SMTDEFINED_IDENTIFIER,
+					new Expression[] {
+							ExpressionFactory.createStringLiteral(ignoreLoc1, smtDefinition)
+					});
+			attributeList.add(namedAttribute);
+		}
+
+		attributes = attributeList.toArray(new Attribute[attributeList.size()]);
+		return attributes;
 	}
 
 	/**
@@ -2980,297 +3272,6 @@ public class MemoryHandler {
 			}
 		}
 		return result;
-	}
-
-	private static final class constructMemcpyOrMemmoveNonPointerLoopAssignment {
-		private final MemoryHandler mMemoryHandler;
-		private final ProcedureManager mProcedureManager;
-		private final TypeHandler mTypeHandler;
-		private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
-		private final ExpressionTranslation mExpressionTranslation;
-		private final AuxVarInfoBuilder mAuxVarInfoBuilder;
-		private final TypeSizes mTypeSizes;
-
-		constructMemcpyOrMemmoveNonPointerLoopAssignment(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
-				final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-				final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
-				final TypeSizes typeSizes) {
-			mMemoryHandler = memoryHandler;
-			mProcedureManager = procedureHandler;
-			mTypeHandler = typeHandler;
-			mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
-			mExpressionTranslation = expressionTranslation;
-			mAuxVarInfoBuilder = auxVarInfoBuilder;
-			mTypeSizes = typeSizes;
-		}
-		/**
-		 * Construct specification and implementation for our Boogie representation of the memcpy and memmove functions
-		 * defined in 7.24.2.1 of C11.
-		 *
-		 * void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
-		 *
-		 * void *memmove( void* dest, const void* src, size_t count );
-		 *
-		 * @param main
-		 * @param heapDataArrays
-		 * @return
-		 */
-		private List<Declaration> declareMemcpyOrMemmove(final CHandler main,
-				final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memCopyOrMemMove,
-				final IASTNode hook) {
-			assert memCopyOrMemMove == MemoryModelDeclarations.C_Memcpy
-					|| memCopyOrMemMove == MemoryModelDeclarations.C_Memmove;
-
-			final List<Declaration> memCpyDecl = new ArrayList<>();
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-			final VarList inPDest =
-					new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, mTypeHandler.constructPointerType(ignoreLoc));
-			final VarList inPSrc =
-					new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, mTypeHandler.constructPointerType(ignoreLoc));
-			final VarList inPSize = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SIZE },
-					mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
-			final VarList outP =
-					new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
-			final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
-			final VarList[] outParams = new VarList[] { outP };
-
-			{
-				final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
-						new String[0], inParams, outParams, new Specification[0], null);
-				mProcedureManager.beginCustomProcedure(main, ignoreLoc, memCopyOrMemMove.getName(), memCpyProcDecl);
-			}
-
-			final List<Declaration> decl = new ArrayList<>();
-			final List<Statement> stmt = new ArrayList<>();
-			final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
-
-
-			{
-				final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
-				decl.add(loopCtrAux.getVarDec());
-
-
-				final ExpressionResult loopBody =
-						constructMemcpyOrMemmoveDataLoopAssignment(heapDataArrays, loopCtrAux, SFO.MEMCPY_DEST,
-								SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
-				decl.addAll(loopBody.getDeclarations());
-
-				final IdentifierExpression sizeIdExprBody =
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-								SFO.MEMCPY_SIZE,
-								new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
-
-				final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-
-				stmt.addAll(mMemoryHandler.constructCountingLoop(
-						mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux),
-						loopCtrAux, one, loopBody.getStatements(),
-						memCopyOrMemMove.getName()));
-			}
-
-			{
-				final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
-				decl.add(loopCtrAux.getVarDec());
-
-
-				final ExpressionResult loopBody =
-						constructMemcpyOrMemmovePointerLoopAssignment(heapDataArrays, loopCtrAux, SFO.MEMCPY_DEST,
-								SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
-				decl.addAll(loopBody.getDeclarations());
-
-				final IdentifierExpression sizeIdExprBody =
-						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-								SFO.MEMCPY_SIZE,
-								new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
-
-				final Expression pointerSize =  mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(),
-						new BigInteger(Integer.toString(mTypeSizes.getSizeOfPointer())));
-
-				stmt.addAll(mMemoryHandler.constructCountingLoop(
-						mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux),
-						loopCtrAux, pointerSize, loopBody.getStatements(),
-						memCopyOrMemMove.getName()));
-			}
-
-			final Body procBody =
-					mProcedureManager.constructBody(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
-							stmt.toArray(new Statement[stmt.size()]), memCopyOrMemMove.getName());
-
-			// make the specifications
-			final ArrayList<Specification> specs = new ArrayList<>();
-
-			final IdentifierExpression sizeIdExprDecl = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
-					ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-							SFO.MEMCPY_SIZE,
-							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
-
-			// add requires #valid[dest!base];
-			specs.addAll(mMemoryHandler.constructPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST,
-					memCopyOrMemMove.getName()));
-			// add requires #valid[src!base];
-			specs.addAll(mMemoryHandler.constructPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC,
-					memCopyOrMemMove.getName()));
-
-			// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
-			specs.addAll(mMemoryHandler.constructPointerTargetFullyAllocatedCheck(ignoreLoc, sizeIdExprDecl,
-					SFO.MEMCPY_DEST, memCopyOrMemMove.getName()));
-
-			// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
-			specs.addAll(mMemoryHandler.constructPointerTargetFullyAllocatedCheck(ignoreLoc, sizeIdExprDecl,
-					SFO.MEMCPY_SRC, memCopyOrMemMove.getName()));
-
-			// free ensures #res == dest;
-			final EnsuresSpecification returnValue =
-					mProcedureManager.constructEnsuresSpecification(
-							ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
-									ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-											mTypeHandler.getBoogiePointerType(), SFO.RES,
-											new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
-													memCopyOrMemMove.getName())),
-									ExpressionFactory
-									.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
-											SFO.MEMCPY_DEST, new DeclarationInformation(
-													StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()))),
-							Collections.emptySet());
-			specs.add(returnValue);
-
-			// add the procedure declaration
-			mProcedureManager.addSpecificationsToCurrentProcedure(specs);
-
-			// add the procedure implementation
-			final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
-					new String[0], inParams, outParams, null, procBody);
-			memCpyDecl.add(memCpyProc);
-
-			mProcedureManager.endCustomProcedure(main, memCopyOrMemMove.getName());
-
-			return memCpyDecl;
-		}
-
-
-		/**
-		 * Return the assignments that we do in the loop body of our memcpy or memmove implementation.
-		 *
-		 *
-		 * background: C11 7.24.2.1.2
-		 * The memcpy function copies n characters from the object pointed to by s2 into the object pointed to by s1.
-		 *
-		 * @param heapDataArrays
-		 * @param loopCtr
-		 * @param destPtrName
-		 * @param srcPtrName
-		 * @param valueType determines which type the pointers have (thus in which steps we have to increment the access
-		 *    source and destination)
-		 * @return
-		 */
-				private ExpressionResult constructMemcpyOrMemmoveDataLoopAssignment(
-				final Collection<HeapDataArray> heapDataArrays, final AuxVarInfo loopCtrAux, final String destPtrName,
-				final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
-
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-			final CType charCType = new CPrimitive(CPrimitives.CHAR);
-			final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogiePointerType(), srcPtrName,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
-			final Expression destId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogiePointerType(), destPtrName,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
-
-
-			final ExpressionResultBuilder loopBody = new ExpressionResultBuilder();
-			{
-				final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
-						ignoreLoc, srcId,
-						new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-						charCType, hook);
-				final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
-						ignoreLoc, destId,
-						new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-						charCType, hook);
-
-				for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
-					final CType cPrimType = new CPrimitive(cPrim);
-					final Expression srcAcc;
-					{
-						final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true, hook);
-						srcAcc = srcAccExpRes.getLrValue().getValue();
-						loopBody.addStatements(srcAccExpRes.getStatements());
-						loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-						assert srcAccExpRes.getOverapprs().isEmpty();
-					}
-
-					{
-						final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
-								LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPrimType, null),
-								srcAcc,
-								cPrimType,
-								true,
-								hook);
-						loopBody.addStatements(writeCall);
-					}
-				}
-			}
-
-			return loopBody.build();
-		}
-
-		private ExpressionResult constructMemcpyOrMemmovePointerLoopAssignment(
-				final Collection<HeapDataArray> heapDataArrays, final AuxVarInfo loopCtrAux, final String destPtrName,
-				final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
-
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-			final CType charCType = new CPrimitive(CPrimitives.CHAR);
-			final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogiePointerType(), srcPtrName,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
-			final Expression destId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogiePointerType(), destPtrName,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
-
-
-			final ExpressionResultBuilder loopBody = new ExpressionResultBuilder();
-			{
-				final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
-						ignoreLoc, srcId,
-						new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-						charCType, hook);
-				final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
-						ignoreLoc, destId,
-						new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-						charCType, hook);
-
-				if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-					final CType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
-					final Expression srcAcc;
-					{
-						final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true,
-								hook);
-						srcAcc = srcAccExpRes.getLrValue().getValue();
-						loopBody.addStatements(srcAccExpRes.getStatements());
-						loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-						assert srcAccExpRes.getOverapprs().isEmpty();
-					}
-
-					{
-						final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
-								LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null),
-								srcAcc,
-								cPointer,
-								true,
-								hook);
-						loopBody.addStatements(writeCall);
-					}
-				}
-			}
-
-			return loopBody.build();
-		}
-
 	}
 
 	public interface IBooleanArrayHelper {
@@ -3409,6 +3410,9 @@ public class MemoryHandler {
 		private final Set<CPrimitives> mDataOnHeapInitFunctionRequired;
 		private boolean mPointerOnHeapInitFunctionRequired;
 
+		private final Set<CPrimitives> mDataOnHeapStoreFunctionRequired;
+		private boolean mPointerOnHeapStoreFunctionRequired;
+
 		/**
 		 * Once this flag is set, no member of this class may be changed anymore.
 		 */
@@ -3426,6 +3430,7 @@ public class MemoryHandler {
 			mDataInitWriteRequired = new HashSet<>();
 			mDataUncheckedReadRequired = new HashSet<>();
 			mDataOnHeapInitFunctionRequired = new HashSet<>();
+			mDataOnHeapStoreFunctionRequired = new HashSet<>();
 		}
 
 		public boolean requireMemoryModelInfrastructure() {
@@ -3544,6 +3549,26 @@ public class MemoryHandler {
 			return true;
 		}
 
+		public boolean reportDataOnHeapStoreFunctionRequired(final CPrimitives prim) {
+			if (mDataOnHeapStoreFunctionRequired.contains(prim)) {
+				return false;
+			}
+			checkNotFrozen();
+			reportDataOnHeapRequired(prim);
+			mDataOnHeapStoreFunctionRequired.add(prim);
+			return true;
+		}
+
+		public boolean reportPointerOnHeapStoreFunctionRequired() {
+			if (mPointerOnHeapStoreFunctionRequired) {
+				return false;
+			}
+			checkNotFrozen();
+			reportPointerOnHeapRequired();
+			mPointerOnHeapStoreFunctionRequired = true;
+			return true;
+		}
+
 		public boolean isPointerOnHeapRequired() {
 			checkIsFrozen();
 			return mPointerOnHeapRequired;
@@ -3578,6 +3603,16 @@ public class MemoryHandler {
 		public boolean isDataOnHeapInitFunctionRequired(final CPrimitives prim) {
 			checkIsFrozen();
 			return mDataOnHeapInitFunctionRequired.contains(prim);
+		}
+
+		public boolean isPointerOnHeapStoreFunctionRequired() {
+			checkIsFrozen();
+			return mPointerOnHeapStoreFunctionRequired;
+		}
+
+		public boolean isDataOnHeapStoreFunctionRequired(final CPrimitives prim) {
+			checkIsFrozen();
+			return mDataOnHeapStoreFunctionRequired.contains(prim);
 		}
 
 		public Set<CPrimitives> getUncheckedReadRequired() {
@@ -3632,7 +3667,7 @@ public class MemoryHandler {
 			boolean changedSomething = true;
 			while (changedSomething) {
 				changedSomething = false;
-				for (final MemoryModelDeclarations mmdecl : mRequiredMemoryModelDeclarations) {
+				for (final MemoryModelDeclarations mmdecl : new HashSet<>(mRequiredMemoryModelDeclarations)) {
 					changedSomething |=	mmdecl.resolveDependencies(this, settings);
 				}
 			}
@@ -3647,8 +3682,10 @@ public class MemoryHandler {
 
 		private void checkNotFrozen() {
 			if (mIsFrozen) {
-				throw new AssertionError("attempt to modify, although this has been frozen already, perhaps we need to "
-						+ "update MemoryModelDeclarations.resolveDependencies(..)");
+				throw new AssertionError("attempt to modify, although this has been frozen already, "
+						+ "note that if some memory model feature relies on another one, this has to be declared in"
+						+ "MemoryModelDeclarations.resolveDependencies(..)"
+						+ "perhaps we need to update a method there");
 			}
 		}
 	}

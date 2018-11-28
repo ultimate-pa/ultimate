@@ -1098,8 +1098,4 @@ public class TypeHandler implements ITypeHandler {
 		mNamedIncompleteTypes.addPair(incompleteType, named);
 	}
 
-	@Override
-	public CType getCTypeForSizeT() {
-		return new CPrimitive(CPrimitives.UINT);
-	}
 }

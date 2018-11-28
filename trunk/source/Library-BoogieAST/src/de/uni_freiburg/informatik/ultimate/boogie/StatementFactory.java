@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
@@ -42,6 +44,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  */
 public class StatementFactory {
+
+
+	public static AssignmentStatement constructSingleAssignmentStatement(final ILocation loc, final LeftHandSide lhs,
+			final Expression rhs) {
+		return constructAssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
+	}
 
 	public static AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide[] lhs,
 			final Expression[] rhs) {
@@ -68,6 +76,11 @@ public class StatementFactory {
 	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
 			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {
 		return new CallStatement(loc, isForall, variableLHSs, methodName, arguments);
+	}
+
+	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
+			final Statement[] thenPart, final Statement[] elsePart) {
+		return new IfStatement(loc, condition, thenPart, elsePart);
 	}
 
 }

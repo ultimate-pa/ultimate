@@ -115,10 +115,6 @@ public final class SFO {
 	/**
 	 * Identifier of free procedure.
 	 */
-	public static final String FREE = "ULTIMATE.free";
-	/**
-	 * Identifier of free procedure.
-	 */
 	public static final String DEALLOC = "ULTIMATE.dealloc";
 	/**
 	 * The "#length" array identifier.
@@ -211,7 +207,20 @@ public final class SFO {
 
 	public static final String C_STRCPY = "#Ultimate.C_strcpy";
 
+	public static final String C_REALLOC = "#Ultimate.C_realloc";
+
+	public static final String REALLOC_PTR = "ptr";
+	public static final String REALLOC_SIZE = "size";
+
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
+
+	public static final String INIT_TO_ZERO_AT_ADDRESS = "initToZeroAtPointerBaseAddress~";
+
+	public static final String STORE_SUBARRAY_AT_ADDRESS = "storeAtPointerBaseAddress~";
+
+	public static final String SELECT_SUBARRAY_AT_ADDRESS = "selectAtPointerBaseAddress~";
+
+
 
 
 
@@ -351,10 +360,16 @@ public final class SFO {
 		MEMSETRES("memset~res"),
 
 		/**
-		 * Auxiliary variable used for the result of a call to the 'builtin' memset function
+		 * Auxiliary variable used for the result of a call to the strcpy function
 		 */
 		STRCPYRES("strcpy~res"),
 
+		/**
+		 * Auxiliary variable used for the result of a call to the realloc function
+		 */
+		REALLOCRES("realloc~res"),
+
+		REALLOC_OLDPTR("oldPtr"),
 
 		/**
 		 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used
@@ -362,6 +377,7 @@ public final class SFO {
 		 * (note that this string has to fit the regex that is checked during creation of an IdentifierExpression...)
 		 */
 		DUMMY_VOID("#dummy~void~value"),
+
 
 		;
 

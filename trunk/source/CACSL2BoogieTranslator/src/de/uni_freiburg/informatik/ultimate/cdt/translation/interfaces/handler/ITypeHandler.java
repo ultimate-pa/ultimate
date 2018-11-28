@@ -176,6 +176,4 @@ public interface ITypeHandler extends IHandler {
 	boolean areFloatingTypesNeeded();
 
 	void registerNamedIncompleteType(String incompleteType, String named);
-
-	CType getCTypeForSizeT();
 }
