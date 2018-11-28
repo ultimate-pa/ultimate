@@ -111,9 +111,15 @@ int a[1000] = {
 
 int main() {
 
-  /* This assertion can be violated since the values of the array are
-   * indeterminate. */
-  if (a[0] != 0) {
+  if (a[0] != 1) {
+    //@ assert \false;
+  }
+
+  if (a[500] != 1) {
+    //@ assert \false;
+  }
+
+  if (a[999] != 1) {
     //@ assert \false;
   }
 }
