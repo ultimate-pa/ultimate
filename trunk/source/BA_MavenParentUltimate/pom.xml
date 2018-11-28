@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.1.23</version>
+	<version>0.1.24</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -16,7 +16,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.1.23</ultimate-version>
+		<ultimate-version>0.1.24</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<tycho-version>1.2.0</tycho-version>

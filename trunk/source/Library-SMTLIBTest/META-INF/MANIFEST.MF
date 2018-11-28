@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.smtlibTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlib.test
-Bundle-Version: 0.1.23
+Bundle-Version: 0.1.24
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.smtlib
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit
