@@ -32,7 +32,7 @@ for j in `grep -oP '.*/\K.+\.prp' tmp-file | sort | uniq` ; do
         # write tasks block 
         printf '    <tasks name="' >> "$outfile"
         printf "${j}-${i}" >> "$outfile"
-        printf '>\n' >> "$outfile"
+        printf '">\n' >> "$outfile"
         
         # write include files 
         grep "$i" tmp-file | grep "$j" | sort | uniq | sed 's/ --architecture.*//g' | sed 's/.*\.prp //g' | sed 's/\(.*\)/        <include>\1<\/include>/g' >> "$outfile" 

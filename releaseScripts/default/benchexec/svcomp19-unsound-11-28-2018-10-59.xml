@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="1800" hardtimelimit="1800" cpuCores="4">
     <rundefinition name="sv-comp19-unsound"></rundefinition>
     <option name="--full-output"/>
 
-    <tasks name="unreach-call.prp-32bit>
+    <tasks name="unreach-call.prp-32bit">
         <include>/storage/repos/svcomp/c/float-benchs/sin_interpolated_index_false-unreach-call_true-termination.c</include>
         <include>/storage/repos/svcomp/c/float-benchs/sin_interpolated_index_true-unreach-call_true-termination.c</include>
         <include>/storage/repos/svcomp/c/float-newlib/double_req_bl_0870a_false-unreach-call.c</include>
@@ -53,7 +53,7 @@
         <option name="--architecture">32bit</option>
     </tasks>
 
-    <tasks name="unreach-call.prp-64bit>
+    <tasks name="unreach-call.prp-64bit">
         <include>/storage/repos/svcomp/c/ldv-challenges/linux-3.14__complex_emg__linux-usb-dev__drivers-media-usb-hdpvr-hdpvr_false-unreach-call.cil.c</include>
         <include>/storage/repos/svcomp/c/ldv-commit-tester/m0_false-unreach-call_drivers-usb-gadget-g_printer-ko--106_1a--2b9ec6c.c</include>
         <include>/storage/repos/svcomp/c/ldv-linux-3.0/module_get_put-drivers-net-wan-farsync.ko_false-unreach-call.cil.out.i.pp.i</include>
@@ -94,7 +94,7 @@
         <option name="--architecture">64bit</option>
     </tasks>
 
-    <tasks name="valid-memcleanup.prp-32bit>
+    <tasks name="valid-memcleanup.prp-32bit">
         <include>/storage/repos/svcomp/c/heap-manipulation/merge_sort_false-unreach-call_false-valid-memcleanup.i</include>
         <include>/storage/repos/svcomp/c/list-ext-properties/simple-ext_false-unreach-call_false-valid-memcleanup_true-termination.i</include>
         <include>/storage/repos/svcomp/c/list-properties/alternating_list_false-unreach-call_false-valid-memcleanup.i</include>
@@ -103,12 +103,7 @@
         <option name="--architecture">32bit</option>
     </tasks>
 
-    <tasks name="valid-memcleanup.prp-64bit>
-        <propertyfile>/storage/repos/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-        <option name="--architecture">64bit</option>
-    </tasks>
-
-    <tasks name="valid-memsafety.prp-32bit>
+    <tasks name="valid-memsafety.prp-32bit">
         <include>/storage/repos/svcomp/c/ldv-memsafety/memleaks_test23_1_true-valid-memsafety.i</include>
         <include>/storage/repos/svcomp/c/memsafety-ext3/freeAlloca_false-valid-free.c</include>
         <include>/storage/repos/svcomp/c/memsafety-ext3/naturalNumbers1_false-valid-deref.c</include>
@@ -116,11 +111,5 @@
         <propertyfile>/storage/repos/svcomp/c/properties/valid-memsafety.prp</propertyfile>
         <option name="--architecture">32bit</option>
     </tasks>
-
-    <tasks name="valid-memsafety.prp-64bit>
-        <propertyfile>/storage/repos/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-        <option name="--architecture">64bit</option>
-    </tasks>
-
 
 </benchmark>
