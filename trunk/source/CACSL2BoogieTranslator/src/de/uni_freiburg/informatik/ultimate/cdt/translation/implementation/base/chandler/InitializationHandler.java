@@ -304,8 +304,13 @@ public class InitializationHandler {
 		final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
 		if (initInfoIfAny == null) {
-			// there is no initializer -- apply default initialization
-			return makeDefaultOrNondetInitialization(loc, lhsIfAny, targetCType, onHeap, false, hook);
+			if (!onHeap || !usingOnHeapInitializationViaConstArray) {
+				// there is no initializer -- apply default initialization
+				return makeDefaultOrNondetInitialization(loc, lhsIfAny, targetCType, onHeap, false, hook);
+			} else {
+				// no initializer we already did initialization via a constant array
+				return new ExpressionResultBuilder().build();
+			}
 		}
 
 		if (initInfoIfAny.isMakeNondeterministicInitialization()) {
@@ -1039,13 +1044,13 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float noCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
-		if (noCells < MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		if (numberOfCells < MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
 
-		final float noInitializerValue = initInfo == null ? noCells : initInfo.getNumberOfValues();
-		final float ratio = noInitializerValue / noCells;
+		final float numberOfInitializerValues = initInfo == null ? 0 : initInfo.getNumberOfValues();
+		final float ratio = numberOfInitializerValues / numberOfCells;
 		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
