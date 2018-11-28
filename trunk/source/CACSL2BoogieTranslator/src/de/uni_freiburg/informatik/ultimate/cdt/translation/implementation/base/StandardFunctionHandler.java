@@ -749,7 +749,7 @@ public class StandardFunctionHandler {
 	private Result handleStrCpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_Realloc;
+		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_StrCpy;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
