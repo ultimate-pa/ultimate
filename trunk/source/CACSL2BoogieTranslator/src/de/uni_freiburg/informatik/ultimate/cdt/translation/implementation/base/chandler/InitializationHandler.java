@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -1113,13 +1114,16 @@ public class InitializationHandler {
 
 		final CPrimitive sizeT = mTypeSetAndOffsetComputer.getSizeT();
 
-		final Expression fieldOffset =
-				mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex, hook);
+		final Offset fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex,
+				hook);
+		if (fieldOffset.isBitfieldOffset()) {
+			throw new UnsupportedOperationException("Bitfield initialization");
+		}
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, fieldOffset, sizeT);
+				pointerOffset, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cStructType.getFieldTypes()[fieldIndex],

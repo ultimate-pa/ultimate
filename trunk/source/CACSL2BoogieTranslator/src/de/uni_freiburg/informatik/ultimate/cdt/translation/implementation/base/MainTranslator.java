@@ -213,8 +213,8 @@ public class MainTranslator {
 		final ExpressionTranslation expressionTranslation =
 				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
 
-		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer =
-				new TypeSizeAndOffsetComputer(typeSizes, expressionTranslation, typeHandler);
+		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer = new TypeSizeAndOffsetComputer(typeSizes,
+				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
 
 		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
 				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);

@@ -401,7 +401,8 @@ public class CHandler {
 		mGlobAcslExtractors = new ArrayList<>();
 		mDeclarations = new ArrayList<>();
 
-		mTypeSizeComputer = new TypeSizeAndOffsetComputer(mTypeSizes, mExpressionTranslation, mTypeHandler);
+		mTypeSizeComputer = new TypeSizeAndOffsetComputer(mTypeSizes, mExpressionTranslation, mTypeHandler,
+				mSettings.useBitpreciseBitfields());
 
 		// the procedure manager has to be replaced between pre-run and main run
 		// the following fields form the transitive dependency hull on the procedure manager

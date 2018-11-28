@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -80,12 +79,13 @@ public class TypeSizeAndOffsetComputer {
 	private final LinkedHashSet<Axiom> mAxioms;
 
 	private final HashMap<CType, SizeTValue> mTypeSizeCache;
-	private final HashMap<CStructOrUnion, Expression[]> mStructOffsets;
+	private final HashMap<CStructOrUnion, Offset[]> mStructOffsets;
 	private final ITypeHandler mTypeHandler;
 
 	private final TypeSizes mTypeSizes;
 
 	private final ExpressionTranslation mExpressionTranslation;
+	private final boolean mBitPreciseBitfields;
 
 	/**
 	 * Given the field of a struct myStruct.myField such that the offset of the field is n, the computation can
@@ -100,7 +100,7 @@ public class TypeSizeAndOffsetComputer {
 	private SizeTValue mTypeSizePointer = null;
 
 	public TypeSizeAndOffsetComputer(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
-			final ITypeHandler typeHandler) {
+			final ITypeHandler typeHandler, final boolean bitpreciseBitfields) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
@@ -108,6 +108,7 @@ public class TypeSizeAndOffsetComputer {
 		mStructOffsets = new HashMap<>();
 		mConstants = new LinkedHashSet<>();
 		mAxioms = new LinkedHashSet<>();
+		mBitPreciseBitfields = bitpreciseBitfields;
 	}
 
 	/**
@@ -125,18 +126,18 @@ public class TypeSizeAndOffsetComputer {
 	 * @return An Expression that represents the offset (in bytes) at which a certain field of a stuct is stored (on the
 	 *         heap).
 	 */
-	public Expression constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex,
+	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex,
 			final IASTNode hook) {
 		if (!mTypeSizeCache.containsKey(cStruct)) {
 			assert !mStructOffsets.containsKey(cStruct) : "both or none";
 			computeSize(loc, cStruct, hook);
 		}
-		final Expression[] offsets = mStructOffsets.get(cStruct);
+		final Offset[] offsets = mStructOffsets.get(cStruct);
 		assert offsets.length == cStruct.getFieldCount() : "inconsistent struct";
 		return offsets[fieldIndex];
 	}
 
-	public Expression constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final String fieldId,
+	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final String fieldId,
 			final IASTNode hook) {
 		final int fieldIndex = Arrays.asList(cStruct.getFieldIds()).indexOf(fieldId);
 		return constructOffsetForField(loc, cStruct, fieldIndex, hook);
@@ -257,46 +258,59 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		final Expression[] offsets = new Expression[cStruct.getFieldCount()];
+		final Offset[] offsets = new Offset[cStruct.getFieldCount()];
 		mStructOffsets.put(cStruct, offsets);
-		final List<SizeTValue> fieldTypeSizes = new ArrayList<>();
-		for (int i = 0; i < cStruct.getFieldCount(); i++) {
-			final CType fieldType = cStruct.getFieldTypes()[i];
-//			if (cStruct.getBitFieldWidths().get(i) != -1) {
-//				final String msg = "bitfield implementation not yet bitprecise (soundness first)";
-//				throw new UnsupportedSyntaxException(loc, msg);
-//			}
-
-			final Expression offset;
-			if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
-				offset = mTypeSizes.constructLiteralForIntegerType(loc, getSizeT(), BigInteger.ZERO);
-			} else {
-				final SizeTValue sumOfPreceedingFields =
-						(new SizeTValueAggregator_Add()).aggregate(loc, fieldTypeSizes);
-				offset = sumOfPreceedingFields.asExpression(loc);
-			}
-
-			if (mPreferConstantsOverValues) {
-				final Expression fieldConstant = constructTypeSizeConstantForStructField(loc, cStruct, i);
-				final Expression equality = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-						IASTBinaryExpression.op_equals, fieldConstant, getSizeT(), offset, getSizeT());
-				final Axiom axiom = new Axiom(loc, new Attribute[0], equality);
-				mAxioms.add(axiom);
-				offsets[i] = fieldConstant;
-			} else {
-				offsets[i] = offset;
-			}
-			final SizeTValue fieldTypeSize = computeSize(loc, fieldType, hook);
-			fieldTypeSizes.add(fieldTypeSize);
-		}
-
-		final SizeTValueAggregator aggregator;
-		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
-			aggregator = new SizeTValueAggregator_Max();
+		final SizeTValue result;
+		if (cStruct.getFieldCount() == 0) {
+			result = new SizeTValue_Integer(BigInteger.ZERO);
 		} else {
-			aggregator = new SizeTValueAggregator_Add();
+			if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
+				final SizeTValue[] fieldTypeSizes = new SizeTValue[cStruct.getFieldCount()];
+				for (int i = 0; i < cStruct.getFieldCount(); i++) {
+					final CType fieldType = cStruct.getFieldTypes()[i];
+					final int bitsize;
+					if (mBitPreciseBitfields) {
+						bitsize = cStruct.getBitFieldWidths().get(i);
+					} else {
+						bitsize = -1;
+					}
+					final int startBit;
+					if (bitsize == -1) {
+						startBit = -1;
+					} else {
+						startBit = 0;
+					}
+					offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
+					fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc, hook);
+				}
+				result = new SizeTValueAggregator_Max().aggregate(loc, Arrays.asList(fieldTypeSizes));
+			} else {
+				for (int i = 0; i < cStruct.getFieldCount(); i++) {
+					final int bitsize;
+					if (mBitPreciseBitfields) {
+						bitsize = cStruct.getBitFieldWidths().get(i);
+					} else {
+						bitsize = -1;
+					}
+					final int startBit;
+					if (i == 0) {
+						if (bitsize == -1) {
+							startBit = -1;
+						} else {
+							startBit = 0;
+						}
+						offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
+					} else {
+						offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize,
+								loc, hook);
+					}
+				}
+				final int lastPosition = cStruct.getFieldCount()-1;
+				result = computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc, hook);
+			}
 		}
-		return aggregator.aggregate(loc, fieldTypeSizes);
+		mTypeSizeCache.put(cStruct, result);
+		return result;
 	}
 
 	private SizeTValue constructSizeTValue_Pointer(final ILocation loc) {
@@ -500,7 +514,7 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private class Offset {
+	public class Offset {
 		private final SizeTValue_Integer mAddressOffset;
 		private final int mStartBit;
 		private final int mBitsize;
@@ -509,7 +523,10 @@ public class TypeSizeAndOffsetComputer {
 			mAddressOffset = addressOffset;
 			mStartBit = startBit;
 			mBitsize = bitsize;
-			assert (startBit == -1 && bitsize == -1) || (startBit >= 0 && bitsize > 0);
+			assert (startBit == -1 && bitsize == -1) || (startBit >= 0 && bitsize >= 0);
+		}
+		public Expression getAddressOffsetAsExpression(final ILocation loc) {
+			return mAddressOffset.asExpression(loc);
 		}
 		public SizeTValue_Integer getAddressOffset() {
 			return mAddressOffset;
@@ -536,26 +553,23 @@ public class TypeSizeAndOffsetComputer {
 
 	private Offset computeMemberOffset(final Offset precedingMemberOffset, final CType precedingMemberType,
 			final int bitfieldSize, final ILocation loc, final IASTNode hook) {
-		final boolean previousMemberIsBitfield = precedingMemberOffset.isBitfieldOffset();
+		final boolean precedingMemberIsBitfield = precedingMemberOffset.isBitfieldOffset();
 		final boolean currentMemberIsBitfield = (bitfieldSize != -1);
 		final Offset result;
-		if (previousMemberIsBitfield) {
+		if (precedingMemberIsBitfield) {
+			if (precedingMemberOffset.getBitFieldSize() == 0) {
+				throw new UnsupportedOperationException("Bitfields: case that previous is zero not yet implemented.");
+			}
 			if (currentMemberIsBitfield) {
-				final int newStartBit = precedingMemberOffset.getStartBit() + precedingMemberOffset.getBitFieldSize();
-				if (newStartBit == 8) {
-					result = new Offset(
-							new SizeTValue_Integer(
-									precedingMemberOffset.getAddressOffset().getInteger().add(BigInteger.ONE)),
-							0, bitfieldSize);
-				} else if (newStartBit > 8) {
-					throw new AssertionError("large bitfields not yet supported");
-				} else {
-					assert newStartBit > 0;
-					result = new Offset(precedingMemberOffset.getAddressOffset(), newStartBit, bitfieldSize);
-				}
+				final int occupiedSize = precedingMemberOffset.getStartBit() + precedingMemberOffset.getBitFieldSize();
+				final int completelyOccupiedBytes = occupiedSize / 2;
+				final int newStartBit = occupiedSize % 8;
+				result = new Offset(new SizeTValue_Integer(precedingMemberOffset.getAddressOffset().getInteger()
+						.add(BigInteger.valueOf(completelyOccupiedBytes))), newStartBit, bitfieldSize);
 			} else {
 				// !currentMemberIsBitfield
-				final SizeTValue_Integer nextAddress = computeOffsetOfNextByte(precedingMemberOffset);
+				final SizeTValue_Integer nextAddress = (SizeTValue_Integer) computeOffsetOfNextByte(
+						precedingMemberOffset, precedingMemberType, loc, hook);
 				result = new Offset(nextAddress, -1, -1);
 			}
 		} else {
@@ -576,16 +590,18 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 
-	private SizeTValue_Integer computeOffsetOfNextByte(final Offset offset) {
+	private SizeTValue computeOffsetOfNextByte(final Offset offset, final CType precedingMemberType, final ILocation loc, final IASTNode hook) {
 		if (offset.getStartBit() == -1) {
-			throw new AssertionError("No bitfield, no padding.");
+			final SizeTValue precedingTypeSize = computeSize(loc, precedingMemberType, hook);
+			return new SizeTValueAggregator_Add().aggregate(loc, Arrays.asList(offset.getAddressOffset(), precedingTypeSize));
 		}
-		if (offset.getBitFieldSize() < 1) {
-			throw new AssertionError("Not at bitfield with size.");
+		if (offset.getBitFieldSize() == 0) {
+			return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.ONE));
+		} else {
+			final int lastOccupiedBit = offset.getStartBit() + offset.getBitFieldSize();
+			final int additionalByes = (lastOccupiedBit / 8) + 1;
+			return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
 		}
-		final int lastOccupiedBit = offset.getStartBit() + offset.getBitFieldSize();
-		final int additionalByes = (lastOccupiedBit / 8) + 1;
-		return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
 
 	}
 

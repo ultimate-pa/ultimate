@@ -84,6 +84,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		assert name != null;
+		assert fNames.length == bitFieldWidths.size();
 		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
@@ -189,11 +190,13 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
+		assert cvar.mFieldNames.length == cvar.getBitFieldWidths().size();
 		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mFieldNames, cvar.mFieldTypes,
 				cvar.getBitFieldWidths());
 	}
 
 	public void complete(final String[] memberNames, final CType[] memberTypes, final List<Integer> bitfieldWidth) {
+		assert memberNames.length == bitfieldWidth.size();
 		mFieldNames = memberNames;
 		mFieldTypes = memberTypes;
 		mBitFieldWidths = bitfieldWidth;

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
@@ -139,12 +140,16 @@ public class StructHandler {
 			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 
-			final Expression fieldOffset =
+			final Offset fieldOffset =
 					mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field, node);
-			final Expression sumOffset =
-					mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-							newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
-							mExpressionTranslation.getCTypeOfPointerComponents());
+			if (fieldOffset.isBitfieldOffset()) {
+				throw new UnsupportedOperationException("Bitfield reference");
+			}
+
+			final Expression sumOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+					IASTBinaryExpression.op_plus, newStartAddressOffset,
+					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset.getAddressOffsetAsExpression(loc),
+					mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression newPointer =
 					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, sumOffset, loc);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
@@ -206,12 +211,17 @@ public class StructHandler {
 				builder.setLrValue(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
-				final Expression fieldOffset =
+				final Offset fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField, hook);
+				if (fieldOffset.isBitfieldOffset()) {
+					throw new UnsupportedOperationException("Bitfield union neighbor");
+				}
+
 				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
 				final Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 						IASTBinaryExpression.op_plus, MemoryHandler.getPointerOffset(unionAddress, loc),
-						mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
+						mExpressionTranslation.getCTypeOfPointerComponents(),
+						fieldOffset.getAddressOffsetAsExpression(loc),
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
 						MemoryHandler.getPointerBaseAddress(unionAddress, loc), summedOffset, loc);
@@ -257,11 +267,15 @@ public class StructHandler {
 		if (structType == null) {
 			throw new IncorrectSyntaxException(loc, "Incorrect or unexpected field owner!");
 		}
-		final Expression fieldOffset =
+		final Offset fieldOffset =
 				mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex, hook);
+		if (fieldOffset.isBitfieldOffset()) {
+			throw new UnsupportedOperationException("Bitfield read");
+		}
+
 		final Expression result = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, mTypeSizeAndOffsetComputer.getSizeT(),
-				fieldOffset, mTypeSizeAndOffsetComputer.getSizeT());
+				fieldOffset.getAddressOffsetAsExpression(loc), mTypeSizeAndOffsetComputer.getSizeT());
 		return result;
 	}
 

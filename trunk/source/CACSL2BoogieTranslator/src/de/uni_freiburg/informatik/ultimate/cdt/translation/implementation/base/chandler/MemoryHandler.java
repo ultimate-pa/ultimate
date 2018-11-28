@@ -102,6 +102,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryModel.ReadWriteDefinition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -2541,11 +2542,16 @@ public class MemoryHandler {
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			final CType fieldType = valueType.getFieldType(fieldId);
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
-			final Expression fieldOffset =
+			final Offset fieldOffset =
 					mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId, hook);
+			if (fieldOffset.isBitfieldOffset()) {
+				throw new UnsupportedOperationException("Bitfield write");
+			}
+
 			final Expression newOffset =
 					mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-							newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
+							newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+							fieldOffset.getAddressOffsetAsExpression(loc),
 							mExpressionTranslation.getCTypeOfPointerComponents());
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler,
 					constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
