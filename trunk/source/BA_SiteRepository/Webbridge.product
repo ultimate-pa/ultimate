@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Webbridge" uid="Webbridge" id="de.uni_freiburg.informatik.ultimate.webbridge.Webbridge" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.23" useFeatures="true" includeLaunchers="false">
+<product name="Webbridge" uid="Webbridge" id="de.uni_freiburg.informatik.ultimate.webbridge.Webbridge" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.24" useFeatures="true" includeLaunchers="false">
 
    <aboutInfo>
       <text>
@@ -41,8 +41,8 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureUltimateCommon" version="0.1.23"/>
-      <feature id="BA_FeatureUltimateWebbridge" version="0.1.23"/>
+      <feature id="BA_FeatureUltimateCommon" version="0.1.24"/>
+      <feature id="BA_FeatureUltimateWebbridge" version="0.1.24"/>
    </features>
 
    <configurations>

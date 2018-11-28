@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="BA_FeatureUltimateWebbridge"
-      version="0.1.23">
+      version="0.1.24">
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.webbridge"
