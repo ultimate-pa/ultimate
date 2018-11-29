@@ -17,12 +17,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
 
 /**
  * TODO: Comment.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>, ISinkStateFactory<String>,
-		IDeterminizeStateFactory<String>, IMinimizationStateFactory<String> {
+public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>,
+		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IMinimizationStateFactory<String> {
 
 	static final String EMPTY = "€";
 	static final String STATE = "q";
@@ -42,7 +42,8 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 	public String intersection(final String state1, final String state2) {
 		return newString();
 	}
-	
+
+	@Override
 	public String union(final String state1, final String state2) {
 		return newString();
 	}

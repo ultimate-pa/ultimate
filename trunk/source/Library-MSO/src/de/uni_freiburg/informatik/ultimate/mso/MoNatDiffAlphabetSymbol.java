@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * TODO: Comment.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -29,30 +29,32 @@ public class MoNatDiffAlphabetSymbol {
 	 * Constructor for empty alphabet symbol.
 	 */
 	public MoNatDiffAlphabetSymbol() {
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains a single variable.
 	 */
 	public MoNatDiffAlphabetSymbol(final Term term, final boolean value) {
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 		add(term, value);
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains multiple variables.
-	 * 
+	 *
 	 * @throws InvalidParameterException
 	 *             if lengths of terms and values differ.
 	 */
 	public MoNatDiffAlphabetSymbol(final Term[] terms, final boolean[] values) {
-		if (terms.length != values.length)
+		if (terms.length != values.length) {
 			throw new InvalidParameterException("Input terms, values of different length.");
+		}
 
-		mMap = new HashMap<Term, Boolean>();
-		for (int i = 0; i < terms.length; i++)
+		mMap = new HashMap<>();
+		for (int i = 0; i < terms.length; i++) {
 			add(terms[i], values[i]);
+		}
 	}
 
 	/**
@@ -61,7 +63,7 @@ public class MoNatDiffAlphabetSymbol {
 	public final Map<Term, Boolean> getMap() {
 		return mMap;
 	}
-	
+
 	/**
 	 * Returns the terms contained in this alphabet symbol.
 	 */
@@ -71,38 +73,38 @@ public class MoNatDiffAlphabetSymbol {
 
 	/**
 	 * Adds the given variable to this alphabet symbol.
-	 * 
+	 *
 	 * @throws InvalidParameterException
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
-		if (!MoNatDiffUtils.isVariable(term))
+		if (!MoNatDiffUtils.isVariable(term)) {
 			throw new InvalidParameterException("Input term must be an Int or SetOfInt variable.");
+		}
 
 		mMap.put(term, value);
 	}
 
 	/**
-	 * Returns true if all variables of the given alphabet symbol are included in
-	 * this alphabet symbol.
+	 * Returns true if all variables of the given alphabet symbol are included in this alphabet symbol.
 	 */
 	public boolean contains(final MoNatDiffAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
 
 	/**
-	 * Returns true if all but the excluded variables of this alphabet symbol match
-	 * the given value.
+	 * Returns true if all but the excluded variables of this alphabet symbol match the given value.
 	 */
 	public boolean allMatches(final boolean value, final Term... excludedTerms) {
-		final Set<Term> excluded = new HashSet<Term>(Arrays.asList(excludedTerms));
+		final Set<Term> excluded = new HashSet<>(Arrays.asList(excludedTerms));
 		final Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
 
 		while (it.hasNext()) {
 			final Entry<Term, Boolean> entry = it.next();
 
-			if (!excluded.contains(entry.getKey()) && !entry.getValue().equals(value))
+			if (!excluded.contains(entry.getKey()) && !entry.getValue().equals(value)) {
 				return false;
+			}
 		}
 
 		return true;
@@ -115,8 +117,9 @@ public class MoNatDiffAlphabetSymbol {
 	public String toString() {
 		String str = new String();
 
-		if (mMap.isEmpty())
+		if (mMap.isEmpty()) {
 			return "empty";
+		}
 
 		for (final Map.Entry<Term, Boolean> entry : mMap.entrySet()) {
 			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1 " : "0 ");

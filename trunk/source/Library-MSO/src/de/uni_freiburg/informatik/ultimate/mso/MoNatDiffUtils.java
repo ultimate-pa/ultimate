@@ -5,21 +5,16 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -30,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalF
 
 /**
  * TODO: Comment.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -46,13 +41,12 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See
-	 * {@link UltimateNormalFormUtils}.
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
 	 */
-	public static Term constructSetOfIntValue(final Script script, Set<BigInteger> numbers) {
-		Set<Term> terms = new HashSet<Term>();
+	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
+		final Set<Term> terms = new HashSet<>();
 
-		for (BigInteger number : numbers) {
+		for (final BigInteger number : numbers) {
 			terms.add(SmtUtils.constructIntValue(script, number));
 		}
 
@@ -139,11 +133,11 @@ public final class MoNatDiffUtils {
 
 	/**
 	 * Returns the alphabet for the given variable names.
-	 * 
+	 *
 	 * TODO: Check input.
 	 */
 	public static Set<MoNatDiffAlphabetSymbol> createAlphabet(final Term[] terms) {
-		final Set<MoNatDiffAlphabetSymbol> symbols = new HashSet<MoNatDiffAlphabetSymbol>();
+		final Set<MoNatDiffAlphabetSymbol> symbols = new HashSet<>();
 
 		if (terms.length == 0) {
 			symbols.add(new MoNatDiffAlphabetSymbol());
@@ -169,43 +163,45 @@ public final class MoNatDiffUtils {
 	public static Set<MoNatDiffAlphabetSymbol> mergeAlphabets(final Set<MoNatDiffAlphabetSymbol> s1,
 			final Set<MoNatDiffAlphabetSymbol> s2) {
 
-		final Set<Term> terms = new HashSet<Term>();
+		final Set<Term> terms = new HashSet<>();
 
-		if (!s1.isEmpty())
+		if (!s1.isEmpty()) {
 			terms.addAll(s1.iterator().next().getMap().keySet());
+		}
 
-		if (!s2.isEmpty())
+		if (!s2.isEmpty()) {
 			terms.addAll(s2.iterator().next().getMap().keySet());
+		}
 
 		return createAlphabet(terms.toArray(new Term[terms.size()]));
 	}
 
 	/**
-	 * Returns the alphabet symbols where all but the excluded variables match the
-	 * given value.
+	 * Returns the alphabet symbols where all but the excluded variables match the given value.
 	 */
 	public static Set<MoNatDiffAlphabetSymbol> allMatchesAlphabet(final Set<MoNatDiffAlphabetSymbol> symbols,
 			final Boolean value, final Term... excludedTerms) {
 
-		final Set<MoNatDiffAlphabetSymbol> matches = new HashSet<MoNatDiffAlphabetSymbol>();
+		final Set<MoNatDiffAlphabetSymbol> matches = new HashSet<>();
 
 		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
-			if (symbol.allMatches(value, excludedTerms))
+			if (symbol.allMatches(value, excludedTerms)) {
 				matches.add(symbol);
+			}
 		}
 
 		return matches;
 	}
 
 	/**
-	 * Returns the successors which are directly reachable with the given symbols
-	 * from the given state in the given automaton.
+	 * Returns the successors which are directly reachable with the given symbols from the given state in the given
+	 * automaton.
 	 */
 	public static Set<String> hierarchicalSuccessorsOutgoing(
 			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, final String state,
 			final Set<MoNatDiffAlphabetSymbol> symbols) {
 
-		final Set<String> successors = new HashSet<String>();
+		final Set<String> successors = new HashSet<>();
 		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
 
 			for (final OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
@@ -219,14 +215,14 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns the predecessors which are directly reachable with the given symbols
-	 * from the given state in the given automaton.
+	 * Returns the predecessors which are directly reachable with the given symbols from the given state in the given
+	 * automaton.
 	 */
 	public static Set<String> hierarchicalPredecessorsIncoming(
 			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, final String state,
 			final Set<MoNatDiffAlphabetSymbol> symbols) {
 
-		final Set<String> predecessors = new HashSet<String>();
+		final Set<String> predecessors = new HashSet<>();
 		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
 
 			for (final IncomingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
@@ -245,11 +241,12 @@ public final class MoNatDiffUtils {
 	public static Map<Term, Term> parseMoNatDiffToTerm(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
 			final Term... terms) {
 
-		Map<Term, Term> result = new HashMap<Term, Term>();
-		final Map<Term, Set<BigInteger>> values = new HashMap<Term, Set<BigInteger>>();
+		final Map<Term, Term> result = new HashMap<>();
+		final Map<Term, Set<BigInteger>> values = new HashMap<>();
 
-		for (final Term term : terms)
+		for (final Term term : terms) {
 			values.put(term, new HashSet<BigInteger>());
+		}
 
 		for (int i = 0; i < word.length(); i++) {
 			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
@@ -261,16 +258,18 @@ public final class MoNatDiffUtils {
 			}
 		}
 
-		for (Term term : values.keySet()) {
+		for (final Term term : values.keySet()) {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
-				assert(values.get(term) != null && values.get(term).size() == 1);
-				
-				BigInteger value = values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				assert (values.get(term) != null && values.get(term).size() == 1);
+
+				final BigInteger value =
+						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
-			if (MoNatDiffUtils.isSetOfIntSort(term.getSort()))
+			if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
 				result.put(term, MoNatDiffUtils.constructSetOfIntValue(script, values.get(term)));
+			}
 		}
 
 		return result;
