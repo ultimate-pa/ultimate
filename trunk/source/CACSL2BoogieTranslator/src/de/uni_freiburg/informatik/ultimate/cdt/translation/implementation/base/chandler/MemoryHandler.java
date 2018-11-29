@@ -167,7 +167,11 @@ public class MemoryHandler {
 
 		ULTIMATE_PTHREADS_MUTEX_LOCK("#PthreadsMutexLock"),
 
-		Ultimate_Valid(SFO.VALID);
+		Ultimate_Valid(SFO.VALID),
+
+		ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
+
+		;
 
 		private final String mName;
 
@@ -464,7 +468,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_Alloc)) {
-			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook));
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, null));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -514,6 +518,11 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
 			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc, hook));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER)) {
+			decl.add(constructStackHeapBarrierConstant());
 		}
 		assert assertContainsNodeProcedureDeclarations(decl) : "add procedure declarations via function handler!";
 		return decl;
@@ -618,6 +627,13 @@ public class MemoryHandler {
 		final MemoryModelDeclarationInfo validMmfInfo =
 				getMemoryModelDeclarationInfo(MemoryModelDeclarations.Ultimate_Valid);
 		return validMmfInfo.constructVariableLHS(loc);
+	}
+
+	public Expression getStackHeapBarrier(final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+		final MemoryModelDeclarationInfo mmdi =
+				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+		return mmdi.constructIdentiferExpression(loc);
 	}
 
 	public Collection<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
@@ -1173,6 +1189,15 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
 				new VarList(ignoreLoc, new String[] { SFO.NULL }, mTypeHandler.constructPointerType(ignoreLoc)) });
+		return result;
+	}
+
+
+	private VariableDeclaration constructStackHeapBarrierConstant() {
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
+				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER.toString() },
+						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
 		return result;
 	}
 
@@ -2370,7 +2395,7 @@ public class MemoryHandler {
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
 	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final IASTNode hook) {
+			final ILocation tuLoc, final IASTNode hook, final MemoryArea memArea) {
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -2439,6 +2464,29 @@ public class MemoryHandler {
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
 						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
 				Collections.emptySet()));
+		if (memArea == MemoryArea.HEAP) {
+		// #StackHeapBarrier < res!base
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan,
+							getStackHeapBarrier(tuLoc),
+							mExpressionTranslation.getCTypeOfPointerComponents(),
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
+							mExpressionTranslation.getCTypeOfPointerComponents()),
+					Collections.emptySet()));
+		}
+		if (memArea == MemoryArea.STACK) {
+		// #StackHeapBarrier < res!base
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan,
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
+							mExpressionTranslation.getCTypeOfPointerComponents(),
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
+							mExpressionTranslation.getCTypeOfPointerComponents()),
+					Collections.emptySet()));
+		}
+
 		// #length == old(#length)[#res!base := ~size]
 		specMalloc
 				.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
@@ -2718,6 +2766,8 @@ public class MemoryHandler {
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
 							mTypeHandler.getBoogieTypeForBoogieASTType(
 									getBooleanArrayHelper().constructBoolReplacementType())));
+		case ULTIMATE_STACK_HEAP_BARRIER:
+			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForPointerComponents());
 		default:
 			break;
 		}
