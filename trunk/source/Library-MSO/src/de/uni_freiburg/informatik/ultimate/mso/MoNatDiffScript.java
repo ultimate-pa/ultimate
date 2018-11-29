@@ -153,12 +153,21 @@ public class MoNatDiffScript extends NoopScript {
 
 				// Test Automaton with int numbers
 				mLogger.info("------------------------------------Test---------------------------------");
-				Rational cRational = Rational.valueOf(4, 1);
-				Term xTerm = SmtUtils.buildNewConstant(this, "a", "Int");
-				Term yTerm = SmtUtils.buildNewConstant(this, "b", "Int");
-				mLogger.info(automatonToString(MoNatDiffAutomatonFactory.testAutomaton(mAutomataLibrarayServices, xTerm, yTerm, cRational), Format.ATS));
+				Rational c = Rational.valueOf(1, 1);
+				Term x = SmtUtils.buildNewConstant(this, "a", "Int");
+				Term y = SmtUtils.buildNewConstant(this, "b", "Int");
+
+				mLogger.info(automatonToString(
+						MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c),
+						Format.ATS));
+
+				mLogger.info(
+						automatonToString(new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(),
+								MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c))
+										.getResult(),
+								Format.ATS));
 				mLogger.info("------------------------------------Test-Ende---------------------------------");
-				
+
 				return LBool.SAT;
 			}
 
@@ -442,7 +451,7 @@ public class MoNatDiffScript extends NoopScript {
 
 			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
-		
+
 		return result;
 	}
 
