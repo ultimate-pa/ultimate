@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -30,8 +29,11 @@ public class InputDetSuccConstruction {
 	// iterate over the input variables and create all the possible monomials
 	// might be a good ideea to do this in another class altogether...
 	private Set<Term> createMonomials(Set<String> inputVariables) {
-		// TODO implement this
-		return new HashSet<Term>();
+		HashSet<Term> result = new HashSet<Term>();
+		for (String string : inputVariables) {
+			// TODO create the monomials here ... HOW?????
+		}
+		return result;
 	}
 
 	public GuardGraph getAutomaton() {
@@ -63,12 +65,12 @@ public class InputDetSuccConstruction {
 		succ.add(fromNode);
 		
 		GuardGraph startingNode = new GuardGraph(succ);
-		GuardGraph thisNode = startingNode;
+		
 		
 		// now go over the queue
 		while (!mQueue.isEmpty()) {
 			succ.clear();
-			thisNode = mQueue.pop();
+			GuardGraph thisNode = mQueue.pop();
 			// look at each input monomial
 			for (Term monomial : mMonomials) {
 				// calculate successor Node with given monomial
@@ -83,5 +85,10 @@ public class InputDetSuccConstruction {
 			addToSeen(thisNode);
 		}
 		return startingNode;
+	}
+	
+	private boolean testPartOfConj(Term edge, Term monomial) {
+		// if monomial is part of the edge conjunction return true; else false
+		return false;
 	}
 }
