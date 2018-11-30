@@ -53,13 +53,17 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				final int max = bounds.getSecond();
 				final IProgramVar auxVar =
 						mToolkit.createAuxVar(mToolkit.getType(TypeUtils.getValueSort(currentTerm.getSort())));
-				if (auxVar.getSort().isArraySort()) {
-					final List<Term> disjuncts = new ArrayList<>();
+				final Sort sort = auxVar.getSort();
+				if (sort.isArraySort()) {
+					final List<Segmentation> segmentations = new ArrayList<>();
 					for (int i = min; i < max; i++) {
-						disjuncts.add(SmtUtils.binaryEquality(script, auxVar.getTermVariable(),
-								segmentation.getValue(i).getTermVariable()));
+						segmentations.add(tmpState.getSegmentation(segmentation.getValue(i)));
 					}
-					tmpState = processAssumeTerm(tmpState.addAuxVar(auxVar), SmtUtils.or(script, disjuncts));
+					final Pair<Segmentation, ArrayDomainState<STATE>> pair =
+							tmpState.unionSegmentations(segmentations, sort);
+					final SegmentationMap newSegmentationMap = pair.getSecond().getSegmentationMap();
+					newSegmentationMap.put(auxVar, pair.getFirst());
+					tmpState = pair.getSecond().updateState(newSegmentationMap);
 				} else {
 					auxVars.add(auxVar);
 					final List<Term> disjuncts = new ArrayList<>();
