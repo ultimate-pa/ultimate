@@ -63,14 +63,16 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		final BuchiGraph reqToBuchi = new BuchiGraph(mLogger, mScript, cddToSmt);
 		final List<GuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
 		final GuardGraph setAutomaton = new PowersetConstruction(mLogger, automata, mScript).getProduct();
-		final GuardGraph inputDetAutomaton = new InputDetSuccConstruction(mLogger, setAutomaton, mScript, symbolTable.getInputVars()).getAutomaton();
+		final GuardGraph inputDetAutomaton = new InputDetSuccConstruction(mLogger, setAutomaton, mScript, symbolTable).getAutomaton();
+		
 		// TODO remove this; just for debug
-		mLogger.warn(setAutomaton);
 		/*
+		mLogger.warn(setAutomaton);
 		for (GuardGraph automaton : automata ) {
 			mLogger.warn(AuxGraphOperations.makeStringInterpretation(automaton));
 		}
 		*/
+
 		return false;
 	}
 

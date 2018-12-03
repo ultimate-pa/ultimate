@@ -1,11 +1,11 @@
-Input I is int
-Internal S is int 
-Input J is int
+Input I is bool
+Internal S is bool 
+Input J is bool
  
-Output O is int
-Output Q is int 
+Output O is bool
+Output Q is bool
 
 
-req1: Globally, it is always the case that if "I == 1" holds then "S == 2" holds after at most 10 time units.
-req2: Globally, it is always the case that if "S == 2" holds then "O == 2" holds after at most 12 time units.
+req1: Globally, it is always the case that if "I" holds then "S" holds after at most 10 time units.
+req2: Globally, it is always the case that if "S" holds then "O" holds after at most 12 time units.
 

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -11,21 +12,28 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 
 	private static final long serialVersionUID = 94683849463494167L;
 	private final int mNodeLabel;
-	private Set<GuardGraph> mConcatNodes;
-	private int mLabel = 0;
+	private HashMap<Integer, GuardGraph> mNodesMap;
 	
 	public GuardGraph(int label) {
 		mNodeLabel = label;
-	}
-	
-	public GuardGraph(Set<GuardGraph> nodes) {
-		mNodeLabel = mLabel;
-		mLabel++;
-		mConcatNodes = nodes;
+		mNodesMap = new HashMap<Integer, GuardGraph>();
 	}
 
 	public int getLabel() {
 		return mNodeLabel;
+	}
+	
+	
+	public HashMap<Integer, GuardGraph> getAllNodesMap() {
+		populateNodes();
+		return mNodesMap;
+	}
+	
+	private void populateNodes() {
+		Set<GuardGraph> allNodes = getAllNodes();
+		for (GuardGraph node : allNodes) {
+			mNodesMap.put(node.getLabel(), node);
+		}
 	}
 	
 	public String toString() {
@@ -50,7 +58,8 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 
 		return autRepr.toString();
 	}
-	
+
+	// expand to return value HashMap<int, GuardGraph> int is label
 	public Set<GuardGraph> getAllNodes(){
 		Set<GuardGraph> nodes = new HashSet<>();
 		LinkedList<GuardGraph> open = new LinkedList<GuardGraph>();
