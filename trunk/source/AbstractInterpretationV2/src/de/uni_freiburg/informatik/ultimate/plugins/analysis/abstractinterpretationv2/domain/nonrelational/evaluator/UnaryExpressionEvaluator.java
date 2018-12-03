@@ -60,7 +60,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 	public UnaryExpressionEvaluator(final EvaluatorLogger logger, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mLogger = logger;
 		mTopValue = nonrelationalValueFactory.createTopValue();
 	}

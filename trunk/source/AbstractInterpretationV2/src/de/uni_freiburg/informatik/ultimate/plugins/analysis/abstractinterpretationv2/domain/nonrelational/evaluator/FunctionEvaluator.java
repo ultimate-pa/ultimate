@@ -57,8 +57,9 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	private final EvaluatorType mType;
 
 	public FunctionEvaluator(final String name, final int numInParams, final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorType type) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorType type,
+			final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mName = name;
 		mInParamCount = numInParams;
 		mNonrelationalValueFactory = nonrelationalValueFactory;

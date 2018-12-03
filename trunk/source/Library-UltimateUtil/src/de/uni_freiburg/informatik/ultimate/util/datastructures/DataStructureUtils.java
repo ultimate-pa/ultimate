@@ -72,9 +72,8 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * Constructs a new {@link Set} that contains only elements that occur in all
-	 * sets that are in the list inputSets. Modifies the list inputSets but not the
-	 * contained sets.
+	 * Constructs a new {@link Set} that contains only elements that occur in all sets that are in the list inputSets.
+	 * Modifies the list inputSets but not the contained sets.
 	 */
 	public static <T> Set<T> intersection(final List<Set<T>> inputSets) {
 		Collections.sort(inputSets, (o1, o2) -> o1.size() - o2.size());
@@ -300,6 +299,22 @@ public class DataStructureUtils {
 			return true;
 		}
 		return a.stream().anyMatch(e -> !b.contains(e));
+	}
+
+	public static <T> boolean differenceIsEmpty(final T[] a, final T[] b) {
+		if (a == null || a.length == 0) {
+			return true;
+		}
+		if (b == null || b.length == 0) {
+			return false;
+		}
+		final Set<T> setB = new HashSet<>(Arrays.asList(b));
+		for (int i = 0; i < a.length; ++i) {
+			if (!setB.contains(a[i])) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

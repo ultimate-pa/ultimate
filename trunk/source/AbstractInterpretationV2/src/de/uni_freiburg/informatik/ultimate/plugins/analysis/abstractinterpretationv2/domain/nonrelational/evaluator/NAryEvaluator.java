@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public abstract class NAryEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
 		extends Evaluator<VALUE, STATE> {
 
-	public NAryEvaluator(final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+	public NAryEvaluator(final int maxRecursionDepth, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
+			final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 	}
 
 	/**

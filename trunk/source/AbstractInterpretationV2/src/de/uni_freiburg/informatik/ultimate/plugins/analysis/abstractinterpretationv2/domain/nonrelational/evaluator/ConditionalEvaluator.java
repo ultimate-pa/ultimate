@@ -61,8 +61,8 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 	// SubEvaluator(3) = else evaluator
 
 	public ConditionalEvaluator(final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mTopValue = nonrelationalValueFactory.createTopValue();
 	}
 

@@ -70,7 +70,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final int maxRecursionDepth,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mLogger = logger;
 		mEvaluatorType = type;
 		mMaxParallelSates = maxParallelStates;

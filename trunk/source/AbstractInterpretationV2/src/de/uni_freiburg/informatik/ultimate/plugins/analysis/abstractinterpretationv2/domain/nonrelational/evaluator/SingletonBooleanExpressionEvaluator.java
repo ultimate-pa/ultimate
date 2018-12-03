@@ -55,8 +55,8 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
 	public SingletonBooleanExpressionEvaluator(final BooleanValue booleanValue, final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mBooleanValue = booleanValue;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}

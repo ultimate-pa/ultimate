@@ -61,10 +61,11 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 	 *            The value of the evaluated expression.
 	 * @param type
 	 * @param nonrelationalValueFactory
+	 * @param logger
 	 */
 	public SingletonValueExpressionEvaluator(final VALUE value, final EvaluatorType type, final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mValue = value;
 		mType = type;
 	}

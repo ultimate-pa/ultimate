@@ -62,8 +62,11 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 
 	private int mCurrentEvaluationRecursion;
 	private int mCurrentInverseEvaluationRecursion;
+	private final EvaluatorLogger mLogger;
 
-	public Evaluator(final int maxRecursionDepth, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+	public Evaluator(final int maxRecursionDepth, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
+			final EvaluatorLogger logger) {
+		mLogger = logger;
 		mMaxRecursionDepth = maxRecursionDepth;
 		mCurrentEvaluationRecursion = -1;
 		mCurrentInverseEvaluationRecursion = -1;
@@ -116,7 +119,6 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 	 */
 	public final Collection<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldstate,
 			final int currentRecursion) {
-
 		if (mMaxRecursionDepth >= 0 && currentRecursion > mMaxRecursionDepth) {
 			return Collections.singletonList(oldstate);
 		}
@@ -124,7 +126,8 @@ public abstract class Evaluator<VALUE extends INonrelationalValue<VALUE>, STATE 
 		if (mCurrentInverseEvaluationRecursion < currentRecursion) {
 			mCurrentInverseEvaluationRecursion = currentRecursion;
 		}
-
+		// mLogger.getLogger().info(
+		// String.format("Inverse evaluation in depth %s for state %s", currentRecursion, oldstate.hashCode()));
 		return inverseEvaluate(evalResult, oldstate);
 	}
 

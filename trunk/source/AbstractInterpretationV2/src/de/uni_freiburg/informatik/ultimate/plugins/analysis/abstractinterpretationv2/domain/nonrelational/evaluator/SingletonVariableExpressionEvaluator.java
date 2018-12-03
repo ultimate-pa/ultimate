@@ -62,8 +62,8 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	private final EvaluatorType mType;
 
 	public SingletonVariableExpressionEvaluator(final IProgramVarOrConst var, final int maxRecursionDepth,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		super(maxRecursionDepth, nonrelationalValueFactory);
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory, final EvaluatorLogger logger) {
+		super(maxRecursionDepth, nonrelationalValueFactory, logger);
 		mVar = var;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mType = EvaluatorUtils.getEvaluatorType(mVar);

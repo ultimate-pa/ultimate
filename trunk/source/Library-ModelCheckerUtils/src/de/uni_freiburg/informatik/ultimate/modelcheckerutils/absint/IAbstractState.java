@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain program location.
@@ -261,6 +262,22 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	 */
 	default EvalResult evaluate(final Script script, final Term term) {
 		final Term local = getTerm(script);
+
+		if (SmtUtils.isTrue(term)) {
+			return EvalResult.TRUE;
+		} else if (SmtUtils.isFalse(term)) {
+			return EvalResult.FALSE;
+		} else if (SmtUtils.isTrue(local)) {
+			return EvalResult.UNKNOWN;
+		} else if (SmtUtils.isFalse(local)) {
+			return EvalResult.FALSE;
+		}
+
+		if (!DataStructureUtils.differenceIsEmpty(term.getFreeVars(), local.getFreeVars())) {
+			// overapproximation
+			return EvalResult.UNKNOWN;
+		}
+
 		final Term notTerm = SmtUtils.not(script, term);
 		final LBool localImpliesTermResult = SmtUtils.checkSatTerm(script, SmtUtils.and(script, local, notTerm));
 		if (localImpliesTermResult == LBool.UNSAT) {

@@ -93,18 +93,18 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	public Evaluator<VALUE, STATE> createFunctionEvaluator(final String functionName, final int inputParamCount,
 			final EvaluatorType type) {
 		return new FunctionEvaluator<>(functionName, inputParamCount, mMaxRecursionDepth, mNonrelationalValueFactory,
-				type);
+				type, mEvalLogger);
 	}
 
 	@Override
 	public Evaluator<VALUE, STATE> createConditionalEvaluator() {
-		return new ConditionalEvaluator<>(mMaxRecursionDepth, mNonrelationalValueFactory);
+		return new ConditionalEvaluator<>(mMaxRecursionDepth, mNonrelationalValueFactory, mEvalLogger);
 	}
 
 	@Override
 	public Evaluator<VALUE, STATE> createSingletonValueTopEvaluator(final EvaluatorType type) {
 		return new SingletonValueExpressionEvaluator<>(mNonrelationalValueFactory.createTopValue(), type,
-				mMaxParallelStates, mNonrelationalValueFactory);
+				mMaxParallelStates, mNonrelationalValueFactory, mEvalLogger);
 	}
 
 	@Override
@@ -123,18 +123,20 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 		}
 		return new SingletonValueExpressionEvaluator<>(
 				mSingletonValueExpressionEvaluatorCreator.apply(value, valueType), evaluatorType, mMaxRecursionDepth,
-				mNonrelationalValueFactory);
+				mNonrelationalValueFactory, mEvalLogger);
 	}
 
 	@Override
 	public Evaluator<VALUE, STATE> createSingletonVariableExpressionEvaluator(final IProgramVarOrConst variableName) {
 		assert variableName != null;
-		return new SingletonVariableExpressionEvaluator<>(variableName, mMaxRecursionDepth, mNonrelationalValueFactory);
+		return new SingletonVariableExpressionEvaluator<>(variableName, mMaxRecursionDepth, mNonrelationalValueFactory,
+				mEvalLogger);
 	}
 
 	@Override
 	public Evaluator<VALUE, STATE> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value) {
-		return new SingletonBooleanExpressionEvaluator<>(value, mMaxRecursionDepth, mNonrelationalValueFactory);
+		return new SingletonBooleanExpressionEvaluator<>(value, mMaxRecursionDepth, mNonrelationalValueFactory,
+				mEvalLogger);
 	}
 
 	@FunctionalInterface
