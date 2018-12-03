@@ -683,7 +683,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final ACSLResultExpression node) {
-		final String id = "#res";
+		final String id = SFO.RES;
 		final CACSLLocation loc = mLocationFactory.createACSLLocation(node);
 		// TODO: what is the right storageclass here? and procedure?..
 		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,

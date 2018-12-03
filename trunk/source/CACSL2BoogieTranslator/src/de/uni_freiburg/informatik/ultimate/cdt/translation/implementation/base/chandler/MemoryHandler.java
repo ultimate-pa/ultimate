@@ -2998,7 +2998,6 @@ public class MemoryHandler {
 	 * @param heapDataArray
 	 */
 	private void declareDataOnHeapStoreFunction(final HeapDataArray heapDataArray) {
-
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
 		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
@@ -3014,17 +3013,14 @@ public class MemoryHandler {
 			subarraysToStore = new String[bst.getFieldCount()];
 
 			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
-//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
 				final String param = FunctionDeclarations.constructNameForFunctionInParam(2);
 				subarraysToStore[fieldNr] = param
 							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr];
 			}
 		} else {
-//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
 			final String param = FunctionDeclarations.constructNameForFunctionInParam(2);
 			subarraysToStore = new String[] { param };
 		}
-
 
 		final Attribute[] attributes =
 				constructExpandAndSmtDefinedAttributesForSubArrayStore(heapDataArray, subarraysToStore);
@@ -3074,17 +3070,13 @@ public class MemoryHandler {
 			subarraysToStore = new String[bst.getFieldCount()];
 
 			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
-//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
 				final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
 				subarraysToStore[fieldNr] = param;
 			}
 		} else {
-//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
 			final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
 			subarraysToStore = new String[] { param };
 		}
-
-//		final String param = FunctionDeclarations.constructNameForFunctionInParam(1);
 
 		final Attribute[] attributes =
 				constructExpandAndSmtDefinedAttributesForSubArraySelect(heapDataArray, subarraysToStore);
@@ -3101,7 +3093,6 @@ public class MemoryHandler {
 	}
 
 	private void declareDataOnHeapInitFunction(final HeapDataArray heapDataArray) {
-
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CPrimitive cTypeOfPointerComponents = mExpressionTranslation.getCTypeOfPointerComponents();
 		final ASTType astTypeOfPointerComponents = mTypeHandler.cType2AstType(ignoreLoc, cTypeOfPointerComponents);
@@ -3123,8 +3114,6 @@ public class MemoryHandler {
 			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
 				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
 				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
-//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
-//				subarraysToStore[fieldNr] = zero;
 				subarraysToStore[fieldNr] = String.format("((as const (Array %s %s)) %s)",
 						smtSortOfPointerComponents1,
 						contentType,
@@ -3169,10 +3158,6 @@ public class MemoryHandler {
 		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
 		final BoogieType boogieTypeOfPointerComponents1 =
 				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
-		final String smtSortOfPointerComponents1 =
-				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents1);
-
-
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
 		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types
@@ -3192,19 +3177,11 @@ public class MemoryHandler {
 						});
 				attributeList.add(expandAttribute);
 
-				//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
-
-				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
-
-//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 				final String smtDefinition = String.format("(store %s %s %s)",
 						FunctionDeclarations.constructNameForFunctionInParam(0)
 							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
 						FunctionDeclarations.constructNameForFunctionInParam(1),
-//						smtSortOfPointerComponents1,
-//						contentType,
 						subArrayToStore[fieldNr]
-//							+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr]
 						);
 
 				final NamedAttribute namedAttribute = new NamedAttribute(
@@ -3216,16 +3193,9 @@ public class MemoryHandler {
 				attributeList.add(namedAttribute);
 			}
 		} else {
-
-			//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
-			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
-
-//			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 			final String smtDefinition = String.format("(store %s %s %s)",
 					FunctionDeclarations.constructNameForFunctionInParam(0),
 					FunctionDeclarations.constructNameForFunctionInParam(1),
-//					smtSortOfPointerComponents1,
-//					contentType,
 					subArrayToStore[0]);
 
 			final NamedAttribute namedAttribute = new NamedAttribute(
@@ -3252,9 +3222,6 @@ public class MemoryHandler {
 		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
 		final BoogieType boogieTypeOfPointerComponents1 =
 				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
-		final String smtSortOfPointerComponents1 =
-				CTranslationUtil.getSmtSortStringForBoogieType(boogieTypeOfPointerComponents1);
-
 
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
@@ -3275,17 +3242,10 @@ public class MemoryHandler {
 						});
 				attributeList.add(expandAttribute);
 
-				//				final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(bst.getFieldType(fieldNr));
-
-				final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(bst.getFieldType(fieldNr));
-
-//				final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 				final String smtDefinition = String.format("(select %s %s)",
 						FunctionDeclarations.constructNameForFunctionInParam(0)
 						+ StructExpanderUtil.DOT + bst.getFieldIds()[fieldNr],
 						FunctionDeclarations.constructNameForFunctionInParam(1),
-//						smtSortOfPointerComponents1,
-//						contentType,
 						indices[fieldNr]);
 
 				final NamedAttribute namedAttribute = new NamedAttribute(
@@ -3298,15 +3258,9 @@ public class MemoryHandler {
 			}
 		} else {
 
-			//			final String zero = CTranslationUtil.getSmtZeroStringForBoogieType(heapContentBoogieType);
-			final String contentType = CTranslationUtil.getSmtSortStringForBoogieType(heapContentBoogieType);
-
-//			final String smtDefinition = String.format("(store %s %s ((as const (Array %s %s)) %s))",
 			final String smtDefinition = String.format("(select %s %s)",
 					FunctionDeclarations.constructNameForFunctionInParam(0),
 					FunctionDeclarations.constructNameForFunctionInParam(1),
-//					smtSortOfPointerComponents1,
-//					contentType,
 					indices[0]);
 
 			final NamedAttribute namedAttribute = new NamedAttribute(
