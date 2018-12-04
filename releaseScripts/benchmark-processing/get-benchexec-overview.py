@@ -47,9 +47,10 @@ known_exceptions = {
     "No suitable toolchain file found": True,
     "No suitable file found in config dir": True,
     "AssertionError: var is still there": True,
+    "IllegalStateException: Petrification does not provide enough thread instances": True,
     "ExceptionOrErrorResult": False,
     "was unable to instantiate class": True,
-    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":True, 
+    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":True,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
