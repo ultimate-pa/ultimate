@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="900" cpuCores="2">
+	<rundefinition name="Taipan EXP+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_exp_cong.epf</option>
+	</rundefinition>
+	<rundefinition name="Taipan Array-OCT">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_array_oct.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbsInt EXP+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_exp_cong.epf</option>
+	</rundefinition>
+	<rundefinition name="AbsInt OCT+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_oct_cong.epf</option>
+	</rundefinition>
+	<rundefinition name="AbsInt OCT">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_oct.epf</option>
+	</rundefinition>
+
+	<rundefinition name="AbsInt Array-EXP+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_array_compound_exp_cong.epf</option>
+	</rundefinition>
+	<rundefinition name="AbsInt Array-OCT+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_array_compound_oct_cong.epf</option>
+	</rundefinition>
+	<rundefinition name="AbsInt Array-OCT">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_array_oct.epf</option>
+	</rundefinition>
+
+	<tasks name="Array-Boogie">
+		<includesfile>../../../trunk/examples/bench-array-boogie.set</includesfile>
+	</tasks>
+</benchmark>
