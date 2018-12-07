@@ -13,16 +13,35 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 	private static final long serialVersionUID = 94683849463494167L;
 	private final int mNodeLabel;
 	private HashMap<Integer, GuardGraph> mNodesMap;
+	private final Set<GuardGraph> mBuildingNodes;
 	
 	public GuardGraph(int label) {
 		mNodeLabel = label;
 		mNodesMap = new HashMap<Integer, GuardGraph>();
+		mBuildingNodes = new HashSet<GuardGraph>();
 	}
 
+	public GuardGraph(int label, Set<GuardGraph> neighbours) {
+		mNodeLabel = label;
+		mNodesMap = new HashMap<Integer, GuardGraph>();
+		mBuildingNodes = neighbours;
+	}
+	
+	public Set<GuardGraph> getBuildingNodes() {
+		return mBuildingNodes;
+	}
+	
+	public boolean isSameNode(GuardGraph node) {
+		if (mBuildingNodes.containsAll(node.getBuildingNodes()) && node.getBuildingNodes().containsAll(mBuildingNodes)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	public int getLabel() {
 		return mNodeLabel;
 	}
-	
 	
 	public HashMap<Integer, GuardGraph> getAllNodesMap() {
 		populateNodes();
@@ -35,6 +54,7 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 			mNodesMap.put(node.getLabel(), node);
 		}
 	}
+
 	
 	public String toString() {
 		StringBuilder autRepr = new StringBuilder();

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,23 +17,35 @@ public class InputDetSuccConstruction {
 	private final Script mScript;
 	private final ILogger mLogger;
 	private final GuardGraph mGuardGraph;
-	private final Set<GuardGraph> mSeenNodes;
-	private final LinkedList<GuardGraph> mQueue;
-	private final HashMap<String, Term> mMonomials;
+	private Set<GuardGraph> mSeenNodes;
+	private LinkedList<GuardGraph> mQueue;
+	private final Set<Term> mMonomials;
 	private final Sort mSort;
+	private Set<GuardGraph> mAutStates;
+	//TODO remove this hack later
+	private Term mF = null;;
 	
 	
 	public InputDetSuccConstruction(ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
 		mLogger = logger;
 		mScript = script;
-		//mGuardGraph = constructInputDetSuccAutomaton(powersetAuto, symboltable.getInputVars());
-		mGuardGraph = new GuardGraph(0);
 		mSeenNodes = new HashSet<GuardGraph>();
 		mQueue = new LinkedList<GuardGraph>();
+		mAutStates = new HashSet<>();
 		mSort = mScript.sort("Bool");
 		mMonomials = createMonomials(symboltable);
+
+		mGuardGraph = constructInputDetSuccAutomaton(powersetAuto);
 		
-		
+		String meh = "string";
+//		Set<String> s1 = new HashSet<>();
+//		s1.add(meh);
+//		Set<String> s2 = new HashSet<>();
+//		s2.add(meh);
+//		
+//		mLogger.warn(s1.contains(s2));
+//		
+//		mLogger.warn(s1.equals(s2));
 		// TODO just for debug, remove later
 		/*
 		for (String key : mMonomials.keySet()) {
@@ -51,6 +64,9 @@ public class InputDetSuccConstruction {
 			Set<Term> values = new HashSet<Term>();
 			values.add(a);
 			values.add(na);
+			if (mF == null ) {
+				mF = SmtUtils.and(mScript, a, na);
+			}
 			result.put(varname, values);
 		}
 		return result;
@@ -58,39 +74,32 @@ public class InputDetSuccConstruction {
 	
 	// HashMap<String, Term>
 	// mon1 : I and J and ....
-	private HashMap<String, Term> createMonomials(ReqSymbolTable sbt) {
+	private Set<Term> createMonomials(ReqSymbolTable sbt) {
 		HashMap<String, Set<Term>> inVarToTerms = inVarToTermMap(sbt.getInputVars());
-		HashMap<String, Term> result = new HashMap<String, Term>();
-		HashMap<String, Term> oldRes = new HashMap<String, Term>();
-		String monKey = "mon";
-		
-		int monIndex = 0;
+		Set<Term> result = new HashSet<>();
+		Set<Term> oldRes = new HashSet<>();
 		
 		// get one key as first element to create the first monomials (length 1)
 		// e.g. mon0 will be I and mon1 will be not I
 		for (String key : inVarToTerms.keySet()) {
 			for (Term boolInputVal : inVarToTerms.get(key)) {
-				result.put(monKey+Integer.toString(monIndex), boolInputVal);
-				monIndex++;
+				result.add(boolInputVal);
 			}
-			monIndex = 0;
 			inVarToTerms.remove(key);
-			oldRes = new HashMap<String, Term>(result);
+			oldRes = new HashSet<>(result);
 			break;
 		}
 		
 		// now for the rest of the input Terms
 		if (!inVarToTerms.isEmpty()) {
 			for (String key : inVarToTerms.keySet()) {
-				result = new HashMap<String, Term>();
+				result = new HashSet<>();
 				for (Term boolInputVal : inVarToTerms.get(key)) {
-					for (String oldMonKey : oldRes.keySet()) {
-						result.put(monKey+Integer.toString(monIndex), 
-								SmtUtils.and(mScript, boolInputVal, oldRes.get(oldMonKey)));
-						monIndex++;
+					for (Term oldMonKey : oldRes) {
+						result.add(SmtUtils.and(mScript, boolInputVal, oldMonKey));
 					}
 				}
-				oldRes = new HashMap<String, Term>(result); 
+				oldRes = new HashSet<>(result); 
 			}
 		}
 		return result;
@@ -99,60 +108,81 @@ public class InputDetSuccConstruction {
 	public GuardGraph getAutomaton() {
 		return mGuardGraph;
 	}
-	
-	private void addToSeen(GuardGraph node) {
-		mSeenNodes.add(node);
-	}
-	
-	private void addToQueue(GuardGraph node) {
-		mQueue.add(node);
-	}
 
 	// calculate the successors here
 	private Set<GuardGraph> findSuccessors(GuardGraph givenNode, Term givenMonomial) {
-		// TODO implement this
-		return new HashSet<GuardGraph>();
+		Set<GuardGraph> result = new HashSet<>();
+		
+		for (GuardGraph neighbour : givenNode.getOutgoingNodes()) {
+			if (!(givenNode.getOutgoingEdgeLabel(neighbour) == null)) {
+				if (!SmtUtils.isFalse(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
+					result.add(neighbour);
+				}
+			}
+		}
+		return result;
 	}
 	
-	private GuardGraph constructInputDetSuccAutomaton(GuardGraph psauto, Set<String> inpVars) {
-		// take starting node
-		
-		GuardGraph fromNode = psauto;
-
-		/*
-		 * SmtUtils.checkSatTerm to test if term and monomial satisfiable
-		 */
+	private GuardGraph collectionContains(Collection<GuardGraph> collection, GuardGraph thisInpDetANode) {
+		for(GuardGraph gg: collection) {
+			if(gg.isSameNode(thisInpDetANode)) {
+				return gg;
+			}
+		}
+		return null;
+	}
+	
+	private GuardGraph constructInputDetSuccAutomaton(GuardGraph productAutomaton) {
+		Set<GuardGraph> initialIndex = new HashSet<>();
+		initialIndex.add(productAutomaton);
+		GuardGraph initialPowerNode = new GuardGraph(0, new HashSet<GuardGraph>(initialIndex));
+		mAutStates.add(initialPowerNode);
+		int newlabel = 1;
 		// add it to queue
-		addToQueue(fromNode);
-		
-		// create new starting node
-		Set<GuardGraph> succ = new HashSet<GuardGraph>();
-		succ.add(fromNode);
-		
-		GuardGraph startingNode = new GuardGraph(0);
-		
+		mQueue.add(initialPowerNode);
 		
 		// now go over the queue
-		/*while (!mQueue.isEmpty()) {
-			GuardGraph thisNode = mQueue.pop();
-			// look at each input monomial
-			for (Term monomial : mMonomials) {
-				// calculate successor Node with given monomial
-				succ = findSuccessors(thisNode, monomial);
-				GuardGraph goingToNode = new GuardGraph(0);
+		while (mQueue.size() > 0) {
+		
+			GuardGraph thisInpDetANode = mQueue.pop();
+			mSeenNodes.add(thisInpDetANode);
+
+			for (Term mon : mMonomials) {
+				Set<GuardGraph> succsrs = new HashSet<>();
+				for (GuardGraph buildingNode : thisInpDetANode.getBuildingNodes()) {
+					succsrs.addAll(findSuccessors(buildingNode, mon));
+				}
+				GuardGraph targetNode = new GuardGraph(newlabel, succsrs);
+				//TODO: refactor! take HashMap<set<GuardGraph>, GuardGraph> which stores the internal nodes i.e. succsrs and indexes nodes 
+				// accordingly.
+				if(collectionContains(mAutStates, targetNode) == null) {
+					mAutStates.add(targetNode);
+				} else {
+					targetNode = collectionContains(mAutStates, targetNode);
+				}
 				
-				thisNode.addOutgoingNode(goingToNode, monomial);
-				// test if gointToNode already in queueueueueu oder seen
-				addToQueue(goingToNode);
-				succ = new HashSet<GuardGraph>();
+				// TODO this hack here seems stupid
+				Term edgelabel = mF;
+				for (GuardGraph fromNode : thisInpDetANode.getBuildingNodes()) {
+					for (GuardGraph toNode : succsrs) {
+						Term eh = SmtUtils.and(mScript, fromNode.getOutgoingEdgeLabel(toNode), mon);
+						edgelabel = SmtUtils.or(mScript, edgelabel, eh);
+					}	
+				}
+				if(collectionContains(mQueue, targetNode) == null && collectionContains(mSeenNodes, targetNode) == null) {
+					mQueue.add(targetNode);
+					newlabel++;
+				}
+				
+				if (thisInpDetANode.getOutgoingNodes().contains(targetNode)) {
+					Term newLabel = SmtUtils.or(mScript, thisInpDetANode.getOutgoingEdgeLabel(targetNode), edgelabel);
+					thisInpDetANode.disconnectOutgoing(targetNode);
+					thisInpDetANode.connectOutgoing(targetNode, newLabel);
+				} else {
+					thisInpDetANode.connectOutgoing(targetNode, edgelabel);
+				}
 			}
-			addToSeen(thisNode);
-		}*/
-		return startingNode;
-	}
-	
-	private boolean testPartOfConj(Term edge, Term monomial) {
-		// if monomial is part of the edge conjunction return true; else false
-		return false;
+		}
+		return initialPowerNode;
 	}
 }
