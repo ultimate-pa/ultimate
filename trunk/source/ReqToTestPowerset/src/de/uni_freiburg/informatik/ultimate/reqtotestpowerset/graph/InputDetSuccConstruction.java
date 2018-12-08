@@ -21,10 +21,7 @@ public class InputDetSuccConstruction {
 	private LinkedList<GuardGraph> mQueue;
 	private final Set<Term> mMonomials;
 	private final Sort mSort;
-	private Set<GuardGraph> mAutStates;
-	//TODO remove this hack later
-	private Term mF = null;;
-	
+	private Set<GuardGraph> mAutStates;	
 	
 	public InputDetSuccConstruction(ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
 		mLogger = logger;
@@ -36,23 +33,6 @@ public class InputDetSuccConstruction {
 		mMonomials = createMonomials(symboltable);
 
 		mGuardGraph = constructInputDetSuccAutomaton(powersetAuto);
-		
-		String meh = "string";
-//		Set<String> s1 = new HashSet<>();
-//		s1.add(meh);
-//		Set<String> s2 = new HashSet<>();
-//		s2.add(meh);
-//		
-//		mLogger.warn(s1.contains(s2));
-//		
-//		mLogger.warn(s1.equals(s2));
-		// TODO just for debug, remove later
-		/*
-		for (String key : mMonomials.keySet()) {
-			mLogger.warn(String.format("Key %s has monomials %s", key, mMonomials.get(key)));
-		}
-		mLogger.warn(mMonomials.size());
-		*/
 	}
 	
 	// inputvar I : {Term I, Term notI}
@@ -64,15 +44,11 @@ public class InputDetSuccConstruction {
 			Set<Term> values = new HashSet<Term>();
 			values.add(a);
 			values.add(na);
-			if (mF == null ) {
-				mF = SmtUtils.and(mScript, a, na);
-			}
 			result.put(varname, values);
 		}
 		return result;
 	}
 	
-	// HashMap<String, Term>
 	// mon1 : I and J and ....
 	private Set<Term> createMonomials(ReqSymbolTable sbt) {
 		HashMap<String, Set<Term>> inVarToTerms = inVarToTermMap(sbt.getInputVars());
@@ -148,10 +124,8 @@ public class InputDetSuccConstruction {
 			mSeenNodes.add(thisInpDetANode);
 
 			for (Term mon : mMonomials) {
-				Set<GuardGraph> succsrs = new HashSet<>();
-				for (GuardGraph buildingNode : thisInpDetANode.getBuildingNodes()) {
-					succsrs.addAll(findSuccessors(buildingNode, mon));
-				}
+				Set<GuardGraph> succsrs = getAllSuccessors(thisInpDetANode.getBuildingNodes(), mon);
+
 				GuardGraph targetNode = new GuardGraph(newlabel, succsrs);
 				//TODO: refactor! take HashMap<set<GuardGraph>, GuardGraph> which stores the internal nodes i.e. succsrs and indexes nodes 
 				// accordingly.
@@ -161,14 +135,8 @@ public class InputDetSuccConstruction {
 					targetNode = collectionContains(mAutStates, targetNode);
 				}
 				
-				// TODO this hack here seems stupid
-				Term edgelabel = mF;
-				for (GuardGraph fromNode : thisInpDetANode.getBuildingNodes()) {
-					for (GuardGraph toNode : succsrs) {
-						Term eh = SmtUtils.and(mScript, fromNode.getOutgoingEdgeLabel(toNode), mon);
-						edgelabel = SmtUtils.or(mScript, edgelabel, eh);
-					}	
-				}
+				Term edgelabel = getNewEdgeLabel(thisInpDetANode.getBuildingNodes(), succsrs, mon);
+				
 				if(collectionContains(mQueue, targetNode) == null && collectionContains(mSeenNodes, targetNode) == null) {
 					mQueue.add(targetNode);
 					newlabel++;
@@ -184,5 +152,24 @@ public class InputDetSuccConstruction {
 			}
 		}
 		return initialPowerNode;
+	}
+	
+	private Set<GuardGraph> getAllSuccessors(Set<GuardGraph> buildingNodes, Term monomial) {
+		Set<GuardGraph> result = new HashSet<>();
+		for (GuardGraph buildingNode : buildingNodes) {
+			result.addAll(findSuccessors(buildingNode, monomial));
+		}
+		return result;
+	}
+	
+	private Term getNewEdgeLabel(Set<GuardGraph> buildingNodes, Set<GuardGraph> successors, Term monomial) {
+		Term result = SmtUtils.and(mScript, monomial, SmtUtils.not(mScript, monomial));
+		for (GuardGraph fromNode : buildingNodes) {
+			for (GuardGraph toNode : successors) {
+				Term eh = SmtUtils.and(mScript, fromNode.getOutgoingEdgeLabel(toNode), monomial);
+				result = SmtUtils.or(mScript, result, eh);
+			}	
+		}
+		return result;
 	}
 }

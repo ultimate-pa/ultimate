@@ -65,13 +65,8 @@ public class ReqToTestPowersetObserver extends BaseObserver{
 		final GuardGraph setAutomaton = new PowersetConstruction(mLogger, automata, mScript).getProduct();
 		final GuardGraph inputDetAutomaton = new InputDetSuccConstruction(mLogger, setAutomaton, mScript, symbolTable).getAutomaton();
 		
-		// TODO remove this; just for debug
-		
-		
+//		TODO remove this; just for debug
 		mLogger.warn(inputDetAutomaton);
-//		for (GuardGraph automaton : automata ) {
-//			mLogger.warn(AuxGraphOperations.makeStringInterpretation(automaton));
-//		}
 		return false;
 	}
 
