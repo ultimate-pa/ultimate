@@ -45,58 +45,57 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public enum PreferenceItem {
 
-	LABEL_ENABLE_INLINING_FOR("Enable inlining for ..."),
+	LABEL_ENABLE_INLINING_FOR("───  I n l i n e  ───"),
 
-	INLINE_UNIMPLEMENTED("calls to unimplemented procedures",
+	INLINE_UNIMPLEMENTED("Inline calls to unimplemented procedures",
 			"Inline calls to unimplemented procedures.",
 			Boolean.FALSE, PreferenceType.Boolean),
 
-	INLINE_IMPLEMENTED("... calls to implemented procedures",
+	INLINE_IMPLEMENTED("Inline calls to implemented procedures",
 			"When to inline calls to implemented procedures.",
 			EnableWhen.ALWAYS, PreferenceType.Combo, EnableWhen.values()),
 
-	LABEL_IGNORE_CALLS("Ignore calls ..."),
+	LABEL_IGNORE_CALLS("───  I g n o r e  ───"),
 
-	IGNORE_CALL_FORALL("with \'forall\' modifier",
+	IGNORE_CALL_FORALL("Ignore calls with \'forall\' modifier",
 			"Do not inline calls with forall-star modifier (attempting to inline these can cause exceptions).",
 			Boolean.TRUE, PreferenceType.Boolean),
 
-	IGNORE_WITH_FREE_REQUIRES("to procedures with \'free requires\' specifications",
+	IGNORE_WITH_FREE_REQUIRES("Ignore calls to procedures with \'free requires\' specifications",
 			"Do not inline calls to procedures with free-requires specification "
 					+ "(attempting to inline these can cause exceptions).",
 			Boolean.TRUE, PreferenceType.Boolean),
 
-	IGNORE_POLYMORPHIC("to and inside polymorphic procedures",
+	IGNORE_POLYMORPHIC("Ignore calls to and inside polymorphic procedures",
 			"Do not inline calls to and inside polymorphic procedures (attempting to inline these can cause exceptions).",
 			Boolean.TRUE, PreferenceType.Boolean),
 
-	IGNORE_RECURSIVE("to recursive procedures",
+	IGNORE_RECURSIVE("Ignore calls to recursive procedures",
 			"Do not inline calls to recursive procedures (attempting to inline these can cause exceptions).",
 			Boolean.TRUE,
 			PreferenceType.Boolean),
 
-	IGNORE_MULTIPLE_CALLED("... to procedures called more than once",
+	IGNORE_MULTIPLE_CALLED("Ignore calls to procedures called more than once",
 			"When to ignore calls to procedures called more than once.",
 			EnableWhen.NEVER, PreferenceType.Combo, EnableWhen.values()),
 
-
-	LABEL_USER_LIST("User list (procedure ids, separated by whitespace)"),
-
-	USER_LIST("User list",
-			"Specify procedure names that should not be inlined (separate with a comma).",
-			"", PreferenceType.MultilineString),
+	LABEL_USER_LIST("───  U s e r   L i s t  ───"),
 
 	USER_LIST_TYPE("User list type",
 			UserListType.description(),
 			UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 
-	LABEL_ENTRY_PROCEDURE_HANDLING("Entry procedure handling"),
+	USER_LIST("User list",
+			"Procedure IDs/names separated by whitespace",
+			"", PreferenceType.MultilineString),
+
+	LABEL_ENTRY_PROCEDURE_HANDLING("───  E n t r y   P o i n t s  ───"),
 
 	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures",
 			null, Boolean.TRUE, PreferenceType.Boolean),
 
 	ENTRY_PROCEDURES("Entry procedures",
-			"Give names separated by whitespace.",
+			"Procedure IDs/names separated by whitespace.",
 			"ULTIMATE.start", PreferenceType.String),
 
 	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",

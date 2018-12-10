@@ -58,12 +58,12 @@ file_export_version=3.0
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Number\ of\ generalized\ eigenvectors=3
 #Tue Mar 22 18:13:24 CET 2016
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ recursive\ procedures\ *=true
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ and\ inside\ polymorphic\ procedures\ *=true
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/calls\ to\ unimplemented\ procedures=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ recursive\ procedures\ *=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ and\ inside\ polymorphic\ procedures\ *=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Inline\ calls\ to\ unimplemented\ procedures=true
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Eliminate\ dead\ code\ after\ inlining=true
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ to\ procedures\ called\ more\ than\ once=NEVER
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=NEVER
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ALWAYS
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/with\ 'forall'\ modifier\ *=true
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures\ with\ 'free\ requires'\ specifications\ *=true

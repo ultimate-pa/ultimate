@@ -65,9 +65,9 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.9
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ recursive\ procedures=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ recursive\ procedures=false
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/with\ 'forall'\ modifier=false
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures\ with\ 'free\ requires'\ specifications=false
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ and\ inside\ polymorphic\ procedures=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ and\ inside\ polymorphic\ procedures=false
 

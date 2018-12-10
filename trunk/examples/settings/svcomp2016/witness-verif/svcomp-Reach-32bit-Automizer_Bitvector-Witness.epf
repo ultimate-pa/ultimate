@@ -39,7 +39,7 @@ file_export_version=3.0
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ to\ procedures\ called\ more\ than\ once=ALWAYS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ALWAYS
 
 #Fri Nov 06 13:55:47 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.core/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.sh -witness-check 

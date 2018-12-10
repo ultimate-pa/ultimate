@@ -2,7 +2,7 @@
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ to\ procedures\ called\ more\ than\ once=ALWAYS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ALWAYS
 #Sun Nov 08 00:43:17 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Parallel\ states\ before\ merging=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Use\ source\ directory\ for\ state\ change\ logs=false
