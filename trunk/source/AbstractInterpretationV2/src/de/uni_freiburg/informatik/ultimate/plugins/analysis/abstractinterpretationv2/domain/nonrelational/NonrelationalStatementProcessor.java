@@ -28,8 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,47 +40,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.Evaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.NAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -98,34 +75,28 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		extends BoogieVisitor {
 
 	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
-	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
-	private final IEvaluatorFactory<V, STATE> mEvaluatorFactory;
 
 	private STATE mOldState;
 	private List<STATE> mReturnState;
-	private ExpressionEvaluator<V, STATE> mExpressionEvaluator;
 	private IProgramVarOrConst mLhsVariable;
 	private Map<LeftHandSide, IProgramVarOrConst> mTemporaryVars;
 
 	private final Map<Expression, Expression> mNormalizedExpressionCache;
-	private final Map<Expression, ExpressionEvaluator<V, STATE>> mEvaluatorCache;
-
-	private boolean mOldScope;
 	private AbsIntBenchmark<IcfgEdge> mAbsIntBenchmark;
+	private final NonrelationalEvaluator<STATE, V> mEvaluator;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
-		mSymbolTable = boogieSymbolTable;
-		mOldScope = false;
 		mLogger = logger;
 		mLhsVariable = null;
 		mNormalizedExpressionCache = new HashMap<>();
-		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
-		mEvaluatorCache = new HashMap<>();
-		assert mEvaluatorFactory != null;
+		final IEvaluatorFactory<V, STATE> evaluatorFactory =
+				createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
+		assert evaluatorFactory != null;
+		mEvaluator = new NonrelationalEvaluator<>(evaluatorFactory, boogieSymbolTable, bpl2SmtTable);
 	}
 
 	/**
@@ -200,25 +171,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return super.processStatement(statement);
 	}
 
-	@Override
-	protected Expression processExpression(final Expression expr) {
-		// TODO: implement proper array handling. Currently, TOP is returned for all array accesses.
-		if (expr instanceof ArrayStoreExpression || expr instanceof ArrayAccessExpression) {
-			mExpressionEvaluator.addEvaluator(mEvaluatorFactory
-					.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
-			return expr;
-		}
-		if (expr instanceof UnaryExpression) {
-			final UnaryExpression uexpr = (UnaryExpression) expr;
-			if (uexpr.getOperator() == Operator.OLD) {
-				mOldScope = true;
-				final Expression rtr = super.processExpression(uexpr.getExpr());
-				mOldScope = false;
-				return rtr;
-			}
-		}
-		final Expression newExpr = createNormalizedExpression(expr);
-		return super.processExpression(newExpr);
+	private Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
+		return mEvaluator.evaluate(state, createNormalizedExpression(expr));
 	}
 
 	private Expression createNormalizedExpression(final Expression inputExpr) {
@@ -341,18 +295,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	private List<STATE> handleSingleAssignment(final IProgramVarOrConst lhsVar, final Expression rhs,
 			final STATE oldstate) {
-		if (mEvaluatorCache.containsKey(rhs)) {
-			mExpressionEvaluator = mEvaluatorCache.get(rhs);
-		} else {
-			mExpressionEvaluator = new ExpressionEvaluator<>();
-			processExpression(rhs);
-
-			assert mExpressionEvaluator.isFinished() : "Expression evaluator is not finished";
-			assert mExpressionEvaluator.getRootEvaluator() != null : "There is no root evaluator";
-			mEvaluatorCache.put(rhs, mExpressionEvaluator);
-		}
-
-		final Collection<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate, 0);
+		final Collection<IEvaluationResult<V>> results = evaluate(oldstate, rhs);
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
@@ -371,10 +314,10 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		}
 
 		if (mAbsIntBenchmark != null) {
-			mAbsIntBenchmark.recordEvaluationRecursionDepth(
-					mExpressionEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
+			mAbsIntBenchmark
+					.recordEvaluationRecursionDepth(mEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
 			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
-					mExpressionEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
+					mEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
 		}
 
 		return newStates;
@@ -404,18 +347,9 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			return;
 		}
 
-		// Caching of expression evaluators
-		mExpressionEvaluator = mEvaluatorCache.get(formula);
-		if (mExpressionEvaluator == null) {
-			mExpressionEvaluator = new ExpressionEvaluator<>();
-			processExpression(formula);
-			assert mExpressionEvaluator.isFinished();
-			mEvaluatorCache.put(formula, mExpressionEvaluator);
-		}
+		final Collection<IEvaluationResult<V>> results = evaluate(mOldState, formula);
 
-		final Collection<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState, 0);
-
-		for (final IEvaluationResult<V> res : result) {
+		for (final IEvaluationResult<V> res : results) {
 			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
 					|| res.getBooleanValue() == BooleanValue.FALSE) {
 				if (!mOldState.getVariables().isEmpty()) {
@@ -424,7 +358,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			} else {
 				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
 				// states. Otherwise, the return state will be bottom.
-				final Collection<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
+				final Collection<STATE> resultStates = mEvaluator.getRootEvaluator().inverseEvaluate(
 						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState, 0);
 				mReturnState.addAll(
 						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
@@ -432,10 +366,10 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		}
 
 		if (mAbsIntBenchmark != null) {
-			mAbsIntBenchmark.recordEvaluationRecursionDepth(
-					mExpressionEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
+			mAbsIntBenchmark
+					.recordEvaluationRecursionDepth(mEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
 			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
-					mExpressionEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
+					mEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
 		}
 	}
 
@@ -463,104 +397,6 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mLhsVariable = getBoogieVar(lhs);
 	}
 
-	@Override
-	protected void visit(final IntegerLiteral expr) {
-		final Evaluator<V, STATE> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
-		mExpressionEvaluator.addEvaluator(evaluator);
-	}
-
-	@Override
-	protected void visit(final RealLiteral expr) {
-		final Evaluator<V, STATE> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
-		mExpressionEvaluator.addEvaluator(evaluator);
-	}
-
-	@Override
-	protected void visit(final BinaryExpression expr) {
-		final NAryEvaluator<V, STATE> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
-		evaluator.setOperator(expr.getOperator());
-		mExpressionEvaluator.addEvaluator(evaluator);
-	}
-
-	@Override
-	protected void visit(final FunctionApplication expr) {
-		final Evaluator<V, STATE> evaluator;
-		final List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
-
-		// If we don't have a specification for the function, we return top.
-		if (decls == null || decls.isEmpty()) {
-			evaluator =
-					mEvaluatorFactory.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType()));
-		} else {
-
-			assert decls.get(0) instanceof FunctionDeclaration;
-
-			final FunctionDeclaration fun = (FunctionDeclaration) decls.get(0);
-
-			// If the body is empty (as in undefined), we return top.
-			if (fun.getBody() == null) {
-				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length,
-						EvaluatorUtils.getEvaluatorType(expr.getType()));
-			} else {
-				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
-				throw new UnsupportedOperationException(
-						"The function application for not inlined functions is not yet supported.");
-			}
-		}
-
-		mExpressionEvaluator.addEvaluator(evaluator);
-	}
-
-	@Override
-	protected void visit(final IdentifierExpression expr) {
-		final Evaluator<V, STATE> evaluator =
-				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
-		mExpressionEvaluator.addEvaluator(evaluator);
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(final UnaryExpression expr) {
-		final NAryEvaluator<V, STATE> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
-		evaluator.setOperator(expr.getOperator());
-		mExpressionEvaluator.addEvaluator(evaluator);
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(final BooleanLiteral expr) {
-		final Evaluator<V, STATE> evaluator = mEvaluatorFactory
-				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
-		mExpressionEvaluator.addEvaluator(evaluator);
-	}
-
-	@Override
-	protected void visit(final ArrayStoreExpression expr) {
-		throw new UnsupportedOperationException("Proper array handling is not implemented.");
-	}
-
-	@Override
-	protected void visit(final ArrayAccessExpression expr) {
-		throw new UnsupportedOperationException("Proper array handling is not implemented.");
-	}
-
-	@Override
-	protected void visit(final IfThenElseExpression expr) {
-		final Evaluator<V, STATE> evaluator = mEvaluatorFactory.createConditionalEvaluator();
-		mExpressionEvaluator.addEvaluator(evaluator);
-
-		// Create a new expression for the negative case
-		final UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), expr.getCondition().getType(),
-				UnaryExpression.Operator.LOGICNEG, expr.getCondition());
-
-		// This expression should be added first to the evaluator inside the handling of processExpression.
-		processExpression(newUnary);
-	}
-
 	private IProgramVarOrConst getBoogieVar(final VariableLHS expr) {
 		IProgramVarOrConst rtr = mTemporaryVars.get(expr);
 		if (rtr == null) {
@@ -574,46 +410,5 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		}
 		assert rtr != null : "Could not find boogie var";
 		return rtr;
-	}
-
-	private IProgramVarOrConst getBoogieVar(final IdentifierExpression expr) {
-		IProgramVarOrConst returnVar =
-				mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
-
-		if (returnVar != null) {
-			if (mOldScope && returnVar instanceof IProgramNonOldVar) {
-				return ((IProgramNonOldVar) returnVar).getOldVar();
-			}
-			return returnVar;
-		}
-
-		returnVar = mBoogie2SmtSymbolTable.getBoogieConst(expr.getIdentifier());
-		assert returnVar != null;
-		return returnVar;
-	}
-
-	@Override
-	protected void visit(final BitvecLiteral expr) {
-		throw new UnsupportedOperationException("Bit vector literals are not supported.");
-	}
-
-	@Override
-	protected void visit(final BitVectorAccessExpression expr) {
-		throw new UnsupportedOperationException("Bit vector access expressions are not supported.");
-	}
-
-	@Override
-	protected void visit(final WildcardExpression expr) {
-		throw new UnsupportedOperationException("Wildcard expressions are not supported.");
-	}
-
-	@Override
-	protected void visit(final StructAccessExpression expr) {
-		throw new UnsupportedOperationException("Struct access expressions are not supported.");
-	}
-
-	@Override
-	protected void visit(final QuantifierExpression expr) {
-		throw new UnsupportedOperationException("Quantifier expressions are not supported.");
 	}
 }
