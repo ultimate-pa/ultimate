@@ -48,6 +48,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class OptionBuilder {
 
 	private static final int MAX_NAME_LENGTH = 160;
@@ -334,13 +339,17 @@ public class OptionBuilder {
 		sb.append("The default value is " + item.getDefaultValue() + ". ");
 	}
 
+	/**
+	 * This method converts the label of an {@link UltimatePreferenceItem} to a string that can be used on the command
+	 * line.
+	 */
 	private String convertLabelToLongName(final String pluginId, final UltimatePreferenceItem<?> item) {
 		final String label = item.getLabel();
 		final int lastIdx = pluginId.lastIndexOf('.');
 		final String prefix = lastIdx > 0 ? pluginId.substring(lastIdx + 1) : pluginId;
 		final String unprocessedName = prefix + " " + label;
 		final String processedName = unprocessedName.replace(' ', '.').replace('(', '.').replace(')', '.')
-				.replaceAll(":", "").replace('"', '.').replaceAll("\\.+", ".").toLowerCase();
+				.replaceAll(":", "").replace('"', '.').replace('\'', '.').replaceAll("\\.+", ".").toLowerCase();
 		final int newLength = processedName.length();
 
 		if (newLength > MAX_NAME_LENGTH) {
