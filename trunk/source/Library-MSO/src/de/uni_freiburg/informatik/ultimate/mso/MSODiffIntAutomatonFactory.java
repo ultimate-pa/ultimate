@@ -34,16 +34,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 
 /**
- * TODO: 
- * @formatter:off
- * 1. Find meaningful names for the automata representing only one case of the complete automaton. 
- * 2. Test all (new) Int automata. 
- * 3. Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
- * 		shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton, 
- * 		intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton
- * 4. nonStrictSubset currently requires at least one transition in order to return an accepted word, 
- * 		even for {} \subset {}. An automaton consisting of only one state might already be sufficient.
- * @formatter:on
+ * TODO:
+ * 
+ * 1. Find meaningful names for the automata representing only one case of the complete automaton. 2. Test all (new) Int
+ * automata. 3. Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
+ * shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton,
+ * intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton 4. nonStrictSubset
+ * currently requires at least one transition in order to return an accepted word, even for {} \subset {}. An automaton
+ * consisting of only one state might already be sufficient.
+ * 
  */
 
 public class MSODiffIntAutomatonFactory {
