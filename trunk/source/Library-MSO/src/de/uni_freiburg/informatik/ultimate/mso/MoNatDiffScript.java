@@ -146,22 +146,23 @@ public class MoNatDiffScript extends NoopScript {
 				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
 
-				// Test Automaton with int numbers
-				mLogger.info("------------------------------------Test---------------------------------");
-				final Rational c = Rational.valueOf(1, 1);
-				final Term x = SmtUtils.buildNewConstant(this, "a", "Int");
-				final Term y = SmtUtils.buildNewConstant(this, "b", "Int");
 
-				mLogger.info(automatonToString(
-						MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c),
-						Format.ATS));
-
-				mLogger.info(
-						automatonToString(new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(),
-								MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c))
-										.getResult(),
-								Format.ATS));
-				mLogger.info("------------------------------------Test-Ende---------------------------------");
+//				// Test Automaton with int numbers
+//				mLogger.info("------------------------------------Test---------------------------------");
+//				Rational c = Rational.valueOf(1, 1);
+//				Term x = SmtUtils.buildNewConstant(this, "a", "Int");
+//				Term y = SmtUtils.buildNewConstant(this, "b", "Int");
+//
+//				mLogger.info(automatonToString(
+//						MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c),
+//						Format.ATS));
+//
+//				mLogger.info(
+//						automatonToString(new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(),
+//								MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c))
+//										.getResult(),
+//								Format.ATS));
+//				mLogger.info("------------------------------------Test-Ende---------------------------------");
 
 				return LBool.SAT;
 			}

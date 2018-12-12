@@ -851,6 +851,7 @@ public final class MoNatDiffAutomatonFactory {
 		}
 	}
 
+	
 	/**
 	 * TODO: Move to MoNatDiffAlphabetSymbol
 	 */
