@@ -1,28 +1,5 @@
-/*
- * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
- *
- * This file is part of the ULTIMATE MSO Library package.
- *
- * The ULTIMATE MSO Library package library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ULTIMATE MSO Library package library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE MSO Library package. If not, see <http://www.gnu.org/licenses/>.
- *
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE MSO Library package, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
- * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE MSO Library package library grant you additional permission
- * to convey the resulting work.
+/**
+ * TODO: Copyright.
  */
 
 package de.uni_freiburg.informatik.ultimate.mso;
@@ -34,16 +11,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -65,36 +42,16 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 
-/**
- * @Questions How to use SmtUtils.toCNF()? (Might be helpful for dealing with disjunction, implication, equality)
- *
- *            One-transitions in {@link #processExists} are not needed?.
- *
- *            Why is {@link SmtUtils#geq} not usable in {@link #processEqual}, {@link #processGreater}?
- *
- *            Model is not always minimal e.g. (assert (element 9 I))?
- *
- *            final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new
- *            MinimizeSevpa<>(AutomataLibrarayServices, new StringFactory(), automaton).getResult();
- *
- *            SmtUtils.toCnf(mUltimateServiceProvider, managedScript, mAssertionTerm,
- *            XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
- *
- * @Solved {@link Union} does not ensure that Int variables are set exactly once.
- *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
- */
-public class MoNatDiffScript extends NoopScript {
+public class MSODiffIntScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
@@ -102,7 +59,7 @@ public class MoNatDiffScript extends NoopScript {
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
-	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
+	public MSODiffIntScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
@@ -145,23 +102,6 @@ public class MoNatDiffScript extends NoopScript {
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
-
-				// // Test Automaton with int numbers
-				// mLogger.info("------------------------------------Test---------------------------------");
-				// Rational c = Rational.valueOf(1, 1);
-				// Term x = SmtUtils.buildNewConstant(this, "a", "Int");
-				// Term y = SmtUtils.buildNewConstant(this, "b", "Int");
-				//
-				// mLogger.info(automatonToString(
-				// MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c),
-				// Format.ATS));
-				//
-				// mLogger.info(
-				// automatonToString(new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(),
-				// MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c))
-				// .getResult(),
-				// Format.ATS));
-				// mLogger.info("------------------------------------Test-Ende---------------------------------");
 
 				return LBool.SAT;
 			}
@@ -309,12 +249,6 @@ public class MoNatDiffScript extends NoopScript {
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processExists(final QuantifiedFormula term)
 			throws Exception {
 
-		/*
-		 * final ManagedScript managedScript = new ManagedScript(mUltimateServiceProvider, this); final Term subformula
-		 * = SmtUtils.toCnf(mUltimateServiceProvider, managedScript, term.getSubformula(),
-		 * XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION); mLogger.info("CNF: " + subformula);
-		 */
-
 		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
 
@@ -342,7 +276,7 @@ public class MoNatDiffScript extends NoopScript {
 
 		Set<MoNatDiffAlphabetSymbol> reducedAlphabet;
 		reducedAlphabet = MoNatDiffUtils.createAlphabet(freeVars.toArray(new Term[0]));
-		result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
+		result = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 		result = makeStatesFinal(result, additionalFinals);
 
 		return result;
@@ -354,7 +288,7 @@ public class MoNatDiffScript extends NoopScript {
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processTrue() {
 		mLogger.info("Construct true");
 
-		return MoNatDiffAutomatonFactory.trueAutomaton(mAutomataLibrarayServices);
+		return MSODiffIntAutomatonFactory.trueAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -363,7 +297,7 @@ public class MoNatDiffScript extends NoopScript {
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processFalse() {
 		mLogger.info("Construct false");
 
-		return MoNatDiffAutomatonFactory.falseAutomaton(mAutomataLibrarayServices);
+		return MSODiffIntAutomatonFactory.falseAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -388,8 +322,8 @@ public class MoNatDiffScript extends NoopScript {
 
 		for (final Term intVar : intVars) {
 			NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> varAutomaton;
-			varAutomaton = MoNatDiffAutomatonFactory.intVariableAutomaton(mAutomataLibrarayServices, intVar);
-			varAutomaton = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton,
+			varAutomaton = MSODiffIntAutomatonFactory.intVariableAutomaton(mAutomataLibrarayServices, intVar);
+			varAutomaton = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton,
 					result.getAlphabet(), true);
 
 			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, varAutomaton)
@@ -422,8 +356,8 @@ public class MoNatDiffScript extends NoopScript {
 			Set<MoNatDiffAlphabetSymbol> symbols;
 			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
@@ -438,15 +372,6 @@ public class MoNatDiffScript extends NoopScript {
 	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
 			throws Exception {
 
-		/*
-		 * final Term[] terms = new Term[term.getParameters().length]; for (int i = 0; i < term.getParameters().length;
-		 * i++) terms[i] = SmtUtils.not(this, term.getParameters()[i]);
-		 *
-		 * final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
-		 *
-		 * return traversePostOrder(conjunction);
-		 */
-
 		INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct φ and ψ (0): " + term);
 
@@ -457,8 +382,8 @@ public class MoNatDiffScript extends NoopScript {
 			Set<MoNatDiffAlphabetSymbol> symbols;
 			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = MoNatDiffAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODiffIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
@@ -527,9 +452,10 @@ public class MoNatDiffScript extends NoopScript {
 	 *
 	 * @throws NotAffineException
 	 *             if construction of {@link AffineRelation} fails.
+	 * @throws AutomataLibraryException
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
-			throws NotAffineException {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
+			throws NotAffineException, AutomataLibraryException {
 
 		final AffineRelation affineRelation = new AffineRelation(this, term, TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = affineRelation.getAffineTerm();
@@ -541,12 +467,13 @@ public class MoNatDiffScript extends NoopScript {
 
 			if (var.getValue().equals(Rational.ONE)) {
 				mLogger.info("Construct x < c: " + term);
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
+				return MSODiffIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(),
+						constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
 				mLogger.info("Construct -x < c: " + term);
-				return MoNatDiffAutomatonFactory.strictNegIneqAutomaton(mAutomataLibrarayServices, var.getKey(),
+				return MSODiffIntAutomatonFactory.strictNegIneqAutomaton(mAutomataLibrarayServices, var.getKey(),
 						constant);
 			}
 		}
@@ -563,12 +490,12 @@ public class MoNatDiffScript extends NoopScript {
 			}
 
 			if (var1.getValue().equals(Rational.ONE)) {
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var1.getKey(),
+				return MSODiffIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var1.getKey(),
 						var2.getKey(), constant);
 			}
 
 			if (var2.getValue().equals(Rational.ONE)) {
-				return MoNatDiffAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var2.getKey(),
+				return MSODiffIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var2.getKey(),
 						var1.getKey(), constant);
 			}
 		}
@@ -586,7 +513,7 @@ public class MoNatDiffScript extends NoopScript {
 			throw new IllegalArgumentException("StrictSubset must have exactly two parameters.");
 		}
 
-		return MoNatDiffAutomatonFactory.strictSubsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
+		return MSODiffIntAutomatonFactory.strictSubsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
 				term.getParameters()[1]);
 	}
 
@@ -600,14 +527,17 @@ public class MoNatDiffScript extends NoopScript {
 			throw new IllegalArgumentException("Subset must have exactly two parameters.");
 		}
 
-		return MoNatDiffAutomatonFactory.subsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
+		return MSODiffIntAutomatonFactory.subsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
 				term.getParameters()[1]);
 	}
 
 	/**
 	 * Returns automaton that represents "t element X".
+	 * 
+	 * @throws AutomataLibraryException
 	 */
-	private NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processElement(final ApplicationTerm term) {
+	private INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> processElement(final ApplicationTerm term)
+			throws AutomataLibraryException {
 		if (term.getParameters().length != 2) {
 			throw new IllegalArgumentException("Element must have exactly two parameters.");
 		}
@@ -623,7 +553,7 @@ public class MoNatDiffScript extends NoopScript {
 
 		if (variables.size() == 0) {
 			mLogger.info("Construct c element X: " + term);
-			return MoNatDiffAutomatonFactory.constElementAutomaton(mAutomataLibrarayServices, constant,
+			return MSODiffIntAutomatonFactory.constElementAutomaton(mAutomataLibrarayServices, constant,
 					term.getParameters()[1]);
 		}
 
@@ -635,7 +565,7 @@ public class MoNatDiffScript extends NoopScript {
 				throw new IllegalArgumentException("Invalid input.");
 			}
 
-			return MoNatDiffAutomatonFactory.elementAutomaton(mAutomataLibrarayServices, var.getKey(), constant,
+			return MSODiffIntAutomatonFactory.elementAutomaton(mAutomataLibrarayServices, var.getKey(), constant,
 					term.getParameters()[1]);
 		}
 
