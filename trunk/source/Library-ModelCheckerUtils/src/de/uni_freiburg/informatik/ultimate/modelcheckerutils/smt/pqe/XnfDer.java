@@ -50,8 +50,15 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * Destructive equality resolution (DER) for terms in XNF.
+ * <br>
+ * DER transforms terms of the form
+ * <code>∃x. x=t /\ φ(x)</code>
+ * into
+ * <code>φ[x-->t]</code>
+ * where [x-->t] denotes that all occurrences of x have been replaced.
+ * (Applies the dual transformation for universal quantification.)
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
@@ -61,7 +68,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	@Override
 	public String getName() {
-		return "desctructive equality resolution";
+		return "destructive equality resolution";
 	}
 
 	@Override
