@@ -93,7 +93,7 @@ public class InputDetSuccConstruction {
 			if (!(givenNode.getOutgoingEdgeLabel(neighbour) == null)) {
 				if (!SmtUtils.isFalse(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
 					result.add(neighbour);
-				}
+				} 
 			}
 		}
 		return result;
@@ -166,8 +166,11 @@ public class InputDetSuccConstruction {
 		Term result = SmtUtils.and(mScript, monomial, SmtUtils.not(mScript, monomial));
 		for (GuardGraph fromNode : buildingNodes) {
 			for (GuardGraph toNode : successors) {
-				Term eh = SmtUtils.and(mScript, fromNode.getOutgoingEdgeLabel(toNode), monomial);
-				result = SmtUtils.or(mScript, result, eh);
+				if(fromNode.getSuccessors().contains(toNode)) {
+					Term tmp =  fromNode.getOutgoingEdgeLabel(toNode);
+					Term eh = SmtUtils.and(mScript, tmp, monomial);
+					result = SmtUtils.or(mScript, result, eh);
+				}
 			}	
 		}
 		return result;
