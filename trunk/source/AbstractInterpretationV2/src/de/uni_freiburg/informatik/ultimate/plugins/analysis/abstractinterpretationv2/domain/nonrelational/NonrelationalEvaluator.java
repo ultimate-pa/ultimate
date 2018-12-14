@@ -22,7 +22,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -32,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.NAryEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 /**
  * Evaluates Boogie {@link Expressions}s for a given {@link NonrelationalState}.
@@ -40,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class NonrelationalEvaluator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
+public abstract class NonrelationalEvaluator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
 		extends BoogieVisitor {
 	private ExpressionEvaluator<V, STATE> mExpressionEvaluator;
 	private final Map<Expression, ExpressionEvaluator<V, STATE>> mEvaluatorCache;
@@ -48,13 +51,17 @@ public class NonrelationalEvaluator<STATE extends NonrelationalState<STATE, V>, 
 	private final BoogieSymbolTable mSymbolTable;
 	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
 	private boolean mOldScope;
+	private final Map<Expression, Expression> mNormalizedExpressionCache;
+	private final ILogger mLogger;
 
-	public NonrelationalEvaluator(final IEvaluatorFactory<V, STATE> evaluatorFactory,
-			final BoogieSymbolTable boogieSymbolTable, final IBoogieSymbolTableVariableProvider bpl2SmtTable) {
-		mEvaluatorFactory = evaluatorFactory;
+	public NonrelationalEvaluator(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
+			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates, final int maxRecursionDepth) {
+		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
 		mEvaluatorCache = new HashMap<>();
 		mSymbolTable = boogieSymbolTable;
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
+		mNormalizedExpressionCache = new HashMap<>();
+		mLogger = logger;
 	}
 
 	public Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
@@ -85,7 +92,8 @@ public class NonrelationalEvaluator<STATE extends NonrelationalState<STATE, V>, 
 				return rtr;
 			}
 		}
-		return super.processExpression(expr);
+		final Expression newExpr = createNormalizedExpression(expr);
+		return super.processExpression(newExpr);
 	}
 
 	public Evaluator<V, STATE> getRootEvaluator() {
@@ -204,6 +212,50 @@ public class NonrelationalEvaluator<STATE extends NonrelationalState<STATE, V>, 
 		returnVar = mBoogie2SmtSymbolTable.getBoogieConst(expr.getIdentifier());
 		assert returnVar != null;
 		return returnVar;
+	}
+
+	private Expression createNormalizedExpression(final Expression inputExpr) {
+		final Expression rtrExpr = mNormalizedExpressionCache.get(inputExpr);
+		if (rtrExpr != null) {
+			return rtrExpr;
+		}
+		final Expression newExpr = normalizeExpression(inputExpr);
+		if (mLogger.isDebugEnabled() && newExpr != inputExpr) {
+			mLogger.debug(String.format("%sRewrote expression %s to %s", AbsIntPrefInitializer.INDENT,
+					BoogiePrettyPrinter.print(inputExpr), BoogiePrettyPrinter.print(newExpr)));
+		}
+
+		mNormalizedExpressionCache.put(inputExpr, newExpr);
+		return newExpr;
+	}
+
+	/**
+	 * Override this method if you want to apply some sort of normalization.
+	 *
+	 * @param expr
+	 *            The expression that is about to be processed.
+	 * @return The normalized expression or the old expression, if nothing had to be changed.
+	 */
+	protected Expression normalizeExpression(final Expression expr) {
+		assert expr.getType() != null;
+		return expr;
+	}
+
+	/**
+	 * Creates an evaluator factory for evaluators.
+	 *
+	 * @param maxParallelStates
+	 *            The maximum number of allowed parallel states before merging.
+	 * @param maxRecursionDepth
+	 *            The maximum number of recursion allowed during evaluation. The value -1 indicates that <b>no</b> limit
+	 *            should be used.
+	 * @return
+	 */
+	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates,
+			final int maxRecursionDepth);
+
+	protected ILogger getLogger() {
+		return mLogger;
 	}
 
 }

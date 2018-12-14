@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -52,15 +54,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class SignPostOperator implements IAbstractPostOperator<SignDomainState, IcfgEdge> {
 
 	private final RcfgStatementExtractor mStatementExtractor;
-	private final SignDomainStatementProcessor mStatementProcessor;
+	private final NonrelationalStatementProcessor<SignDomainState, SignDomainValue> mStatementProcessor;
 	private final ILogger mLogger;
 
 	/**
 	 * Default constructor.
+	 *
+	 * @param bpl2SmtTable
 	 */
-	protected SignPostOperator(final ILogger logger, final SignDomainStatementProcessor stmtProcessor) {
+	protected SignPostOperator(final ILogger logger, final IBoogieSymbolTableVariableProvider bpl2SmtTable,
+			final SignDomainEvaluator evaluator) {
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = stmtProcessor;
+		mStatementProcessor = new NonrelationalStatementProcessor<>(logger, bpl2SmtTable, evaluator);
 		mLogger = logger;
 	}
 

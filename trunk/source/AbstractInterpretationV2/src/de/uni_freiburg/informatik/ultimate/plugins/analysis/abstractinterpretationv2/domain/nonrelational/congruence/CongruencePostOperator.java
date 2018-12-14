@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 
 /**
  * The post operator of the Congruence domain.
@@ -45,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class CongruencePostOperator extends NonrelationalPostOperator<CongruenceDomainState, CongruenceDomainValue> {
 
 	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final CongruenceDomainStatementProcessor statementProcessor,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
-			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit) {
-		super(logger, symbolTable, bpl2SmtSymbolTable, statementProcessor, maxParallelStates, boogie2Smt,
-				cfgSmtToolkit);
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit, final CongruenceDomainEvaluator evaluator) {
+		super(logger, symbolTable, bpl2SmtSymbolTable,
+				new NonrelationalStatementProcessor<>(logger, bpl2SmtSymbolTable, evaluator), maxParallelStates,
+				boogie2Smt, cfgSmtToolkit);
 	}
 }

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.ExpressionNormalizer;
@@ -43,10 +43,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ExplicitValueStatementProcessor
-		extends NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> {
+public class ExplicitValueEvaluator extends NonrelationalEvaluator<ExplicitValueState, BaseExplicitValueValue> {
 
-	protected ExplicitValueStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
+	protected ExplicitValueEvaluator(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);

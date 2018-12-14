@@ -44,10 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  *
  */
 public class CongruenceDomainPreferences {
-
-	public static final String VALUE_WIDENING = CongruenceMergeOperator.class.getSimpleName();
-	public static final String[] VALUES_WIDENING_OPERATOR = new String[] { VALUE_WIDENING };
-
 	public static final String VALUE_EVALUATOR_DEFAULT = "Congruence Default Evaluator";
 	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Congruence Optimizer Evaluator";
 	public static final String[] VALUES_EVALUATOR_TYPE =
@@ -58,7 +54,6 @@ public class CongruenceDomainPreferences {
 	public static final String LABEL_EVALUATOR_TYPE = "Congruence Evaluator type";
 
 	// DEFAULT VALUES
-	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING;
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
 	public static List<BaseUltimatePreferenceItem> getPreferences() {
@@ -66,9 +61,6 @@ public class CongruenceDomainPreferences {
 
 		final UltimatePreferenceItemContainer congruenceContainer =
 				new UltimatePreferenceItemContainer("Congruence Domain");
-
-		congruenceContainer.addItem(new UltimatePreferenceItem<>(LABEL_Congruence_WIDENING_OPERATOR,
-				DEF_WIDENING_OPERATOR, PreferenceType.Combo, VALUES_WIDENING_OPERATOR));
 
 		congruenceContainer.addItem(new UltimatePreferenceItem<>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
 				PreferenceType.Combo, VALUES_EVALUATOR_TYPE));

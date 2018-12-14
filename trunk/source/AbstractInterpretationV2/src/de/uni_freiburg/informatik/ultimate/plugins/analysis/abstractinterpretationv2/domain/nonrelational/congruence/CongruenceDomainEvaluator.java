@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 
@@ -48,10 +48,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CongruenceDomainStatementProcessor
-		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
+public class CongruenceDomainEvaluator extends NonrelationalEvaluator<CongruenceDomainState, CongruenceDomainValue> {
 
-	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
+	protected CongruenceDomainEvaluator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		super(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);

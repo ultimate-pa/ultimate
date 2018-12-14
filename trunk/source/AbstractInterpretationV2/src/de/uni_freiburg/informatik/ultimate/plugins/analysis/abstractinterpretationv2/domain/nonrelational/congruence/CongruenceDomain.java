@@ -30,7 +30,6 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 
-	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
 	private NonrelationalPostOperator<CongruenceDomainState, CongruenceDomainValue> mPostOperator;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IBoogieSymbolTableVariableProvider mBpl2SmtSymbolTable;
@@ -58,11 +57,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
-		if (mWideningOperator == null) {
-			// Widening is the same as merge, so we don't need an extra operator
-			mWideningOperator = new CongruenceMergeOperator<>();
-		}
-		return mWideningOperator;
+		return (a, b) -> a.union(b);
 	}
 
 	@Override
@@ -72,10 +67,10 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			final int maxRecursionDepth = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_EVALUATION_RECURSION_DETPH);
 			final Boogie2SMT boogie2smt = mRootAnnotation.getBoogie2SMT();
-			final CongruenceDomainStatementProcessor stmtProcessor = new CongruenceDomainStatementProcessor(mLogger,
-					mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
-			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, stmtProcessor, mBpl2SmtSymbolTable,
-					maxParallelStates, boogie2smt, mCfgSmtToolkit);
+			final CongruenceDomainEvaluator evaluator = new CongruenceDomainEvaluator(mLogger, mSymbolTable,
+					mBpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
+			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
+					boogie2smt, mCfgSmtToolkit, evaluator);
 		}
 		return mPostOperator;
 	}

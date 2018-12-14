@@ -83,9 +83,9 @@ public class SignDomain implements IAbstractDomain<SignDomainState, IcfgEdge> {
 		if (mPostOperator == null) {
 			final int maxParallelStates = 2;
 			final int maxRecursionDepth = -1;
-			final SignDomainStatementProcessor stmtProcessor = new SignDomainStatementProcessor(mLogger, mSymbolTable,
-					mIcfgSymbolTable, maxParallelStates, maxRecursionDepth);
-			mPostOperator = new SignPostOperator(mLogger, stmtProcessor);
+			final SignDomainEvaluator evaluator = new SignDomainEvaluator(mLogger, mSymbolTable, mIcfgSymbolTable,
+					maxParallelStates, maxRecursionDepth);
+			mPostOperator = new SignPostOperator(mLogger, mIcfgSymbolTable, evaluator);
 		}
 		return mPostOperator;
 	}

@@ -100,9 +100,10 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			final int maxRecursionDepth = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_EVALUATION_RECURSION_DETPH);
+			final ExplicitValueEvaluator evaluator = new ExplicitValueEvaluator(mLogger, mSymbolTable,
+					mBpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
 			final NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> stmtProc =
-					new ExplicitValueStatementProcessor(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
-							maxRecursionDepth);
+					new NonrelationalStatementProcessor<>(mLogger, mBpl2SmtSymbolTable, evaluator);
 			mPostOperator = new ExplicitValuePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, stmtProc,
 					maxParallelStates, mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
