@@ -239,7 +239,7 @@ public class AffineExpression {
 	 * expression of the form {@code +/- x_1 +/- x_2 + c} where {@code x_1, x_2} are variables and {@code c} is a
 	 * constant.
 	 *
-	 * @return OneVarForm of this affine expression or null.
+	 * @return TwoVarForm of this affine expression or null.
 	 */
 	public TwoVarForm getTwoVarForm() {
 		final int distinctVars = mCoefficients.size();
@@ -476,7 +476,11 @@ public class AffineExpression {
 		public OctValue constant;
 	}
 
-	/** @see AffineExpression#getTwoVarForm() */
+	/**
+	 * Affine expression of the form
+	 * <i>(±var1) + (±var2) + c</i>.
+	 * @see AffineExpression#getTwoVarForm()
+	 */
 	public static class TwoVarForm {
 		public IProgramVarOrConst var1, var2;
 		public boolean negVar2, negVar1;
