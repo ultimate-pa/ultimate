@@ -38,7 +38,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -117,9 +119,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class OctMatrix {
 
-	public static final BiFunction<OctValue, OctValue, Boolean> sRelationEqual = (x, y) -> x.compareTo(y) == 0;
-	public static final BiFunction<OctValue, OctValue, Boolean> sRelationLessThanOrEqual = (x,
-			y) -> x.compareTo(y) <= 0;
+	public static final BiPredicate<OctValue, OctValue> sRelationEqual =
+			(x, y) -> x.compareTo(y) == 0;
+	public static final BiPredicate<OctValue, OctValue> sRelationLessThanOrEqual =
+			(x, y) -> x.compareTo(y) <= 0;
 
 	/**
 	 * Empty octagon that stores constraints over the empty set of variables.
@@ -220,7 +223,7 @@ public class OctMatrix {
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		m = m.trim();
 		final String[] entries = m.length() > 0 ? m.split("\\s+") : new String[0];
-		final int matrixRows = (int) Math.sqrt(1 + 2 * entries.length) - 1;
+		final int matrixRows = (int) Math.sqrt(1.0 + 2 * entries.length) - 1;
 		if (matrixRows % 2 != 0) {
 			throw new IllegalArgumentException(
 					"Number of entries does not match any 2x2 block lower triangular matrix.");
@@ -268,7 +271,7 @@ public class OctMatrix {
 				} else if (Math.random() < infProbability) {
 					v = OctValue.INFINITY;
 				} else {
-					v = new OctValue((int) (Math.random() * 20 - 10));
+					v = new OctValue(ThreadLocalRandom.current().nextInt(-10, 10));
 				}
 				m.set(row, col, v);
 			}
@@ -377,7 +380,6 @@ public class OctMatrix {
 	 */
 	public void setMin(final int row, final int col, final OctValue newValue) {
 		assert newValue != null : "null is not a valid matrix entry.";
-		mStrongClosure = mTightClosure = null;
 		final int index = indexOf(row, col);
 		if (newValue.compareTo(mEntries[index]) < 0) {
 			mEntries[index] = newValue;
@@ -396,7 +398,9 @@ public class OctMatrix {
 	 */
 	private boolean minimizeDiagonal() {
 		for (int i = 0; i < mSize; ++i) {
-			minimizeDiagonalEntries(i);
+			if (minimizeDiagonalEntry(i)) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -406,15 +410,18 @@ public class OctMatrix {
 	 *
 	 * @param rowCol
 	 *            Row (= column) of the diagonal entry
+	 * @return The diagonal entry was negative.
 	 */
-	private void minimizeDiagonalEntries(final int rowCol) {
+	private boolean minimizeDiagonalEntry(final int rowCol) {
 		final int idx = indexOfLower(rowCol, rowCol);
 		final int sig = mEntries[idx].signum();
 		if (sig > 0) {
 			mEntries[idx] = OctValue.ZERO;
-			// no need to reset cached closures -- diagonal is always minimized
-			// on closure computation
+			// no need to reset cached closures
+			// diagonal is always minimized on closure computation
+			return false;
 		}
+		return sig < 0;
 	}
 
 	/**
@@ -484,17 +491,17 @@ public class OctMatrix {
 	 *            Elementwise relation to be checked
 	 * @return All pairs of corresponding entries were in the relation
 	 */
-	public boolean elementwiseRelation(final OctMatrix other, final BiFunction<OctValue, OctValue, Boolean> relation) {
+	public boolean elementwiseRelation(final OctMatrix other, final BiPredicate<OctValue, OctValue> relation) {
 		checkCompatibility(other);
 		for (int i = 0; i < mEntries.length; ++i) {
-			if (!relation.apply(mEntries[i], other.mEntries[i])) {
+			if (!relation.test(mEntries[i], other.mEntries[i])) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public boolean elementwiseRelation(final OctMatrix other, final BiFunction<OctValue, OctValue, Boolean> relation,
+	public boolean elementwiseRelation(final OctMatrix other, final BiPredicate<OctValue, OctValue> relation,
 			final int[] mapThisVarIndexToPermVarIndex) {
 		if (mapThisVarIndexToPermVarIndex == null) {
 			return elementwiseRelation(other, relation);
@@ -534,14 +541,14 @@ public class OctMatrix {
 	 *         in the relation
 	 */
 	public boolean blockwiseRelation(int bRow, int bCol, final OctMatrix other, int otherBRow, int otherBCol,
-			final BiFunction<OctValue, OctValue, Boolean> relation) {
+			final BiPredicate<OctValue, OctValue> relation) {
 		bRow *= 2;
 		bCol *= 2;
 		otherBRow *= 2;
 		otherBCol *= 2;
 		for (int j = 0; j < 2; ++j) {
 			for (int i = 0; i < 2; ++i) {
-				if (!relation.apply(get(bRow + i, bCol + j), other.get(otherBRow + i, otherBCol + j))) {
+				if (!relation.test(get(bRow + i, bCol + j), other.get(otherBRow + i, otherBCol + j))) {
 					return false;
 				}
 			}
@@ -646,9 +653,15 @@ public class OctMatrix {
 	 * @return Element-wise minimum
 	 */
 	public static OctMatrix max(final OctMatrix m, final OctMatrix n) {
-		return m.elementwiseOperation(n, OctValue::max);
-		// TODO set cached closure of result: a and b are closed ==> max(a,b)
-		// are closed
+		OctMatrix result = m.elementwiseOperation(n, OctValue::max);
+		// a and b are closed ==> max(a,b) is closed
+		if (m.mStrongClosure != null && n.mStrongClosure != null) {
+			result.mStrongClosure = result;
+		}
+		if (m.mTightClosure != null && n.mTightClosure != null) {
+			result.mTightClosure = result;
+		}
+		return result;
 	}
 
 	/**
@@ -1458,9 +1471,8 @@ public class OctMatrix {
 			final Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
 			assert prevValue == null : "Selection contained duplicate: " + sourceVar;
 		}
-		m.copySelection(source, mapTargetVarToSourceVar); // TODO use
-															// skipVarsLessThan
-															// parameter
+		// TODO use skipVarsLessThan parameter
+		m.copySelection(source, mapTargetVarToSourceVar);
 		return m;
 	}
 
@@ -1510,8 +1522,8 @@ public class OctMatrix {
 		final int s21 = s2 + 1;
 
 		// "x == y" cannot be detected when imprecise "x + x <= 4" is copied
-		minimizeDiagonalEntries(s2);
-		minimizeDiagonalEntries(s2 + 1);
+		minimizeDiagonalEntry(s2);
+		minimizeDiagonalEntry(s2 + 1);
 
 		// copy (block lower) block-row (including diagonal block)
 		final int length = Math.min(s2, t2) + 2;
