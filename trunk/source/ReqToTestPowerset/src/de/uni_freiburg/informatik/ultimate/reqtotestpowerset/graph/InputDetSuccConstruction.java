@@ -20,8 +20,11 @@ public class InputDetSuccConstruction {
 	private Set<GuardGraph> mSeenNodes;
 	private LinkedList<GuardGraph> mQueue;
 	private final Set<Term> mMonomials;
+	private final Set<Term> mOutputVars;
 	private final Sort mSort;
-	private Set<GuardGraph> mAutStates;	
+	private Set<GuardGraph> mAutStates;
+	private Term mTrue;
+	private Term mFalse;
 	
 	public InputDetSuccConstruction(ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
 		mLogger = logger;
@@ -31,8 +34,29 @@ public class InputDetSuccConstruction {
 		mAutStates = new HashSet<>();
 		mSort = mScript.sort("Bool");
 		mMonomials = createMonomials(symboltable);
-
+		mOutputVars = getOutputVariables(symboltable.getOutputVars());
+		makeTrueAndFalse();
 		mGuardGraph = constructInputDetSuccAutomaton(powersetAuto);
+	}
+	
+	private void makeTrueAndFalse() {
+		for (Term t : mMonomials) {
+			Term nt = SmtUtils.not(mScript, t);
+			mFalse = SmtUtils.and(mScript, t, nt);
+			mTrue = SmtUtils.or(mScript, t, nt);
+			break;
+		}
+	}
+	
+	private Set<Term> getOutputVariables(Set<String> inputVars) {
+		Set<Term> result = new HashSet<>();
+		for (String varname : inputVars) {
+			Term a = mScript.variable(varname, mSort);
+			Term na = SmtUtils.not(mScript, a);
+			result.add(a);
+			result.add(na);
+		}
+		return result;
 	}
 	
 	// inputvar I : {Term I, Term notI}
@@ -163,15 +187,100 @@ public class InputDetSuccConstruction {
 	}
 	
 	private Term getNewEdgeLabel(Set<GuardGraph> buildingNodes, Set<GuardGraph> successors, Term monomial) {
-		Term result = SmtUtils.and(mScript, monomial, SmtUtils.not(mScript, monomial));
+		// hack to create a false term for the later disjunction
+		LinkedList<Term> termsOfDisjunction = new LinkedList<>();
 		for (GuardGraph fromNode : buildingNodes) {
 			for (GuardGraph toNode : successors) {
 				if(fromNode.getSuccessors().contains(toNode)) {
-					Term tmp =  fromNode.getOutgoingEdgeLabel(toNode);
-					Term eh = SmtUtils.and(mScript, tmp, monomial);
-					result = SmtUtils.or(mScript, result, eh);
+					Term oldLabelToSuccessor =  fromNode.getOutgoingEdgeLabel(toNode);
+					Term newLabelToSuccessor = SmtUtils.and(mScript, oldLabelToSuccessor, monomial);
+					termsOfDisjunction.add(newLabelToSuccessor);
 				}
-			}	
+			}
+		}
+		return makeDisj(outputTester(termsOfDisjunction));
+	}
+	
+	/***
+	 * Method test if any one output variable is present in each disjunction term
+	 * Method removes output variables from disjunction terms if said output variable is not present in all the disjunction terms
+	 * 
+	 * @param disjTermToBeTested
+	 * Term may or may not contain Output variables
+	 * @return testedTerm
+	 * Term contains the same output variable in all its disjuncs or none at all 
+	 */
+	private LinkedList<Term> outputTester(LinkedList<Term> termsToTest) {
+		LinkedList<Term> localList = new LinkedList<>(termsToTest);
+		Set<Term> oVarHelper = findOutputVars(termsToTest);
+		
+		if ( oVarHelper.size() == 0 ) {
+			return termsToTest;
+		} else {
+			for ( Term ov : oVarHelper ) {
+				if ( testTermsContainOVar(localList, ov) ) {
+					continue;
+				} else {
+					localList = removeOVar(localList, ov);
+				}
+			}
+			return localList;
+		}
+	}
+
+	private LinkedList<Term> removeOVar(LinkedList<Term> localList, Term ov) {
+		LinkedList<Term> helperList = new LinkedList<>();
+		for ( Term t : localList ) {
+			helperList.add(remakeTerm(t, ov));
+		}
+		return helperList;
+	}
+
+	private boolean testTermsContainOVar(LinkedList<Term> disjTerms, Term ov) {
+		boolean disjFlag = true;
+		
+		for (Term disjTerm : disjTerms) {
+			boolean disjTermFlag = false;
+			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
+				if (element.equals(ov)) {
+					disjTermFlag = disjTermFlag | true;
+				}
+			}
+			disjFlag = disjFlag & disjTermFlag;
+		}
+		return disjFlag;
+	}
+
+	// TODO this will not work if termToRemake is not a conjunction...I think
+	private Term remakeTerm(Term termToRemake, Term oVar) {
+		Term result = mTrue;
+		for (Term element : SmtUtils.getConjuncts(termToRemake)) {
+			if (!element.equals(oVar)) {
+				result = SmtUtils.and(mScript, result, element);
+			}
+		}
+		return result;
+	}
+
+	private Set<Term> findOutputVars(LinkedList<Term> termsToTest) {
+		Set<Term> result = new HashSet<>();
+		for (Term element : termsToTest) {
+			// find terms which are output variables
+			for (Term x : element.getFreeVars()) {
+				for (Term o : mOutputVars) {
+					if(x.equals(o)) {
+						result.add(x);
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	private Term makeDisj(LinkedList<Term> terms) {
+		Term result = mFalse;
+		for ( Term t : terms ) {
+			result = SmtUtils.or(mScript, result, t);
 		}
 		return result;
 	}

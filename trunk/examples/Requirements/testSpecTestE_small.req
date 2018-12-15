@@ -1,9 +1,8 @@
 Input I is bool
 Internal S is bool 
-Internal B is bool
 Output O is bool
+Output Q is bool
 
 
 req1: Globally, it is always the case that if "I" holds then "S" holds after at most 10 time units.
-req2: Globally, it is always the case that if "B" holds then "O" holds after at most 12 time units.
-req4: Globally, it is always the case that if "S" holds then "B" holds after at most 12 time units.
+req4: Globally, it is always the case that if "S" holds then "O" holds after at most 12 time units.
