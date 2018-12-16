@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -55,9 +56,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -66,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
@@ -94,19 +98,25 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final Boogie2SMT mBoogie2Smt;
 	private final CallInfoCache mCallInfoCache;
 	private AbsIntBenchmark<IcfgEdge> mAbsIntBenchmark = null;
+	private final MappedTerm2Expression mMappedTerm2Expression;
+	private final NonrelationalEvaluator<STATE, V> mEvaluator;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable,
-			final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
-			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolki) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates,
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit,
+			final NonrelationalEvaluator<STATE, V> evaluator) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mBoogie2SmtSymbolTable = bpl2SmtSymbolTable;
-		mStatementProcessor = statementProcessor;
+		mStatementProcessor =
+				new NonrelationalStatementProcessor<>(logger, boogie2Smt.getBoogie2SmtSymbolTable(), evaluator);
+		mEvaluator = evaluator;
 		mSymbolTable = symbolTable;
 		mParallelStates = parallelStates;
 		mBoogie2Smt = boogie2Smt;
-		mCallInfoCache = new CallInfoCache(cfgSmtToolki, symbolTable);
+		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
+		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
+				mBoogie2Smt.getBoogie2SmtSymbolTable(), mBoogie2Smt.getManagedScript());
 	}
 
 	@Override
@@ -156,6 +166,42 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			throw new UnsupportedOperationException(
 					"Nonrelational domains do not support context switches other than Call and Return (yet)");
 		}
+	}
+
+	private Expression getExpression(final Term term) {
+		// TODO: Does this work correctly for created aux-vars?
+		return mMappedTerm2Expression.translate(term, Collections.emptySet(), Collections.emptyMap());
+	}
+
+	// TODO: Use in interface?
+	public EvalResult evaluate(final STATE state, final Term term) {
+		final Collection<IEvaluationResult<V>> tmpResults = mEvaluator.evaluate(state, getExpression(term));
+		boolean allTrue = true;
+		boolean allFalse = true;
+		for (final IEvaluationResult<V> r : tmpResults) {
+			switch (r.getBooleanValue()) {
+			case BOTTOM:
+			case FALSE:
+				allTrue = false;
+				break;
+			case TOP:
+				allTrue = false;
+				allFalse = false;
+				break;
+			case TRUE:
+				allFalse = false;
+				break;
+			default:
+				break;
+			}
+		}
+		if (allTrue) {
+			return EvalResult.TRUE;
+		}
+		if (allFalse) {
+			return EvalResult.FALSE;
+		}
+		return EvalResult.UNKNOWN;
 	}
 
 	/**

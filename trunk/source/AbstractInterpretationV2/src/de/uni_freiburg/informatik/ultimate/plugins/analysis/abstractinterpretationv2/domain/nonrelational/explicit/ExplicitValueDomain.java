@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
@@ -102,10 +101,8 @@ public class ExplicitValueDomain implements IAbstractDomain<ExplicitValueState, 
 			final int maxRecursionDepth = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_EVALUATION_RECURSION_DETPH);
 			final ExplicitValueEvaluator evaluator = new ExplicitValueEvaluator(mLogger, mSymbolTable,
 					mBpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);
-			final NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> stmtProc =
-					new NonrelationalStatementProcessor<>(mLogger, mBpl2SmtSymbolTable, evaluator);
-			mPostOperator = new ExplicitValuePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, stmtProc,
-					maxParallelStates, mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
+			mPostOperator = new ExplicitValuePostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
+					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit, evaluator);
 		}
 		return mPostOperator;
 	}

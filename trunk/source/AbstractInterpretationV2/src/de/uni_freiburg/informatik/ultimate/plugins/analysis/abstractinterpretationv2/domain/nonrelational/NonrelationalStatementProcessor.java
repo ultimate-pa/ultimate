@@ -241,7 +241,7 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 
 	private List<STATE> handleSingleAssignment(final IProgramVarOrConst lhsVar, final Expression rhs,
 			final STATE oldstate) {
-		final Collection<IEvaluationResult<V>> results = evaluate(oldstate, rhs);
+		final Collection<IEvaluationResult<V>> results = mEvaluator.evaluate(oldstate, rhs);
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
@@ -293,7 +293,7 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 			return;
 		}
 
-		final Collection<IEvaluationResult<V>> results = evaluate(mOldState, formula);
+		final Collection<IEvaluationResult<V>> results = mEvaluator.evaluate(mOldState, formula);
 
 		for (final IEvaluationResult<V> res : results) {
 			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
@@ -356,9 +356,5 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 		}
 		assert rtr != null : "Could not find boogie var";
 		return rtr;
-	}
-
-	protected Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
-		return mEvaluator.evaluate(state, expr);
 	}
 }

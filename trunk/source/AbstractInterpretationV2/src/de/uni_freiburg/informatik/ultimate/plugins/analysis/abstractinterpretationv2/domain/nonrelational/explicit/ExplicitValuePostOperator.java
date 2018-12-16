@@ -31,16 +31,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 
 public class ExplicitValuePostOperator extends NonrelationalPostOperator<ExplicitValueState, BaseExplicitValueValue> {
-
 	protected ExplicitValuePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable,
-			final NonrelationalStatementProcessor<ExplicitValueState, BaseExplicitValueValue> statementProcessor,
-			final int parallelStates, final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolki) {
-		super(logger, symbolTable, bpl2SmtSymbolTable, statementProcessor, parallelStates, boogie2Smt, cfgSmtToolki);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates, final Boogie2SMT boogie2Smt,
+			final CfgSmtToolkit cfgSmtToolkit, final NonrelationalEvaluator<ExplicitValueState, BaseExplicitValueValue> evaluator) {
+		super(logger, symbolTable, bpl2SmtSymbolTable, parallelStates, boogie2Smt, cfgSmtToolkit, evaluator);
 	}
-
 }
