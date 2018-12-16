@@ -55,13 +55,14 @@ public abstract class NonrelationalEvaluator<STATE extends NonrelationalState<ST
 	private final ILogger mLogger;
 
 	public NonrelationalEvaluator(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates, final int maxRecursionDepth) {
-		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
+			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates,
+			final int maxRecursionDepth) {
 		mEvaluatorCache = new HashMap<>();
-		mSymbolTable = boogieSymbolTable;
-		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mNormalizedExpressionCache = new HashMap<>();
 		mLogger = logger;
+		mSymbolTable = boogieSymbolTable;
+		mBoogie2SmtSymbolTable = bpl2SmtTable;
+		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
 	}
 
 	public Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
