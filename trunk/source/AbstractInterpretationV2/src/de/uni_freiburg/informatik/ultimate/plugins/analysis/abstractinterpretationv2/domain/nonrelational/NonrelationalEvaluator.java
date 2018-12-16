@@ -65,7 +65,7 @@ public abstract class NonrelationalEvaluator<STATE extends NonrelationalState<ST
 		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates, maxRecursionDepth);
 	}
 
-	public Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
+	public Evaluator<V, STATE> createEvaluator(final Expression expr) {
 		mExpressionEvaluator = mEvaluatorCache.get(expr);
 		if (mExpressionEvaluator == null) {
 			mExpressionEvaluator = new ExpressionEvaluator<>();
@@ -74,7 +74,11 @@ public abstract class NonrelationalEvaluator<STATE extends NonrelationalState<ST
 			assert mExpressionEvaluator.getRootEvaluator() != null : "There is no root evaluator";
 			mEvaluatorCache.put(expr, mExpressionEvaluator);
 		}
-		return getRootEvaluator().evaluate(state, 0);
+		return mExpressionEvaluator.getRootEvaluator();
+	}
+
+	public Collection<IEvaluationResult<V>> evaluate(final STATE state, final Expression expr) {
+		return createEvaluator(expr).evaluate(state, 0);
 	}
 
 	@Override
@@ -95,10 +99,6 @@ public abstract class NonrelationalEvaluator<STATE extends NonrelationalState<ST
 		}
 		final Expression newExpr = createNormalizedExpression(expr);
 		return super.processExpression(newExpr);
-	}
-
-	public Evaluator<V, STATE> getRootEvaluator() {
-		return mExpressionEvaluator.getRootEvaluator();
 	}
 
 	@Override

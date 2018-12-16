@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.Evaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
@@ -260,10 +261,9 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 		}
 
 		if (mAbsIntBenchmark != null) {
-			mAbsIntBenchmark
-					.recordEvaluationRecursionDepth(mEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
-			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
-					mEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
+			final Evaluator<V, STATE> evaluator = mEvaluator.createEvaluator(rhs);
+			mAbsIntBenchmark.recordEvaluationRecursionDepth(evaluator.getEvaluationRecursionDepth());
+			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(evaluator.getInverseEvaluationRecursionDepth());
 		}
 
 		return newStates;
@@ -293,6 +293,7 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 			return;
 		}
 
+		final Evaluator<V, STATE> evaluator = mEvaluator.createEvaluator(formula);
 		final Collection<IEvaluationResult<V>> results = mEvaluator.evaluate(mOldState, formula);
 
 		for (final IEvaluationResult<V> res : results) {
@@ -304,7 +305,7 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 			} else {
 				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
 				// states. Otherwise, the return state will be bottom.
-				final Collection<STATE> resultStates = mEvaluator.getRootEvaluator().inverseEvaluate(
+				final Collection<STATE> resultStates = evaluator.inverseEvaluate(
 						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState, 0);
 				mReturnState.addAll(
 						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
@@ -312,10 +313,8 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 		}
 
 		if (mAbsIntBenchmark != null) {
-			mAbsIntBenchmark
-					.recordEvaluationRecursionDepth(mEvaluator.getRootEvaluator().getEvaluationRecursionDepth());
-			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(
-					mEvaluator.getRootEvaluator().getInverseEvaluationRecursionDepth());
+			mAbsIntBenchmark.recordEvaluationRecursionDepth(evaluator.getEvaluationRecursionDepth());
+			mAbsIntBenchmark.recordInverseEvaluationRecursionDepth(evaluator.getInverseEvaluationRecursionDepth());
 		}
 	}
 
