@@ -269,7 +269,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		if (rtr) {
 			return true;
 		}
-		mLogger.fatal("Post is unsound because the term-transformation of the following triple is not valid: {");
+		mLogger.fatal("Post is unsound because the term-transformation of the following triple is not valid: ");
 		mLogger.fatal("PreBL : " + preState.toLogString());
 		mLogger.fatal("PreH  : " + hierachicalPreState.toLogString());
 		if (preState != preStateWithFreshVariables) {
