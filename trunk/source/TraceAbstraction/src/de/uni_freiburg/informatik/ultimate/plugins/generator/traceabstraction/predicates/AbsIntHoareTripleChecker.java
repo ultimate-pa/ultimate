@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.DebuggingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -586,13 +587,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		} else {
 			precondHier = createPredicateFromState(validPreLinState);
 		}
-
-		final Validity checkedResult = assertIsPostSound(precond, precondHier, transition, postcond);
-		if (checkedResult == result) {
-			mLogger.debug("HTC assert ok");
-			return true;
+		final Validity checkedResult;
+		mHtcSmt.releaseLock();
+		final DebuggingHoareTripleChecker checkHtc =
+				new DebuggingHoareTripleChecker(mServices, mLogger, mCsToolkit, result);
+		if (transition instanceof ICallAction) {
+			checkedResult = checkHtc.checkCall(precond, (ICallAction) transition, postcond);
+		} else if (transition instanceof IReturnAction) {
+			checkedResult = checkHtc.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
+		} else {
+			checkedResult = checkHtc.checkInternal(precond, (IInternalAction) transition, postcond);
 		}
-		if (result == Validity.UNKNOWN || result == Validity.NOT_CHECKED) {
+		checkHtc.releaseLock();
+
+		if (checkHtc.isLastOk()) {
 			mLogger.debug("HTC assert ok");
 			return true;
 		}
@@ -612,35 +620,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		}
 		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
 		mLogger.fatal(getMsgPost(succ));
-
-		mLogger.fatal("Failing Hoare triple:");
-		if (precondHier == null) {
-			mLogger.fatal("Pre: {" + precond.getFormula() + "}");
-		} else {
-			mLogger.fatal(getMsgPreBefore(precond.getFormula()));
-			mLogger.fatal(getMsgPreAfter(precondHier.getFormula()));
-		}
-		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
-		mLogger.fatal(getMsgPost(postcond.getFormula()));
-
-		mLogger.fatal("Simplified:");
-		final String simplePre = SmtUtils
-				.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
-		if (precondHier == null) {
-			mLogger.fatal("Pre: {" + simplePre + "}");
-		} else {
-			mLogger.fatal(getMsgPreBefore(simplePre));
-			mLogger.fatal(getMsgPreAfter(
-					SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
-							.toStringDirect()));
-		}
-		mLogger.fatal(
-				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
-		mLogger.fatal(
-				getMsgPost(SmtUtils.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique)
-						.toStringDirect()));
 		return false;
-
 	}
 
 	private static String getMsgPreBefore(final Object preState) {
@@ -653,20 +633,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 	private static String getMsgPost(final Object succ) {
 		return "Post: {" + succ + "}";
-	}
-
-	private Validity assertIsPostSound(final IPredicate precond, final IPredicate precondHier, final ACTION transition,
-			final IPredicate postcond) {
-		final Validity result;
-		if (transition instanceof ICallAction) {
-			result = mHtcSmt.checkCall(precond, (ICallAction) transition, postcond);
-		} else if (transition instanceof IReturnAction) {
-			result = mHtcSmt.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
-		} else {
-			result = mHtcSmt.checkInternal(precond, (IInternalAction) transition, postcond);
-		}
-		mHtcSmt.releaseLock();
-		return result;
 	}
 
 	private boolean assertIsSubsetOf(final DisjunctiveAbstractState<STATE> leftState,

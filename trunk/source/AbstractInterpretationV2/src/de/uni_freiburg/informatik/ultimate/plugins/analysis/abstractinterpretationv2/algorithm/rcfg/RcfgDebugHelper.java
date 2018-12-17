@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -15,11 +14,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.DebuggingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -39,8 +36,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends IAction, VARDECL, LOCATION>
 		implements IDebugHelper<STATE, ACTION, VARDECL, LOCATION> {
 
-	private static final boolean SIMPLIFY_IF_ASSERTION_FAILS = false;
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IHoareTripleChecker mHTC;
@@ -55,7 +50,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 		mSymbolTable = symbolTable;
 		mMgdScript = csToolkit.getManagedScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mHTC = new IncrementalHoareTripleChecker(csToolkit, false);
+		mHTC = new DebuggingHoareTripleChecker(mServices, mLogger, csToolkit, Validity.VALID);
 	}
 
 	@Override
@@ -86,61 +81,9 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 			} else {
 				result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 			}
-
-			logUnsoundness(transition, precond, postcond, precondHier, result);
 			return result != Validity.INVALID;
 		} finally {
 			mHTC.releaseLock();
-		}
-	}
-
-	private void logUnsoundness(final ACTION transition, final IPredicate precond, final IPredicate postcond,
-			final IPredicate precondHier, final Validity validity) {
-		final Consumer<Object> log;
-		if (validity == Validity.INVALID) {
-			log = mLogger::fatal;
-		} else if (validity == Validity.UNKNOWN) {
-			log = mLogger::warn;
-		} else {
-			return;
-		}
-		log.accept("Soundness check failed for the following triple (with result " + validity + "):");
-
-		if (precondHier == null) {
-			log.accept("Pre: {" + precond + "}");
-		} else {
-			log.accept("Pre: {" + precond + "}");
-			log.accept("PreHier: {" + precondHier + "}");
-		}
-		log.accept(getTransformulaDebugString(transition) + " (" + transition + ")");
-		log.accept("Post: {" + postcond + "}");
-
-		if (SIMPLIFY_IF_ASSERTION_FAILS) {
-			log.accept("Simplified triple ");
-			final Term simplifiedPrecond = SmtUtils.simplify(mMgdScript, precond.getFormula(), mServices,
-					SimplificationTechnique.SIMPLIFY_DDA);
-			if (precondHier == null) {
-				log.accept("Pre: {" + simplifiedPrecond + "}");
-			} else {
-				log.accept("Pre: {" + simplifiedPrecond + "}");
-				log.accept("PreHier: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices,
-						SimplificationTechnique.SIMPLIFY_DDA) + "}");
-			}
-			log.accept(getTransformulaDebugString(transition) + " (" + transition + ")");
-			log.accept("Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices,
-					SimplificationTechnique.SIMPLIFY_DDA) + "}");
-		}
-	}
-
-	private String getTransformulaDebugString(final ACTION action) {
-		if (action instanceof IInternalAction) {
-			return ((IInternalAction) action).getTransformula().getFormula().toStringDirect();
-		} else if (action instanceof ICallAction) {
-			return ((ICallAction) action).getLocalVarsAssignment().getFormula().toStringDirect();
-		} else if (action instanceof IReturnAction) {
-			return ((IReturnAction) action).getAssignmentOfReturn().getFormula().toStringDirect();
-		} else {
-			throw new UnsupportedOperationException("Cannot find transformula in " + action);
 		}
 	}
 
