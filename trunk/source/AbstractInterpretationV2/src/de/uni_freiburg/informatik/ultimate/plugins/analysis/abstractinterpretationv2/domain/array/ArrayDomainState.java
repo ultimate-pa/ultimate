@@ -801,19 +801,13 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				values.add(1, values.get(0));
 				continue;
 			}
-			final Term firstConstraint = SmtUtils.less(script, rep, bounds.get(0));
-			if (mSubState.evaluate(script, firstConstraint) == EvalResult.TRUE) {
-				bounds.add(1, rep);
-				values.add(1, values.get(0));
-				continue;
-			}
 			boolean added = false;
 			for (int i = 1; i < bounds.size() - 2; i++) {
 				final Term prev = bounds.get(i);
 				final Term next = bounds.get(i + 1);
 				final Term constraint =
 						Util.and(script, SmtUtils.leq(script, prev, rep), SmtUtils.less(script, rep, next));
-				if (mSubState.evaluate(script, constraint) == EvalResult.TRUE) {
+				if (isTrueInSubstate(constraint)) {
 					bounds.add(i + 1, rep);
 					values.add(i + 1, values.get(i));
 					added = true;
@@ -821,8 +815,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 			}
 			if (!added) {
-				final Term lastConstraint = SmtUtils.less(script, bounds.get(bounds.size() - 2), rep);
-				if (mSubState.evaluate(script, lastConstraint) == EvalResult.TRUE) {
+				if (isTrueInSubstate(SmtUtils.less(script, bounds.get(bounds.size() - 2), rep))) {
 					bounds.add(bounds.size() - 1, rep);
 					values.add(values.get(values.size() - 1));
 				}
@@ -1111,10 +1104,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	@Override
 	public EvalResult evaluate(final Script script, final Term term) {
-		// TODO: Implement (low priority, should be never called)
-		// Idea: Replace all select-terms by fresh aux-vars that are added to boundState and valueState
-		// and evaluate on these states
-		return EvalResult.UNKNOWN;
+		// TODO: Make it more precise for arrays (if needed)
+		return mSubState.evaluate(script, term);
 	}
 
 	public ArrayDomainState<STATE> updateState(final STATE newSubState, final SegmentationMap newSegmentationMap) {
@@ -1146,8 +1137,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Script script = mToolkit.getScript();
 		for (int i = 1; i < segmentation.size(); i++) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			final Term term = SmtUtils.leq(script, bound, index);
-			if (mSubState.evaluate(script, term) != EvalResult.TRUE) {
+			if (!isTrueInSubstate(SmtUtils.leq(script, bound, index))) {
 				min = i - 1;
 				break;
 			}
@@ -1155,8 +1145,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		int max = min + 1;
 		for (int i = segmentation.size() - 1; i > min; i--) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			final Term term = SmtUtils.less(script, index, bound);
-			if (mSubState.evaluate(script, term) != EvalResult.TRUE) {
+			if (!isTrueInSubstate(SmtUtils.less(script, index, bound))) {
 				max = i + 1;
 				break;
 			}
@@ -1209,7 +1198,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final TermVariable currentBound = segmentation.getBound(i).getTermVariable();
 				final TermVariable nextBound = segmentation.getBound(i + 1).getTermVariable();
 				final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
-				if (mSubState.evaluate(script, boundEquality) == EvalResult.TRUE) {
+				if (i + 1 < segmentation.size() && isTrueInSubstate(boundEquality)) {
 					continue;
 				}
 				final IProgramVar currentValue = segmentation.getValue(i);
@@ -1265,6 +1254,12 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		old2newVars2.put(v2, aux1);
 		final STATE renamedState2 = mSubState.renameVariables(old2newVars2);
 		return renamedState1.isEqualTo(renamedState2);
+	}
+
+	private boolean isTrueInSubstate(final Term constraint) {
+		final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
+		final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
+		return afterNegation.isBottom();
 	}
 
 	public ArrayDomainState<STATE> simplify() {
