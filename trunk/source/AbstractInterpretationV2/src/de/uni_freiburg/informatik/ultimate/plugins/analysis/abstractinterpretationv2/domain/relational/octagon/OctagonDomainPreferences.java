@@ -53,7 +53,7 @@ public class OctagonDomainPreferences {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	public static final String LOG_STRING_FORMAT = "Log string format";
-	public static final LogMessageFormatting LOG_STRING_FORMAT_DEFAULT = LogMessageFormatting.HALF_MATRIX;
+	public static final LogMessageFormatting LOG_STRING_FORMAT_DEFAULT = LogMessageFormatting.TERM;
 
 	public static final String WIDENING_OPERATOR = "Octagon widening operator";
 	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.LITERAL;
@@ -76,8 +76,8 @@ public class OctagonDomainPreferences {
 		octagonContainer.addItem(new UltimatePreferenceItem<>(LOG_STRING_FORMAT, LOG_STRING_FORMAT_DEFAULT,
 				PreferenceType.Combo, LogMessageFormatting.values()));
 
-		octagonContainer.addItem(new UltimatePreferenceItem<>(WIDENING_OPERATOR,
-				WIDENING_OPERATOR_DEFAULT, PreferenceType.Combo, WideningOperator.values()));
+		octagonContainer.addItem(new UltimatePreferenceItem<>(WIDENING_OPERATOR, WIDENING_OPERATOR_DEFAULT,
+				PreferenceType.Combo, WideningOperator.values()));
 		octagonContainer.addItem(new UltimatePreferenceItem<>(EXP_WIDENING_THRESHOLD,
 				EXP_WIDENING_THRESHOLD_DEFAULT_VALUE, EXP_WIDENING_THRESHOLD_TOOLTIP, PreferenceType.String));
 
