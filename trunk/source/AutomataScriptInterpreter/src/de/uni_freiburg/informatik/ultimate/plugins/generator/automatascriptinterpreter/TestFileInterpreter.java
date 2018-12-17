@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * This is the main class for interpreting automata script test files. It fulfills the following tasks: - Interpreting
@@ -1201,7 +1202,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (classIsAbstract(clazz)) {
 			return false;
 		}
-		if (!classImplementsIOperationInterface(clazz)) {
+
+		if (!ReflectionUtil.classImplementsInterface(clazz, IOperation.class)) {
 			return false;
 		}
 
@@ -1251,29 +1253,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 	private static boolean classIsAbstract(final Class<?> clazz) {
 		return Modifier.isAbstract(clazz.getModifiers());
-	}
-
-	/**
-	 * Checks if the given class object implements the IOperation interface.
-	 * <p>
-	 * The check also checks whether a superclass implements the interface.
-	 *
-	 * @param clazzIn
-	 *            the class object to check
-	 * @return true if and only if the class object c implements the IOperation interface. Otherwise false.
-	 */
-	private static boolean classImplementsIOperationInterface(final Class<?> clazzIn) {
-		Class<?> clazz = clazzIn;
-		do {
-			final Class<?>[] implementedInterfaces = clazz.getInterfaces();
-			for (final Class<?> interFace : implementedInterfaces) {
-				if (interFace.equals(IOperation.class)) {
-					// class implements IOperation in a transitive chain
-					return true;
-				}
-			}
-		} while ((clazz = clazz.getSuperclass()) != null);
-		return false;
 	}
 
 	/**
