@@ -644,6 +644,7 @@
 				<module>../Library-AutomataTest</module>
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-MSOTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -740,6 +741,7 @@
 				<module>../Library-AutomataTest</module>
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-MSOTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -816,6 +818,7 @@
 				<module>../Library-AutomataTest</module>
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-MSOTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -824,6 +827,7 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
+				
 
 				<!-- UltimateRegressionTest contains system tests that are relatively 
 					fast -->

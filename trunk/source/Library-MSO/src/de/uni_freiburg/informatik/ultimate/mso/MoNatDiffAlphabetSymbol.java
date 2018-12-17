@@ -79,7 +79,7 @@ public class MoNatDiffAlphabetSymbol {
 	 */
 	public void add(final Term term, final boolean value) {
 		if (!MoNatDiffUtils.isVariable(term)) {
-			throw new InvalidParameterException("Input term must be an Int or SetOfInt variable.");
+			throw new IllegalArgumentException("Input term must be an Int or SetOfInt variable.");
 		}
 
 		mMap.put(term, value);
@@ -126,5 +126,26 @@ public class MoNatDiffAlphabetSymbol {
 		}
 
 		return str.trim();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		return prime + mMap.hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final MoNatDiffAlphabetSymbol other = (MoNatDiffAlphabetSymbol) obj;
+		return mMap.equals(other.mMap);
 	}
 }
