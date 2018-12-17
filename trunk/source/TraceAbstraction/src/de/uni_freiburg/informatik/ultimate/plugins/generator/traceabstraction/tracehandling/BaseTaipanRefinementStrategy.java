@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
@@ -254,9 +255,11 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			}
 			// if we have some perfect, we take one of those
 			mLogger.info("Using the first perfect interpolant sequence");
+			final List<TracePredicates> ippSequence = perfectIpps.stream().limit(1).collect(Collectors.toList());
+			assert mode != Mode.ABSTRACT_INTERPRETATION || ippSequence.get(0).getPredicates().stream()
+					.allMatch(a -> a instanceof AbsIntPredicate<?>) : "AbsInt did not yield AbsIntPredicates";
 			return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
-					NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
-					perfectIpps.stream().limit(1).collect(Collectors.toList()), emptyStackFactory,
+					NestedWordAutomataUtils.getVpAlphabet(mAbstraction), ippSequence, emptyStackFactory,
 					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:

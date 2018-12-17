@@ -109,6 +109,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private static final boolean USE_INTERPOLANT_WEAKENER = true;
 
+	private static final boolean DEBUG_PRINT_TRACE = false;
+
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -204,10 +206,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Trace:");
+			if (DEBUG_PRINT_TRACE) {
+				mLogger.info("Trace:");
 				for (final LETTER trans : currentCex.getWord().asList()) {
-					mLogger.debug("[" + trans.hashCode() + "] " + trans);
+					mLogger.info("[" + trans.hashCode() + "] " + trans);
 				}
 			}
 

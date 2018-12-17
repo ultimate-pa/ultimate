@@ -74,7 +74,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 * compatible result. Set this only to true if you can guarantee that only an IPredicate whose formula is true is
 	 * equivalent to true.
 	 */
-	private final static boolean mTestDataflow = false;
+	private final static boolean DEBUG_TEST_DATAFLOW = false;
 
 	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		super();
@@ -214,7 +214,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 					+ ps2.getFormula().toStringDirect() + "Not inductive!";
 		}
 		mSatCheckTime += (System.nanoTime() - startTime);
-		if (mTestDataflow) {
+		if (DEBUG_TEST_DATAFLOW) {
 			testMyInternalDataflowCheck(ps1, ta, ps2, result);
 		}
 		mManagedScript.unlock(this);
@@ -277,7 +277,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) : "call statement not inductive";
 		}
 		mSatCheckTime += (System.nanoTime() - startTime);
-		if (mTestDataflow) {
+		if (DEBUG_TEST_DATAFLOW) {
 			testMyCallDataflowCheck(ps1, ta, ps2, result);
 		}
 		mManagedScript.unlock(this);
@@ -373,7 +373,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 		}
 		mSatCheckTime += (System.nanoTime() - startTime);
-		if (mTestDataflow) {
+		if (DEBUG_TEST_DATAFLOW) {
 			testMyReturnDataflowCheck(ps1, psk, ta, ps2, result);
 		}
 		mManagedScript.unlock(this);

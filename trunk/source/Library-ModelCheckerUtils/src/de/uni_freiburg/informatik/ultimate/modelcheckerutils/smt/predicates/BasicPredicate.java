@@ -82,9 +82,7 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 
 	@Override
 	public String toString() {
-		String result = mSerialNumber + "#";
-		result += mFormula.toStringDirect();
-		return result;
+		return mSerialNumber + "#" + mFormula.toStringDirect();
 	}
 
 	public boolean isUnknown() {
