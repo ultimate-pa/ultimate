@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.DebuggingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
@@ -38,7 +37,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IHoareTripleChecker mHTC;
+	private final DebuggingHoareTripleChecker mHTC;
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mSymbolTable;
 
@@ -73,15 +72,14 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 	private boolean isPostSound(final IPredicate precondHier, final ACTION transition, final IPredicate precond,
 			final IPredicate postcond) {
 		try {
-			final Validity result;
 			if (transition instanceof ICallAction) {
-				result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
+				mHTC.checkCall(precond, (ICallAction) transition, postcond);
 			} else if (transition instanceof IReturnAction) {
-				result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
+				mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
 			} else {
-				result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
+				mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 			}
-			return result != Validity.INVALID;
+			return mHTC.isLastOk();
 		} finally {
 			mHTC.releaseLock();
 		}
