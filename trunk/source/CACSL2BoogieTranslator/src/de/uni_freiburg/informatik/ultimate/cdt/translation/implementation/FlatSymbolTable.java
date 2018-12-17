@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * Multifiles: The flat symbol table is used as a replacement for the old symbol table. The old symbol table used
@@ -285,8 +286,8 @@ public class FlatSymbolTable {
 			if (cursor instanceof IASTTranslationUnit) {
 				mGlobalScope.put(id, val);
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s", CoreUtil.getCallerSignature(4),
-							cursor.getClass().getSimpleName(), id, val));
+					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
+							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
 				}
 				break;
 			}
@@ -308,8 +309,8 @@ public class FlatSymbolTable {
 					mCTable.put(cursor, scopeTable);
 				}
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s", CoreUtil.getCallerSignature(4),
-							cursor.getClass().getSimpleName(), id, val));
+					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
+							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
 				}
 				scopeTable.put(id, val);
 				break;
@@ -357,7 +358,8 @@ public class FlatSymbolTable {
 			if (scope != null) {
 				if (DEBUG_ENABLE_STORE_LOGGING) {
 					mLogger.info(String.format("%-50.50s[%-25.25s]: Updating %s from %s to %s",
-							CoreUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, oldVal, newVal));
+							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, oldVal,
+							newVal));
 				}
 				scope.put(id, newVal);
 				mBoogieIdToCId.remove(oldVal.getBoogieName());

@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.Nnf
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -132,8 +133,8 @@ public final class SmtUtils {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
 		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
-			logger.info(
-					String.format("Current caller to simplify is %s", CoreUtil.getCallerClassName(3).getSimpleName()));
+			logger.info(String.format("Current caller to simplify is %s",
+					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
 		final long startTime = System.nanoTime();
 		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgScript.getScript());
