@@ -136,6 +136,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 		declareTruePredicateAndFalsePredicate();
 		for (final IPredicate pred : initialPredicates) {
+			if (pred == mFalsePredicate || pred == mTruePredicate) {
+				continue;
+			}
 			declarePredicate(pred);
 		}
 		logger.info("Initialized classic predicate unifier");
@@ -178,7 +181,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 	void declarePredicate(final IPredicate predicate) {
 		final PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars(), null, null);
 		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
-			if (pc.getEquivalantLeqQuantifiedPredicate() != predicate) {
+			final IPredicate other = pc.getEquivalantLeqQuantifiedPredicate();
+			if (other != predicate) {
+				mLogger.fatal("Have " + other);
+				mLogger.fatal("Want " + predicate);
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
 		} else if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
