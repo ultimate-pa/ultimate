@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
@@ -74,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TemporaryBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -168,14 +171,17 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 	}
 
-	private Expression getExpression(final Term term) {
-		// TODO: Does this work correctly for created aux-vars?
-		return mMappedTerm2Expression.translate(term, Collections.emptySet(), Collections.emptyMap());
+	private Expression getExpression(final Term term, final STATE state) {
+		final Map<TermVariable, String> namesMap = state.getVariables().stream()
+				.filter(x -> x instanceof TemporaryBoogieVar).map(x -> (TemporaryBoogieVar) x).collect(
+						Collectors.toMap(TemporaryBoogieVar::getTermVariable, TemporaryBoogieVar::getGloballyUniqueId));
+		return mMappedTerm2Expression.translate(term, Collections.emptySet(), namesMap);
 	}
 
 	@Override
 	public EvalResult evaluate(final STATE state, final Term term, final Script script) {
-		final Collection<IEvaluationResult<V>> tmpResults = mEvaluator.evaluate(state, getExpression(term));
+		final Expression expression = getExpression(term, state);
+		final Collection<IEvaluationResult<V>> tmpResults = mEvaluator.evaluate(state, expression);
 		boolean allTrue = true;
 		boolean allFalse = true;
 		for (final IEvaluationResult<V> r : tmpResults) {

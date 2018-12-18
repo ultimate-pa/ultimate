@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -161,6 +162,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 			return mSubDomain.createBottomState();
 		}
 		return DisjunctiveAbstractState.union(newStates);
+	}
+
+	public EvalResult evaluate(final STATE state, final Term formula) {
+		return mSubDomain.getPostOperator().evaluate(state, formula, getScript());
 	}
 
 	public Expression getExpression(final Term term) {

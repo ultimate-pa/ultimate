@@ -1254,6 +1254,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
 		final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
 		return afterNegation.isBottom();
+		// TODO: Use evaluate based result?
+		// return mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
 	}
 
 	public ArrayDomainState<STATE> simplify() {
