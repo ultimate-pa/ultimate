@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -44,10 +46,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class ArrayDomainPostOperator<STATE extends IAbstractState<STATE>>
 		implements IAbstractPostOperator<ArrayDomainState<STATE>, IcfgEdge> {
 
+	private final ArrayDomainToolkit<STATE> mToolkit;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final ArrayDomainStatementProcessor<STATE> mStatementProcessor;
 
 	public ArrayDomainPostOperator(final ArrayDomainToolkit<STATE> toolkit) {
+		mToolkit = toolkit;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new ArrayDomainStatementProcessor<>(toolkit);
 	}
@@ -120,5 +124,10 @@ public class ArrayDomainPostOperator<STATE extends IAbstractState<STATE>>
 			currentState = mStatementProcessor.process(currentState, s);
 		}
 		return Collections.singletonList(currentState);
+	}
+
+	@Override
+	public EvalResult evaluate(final ArrayDomainState<STATE> state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 }

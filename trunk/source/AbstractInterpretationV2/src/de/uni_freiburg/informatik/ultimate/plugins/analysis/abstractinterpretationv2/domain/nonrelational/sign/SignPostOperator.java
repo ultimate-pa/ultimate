@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
@@ -130,6 +132,11 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 		}
 
 		return returnList;
+	}
+
+	@Override
+	public EvalResult evaluate(final SignDomainState state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 }

@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -113,5 +115,11 @@ public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			return allVariables;
 		}
 		return new HashSet<>(tf.getAssignedVars());
+	}
+
+	@Override
+	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult
+			evaluate(final DataflowState<ACTION> state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 }

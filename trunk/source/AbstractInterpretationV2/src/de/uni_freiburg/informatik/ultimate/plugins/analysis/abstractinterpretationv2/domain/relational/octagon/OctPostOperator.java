@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
@@ -341,6 +343,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		returnVar = getBoogie2SmtSymbolTable().getBoogieConst(ie.getIdentifier());
 		assert returnVar != null;
 		return returnVar;
+	}
+
+	@Override
+	public EvalResult evaluate(final OctDomainState state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 }

@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -125,7 +126,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 	// TODO: unclear if this is useful/necessary
 	private Term dropQuantifiedConjuncts(final Term resTerm) {
 		final List<Term> filteredConjuncts = Arrays.stream(SmtUtils.getConjuncts(resTerm))
-				.filter(conjunct -> (!(conjunct instanceof QuantifiedFormula))).collect(Collectors.toList());
+				.filter(conjunct -> !(conjunct instanceof QuantifiedFormula)).collect(Collectors.toList());
 		final Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), filteredConjuncts);
 		return conjunction;
 	}
@@ -163,7 +164,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 		} else if (transition instanceof IReturnAction) {
 			// the hierarchicalPrestate may contain oldVars in its predicate --> we need to project them out
 			final Set<IProgramVar> oldVars = hierarchicalPreOrStateAfterLeaving.getPredicate().getVars().stream()
-					.filter(var -> (var instanceof IProgramVar) && var.isOldvar()).map(var -> var)
+					.filter(var -> var instanceof IProgramVar && var.isOldvar()).map(var -> var)
 					.collect(Collectors.toSet());
 			final Set<TermVariable> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
@@ -196,6 +197,11 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 
 	public SMTTheoryStateFactoryAndPredicateHelper getStateFactory() {
 		return mStateFactory;
+	}
+
+	@Override
+	public EvalResult evaluate(final SMTTheoryState state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 }

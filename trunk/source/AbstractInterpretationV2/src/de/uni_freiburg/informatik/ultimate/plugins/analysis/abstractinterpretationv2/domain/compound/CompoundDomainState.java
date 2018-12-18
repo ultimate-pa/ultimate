@@ -295,31 +295,6 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 	}
 
 	@Override
-	public EvalResult evaluate(final Script script, final Term term) {
-		for (int i = 0; i < mAbstractStates.size(); i++) {
-			final EvalResult result = mAbstractStates.get(i).evaluate(script, term);
-			if (result != EvalResult.UNKNOWN) {
-				assert result == slowEvaluate(script, term);
-				return result;
-			}
-		}
-		return EvalResult.UNKNOWN;
-	}
-
-	private EvalResult slowEvaluate(final Script script, final Term term) {
-		EvalResult rtr = EvalResult.UNKNOWN;
-		for (int i = 0; i < mAbstractStates.size(); i++) {
-			final EvalResult result = mAbstractStates.get(i).evaluate(script, term);
-			if (rtr == EvalResult.UNKNOWN || result == EvalResult.UNKNOWN) {
-				rtr = result;
-			} else if (result != rtr) {
-				assert false : "One state said " + rtr + " another said " + result;
-			}
-		}
-		return rtr;
-	}
-
-	@Override
 	public String toString() {
 		return toLogString();
 	}

@@ -30,6 +30,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 /**
  * {@link IAbstractPostOperator} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
  * the abstract post or pre state given an old {@link IAbstractState} and a transition.
@@ -59,4 +62,34 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE>, ACTI
 	 *         effects of the taken transition.
 	 */
 	List<STATE> apply(STATE stateBeforeLeaving, STATE secondState, ACTION transition);
+
+	/**
+	 * Evaluate the given boolean formula under the given state.
+	 *
+	 * @param state
+	 *            The state under the formula should be evaluated.
+	 * @param formula
+	 *            The boolean {@link Term} that should be evaluated.
+	 * @param script
+	 *            A {@link Script} that can be used during evaluation.
+	 * @return {@link EvalResult#TRUE} if this state does not allow any valuation that makes the term equivalent to
+	 *         false, {@link EvalResult#FALSE} if this state does not allow any valuation that makes the term equivalent
+	 *         to true, and {@link EvalResult#UNKNOWN} otherwise. Note that in particular, an implementation that only
+	 *         returns {@link EvalResult#UNKNOWN} is sound.
+	 */
+	EvalResult evaluate(STATE state, Term formula, Script script);
+
+	/**
+	 * The result of {@link IAbstractPostOperator#evaluate(Script, Term)}.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum EvalResult {
+		TRUE,
+
+		FALSE,
+
+		UNKNOWN
+	}
 }

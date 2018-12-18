@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -232,5 +233,10 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				mServices, mBoogie2Smt, mManagedScript, mBoogie2SmtSymbolTable, mCodeBlockFactory, mBackingDomain);
 		mCachedTransformulaOperations.put(transformula, cachedOperation);
 		return cachedOperation;
+	}
+
+	@Override
+	public EvalResult evaluate(final PoormanAbstractState<BACKING> state, final Term formula, final Script script) {
+		return mBackingDomain.getPostOperator().evaluate(state.getBackingState(), formula, script);
 	}
 }

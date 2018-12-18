@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 
 /**
@@ -54,5 +56,10 @@ public final class EmptyPostOperator<ACTION> implements IAbstractPostOperator<Em
 		final List<EmptyDomainState> returnList = new ArrayList<>();
 		returnList.add(new EmptyDomainState(new HashSet<>(oldstateWithFreshVariables.getVariables())));
 		return returnList;
+	}
+
+	@Override
+	public EvalResult evaluate(final EmptyDomainState state, final Term formula, final Script script) {
+		return EvalResult.UNKNOWN;
 	}
 }

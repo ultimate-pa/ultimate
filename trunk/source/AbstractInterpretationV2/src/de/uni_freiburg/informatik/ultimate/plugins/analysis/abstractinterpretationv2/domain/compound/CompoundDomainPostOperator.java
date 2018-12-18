@@ -315,4 +315,33 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return first.union(second);
 	}
 
+	@Override
+	public EvalResult evaluate(final CompoundDomainState state, final Term formula, final Script script) {
+		final List<IAbstractState<?>> states = state.getAbstractStatesList();
+		for (int i = 0; i < states.size(); i++) {
+			final IAbstractPostOperator postOperator = state.getDomainList().get(i).getPostOperator();
+			final EvalResult result = postOperator.evaluate(states.get(i), formula, script);
+			if (result != EvalResult.UNKNOWN) {
+				assert result == slowEvaluate(state, formula, script);
+				return result;
+			}
+		}
+		return EvalResult.UNKNOWN;
+	}
+
+	private static EvalResult slowEvaluate(final CompoundDomainState state, final Term formula, final Script script) {
+		EvalResult rtr = EvalResult.UNKNOWN;
+		final List<IAbstractState<?>> states = state.getAbstractStatesList();
+		for (int i = 0; i < states.size(); i++) {
+			final IAbstractPostOperator postOperator = state.getDomainList().get(i).getPostOperator();
+			final EvalResult result = postOperator.evaluate(states.get(i), formula, script);
+			if (rtr == EvalResult.UNKNOWN || result == EvalResult.UNKNOWN) {
+				rtr = result;
+			} else if (result != rtr) {
+				assert false : "One state said " + rtr + " another said " + result;
+			}
+		}
+		return rtr;
+	}
+
 }

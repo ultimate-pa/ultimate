@@ -31,6 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
@@ -58,5 +60,10 @@ public class IntervalPostOperator
 			final Supplier<IntervalDomainState> bottomStateSupplier) {
 		super(logger, new IntervalDomainTermProcessor(logger, maxParallelStates, bottomStateSupplier),
 				topStateSupplier);
+	}
+
+	@Override
+	public EvalResult evaluate(final IntervalDomainState state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 }

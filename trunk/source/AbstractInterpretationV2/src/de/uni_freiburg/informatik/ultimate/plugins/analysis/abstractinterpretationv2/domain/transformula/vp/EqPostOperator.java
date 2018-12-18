@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
@@ -93,8 +94,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final EqStateFactory eqStateFactory, final VPDomainSettings settings) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory, final EqStateFactory eqStateFactory,
+			final VPDomainSettings settings) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mCfgSmtToolkit = csToolkit;
@@ -107,9 +108,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mLogger = logger;
 
 		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, new EqOperationProvider(eqConstraintFactory));
-		mTransFormulaConverter =
-				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory,
-						mSettings);
+		mTransFormulaConverter = new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory,
+				mEqConstraintFactory, mSettings);
 		mEqStateFactory.registerTransformulaConverter(mTransFormulaConverter);
 
 		mDoubleCheckPredicateTransformer =
@@ -145,7 +145,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			assert preciseStrongestPostImpliesAbstractPost(oldState, transition,
 					mEqStateFactory.statesToPredicate(result)) : "soundness check failed!";
 		}
-//		TransFormulaUtils.prettyPrint(transition.getTransformula())
+		// TransFormulaUtils.prettyPrint(transition.getTransformula())
 		debugEnd(BmNames.APPLY_NORMAL);
 		return result;
 	}
@@ -160,9 +160,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private List<EqState> toEqStates(final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint,
 			final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
 		/*
-		 * The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
-		 * Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
-		 * disjunct-state/constraint talks about.
+		 * The AbstractInterpretation framework demands that all EqStates here have the same Pvocs Thus we set the Pvocs
+		 * of all the disjunct-states to be the union of the pvocs that each disjunct-state/constraint talks about.
 		 * EDIT: the variables are now determined externally (by the oldstate of the post operator..)
 		 */
 		return disjunctiveConstraint.getConstraints().stream()
@@ -203,8 +202,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (transition instanceof ICallAction) {
 			final String calledProcedure = transition.getSucceedingProcedure();
 
-			final EqTransitionRelation localVarAssignments = mTransFormulaConverter
-					.getOrConstructEqTransitionRelationFromTransformula(((ICallAction) transition).getLocalVarsAssignment());
+			final EqTransitionRelation localVarAssignments =
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
+							((ICallAction) transition).getLocalVarsAssignment());
 			final EqTransitionRelation globalVarAssignments =
 					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure));
@@ -229,18 +229,19 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<IProgramVar> oldVars =
 					hierarchicalPrestate.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable()).stream()
 							.filter(var -> var.isOldvar()).collect(Collectors.toSet());
-			final Set<Term> ovTvs =
-					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
+			final Set<Term> ovTvs = oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<EqNode> projectedCons =
 					mEqConstraintFactory.projectExistentially(ovTvs, hierarchicalPrestate.getConstraint(), false);
 			final EqState hier = mEqStateFactory.getEqState(projectedCons, hierarchicalPrestate.getVariables());
 
 			final EqPredicate callPred = hier.toEqPredicate();
 
-			final EqTransitionRelation returnTF = mTransFormulaConverter
-					.getOrConstructEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
-			final EqTransitionRelation callTF = mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
-					((IReturnAction) transition).getLocalVarsAssignmentOfCall());
+			final EqTransitionRelation returnTF =
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
+							((IReturnAction) transition).getAssignmentOfReturn());
+			final EqTransitionRelation callTF =
+					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(
+							((IReturnAction) transition).getLocalVarsAssignmentOfCall());
 			final EqTransitionRelation oldVarAssignments =
 					mTransFormulaConverter.getOrConstructEqTransitionRelationFromTransformula(mCfgSmtToolkit
 							.getOldVarsAssignmentCache().getOldVarsAssignment(transition.getPrecedingProcedure()));
@@ -292,5 +293,10 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			}
 			return result;
 		}
+	}
+
+	@Override
+	public EvalResult evaluate(final EqState state, final Term formula, final Script script) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 }

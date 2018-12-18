@@ -54,9 +54,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
@@ -173,8 +173,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		return mMappedTerm2Expression.translate(term, Collections.emptySet(), Collections.emptyMap());
 	}
 
-	// TODO: Use in interface?
-	public EvalResult evaluate(final STATE state, final Term term) {
+	@Override
+	public EvalResult evaluate(final STATE state, final Term term, final Script script) {
 		final Collection<IEvaluationResult<V>> tmpResults = mEvaluator.evaluate(state, getExpression(term));
 		boolean allTrue = true;
 		boolean allFalse = true;

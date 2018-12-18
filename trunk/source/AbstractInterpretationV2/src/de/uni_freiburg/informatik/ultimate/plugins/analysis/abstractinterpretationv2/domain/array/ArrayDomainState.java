@@ -1102,12 +1102,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return constraints;
 	}
 
-	@Override
-	public EvalResult evaluate(final Script script, final Term term) {
-		// TODO: Make it more precise for arrays (if needed)
-		return mSubState.evaluate(script, term);
-	}
-
 	public ArrayDomainState<STATE> updateState(final STATE newSubState, final SegmentationMap newSegmentationMap) {
 		return new ArrayDomainState<>(newSubState, newSegmentationMap, mVariables, mToolkit);
 	}

@@ -35,11 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain program location.
@@ -248,50 +245,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	SubsetResult isSubsetOf(final STATE other);
 
 	/**
-	 * Evaluate the supplied term under this {@link IAbstractState}.
-	 *
-	 * @param script
-	 *            A {@link Script} that can be used during evaluation.
-	 * @param term
-	 *            The {@link Term} that should be evaluated.
-	 *
-	 * @return {@link EvalResult#TRUE} if this state does not allow any valuation that makes the term equivalent to
-	 *         false, {@link EvalResult#FALSE} if this state does not allow any valuation that makes the term equivalent
-	 *         to true, and {@link EvalResult#UNKNOWN} otherwise. Note that in particular, an implementation that only
-	 *         returns {@link EvalResult#UNKNOWN} is sound.
-	 */
-	default EvalResult evaluate(final Script script, final Term term) {
-		final Term local = getTerm(script);
-
-		if (SmtUtils.isTrue(term)) {
-			return EvalResult.TRUE;
-		} else if (SmtUtils.isFalse(term)) {
-			return EvalResult.FALSE;
-		} else if (SmtUtils.isTrue(local)) {
-			return EvalResult.UNKNOWN;
-		} else if (SmtUtils.isFalse(local)) {
-			return EvalResult.FALSE;
-		}
-
-		if (!DataStructureUtils.differenceIsEmpty(term.getFreeVars(), local.getFreeVars())) {
-			// overapproximation
-			return EvalResult.UNKNOWN;
-		}
-
-		final Term notTerm = SmtUtils.not(script, term);
-		final LBool localImpliesTermResult = SmtUtils.checkSatTerm(script, SmtUtils.and(script, local, notTerm));
-		if (localImpliesTermResult == LBool.UNSAT) {
-			return EvalResult.TRUE;
-		}
-		final Term notLocal = SmtUtils.not(script, local);
-		final LBool termImpliesLocalResult = SmtUtils.checkSatTerm(script, SmtUtils.and(script, notLocal, term));
-		if (termImpliesLocalResult == LBool.UNSAT) {
-			return EvalResult.FALSE;
-		}
-		return EvalResult.UNKNOWN;
-	}
-
-	/**
 	 * Return a compacted representation of the current {@link IAbstractState} where all variables are removed for which
 	 * no information is present (i.e., remove all "top" variables).
 	 *
@@ -315,20 +268,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	 * @return A {@link String} representing this abstract state.
 	 */
 	String toLogString();
-
-	/**
-	 * The result of {@link IAbstractState#evaluate(Script, Term)}.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	public enum EvalResult {
-		TRUE,
-
-		FALSE,
-
-		UNKNOWN
-	}
 
 	/**
 	 * The result of {@link IAbstractState#isSubsetOf(IAbstractState)}.
