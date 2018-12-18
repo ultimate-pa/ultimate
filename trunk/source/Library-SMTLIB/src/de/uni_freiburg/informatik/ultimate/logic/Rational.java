@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
@@ -381,6 +382,26 @@ public class Rational implements Comparable<Rational> {
 		}
 	}
 
+	/**
+	 * Construct a rational from a BigDecimal by normalizing the decimal fraction.
+	 *
+	 * @param bigdec Decimal Fraction
+	 * @return a rational representing the decimal fraction.
+	 */
+	public static Rational valueOf(final BigDecimal bigdec) {
+		final int scale = bigdec.scale();
+		final BigInteger numerator;
+		final BigInteger denominator;
+		if (scale < 0) {
+			numerator = bigdec.unscaledValue().multiply(BigInteger.TEN.pow(-scale));
+			denominator = BigInteger.ONE;
+		} else {
+			numerator = bigdec.unscaledValue();
+			denominator = BigInteger.TEN.pow(scale);
+		}
+		return valueOf(numerator, denominator);
+	}
+	
 	/**
 	 * Construct a rational from two longs.  Use this method
 	 * to create a rational number.  This method normalizes

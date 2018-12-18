@@ -18,7 +18,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -105,6 +107,25 @@ public final class RationalTest {
 		Assert.assertSame(Rational.POSITIVE_INFINITY, Rational.valueOf(large, BigInteger.ZERO));
 		Assert.assertSame(Rational.NEGATIVE_INFINITY, Rational.valueOf(large.negate(), BigInteger.ZERO));
 		Assert.assertSame(Rational.NAN, Rational.valueOf(BigInteger.ZERO, BigInteger.ZERO));
+	}
+	
+	@Test
+	public void testValueOfBigDecimal() {
+		// 10^12 overflows integers therefore we also check scales >= 12
+		Rational expected = Rational.valueOf(3, 1);
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("3")));
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("3").setScale(3)));
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("3").setScale(12)));
+
+		expected = Rational.valueOf(-3, 1);
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("-3")));
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("-3").setScale(12)));
+
+		Assert.assertEquals(Rational.valueOf(41923, 1000), Rational.valueOf(new BigDecimal("41.923")));
+		Assert.assertEquals(Rational.valueOf(-68214, 100), Rational.valueOf(new BigDecimal("-682.14")));
+
+		expected = Rational.valueOf(new BigInteger("98765432198760000000000001"), new BigInteger("10000000000000"));
+		Assert.assertEquals(expected, Rational.valueOf(new BigDecimal("9876543219876.0000000000001")));
 	}
 
 	@Test
