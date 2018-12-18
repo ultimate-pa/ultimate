@@ -96,7 +96,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
-	private static final String MSG_INVALID_HOARE_TRIPLE_CHECK = "Invalid hoare triple check";
+	private static final String MSG_INVALID_HOARE_TRIPLE_CHECK = "Invalid AbsInt hoare triple check";
 
 	private final ILogger mLogger;
 	private final IAbstractPostOperator<STATE, ACTION> mPostOp;
@@ -610,17 +610,26 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return ACCEPT_REJECTION_DUE_TO_IMPRECISION;
 		}
 
-		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
-
-		if (precondHier == null) {
-			mLogger.fatal("PreS: {" + preState + "}");
+		final Consumer<Object> log;
+		if (result == Validity.UNKNOWN) {
+			log = mLogger::warn;
 		} else {
-			mLogger.fatal(getMsgPreBefore(preState));
-			mLogger.fatal(getMsgPreAfter(validPreLinState));
+			log = mLogger::fatal;
 		}
-		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
-		mLogger.fatal(getMsgPost(succ));
-		return false;
+
+		log.accept("--");
+		log.accept("Abstract states");
+		if (precondHier == null) {
+			log.accept("PreS: {" + preState + "}");
+		} else {
+			log.accept(getMsgPreBefore(preState));
+			log.accept(getMsgPreAfter(validPreLinState));
+		}
+		log.accept(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
+		log.accept(getMsgPost(succ));
+		log.accept("--");
+
+		return result == Validity.UNKNOWN;
 	}
 
 	private static String getMsgPreBefore(final Object preState) {

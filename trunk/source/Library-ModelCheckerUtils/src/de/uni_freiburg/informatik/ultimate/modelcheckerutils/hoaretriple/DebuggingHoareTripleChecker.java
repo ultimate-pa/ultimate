@@ -202,13 +202,18 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 	private void logUnsoundness(final IAction transition, final IPredicate precond, final IPredicate postcond,
 			final IPredicate precondHier, final Validity expected, final Validity actual) {
 		final Consumer<Object> log;
-		if (expected == Validity.UNKNOWN) {
+		if (actual == Validity.UNKNOWN || expected == Validity.UNKNOWN) {
 			log = mLogger::warn;
-			log.accept("Soundness check inconclusive for the following hoare triple");
 		} else {
 			log = mLogger::fatal;
+		}
+
+		if (actual == Validity.UNKNOWN) {
+			log.accept("Soundness check inconclusive for the following hoare triple");
+		} else {
 			log.accept("Soundness check failed for the following hoare triple");
 		}
+
 		log.accept("Expected: " + expected + " Actual: " + actual);
 		final Script script = mManagedScript.getScript();
 		log.accept("Solver was " + script.getInfo(":name") + " in version " + script.getInfo(":version"));
@@ -216,59 +221,59 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 		final List<String> strActions = getActionStrings();
 
 		log.accept("--");
-		log.accept("Pre:     {" + toString(precond) + "}");
+		log.accept("Pre:       {" + toString(precond) + "}");
 		if (precondHier != null) {
-			log.accept("PreHier: {" + toString(precondHier) + "}");
+			log.accept("PreHier:   {" + toString(precondHier) + "}");
 		}
-		log.accept("Action:   " + transition);
+		log.accept("Action:    " + transition);
 		strActions.stream().map(a -> "ActionStr: " + a).forEachOrdered(log::accept);
-		log.accept("Post:    {" + toString(postcond) + "}");
+		log.accept("Post:      {" + toString(postcond) + "}");
 
-		if (actual == Validity.VALID) {
-			log.accept("--");
-			final Term[] unsatCore = mManagedScript.getUnsatCore(this);
-			log.accept("Unsat core");
-			for (final Term part : unsatCore) {
-				log.accept(part.toStringDirect());
+		if (mGenerateUnsatCore) {
+			if (actual == Validity.VALID) {
+				log.accept("--");
+				final Term[] unsatCore = mManagedScript.getUnsatCore(this);
+				log.accept("Unsat core");
+				for (final Term part : unsatCore) {
+					log.accept(part.toStringDirect());
+				}
+			} else if (actual == Validity.INVALID) {
+				log.accept("--");
+				log.accept("Model of prestate for invars");
+				final UnmodifiableTransFormula actTf = getAction().getTransformula();
+				final ApplicationTermFinder selectFinder =
+						new ApplicationTermFinder(Collections.singleton("select"), false);
+				final Set<ApplicationTerm> selects = selectFinder.findMatchingSubterms(actTf.getClosedFormula());
+				for (final Entry<IProgramVar, TermVariable> entry : actTf.getInVars().entrySet()) {
+					final IProgramVar key = entry.getKey();
+					final TermVariable tv = key.getTermVariable();
+					final Term inVarConst = UnmodifiableTransFormula.getConstantForInVar(key);
+					logUnsoundnessStateVar(log, selects, tv, inVarConst);
+				}
+				log.accept("Model of poststate for outvars");
+				for (final Entry<IProgramVar, TermVariable> entry : actTf.getOutVars().entrySet()) {
+					final IProgramVar key = entry.getKey();
+					final TermVariable tv = key.getTermVariable();
+					final Term outVarConst =
+							UnmodifiableTransFormula.getConstantForOutVar(key, actTf.getInVars(), actTf.getOutVars());
+					logUnsoundnessStateVar(log, selects, tv, outVarConst);
+				}
 			}
-		} else if (actual == Validity.INVALID) {
-			log.accept("--");
-			if (!mGenerateUnsatCore) {
-				log.accept("unsat core generation is disabled, enable it to get more details");
-				return;
-			}
-			log.accept("Model of prestate for invars");
-			final UnmodifiableTransFormula actTf = getAction().getTransformula();
-			final ApplicationTermFinder selectFinder =
-					new ApplicationTermFinder(Collections.singleton("select"), false);
-			final Set<ApplicationTerm> selects = selectFinder.findMatchingSubterms(actTf.getClosedFormula());
-			for (final Entry<IProgramVar, TermVariable> entry : actTf.getInVars().entrySet()) {
-				final IProgramVar key = entry.getKey();
-				final TermVariable tv = key.getTermVariable();
-				final Term inVarConst = UnmodifiableTransFormula.getConstantForInVar(key);
-				logUnsoundnessStateVar(log, selects, tv, inVarConst);
-			}
-			log.accept("Model of poststate for outvars");
-			for (final Entry<IProgramVar, TermVariable> entry : actTf.getOutVars().entrySet()) {
-				final IProgramVar key = entry.getKey();
-				final TermVariable tv = key.getTermVariable();
-				final Term outVarConst =
-						UnmodifiableTransFormula.getConstantForOutVar(key, actTf.getInVars(), actTf.getOutVars());
-				logUnsoundnessStateVar(log, selects, tv, outVarConst);
-			}
+		} else {
+			log.accept("unsat core / model generation is disabled, enable it to get more details");
 		}
 
 		if (SIMPLIFY_IF_ASSERTION_FAILS) {
 			clearAssertionStack();
 			log.accept("--");
 			log.accept("Simplified triple ");
-			log.accept("Pre:     {" + toStringSimplified(precond) + "}");
+			log.accept("Pre:       {" + toStringSimplified(precond) + "}");
 			if (precondHier != null) {
-				log.accept("PreHier: {" + toStringSimplified(precondHier) + "}");
+				log.accept("PreHier:   {" + toStringSimplified(precondHier) + "}");
 			}
-			log.accept("Action:   " + transition);
+			log.accept("Action:    " + transition);
 			strActions.stream().map(a -> "ActionStr: " + a).forEachOrdered(log::accept);
-			log.accept("Post:    {" + toStringSimplified(postcond) + "}");
+			log.accept("Post:      {" + toStringSimplified(postcond) + "}");
 		}
 	}
 
