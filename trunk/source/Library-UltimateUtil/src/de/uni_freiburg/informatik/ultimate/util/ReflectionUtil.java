@@ -71,6 +71,9 @@ public class ReflectionUtil {
 		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth);
 	}
 
+	/**
+	 * Return the name of the calling method up to the specified stack depth.
+	 */
 	public static String getCallerMethodName(final int callStackDepth) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 		if (callStack.length < callStackDepth) {
@@ -79,6 +82,9 @@ public class ReflectionUtil {
 		return callStack[callStackDepth].getMethodName();
 	}
 
+	/**
+	 * Return a String specifying the calling method and its signature up to the given stack depth.
+	 */
 	public static String getCallerSignature(final int callStackDepth) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 		final StackTraceElement theFrame;
@@ -92,7 +98,7 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Finds all classes implementing the given class placed in the folder beside or below the interface class.
+	 * Finds all classes implementing the given interface placed in the folder beside or below it.
 	 */
 	public static Set<Class<?>> getClassesImplementingInterfaceFromFolder(final Class<?> interfaceClazz) {
 		if (interfaceClazz == null) {
