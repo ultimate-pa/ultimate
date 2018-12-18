@@ -35,3 +35,4 @@ programs/toy/tooDifficultLoopInvariant/Sandman01.bpl
 programs/toy/tooDifficultLoopInvariant/ValueTerminatedArrayIteration01.bpl
 programs/toy/tooDifficultLoopInvariant/HierarchicalTraceAbstraction/GeometricalIntegerCakeWithArray.bpl
 programs/toy/tooDifficultLoopInvariant/HierarchicalTraceAbstraction/SkatingStrawberry.bpl
+programs/heapseparator/speedup-poc-dd-*.bpl
