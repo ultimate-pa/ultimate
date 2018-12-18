@@ -65,7 +65,7 @@ file_export_version=3.0
 
 #Mon Dec 03 14:44:51 CET 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Inline\ calls\ to\ unimplemented\ procedures=true
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.24
 file_export_version=3.0
