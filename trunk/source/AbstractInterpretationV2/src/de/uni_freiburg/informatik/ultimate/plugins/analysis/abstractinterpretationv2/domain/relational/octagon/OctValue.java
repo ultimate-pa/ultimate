@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
@@ -126,6 +128,13 @@ public class OctValue implements Comparable<OctValue> {
 		return mValue;
 	}
 
+	public Rational toRational() {
+		if (mValue == null) {
+			return Rational.POSITIVE_INFINITY;
+		}
+		return SmtUtils.toRational(mValue);
+	}
+	
 	/**
 	 * Calculates the sum of this and another OctValue. The sum of infinity and something other is infinity.
 	 *

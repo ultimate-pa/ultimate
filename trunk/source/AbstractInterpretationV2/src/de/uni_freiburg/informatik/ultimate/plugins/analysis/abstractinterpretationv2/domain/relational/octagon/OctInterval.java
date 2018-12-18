@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 
 /**
@@ -81,7 +84,7 @@ public class OctInterval {
 	}
 
 	/**
-	 * Creates the interval of allowed values for an variable from an octagon matrix.
+	 * Creates the interval of allowed values for one variable from an octagon matrix.
 	 * 
 	 * @param octMat Octagon matrix
 	 * @param varIdx
@@ -93,6 +96,22 @@ public class OctInterval {
 		final int idx2 = varIdx * 2;
 		final int idx21 = idx2 + 1;
 		return new OctInterval(octMat.get(idx2, idx21).half().negateIfNotInfinity(), octMat.get(idx21, idx2).half());
+	}
+
+	/**
+	 * Creates the interval of allowed results an expression of the form (±var1) - (±var2)
+	 * can assume in an octagon matrix. The actual interval of results can be smaller than
+	 * the interval returned by this method. Compute the closure of the octagon to get a
+	 * minimal interval.
+	 * 
+	 * @param octMat Octagon matrix
+	 * @param varIdx
+	 *            Index of the variable in the octagon matrix.
+	 *            Index i corresponds to a positive variable i/2 when even and to a negative variable floor(i/2) when odd.
+	 * @return Interval constraint for the expression
+	 */
+	public static OctInterval fromMatrix(final OctMatrix octMat, final int var1Idx, final int var2Idx) {
+		return new OctInterval(octMat.get(var1Idx, var2Idx).negateIfNotInfinity(), octMat.get(var2Idx, var1Idx));
 	}
 
 	/** Creates a new, unbounded interval {@code [-\inf, \inf]}. */
@@ -135,6 +154,47 @@ public class OctInterval {
 		return mMin.isInfinity() && mMax.isInfinity();
 	}
 
+	/**
+	 * Evaluates an expression of the form <i>x R c</i> with
+	 * <ul>
+	 *   <li>variable x ∈ this interval
+	 *   <li>relation R from {@link RelationSymbol} (for instance =, ≤; ...)
+	 *   <li>constant c
+	 * </ul>
+	 * 
+	 * @param rel relation
+	 * @param rightHandSide constant on the right hand side of the relation symbol
+
+	 * @return {@link EvalResult#TRUE} iff interval empty or ∀ x ∈ this interval : x R c,
+	 *         {@link EvalResult#FALSE} iff interval not empty and ∀ x ∈ this interval : ¬(x R c),
+	 *         {@link EvalResult#UNKNOWN} otherwise.
+	 */
+	public EvalResult evaluate(final RelationSymbol rel, final Rational c) {
+		if (isBottom()) {
+			return EvalResult.TRUE;
+		}
+		final Rational lower = mMin.isInfinity() ? Rational.NEGATIVE_INFINITY : mMin.toRational();
+		final Rational upper = mMax.toRational();
+		switch(rel) {
+		case DISTINCT:
+			return EvalResult.selectTF(lower.compareTo(c) > 0 || upper.compareTo(c) < 0,
+					lower.compareTo(c) == 0 && upper.compareTo(c) == 0);
+		case EQ:
+			return EvalResult.selectTF(lower.compareTo(c) == 0 && upper.compareTo(c) == 0,
+					lower.compareTo(c) > 0 || upper.compareTo(c) < 0);
+		case GEQ:
+			return EvalResult.selectTF(lower.compareTo(c) >= 0, upper.compareTo(c) < 0);
+		case GREATER:
+			return EvalResult.selectTF(lower.compareTo(c) > 0, upper.compareTo(c) <= 0);
+		case LEQ:
+			return EvalResult.selectTF(upper.compareTo(c) <= 0, lower.compareTo(c) > 0);
+		case LESS:
+			return EvalResult.selectTF(upper.compareTo(c) < 0, lower.compareTo(c) >= 0);
+		default:
+			return EvalResult.UNKNOWN;
+		}
+	}
+	
 	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();

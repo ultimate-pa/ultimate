@@ -47,12 +47,16 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.OctagonRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
@@ -503,7 +507,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		case UNCHECKED:
 			final boolean isBottom = isBooleanAbstractionBottom() || isNumericAbstractionBottom();
 			mIsBottom = isBottom ? TVBool.TRUE : TVBool.FALSE;
-			return isBottom();
+			return isBottom;
 		default:
 			throw new UnsupportedOperationException("Unknown LBool " + mIsBottom);
 		}
@@ -1141,34 +1145,55 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			iVar2Inv = iVar2Inv - 1;
 		}
 		final OctMatrix m = cachedSelectiveClosure();
-		// var1 - (-var2) <= c equivalent var1 + var2 <= c
+		// var1 - (-var2) ≤ c equivalent var1 + var2 ≤ c
 		OctValue max = m.get(iVar2Inv, iVar1);
-		// (-var1) - var2 <= c equivalent -c <= var1 + var2
+		// (-var1) - var2 ≤ c equivalent -c ≤ var1 + var2
 		OctValue min = m.get(iVar2Inv ^ 1, iVar1 ^ 1).negateIfNotInfinity();
 		if (tvf.constant.signum() != 0) {
 			max = max.add(tvf.constant);
 			min = min.add(tvf.constant);
 		}
-		// TODO negate min
 		return new OctInterval(min, max);
 	}
 
-	/*
-	 * TODO implement
-	 * 
-	 * @Override public EvalResult evaluate(final Script script, final Term term) { AffineRelation affRel; try { affRel
-	 * = new AffineRelation(script, term); } catch(NotAffineException nae) { // TODO special treatment for boolean
-	 * variables? // TODO really necessary or is result is always UNKNOWN? return IAbstractState.super.evaluate(script,
-	 * term); } OctagonRelation octRel = OctagonRelation.from(affRel); if (octRel == null) { // TODO really true or is
-	 * it sometimes possible to deduce TRUE/FALSE using SMT solver? // Maybe result is always TRUE or always FALSE?
-	 * return EvalResult.UNKNOWN; } mNumericAbstraction = cachedSelectiveClosure(); // TODO FIXME map term variables to
-	 * program variables, see warning final int var1Idx = 2 * mMapNumericVarToIndex.get(octRel.getVar1()) +
-	 * (octRel.isNegateVar1() ? 1 : 0); final int var2Idx = 2 * mMapNumericVarToIndex.get(octRel.getVar2()) +
-	 * (octRel.isNegateVar2() ? 1 : 0); switch (octRel.getRelationSymbol()) { case DISTINCT: // TODO check expr < c OR
-	 * expr > c break; case EQ: // TODO check expr < c OR expr > c break; case GEQ: mNumericAbstraction.get(var1Idx,
-	 * var2Idx); break; case GREATER: break; case LEQ: // TODO compare to mNumericAbstraction.get(var1Idx,
-	 * var2Idx).getValue(); break; case LESS: break; default: break; } return null; // TODO implement useful result }
-	 */
+	public EvalResult evaluate(final Script script, final Term term) {
+		if (isBottom()) {
+			return EvalResult.TRUE;
+		}
+		OctagonRelation octRel;
+		try {
+			AffineRelation affRel = new AffineRelation(script, term);
+			octRel = OctagonRelation.from(affRel);
+		} catch(NotAffineException nae) {
+			// TODO (optional) special treatment for boolean variables
+			return EvalResult.UNKNOWN; // alternatively apply SMT solver
+		}
+		if (octRel == null) {
+			return EvalResult.UNKNOWN; // alternatively apply SMT solver
+		}
+		mNumericAbstraction = cachedSelectiveClosure();
+
+		// TODO store map somewhere instead of creating a new one for every call of this method
+		Map<Term, IProgramVarOrConst> mapTermsToVars = mapTermsToVars();
+		final int var1Idx = 2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar1()))
+				+ (octRel.isNegateVar1() ? 1 : 0);
+		final int var2Idx = 2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar2()))
+				+ (octRel.isNegateVar2() ? 1 : 0);
+
+		return OctInterval.fromMatrix(mNumericAbstraction, var1Idx, var2Idx)
+				.evaluate(octRel.getRelationSymbol(), octRel.getConstant());
+	}
+	
+	private Map<Term, IProgramVarOrConst> mapTermsToVars() {
+		final Map<Term, IProgramVarOrConst> termToVars = new HashMap<>();
+		for (final IProgramVarOrConst key : mMapNumericVarToIndex.keySet()) {
+			termToVars.put(key.getTerm(), key);
+		}
+		for (final IProgramVarOrConst key : mBooleanAbstraction.keySet()) {
+			termToVars.put(key.getTerm(), key);
+		}
+		return termToVars;
+	}
 
 	/**
 	 * Returns the index of an numerical variable of this abstract state for the octagon. A variable with index i

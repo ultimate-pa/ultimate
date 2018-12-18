@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.EvalResult;
 
 /**
  * {@link IAbstractPostOperator} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
@@ -90,6 +91,26 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE>, ACTI
 
 		FALSE,
 
-		UNKNOWN
+		UNKNOWN;
+
+		/**
+		 * Select one of the enum constants base on boolean conditions.
+		 * 
+		 * @param selectTrue Select TRUE
+		 * @param selectFalse Select FALSE
+		 * @return {@link #TRUE}/{@link #FALSE} if only one of the corresponding flags was set,
+		 *         {@link #UNKNOWN} if no flag was set.
+		 * @throws IllegalArgumentException both flags were set at the same time.
+		 */
+		public static EvalResult selectTF(final boolean selectTrue, final boolean selectFalse) {
+			if (selectTrue && selectFalse) {
+				throw new IllegalArgumentException("Selected TRUE and FALSE at the same time.");
+			} else if (selectTrue) {
+				return TRUE;
+			} else if (selectFalse) {
+				return FALSE;
+			}
+			return UNKNOWN;
+		}
 	}
 }

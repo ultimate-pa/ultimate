@@ -347,7 +347,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 	@Override
 	public EvalResult evaluate(final OctDomainState state, final Term formula, final Script script) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return state.evaluate(script, formula);
 	}
 
 }
