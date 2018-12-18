@@ -8,7 +8,8 @@
 
 procedure main()
 {
-  var x, y: int;
+  var x, y, xold, yold : int;
+  var a : [int]int;
   
   y := x + 1;
   a[x] := 1000;
