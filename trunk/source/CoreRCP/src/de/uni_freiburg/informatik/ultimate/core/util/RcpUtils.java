@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Dictionary;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -41,6 +42,8 @@ import org.osgi.framework.ServiceReference;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.UncheckedURISyntaxException;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.UrlConverter;
 
 /**
  *
@@ -104,5 +107,13 @@ public final class RcpUtils {
 		}
 		bc.ungetService(infoRef);
 		return envInfo;
+	}
+
+	/**
+	 * Create an UrlConverter instance that can be retrieved using reflection to avoid explicit dependencies in
+	 * {@link ReflectionUtil}.
+	 */
+	public static UrlConverter getBundleProtocolResolver() {
+		return url -> FileLocator.toFileURL(url);
 	}
 }

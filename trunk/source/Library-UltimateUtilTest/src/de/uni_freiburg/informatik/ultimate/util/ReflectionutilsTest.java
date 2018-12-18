@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -35,8 +36,35 @@ public class ReflectionutilsTest {
 
 	@Test
 	public void loadInterfaceImplementingClasses() {
-		final Set<Class<?>> classes = ReflectionUtil.getClassesImplementingInterfaceFromFolder(ITestInterface.class);
+		Set<Class<?>> classes = Collections.emptySet();
+		try {
+			classes = ReflectionUtil.getClassesImplementingInterfaceFromFolder(ITestInterface.class);
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
 		Assert.assertTrue("", classes.contains(TestInterfaceImplementation.class));
+	}
+
+	@Test
+	public void instantiateStaticInnerClass() {
+		ITestInterface instance = null;
+		try {
+			instance = ReflectionUtil.instantiate(TestInterfaceImplementationStatic.class);
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
+		Assert.assertTrue("", instance != null);
+	}
+
+	@Test
+	public void instantiateNonStaticInnerClass() {
+		ITestInterface instance = null;
+		try {
+			instance = ReflectionUtil.instantiate(TestInterfaceImplementation.class);
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
+		Assert.assertTrue("", instance != null);
 	}
 
 	public interface ITestInterface {
@@ -44,6 +72,14 @@ public class ReflectionutilsTest {
 	}
 
 	public class TestInterfaceImplementation implements ITestInterface {
+
+		@Override
+		public void doIt() {
+			System.out.println("Doing it");
+		}
+	}
+
+	public static class TestInterfaceImplementationStatic implements ITestInterface {
 
 		@Override
 		public void doIt() {

@@ -39,12 +39,14 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -434,10 +436,6 @@ public class CoreUtil {
 
 	/**
 	 * Flattens a string, i.e. removes all line breaks and replaces them with separator
-	 *
-	 * @param original
-	 * @param separator
-	 * @return
 	 */
 	public static StringBuilder flatten(final String original, final String separator) {
 		final StringBuilder sb = new StringBuilder();
@@ -447,6 +445,24 @@ public class CoreUtil {
 		}
 		sb.replace(sb.length() - separator.length(), sb.length(), "");
 		return sb;
+	}
+
+	/**
+	 * Replace all files that represent directories by their contents (recursively).
+	 */
+	public static List<File> flattenDirectories(final Collection<File> files) {
+		final Deque<File> worklist = new ArrayDeque<>();
+		final List<File> rtr = new ArrayList<>();
+		worklist.addAll(files);
+		while (!worklist.isEmpty()) {
+			final File file = worklist.removeFirst();
+			if (file.isFile()) {
+				rtr.add(file);
+				continue;
+			}
+			worklist.addAll(Arrays.asList(file.listFiles()));
+		}
+		return rtr;
 	}
 
 	public static <E> Collection<E> firstN(final Collection<E> collection, final int n) {

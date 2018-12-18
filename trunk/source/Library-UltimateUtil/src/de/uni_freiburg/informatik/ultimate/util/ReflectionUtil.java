@@ -26,20 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -54,9 +51,26 @@ import java.util.Set;
 public class ReflectionUtil {
 
 	private final static ExposedSecurityManager EXPOSED_SECURITY_MANAGER = new ExposedSecurityManager();
+	private final static UrlConverter BUNDLE_RESOURCE_CONVERTER = createBundleResourceConverter();
 
 	private ReflectionUtil() {
 		// do not instantiate utility class
+	}
+
+	/**
+	 * Create a UrlConverter taken from the core to handle bundle resources.
+	 *
+	 * If the core is not present, we do not need it as no OSGi loading can take place.
+	 */
+	private static UrlConverter createBundleResourceConverter() {
+		try {
+			final Class<?> clazz = getClassFromQualifiedName("de.uni_freiburg.informatik.ultimate.core.util.RcpUtils");
+			final Method method = clazz.getMethod("getBundleProtocolResolver");
+			return (UrlConverter) method.invoke(null);
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | ReflectionUtilException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -106,14 +120,12 @@ public class ReflectionUtil {
 		}
 
 		final Set<Class<?>> result = new HashSet<>();
-		final ClassLoader classLoader = interfaceClazz.getClassLoader();
 		final String packageName = interfaceClazz.getPackage().getName();
-		final List<String> filenames = getFolderContentsFromClass(interfaceClazz);
-		if (filenames == null) {
+		final Collection<File> files = getFolderContentsFromClass(interfaceClazz);
+		if (files == null) {
 			return Collections.emptySet();
 		}
 
-		final Collection<File> files = filesInDirectory(classLoader, filenames);
 		for (final File file : files) {
 			final Class<?> clazz = retrieveClassFromFile(packageName, file, interfaceClazz);
 			if (clazz == null) {
@@ -124,56 +136,94 @@ public class ReflectionUtil {
 		return result;
 	}
 
+	public static <T> T instantiate(final Class<T> clazz) {
+		if (clazz == null) {
+			throw new IllegalArgumentException("clazz is null");
+		}
+		try {
+			final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+			if (constructors.length == 0) {
+				throw new ReflectionUtilException(
+						"Cannot instantiate class " + clazz.toString() + " because it has no constructors");
+			}
+
+			if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers())) {
+				// this class is a non-static inner class of another one
+				final Class<?> enclosingClazz = clazz.getEnclosingClass();
+				final Object enclosingClazzInstance = instantiate(enclosingClazz);
+				return clazz.getConstructor(enclosingClazz).newInstance(enclosingClazzInstance);
+			}
+
+			return clazz.getConstructor().newInstance();
+		} catch (final NoSuchMethodException e) {
+			throw new ReflectionUtilException(
+					"Cannot instantiate class " + clazz.toString() + " because I did not find a valid constructor", e);
+		} catch (final SecurityException | InstantiationException | IllegalAccessException e) {
+			throw new ReflectionUtilException(
+					"Cannot instantiate class " + clazz.toString() + " because I am not allowed to access it", e);
+		} catch (final IllegalArgumentException e) {
+			throw new AssertionError(
+					"Cannot instantiate class " + clazz.toString() + " because the parameters do not match", e);
+		} catch (final InvocationTargetException e) {
+			throw new ReflectionUtilException(
+					"Cannot instantiate class " + clazz.toString() + " because the constructor threw an exception", e);
+		}
+	}
+
 	/**
 	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
 	 * We support only URLs with protocol <i>file</i>.
 	 */
-	private static Collection<File> filesInDirectory(final ClassLoader loader, final List<String> resourceNames) {
+	private static Collection<File> getFilesFromDirectoryResources(final ClassLoader loader,
+			final List<String> resourceNames) {
 		final Set<File> rtr = new HashSet<>();
-		for (final String filename : resourceNames) {
-			final URL dirUrl = loader.getResource(filename);
-			if (dirUrl == null) {
-				continue;
-			}
-			final String protocol = dirUrl.getProtocol();
-			final File dirFile;
-			if ("file".equals(protocol)) {
-				try {
-					dirFile = new File(dirUrl.toURI());
-				} catch (final URISyntaxException e) {
-					continue;
-				}
-			}
-			// TODO: We need a dependency on eclipse for this protocol
-			// else if ("bundleresource".equals(protocol)) {
-			// try {
-			// final URL fileUrl = FileLocator.toFileURL(dirUrl);
-			// dirFile = new File(fileUrl.getFile());
-			// } catch (final Exception e) {
-			// return Collections.emptyList();
-			// }
-			// }
-			else {
-				throw new UnsupportedOperationException("unknown protocol " + protocol);
-			}
-			rtr.addAll(resolveDirectories(Arrays.asList(dirFile)));
+		for (final String resourceName : resourceNames) {
+			rtr.addAll(getFilesFromDirectoryResource(loader, resourceName));
 		}
 		return rtr;
 	}
 
-	private static Collection<File> resolveDirectories(final Collection<File> files) {
-		final Deque<File> worklist = new ArrayDeque<>();
-		final List<File> rtr = new ArrayList<>();
-		worklist.addAll(files);
-		while (!worklist.isEmpty()) {
-			final File file = worklist.removeFirst();
-			if (file.isFile()) {
-				rtr.add(file);
-				continue;
-			}
-			worklist.addAll(Arrays.asList(file.listFiles()));
+	/**
+	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
+	 * We support only URLs with protocol <i>file</i>.
+	 */
+	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final String resourceName) {
+		final URL dirUrl = loader.getResource(resourceName);
+		if (dirUrl == null) {
+			throw new ReflectionUtilException("Could not resolve resource " + resourceName);
 		}
-		return rtr;
+		return getFilesFromDirectoryResource(loader, dirUrl);
+	}
+
+	/**
+	 * Return the filenames of the files specified by the given resource URL. We use the classloader to get the URL of
+	 * this folder. We support only URLs with protocol <i>file</i>.
+	 */
+	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final URL url) {
+		final String protocol = url.getProtocol();
+		final File dirFile;
+		if ("file".equals(protocol)) {
+			try {
+				dirFile = new File(url.toURI());
+			} catch (final URISyntaxException e) {
+				return Collections.emptySet();
+			}
+		} else if ("bundleresource".equals(protocol)) {
+			if (BUNDLE_RESOURCE_CONVERTER == null) {
+				throw new AssertionError("Someone supplied a bundleresource resource but we do not have a converter -- "
+						+ "check if this deployable is built correctly "
+						+ "(maybe de.uni_freiburg.informatik.ultimate.core is missing?)");
+			}
+			try {
+				final URL fileUrl = BUNDLE_RESOURCE_CONVERTER.convert(url);
+				dirFile = new File(fileUrl.getFile());
+			} catch (final IOException e) {
+				return Collections.emptySet();
+			}
+		} else {
+			throw new UnsupportedOperationException("unknown protocol " + protocol);
+		}
+		return CoreUtil.flattenDirectories(Collections.singleton(dirFile));
 	}
 
 	/**
@@ -203,13 +253,18 @@ public class ReflectionUtil {
 
 	private static Class<?> getClassFromFile(final String packageName, final File file) {
 		final String qualifiedName = getQualifiedNameFromFile(packageName, file);
-		final Class<?> clazz;
+		return getClassFromQualifiedName(qualifiedName);
+	}
+
+	/**
+	 * Create a {@link Class} instance from a fully qualified name
+	 */
+	public static Class<?> getClassFromQualifiedName(final String qualifiedName) {
 		try {
-			clazz = Class.forName(qualifiedName);
+			return Class.forName(qualifiedName);
 		} catch (final ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName, e);
 		}
-		return clazz;
 	}
 
 	/**
@@ -249,7 +304,7 @@ public class ReflectionUtil {
 	/**
 	 * Return the contents of the folder from which this class was loaded.
 	 */
-	public static List<String> getFolderContentsFromClass(final Class<?> clazz) {
+	public static Collection<File> getFolderContentsFromClass(final Class<?> clazz) {
 		if (clazz == null) {
 			return null;
 		}
@@ -258,59 +313,52 @@ public class ReflectionUtil {
 			return Collections.emptyList();
 		}
 
-		final String nameName = clazz.getPackage().getName();
-		final String resourceName = nameName.replace(".", File.separator);
+		final String packageName = clazz.getPackage().getName();
+		final String packagePath = getPathFromPackageName(packageName);
 
-		// final URL loc = clazz.getProtectionDomain().getCodeSource().getLocation();
-		//
-		// try {
-		// final Path dir = Paths.get(loc.toURI());
-		// final Path subdir = dir.resolve(resourceName);
-		// final File f = new File(subdir.toUri());
-		// return Files.list(f.toPath()).map(a -> a.toString()).collect(Collectors.toList());
-		// } catch (final URISyntaxException e) {
-		// throw new RuntimeException(e);
-		// } catch (final IOException e) {
-		// throw new RuntimeException(e);
-		// }
-
-		Enumeration<URL> resourceUrlsIter = null;
+		final Enumeration<URL> resourceUrlsIter;
 		try {
-			resourceUrlsIter = loader.getResources(resourceName);
+			resourceUrlsIter = loader.getResources(packagePath);
 		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-		final List<URL> resourceUrls = new ArrayList<>();
-		while (resourceUrlsIter.hasMoreElements()) {
-			resourceUrls.add(resourceUrlsIter.nextElement());
+			throw new ReflectionUtilException(
+					"Classloader " + loader.toString() + " could not load resource " + packagePath, e);
 		}
 
-		final List<String> filenames = new ArrayList<>();
-		for (final URL resourceUrl : resourceUrls) {
-			InputStream in = null;
-			try {
-				in = resourceUrl.openStream();
-				if (in != null) {
-					final BufferedReader br = new BufferedReader(new InputStreamReader(in));
-					String resource = br.readLine();
-					while (resource != null) {
-						filenames.add(resourceName + File.separator + resource);
-						resource = br.readLine();
-					}
-				}
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
-			} finally {
-				if (in != null) {
-					try {
-						in.close();
-					} catch (final IOException e) {
-						throw new RuntimeException(e);
-					}
-				}
-			}
+		final List<File> rtr = new ArrayList<>();
+		while (resourceUrlsIter.hasMoreElements()) {
+			final URL resourceUrl = resourceUrlsIter.nextElement();
+
+			// if ("file".equals(resourceUrl.getProtocol())) {
+			// InputStream in = null;
+			// try {
+			// in = resourceUrl.openStream();
+			// if (in != null) {
+			// final BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			// String resource = br.readLine();
+			// while (resource != null) {
+			// filenames.add(packagePath + File.separator + resource);
+			// resource = br.readLine();
+			// }
+			// }
+			// } catch (final IOException e) {
+			// throw new ReflectionUtilException("Could not read from or open stream for resource " + resourceUrl
+			// + " after already reading " + filenames.size() + " files", e);
+			// } finally {
+			// if (in != null) {
+			// try {
+			// in.close();
+			// } catch (final IOException e) {
+			// throw new ReflectionUtilException(
+			// "Expcetion during closing of resource input stream " + resourceUrl, e);
+			// }
+			// }
+			// }
+			// } else {
+			//
+			// }
+			rtr.addAll(getFilesFromDirectoryResource(loader, resourceUrl));
 		}
-		return filenames;
+		return rtr;
 	}
 
 	/**
@@ -348,6 +396,36 @@ public class ReflectionUtil {
 		public Class<?> getCallerClass(final int callStackDepth) {
 			return getClassContext()[callStackDepth];
 		}
+	}
+
+	/**
+	 * A {@link RuntimeException} that will be thrown for unsuccessful operations of {@link ReflectionUtil}.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class ReflectionUtilException extends RuntimeException {
+
+		private static final long serialVersionUID = -5821955867584671607L;
+
+		public ReflectionUtilException(final String message) {
+			super(message);
+		}
+
+		public ReflectionUtilException(final String message, final Throwable cause) {
+			super(message, cause);
+		}
+	}
+
+	/**
+	 * Interface that allows me to indirectly instantiate a converter without adding the dependency explicitly.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	@FunctionalInterface
+	public interface UrlConverter {
+		public URL convert(URL url) throws IOException;
 	}
 
 }
