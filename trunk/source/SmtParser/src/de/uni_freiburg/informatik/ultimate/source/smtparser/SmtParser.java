@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.MsoLogic;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HornClauseParserScript;
@@ -187,6 +188,8 @@ public class SmtParser implements ISource {
 				.getBoolean(SmtParserPreferenceInitializer.LABEL_HornSolverMode);
 		final boolean inMsoSolverMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(SmtParserPreferenceInitializer.LABEL_MsoSolverMode);
+		final MsoLogic msoLogic = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(SmtParserPreferenceInitializer.LABEL_MsoLogic, MsoLogic.class);
 		final boolean filterUnusedDeclarationsMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(SmtParserPreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
 
@@ -208,7 +211,7 @@ public class SmtParser implements ISource {
 //					"ALL", caibss.getSolverSettings());
 					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
 		} else if (inMsoSolverMode) {
-			mLogger.info("Running our experimental MSO solver on input file");
+			mLogger.info("Running our experimental MSO solver on input file for the " + msoLogic + " logic.");
 			script = new MoNatDiffScript(mServices, mLogger);
 		} else {
 			mLogger.info("Running solver on smt file");

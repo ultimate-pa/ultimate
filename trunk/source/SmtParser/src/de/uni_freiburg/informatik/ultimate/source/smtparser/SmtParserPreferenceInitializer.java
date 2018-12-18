@@ -40,6 +40,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
  */
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
+	public enum MsoLogic {
+		MsoDiffInt,
+		MsoDiffNat,
+		WeakMsoDiffInt,
+		WeakMsoDiffNat,
+	}
+
 	//	public static final String LABEL_UseExtSolver = "Use external solver";
 //	public static final boolean DEF_UseExtSolver = true;
 //
@@ -58,9 +65,12 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file"
 			+ " contains Horn clauses only).";
 	public static final boolean DEF_HornSolverMode = false;
-	
+
 	public static final String LABEL_MsoSolverMode = "Apply MSO solver on input";
 	public static final boolean DEF_MsoSolverMode = false;
+
+	public static final String LABEL_MsoLogic = "MSO logic";
+	public static final MsoLogic DEF_MsoLogic = MsoLogic.MsoDiffInt;
 
 	public static final String LABEL_DoLocalSimplifications = "Use SMTUtils to do local simplifications during parsing";
 	public static final boolean DEF_DoLocalSimplifications = true;
@@ -125,6 +135,8 @@ public SmtParserPreferenceInitializer() {
 							DEF_HornSolverMode, PreferenceType.Boolean),
 					new UltimatePreferenceItem<Boolean>(LABEL_MsoSolverMode,
 							DEF_MsoSolverMode, PreferenceType.Boolean),
+					new UltimatePreferenceItem<MsoLogic>(LABEL_MsoLogic, DEF_MsoLogic, PreferenceType.Combo,
+							MsoLogic.values()),
 					new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
 							DEF_FilterUnusedDeclarationsMode, PreferenceType.Boolean),
 					new UltimatePreferenceItem<Boolean>(LABEL_DoLocalSimplifications,
