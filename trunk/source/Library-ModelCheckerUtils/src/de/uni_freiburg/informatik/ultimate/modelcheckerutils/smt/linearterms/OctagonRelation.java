@@ -91,7 +91,7 @@ public class OctagonRelation {
 		Map.Entry<Term, Rational> var2coeff1 = iter.next();
 		Map.Entry<Term, Rational> var2coeff2 = iter.next();
 		Rational absCommonCoeff = var2coeff1.getValue().abs();
-		if (absCommonCoeff.equals(var2coeff2.getValue().abs())) {
+		if (!absCommonCoeff.equals(var2coeff2.getValue().abs())) {
 			// No common coefficient. (3x + 2y < c) cannot be converted to an octagon relation.
 			return null;
 		}
@@ -135,16 +135,12 @@ public class OctagonRelation {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		if (mNegateVar1) {
-			sb.append('-');
-		}
-		sb.append(mVar1).append('-');
-		if (mNegateVar2) {
-			sb.append('-');
-		}
-		sb.append(mVar2).append(mRelationSymbol).append(mConstant);
-		return sb.toString();
+		return String.format("(%s%s) - (%s%s) %s %s",
+				sign(mNegateVar1), mVar1, sign(mNegateVar2), mVar2, mRelationSymbol, mConstant);
+	}
+	
+	private char sign(final boolean negate) {
+		return negate ? '-' : '+';
 	}
 
 }
