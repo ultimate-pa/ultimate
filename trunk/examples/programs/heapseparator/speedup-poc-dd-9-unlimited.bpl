@@ -56,15 +56,15 @@ implementation main() {
     }
   }
 
-  assert #memory_int[p1] <= 0;
-  assert #memory_int[p2] >= 0;
-  assert #memory_int[p3] <= 0;
-  assert #memory_int[p4] >= 0;
-  assert #memory_int[p5] <= 0;
-  assert #memory_int[p6] >= 0;
-  assert #memory_int[p7] <= 0;
-  assert #memory_int[p8] >= 0;
-  assert #memory_int[p9] <= 0;
+  assert #memory_int[p1] >= 0;
+  assert #memory_int[p2] <= 0;
+  assert #memory_int[p3] >= 0;
+  assert #memory_int[p4] <= 0;
+  assert #memory_int[p5] >= 0;
+  assert #memory_int[p6] <= 0;
+  assert #memory_int[p7] >= 0;
+  assert #memory_int[p8] <= 0;
+  assert #memory_int[p9] >= 0;
 
 }
 

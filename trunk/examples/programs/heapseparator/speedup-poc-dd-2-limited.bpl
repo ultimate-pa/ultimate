@@ -30,8 +30,8 @@ implementation main() {
     }
   }
 
-  assert #memory_int[p1] <= 0;
-  assert #memory_int[p2] >= 0;
+  assert #memory_int[p1] >= 0;
+  assert #memory_int[p2] <= 0;
 
 }
 

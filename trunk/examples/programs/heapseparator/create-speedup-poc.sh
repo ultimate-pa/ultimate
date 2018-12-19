@@ -88,9 +88,9 @@ printf '\n'
 for i in $(seq 1 ${pointers}) ; do 
   printf "  assert #memory_int[p${i}] "
   if (( i % 2 == 0 )) ; then 
-    printf ">="
-  else 
     printf "<="
+  else 
+    printf ">="
   fi
   printf " 0;\n"
 done 
