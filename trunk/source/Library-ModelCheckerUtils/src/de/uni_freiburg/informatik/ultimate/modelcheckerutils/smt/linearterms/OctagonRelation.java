@@ -72,7 +72,7 @@ public class OctagonRelation {
 	}
 
 	private static OctagonRelation from1Var(final AffineRelation arWith1Var) {
-		assert arWith1Var.getAffineTerm().getVariable2Coefficient().size() == 1 : "AffineRelation has not exactly one variable.";
+		checkNumberOfVariables(1, arWith1Var.getAffineTerm().getVariable2Coefficient().size());
 		final Map.Entry<Term, Rational> var2coeff = arWith1Var.getAffineTerm().getVariable2Coefficient().entrySet().iterator().next();
 		final Term var = var2coeff.getKey();
 		final Rational absCoeff = var2coeff.getValue().abs();
@@ -86,7 +86,7 @@ public class OctagonRelation {
 
 	private static OctagonRelation from2Vars(final AffineRelation arWith2Vars) {
 		final Map<Term, Rational> var2coeff = arWith2Vars.getAffineTerm().getVariable2Coefficient();
-		assert var2coeff.size() == 2 : "AffineRelation has not exactly two variables.";
+		checkNumberOfVariables(2, var2coeff.size());
 		Iterator<Map.Entry<Term, Rational>> iter = var2coeff.entrySet().iterator();
 		Map.Entry<Term, Rational> var2coeff1 = iter.next();
 		Map.Entry<Term, Rational> var2coeff2 = iter.next();
@@ -103,6 +103,12 @@ public class OctagonRelation {
 				arWith2Vars.getRelationSymbol(), constant);
 	}
 
+	private static void checkNumberOfVariables(final int expected, final int actual) {
+		if (expected != actual) {
+			throw new IllegalArgumentException("Expected " + expected + " variable(s), found " + actual);
+		}
+	}
+	
 	public boolean isNegateVar1() {
 		return mNegateVar1;
 	}
