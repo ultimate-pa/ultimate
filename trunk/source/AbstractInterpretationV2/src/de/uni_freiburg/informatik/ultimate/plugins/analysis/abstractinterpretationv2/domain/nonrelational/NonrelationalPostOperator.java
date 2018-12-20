@@ -201,13 +201,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 				break;
 			}
 		}
-		if (allTrue) {
-			return EvalResult.TRUE;
-		}
-		if (allFalse) {
-			return EvalResult.FALSE;
-		}
-		return EvalResult.UNKNOWN;
+		return EvalResult.selectTF(allTrue, allFalse);
 	}
 
 	/**

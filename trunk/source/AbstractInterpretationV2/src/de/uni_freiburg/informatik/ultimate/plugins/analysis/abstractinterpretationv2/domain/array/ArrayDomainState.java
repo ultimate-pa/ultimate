@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -805,9 +805,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			for (int i = 1; i < bounds.size() - 2; i++) {
 				final Term prev = bounds.get(i);
 				final Term next = bounds.get(i + 1);
-				final Term constraint =
-						Util.and(script, SmtUtils.leq(script, prev, rep), SmtUtils.less(script, rep, next));
-				if (isTrueInSubstate(constraint)) {
+				if (isTrueInSubstate(SmtUtils.leq(script, prev, rep))
+						&& isTrueInSubstate(SmtUtils.less(script, rep, next))) {
 					bounds.add(i + 1, rep);
 					values.add(i + 1, values.get(i));
 					added = true;
@@ -1251,11 +1250,11 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private boolean isTrueInSubstate(final Term constraint) {
-		final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
-		final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
-		return afterNegation.isBottom();
-		// TODO: Use evaluate based result?
-		// return mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
+		// TODO: Remove this
+		// final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
+		// final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
+		// return afterNegation.isBottom();
+		return mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
 	}
 
 	public ArrayDomainState<STATE> simplify() {
