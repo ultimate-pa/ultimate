@@ -25,6 +25,7 @@ public class InputDetSuccConstruction {
 	private Set<GuardGraph> mAutStates;
 	private Term mTrue;
 	private Term mFalse;
+	private SearchGraphTable mSGTable;
 	
 	public InputDetSuccConstruction(ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
 		mLogger = logger;
@@ -37,8 +38,12 @@ public class InputDetSuccConstruction {
 		mOutputVars = getOutputVariables(symboltable.getOutputVars());
 		makeTrueAndFalse();
 		mGuardGraph = constructInputDetSuccAutomaton(powersetAuto);
+		mSGTable = new SearchGraphTable(logger, script);
+		populateSearchGraph();
+		mLogger.warn(mSGTable);
+		mSGTable.makeTests();
 	}
-	
+
 	private void makeTrueAndFalse() {
 		for (Term t : mMonomials) {
 			Term nt = SmtUtils.not(mScript, t);
@@ -251,7 +256,8 @@ public class InputDetSuccConstruction {
 		return disjFlag;
 	}
 
-	// TODO this will not work if termToRemake is not a conjunction...I think
+	// TODO this will not work if termToRemake is not a conjunction, I think
+	// or a conjunction of conjunctions...
 	private Term remakeTerm(Term termToRemake, Term oVar) {
 		Term result = mTrue;
 		for (Term element : SmtUtils.getConjuncts(termToRemake)) {
@@ -283,5 +289,45 @@ public class InputDetSuccConstruction {
 			result = SmtUtils.or(mScript, result, t);
 		}
 		return result;
+	}
+	
+	public void populateSearchGraph() {
+		LinkedList<GuardGraph> open = new LinkedList<>();
+		Set<GuardGraph> seen = new HashSet<>();
+		
+		
+		mSGTable.add(mGuardGraph, 0, null, false);
+		open.add(mGuardGraph);
+		
+		while (open.size() > 0) {
+			GuardGraph workingNode = open.pop();
+			seen.add(workingNode);
+			
+			for ( GuardGraph successor : workingNode.getOutgoingNodes()) {
+				mSGTable.add(successor, mSGTable.getDistOfElement(workingNode) + 1, workingNode, isEndNode(successor));
+				if ( !seen.contains(successor) && !open.contains(successor) ) {
+					open.add(successor);
+				}
+			}
+		}
+	}
+	
+	private boolean isEndNode(GuardGraph node) {
+		boolean localFlag = false;
+		for ( Term oVar : mOutputVars ) {
+			for ( GuardGraph succ : node.getOutgoingNodes() ) {
+				Term[] meh = SmtUtils.getDisjuncts(node.getOutgoingEdgeLabel(succ));
+				localFlag = localFlag | oneTermOVarTester(meh, oVar);
+			}
+		}
+		return localFlag;
+	}
+	
+	private boolean oneTermOVarTester(Term[] disjs, Term oVar) {
+		LinkedList<Term> localList = new LinkedList<>();
+		for (Term dTerm : disjs ) {
+			localList.add(dTerm);
+		}
+		return testTermsContainOVar(localList, oVar);
 	}
 }
