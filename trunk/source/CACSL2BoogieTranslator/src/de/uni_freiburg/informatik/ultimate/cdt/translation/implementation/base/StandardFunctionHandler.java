@@ -750,7 +750,7 @@ public class StandardFunctionHandler {
 	private Result handleStrCpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_StrCpy;
+		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_STRCPY;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
@@ -1119,7 +1119,7 @@ public class StandardFunctionHandler {
 
 	private Result handlePthread_exit(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
@@ -1193,7 +1193,7 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
@@ -1216,7 +1216,7 @@ public class StandardFunctionHandler {
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Pthreads_Mutex);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
@@ -1509,7 +1509,7 @@ public class StandardFunctionHandler {
 	 */
 	private Result handleRealloc(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String methodName) {
-		final MemoryModelDeclarations reallocMmDecl = MemoryModelDeclarations.C_Realloc;
+		final MemoryModelDeclarations reallocMmDecl = MemoryModelDeclarations.C_REALLOC;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, methodName, arguments);
@@ -1855,12 +1855,12 @@ public class StandardFunctionHandler {
 
 	private Result handleMemcpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryModelDeclarations.C_Memcpy);
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryModelDeclarations.C_MEMCPY);
 	}
 
 	private Result handleMemmove(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryModelDeclarations.C_Memmove);
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryModelDeclarations.C_MEMMOVE);
 	}
 
 	private Result handleMemCopyOrMove(final IDispatcher main, final IASTFunctionCallExpression node,

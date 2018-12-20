@@ -634,7 +634,7 @@ public class PostProcessor {
 						final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
 						staticObjectInitStatements.add(
 								mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook, MemoryArea.STACK));
-						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
+						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC.name());
 					}
 
 					final ExpressionResult initRex =

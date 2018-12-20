@@ -83,8 +83,8 @@ public final class ConstructMemcpyOrMemmove {
 	public List<Declaration> declareMemcpyOrMemmove(final CHandler main,
 			final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memCopyOrMemMove,
 			final IASTNode hook) {
-		assert memCopyOrMemMove == MemoryModelDeclarations.C_Memcpy
-				|| memCopyOrMemMove == MemoryModelDeclarations.C_Memmove;
+		assert memCopyOrMemMove == MemoryModelDeclarations.C_MEMCPY
+				|| memCopyOrMemMove == MemoryModelDeclarations.C_MEMMOVE;
 
 		final List<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
