@@ -851,8 +851,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	public SubsetResult isSubsetOf(final ArrayDomainState<STATE> other) {
 		final Set<IProgramVarOrConst> thisRemoved = new HashSet<>();
 		final Set<IProgramVarOrConst> otherRemoved = new HashSet<>();
-		ArrayDomainState<STATE> thisState = this;
-		ArrayDomainState<STATE> otherState = other;
+		ArrayDomainState<STATE> thisState = removeUnusedAuxVars();
+		ArrayDomainState<STATE> otherState = other.removeUnusedAuxVars();
 		for (final IProgramVarOrConst var : mVariables) {
 			if (!var.getSort().isArraySort()) {
 				continue;
@@ -892,8 +892,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 		thisRemoved.addAll(mSegmentationMap.getAuxVars());
 		otherRemoved.addAll(other.mSegmentationMap.getAuxVars());
-		final STATE substateThis = thisState.removeUnusedAuxVars().getSubState().removeVariables(thisRemoved);
-		final STATE substateOther = otherState.removeUnusedAuxVars().getSubState().removeVariables(otherRemoved);
+		final STATE substateThis = thisState.getSubState().removeVariables(thisRemoved);
+		final STATE substateOther = otherState.getSubState().removeVariables(otherRemoved);
 		// Check for compatible array equalities
 		SubsetResult result = substateThis.isSubsetOf(substateOther);
 		for (final IProgramVarOrConst var : thisState.mSegmentationMap.getArrays()) {
