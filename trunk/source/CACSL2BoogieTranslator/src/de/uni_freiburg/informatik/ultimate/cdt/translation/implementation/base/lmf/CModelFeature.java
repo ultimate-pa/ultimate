@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
@@ -37,6 +36,8 @@ public enum CModelFeature {
 
 	ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
 
+	ULTIMATE_DATA_ON_HEAP_REQUIRED(UltimateDataOnHeapRequired.class),
+
 	;
 
 	private final Class<? extends ICModelFeatureDefinition> mClazz;
@@ -55,7 +56,7 @@ public enum CModelFeature {
 	 * @param settings
 	 * @return true iff the method execution made a change in rmmf
 	 */
-	boolean resolveDependencies(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+	boolean resolveDependencies(final CMemoryModelFeatures rmmf, final TranslationSettings settings) {
 		if (this == MemoryModelDeclarations.C_MEMCPY || this == MemoryModelDeclarations.C_MEMMOVE) {
 			return memcpyOrMemmoveRequirements(rmmf);
 		} else if (this == MemoryModelDeclarations.C_MEMSET) {
@@ -71,7 +72,7 @@ public enum CModelFeature {
 		}
 	}
 
-	private boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+	private boolean reallocRequirements(final CMemoryModelFeatures rmmf, final TranslationSettings settings) {
 		boolean changedSomething = false;
 		changedSomething |= rmmf.requireMemoryModelInfrastructure();
 		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
@@ -84,7 +85,7 @@ public enum CModelFeature {
 		return changedSomething;
 	}
 
-	private boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+	private boolean strcpyRequirements(final CMemoryModelFeatures rmmf, final TranslationSettings settings) {
 		boolean changedSomething = false;
 		for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
 			changedSomething |= rmmf.reportUncheckedWriteRequired(prim);
@@ -95,7 +96,7 @@ public enum CModelFeature {
 		return changedSomething;
 	}
 
-	private boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+	private boolean meminitRequirements(final CMemoryModelFeatures rmmf, final TranslationSettings settings) {
 		boolean changedSomething = false;
 		if (settings.useConstantArrays()) {
 			// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
@@ -113,7 +114,7 @@ public enum CModelFeature {
 		return changedSomething;
 	}
 
-	boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
+	boolean memcpyOrMemmoveRequirements(final CMemoryModelFeatures mmf) {
 		boolean changedSomething = false;
 		// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 		for (final CPrimitives prim : new HashSet<>(mmf.mDataOnHeapRequired)) {

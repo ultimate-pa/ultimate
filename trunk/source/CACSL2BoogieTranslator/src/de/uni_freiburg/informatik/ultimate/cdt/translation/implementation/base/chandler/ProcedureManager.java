@@ -240,7 +240,7 @@ public class ProcedureManager {
 					 *
 					 */
 					final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryModel()
-							.getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
+							.getHeapDataArrays(memoryHandler.getRequiredMemoryModelFeatures());
 					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 						for (final HeapDataArray hda : heapDataArrays) {
 							// currModClause.add(hda.getVariableName());

@@ -24,9 +24,8 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.lmf;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -46,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * <li>One for the query if any memory model features are required (PostProcessor queries this because it needs to know
  * for the init procedure.).
  * <li>At the start of {@link MemoryHandler#declareMemoryModelInfrastructure(CHandler, ILocation, IASTNode)}, the method
- * {@link RequiredMemoryModelFeatures#finish()} is called. This method resolves dependencies between the different
- * memory model features (e.g. memcpy requires write_unchecked procedures for all heap data arrays), afterwards it
- * freezes those features.
+ * {@link CMemoryModelFeatures#finish()} is called. This method resolves dependencies between the different memory model
+ * features (e.g. memcpy requires write_unchecked procedures for all heap data arrays), afterwards it freezes those
+ * features.
  *
  * Background: There are different dependencies between features recorded in this class. Simple ones are resolved
  * immediately (e.g. reportPointerUncheckedWriteRequired, triggers reportPointerOnHeapRequired). Others are resolved
@@ -56,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public final class RequiredMemoryModelFeatures {
+public final class CMemoryModelFeatures {
 
 	/**
 	 * This flag must be set if any of the memory model features are required.
@@ -69,7 +68,6 @@ public final class RequiredMemoryModelFeatures {
 	private boolean mPointerOnHeapRequired;
 	private boolean mPointerUncheckedWriteRequired;
 	private boolean mPointerInitWriteRequired;
-	private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations;
 
 	/**
 	 * Set of HeapDataArrays for which constant array initialization is required. (for those we create a Boogie function
@@ -81,19 +79,11 @@ public final class RequiredMemoryModelFeatures {
 	private final Set<CPrimitives> mDataOnHeapStoreFunctionRequired;
 	private boolean mPointerOnHeapStoreFunctionRequired;
 
-	/**
-	 * Once this flag is set, no member of this class may be changed anymore.
-	 */
-	private boolean mIsFrozen;
-
-	private boolean mMemoryModelInfrastructureRequiredHasBeenQueried;
-
 	private final Set<CPrimitives> mDataUncheckedReadRequired;
 	private boolean mPointerUncheckedReadRequired;
 
-	public RequiredMemoryModelFeatures() {
+	public CMemoryModelFeatures() {
 		mDataOnHeapRequired = new HashSet<>();
-		mRequiredMemoryModelDeclarations = new HashSet<>();
 		mDataUncheckedWriteRequired = new HashSet<>();
 		mDataInitWriteRequired = new HashSet<>();
 		mDataUncheckedReadRequired = new HashSet<>();
@@ -105,10 +95,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mMemoryModelInfrastructureRequired) {
 			return false;
 		}
-		if (mMemoryModelInfrastructureRequiredHasBeenQueried) {
-			throw new AssertionError(
-					"someone already asked if memory model infrastructure was required and we " + "said no");
-		}
 		mMemoryModelInfrastructureRequired = true;
 		require(MemoryModelDeclarations.ULTIMATE_LENGTH);
 		require(MemoryModelDeclarations.ULTIMATE_VALID);
@@ -119,7 +105,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerOnHeapRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		requireMemoryModelInfrastructure();
 		mPointerOnHeapRequired = true;
 		return true;
@@ -129,7 +114,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerUncheckedWriteRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		reportPointerOnHeapRequired();
 		mPointerUncheckedWriteRequired = true;
 		return true;
@@ -139,7 +123,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerUncheckedReadRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		reportPointerOnHeapRequired();
 		mPointerUncheckedReadRequired = true;
 		return true;
@@ -149,7 +132,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerInitWriteRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		reportPointerOnHeapRequired();
 		mPointerInitWriteRequired = true;
 		return true;
@@ -159,7 +141,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataOnHeapRequired.contains(primitive)) {
 			return false;
 		}
-		checkNotFrozen();
 		requireMemoryModelInfrastructure();
 		mDataOnHeapRequired.add(primitive);
 		return true;
@@ -169,7 +150,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataUncheckedReadRequired.contains(primitive)) {
 			return false;
 		}
-		checkNotFrozen();
 		reportDataOnHeapRequired(primitive);
 		mDataUncheckedReadRequired.add(primitive);
 		return true;
@@ -179,7 +159,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataUncheckedWriteRequired.contains(primitive)) {
 			return false;
 		}
-		checkNotFrozen();
 		reportDataOnHeapRequired(primitive);
 		mDataUncheckedWriteRequired.add(primitive);
 		return true;
@@ -189,7 +168,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataInitWriteRequired.contains(prim)) {
 			return false;
 		}
-		checkNotFrozen();
 		reportDataOnHeapRequired(prim);
 		mDataInitWriteRequired.add(prim);
 		return true;
@@ -199,7 +177,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataOnHeapInitFunctionRequired.contains(prim)) {
 			return false;
 		}
-		checkNotFrozen();
 		reportDataOnHeapRequired(prim);
 		mDataOnHeapInitFunctionRequired.add(prim);
 		return true;
@@ -209,7 +186,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerOnHeapInitFunctionRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		reportPointerOnHeapRequired();
 		mPointerOnHeapInitFunctionRequired = true;
 		return true;
@@ -219,7 +195,6 @@ public final class RequiredMemoryModelFeatures {
 		if (mDataOnHeapStoreFunctionRequired.contains(prim)) {
 			return false;
 		}
-		checkNotFrozen();
 		reportDataOnHeapRequired(prim);
 		mDataOnHeapStoreFunctionRequired.add(prim);
 		return true;
@@ -229,74 +204,60 @@ public final class RequiredMemoryModelFeatures {
 		if (mPointerOnHeapStoreFunctionRequired) {
 			return false;
 		}
-		checkNotFrozen();
 		reportPointerOnHeapRequired();
 		mPointerOnHeapStoreFunctionRequired = true;
 		return true;
 	}
 
 	public boolean isPointerOnHeapRequired() {
-		checkIsFrozen();
 		return mPointerOnHeapRequired;
 	}
 
 	public boolean isPointerUncheckedWriteRequired() {
-		checkIsFrozen();
 		return mPointerUncheckedWriteRequired;
 	}
 
 	public boolean isPointerUncheckedReadRequired() {
-		checkIsFrozen();
 		return mPointerUncheckedReadRequired;
 	}
 
 	public boolean isPointerInitRequired() {
-		checkIsFrozen();
 		return mPointerInitWriteRequired;
 	}
 
 	public Set<CPrimitives> getDataOnHeapRequired() {
-		checkIsFrozen();
 		return mDataOnHeapRequired;
 	}
 
 	public boolean isPointerOnHeapInitFunctionRequired() {
-		checkIsFrozen();
 		return mPointerOnHeapInitFunctionRequired;
 	}
 
 	public boolean isDataOnHeapInitFunctionRequired(final CPrimitives prim) {
-		checkIsFrozen();
 		return mDataOnHeapInitFunctionRequired.contains(prim);
 	}
 
 	public boolean isPointerOnHeapStoreFunctionRequired() {
-		checkIsFrozen();
 		return mPointerOnHeapStoreFunctionRequired;
 	}
 
 	public boolean isDataOnHeapStoreFunctionRequired(final CPrimitives prim) {
-		checkIsFrozen();
 		return mDataOnHeapStoreFunctionRequired.contains(prim);
 	}
 
 	public Set<CPrimitives> getUncheckedReadRequired() {
-		checkIsFrozen();
 		return mDataUncheckedReadRequired;
 	}
 
 	public Set<CPrimitives> getUncheckedWriteRequired() {
-		checkIsFrozen();
 		return mDataUncheckedWriteRequired;
 	}
 
 	public Set<CPrimitives> getInitWriteRequired() {
-		checkIsFrozen();
 		return mDataInitWriteRequired;
 	}
 
 	public boolean isMemoryModelInfrastructureRequired() {
-		mMemoryModelInfrastructureRequiredHasBeenQueried = true;
 		return mMemoryModelInfrastructureRequired;
 	}
 
@@ -310,14 +271,8 @@ public final class RequiredMemoryModelFeatures {
 			// mmdecl has already been added -- nothing to do
 			return false;
 		}
-		checkNotFrozen();
 		requireMemoryModelInfrastructure();
 		return mRequiredMemoryModelDeclarations.add(mmdecl);
-	}
-
-	public Set<MemoryModelDeclarations> getRequiredMemoryModelDeclarations() {
-		checkIsFrozen();
-		return Collections.unmodifiableSet(mRequiredMemoryModelDeclarations);
 	}
 
 	/**
@@ -335,21 +290,6 @@ public final class RequiredMemoryModelFeatures {
 			for (final MemoryModelDeclarations mmdecl : new HashSet<>(mRequiredMemoryModelDeclarations)) {
 				changedSomething |= mmdecl.resolveDependencies(this, settings);
 			}
-		}
-		mIsFrozen = true;
-	}
-
-	private void checkIsFrozen() {
-		if (!mIsFrozen) {
-			throw new AssertionError("attempt to query before this has been frozen -- results might be wrong");
-		}
-	}
-
-	private void checkNotFrozen() {
-		if (mIsFrozen) {
-			throw new AssertionError("attempt to modify, although this has been frozen already, "
-					+ "note that if some memory model feature relies on another one, this has to be declared in"
-					+ "MemoryModelDeclarations.resolveDependencies(..)" + "perhaps we need to update a method there");
 		}
 	}
 }

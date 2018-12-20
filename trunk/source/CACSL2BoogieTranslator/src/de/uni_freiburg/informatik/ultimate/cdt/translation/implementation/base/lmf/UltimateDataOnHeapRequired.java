@@ -1,6 +1,8 @@
 /*
+ * Copyright (C) 2013-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2012-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -27,20 +29,46 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.lmf;
 
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
  *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ICModelFeatureDefinition {
+public class UltimateDataOnHeapRequired extends BaseCModelFeatureDefinition {
 
-	String getName();
+	private final Set<CPrimitives> mDataOnHeapRequired;
 
-	CModelFeature getFeature();
+	public UltimateDataOnHeapRequired() {
+		mDataOnHeapRequired = new LinkedHashSet<>();
+	}
 
-	EnumSet<CModelFeature> getRequirements();
+	@Override
+	public String getName() {
+		return getFeature().toString();
+	}
 
-	void addFeatureParameter(Object... featureParams);
+	@Override
+	public CModelFeature getFeature() {
+		return CModelFeature.ULTIMATE_DATA_ON_HEAP_REQUIRED;
+	}
+
+	@Override
+	public EnumSet<CModelFeature> getRequirements() {
+		return EnumSet.of(CModelFeature.ULTIMATE_LENGTH, CModelFeature.ULTIMATE_VALID);
+	}
+
+	@Override
+	public void addFeatureParameter(final Object... featureParams) {
+		for (final Object param : featureParams) {
+			mDataOnHeapRequired.add((CPrimitives) param);
+		}
+	}
 
 }

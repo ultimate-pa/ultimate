@@ -104,6 +104,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructRealloc;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.lmf.CModelFeatureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -167,7 +168,6 @@ public class MemoryHandler {
 
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final TypeSizes mTypeSizes;
-	private final RequiredMemoryModelFeatures mRequiredMemoryModelFeatures;
 	private final BaseMemoryModel mMemoryModel;
 	private final INameHandler mNameHandler;
 	private final IBooleanArrayHelper mBooleanArrayHelper;
@@ -175,6 +175,8 @@ public class MemoryHandler {
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TranslationSettings mSettings;
+
+	private final CModelFeatureManager mFeatureManager;
 
 	/**
 	 * Pre-run constructor.
@@ -184,7 +186,7 @@ public class MemoryHandler {
 			final boolean smtBoolArrayWorkaround, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TranslationSettings settings) {
+			final CModelFeatureManager featureManager, final TranslationSettings settings) {
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mExpressionTranslation = expressionTranslation;
@@ -193,8 +195,8 @@ public class MemoryHandler {
 		mProcedureManager = procedureManager;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mSettings = settings;
+		mFeatureManager = featureManager;
 
-		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
 		if (smtBoolArrayWorkaround) {
 			if (mSettings.isBitvectorTranslation()) {
 				mBooleanArrayHelper = new BooleanArrayHelper_Bitvector();
@@ -217,7 +219,7 @@ public class MemoryHandler {
 			final INameHandler nameHandler, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TranslationSettings settings) {
+			final CModelFeatureManager featureManager, final TranslationSettings settings) {
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mExpressionTranslation = expressionTranslation;
@@ -227,15 +229,12 @@ public class MemoryHandler {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mSettings = settings;
 
-		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();// prerunMemoryHandler.mRequiredMemoryModelFeatures;
+		mFeatureManager = featureManager;
+
 		mBooleanArrayHelper = prerunMemoryHandler.mBooleanArrayHelper;
 		mMemoryModel = prerunMemoryHandler.mMemoryModel;
 		mVariablesToBeMalloced = prerunMemoryHandler.mVariablesToBeMalloced;
 		mVariablesToBeFreed = prerunMemoryHandler.mVariablesToBeFreed;
-	}
-
-	public RequiredMemoryModelFeatures getRequiredMemoryModelFeatures() {
-		return mRequiredMemoryModelFeatures;
 	}
 
 	public BaseMemoryModel getMemoryModel() {

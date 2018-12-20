@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.lmf.CMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -123,7 +124,7 @@ public abstract class BaseMemoryModel {
 	}
 
 	public final Collection<HeapDataArray>
-			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			getHeapDataArrays(final CMemoryModelFeatures requiredMemoryModelFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
 		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
@@ -135,7 +136,7 @@ public abstract class BaseMemoryModel {
 	}
 
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final CMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
@@ -156,7 +157,7 @@ public abstract class BaseMemoryModel {
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
+			CMemoryModelFeatures requiredMemoryModelFeatures);
 
 	public static class ReadWriteDefinition {
 		private final String mProcedureSuffix;

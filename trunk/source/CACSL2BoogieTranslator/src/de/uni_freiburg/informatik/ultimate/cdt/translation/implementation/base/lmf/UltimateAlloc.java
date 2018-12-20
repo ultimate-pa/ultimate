@@ -269,4 +269,9 @@ public class UltimateAlloc extends BaseCModelFeatureDefinition {
 		return result;
 	}
 
+	@Override
+	public void addFeatureParameter(final Object... featureParams) {
+		throw new AssertionError(getFeature() + " does not accept feature params");
+	}
+
 }
