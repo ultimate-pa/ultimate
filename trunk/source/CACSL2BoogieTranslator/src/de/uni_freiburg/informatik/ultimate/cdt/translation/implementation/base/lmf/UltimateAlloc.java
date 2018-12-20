@@ -95,7 +95,7 @@ public class UltimateAlloc extends BaseCModelFeatureDefinition {
 
 	@Override
 	public EnumSet<CModelFeature> getRequirements() {
-		return null;
+		return EnumSet.of(CModelFeature.ULTIMATE_LENGTH, CModelFeature.ULTIMATE_VALID);
 	}
 
 	/**
@@ -119,6 +119,7 @@ public class UltimateAlloc extends BaseCModelFeatureDefinition {
 		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		final Expression valid = getValidArray(tuLoc);
+
 		// procedure ~malloc(~size:int) returns (#res:$Pointer$);
 		// requires ~size >= 0;
 		// ensures old(#valid)[#res!base] = false;
@@ -215,9 +216,9 @@ public class UltimateAlloc extends BaseCModelFeatureDefinition {
 
 		final ArrayList<Declaration> result = new ArrayList<>();
 		if (ADD_IMPLEMENTATIONS) {
-			final Expression addr = ExpressionFactory.constructIdentifierExpression(tuLoc,
-					mTypeHandler.getBoogiePointerType(), ADDR,
-					new DeclarationInformation(StorageClass.LOCAL, MemoryModelDeclarations.ULTIMATE_ALLOC.getName()));
+			final Expression addr =
+					ExpressionFactory.constructIdentifierExpression(tuLoc, typeHandler.getBoogiePointerType(), ADDR,
+							new DeclarationInformation(StorageClass.LOCAL, getName()));
 			final Expression addrOffset =
 					ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
 			final Expression addrBase =
