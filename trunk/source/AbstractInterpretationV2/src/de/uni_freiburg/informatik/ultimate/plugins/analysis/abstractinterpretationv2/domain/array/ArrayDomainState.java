@@ -77,7 +77,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	private final Set<IProgramVarOrConst> mVariables;
 	private Term mCachedTerm;
 	private EquivalenceFinder mEquivalenceFinder;
-	private Map<Segmentation, Segmentation> mSimplifiedSegmentations;
+	private final Map<Segmentation, Segmentation> mSimplifiedSegmentations;
 
 	private ArrayDomainState(final STATE subState, final SegmentationMap segmentationMap,
 			final Set<IProgramVarOrConst> variables, final ArrayDomainToolkit<STATE> toolkit) {
@@ -437,13 +437,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				continue;
 			}
 			processedSegmentations.add(segmentation);
-			if (getEqualArrays(array).stream().anyMatch(x -> other.getSegmentation(x).equals(segmentation))) {
-				continue;
-			}
 			newSegmentationMap.put(array, createFreshSegmentationCopy(segmentation, old2newVars));
 		}
 		final STATE newSubState = mSubState.renameVariables(old2newVars);
-		return new ArrayDomainState<>(newSubState, newSegmentationMap, mVariables, mToolkit);
+		return updateState(newSubState, newSegmentationMap);
 	}
 
 	private Segmentation createFreshSegmentationCopy(final Segmentation segmentation,
@@ -1253,8 +1250,12 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		// TODO: Remove this
 		// final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
 		// final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
-		// return afterNegation.isBottom();
-		return mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
+		// final boolean result1 = afterNegation.isBottom();
+		final boolean result2 = mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
+		// if (result1 != result2) {
+		// return result1;
+		// }
+		return result2;
 	}
 
 	public ArrayDomainState<STATE> simplify() {
@@ -1306,7 +1307,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private boolean checkSegmentationMap() {
-		if (isBottom()) {
+		if (isBottom() || mSegmentationMap.getAllRepresentatives().isEmpty()) {
 			return true;
 		}
 		for (final IProgramVarOrConst var : mVariables) {
