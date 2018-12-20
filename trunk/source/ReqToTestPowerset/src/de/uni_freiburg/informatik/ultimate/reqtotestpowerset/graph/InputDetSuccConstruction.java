@@ -1,20 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class InputDetSuccConstruction {
 	private final Script mScript;
+	private final ManagedScript mManagedScript;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final GuardGraph mGuardGraph;
 	private Set<GuardGraph> mSeenNodes;
@@ -27,7 +34,10 @@ public class InputDetSuccConstruction {
 	private Term mFalse;
 	private SearchGraphTable mSGTable;
 	
-	public InputDetSuccConstruction(ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
+	public InputDetSuccConstruction(ManagedScript managedScript, IUltimateServiceProvider services,
+			ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
+		mManagedScript = managedScript;
+		mServices = services;
 		mLogger = logger;
 		mScript = script;
 		mSeenNodes = new HashSet<GuardGraph>();
@@ -241,28 +251,32 @@ public class InputDetSuccConstruction {
 		return helperList;
 	}
 
-	private boolean testTermsContainOVar(LinkedList<Term> disjTerms, Term ov) {
-		boolean disjFlag = true;
-		
+	private boolean testTermsContainOVar(List<Term> disjTerms, Term ov) {
 		for (Term disjTerm : disjTerms) {
 			boolean disjTermFlag = false;
 			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
 				if (element.equals(ov)) {
-					disjTermFlag = disjTermFlag | true;
+					disjTermFlag = true;
 				}
 			}
-			disjFlag = disjFlag & disjTermFlag;
+			if (!disjTermFlag) {
+				return false;
+			}
 		}
-		return disjFlag;
+		return true;
 	}
 
 	// TODO this will not work if termToRemake is not a conjunction, I think
 	// or a conjunction of conjunctions...
 	private Term remakeTerm(Term termToRemake, Term oVar) {
 		Term result = mTrue;
-		for (Term element : SmtUtils.getConjuncts(termToRemake)) {
-			if (!element.equals(oVar)) {
-				result = SmtUtils.and(mScript, result, element);
+		Term dnf = SmtUtils.toDnf(mServices, mManagedScript, termToRemake,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		for (Term disjTerm : SmtUtils.getDisjuncts(dnf)) {
+			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
+				if (!element.equals(oVar)) {
+					result = SmtUtils.and(mScript, result, element);
+				}
 			}
 		}
 		return result;
@@ -316,18 +330,14 @@ public class InputDetSuccConstruction {
 		boolean localFlag = false;
 		for ( Term oVar : mOutputVars ) {
 			for ( GuardGraph succ : node.getOutgoingNodes() ) {
-				Term[] meh = SmtUtils.getDisjuncts(node.getOutgoingEdgeLabel(succ));
-				localFlag = localFlag | oneTermOVarTester(meh, oVar);
+				Term[] disjs = SmtUtils.getDisjuncts(
+						SmtUtils.toDnf(
+								mServices, mManagedScript, node.getOutgoingEdgeLabel(succ),
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+				
+				localFlag = localFlag || testTermsContainOVar(Arrays.asList(disjs), oVar);
 			}
 		}
 		return localFlag;
-	}
-	
-	private boolean oneTermOVarTester(Term[] disjs, Term oVar) {
-		LinkedList<Term> localList = new LinkedList<>();
-		for (Term dTerm : disjs ) {
-			localList.add(dTerm);
-		}
-		return testTermsContainOVar(localList, oVar);
 	}
 }

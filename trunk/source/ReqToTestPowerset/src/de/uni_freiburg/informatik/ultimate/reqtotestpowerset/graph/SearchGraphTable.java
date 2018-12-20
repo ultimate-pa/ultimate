@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class SearchGraphTable {
