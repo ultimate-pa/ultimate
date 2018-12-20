@@ -272,9 +272,9 @@ public class MemoryHandler {
 
 
 	private static enum HeapWriteMode {
-		Store_Checked,
-		Store_Unchecked,
-		Select
+		STORE_CHECKED,
+		STORE_UNCHECKED,
+		SELECT
 	}
 
 	private static final boolean SUPPORT_FLOATS_ON_HEAP = true;
@@ -844,7 +844,7 @@ public class MemoryHandler {
 		final CType realValueType = valueType.getUnderlyingType();
 
 		final HeapWriteMode writeMode =
-				isStaticInitialization ? HeapWriteMode.Store_Unchecked : HeapWriteMode.Store_Checked;
+				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
 		return getWriteCall(loc, hlv, value, realValueType, writeMode, hook);
 	}
 
@@ -883,7 +883,7 @@ public class MemoryHandler {
 	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final CType valueType, final IASTNode hook) {
 		final CType realValueType = valueType.getUnderlyingType();
-		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.Select, hook);
+		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT, hook);
 	}
 
 
@@ -1843,12 +1843,12 @@ public class MemoryHandler {
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
 			final ReadWriteDefinition rda, final IASTNode hook) {
 		if (rda.alsoUncheckedWrite()) {
-			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Store_Unchecked);
+			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.STORE_UNCHECKED);
 		}
 		if (rda.alsoInit()) {
-			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Select);
+			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.SELECT);
 		}
-		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.Store_Checked);
+		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.STORE_CHECKED);
 		return Collections.emptySet();
 	}
 
@@ -1862,13 +1862,13 @@ public class MemoryHandler {
 		// create procedure signature
 		final String procName;
 		switch (writeMode) {
-		case Select:
+		case SELECT:
 			procName = rda.getInitWriteProcedureName();
 			break;
-		case Store_Checked:
+		case STORE_CHECKED:
 			procName = rda.getWriteProcedureName();
 			break;
-		case Store_Unchecked:
+		case STORE_UNCHECKED:
 			procName = rda.getUncheckedWriteProcedureName();
 			break;
 		default:
@@ -1890,7 +1890,7 @@ public class MemoryHandler {
 
 		// specification for memory writes
 		final ArrayList<Specification> swrite = new ArrayList<>();
-		if (writeMode == HeapWriteMode.Store_Checked) {
+		if (writeMode == HeapWriteMode.STORE_CHECKED) {
 			swrite.addAll(constructPointerBaseValidityCheck(loc, inPtr, procName));
 
 			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
@@ -1922,7 +1922,7 @@ public class MemoryHandler {
 					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 		}
 
-		final boolean useSelectInsteadOfStore = writeMode == HeapWriteMode.Select;
+		final boolean useSelectInsteadOfStore = writeMode == HeapWriteMode.SELECT;
 
 		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
@@ -2659,14 +2659,14 @@ public class MemoryHandler {
 			throws AssertionError {
 		final String writeCallProcedureName;
 		switch (writeMode) {
-		case Select:
+		case SELECT:
 			mRequiredMemoryModelFeatures.reportPointerInitWriteRequired();
 			writeCallProcedureName = mMemoryModel.getInitPointerProcedureName();
 			break;
-		case Store_Checked:
+		case STORE_CHECKED:
 			writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
 			break;
-		case Store_Unchecked:
+		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportPointerUncheckedWriteRequired();
 			writeCallProcedureName = mMemoryModel.getUncheckedWritePointerProcedureName();
 			break;
@@ -2710,14 +2710,14 @@ public class MemoryHandler {
 			throws AssertionError {
 		final String writeCallProcedureName;
 		switch (writeMode) {
-		case Select:
+		case SELECT:
 			mRequiredMemoryModelFeatures.reportInitWriteRequired(valueType.getType());
 			writeCallProcedureName = mMemoryModel.getInitWriteProcedureName(valueType.getType());
 			break;
-		case Store_Checked:
+		case STORE_CHECKED:
 			writeCallProcedureName = mMemoryModel.getWriteProcedureName(valueType.getType());
 			break;
-		case Store_Unchecked:
+		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportUncheckedWriteRequired(valueType.getType());
 			writeCallProcedureName = mMemoryModel.getUncheckedWriteProcedureName(valueType.getType());
 			break;
