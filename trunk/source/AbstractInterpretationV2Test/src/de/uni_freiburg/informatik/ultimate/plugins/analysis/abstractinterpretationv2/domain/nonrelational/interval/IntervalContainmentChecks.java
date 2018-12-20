@@ -33,6 +33,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
+import org.hamcrest.core.Is;
+import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
@@ -171,6 +173,7 @@ public class IntervalContainmentChecks {
 		final IntervalDomainValue int2 = HelperFunctions.createInterval(1, 1);
 
 		// Expected result: true
-		assertTrue(int1.isLessOrEqual(int2) == BooleanValue.TRUE);
+		Assert.assertThat(int1.isLessOrEqual(int2), Is.is(BooleanValue.TRUE));
+		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.FALSE));
 	}
 }
