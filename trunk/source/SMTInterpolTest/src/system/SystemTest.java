@@ -22,12 +22,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 @RunWith(Parameterized.class)
 public class SystemTest {
 
-	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
+	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
@@ -89,13 +92,23 @@ public class SystemTest {
 	}
 
 	@Parameters // (name = "{0}")
-	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
+	public static Collection<File> testFiles() throws URISyntaxException, IOException {
 		final Collection<File> testFiles = new ArrayList<>();
 
 		final String name = SystemTest.class.getPackage().getName();
 		final URL url = SystemTest.class.getClassLoader().getResource(name);
-		final File f = new File(url.toURI());
-		final File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+		final String protocol = url.getProtocol();
+		final URI uri;
+		if ("file".equals(protocol)) {
+			uri = url.toURI();
+		} else if ("bundleresource".equals(protocol)) {
+			uri = FileLocator.toFileURL(url).toURI();
+		} else {
+			throw new UnsupportedOperationException("unsupported resource protocol");
+		}
+		final File f = new File(uri);
+		final File[] lst =
+				f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
 		assert lst != null && lst.length == 1;
 		final ArrayDeque<File> todo = new ArrayDeque<>();
 		todo.add(lst[0]);
