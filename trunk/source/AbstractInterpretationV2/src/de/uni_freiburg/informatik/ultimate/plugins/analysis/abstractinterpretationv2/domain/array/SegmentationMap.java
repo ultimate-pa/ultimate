@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -207,68 +204,42 @@ public class SegmentationMap {
 		return mArrayEqualities.getAllRepresentatives();
 	}
 
-	public Term getTerm(final ManagedScript managedScript, final Term valueConstraints) {
-		if (SmtUtils.isTrue(valueConstraints)) {
-			return valueConstraints;
-		}
+	public Term getTerm(final ManagedScript managedScript, final Set<TermVariable> auxVars, final Term term) {
 		final Script script = managedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
-		final List<Term> negatedBoundConstraints = new ArrayList<>();
+		conjuncts.add(term);
 		final Set<TermVariable> bounds = new HashSet<>();
-		final Map<Term, Term> substitution = new HashMap<>();
-		final List<IProgramVarOrConst> sortedArrays = new ArrayList<>(mRepresentiveSegmentations.keySet());
-		Collections.sort(sortedArrays, new SortDimensionComparator());
-		int currentDimension = 1;
-		Term rhs = valueConstraints;
-		for (final IProgramVarOrConst rep : sortedArrays) {
-			final Sort sort = rep.getSort();
-			final int newDimension = SmtUtils.getDimension(sort);
-			if (newDimension > currentDimension) {
-				currentDimension = newDimension;
-				rhs = new Substitution(managedScript, substitution).transform(rhs);
-				substitution.clear();
-			}
-			final Segmentation segmentation = mRepresentiveSegmentations.get(rep);
-			final Term repVar = NonrelationalTermUtils.getTermVar(rep);
+		for (final IProgramVarOrConst array : mRepresentiveSegmentations.keySet()) {
+			final Segmentation segmentation = mRepresentiveSegmentations.get(array);
+			final Term arrayVar = NonrelationalTermUtils.getTermVar(array);
 			// Add the array equivalences to the term
-			for (final IProgramVarOrConst eq : getEquivalenceClass(rep)) {
-				if (!eq.equals(rep)) {
-					conjuncts.add(SmtUtils.binaryEquality(script, repVar, NonrelationalTermUtils.getTermVar(eq)));
+			for (final IProgramVarOrConst eq : getEquivalenceClass(array)) {
+				if (!eq.equals(array)) {
+					conjuncts.add(SmtUtils.binaryEquality(script, arrayVar, NonrelationalTermUtils.getTermVar(eq)));
 				}
 			}
-			final Sort boundSort = TypeUtils.getIndexSort(sort);
+			final Sort boundSort = TypeUtils.getIndexSort(array.getSort());
 			for (int i = 0; i < segmentation.size(); i++) {
 				// Add the bound constraints
+				final List<Term> disjuncts = new ArrayList<>();
 				final TermVariable idx = managedScript.constructFreshTermVariable("idx", boundSort);
 				final TermVariable prev = segmentation.getBound(i).getTermVariable();
 				final TermVariable next = segmentation.getBound(i + 1).getTermVariable();
 				if (i > 0) {
-					negatedBoundConstraints.add(SmtUtils.greater(script, prev, idx));
+					disjuncts.add(SmtUtils.greater(script, prev, idx));
 				}
 				if (i < segmentation.size() - 1) {
-					negatedBoundConstraints.add(SmtUtils.geq(script, idx, next));
+					disjuncts.add(SmtUtils.geq(script, idx, next));
 				}
 				bounds.add(idx);
-				// Substitute the values by the corresponding select (using idx)
 				final TermVariable value = segmentation.getValue(i).getTermVariable();
-				final Term select = script.term("select", repVar, idx);
-				substitution.put(value, select);
-
+				final Term select = script.term("select", arrayVar, idx);
+				disjuncts.add(SmtUtils.binaryEquality(script, value, select));
+				conjuncts.add(SmtUtils.or(script, disjuncts));
 			}
 		}
-		rhs = new Substitution(managedScript, substitution).transform(rhs);
-		final Term body = SmtUtils.or(script, SmtUtils.or(script, negatedBoundConstraints), rhs);
-		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
-		conjuncts.add(quantified);
-		return SmtUtils.and(script, conjuncts);
-	}
-
-	private class SortDimensionComparator implements Comparator<IProgramVarOrConst> {
-		@Override
-		public int compare(final IProgramVarOrConst var1, final IProgramVarOrConst var2) {
-			final int dimension1 = SmtUtils.getDimension(var1.getSort());
-			final int dimension2 = SmtUtils.getDimension(var2.getSort());
-			return Integer.compare(dimension1, dimension2);
-		}
+		final Term body =
+				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, SmtUtils.and(script, conjuncts));
+		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
 	}
 }

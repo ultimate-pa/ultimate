@@ -962,16 +962,12 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (mSegmentationMap.getAllRepresentatives().isEmpty()) {
 			return getSubTerm();
 		}
-		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
-		final Term filteredTerm = SmtUtils.filterFormula(getSubTerm(), values, script);
-		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), filteredTerm);
 		final Set<IProgramVarOrConst> auxVars = new HashSet<>(mSegmentationMap.getArrays());
 		auxVars.addAll(mSubState.getVariables());
 		auxVars.removeAll(mVariables);
 		final Set<TermVariable> auxVarTvs =
 				auxVars.stream().map(x -> (TermVariable) x.getTerm()).collect(Collectors.toSet());
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVarTvs,
-				SmtUtils.and(script, getSubTerm(), arrayTerm));
+		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, getSubTerm());
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
