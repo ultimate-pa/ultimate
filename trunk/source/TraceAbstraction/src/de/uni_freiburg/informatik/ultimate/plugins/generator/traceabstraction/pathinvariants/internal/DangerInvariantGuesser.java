@@ -96,6 +96,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * location is visited only a finite number of times and this process
  * terminates. If the initial location is annotated by a satisfiable predicate,
  * the danger invariant candidate is a danger invariant.
+ * <p>
+ * Possible improvements: A. improve the computation of
+ * {@link TransFormulaUtils#computeGuardedHavoc} as proposed in the
+ * documentation there. B. Detect in advance which edges occur in a loop Use the
+ * guarded havoc only in loops and the original transformula outside of loops.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
