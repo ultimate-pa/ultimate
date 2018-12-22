@@ -959,7 +959,7 @@ public final class TransFormulaUtils {
 			final Set<TermVariable> oldAuxVars) {
 		final Term resultTerm = PartialQuantifierElimination.quantifier(services, logger, maScript,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				QuantifiedFormula.EXISTS, oldAuxVars, formula, new Term[0]);
+				QuantifiedFormula.EXISTS, oldAuxVars, formula);
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(resultTerm.getFreeVars()));
 		freeVars.retainAll(oldAuxVars);
 		final Pair<Term, Set<TermVariable>> result = new Pair<>(resultTerm, freeVars);
