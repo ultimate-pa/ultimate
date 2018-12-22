@@ -65,7 +65,37 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
- * Guess a danger invariant candidate.
+ * Computes a "danger invariant candidate" by abstracting every transition by
+ * its "guarded havoc" {@link TransFormulaUtils#computeGuardedHavoc} and
+ * iterating backwards over the CFG starting from the error locations.
+ * <p>
+ * We call a mapping from locations to predicates a "danger invariant candidate"
+ * if the following is satisfied.
+ * <ul>
+ * <li>every error location is mapped to "true"
+ * <li>every state that satisfies the invariant and whose location is not an
+ * error location has at least one successor that satisfies the invariant
+ * </ul>
+ * (TODO Matthias 2018-12-22: Hence a "danger invariant candidate" is a
+ * (partial) danger invariant where we do not require that the initial location
+ * is mapped to a satisfiable predicate. I "invented" this term, I do not like
+ * it, maybe we should contact the Danger Invariant authors and ask for a better
+ * suggestion.)
+ * <p>
+ * For the computation, we (conceptually) first annotate all non-error locations
+ * with "false" and all error locations with true. The we iterate backwards over
+ * the CFG by adding all error locations to the worklist. Let ϕ be the mapping
+ * from locations to predicates. Let gh(act) be the guarded havoc of the action
+ * act. For every edge (loc,act,loc') where loc' is in the worklist we compute
+ * pre(ϕ(loc'), gh(act)) and set ϕ(loc) to the following disjunction.
+ * <p>
+ * ϕ(loc) \/ re(ϕ(loc'), gh(act))
+ * <p>
+ * If the annotation of the location loc was changed by this update we add loc
+ * to the worklist. Since the guarded havoc is a very coarse abstraction every
+ * location is visited only a finite number of times and this process
+ * terminates. If the initial location is annotated by a satisfiable predicate,
+ * the danger invariant candidate is a danger invariant.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
