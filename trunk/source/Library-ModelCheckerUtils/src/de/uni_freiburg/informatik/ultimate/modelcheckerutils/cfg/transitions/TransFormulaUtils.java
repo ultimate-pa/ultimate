@@ -881,8 +881,24 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * The "guarded havoc" is the transition relation in which we keep the guard (for all inVars) but havoc all
-	 * variables that are updated.
+	 * The "guarded havoc" is the transition relation in which we keep the guard
+	 * (for all inVars) but havoc all variables that are updated.
+	 * <p>
+	 * TODO Matthias 2018-12-22: This could be improved to a result where we keep
+	 * also guards on outVars. E.g., the forumula that corresponds to the sequence
+	 * <code>x := 0 havoc y; assume y>=0</code> would be translated to 'true'.
+	 * However since only outVars are affected we would like to keep this
+	 * information. This could be achieved by taking the conjunction of the current
+	 * implementation together with a copy of this formula in which all inVars have
+	 * been existentially quantified.
+	 * <p>
+	 * We would afterwards change the documentation as follows.
+	 * The idea of this method is to provide an {@link UnmodifiableTransFormula} in
+	 * which all information about the connection between inVars and outVars is
+	 * dropped, with one exception: the information that a variable does not changes
+	 * its value may be kept. (We cannot guarantee that this information is kept
+	 * because the equality of two variables might be hidden in complicated formula
+	 * and we cannot detect the equality without using an SMT solver.
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
