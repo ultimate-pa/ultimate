@@ -1027,10 +1027,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			final IProgramVar freshMinValue = mToolkit.createValueVar(value.getType());
 			final boolean arrayValues = freshMinValue.getSort().isArraySort();
 			if (arrayValues) {
+				// TODO: Improve precision
 				tmpState = tmpState.addAuxVar(freshMinValue);
-				if (oldValues.size() == 1) {
-					tmpState.mSegmentationMap.move(freshMinValue, oldValues.get(0));
-				}
 			} else {
 				constraints
 						.add(SmtUtils.or(script, tmpState.connstructEquivalentConstraints(freshMinValue, oldValues)));
@@ -1054,10 +1052,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			newBounds.add(newMaxBound);
 			final IProgramVar freshMaxValue = mToolkit.createValueVar(value.getType());
 			if (arrayValues) {
+				// TODO: Improve precision
 				tmpState = tmpState.addAuxVar(freshMaxValue);
-				if (oldValues.size() == 1) {
-					tmpState.mSegmentationMap.move(freshMaxValue, oldValues.get(0));
-				}
 			} else {
 				constraints
 						.add(SmtUtils.or(script, tmpState.connstructEquivalentConstraints(freshMaxValue, oldValues)));
