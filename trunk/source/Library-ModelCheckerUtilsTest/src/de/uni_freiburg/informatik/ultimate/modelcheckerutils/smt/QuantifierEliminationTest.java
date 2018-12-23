@@ -363,6 +363,25 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
+
+	/**
+	 * Simple test for DER.
+	 */
+	@Test
+	public void derTest1() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("a", new Sort[0], intSort);
+		mScript.declareFun("b", new Sort[0], intSort);
+
+		final String formulaAsString = "(exists ((x Int)) (or (and (= x a) (= x 1)) (and (= x b) (= x 2))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result.toStringDirect());
+		Assert.assertTrue(!(result instanceof QuantifiedFormula));
+	}
+
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
 		// TODO: DD: Somehow the quantified formulas are too large / strange for TermParseUtils.parseTerm, but this way
