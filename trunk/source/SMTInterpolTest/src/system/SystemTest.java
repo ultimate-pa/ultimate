@@ -93,38 +93,50 @@ public class SystemTest {
 
 	@Parameters // (name = "{0}")
 	public static Collection<File> testFiles() throws URISyntaxException, IOException {
+
 		final Collection<File> testFiles = new ArrayList<>();
 
 		final String name = SystemTest.class.getPackage().getName();
 		final URL url = SystemTest.class.getClassLoader().getResource(name);
-		final String protocol = url.getProtocol();
-		final URI uri;
-		if ("file".equals(protocol)) {
-			uri = url.toURI();
-		} else if ("bundleresource".equals(protocol)) {
-			uri = FileLocator.toFileURL(url).toURI();
-		} else {
-			throw new UnsupportedOperationException("unsupported resource protocol");
-		}
-		final File f = new File(uri);
-		final File[] lst =
-				f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
-		assert lst != null && lst.length == 1;
-		final ArrayDeque<File> todo = new ArrayDeque<>();
-		todo.add(lst[0]);
-		while (!todo.isEmpty()) {
-			final File file = todo.removeFirst();
-			if (file.isDirectory()) {
-				for (final File subFile : file.listFiles()) {
-					todo.add(subFile);
-				}
-			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
-				if (shouldExecute(file)) {
-					testFiles.add(file);
+		try {
+			final String protocol = url.getProtocol();
+			final URI uri;
+			if ("file".equals(protocol)) {
+				uri = url.toURI();
+			} else if ("bundleresource".equals(protocol)) {
+				uri = FileLocator.toFileURL(url).toURI();
+			} else {
+				throw new UnsupportedOperationException("unsupported resource protocol");
+			}
+			final File f = new File(uri);
+			final File[] lst =
+					f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+			assert lst != null && lst.length == 1;
+			final ArrayDeque<File> todo = new ArrayDeque<>();
+			todo.add(lst[0]);
+			while (!todo.isEmpty()) {
+				final File file = todo.removeFirst();
+				if (file.isDirectory()) {
+					for (final File subFile : file.listFiles()) {
+						todo.add(subFile);
+					}
+				} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
+					if (shouldExecute(file)) {
+						testFiles.add(file);
+					}
 				}
 			}
+			return testFiles;
+		} catch (final Throwable t) {
+			if (url != null) {
+				System.out.println("Error trying to extract system tests from URL " + url.toString());
+			} else {
+				System.out.println("Error trying to extract system tests; could not load resource");
+			}
+
+			t.printStackTrace();
+			throw t;
 		}
-		return testFiles;
 	}
 
 	public File mFile;
