@@ -157,9 +157,10 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
-	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using the
-	 * specified {@link PqeTechniques}.
+	 * Returns formula equivalent to the one constructed by
+	 * {@link SmtUtils#quantifier}. The resulting formula is not quantified if the
+	 * quantified variables are not in the input formula or if quantifiers can be
+	 * eliminated by using the specified {@link PqeTechniques}.
 	 */
 	public static Term quantifierCustom(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final PqeTechniques techniques, final int quantifier,
