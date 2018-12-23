@@ -115,7 +115,15 @@ public class QuantifierPusher extends TermTransformer {
 		SubformulaClassification classification =
 				classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
 		if (classification == SubformulaClassification.DUAL_QUANTIFIER) {
-			quantifiedFormula = processDualQuantifier(quantifiedFormula);
+			final Term dualQuantifierPushResult = processDualQuantifier(quantifiedFormula);
+			if (dualQuantifierPushResult instanceof QuantifiedFormula) {
+				quantifiedFormula = (QuantifiedFormula) dualQuantifierPushResult;
+			} else {
+				// Pushing the inner dual quantifier did not only remove that
+				// quantifier but also the quantified variables bounded
+				// by the outer quantifier
+				return dualQuantifierPushResult;
+			}
 			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
 		}
 		while (classification == SubformulaClassification.SAME_QUANTIFIER) {
@@ -364,16 +372,16 @@ public class QuantifierPusher extends TermTransformer {
 		return (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), vars, body);
 	}
 
-	private QuantifiedFormula processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
+	private Term processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
 		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
 		assert (quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()));
 		final Term quantifiedSubFormulaPushed =
 				(new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques))
 						.transform(quantifiedSubFormula);
-		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(),
-				quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
-		return update;
+		final Term result = mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(),
+				quantifiedSubFormulaPushed);
+		return result;
 	}
 
 	@Override
