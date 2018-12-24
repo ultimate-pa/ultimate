@@ -23,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayDeque;
@@ -100,15 +99,14 @@ public class SystemTest {
 		final URL url = SystemTest.class.getClassLoader().getResource(name);
 		try {
 			final String protocol = url.getProtocol();
-			final URI uri;
+			final File f;
 			if ("file".equals(protocol)) {
-				uri = url.toURI();
+				f = new File(url.toURI());
 			} else if ("bundleresource".equals(protocol)) {
-				uri = FileLocator.toFileURL(url).toURI();
+				f = new File(FileLocator.toFileURL(url).getFile());
 			} else {
 				throw new UnsupportedOperationException("unsupported resource protocol");
 			}
-			final File f = new File(uri);
 			final File[] lst =
 					f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
 			assert lst != null && lst.length == 1;
