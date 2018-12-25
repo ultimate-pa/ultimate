@@ -27,6 +27,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -109,9 +110,12 @@ public class SystemTest {
 			}
 			final File[] lst =
 					f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
-			assert lst != null && lst.length == 1;
+			assert lst != null && lst.length > 0 : "File " + f.getAbsolutePath() + " does not describe any tests";
 			final ArrayDeque<File> todo = new ArrayDeque<>();
-			todo.add(lst[0]);
+			if (lst.length > 1) {
+				System.out.println("More than one test directory found");
+			}
+			todo.addAll(Arrays.asList(lst));
 			while (!todo.isEmpty()) {
 				final File file = todo.removeFirst();
 				if (file.isDirectory()) {
