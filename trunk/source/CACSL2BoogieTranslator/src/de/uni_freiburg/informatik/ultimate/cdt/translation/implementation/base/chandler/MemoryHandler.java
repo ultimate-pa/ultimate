@@ -1193,6 +1193,10 @@ public class MemoryHandler {
 	}
 
 
+	/**
+	 * TODO 2019-12-26 Matthias: Our verifier does probably not support Boogie
+	 * constants soundly as a workaround, we construct a variable instead.
+	 */
 	private VariableDeclaration constructStackHeapBarrierConstant() {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
