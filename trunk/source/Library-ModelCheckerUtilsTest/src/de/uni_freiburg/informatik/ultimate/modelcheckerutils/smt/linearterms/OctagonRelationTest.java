@@ -113,9 +113,15 @@ public class OctagonRelationTest {
 		Assert.assertNull(octRelAsString("(<= (- x y) z)"));
 	}
 
-	@Test
+
+	/**
+	 * 2018-12-25 Matthias: Shows that {@link AffineRelation} does not support
+	 * comparison of Int and Real. Support for such comparisons is required by
+	 * SMT-LIB but some solvers will not support it and it might get removed form
+	 * the standard.
+	 */
 	public void bugsInAffineRelation() {
-		// TODO fix? Z3 allows comparison "Int = Real" 
+		// TODO fix? Z3 allows comparison "Int = Real"
 		Assert.assertEquals("(+x) - (+a) = 0", octRelAsString("(= x a)"));
 	}
 
@@ -124,7 +130,7 @@ public class OctagonRelationTest {
 			final OctagonRelation octRel = OctagonRelation.from(
 					new AffineRelation(mScript, TermParseUtils.parseTerm(mScript, termAsString)));
 			return octRel == null ? null : octRel.toString();
-		} catch (NotAffineException nae) {
+		} catch (final NotAffineException nae) {
 			throw new IllegalArgumentException("Invalid test case. Term was not affine.", nae);
 		}
 	}
