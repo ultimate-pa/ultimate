@@ -1,6 +1,6 @@
-//#Safe
+//#Unsafe
 /*
- * Date: September 2013
+ * Date: 2018-12-26
  * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
@@ -9,6 +9,7 @@
 
 int main() {
     int *p = malloc(sizeof(int));
+    free(p);
     free(p);
     return 0;
 }
