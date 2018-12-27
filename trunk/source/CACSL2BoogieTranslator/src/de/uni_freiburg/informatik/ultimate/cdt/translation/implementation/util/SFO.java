@@ -192,11 +192,6 @@ public final class SFO {
 	 */
 	public static final String MAIN = "main";
 
-	/**
-	 * Name of the memory allocation procedure used by the memory model.
-	 */
-	public static final String ALLOC = "#Ultimate.alloc";
-
 	public static final String MEMINIT = "#Ultimate.meminit";
 
 	public static final String C_MEMCPY = "#Ultimate.C_memcpy";

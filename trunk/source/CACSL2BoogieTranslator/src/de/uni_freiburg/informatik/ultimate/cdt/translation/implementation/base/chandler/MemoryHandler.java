@@ -142,7 +142,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
 public class MemoryHandler {
 
 	public static enum MemoryModelDeclarations {
-		ULTIMATE_ALLOC(SFO.ALLOC),
+		ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
+		ULTIMATE_ALLOC_HEAP("#Ultimate.allocOnHeap"),
 
 		ULTIMATE_DEALLOC(SFO.DEALLOC),
 
@@ -169,6 +170,14 @@ public class MemoryHandler {
 
 		ULTIMATE_VALID(SFO.VALID),
 
+		/**
+		 * The {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} allows us to
+		 * partition the addresses of our memory arrays into a stack and a heap. The
+		 * {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} is a constant
+		 * whose value is not determined. Each pointer whose address-base is strictly
+		 * smaller than the barrier points to the stack, each pointer whose address-base
+		 * is strictly greater than the barrier points to the heap.
+		 */
 		ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
 
 		;
@@ -200,10 +209,22 @@ public class MemoryHandler {
 				return strcpyRequirements(rmmf, settings);
 			} else if (this == MemoryModelDeclarations.C_REALLOC) {
 				return reallocRequirements(rmmf, settings);
+			} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
+					|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
+				return allocRequirements(rmmf, settings);
 			} else {
 				return false;
 			}
 		}
+
+		private boolean allocRequirements(final RequiredMemoryModelFeatures rmmf,
+				final TranslationSettings settings) {
+			boolean changedSomething = false;
+			changedSomething |= rmmf.requireMemoryModelInfrastructure();
+			changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+			return changedSomething;
+		}
+
 
 		private boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
 				final TranslationSettings settings) {
@@ -268,6 +289,18 @@ public class MemoryHandler {
 	public static enum MemoryArea {
 		STACK,
 		HEAP,
+		;
+
+		MemoryModelDeclarations getMemoryModelDeclaration() {
+			switch (this) {
+			case HEAP:
+				return MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP;
+			case STACK:
+				return MemoryModelDeclarations.ULTIMATE_ALLOC_STACK;
+			default:
+				throw new AssertionError();
+			}
+		}
 	}
 
 
@@ -467,8 +500,13 @@ public class MemoryHandler {
 		decl.addAll(declareDeallocation(main, tuLoc, hook));
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC)) {
-			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, null));
+				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK)) {
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, MemoryArea.STACK));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP)) {
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, MemoryArea.HEAP));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -657,24 +695,42 @@ public class MemoryHandler {
 			 * behavior is undefined.
 			 */
 			final Check check = new Check(Spec.MEMORY_FREE);
-			final AssertStatement offsetZero = new AssertStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, nr0));
-			check.annotate(offsetZero);
-			result.add(offsetZero);
+			{
+				// assert (~addr!offset == 0);
+				final AssertStatement offsetZero = new AssertStatement(loc,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, nr0));
+				check.annotate(offsetZero);
+				result.add(offsetZero);
+			}
 
-			// ~addr!base == 0
-			final Expression ptrBaseZero = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final Expression isNullPtr =
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrBase, ptrBaseZero);
+			{
+				// assert (#StackHeapBarrier < ~addr!base);
+				final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_lessThan, getStackHeapBarrier(loc),
+						mExpressionTranslation.getCTypeOfPointerComponents(),
+						getPointerBaseAddress(pointerToBeFreed.getValue(), loc),
+						mExpressionTranslation.getCTypeOfPointerComponents());
 
-			// requires ~addr!base == 0 || #valid[~addr!base];
-			final Expression addrIsValid = mBooleanArrayHelper
-					.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
-			final AssertStatement baseValid = new AssertStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
-			check.annotate(baseValid);
-			result.add(baseValid);
+				final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
+				check.annotate(assertInHeapArea);
+				result.add(assertInHeapArea);
+			}
+
+			{
+				// ~addr!base == 0
+				final Expression ptrBaseZero = mTypeSizes.constructLiteralForIntegerType(loc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				final Expression isNullPtr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrBase,
+						ptrBaseZero);
+
+				// requires ~addr!base == 0 || #valid[~addr!base];
+				final Expression addrIsValid = mBooleanArrayHelper
+						.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
+				final AssertStatement baseValid = new AssertStatement(loc,
+						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
+				check.annotate(baseValid);
+				result.add(baseValid);
+			}
 		}
 
 		return result;
@@ -703,12 +759,13 @@ public class MemoryHandler {
 
 	public CallStatement getUltimateMemAllocCall(final Expression size, final VariableLHS returnedValue,
 			final ILocation loc, final MemoryArea memArea) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_ALLOC);
-		final CallStatement result =
-				StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValue },
-						MemoryModelDeclarations.ULTIMATE_ALLOC.getName(), new Expression[] { size });
 
-		mProcedureManager.registerProcedure(MemoryModelDeclarations.ULTIMATE_ALLOC.getName());
+		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
+		requireMemoryModelFeature(alloc);
+		final CallStatement result = StatementFactory.constructCallStatement(loc, false,
+				new VariableLHS[] { returnedValue }, alloc.getName(), new Expression[] { size });
+
+		mProcedureManager.registerProcedure(alloc.getName());
 		return result;
 	}
 
@@ -1200,7 +1257,7 @@ public class MemoryHandler {
 	private VariableDeclaration constructStackHeapBarrierConstant() {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
-				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER.toString() },
+				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER.getName() },
 						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
 		return result;
 	}
@@ -2400,6 +2457,7 @@ public class MemoryHandler {
 	 */
 	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
 			final ILocation tuLoc, final IASTNode hook, final MemoryArea memArea) {
+		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -2415,7 +2473,7 @@ public class MemoryHandler {
 		final Expression res = // new IdentifierExpression(tuLoc, SFO.RES);
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
 						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
-								MemoryModelDeclarations.ULTIMATE_ALLOC.getName()));
+								alloc.getName()));
 
 		final Expression length = getLengthArray(tuLoc);
 		// #res!base
@@ -2428,16 +2486,16 @@ public class MemoryHandler {
 		final IdentifierExpression size = // new IdentifierExpression(tuLoc, SIZE);
 				ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT, SIZE,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
-								MemoryModelDeclarations.ULTIMATE_ALLOC.getName()));
+								alloc.getName()));
 
 		{
 			final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0],
-					MemoryModelDeclarations.ULTIMATE_ALLOC.getName(), new String[0],
+					alloc.getName(), new String[0],
 					new VarList[] { new VarList(tuLoc, new String[] { SIZE }, intType) },
 					new VarList[] {
 							new VarList(tuLoc, new String[] { SFO.RES }, typeHandler.constructPointerType(tuLoc)) },
 					new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_ALLOC.getName(),
+			mProcedureManager.beginCustomProcedure(main, tuLoc, alloc.getName(),
 					allocDeclaration);
 		}
 
@@ -2468,23 +2526,23 @@ public class MemoryHandler {
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
 						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
 				Collections.emptySet()));
+		if (memArea == MemoryArea.STACK) {
+		// res!base < #StackHeapBarrier
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan,
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
+							mExpressionTranslation.getCTypeOfPointerComponents(),
+							getStackHeapBarrier(tuLoc),
+							mExpressionTranslation.getCTypeOfPointerComponents()),
+					Collections.emptySet()));
+		}
 		if (memArea == MemoryArea.HEAP) {
 		// #StackHeapBarrier < res!base
 			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
 					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
 							IASTBinaryExpression.op_lessThan,
 							getStackHeapBarrier(tuLoc),
-							mExpressionTranslation.getCTypeOfPointerComponents(),
-							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
-							mExpressionTranslation.getCTypeOfPointerComponents()),
-					Collections.emptySet()));
-		}
-		if (memArea == MemoryArea.STACK) {
-		// #StackHeapBarrier < res!base
-			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-							IASTBinaryExpression.op_lessThan,
-							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
 							mExpressionTranslation.getCTypeOfPointerComponents(),
 							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
 							mExpressionTranslation.getCTypeOfPointerComponents()),
@@ -2506,7 +2564,7 @@ public class MemoryHandler {
 		if (ADD_IMPLEMENTATIONS) {
 			final Expression addr = ExpressionFactory.constructIdentifierExpression(tuLoc,
 					mTypeHandler.getBoogiePointerType(), ADDR,
-					new DeclarationInformation(StorageClass.LOCAL, MemoryModelDeclarations.ULTIMATE_ALLOC.getName()));
+					new DeclarationInformation(StorageClass.LOCAL, alloc.getName()));
 			final Expression addrOffset =
 					ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
 			final Expression addrBase =
@@ -2531,7 +2589,7 @@ public class MemoryHandler {
 			final VariableLHS resLhs =
 					ExpressionFactory.constructVariableLHS(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
 							new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
-									MemoryModelDeclarations.ULTIMATE_ALLOC.getName()));
+									alloc.getName()));
 			final Statement[] block = new Statement[6];
 			block[0] = new AssumeStatement(tuLoc,
 					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
@@ -2550,14 +2608,14 @@ public class MemoryHandler {
 					new Expression[] { addr });
 
 			final Body bodyMalloc = mProcedureManager.constructBody(tuLoc, localVars, block,
-					MemoryModelDeclarations.ULTIMATE_ALLOC.getName());
-			result.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.ULTIMATE_ALLOC.getName(),
+					alloc.getName());
+			result.add(new Procedure(tuLoc, new Attribute[0], alloc.getName(),
 					new String[0], new VarList[] { new VarList(tuLoc, new String[] { SIZE }, intType) },
 					new VarList[] {
 							new VarList(tuLoc, new String[] { SFO.RES }, typeHandler.constructPointerType(tuLoc)) },
 					null, bodyMalloc));
 		}
-		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_ALLOC.getName());
+		mProcedureManager.endCustomProcedure(main, alloc.getName());
 		return result;
 	}
 
@@ -2752,7 +2810,9 @@ public class MemoryHandler {
 			break;
 		case C_MEMSET:
 			break;
-		case ULTIMATE_ALLOC:
+		case ULTIMATE_ALLOC_STACK:
+			break;
+		case ULTIMATE_ALLOC_HEAP:
 			break;
 		case ULTIMATE_DEALLOC:
 			break;

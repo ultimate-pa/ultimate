@@ -1478,8 +1478,16 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addDeclaration(auxvar.getVarDec());
+		final MemoryArea memArea;
+		if (methodName.equals("malloc")) {
+			memArea = MemoryArea.HEAP;
+		} else if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
+			memArea = MemoryArea.STACK;
+		} else {
+			throw new IllegalArgumentException("unknown allocation method; " + methodName);
+		}
 		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc,
-				MemoryArea.STACK));
+				memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
