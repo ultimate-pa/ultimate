@@ -967,7 +967,17 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		auxVars.removeAll(mVariables);
 		final Set<TermVariable> auxVarTvs =
 				auxVars.stream().map(x -> (TermVariable) x.getTerm()).collect(Collectors.toSet());
-		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, getSubTerm());
+		final List<Term> conjuncts = new ArrayList<>();
+		conjuncts.add(getSubTerm());
+		// Add known bound-equivalences to the term
+		final UnionFind<Term> unionFind = getEquivalenceFinder().getEquivalences(
+				mSegmentationMap.getBoundVars().stream().map(x -> x.getTerm()).collect(Collectors.toSet()));
+		for (final Term rep : unionFind.getAllRepresentatives()) {
+			for (final Term eq : unionFind.getEquivalenceClassMembers(rep)) {
+				conjuncts.add(SmtUtils.binaryEquality(script, rep, eq));
+			}
+		}
+		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, SmtUtils.and(script, conjuncts));
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
