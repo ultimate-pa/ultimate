@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
@@ -1160,11 +1162,18 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		if (isBottom()) {
 			return EvalResult.TRUE;
 		}
+		// TODO store map somewhere instead of creating a new one for every call of this method
+		final Map<Term, IProgramVarOrConst> mapTermsToVars = mapTermsToVars();
+		for (final TermVariable v : term.getFreeVars()) {
+			if (!mapTermsToVars.containsKey(v)) {
+				throw new InvalidParameterException("Variable " + v + " does not occur in the state, but in the term.");
+			}
+		}
 		OctagonRelation octRel;
 		try {
-			AffineRelation affRel = new AffineRelation(script, term);
+			final AffineRelation affRel = new AffineRelation(script, term);
 			octRel = OctagonRelation.from(affRel);
-		} catch(NotAffineException nae) {
+		} catch (final NotAffineException nae) {
 			// TODO (optional) special treatment for boolean variables
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 		}
@@ -1173,17 +1182,15 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		}
 		mNumericAbstraction = cachedSelectiveClosure();
 
-		// TODO store map somewhere instead of creating a new one for every call of this method
-		Map<Term, IProgramVarOrConst> mapTermsToVars = mapTermsToVars();
-		final int var1Idx = 2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar1()))
-				+ (octRel.isNegateVar1() ? 1 : 0);
-		final int var2Idx = 2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar2()))
-				+ (octRel.isNegateVar2() ? 1 : 0);
+		final int var1Idx =
+				2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar1())) + (octRel.isNegateVar1() ? 1 : 0);
+		final int var2Idx =
+				2 * mMapNumericVarToIndex.get(mapTermsToVars.get(octRel.getVar2())) + (octRel.isNegateVar2() ? 1 : 0);
 
-		return OctInterval.fromMatrix(mNumericAbstraction, var1Idx, var2Idx)
-				.evaluate(octRel.getRelationSymbol(), octRel.getConstant());
+		return OctInterval.fromMatrix(mNumericAbstraction, var1Idx, var2Idx).evaluate(octRel.getRelationSymbol(),
+				octRel.getConstant());
 	}
-	
+
 	private Map<Term, IProgramVarOrConst> mapTermsToVars() {
 		final Map<Term, IProgramVarOrConst> termToVars = new HashMap<>();
 		for (final IProgramVarOrConst key : mMapNumericVarToIndex.keySet()) {
