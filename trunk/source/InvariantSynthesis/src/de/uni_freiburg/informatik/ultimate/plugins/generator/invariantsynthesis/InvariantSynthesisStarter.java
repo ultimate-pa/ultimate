@@ -120,8 +120,8 @@ public class InvariantSynthesisStarter {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mgdScript,
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mgdScript,
-				predicateFactory, icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mgdScript, predicateFactory,
+				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 
@@ -129,23 +129,23 @@ public class InvariantSynthesisStarter {
 		final KindOfInvariant kindOfInvariant =
 				prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 
-		IPredicate precondition;
-		IPredicate postcondition;
+		final IPredicate predicateOfInitialLocations;
+		final IPredicate predicateOfErrorLocations;
 
 		if (kindOfInvariant == KindOfInvariant.DANGER) {
-			precondition = predicateUnifier.getFalsePredicate();
-			postcondition = predicateUnifier.getTruePredicate();
+			predicateOfInitialLocations = predicateUnifier.getFalsePredicate();
+			predicateOfErrorLocations = predicateUnifier.getTruePredicate();
 		} else {
 			assert kindOfInvariant == KindOfInvariant.SAFETY;
-			precondition = predicateUnifier.getTruePredicate();
-			postcondition = predicateUnifier.getFalsePredicate();
+			predicateOfInitialLocations = predicateUnifier.getTruePredicate();
+			predicateOfErrorLocations = predicateUnifier.getFalsePredicate();
 		}
 
-		final boolean guessDangerInvariant =
-				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
+		final boolean guessDangerInvariant = prefs
+				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
 		if (kindOfInvariant == KindOfInvariant.DANGER && guessDangerInvariant) {
-			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage, precondition,
-					predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
+			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage,
+					predicateOfInitialLocations, predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
 			mLogger.info("Constructed danger invariant candidate");
 			if (dig.isDangerInvariant()) {
 				mLogger.info("Candidate is a valid danger invariant");
@@ -162,9 +162,9 @@ public class InvariantSynthesisStarter {
 			return;
 		}
 
-		final CFGInvariantsGenerator cfgInvGenerator =
-				new CFGInvariantsGenerator(icfg, services, storage, precondition, postcondition, predicateFactory,
-						predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
+		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
+				predicateOfInitialLocations, predicateOfErrorLocations, predicateFactory, predicateUnifier,
+				invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {

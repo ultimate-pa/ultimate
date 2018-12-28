@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.InvariantSynthesisStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
@@ -62,7 +62,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final IIcfg<?> mIcfg;
-	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
+	private InvariantSynthesisStatisticsGenerator mPathInvariantsStats;
 
 	private InterpolantComputationStatus mInterpolantComputationStatus;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
@@ -130,7 +130,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		return mInterpolantComputationStatus;
 	}
 
-	public PathInvariantsStatisticsGenerator getPathInvariantsStats() {
+	public InvariantSynthesisStatisticsGenerator getPathInvariantsStats() {
 		return mPathInvariantsStats;
 	}
 

@@ -143,35 +143,22 @@ public final class CFGInvariantsGenerator {
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
-	private final IPredicate mPrecondition;
-	private final IPredicate mPostcondition;
-	private final IIcfg<IcfgLocation> mPathProgram;
+	private final IPredicate mPredicateOfInitialLocations;
+	private final IPredicate mPredicateOfErrorLocations;
+	private final IIcfg<IcfgLocation> mIcfg;
 
-	private final PathInvariantsStatisticsGenerator mPathInvariantsStatistics;
-	private final Map<Integer, PathInvariantsStatisticsGenerator> mRound2PathInvariantsStatistics;
+	private final InvariantSynthesisStatisticsGenerator mPathInvariantsStatistics;
+	private final Map<Integer, InvariantSynthesisStatisticsGenerator> mRound2InvariantSynthesisStatistics;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 	private final CfgSmtToolkit mCsToolKit;
 	private final KindOfInvariant mKindOfInvariant;
 
-	/**
-	 *
-	 * @param pathProgram
-	 * @param services
-	 * @param storage
-	 * @param precondition
-	 * @param postcondition
-	 * @param predicateFactory
-	 * @param predicateUnifier
-	 * @param invariantSynthesisSettings
-	 * @param csToolkit
-	 * @param kindOfInvariant
-	 *            the kind of invariant to be generated
-	 */
-	public CFGInvariantsGenerator(final IIcfg<IcfgLocation> pathProgram, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicate precondition, final IPredicate postcondition,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final InvariantSynthesisSettings invariantSynthesisSettings, final CfgSmtToolkit csToolkit,
-			final KindOfInvariant kindOfInvariant) {
+
+	public CFGInvariantsGenerator(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final IPredicate predicateOfInitialLocations,
+			final IPredicate predicateofErrorLocations, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
+			final CfgSmtToolkit csToolkit, final KindOfInvariant kindOfInvariant) {
 		mStorage = storage;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -180,15 +167,15 @@ public final class CFGInvariantsGenerator {
 
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
-		mPrecondition = precondition;
-		mPostcondition = postcondition;
-		mPathProgram = pathProgram;
+		mPredicateOfInitialLocations = predicateOfInitialLocations;
+		mPredicateOfErrorLocations = predicateofErrorLocations;
+		mIcfg = icfg;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mApplyLargeBlockEncoding = mInvariantSynthesisSettings.useLargeBlockEncoding();
-		mPathInvariantsStatistics = new PathInvariantsStatisticsGenerator();
+		mPathInvariantsStatistics = new InvariantSynthesisStatisticsGenerator();
 		// Initialize statistics
 		mPathInvariantsStatistics.initializeStatistics();
-		mRound2PathInvariantsStatistics = new HashMap<>();
+		mRound2InvariantSynthesisStatistics = new HashMap<>();
 	}
 
 	/**
@@ -320,7 +307,7 @@ public final class CFGInvariantsGenerator {
 		}
 
 		if (invSynthSettings.useAbstractInterpretation()) {
-			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(mPathProgram);
+			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(mIcfg);
 			// FIXME 2018-06-10 Matthias: WIP - continue AI integration here.
 			mLogger.debug("Obtained invariant");
 			mLogger.debug(result);
@@ -359,7 +346,7 @@ public final class CFGInvariantsGenerator {
 						loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
 		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList,
-				transitionsAsList, mPrecondition, mPostcondition, startLocation, errorLocations, invPatternProcFactory,
+				transitionsAsList, mPredicateOfInitialLocations, mPredicateOfErrorLocations, startLocation, errorLocations, invPatternProcFactory,
 				invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
 
@@ -697,7 +684,7 @@ public final class CFGInvariantsGenerator {
 
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
-				stat.aggregateBenchmarkData(mRound2PathInvariantsStatistics.get(round));
+				stat.aggregateBenchmarkData(mRound2InvariantSynthesisStatistics.get(round));
 				final IResult benchmarkResult =
 						new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
@@ -737,11 +724,11 @@ public final class CFGInvariantsGenerator {
 		return result;
 	}
 
-	public Map<Integer, PathInvariantsStatisticsGenerator> getRound2PathInvariantsStatistics() {
-		return mRound2PathInvariantsStatistics;
+	public Map<Integer, InvariantSynthesisStatisticsGenerator> getRound2PathInvariantsStatistics() {
+		return mRound2InvariantSynthesisStatistics;
 	}
 
-	public final PathInvariantsStatisticsGenerator getInvariantSynthesisStatistics() {
+	public final InvariantSynthesisStatisticsGenerator getInvariantSynthesisStatistics() {
 		return mPathInvariantsStatistics;
 	}
 
@@ -764,8 +751,8 @@ public final class CFGInvariantsGenerator {
 		mPathInvariantsStatistics.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound,
 				maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
 				round);
-		final PathInvariantsStatisticsGenerator pathInvariantsStatisticsForThisRound =
-				new PathInvariantsStatisticsGenerator();
+		final InvariantSynthesisStatisticsGenerator pathInvariantsStatisticsForThisRound =
+				new InvariantSynthesisStatisticsGenerator();
 		pathInvariantsStatisticsForThisRound.initializeStatistics();
 		final int numLocsBeforeLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocs");
 		final int numLocsAfterLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocsLbe");
@@ -774,7 +761,7 @@ public final class CFGInvariantsGenerator {
 		pathInvariantsStatisticsForThisRound.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound,
 				maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
 				round);
-		mRound2PathInvariantsStatistics.put(round, pathInvariantsStatisticsForThisRound);
+		mRound2InvariantSynthesisStatistics.put(round, pathInvariantsStatisticsForThisRound);
 	}
 
 	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList,
@@ -798,7 +785,7 @@ public final class CFGInvariantsGenerator {
 		mPathInvariantsStatistics.addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs, numOfNonUnsatCoreVars,
 				constraintsResult, linearInequalityStatistics);
 		// Add statistics data to path invariants statistics for the current round
-		mRound2PathInvariantsStatistics.get(round).addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs,
+		mRound2InvariantSynthesisStatistics.get(round).addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs,
 				numOfNonUnsatCoreVars, constraintsResult, linearInequalityStatistics);
 	}
 
@@ -941,14 +928,14 @@ public final class CFGInvariantsGenerator {
 	 *         null.
 	 */
 	public Map<IcfgLocation, IPredicate> synthesizeInvariants() {
-		final int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
+		final int numLocsBeforeLbe = getNumOfPPLocations(mIcfg);
 		LargeBlockEncodingIcfgTransformer lbeTransformer = null;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (mApplyLargeBlockEncoding) {
 			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
-			lbePathProgram = lbeTransformer.transform(mPathProgram);
+			lbePathProgram = lbeTransformer.transform(mIcfg);
 		} else {
-			lbePathProgram = mPathProgram;
+			lbePathProgram = mIcfg;
 		}
 		// BranchUnfoldIcfgTransformer buTransformer = null;
 		// if (true) {

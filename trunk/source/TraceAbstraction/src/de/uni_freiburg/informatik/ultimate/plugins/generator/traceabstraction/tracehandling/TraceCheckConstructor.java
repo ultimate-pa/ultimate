@@ -240,7 +240,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useUnsatCores = mPrefs.getUseVarsFromUnsatCore();
 		final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
-		final boolean useWeakestPrecondition = mPrefs.getUseWeakestPreconditionForPathInvariants();
+		final boolean useWpPredicates = mPrefs.getUseWeakestPreconditionForPathInvariants();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
@@ -259,7 +259,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 		final InvariantSynthesisSettings invariantSynthesisSettings =
 				new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores,
-						useAbstractInterpretationPredicates, useWeakestPrecondition, true);
+						useAbstractInterpretationPredicates, useWpPredicates, true);
 
 		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<LETTER, IPredicate>) mCounterexample,

@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.InvariantSynthesisStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -84,7 +84,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	private final ILogger mLogger;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
-	private final PathInvariantsStatisticsGenerator mPathInvariantsStats;
+	private final InvariantSynthesisStatisticsGenerator mPathInvariantsStats;
 
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by the default
@@ -239,13 +239,13 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		return mInterpolantComputationStatus;
 	}
 
-	public PathInvariantsStatisticsGenerator getPathInvariantsBenchmarks() {
+	public InvariantSynthesisStatisticsGenerator getPathInvariantsBenchmarks() {
 		return mPathInvariantsStats;
 	}
 
 	// Benchmarks Section
 	@SuppressWarnings("squid:S00115")
-	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
+	public enum InvariantSynthesisStatisticsDefinitions implements IStatisticsElement {
 		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
 		// iteration
 		ProgramSizeConjuncts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
@@ -301,7 +301,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 
-		PathInvariantsStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+		InvariantSynthesisStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
 			mClazz = clazz;
 			mAggr = aggr;
