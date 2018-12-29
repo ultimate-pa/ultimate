@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -89,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -107,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @date 12.10.2012
  */
 public class PostProcessor {
+	private static final String roundingModeVariableName = "currentRoundingMode";
 
 	private final ILogger mLogger;
 
@@ -234,6 +238,10 @@ public class PostProcessor {
 				decl.addAll(declareFloatDataTypes(loc));
 			}
 
+			decl.addAll(declareCurrentRoundingModeVar(loc));
+
+			decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
+
 			final String[] importantFunctions = new String[] { "bvadd" };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
@@ -333,17 +341,114 @@ public class PostProcessor {
 				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 						new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
 				final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
-				attributes[1] =
-						new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
-								new Expression[] {
-										ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
-										ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
+				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
+						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
+								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 			}
 			final String identifier = "C_" + cPrimitive.name();
 			final String[] typeParams = new String[0];
 			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams));
 		}
 		return decls;
+	}
+
+	private ArrayList<Declaration> declareCurrentRoundingModeVar(final ILocation loc) {
+		final ArrayList<Declaration> decls = new ArrayList<>();
+
+		final VarList[] mVarlist;
+		mVarlist = new VarList[1];
+		mVarlist[0] = new VarList(loc, new String[] { roundingModeVariableName },
+				mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
+		final Attribute[] attribute;
+		attribute = new Attribute[0];
+		decls.add(new VariableDeclaration(loc, attribute, mVarlist));
+
+		return decls;
+	}
+
+	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
+		final String functionName = "ULTIMATE.setCurrentRoundingMode";
+		final String functionArgumentVariableName = "i";
+		final String returnVariableName = "r";
+
+		final ArrayList<Declaration> declarations = new ArrayList<>();
+		final ArrayList<Statement> statements = new ArrayList<>();
+		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+		final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
+		final BoogieType intBoogieType = (BoogieType) intAstType.getBoogieType();
+
+		final VarList[] inVarList;
+		inVarList = new VarList[1];
+		inVarList[0] = new VarList(loc, new String[] { functionArgumentVariableName }, intAstType);
+
+		final VarList[] outVarList;
+		outVarList = new VarList[1];
+		outVarList[0] = new VarList(loc, new String[] { returnVariableName }, intAstType);
+
+		// create expressions for integer literals, identifiers, and variableLHS used in the function statements
+		final Expression zeroLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+		final Expression minusOneLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+		final Expression threeLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+		final IdentifierExpression functionArgumentIdentifierExpression =
+				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, functionName));
+		final VariableLHS roundingModeGlobalVariableLHS = ExpressionFactory.constructVariableLHS(loc, intBoogieType,
+				roundingModeVariableName, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final VariableLHS returnVariableLHS = ExpressionFactory.constructVariableLHS(loc, intBoogieType,
+				returnVariableName, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, functionName));
+
+		// create conditional expression
+		// ((argument>=0)&&(argument<=3))
+		final Expression geqZero =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterEqual,
+						functionArgumentIdentifierExpression, intCPrimitive, zeroLiteralExpression, intCPrimitive);
+		final Expression leqThree =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+						functionArgumentIdentifierExpression, intCPrimitive, threeLiteralExpression, intCPrimitive);
+		final List<Expression> exprList = new ArrayList<>();
+		exprList.add(geqZero);
+		exprList.add(leqThree);
+		final Expression conditionExpression = ExpressionFactory.and(loc, exprList);
+
+		// create assignment statements (round=in;out=0)
+		final Statement assignRoundingModeStatement = StatementFactory.constructSingleAssignmentStatement(loc,
+				roundingModeGlobalVariableLHS, functionArgumentIdentifierExpression);
+		final Statement assignSuccessReturnValueStatement =
+				StatementFactory.constructSingleAssignmentStatement(loc, returnVariableLHS, zeroLiteralExpression);
+		// TODO Documentation states that it returns non-zero when fails. Returning one integer literal for now. Should
+		// check what is returned in the source code
+		final Statement assignFailureRetunrValueStatement =
+				StatementFactory.constructSingleAssignmentStatement(loc, returnVariableLHS, minusOneLiteralExpression);
+
+		// create then and else statement arrays
+		final Statement[] thenStatements;
+		thenStatements = new Statement[2];
+		thenStatements[0] = assignRoundingModeStatement;
+		thenStatements[1] = assignSuccessReturnValueStatement;
+		final Statement[] elseStatements;
+		elseStatements = new Statement[1];
+		elseStatements[0] = assignFailureRetunrValueStatement;
+
+		statements.add(StatementFactory.constructIfStatement(loc, conditionExpression, thenStatements, elseStatements));
+
+		final Procedure procedure = new Procedure(loc, new Attribute[0], functionName, new String[0], inVarList,
+				outVarList, new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(mCHandler, loc, functionName, procedure);
+
+		final Body procedureBody = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
+				statements.toArray(new Statement[statements.size()]), functionName);
+
+		final Procedure procedureImplementation = new Procedure(loc, new Attribute[0], functionName, new String[0],
+				inVarList, outVarList, null, procedureBody);
+
+		mProcedureManager.endCustomProcedure(mCHandler, functionName);
+
+		declarations.add(procedureImplementation);
+
+		return declarations;
 	}
 
 	private ArrayList<Declaration> declareConversionFunctions() {
@@ -666,19 +771,48 @@ public class PostProcessor {
 			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
 					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			initStatements.add(0,
-					StatementFactory
-							.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-									new Expression[] {
-											ExpressionFactory.constructStructConstructor(translationUnitLoc,
-													new String[] { "base", "offset" }, new Expression[] {
-															mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-																	mExpressionTranslation
-																			.getCTypeOfPointerComponents(),
-																	BigInteger.ZERO),
-															mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-																	mExpressionTranslation
-																			.getCTypeOfPointerComponents(),
-																	BigInteger.ZERO) }) }));
+					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
+							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
+									new String[] { "base", "offset" },
+									new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+											mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
+											mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+													mExpressionTranslation.getCTypeOfPointerComponents(),
+													BigInteger.ZERO) }) }));
+		}
+
+		// initializes current rounding mode var
+		if (mSettings.isBitvectorTranslation()) {
+			final Expression value;
+			final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+			switch (mSettings.getInitialRoundingMode()) {
+			case FE_TOWARDZERO:
+				value = mTypeSize.constructLiteralForIntegerType(translationUnitLoc, intCPrimitive, BigInteger.ZERO);
+				break;
+			case FE_TONEAREST:
+				value = mTypeSize.constructLiteralForIntegerType(translationUnitLoc, intCPrimitive, BigInteger.ONE);
+				break;
+			case FE_UPWARD:
+				value = mTypeSize.constructLiteralForIntegerType(translationUnitLoc, intCPrimitive,
+						BigInteger.valueOf(2));
+				break;
+			case FE_DOWNWARD:
+				value = mTypeSize.constructLiteralForIntegerType(translationUnitLoc, intCPrimitive,
+						BigInteger.valueOf(3));
+				break;
+			default:
+				// indeterminate rounding mode
+				value = mTypeSize.constructLiteralForIntegerType(translationUnitLoc, intCPrimitive,
+						BigInteger.valueOf(-1));
+			}
+
+			final VariableLHS globalVariableLHS = ExpressionFactory.constructVariableLHS(translationUnitLoc,
+					((BoogiePrimitiveType) value.getType()).getUnderlyingType(), roundingModeVariableName,
+					DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			final Statement statement =
+					StatementFactory.constructSingleAssignmentStatement(translationUnitLoc, globalVariableLHS, value);
+
+			initStatements.add(statement);
 		}
 
 		mStaticObjectsHandler.freeze();
@@ -708,11 +842,10 @@ public class PostProcessor {
 	private UltimateStartProcedure createUltimateStartProcedure(final ILocation loc, final IASTNode hook) {
 
 		Procedure startProcedure = null;
-		{
-			final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
-					new VarList[0], new VarList[0], new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(mCHandler, loc, SFO.START, startDeclaration);
-		}
+
+		final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
+				new VarList[0], new VarList[0], new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(mCHandler, loc, SFO.START, startDeclaration);
 
 		final ArrayList<Statement> startStmt = new ArrayList<>();
 		final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
