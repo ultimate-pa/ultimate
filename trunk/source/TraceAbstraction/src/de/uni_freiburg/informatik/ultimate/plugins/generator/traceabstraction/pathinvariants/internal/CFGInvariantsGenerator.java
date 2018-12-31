@@ -204,8 +204,8 @@ public final class CFGInvariantsGenerator {
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
+			final Map<IcfgLocation, IPredicate> loc2underApprox,
+			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
@@ -287,8 +287,8 @@ public final class CFGInvariantsGenerator {
 				mLogger.debug("Live variables computed: " + pathprogramLocs2LiveVars);
 			}
 		}
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = null;
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
+		Map<IcfgLocation, IPredicate> loc2underApprox = null;
+		Map<IcfgLocation, IPredicate> loc2overApprox = null;
 
 		if (invSynthSettings.useUnsatCores()) {
 			// Compute under-/overapproximation only if we use unsat cores during invariant synthesis
@@ -301,19 +301,15 @@ public final class CFGInvariantsGenerator {
 					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
 			loc2overApprox = convertHashRelation(overApprox.getResult(), csToolkit.getManagedScript());
 		}
-		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
+		final Map<IcfgLocation, IPredicate> pathprogramLocs2Predicates = new HashMap<>();
 		if (invSynthSettings.useWeakestPrecondition()) {
 			pathprogramLocs2Predicates.putAll(loc2overApprox);
 		}
 
 		if (invSynthSettings.useAbstractInterpretation()) {
+			// TODO 2018-06-10 Matthias: WIP - continue AI integration here.
 			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(mIcfg);
-			// FIXME 2018-06-10 Matthias: WIP - continue AI integration here.
-			mLogger.debug("Obtained invariant");
-			mLogger.debug(result);
-			// TODO: Implement the computation of predicates via abstract interpretation
-			// pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
-			// csToolkit.getManagedScript()));
+			 pathprogramLocs2Predicates.putAll(result);
 		}
 		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat =
 				invSynthSettings.getTemplateDimensionsStrategy();
@@ -326,13 +322,13 @@ public final class CFGInvariantsGenerator {
 						pathprogramLocs2LiveVars, templateDimensionStrat, mKindOfInvariant);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
-			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
+			for (final Map.Entry<IcfgLocation, IPredicate> entry : loc2underApprox.entrySet()) {
 				final List<Integer> maxDisjunctsMaxConjuncts =
 						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
 				strategy.setNumOfConjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(1));
 			}
 		} else if (USE_OVER_APPROX_FOR_MIN_DISJUNCTS) {
-			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
+			for (final Map.Entry<IcfgLocation, IPredicate> entry : loc2underApprox.entrySet()) {
 				final List<Integer> maxDisjunctsMaxConjuncts =
 						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
 				strategy.setNumOfDisjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(0));
@@ -346,8 +342,10 @@ public final class CFGInvariantsGenerator {
 						loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
 		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList,
-				transitionsAsList, mPredicateOfInitialLocations, mPredicateOfErrorLocations, startLocation, errorLocations, invPatternProcFactory,
-				invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
+				transitionsAsList, mPredicateOfInitialLocations, mPredicateOfErrorLocations, startLocation,
+				errorLocations, invPatternProcFactory, invSynthSettings.useUnsatCores(), allProgramVars,
+				pathprogramLocs2LiveVars,
+				convertMapToPredsToMapToUnmodTrans(pathprogramLocs2Predicates, csToolkit.getManagedScript()),
 				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
 
 		return invariants;
@@ -371,7 +369,7 @@ public final class CFGInvariantsGenerator {
 		return result;
 	}
 
-	private static Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
+	private static Map<IcfgLocation, IPredicate> convertHashRelation(
 			final HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
 
 		final Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
@@ -381,7 +379,7 @@ public final class CFGInvariantsGenerator {
 			// Currently, we use only one predicate
 			loc2Predicate.put(loc, preds.get(0));
 		}
-		return convertMapToPredsToMapToUnmodTrans(loc2Predicate, managedScript);
+		return loc2Predicate;
 	}
 
 	/**
@@ -715,7 +713,7 @@ public final class CFGInvariantsGenerator {
 		return null;
 	}
 
-	private static Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPredsToMapToUnmodTrans(
+	public static Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPredsToMapToUnmodTrans(
 			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
 
 		final Map<IcfgLocation, UnmodifiableTransFormula> result =

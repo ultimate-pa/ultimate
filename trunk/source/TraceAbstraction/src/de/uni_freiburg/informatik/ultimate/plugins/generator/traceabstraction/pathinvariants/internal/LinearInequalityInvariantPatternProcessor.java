@@ -283,8 +283,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
+			final Map<IcfgLocation, IPredicate> loc2underApprox,
+			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
@@ -329,8 +329,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		mAllPatternCoefficients = null;
 		mIntegerCoefficients = null;
 		mPatternCoefficients2Values = null;
-		mLoc2UnderApproximation = loc2underApprox;
-		mLoc2OverApproximation = loc2overApprox;
+		mLoc2UnderApproximation = CFGInvariantsGenerator.convertMapToPredsToMapToUnmodTrans(loc2underApprox,
+				mCsToolkit.getManagedScript());
+		mLoc2OverApproximation = CFGInvariantsGenerator.convertMapToPredsToMapToUnmodTrans(loc2overApprox,
+				mCsToolkit.getManagedScript());
+		;
 		// Reset statistics
 		resetStatistics();
 	}

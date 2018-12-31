@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -70,8 +69,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final KindOfInvariant mKindOfInvariant;
 	private final SolverSettings mSolverSettings;
 	private final SmtSymbols mSmtSymbols;
-	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
-	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
+	private final Map<IcfgLocation, IPredicate> mLoc2underApprox;
+	private final Map<IcfgLocation, IPredicate> mLoc2overApprox;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -102,8 +101,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinerConstraints, final boolean useUnsatCores, final SolverSettings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final SmtSymbols smtSymbols, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
+			final SmtSymbols smtSymbols, final Map<IcfgLocation, IPredicate> loc2underApprox,
+			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 		mServices = services;
 		mStorage = storage;
