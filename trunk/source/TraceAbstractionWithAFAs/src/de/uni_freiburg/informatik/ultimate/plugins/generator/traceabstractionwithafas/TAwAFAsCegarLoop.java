@@ -105,9 +105,10 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services,
 				storage);
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(),
-				predicateFactory, rootNode.getSymboltable(), mSimplificationTechnique,
+				predicateFactory, rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique,
 				mXnfConversionTechnique,
-				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")), predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
+				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
+				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
 
 	@Override

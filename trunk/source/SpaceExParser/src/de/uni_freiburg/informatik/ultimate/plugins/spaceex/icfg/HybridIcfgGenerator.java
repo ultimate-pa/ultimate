@@ -162,7 +162,7 @@ public class HybridIcfgGenerator {
 			mCfgComponents.forEach((key, value) -> mLogger.debug("ID:" + key + ", Component:" + value.toString()));
 			mLogger.debug("#################### ICFG ######################");
 			mLogger.debug(icfg.getProgramPoints().toString());
-			mLogger.debug(icfg.getSymboltable().getLocals(HybridTranslatorConstants.PROC_NAME).toString());
+			mLogger.debug(icfg.getCfgSmtToolkit().getSymbolTable().getLocals(HybridTranslatorConstants.PROC_NAME).toString());
 		}
 		return icfg;
 	}

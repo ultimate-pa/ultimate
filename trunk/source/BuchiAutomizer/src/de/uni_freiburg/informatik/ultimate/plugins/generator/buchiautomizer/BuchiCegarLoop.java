@@ -490,7 +490,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
-							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
+							mIcfg.getCfgSmtToolkit().getSymbolTable(),
+							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getSmtSymbols(), mBinaryStatePredicateManager, mCounterexample,
 							generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
 							mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,

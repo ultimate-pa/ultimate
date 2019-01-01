@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
@@ -76,14 +75,6 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	Set<LOC> getLoopLocations();
 
 	CfgSmtToolkit getCfgSmtToolkit();
-
-	/**
-	 *
-	 * @deprecated 2017-02-02 Matthias: Symbol table is part of CFG toolkit, we do not want to have a separate getter
-	 *             here.
-	 */
-	@Deprecated
-	IIcfgSymbolTable getSymboltable();
 
 	/**
 	 * The set of initial nodes represents those nodes from which an analysis should start. It is used to distinguish
