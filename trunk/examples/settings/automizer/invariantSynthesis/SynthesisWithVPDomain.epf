@@ -1,0 +1,46 @@
+#Tue Jan 01 22:49:48 CET 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Initial\ conjuncts=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Initial\ disjuncts=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Solver\ timeout\ (sec)=5
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Step\ to\ increase\ conjuncts=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Step\ to\ increase\ disjuncts=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Use\ abstract\ interpretation=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.24
+file_export_version=3.0
+
+
+#Tue Jan 01 22:49:48 CET 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=VPDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Check\ feasibility\ of\ abstract\ posts\ with\ an\ SMT\ solver=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Congruence\ Domain=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Congruence\ Evaluator\ type=Congruence Default Evaluator
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Congruence\ Widening\ operator=CongruenceMergeOperator
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Create\ assumptions\ of\ other\ states\ before\ post=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Deactivate\ Weak\ Equivalences=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Empty\ Domain=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Explicit\ value\ domain=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Fallback\:\ assign\ interval\ projection=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Flatten\ before\ fatten=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Interval\ Domain=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Interval\ Evaluator\ type=Interval Default Evaluator
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Interval\ Widening\ operator=IntervalLiteralWideningOperator
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Log\ string\ format=TERM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Maximum\ recursion\ depth\ of\ evaluation\ operations=-1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Minimum\ iterations\ before\ widening=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Number\ type=BigDecimal
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Octagon\ Domain=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Octagon\ widening\ operator=LITERAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Parallel\ states\ before\ merging=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Precise\ comparison\ operator=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Run\ as\ pre-analysis=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Sign\ Domain=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Simplify\ assumptions\ before\ abstract\ post=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Threshold\ for\ exponential\ widening=131072
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Underlying\ domain=CompoundDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ Strongman=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Weq\ Fattening=false
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.1.24
+file_export_version=3.0
