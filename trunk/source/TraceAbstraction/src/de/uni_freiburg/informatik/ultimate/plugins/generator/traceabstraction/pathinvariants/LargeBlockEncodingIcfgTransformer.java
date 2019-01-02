@@ -164,15 +164,21 @@ public final class LargeBlockEncodingIcfgTransformer {
 				inputIcfgLocationsWithoutInvariants.add(loc);
 			}
 		}
+		int iterationsWithoutProgress = 0;
 		while (!inputIcfgLocationsWithoutInvariants.isEmpty()) {
 			final IcfgLocation some = inputIcfgLocationsWithoutInvariants.removeFirst();
 			if (allPredecessorsHaveInvariants(some, resultInvariantMapping)) {
+				iterationsWithoutProgress = 0;
 				final IPredicate invar = computeInvariantUsingSp(some, resultInvariantMapping,
 						csToolkit.getManagedScript(), predicateUnifier);
 				resultInvariantMapping.put(some, invar);
 				numberSpInvariants++;
 			} else {
+				iterationsWithoutProgress++;
 				inputIcfgLocationsWithoutInvariants.add(some);
+			}
+			if (iterationsWithoutProgress >= inputIcfgLocationsWithoutInvariants.size()) {
+				throw new AssertionError("No Progress! Cycle or unreachable locations in Icfg.");
 			}
 		}
 		mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
