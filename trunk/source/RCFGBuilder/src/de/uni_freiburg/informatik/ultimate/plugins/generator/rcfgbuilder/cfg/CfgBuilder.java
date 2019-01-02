@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -172,6 +173,8 @@ public class CfgBuilder {
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+	private final Set<String> mAllGotoTargets;
+
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services, final IToolchainStorage storage)
 			throws IOException {
@@ -189,11 +192,12 @@ public class CfgBuilder {
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
-		final List<ForkStatement> forkStatements = extractForkStatements(mBoogieDeclarations);
+		final ForkAndGotoInformation fgInfo = new ForkAndGotoInformation(mBoogieDeclarations);
+		mAllGotoTargets = fgInfo.getAllGotoTargets();
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && !forkStatements.isEmpty()) {
+		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && fgInfo.hasSomeForkEdge()) {
 			mCodeBlockSize = CodeBlockSize.SingleStatement;
 			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
 					+ " but program contains fork statements. Overwriting the user preferences and setting CodeBlockSize to "
@@ -221,7 +225,7 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public IIcfg<?> createIcfg(final Unit unit) {
+	public IIcfg<BoogieIcfgLocation> createIcfg(final Unit unit) {
 
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices);
 
@@ -285,33 +289,6 @@ public class CfgBuilder {
 		return mBoogie2Smt;
 	}
 
-	/**
-	 * Returns list of all {@link ForkStatement}s from all declarations. Expects that the input has been "unstructured",
-	 * i.e., all {@link WhileStatement}s and {@link IfStatement}s have been removed.
-	 */
-	private static List<ForkStatement> extractForkStatements(final BoogieDeclarations boogieDeclarations) {
-		final List<ForkStatement> result = new ArrayList<>();
-		for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
-			final Procedure proc = entry.getValue();
-			final Body body = proc.getBody();
-			for (final Statement st : body.getBlock()) {
-				if ((st instanceof ForkStatement)) {
-					result.add((ForkStatement) st);
-				} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
-						|| (st instanceof HavocStatement) || (st instanceof GotoStatement) || (st instanceof Label)
-						|| (st instanceof JoinStatement) || (st instanceof CallStatement)
-						|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)
-						|| (st instanceof AtomicStatement)) {
-					// do nothing
-				} else {
-					throw new UnsupportedOperationException(
-							"Did not expect statement of type " + st.getClass().getSimpleName());
-				}
-			}
-
-		}
-		return result;
-	}
 
 	/**
 	 * @param services
@@ -469,6 +446,56 @@ public class CfgBuilder {
 	}
 
 	/**
+	 * Provides two informations that can be obtained by traversing all statements.
+	 * <ul>
+	 * <li> information whether some {@link ForkStatement} occurs.
+	 * <li> the identifiers of all {@link Label}s that are target of some {@link GotoStatement}
+	 * </ul>
+	 * Expects that the input has been "unstructured",
+	 * i.e., all {@link WhileStatement}s and {@link IfStatement}s have been removed.
+	 */
+	private static class ForkAndGotoInformation {
+
+		private final boolean mHasSomeForkStatement;
+		private final Set<String> mAllGotoTargets;
+
+		public ForkAndGotoInformation(final BoogieDeclarations boogieDeclarations) {
+			boolean hasSomeForkStatement = false;
+			final Set<String> allGotoTargets = new HashSet<>();
+			for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
+				final Procedure proc = entry.getValue();
+				final Body body = proc.getBody();
+				for (final Statement st : body.getBlock()) {
+					if ((st instanceof ForkStatement)) {
+						hasSomeForkStatement = true;
+					} else if (st instanceof GotoStatement) {
+						allGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
+					} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
+							|| (st instanceof HavocStatement) || (st instanceof Label)
+							|| (st instanceof JoinStatement) || (st instanceof CallStatement)
+							|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)
+							|| (st instanceof AtomicStatement)) {
+						// do nothing
+					} else {
+						throw new UnsupportedOperationException(
+								"Did not expect statement of type " + st.getClass().getSimpleName());
+					}
+				}
+			}
+			mHasSomeForkStatement = hasSomeForkStatement;
+			mAllGotoTargets = allGotoTargets;
+		}
+
+		public boolean hasSomeForkEdge() {
+			return mHasSomeForkStatement;
+		}
+
+		public Set<String> getAllGotoTargets() {
+			return mAllGotoTargets;
+		}
+	}
+
+	/**
 	 * Build control flow graph of single procedures.
 	 *
 	 * @author heizmann@informatik.uni-freiburg.de
@@ -508,11 +535,6 @@ public class CfgBuilder {
 		IElement mCurrent;
 
 		/**
-		 * True only if the current code is deadcode. E.g., if there was a goto or return but not yet a label.
-		 */
-		boolean mDeadcode;
-
-		/**
 		 * List of auxiliary edges, which represent Gotos and get removed later.
 		 */
 		List<GotoEdge> mGotoEdges;
@@ -521,11 +543,6 @@ public class CfgBuilder {
 		 * Name of the procedure for which the CFG is build (at the moment)
 		 */
 		String mCurrentProcedureName;
-
-		/**
-		 * The last processed Statement. This is only used in assertions to
-		 */
-		Statement mLastStmt = new Label(null, null);
 
 		/**
 		 * The non goto edges of this procedure.
@@ -580,6 +597,9 @@ public class CfgBuilder {
 			}
 			assumeRequires(false);
 
+			boolean precedingStatementWasControlFlowDead = false;
+			Statement precedingStatement = null;
+
 			for (final Statement st : statements) {
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -593,106 +613,23 @@ public class CfgBuilder {
 					continue;
 				}
 
-				final ILocation loc = st.getLocation();
-				assert loc != null : "location of the following statement is null " + st;
+				assert st.getLocation() != null : "location of the following statement is null " + st;
 
-				if (st instanceof Label) {
-					if (mCurrent instanceof BoogieIcfgLocation) {
-						assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
-								|| mLastStmt instanceof Label : "If st is Label"
-										+ " and mcurrent is LocNode lastSt is Label";
-						mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
-								+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
-								+ " CFG only the first label of those two (or" + " more) will be used");
-					}
-					if (mCurrent instanceof CodeBlock) {
-						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If st"
-										+ " is a Label and the last constructed node"
-										+ " was a TransEdge, then the last"
-										+ " Statement must not be a Label, Return or" + " Goto";
-						mLogger.warn("Label in the middle of a codeblock.");
-					}
-
-					processLabel((Label) st);
+				final boolean currentStatementIsControlFlowDead = statementIsControlFlowDead(
+						precedingStatementWasControlFlowDead, precedingStatement, st, mAllGotoTargets);
+				if (!currentStatementIsControlFlowDead || st instanceof AtomicStatement) {
+					processStatement(procName, st, precedingStatement);
 				}
-
-				else if (st instanceof AssumeStatement || st instanceof AssignmentStatement
-						|| st instanceof HavocStatement) {
-					if (mCurrent instanceof CodeBlock) {
-						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If the"
-										+ " last constructed node is a TransEdge, then"
-										+ " the last Statement must not be a Label,"
-										+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
-					}
-					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
-				}
-
-				else if (st instanceof AssertStatement) {
-					if (mCurrent instanceof CodeBlock) {
-						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If the"
-										+ " last constructed node is a TransEdge, then"
-										+ " the last Statement must not be a Label,"
-										+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
-					}
-					processAssertStatement((AssertStatement) st);
-				}
-
-				else if (st instanceof GotoStatement) {
-					// assert (! (mLastSt instanceof GotoStatement)) :
-					// "Two Gotos in a row";
-					if (mLastStmt instanceof GotoStatement) {
-						mLogger.warn("Two Gotos in a row! There was dead code");
-					} else {
-						processGotoStatement((GotoStatement) st);
-					}
-				}
-
-				else if (st instanceof CallStatement) {
-					if (mCurrent instanceof CodeBlock) {
-						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
-								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement || mLastStmt instanceof AtomicStatement : "If mcurrent is a TransEdge, then lastSt"
-										+ " must not be a Label, Return or Goto."
-										+ " (i.e. this is not the first Statemnt" + " of the block)";
-					}
-					if (mCurrent instanceof BoogieIcfgLocation) {
-						assert mLastStmt instanceof Label || mLastStmt instanceof CallStatement
-								|| mLastStmt instanceof ForkStatement
-								|| mLastStmt instanceof JoinStatement : "If mcurrent is LocNode, then st is first "
-										+ "statement of a block or fist statement after a call, fork, or join.";
-					}
-					processCallStatement((CallStatement) st);
-				}
-
-				else if (st instanceof ReturnStatement) {
-					processReturnStatement();
-				} else if (st instanceof ForkStatement) {
-					processForkStatement((ForkStatement) st);
-				} else if (st instanceof JoinStatement) {
-					processJoinStatement((JoinStatement) st);
-				} else if (st instanceof AtomicStatement) {
-					processAtomicStatement((AtomicStatement) st);
-				} else {
-					throw new UnsupportedOperationException("At the moment"
-							+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");
-				}
-				mLastStmt = st;
+				precedingStatementWasControlFlowDead = currentStatementIsControlFlowDead;
+				precedingStatement = st;
 			}
 
 			// If there is no ReturnStatement at the end of the procedure act
 			// like there would have been one.
-			if (!(mLastStmt instanceof ReturnStatement)) {
+			if (!(precedingStatement instanceof ReturnStatement) && !(precedingStatement instanceof GotoStatement)
+					&& !precedingStatementWasControlFlowDead) {
 				processReturnStatement();
 			}
-
-			// Assume that the procedures final node may be reachable
-			mDeadcode = false;
 
 			assertAndAssumeEnsures();
 
@@ -722,6 +659,112 @@ public class CfgBuilder {
 			// mBoogie2smt.removeLocals(proc);
 		}
 
+
+		private void processStatement(final String procName, final Statement st, final Statement precedingSt) {
+			if (st instanceof Label) {
+				if (mCurrent instanceof BoogieIcfgLocation) {
+					assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
+							|| precedingSt instanceof Label : "If st is Label"
+									+ " and mcurrent is LocNode lastSt is Label";
+					mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
+							+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
+							+ " CFG only the first label of those two (or" + " more) will be used");
+				}
+				if (mCurrent instanceof CodeBlock) {
+					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
+							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
+							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement
+							|| precedingSt == null : "If st is a Label and the last constructed node"
+									+ " was a TransEdge, then the last"
+									+ " Statement must not be a Label, Return or" + " Goto";
+					mLogger.warn("Label in the middle of a codeblock.");
+				}
+
+				processLabel((Label) st);
+			}
+
+			else if (st instanceof AssumeStatement || st instanceof AssignmentStatement
+					|| st instanceof HavocStatement) {
+				if (mCurrent instanceof CodeBlock) {
+					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
+							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
+							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If the"
+									+ " last constructed node is a TransEdge, then"
+									+ " the last Statement must not be a Label,"
+									+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
+				}
+				processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
+			}
+
+			else if (st instanceof AssertStatement) {
+				if (mCurrent instanceof CodeBlock) {
+					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
+							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
+							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If the"
+									+ " last constructed node is a TransEdge, then"
+									+ " the last Statement must not be a Label,"
+									+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
+				}
+				processAssertStatement((AssertStatement) st);
+			}
+
+			else if (st instanceof GotoStatement) {
+				// assert (! (mLastSt instanceof GotoStatement)) :
+				// "Two Gotos in a row";
+				if (precedingSt instanceof GotoStatement) {
+					mLogger.warn("Two Gotos in a row! There was dead code");
+				} else {
+					processGotoStatement((GotoStatement) st);
+				}
+			}
+
+			else if (st instanceof CallStatement) {
+				if (mCurrent instanceof CodeBlock) {
+					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
+							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
+							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If mcurrent is a TransEdge, then lastSt"
+									+ " must not be a Label, Return or Goto."
+									+ " (i.e. this is not the first Statemnt" + " of the block)";
+				}
+				if (mCurrent instanceof BoogieIcfgLocation) {
+					assert precedingSt instanceof Label || precedingSt instanceof CallStatement
+							|| precedingSt instanceof ForkStatement
+							|| precedingSt instanceof JoinStatement : "If mcurrent is LocNode, then st is first "
+									+ "statement of a block or fist statement after a call, fork, or join.";
+				}
+				processCallStatement((CallStatement) st);
+			}
+
+			else if (st instanceof ReturnStatement) {
+				processReturnStatement();
+			} else if (st instanceof ForkStatement) {
+				processForkStatement((ForkStatement) st);
+			} else if (st instanceof JoinStatement) {
+				processJoinStatement((JoinStatement) st);
+			} else if (st instanceof AtomicStatement) {
+				processAtomicStatement((AtomicStatement) st);
+			} else {
+				throw new UnsupportedOperationException("At the moment"
+						+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");
+			}
+		}
+
+
+		private boolean statementIsControlFlowDead(final boolean lastStatementWasControlFlowDead,
+				final Statement lastStmt, final Statement st, final Set<String> allGotoTargets) {
+			final boolean lastStatementWasGotoOrReturn = (lastStmt instanceof GotoStatement
+					|| lastStmt instanceof ReturnStatement);
+			if (lastStatementWasControlFlowDead || lastStatementWasGotoOrReturn) {
+				if (st instanceof Label) {
+					final Label label = (Label) st;
+					return !allGotoTargets.contains(label.getName());
+				} else {
+					return true;
+				}
+			} else {
+				return false;
+			}
+		}
 
 		/**
 		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
@@ -860,7 +903,6 @@ public class CfgBuilder {
 				ModelUtils.copyAnnotations(spec, st);
 				mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 				processAssuAssiHavoStatement(st, Origin.ENSURES);
-				mLastStmt = st;
 			}
 			final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(mCurrentProcedureName);
 			mLastLabelName = exitNode.getDebugIdentifier();
@@ -905,7 +947,6 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(spec, st);
 					mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 					processAssuAssiHavoStatement(st, Origin.REQUIRES);
-					mLastStmt = st;
 				}
 			}
 		}
@@ -1003,13 +1044,9 @@ public class CfgBuilder {
 				}
 				mCurrent = locNode;
 			}
-			mDeadcode = false;
 		}
 
 		private void processAssuAssiHavoStatement(final Statement st, final Origin origin) {
-			if (mDeadcode) {
-				return;
-			}
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
@@ -1077,9 +1114,6 @@ public class CfgBuilder {
 
 
 		private void processAssertStatement(final AssertStatement st) {
-			if (mDeadcode) {
-				return;
-			}
 			if (mCurrent instanceof CodeBlock) {
 				final DebugIdentifier locName = constructLocDebugIdentifier(st);
 				final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
@@ -1124,9 +1158,6 @@ public class CfgBuilder {
 		}
 
 		private void processGotoStatement(final GotoStatement st) {
-			if (mDeadcode) {
-				return;
-			}
 			final String[] targets = st.getLabels();
 			assert targets.length != 0 : "Goto must have at least one target";
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
@@ -1154,13 +1185,9 @@ public class CfgBuilder {
 			// We have not constructed a new node that should be used in the
 			// next iteration step, therefore setting mcurrent to null.
 			mCurrent = null;
-			mDeadcode = true;
 		}
 
 		private void processCallStatement(final CallStatement st) {
-			if (mDeadcode) {
-				return;
-			}
 			if (st.getMethodName().equals("__VERIFIER_atomic_begin")) {
 				if (mAtomicMode) {
 					throw new AssertionError("already in atomic mode");
@@ -1275,9 +1302,6 @@ public class CfgBuilder {
 		// FIXME problem if last statement is goto
 		// fixed on 16.05.2011 - still needs to be tested
 		private void processReturnStatement() {
-			if (mDeadcode) {
-				return;
-			}
 			// If mcurrent is a transition add as successor the final Node
 			// of this procedure.
 			// If mcurrent is a location replace it with the final Node of
@@ -1302,7 +1326,6 @@ public class CfgBuilder {
 			}
 			// No new nodes created, set mcurrent to null
 			mCurrent = null;
-			mDeadcode = true;
 		}
 
 		/**
@@ -1311,10 +1334,6 @@ public class CfgBuilder {
 		 * @param st
 		 */
 		private void processForkStatement(final ForkStatement st) {
-			if (mDeadcode) {
-				return;
-			}
-
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
 				final DebugIdentifier locName = constructLocDebugIdentifier(st);
@@ -1354,10 +1373,6 @@ public class CfgBuilder {
 		 * @param st
 		 */
 		private void processJoinStatement(final JoinStatement st) {
-			if (mDeadcode) {
-				return;
-			}
-
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
 				final DebugIdentifier locName = constructLocDebugIdentifier(st);
