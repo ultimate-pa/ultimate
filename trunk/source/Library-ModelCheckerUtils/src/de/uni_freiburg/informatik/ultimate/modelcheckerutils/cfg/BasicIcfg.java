@@ -277,4 +277,9 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	public Class<LOC> getLocationClass() {
 		return mLocationClass;
 	}
+
+	@Override
+	public String toString() {
+		return graphStructureToString();
+	}
 }

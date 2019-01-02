@@ -240,4 +240,9 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public static BoogieIcfgContainer getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (BoogieIcfgContainer) a);
 	}
+
+	@Override
+	public String toString() {
+		return graphStructureToString();
+	}
 }

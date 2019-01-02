@@ -499,6 +499,11 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 	}
 
+	@Override
+	public String toString() {
+		return graphStructureToString();
+	}
+
 	private static final class PathProgramCallAction<T extends IcfgEdge & ICallAction> extends PathProgramIcfgAction<T>
 			implements IIcfgCallTransition<IcfgLocation> {
 		private static final long serialVersionUID = 1L;

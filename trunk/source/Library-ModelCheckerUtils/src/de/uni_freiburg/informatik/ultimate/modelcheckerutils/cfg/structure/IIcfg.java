@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
@@ -96,4 +97,23 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	}
 
 	Class<LOC> getLocationClass();
+
+	public default String graphStructureToString() {
+		final StringBuilder sb = new StringBuilder();
+		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : getProgramPoints().entrySet()) {
+			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
+				final LOC loc = innerEntry.getValue();
+				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+					sb.append("ProgramPoint: ");
+					sb.append(loc.toString());
+					sb.append(" --->  Edge: ");
+					sb.append(edge.toString());
+					sb.append(" --->  ProgramPoint: ");
+					sb.append(edge.getTarget().toString());
+					sb.append(System.lineSeparator());
+				}
+			}
+		}
+		return sb.toString();
+	}
 }
