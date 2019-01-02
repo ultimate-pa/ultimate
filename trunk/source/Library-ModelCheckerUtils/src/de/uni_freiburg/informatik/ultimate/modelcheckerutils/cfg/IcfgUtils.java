@@ -157,4 +157,18 @@ public class IcfgUtils {
 		}
 		return result;
 	}
+
+	public static <LOC extends IcfgLocation> boolean hasUnreachableProgramPoints(final IIcfg<LOC> icfg) {
+		final Set<LOC> entryNodes = icfg.getProcedureEntryNodes().entrySet().stream().map(Entry::getValue)
+				.collect(Collectors.toSet());
+		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
+			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
+				final LOC loc = innerEntry.getValue();
+				if (loc.getIncomingEdges().isEmpty() && !entryNodes.contains(loc)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
