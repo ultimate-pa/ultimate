@@ -260,11 +260,6 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	@Override
-	public IIcfgSymbolTable getSymboltable() {
-		return getCfgSmtToolkit().getSymbolTable();
-	}
-
-	@Override
 	public Set<LOC> getInitialNodes() {
 		return Collections.unmodifiableSet(mInitialNodes);
 	}

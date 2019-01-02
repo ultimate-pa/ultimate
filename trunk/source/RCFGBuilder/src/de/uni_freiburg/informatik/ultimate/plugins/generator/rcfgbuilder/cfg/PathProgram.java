@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -141,11 +140,6 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	@Override
 	public String getIdentifier() {
 		return mIdentifier;
-	}
-
-	@Override
-	public IIcfgSymbolTable getSymboltable() {
-		return getCfgSmtToolkit().getSymbolTable();
 	}
 
 	@Override

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -226,11 +225,6 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 			return getClass().getSimpleName() + "_" + getFilename();
 		}
 		return getFilename();
-	}
-
-	@Override
-	public IIcfgSymbolTable getSymboltable() {
-		return mBoogie2SMT.getBoogie2SmtSymbolTable();
 	}
 
 	@Override
