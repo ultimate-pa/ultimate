@@ -159,16 +159,28 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> boolean hasUnreachableProgramPoints(final IIcfg<LOC> icfg) {
-		final Set<LOC> entryNodes = icfg.getProcedureEntryNodes().entrySet().stream().map(Entry::getValue)
-				.collect(Collectors.toSet());
 		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
 			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
 				final LOC loc = innerEntry.getValue();
-				if (loc.getIncomingEdges().isEmpty() && !entryNodes.contains(loc)) {
+				if (loc.getIncomingEdges().isEmpty() && !isEntry(loc, icfg) && !isExit(loc, icfg)) {
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @return true iff loc is entry node of some procedure
+	 */
+	public static <LOC extends IcfgLocation> boolean isEntry(final LOC loc, final IIcfg<LOC> icfg) {
+		return icfg.getProcedureEntryNodes().get(loc.getProcedure()).equals(loc);
+	}
+
+	/**
+	 * @return true iff loc is exit node of some procedure
+	 */
+	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
+		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
 	}
 }
