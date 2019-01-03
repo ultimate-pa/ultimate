@@ -37,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
 
 /**
@@ -49,7 +51,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Sucessors of this node exactly the initial nodes of procedures.
 	 */
-	private IIcfg mGraphroot;
+	private IIcfg<BoogieIcfgLocation> mGraphroot;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
@@ -64,7 +66,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 *
 	 * @return the root of the CFG.
 	 */
-	public IIcfg getRoot() {
+	public IIcfg<BoogieIcfgLocation> getRoot() {
 		return mGraphroot;
 	}
 
@@ -87,6 +89,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, mServices, mStorage);
 		try {
 			mGraphroot = recCFGBuilder.createIcfg(unit);
+			if (IcfgUtils.hasUnreachableProgramPoints(mGraphroot)) {
+				throw new AssertionError("ICFG has unreachable program points");
+			}
 			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
