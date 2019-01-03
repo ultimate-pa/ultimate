@@ -177,7 +177,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 				iterationsWithoutProgress++;
 				inputIcfgLocationsWithoutInvariants.add(some);
 			}
-			if (iterationsWithoutProgress >= inputIcfgLocationsWithoutInvariants.size()) {
+			if (iterationsWithoutProgress > inputIcfgLocationsWithoutInvariants.size()) {
 				throw new AssertionError("No Progress! Cycle or unreachable locations in Icfg.");
 			}
 		}
