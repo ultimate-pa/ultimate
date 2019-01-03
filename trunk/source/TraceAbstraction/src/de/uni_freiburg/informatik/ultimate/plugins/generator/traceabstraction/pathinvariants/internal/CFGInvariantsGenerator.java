@@ -311,7 +311,7 @@ public final class CFGInvariantsGenerator {
 
 		if (invSynthSettings.useAbstractInterpretation()) {
 			// TODO 2018-06-10 Matthias: WIP - continue AI integration here.
-			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(mIcfg);
+			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(pathProgram);
 			 pathprogramLocs2Predicates.putAll(result);
 		}
 		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat =
