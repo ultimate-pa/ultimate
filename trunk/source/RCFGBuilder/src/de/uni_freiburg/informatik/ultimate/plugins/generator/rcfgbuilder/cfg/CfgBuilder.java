@@ -30,12 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -656,7 +658,70 @@ public class CfgBuilder {
 				mTransFormulaAdder.addTransitionFormulas(transEdge, procName, mXnfConversionTechnique,
 						mSimplificationTechnique);
 			}
-			// mBoogie2smt.removeLocals(proc);
+
+			// Remove unreachable nodes and unreachable edges
+
+			final BoogieIcfgLocation initial = mIcfg.getProcedureEntryNodes().get(procName);
+			final Set<BoogieIcfgLocation> reachablePPs = computeReachableLocations(initial);
+			final BoogieIcfgLocation exit = mIcfg.getProcedureExitNodes().get(procName);
+			final Map<DebugIdentifier, BoogieIcfgLocation> constructedPPs = mProcLocNodes;
+			removeUnreachableProgramPoints(reachablePPs, constructedPPs, exit);
+
+
+		}
+
+
+		/**
+		 * Given constructed and reachable {@link BoogieIcfgLocation}s. Remove the ones that are not reachable
+		 * (and the adjacent edges) from the CFG. Only exception is the exit node of the procedure.
+		 * (exit node is kept even if unreachable).
+		 */
+		private void removeUnreachableProgramPoints(final Set<BoogieIcfgLocation> reachablePPs,
+				final Map<DebugIdentifier, BoogieIcfgLocation> constructedPPs, final BoogieIcfgLocation exitPP) {
+			final Iterator<Entry<DebugIdentifier, BoogieIcfgLocation>> it = constructedPPs.entrySet().iterator();
+			while (it.hasNext()) {
+				final Entry<DebugIdentifier, BoogieIcfgLocation> entry = it.next();
+				if (reachablePPs.contains(entry.getValue())) {
+					// do nothing
+				} else {
+					if (exitPP == entry.getValue()) {
+						// do nothing
+					} else {
+						it.remove();
+						final List<IcfgEdge> outgoingEdges = new ArrayList<IcfgEdge>(entry.getValue().getOutgoingEdges());
+						for (final IcfgEdge outEdge : outgoingEdges) {
+							outEdge.disconnectSource();
+							outEdge.disconnectTarget();
+							mLogger.info("dead code at ProgramPoint " + entry.getValue() + ": " + outEdge);
+						}
+					}
+				}
+			}
+		}
+
+
+		/**
+		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given
+		 * starting {@link BoogieIcfgLocation}
+		 */
+		private Set<BoogieIcfgLocation> computeReachableLocations(final BoogieIcfgLocation start) {
+			final Set<BoogieIcfgLocation> reachable;
+			{
+				reachable = new HashSet<>();
+				final ArrayDeque<BoogieIcfgLocation> worklist = new ArrayDeque<>();
+				worklist.add(start);
+				reachable.add(start);
+				while (!worklist.isEmpty()) {
+					final BoogieIcfgLocation loc = worklist.removeFirst();
+					for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
+						if (!reachable.contains(succLoc)) {
+							reachable.add((BoogieIcfgLocation) succLoc);
+							worklist.add((BoogieIcfgLocation) succLoc);
+						}
+					}
+				}
+			}
+			return reachable;
 		}
 
 
@@ -1548,6 +1613,9 @@ public class CfgBuilder {
 					mParallelQueue.put(predecessor, outEdges);
 				}
 			}
+			// remove location from ICFG
+			final Map<DebugIdentifier, BoogieIcfgLocation> id2loc = mIcfg.getProgramPoints().get(pp.getProcedure());
+			id2loc.remove(pp.getDebugIdentifier());
 		}
 
 		private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
