@@ -109,6 +109,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		// TODO: If you remove infeasible edges, you may end up with an empty program. Either disable this or deal
 		// with it.
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
+		ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 		final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, inputIcfg,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final IIcfg<IcfgLocation> outputIcfg = blockEncoder.getResult();
