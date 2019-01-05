@@ -718,11 +718,14 @@ public final class CFGInvariantsGenerator {
 
 	public static Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPredsToMapToUnmodTrans(
 			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
-
-		final Map<IcfgLocation, UnmodifiableTransFormula> result =
-				locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
-						.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
-		return result;
+		if (locs2Preds == null) {
+			return null;
+		} else {
+			final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2Preds.keySet().stream()
+					.collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
+							.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
+			return result;
+		}
 	}
 
 	public Map<Integer, InvariantSynthesisStatisticsGenerator> getRound2PathInvariantsStatistics() {
