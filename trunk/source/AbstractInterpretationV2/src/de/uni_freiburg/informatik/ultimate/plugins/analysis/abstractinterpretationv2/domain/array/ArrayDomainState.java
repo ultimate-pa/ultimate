@@ -60,8 +60,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -87,6 +90,32 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		mVariables = variables;
 		mSimplifiedSegmentations = new HashMap<>();
 		assert checkSegmentationMap();
+	}
+
+	private boolean checkSegmentationMap() {
+		if (isBottom() || mSegmentationMap.getAllRepresentatives().isEmpty()) {
+			return true;
+		}
+		for (final IProgramVarOrConst var : mVariables) {
+			final Sort sort = var.getSort();
+			if (!sort.isArraySort()) {
+				continue;
+			}
+			final Sort valueSort = TypeUtils.getValueSort(sort);
+			final Segmentation segmentation = getSegmentation(var);
+			assert segmentation != null : var + " not in segmentation map of state" + this;
+			for (final IProgramVar v : segmentation.getValues()) {
+				final Sort sort2 = v.getSort();
+				assert valueSort.equals(sort2) : "The value " + v
+						+ " has not the sort corresponding to its array variable " + var;
+				if (sort2.isArraySort()) {
+					assert getSegmentation(v) != null : v + " not in segmentation map of state" + this;
+				} else {
+					assert mSubState.containsVariable(v) : v + " not in substate of state" + this;
+				}
+			}
+		}
+		return true;
 	}
 
 	public ArrayDomainState(final STATE subState, final Set<IProgramVarOrConst> variables,
@@ -963,26 +992,65 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (mSegmentationMap.getAllRepresentatives().isEmpty()) {
 			return getSubTerm();
 		}
-		final Set<IProgramVarOrConst> auxVars = new HashSet<>(mSegmentationMap.getArrays());
-		auxVars.addAll(mSubState.getVariables());
-		auxVars.removeAll(mVariables);
-		final Set<TermVariable> auxVarTvs =
-				auxVars.stream().map(x -> (TermVariable) x.getTerm()).collect(Collectors.toSet());
-		final UnionFind<Term> unionFind = getEquivalenceFinder().getEquivalences(auxVarTvs);
-		final Map<Term, Term> substiution = new HashMap<>();
-		for (final Term var : auxVarTvs) {
+		final Set<IProgramVarOrConst> auxVarPvs = new HashSet<>(mSegmentationMap.getArrays());
+		auxVarPvs.addAll(mSubState.getVariables());
+		auxVarPvs.removeAll(mVariables);
+		final Set<TermVariable> auxVars =
+				auxVarPvs.stream().map(x -> (TermVariable) x.getTerm()).collect(Collectors.toSet());
+		final UnionFind<Term> unionFind = getEquivalenceFinder().getEquivalences(auxVars);
+		// Replace the auxVars with equivalent other terms, if possible
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (final Term var : auxVars) {
 			if (unionFind.find(var) == null) {
 				continue;
 			}
+			// If there is a term without aux-vars equivalent to var, substitute var with it
 			for (final Term eq : unionFind.getEquivalenceClassMembers(var)) {
 				final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(eq.getFreeVars()));
-				if (!DataStructureUtils.haveNonEmptyIntersection(freeVars, auxVarTvs)) {
-					substiution.put(var, eq);
+				if (!DataStructureUtils.haveNonEmptyIntersection(freeVars, auxVars)) {
+					substitution.put(var, eq);
+					break;
 				}
 			}
 		}
-		auxVarTvs.removeAll(substiution.keySet());
-		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, getSubTerm(), substiution);
+		auxVars.removeAll(substitution.keySet());
+		final List<Term> conjuncts = new ArrayList<>();
+		conjuncts.add(getSubTerm());
+		final Set<TermVariable> bounds = new HashSet<>();
+		final ManagedScript managedScript = mToolkit.getManagedScript();
+		for (final IProgramVarOrConst array : mSegmentationMap.getArrays()) {
+			final Segmentation segmentation = getSegmentation(array);
+			final Term arrayVar = NonrelationalTermUtils.getTermVar(array);
+			// Add the array equivalences to the term
+			for (final IProgramVarOrConst eq : mSegmentationMap.getEquivalenceClass(array)) {
+				if (!eq.equals(array)) {
+					conjuncts.add(SmtUtils.binaryEquality(script, arrayVar, NonrelationalTermUtils.getTermVar(eq)));
+				}
+			}
+			final Sort boundSort = TypeUtils.getIndexSort(array.getSort());
+			for (int i = 0; i < segmentation.size(); i++) {
+				// Add the bound constraints
+				final List<Term> disjuncts = new ArrayList<>();
+				final TermVariable idx = managedScript.constructFreshTermVariable("idx", boundSort);
+				final TermVariable prev = segmentation.getBound(i).getTermVariable();
+				final TermVariable next = segmentation.getBound(i + 1).getTermVariable();
+				if (i > 0) {
+					disjuncts.add(SmtUtils.greater(script, prev, idx));
+				}
+				if (i < segmentation.size() - 1) {
+					disjuncts.add(SmtUtils.geq(script, idx, next));
+				}
+				bounds.add(idx);
+				final TermVariable value = segmentation.getValue(i).getTermVariable();
+				final Term select = script.term("select", arrayVar, idx);
+				disjuncts.add(SmtUtils.binaryEquality(script, value, select));
+				conjuncts.add(SmtUtils.or(script, disjuncts));
+			}
+		}
+		final Term body = new SubstitutionWithLocalSimplification(managedScript, substitution)
+				.transform(SmtUtils.and(script, conjuncts));
+		final Term existsTerm = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, body);
+		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, existsTerm);
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
@@ -1358,32 +1426,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 		assert result.size() <= maxSize : "Did not reduce enough states";
 		return result;
-	}
-
-	private boolean checkSegmentationMap() {
-		if (isBottom() || mSegmentationMap.getAllRepresentatives().isEmpty()) {
-			return true;
-		}
-		for (final IProgramVarOrConst var : mVariables) {
-			final Sort sort = var.getSort();
-			if (!sort.isArraySort()) {
-				continue;
-			}
-			final Sort valueSort = TypeUtils.getValueSort(sort);
-			final Segmentation segmentation = getSegmentation(var);
-			assert segmentation != null : var + " not in segmentation map of state" + this;
-			for (final IProgramVar v : segmentation.getValues()) {
-				final Sort sort2 = v.getSort();
-				assert valueSort.equals(sort2) : "The value " + v
-						+ " has not the sort corresponding to its array variable " + var;
-				if (sort2.isArraySort()) {
-					assert getSegmentation(v) != null : v + " not in segmentation map of state" + this;
-				} else {
-					assert mSubState.containsVariable(v) : v + " not in substate of state" + this;
-				}
-			}
-		}
-		return true;
 	}
 
 	private class UnificationResult {

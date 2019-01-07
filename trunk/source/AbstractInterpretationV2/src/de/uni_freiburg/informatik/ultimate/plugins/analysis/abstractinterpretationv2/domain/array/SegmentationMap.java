@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,18 +36,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -203,46 +192,5 @@ public class SegmentationMap {
 
 	public Collection<IProgramVarOrConst> getAllRepresentatives() {
 		return mArrayEqualities.getAllRepresentatives();
-	}
-
-	public Term getTerm(final ManagedScript managedScript, final Set<TermVariable> auxVars, final Term term,
-			final Map<Term, Term> substitution) {
-		final Script script = managedScript.getScript();
-		final List<Term> conjuncts = new ArrayList<>();
-		conjuncts.add(term);
-		final Set<TermVariable> bounds = new HashSet<>();
-		for (final IProgramVarOrConst array : mRepresentiveSegmentations.keySet()) {
-			final Segmentation segmentation = mRepresentiveSegmentations.get(array);
-			final Term arrayVar = NonrelationalTermUtils.getTermVar(array);
-			// Add the array equivalences to the term
-			for (final IProgramVarOrConst eq : getEquivalenceClass(array)) {
-				if (!eq.equals(array)) {
-					conjuncts.add(SmtUtils.binaryEquality(script, arrayVar, NonrelationalTermUtils.getTermVar(eq)));
-				}
-			}
-			final Sort boundSort = TypeUtils.getIndexSort(array.getSort());
-			for (int i = 0; i < segmentation.size(); i++) {
-				// Add the bound constraints
-				final List<Term> disjuncts = new ArrayList<>();
-				final TermVariable idx = managedScript.constructFreshTermVariable("idx", boundSort);
-				final TermVariable prev = segmentation.getBound(i).getTermVariable();
-				final TermVariable next = segmentation.getBound(i + 1).getTermVariable();
-				if (i > 0) {
-					disjuncts.add(SmtUtils.greater(script, prev, idx));
-				}
-				if (i < segmentation.size() - 1) {
-					disjuncts.add(SmtUtils.geq(script, idx, next));
-				}
-				bounds.add(idx);
-				final TermVariable value = segmentation.getValue(i).getTermVariable();
-				final Term select = script.term("select", arrayVar, idx);
-				disjuncts.add(SmtUtils.binaryEquality(script, value, select));
-				conjuncts.add(SmtUtils.or(script, disjuncts));
-			}
-		}
-		final Term innerTerm = new SubstitutionWithLocalSimplification(managedScript, substitution)
-				.transform(SmtUtils.and(script, conjuncts));
-		final Term body = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, innerTerm);
-		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
 	}
 }
