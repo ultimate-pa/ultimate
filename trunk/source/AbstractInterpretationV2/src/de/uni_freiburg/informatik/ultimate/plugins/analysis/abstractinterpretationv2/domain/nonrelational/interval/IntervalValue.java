@@ -54,15 +54,16 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	private static int sId;
 	private final int mId;
 
-	private BigDecimal mValue;
+	private final BigDecimal mValue;
 
-	private boolean mIsInfty;
+	private final boolean mIsInfty;
 
 	/**
 	 * Constructor for a new {@link IntervalValue}. The value is set to infinity (&infin;) initially.
 	 */
 	public IntervalValue() {
 		mIsInfty = true;
+		mValue = null;
 		sId++;
 		mId = sId;
 	}
@@ -128,20 +129,6 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	}
 
 	/**
-	 * Sets the value to the given value. If the value before was infinity, the infinity flag will be revoked.
-	 *
-	 * @param val
-	 *            The value to set.
-	 */
-	protected void setValue(final BigDecimal val) {
-		if (val == null) {
-			throw new IllegalArgumentException("val may not be null");
-		}
-		mValue = val;
-		mIsInfty = false;
-	}
-
-	/**
 	 * Returns the value of this.
 	 *
 	 * <p>
@@ -152,14 +139,6 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 */
 	public BigDecimal getValue() {
 		return mValue;
-	}
-
-	/**
-	 * Sets the value to infinity.
-	 */
-	protected void setToInfinity() {
-		mValue = null;
-		mIsInfty = true;
 	}
 
 	/**
@@ -282,5 +261,25 @@ public class IntervalValue implements Comparable<IntervalValue> {
 		assert SmtSortUtils.isRealSort(sort) : "Seems that numeric sort now has something different then Int or Real";
 		// has to be real
 		return script.decimal(mValue);
+	}
+
+	public IntervalValue add(final IntervalValue other) {
+		if (isInfinity()) {
+			return this;
+		}
+		if (other.isInfinity()) {
+			return other;
+		}
+		return new IntervalValue(getValue().add(other.getValue()));
+	}
+
+	public IntervalValue subtract(final IntervalValue other) {
+		if (isInfinity()) {
+			return this;
+		}
+		if (other.isInfinity()) {
+			return other;
+		}
+		return new IntervalValue(getValue().subtract(other.getValue()));
 	}
 }

@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -52,8 +51,15 @@ public final class HelperFunctions {
 	}
 
 	protected static IntervalDomainValue createInterval(final int lower, final int upper) {
-		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
-				new IntervalValue(new BigDecimal(upper)));
+		return new IntervalDomainValue(new IntervalValue(lower), new IntervalValue(upper));
+	}
+
+	protected static IntervalDomainValue createIntervalLeftUnbounded(final int upper) {
+		return new IntervalDomainValue(new IntervalValue(), new IntervalValue(upper));
+	}
+
+	protected static IntervalDomainValue createIntervalRightUnbounded(final int lower) {
+		return new IntervalDomainValue(new IntervalValue(lower), new IntervalValue());
 	}
 
 	protected static IntervalDomainValue createInterval() {

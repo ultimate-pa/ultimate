@@ -34,6 +34,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -345,52 +346,6 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	/**
-	 * Adds another {@link IntervalDomainValue} to <code>this</code> following the scheme:
-	 *
-	 * <p>
-	 * <ul>
-	 * <li>[a, b] + [c, d] = [a + c, b + d]</li>
-	 * </ul>
-	 * </p>
-	 *
-	 * @param other
-	 *            The other interval.
-	 * @return A new evaluation result corresponding to the addition of the two input intervals.
-	 */
-	@Override
-	public IntervalDomainValue add(final IntervalDomainValue other) {
-
-		assert other != null;
-
-		if (isBottom() || other.isBottom()) {
-			return new IntervalDomainValue(true);
-		}
-
-		if (isTop() || other.isTop()) {
-			return new IntervalDomainValue();
-		}
-
-		final IntervalValue lowerBound = new IntervalValue();
-		final IntervalValue upperBound = new IntervalValue();
-
-		// Compute lower bound
-		if (getLower().isInfinity() || other.getLower().isInfinity()) {
-			lowerBound.setToInfinity();
-		} else {
-			lowerBound.setValue(getLower().getValue().add(other.getLower().getValue()));
-		}
-
-		// Compute upper bound
-		if (getUpper().isInfinity() || other.getUpper().isInfinity()) {
-			upperBound.setToInfinity();
-		} else {
-			upperBound.setValue(getUpper().getValue().add(other.getUpper().getValue()));
-		}
-
-		return new IntervalDomainValue(lowerBound, upperBound);
-	}
-
-	/**
 	 * Returns <code>true</code> if and only if <code>0</code> is part of the interval.
 	 *
 	 * @return <code>true</code> if 0 is part of the interval, <code>false</code> otherwise.
@@ -632,6 +587,24 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	/**
+	 * Adds another {@link IntervalDomainValue} to <code>this</code> following the scheme:
+	 *
+	 * <p>
+	 * <ul>
+	 * <li>[a, b] + [c, d] = [a + c, b + d]</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param other
+	 *            The other interval.
+	 * @return A new evaluation result corresponding to the addition of the two input intervals.
+	 */
+	@Override
+	public IntervalDomainValue add(final IntervalDomainValue other) {
+		return addOrSubtract(other, (a, b) -> a.getLower().add(b.getLower()), (a, b) -> a.getUpper().add(b.getUpper()));
+	}
+
+	/**
 	 * Computes the subtraction of another {@link IntervalDomainValue} from <code>this</code> following the scheme:
 	 * <p>
 	 * <ul>
@@ -645,33 +618,43 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 */
 	@Override
 	public IntervalDomainValue subtract(final IntervalDomainValue other) {
+		return addOrSubtract(other, (a, b) -> a.getLower().subtract(b.getUpper()),
+				(a, b) -> a.getUpper().subtract(b.getLower()));
+	}
+
+	private IntervalDomainValue addOrSubtract(final IntervalDomainValue other,
+			final BiFunction<IntervalDomainValue, IntervalDomainValue, IntervalValue> funLower,
+			final BiFunction<IntervalDomainValue, IntervalDomainValue, IntervalValue> funUpper) {
 		assert other != null;
 
-		if (isBottom() || other.isBottom()) {
-			return new IntervalDomainValue(true);
+		if (isBottom()) {
+			return this;
 		}
-
-		if (isTop() || other.isTop()) {
-			return new IntervalDomainValue();
+		if (other.isBottom()) {
+			return other;
 		}
-
-		final IntervalValue lowerBound = new IntervalValue();
-		final IntervalValue upperBound = new IntervalValue();
+		if (isTop()) {
+			return this;
+		}
+		if (other.isTop()) {
+			return other;
+		}
 
 		// Compute lower bound
-		if (getLower().isInfinity() || other.getUpper().isInfinity()) {
-			lowerBound.setToInfinity();
+		final IntervalValue lowerBound;
+		if (getLower().isInfinity() || other.getLower().isInfinity()) {
+			lowerBound = new IntervalValue();
 		} else {
-			lowerBound.setValue(getLower().getValue().subtract(other.getUpper().getValue()));
+			lowerBound = funLower.apply(this, other);
 		}
 
 		// Compute upper bound
-		if (getUpper().isInfinity() || other.getLower().isInfinity()) {
-			upperBound.setToInfinity();
+		final IntervalValue upperBound;
+		if (getUpper().isInfinity() || other.getUpper().isInfinity()) {
+			upperBound = new IntervalValue();
 		} else {
-			upperBound.setValue(getUpper().getValue().subtract(other.getLower().getValue()));
+			upperBound = funUpper.apply(this, other);
 		}
-
 		return new IntervalDomainValue(lowerBound, upperBound);
 	}
 
@@ -713,9 +696,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// Euclidean division x / y has a remainder r with 0 <= r < |y|.
 		final IntervalValue min = new IntervalValue(0);
-		final IntervalValue max = absDivisor.mUpper;
-		if (!max.isInfinity()) {
-			max.setValue(max.getValue().subtract(BigDecimal.ONE));
+		final IntervalValue max;
+		if (absDivisor.mUpper.isInfinity()) {
+			max = absDivisor.mUpper;
+		} else {
+			max = new IntervalValue(absDivisor.mUpper.getValue().subtract(BigDecimal.ONE));
 		}
 		return new IntervalDomainValue(min, max);
 	}
