@@ -1704,7 +1704,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	@Override
 	public BooleanValue compareEquality(final IntervalDomainValue secondOther) {
-		if (isEqualTo(secondOther)) {
+		if (isPointInterval() && isEqualTo(secondOther)) {
 			return BooleanValue.TRUE;
 		}
 		return BooleanValue.TOP;
