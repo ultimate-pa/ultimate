@@ -322,7 +322,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final IAbstractPostOperator postOperator = state.getDomainList().get(i).getPostOperator();
 			final EvalResult result = postOperator.evaluate(states.get(i), formula, script);
 			if (result != EvalResult.UNKNOWN) {
-				assert result == slowEvaluate(state, formula, script);
+				assert result == slowEvaluate(state, formula,
+						script) : "CompoundDomain substates contradict each other during evaluate";
 				return result;
 			}
 		}
