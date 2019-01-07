@@ -1337,12 +1337,11 @@ public final class LinearInequalityInvariantPatternProcessor
 					valuation.put(coeff, mPatternCoefficients2Values.get(coeff));
 				}
 				final Term affineFunctionTerm = inequality.getAffineFunction(valuation).asTerm(script);
+				final Term zero = Rational.ZERO.toTerm(affineFunctionTerm.getSort());
 				if (inequality.isStrict()) {
-					inequalities.add(SmtUtils.less(script, constructZero(script, affineFunctionTerm.getSort()),
-							affineFunctionTerm));
+					inequalities.add(SmtUtils.less(script, zero, affineFunctionTerm));
 				} else {
-					inequalities.add(SmtUtils.leq(script, constructZero(script, affineFunctionTerm.getSort()),
-							affineFunctionTerm));
+					inequalities.add(SmtUtils.leq(script, zero, affineFunctionTerm));
 				}
 			}
 			conjunctions.add(SmtUtils.and(mCsToolkit.getManagedScript().getScript(), inequalities));

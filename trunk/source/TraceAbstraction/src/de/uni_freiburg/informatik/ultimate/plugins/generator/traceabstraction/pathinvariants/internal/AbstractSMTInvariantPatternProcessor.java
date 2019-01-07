@@ -27,22 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
@@ -111,16 +105,6 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	// return predicateUnifier.getOrConstructPredicate(TermVarsProc
 	// .computeTermVarsProc(term, csToolkit.getBoogie2Smt()));
 	// }
-
-	protected static Term constructZero(final Script script, final Sort sort) {
-		if (SmtSortUtils.isIntSort(sort)) {
-			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
-		} else if (SmtSortUtils.isRealSort(sort)) {
-			return script.decimal(BigDecimal.ZERO);
-		} else {
-			throw new IllegalArgumentException("unsupported sort " + sort);
-		}
-	}
 
 	/**
 	 * Given two disjunctions a and b of conjunctions, this method calculates a new disjunction of conjunctions
