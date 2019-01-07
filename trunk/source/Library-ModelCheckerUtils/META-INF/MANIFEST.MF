@@ -27,7 +27,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.xnf
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,

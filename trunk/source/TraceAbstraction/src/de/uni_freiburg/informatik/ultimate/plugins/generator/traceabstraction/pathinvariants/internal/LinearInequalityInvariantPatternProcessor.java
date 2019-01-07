@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015 David Zschocke
  * Copyright (C) 2015 Dirk Steinmetz
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Dennis Wölfing
  * Copyright (C) 2015-2017 University of Freiburg
  *
@@ -81,6 +81,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.xnf.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.xnf.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.xnf.XnfUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils.Linearity;
@@ -463,7 +466,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			cnfAfterNegation.add(disjunctWithNegatedLinearInequalities);
 		}
 		// 3. expand the cnf to get a dnf
-		final Dnf<LinearInequality> mappedAndNegatedPattern = expandCnfToDnf(services, cnfAfterNegation);
+		final Dnf<LinearInequality> mappedAndNegatedPattern = cnfAfterNegation.toDnf(services);
 		assert mappedAndNegatedPattern != null;
 		// 4. return the resulting dnf as the solution
 		return mappedAndNegatedPattern;
@@ -508,7 +511,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 		}
 
-		final Dnf<LinearInequality> conjunctionDNF = expandConjunction(mServices, dnfs);
+		final Dnf<LinearInequality> conjunctionDNF = XnfUtils.and(mServices, dnfs);
 
 		final int numOfMotzkinCoefficientsBeforeTransformation =
 				mMotzkinCoefficients2LinearInequalities.keySet().size();
@@ -652,7 +655,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 			conditionCNF.add(newList);
 		}
-		final Dnf<LinearInequality> newConditionDNF = expandCnfToDnf(mServices, conditionCNF);
+		final Dnf<LinearInequality> newConditionDNF = conditionCNF.toDnf(mServices);
 
 		final Dnf<LinearInequality> patternDNF = mapPattern(pattern, primedMapping);
 		int numberOfInequalities = 0;

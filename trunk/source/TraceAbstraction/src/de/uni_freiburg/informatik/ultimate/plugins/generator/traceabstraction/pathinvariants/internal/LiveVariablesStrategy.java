@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 //import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.xnf.Dnf;
 
 /**
  * This strategy constructs invariant patterns using those program variables which are <i> live </i> at the given
