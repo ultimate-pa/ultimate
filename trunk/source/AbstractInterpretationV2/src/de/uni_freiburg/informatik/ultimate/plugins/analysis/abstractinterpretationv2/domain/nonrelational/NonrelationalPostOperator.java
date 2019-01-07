@@ -180,6 +180,9 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 	@Override
 	public EvalResult evaluate(final STATE state, final Term term, final Script script) {
+		if (state.isBottom()) {
+			return EvalResult.TRUE;
+		}
 		final Expression expression = getExpression(term, state);
 		final Collection<IEvaluationResult<V>> tmpResults = mEvaluator.evaluate(state, expression);
 		boolean allTrue = true;
