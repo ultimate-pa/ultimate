@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -204,7 +205,8 @@ public class SegmentationMap {
 		return mArrayEqualities.getAllRepresentatives();
 	}
 
-	public Term getTerm(final ManagedScript managedScript, final Set<TermVariable> auxVars, final Term term) {
+	public Term getTerm(final ManagedScript managedScript, final Set<TermVariable> auxVars, final Term term,
+			final Map<Term, Term> substitution) {
 		final Script script = managedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.add(term);
@@ -238,8 +240,9 @@ public class SegmentationMap {
 				conjuncts.add(SmtUtils.or(script, disjuncts));
 			}
 		}
-		final Term body =
-				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, SmtUtils.and(script, conjuncts));
+		final Term innerTerm = new SubstitutionWithLocalSimplification(managedScript, substitution)
+				.transform(SmtUtils.and(script, conjuncts));
+		final Term body = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, innerTerm);
 		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
 	}
 }

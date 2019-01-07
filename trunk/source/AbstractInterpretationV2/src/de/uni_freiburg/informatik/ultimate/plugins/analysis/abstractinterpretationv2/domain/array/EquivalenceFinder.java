@@ -29,7 +29,7 @@ public class EquivalenceFinder {
 		mRelations = getEquivalenceRelations(cnf);
 	}
 
-	public UnionFind<Term> getEquivalences(final Set<Term> neededEquivalenceClasses) {
+	public UnionFind<Term> getEquivalences(final Set<? extends Term> neededEquivalenceClasses) {
 		final UnionFind<Term> result = new UnionFind<>();
 		for (final AffineRelation relation : mRelations) {
 			for (final Term var : neededEquivalenceClasses) {

@@ -473,8 +473,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Script script = mToolkit.getScript();
 		final Segmentation simplifiedThisSegmentation = simplifySegmentation(segmentation);
 		final Segmentation simplifiedOtherSegmentation = other.simplifySegmentation(otherSegmentation);
-		final Set<Term> thisBounds = new HashSet<>(getTermVars(simplifiedThisSegmentation.getBounds()));
-		final Set<Term> otherBounds = new HashSet<>(getTermVars(simplifiedOtherSegmentation.getBounds()));
+		final Set<TermVariable> thisBounds = getTermVars(simplifiedThisSegmentation.getBounds());
+		final Set<TermVariable> otherBounds = getTermVars(simplifiedOtherSegmentation.getBounds());
 		final EquivalenceFinder eqThis = getEquivalenceFinder();
 		final EquivalenceFinder eqOther = other.getEquivalenceFinder();
 		final UnionFind<Term> eqClassesThis = eqThis.getEquivalences(thisBounds);
@@ -802,8 +802,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			for (int i = 1; i < bounds.size() - 2; i++) {
 				final Term prev = bounds.get(i);
 				final Term next = bounds.get(i + 1);
-				if (isTrueInSubstate(SmtUtils.leq(script, prev, rep))
-						&& isTrueInSubstate(SmtUtils.less(script, rep, next))) {
+				if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, prev, rep)) == EvalResult.TRUE
+						&& mToolkit.evaluate(mSubState, SmtUtils.less(script, rep, next)) == EvalResult.TRUE) {
 					bounds.add(i + 1, rep);
 					values.add(i + 1, values.get(i));
 					added = true;
@@ -811,7 +811,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 			}
 			if (!added) {
-				if (isTrueInSubstate(SmtUtils.less(script, bounds.get(bounds.size() - 2), rep))) {
+				if (mToolkit.evaluate(mSubState,
+						SmtUtils.less(script, bounds.get(bounds.size() - 2), rep)) == EvalResult.TRUE) {
 					bounds.add(bounds.size() - 1, rep);
 					values.add(values.get(values.size() - 1));
 				}
@@ -820,7 +821,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return new Pair<>(getEqClasses(bounds, unionFind, isIncluded), values);
 	}
 
-	private static List<Set<Term>> getEqClasses(final Collection<Term> terms, final UnionFind<Term> unionFind,
+	private static List<Set<Term>> getEqClasses(final Collection<? extends Term> terms, final UnionFind<Term> unionFind,
 			final Predicate<Term> include) {
 		final List<Set<Term>> eqClasses = new ArrayList<>();
 		for (final Term b : terms) {
@@ -967,17 +968,21 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		auxVars.removeAll(mVariables);
 		final Set<TermVariable> auxVarTvs =
 				auxVars.stream().map(x -> (TermVariable) x.getTerm()).collect(Collectors.toSet());
-		final List<Term> conjuncts = new ArrayList<>();
-		conjuncts.add(getSubTerm());
-		// Add known bound-equivalences to the term
-		final UnionFind<Term> unionFind = getEquivalenceFinder().getEquivalences(
-				mSegmentationMap.getBoundVars().stream().map(x -> x.getTerm()).collect(Collectors.toSet()));
-		for (final Term rep : unionFind.getAllRepresentatives()) {
-			for (final Term eq : unionFind.getEquivalenceClassMembers(rep)) {
-				conjuncts.add(SmtUtils.binaryEquality(script, rep, eq));
+		final UnionFind<Term> unionFind = getEquivalenceFinder().getEquivalences(auxVarTvs);
+		final Map<Term, Term> substiution = new HashMap<>();
+		for (final Term var : auxVarTvs) {
+			if (unionFind.find(var) == null) {
+				continue;
+			}
+			for (final Term eq : unionFind.getEquivalenceClassMembers(var)) {
+				final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(eq.getFreeVars()));
+				if (!DataStructureUtils.haveNonEmptyIntersection(freeVars, auxVarTvs)) {
+					substiution.put(var, eq);
+				}
 			}
 		}
-		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, SmtUtils.and(script, conjuncts));
+		auxVarTvs.removeAll(substiution.keySet());
+		return mSegmentationMap.getTerm(mToolkit.getManagedScript(), auxVarTvs, getSubTerm(), substiution);
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
@@ -1188,7 +1193,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Script script = mToolkit.getScript();
 		for (int i = 1; i < segmentation.size(); i++) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			if (!isTrueInSubstate(SmtUtils.leq(script, bound, index))) {
+			if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bound, index)) != EvalResult.TRUE) {
 				min = i - 1;
 				break;
 			}
@@ -1196,7 +1201,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		int max = min + 1;
 		for (int i = segmentation.size() - 1; i > min; i--) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			if (!isTrueInSubstate(SmtUtils.less(script, index, bound))) {
+			if (mToolkit.evaluate(mSubState, SmtUtils.less(script, index, bound)) != EvalResult.TRUE) {
 				max = i + 1;
 				break;
 			}
@@ -1249,7 +1254,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final TermVariable currentBound = segmentation.getBound(i).getTermVariable();
 				final TermVariable nextBound = segmentation.getBound(i + 1).getTermVariable();
 				final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
-				if (i + 1 < segmentation.size() && isTrueInSubstate(boundEquality)) {
+				if (i + 1 < segmentation.size() && mToolkit.evaluate(mSubState, boundEquality) == EvalResult.TRUE) {
 					continue;
 				}
 				final IProgramVar currentValue = segmentation.getValue(i);
@@ -1305,18 +1310,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		old2newVars2.put(v2, aux1);
 		final STATE renamedState2 = mSubState.renameVariables(old2newVars2);
 		return renamedState1.isEqualTo(renamedState2);
-	}
-
-	private boolean isTrueInSubstate(final Term constraint) {
-		// TODO: Remove this
-		// final Term notConstraint = SmtUtils.not(mToolkit.getScript(), constraint);
-		// final STATE afterNegation = mToolkit.handleAssumptionBySubdomain(mSubState, notConstraint);
-		// final boolean result1 = afterNegation.isBottom();
-		final boolean result2 = mToolkit.evaluate(mSubState, constraint) == EvalResult.TRUE;
-		// if (result1 != result2) {
-		// return result1;
-		// }
-		return result2;
 	}
 
 	public ArrayDomainState<STATE> simplify() {
