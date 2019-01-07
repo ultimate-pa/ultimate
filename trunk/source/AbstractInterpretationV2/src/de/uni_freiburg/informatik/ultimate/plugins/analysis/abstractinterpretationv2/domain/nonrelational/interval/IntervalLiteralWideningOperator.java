@@ -75,7 +75,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			if (secondValue.isContainedIn(firstValue)) {
 				varsToWiden.add(var);
 				varValues.add(firstValue);
-			} else if (!firstValue.isEqualTo(secondValue)) {
+			} else if (!firstValue.isAbstractionEqual(secondValue)) {
 				varsToWiden.add(var);
 				varValues.add(determineNextValue(firstValue, secondValue));
 			}
@@ -108,7 +108,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 	private IntervalDomainValue determineNextValue(final IntervalDomainValue first, final IntervalDomainValue second) {
 		// Determine widen mode:
 		// Nothing changed, return same.
-		if (first.isEqualTo(second)) {
+		if (first.isAbstractionEqual(second)) {
 			return first;
 		}
 

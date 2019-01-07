@@ -73,7 +73,7 @@ public class ExplicitValueBottom extends BaseExplicitValueValue {
 	}
 
 	@Override
-	public boolean isEqualTo(final BaseExplicitValueValue other) {
+	public boolean isAbstractionEqual(final BaseExplicitValueValue other) {
 		return other == this;
 	}
 
@@ -123,12 +123,12 @@ public class ExplicitValueBottom extends BaseExplicitValueValue {
 	}
 
 	@Override
-	public BooleanValue compareEquality(final BaseExplicitValueValue other) {
+	public BooleanValue isEqual(final BaseExplicitValueValue other) {
 		return BooleanValue.BOTTOM;
 	}
 
 	@Override
-	public BooleanValue compareInequality(final BaseExplicitValueValue other) {
+	public BooleanValue isNotEqual(final BaseExplicitValueValue other) {
 		return BooleanValue.BOTTOM;
 	}
 

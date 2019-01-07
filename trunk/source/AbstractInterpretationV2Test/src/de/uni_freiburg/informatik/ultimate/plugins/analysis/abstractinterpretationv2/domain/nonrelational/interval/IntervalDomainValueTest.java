@@ -124,7 +124,7 @@ public class IntervalDomainValueTest {
 		ab = parseInterval(a, b);
 		cd = parseInterval(c, d);
 		result = ab.abs();
-		assertTrue("expected " + cd + ", was " + result, result.isEqualTo(cd));
+		assertTrue("expected " + cd + ", was " + result, result.isAbstractionEqual(cd));
 	}
 
 	@Test
@@ -155,7 +155,7 @@ public class IntervalDomainValueTest {
 		icd = parseInterval(cd, cd);
 		ief = parseInterval(ef, ef);
 		result = iab.modulo(icd);
-		assertTrue("expected " + ief + ", was " + result, result.isEqualTo(ief));
+		assertTrue("expected " + ief + ", was " + result, result.isAbstractionEqual(ief));
 	}
 
 	/**
@@ -181,7 +181,7 @@ public class IntervalDomainValueTest {
 		cd = parseInterval(c, d);
 		ef = parseInterval(e, f);
 		result = ab.modulo(cd);
-		assertTrue("expected " + ef + ", was " + result, result.isEqualTo(ef));
+		assertTrue("expected " + ef + ", was " + result, result.isAbstractionEqual(ef));
 	}
 
 	private static IntervalDomainValue parseInterval(final String min, final String max) {

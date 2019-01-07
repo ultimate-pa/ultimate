@@ -62,7 +62,7 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 	 * @return <code>true</code> if and only if <code>this</code> and other are both bottom, <code>this</code> and other
 	 *         are both top, or if the values represent the same abstract values.
 	 */
-	boolean isEqualTo(final V other);
+	boolean isAbstractionEqual(final V other);
 
 	/**
 	 * Compares <code>this</code> with another value V and checks whether <code>this</code> is included in other. If all
@@ -111,21 +111,27 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	V greaterThan(final V other);
 
-	BooleanValue compareEquality(final V other);
-
-	BooleanValue compareInequality(final V other);
-
-	BooleanValue isGreaterThan(final V other);
-
 	V greaterOrEqual(final V other);
-
-	BooleanValue isGreaterOrEqual(final V other);
 
 	V lessThan(final V other);
 
-	BooleanValue isLessThan(final V other);
-
 	V lessOrEqual(final V other);
+
+	/**
+	 * @return {@link BooleanValue#TRUE} if all concrete states represented by this abstract state are equal to all
+	 *         concrete states represented by the other abstract state, {@link BooleanValue#FALSE} if all concrete
+	 *         states represented by this abstract state are not equal to all concrete states represented by the other
+	 *         abstract state, and {@link BooleanValue#TOP} otherwise.
+	 */
+	BooleanValue isEqual(final V other);
+
+	BooleanValue isNotEqual(final V other);
+
+	BooleanValue isGreaterThan(final V other);
+
+	BooleanValue isGreaterOrEqual(final V other);
+
+	BooleanValue isLessThan(final V other);
 
 	/**
 	 * @return {@link BooleanValue#TRUE} if all concrete states represented by this abstract state are smaller or equal

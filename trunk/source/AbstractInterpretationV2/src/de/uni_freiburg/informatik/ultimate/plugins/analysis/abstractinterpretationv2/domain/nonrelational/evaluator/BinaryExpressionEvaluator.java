@@ -134,7 +134,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			// appropriate boolean value.
 			// TODO it might be necessary to change this behavior for different other abstract domains!
 			if (!getSubEvaluator(0).containsBool() && !getSubEvaluator(1).containsBool()) {
-				return onlyBoolean(firstValue.compareInequality(secondValue));
+				return onlyBoolean(firstValue.isNotEqual(secondValue));
 			}
 			return onlyTop();
 		case COMPGT:
@@ -214,7 +214,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		if (returnBool.isBottom() || returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
 		} else if (!getSubEvaluator(0).containsBool() && !getSubEvaluator(1).containsBool()) {
-			returnBool = first.getValue().compareEquality(second.getValue());
+			returnBool = first.getValue().isEqual(second.getValue());
 		}
 
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));

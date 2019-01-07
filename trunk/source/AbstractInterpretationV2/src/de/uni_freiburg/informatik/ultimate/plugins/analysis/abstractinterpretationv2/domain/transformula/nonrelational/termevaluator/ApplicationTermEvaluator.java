@@ -221,7 +221,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			for (int i = 1; i < arguments.size(); i++) {
 				final VALUE val1 = arguments.get(i - 1).getValue();
 				final VALUE val2 = arguments.get(i).getValue();
-				returnBool = returnBool.intersect(val1.compareEquality(val2));
+				returnBool = returnBool.intersect(val1.isEqual(val2));
 			}
 		}
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));

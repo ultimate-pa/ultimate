@@ -100,8 +100,8 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	}
 
 	@Override
-	public boolean isEqualTo(final BaseExplicitValueValue other) {
-		return commutativeOp(other, other::isEqualTo, evv -> evv.mValue.equals(mValue));
+	public boolean isAbstractionEqual(final BaseExplicitValueValue other) {
+		return commutativeOp(other, other::isAbstractionEqual, evv -> evv.mValue.equals(mValue));
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 		if (other.isBottom()) {
 			return false;
 		}
-		return isEqualTo(other);
+		return isAbstractionEqual(other);
 	}
 
 	@Override
@@ -138,7 +138,8 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	@Override
 	public BaseExplicitValueValue divideInteger(final BaseExplicitValueValue other) {
 		// TODO: Ensure that is euclidedan
-		return nonCommutativeOpCanonical(other, evv -> new ExplicitValueValue(mValue.div(evv.mValue)));
+		return nonCommutativeOpCanonical(other,
+				evv -> new ExplicitValueValue(AbsIntUtil.euclideanDivision(mValue, evv.mValue)));
 	}
 
 	@Override
@@ -164,18 +165,18 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	}
 
 	public BaseExplicitValueValue greaterThan(final ExplicitValueValue other) {
-		// TODO: [a, b] >= [c, d] results in [max(a, c), b]
-		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
+		return nonCommutativeOpCanonical(other,
+				evv -> mValue.compareTo(evv.mValue) == 1 ? this : ExplicitValueBottom.DEFAULT);
 	}
 
 	@Override
-	public BooleanValue compareEquality(final BaseExplicitValueValue other) {
+	public BooleanValue isEqual(final BaseExplicitValueValue other) {
 		return nonCommutativeOpCanonicalBoolean(other,
 				evv -> mValue.equals(evv.mValue) ? BooleanValue.TRUE : BooleanValue.FALSE);
 	}
 
 	@Override
-	public BooleanValue compareInequality(final BaseExplicitValueValue other) {
+	public BooleanValue isNotEqual(final BaseExplicitValueValue other) {
 		return nonCommutativeOpCanonicalBoolean(other,
 				evv -> mValue.equals(evv.mValue) ? BooleanValue.FALSE : BooleanValue.TRUE);
 	}
@@ -199,7 +200,8 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public BaseExplicitValueValue lessThan(final BaseExplicitValueValue other) {
-		return nonCommutativeOpCanonical(other, evv -> ExplicitValueTop.DEFAULT);
+		return nonCommutativeOpCanonical(other,
+				evv -> mValue.compareTo(evv.mValue) == -1 ? this : ExplicitValueBottom.DEFAULT);
 	}
 
 	@Override

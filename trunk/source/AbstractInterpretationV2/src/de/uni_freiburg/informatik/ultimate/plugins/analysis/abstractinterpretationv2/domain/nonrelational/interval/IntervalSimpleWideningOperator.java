@@ -55,7 +55,7 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 
 		// TODO: Add array support.
 		final Consumer<IProgramVarOrConst> varConsumer = var -> {
-			if (!first.getValue(var).isEqualTo(second.getValue(var))) {
+			if (!first.getValue(var).isAbstractionEqual(second.getValue(var))) {
 				varsToTop.add(var);
 			}
 		};

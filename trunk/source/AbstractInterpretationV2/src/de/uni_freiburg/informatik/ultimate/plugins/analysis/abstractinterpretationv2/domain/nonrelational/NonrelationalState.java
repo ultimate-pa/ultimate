@@ -178,7 +178,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *         variable has been set to the given value.
 	 */
 	public STATE setValue(final IProgramVarOrConst name, final V value) {
-		if (getValue(name).isEqualTo(value)) {
+		if (getValue(name).isAbstractionEqual(value)) {
 			return getThis();
 		}
 		final STATE returnState = createCopy();
@@ -661,7 +661,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 		for (final Entry<IProgramVarOrConst, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V otherValue = other.getVar2ValueNonrelational().get(entry.getKey());
-			if (!getVar2ValueNonrelational().get(entry.getKey()).isEqualTo(otherValue)) {
+			if (!getVar2ValueNonrelational().get(entry.getKey()).isAbstractionEqual(otherValue)) {
 				return false;
 			}
 		}

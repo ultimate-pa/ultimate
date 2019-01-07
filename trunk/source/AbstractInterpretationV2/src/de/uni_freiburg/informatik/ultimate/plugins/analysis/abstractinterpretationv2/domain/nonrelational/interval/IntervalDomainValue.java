@@ -239,7 +239,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *         bounds are the same. <code>false</code> otherwise.
 	 */
 	@Override
-	public boolean isEqualTo(final IntervalDomainValue other) {
+	public boolean isAbstractionEqual(final IntervalDomainValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -469,7 +469,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return copy();
 		}
 
-		if (isEqualTo(other)) {
+		if (isAbstractionEqual(other)) {
 			if (thisIsBottom) {
 				return new IntervalDomainValue(true);
 			} else if (isTop()) {
@@ -1612,7 +1612,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		final IntervalDomainValue leq = lessOrEqual(other);
 
-		if (leq.isEqualTo(this)) {
+		if (leq.isAbstractionEqual(this)) {
 			return BooleanValue.TRUE;
 		}
 		if (leq.isBottom()) {
@@ -1622,12 +1622,12 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareEquality(final IntervalDomainValue other) {
+	public BooleanValue isEqual(final IntervalDomainValue other) {
 		if (other.isTop() || isTop()) {
 			return BooleanValue.TOP;
 		}
 
-		if (isPointInterval() && isEqualTo(other)) {
+		if (isPointInterval() && isAbstractionEqual(other)) {
 			return BooleanValue.TRUE;
 		}
 
@@ -1639,7 +1639,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
+	public BooleanValue isNotEqual(final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
 				"Not equals expressions should have been removed during expression normalization.");
 	}

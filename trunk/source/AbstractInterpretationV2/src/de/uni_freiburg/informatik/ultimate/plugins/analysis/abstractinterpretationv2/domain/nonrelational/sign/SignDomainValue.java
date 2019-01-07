@@ -242,7 +242,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 	}
 
 	@Override
-	public boolean isEqualTo(final SignDomainValue other) {
+	public boolean isAbstractionEqual(final SignDomainValue other) {
 		throw new UnsupportedOperationException("not implemented");
 	}
 
@@ -396,13 +396,13 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 	}
 
 	@Override
-	public BooleanValue compareEquality(final SignDomainValue secondOther) {
+	public BooleanValue isEqual(final SignDomainValue secondOther) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public BooleanValue compareInequality(final SignDomainValue secondOther) {
+	public BooleanValue isNotEqual(final SignDomainValue secondOther) {
 		// TODO Auto-generated method stub
 		return null;
 	}

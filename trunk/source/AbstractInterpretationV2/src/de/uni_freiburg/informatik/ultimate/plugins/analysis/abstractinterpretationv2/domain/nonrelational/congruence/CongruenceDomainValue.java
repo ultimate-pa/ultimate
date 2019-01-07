@@ -325,7 +325,7 @@ public final class CongruenceDomainValue
 	 * Returns <code>true</code> if and only if <code>this</code> is equal to <code>other</code>.
 	 */
 	@Override
-	public boolean isEqualTo(final CongruenceDomainValue other) {
+	public boolean isAbstractionEqual(final CongruenceDomainValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -537,7 +537,7 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public BooleanValue compareEquality(final CongruenceDomainValue secondOther) {
+	public BooleanValue isEqual(final CongruenceDomainValue secondOther) {
 		if (isConstant() && secondOther.isConstant()) {
 			return BooleanValue.getBooleanValue(value().equals(secondOther.value()));
 		}
@@ -545,7 +545,7 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public BooleanValue compareInequality(final CongruenceDomainValue secondOther) {
+	public BooleanValue isNotEqual(final CongruenceDomainValue secondOther) {
 		if (isConstant() && secondOther.isConstant()) {
 			return BooleanValue.getBooleanValue(!value().equals(secondOther.value()));
 		}

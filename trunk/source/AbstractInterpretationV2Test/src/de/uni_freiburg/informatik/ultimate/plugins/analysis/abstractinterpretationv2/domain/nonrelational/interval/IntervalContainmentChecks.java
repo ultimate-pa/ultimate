@@ -180,8 +180,8 @@ public class IntervalContainmentChecks {
 		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.FALSE));
 		Assert.assertThat(int1.isLessThan(int2), Is.is(BooleanValue.TRUE));
 		Assert.assertThat(int2.isLessThan(int1), Is.is(BooleanValue.FALSE));
-		Assert.assertThat(int2.compareEquality(int1), Is.is(BooleanValue.FALSE));
-		Assert.assertThat(int1.compareEquality(int2), Is.is(BooleanValue.FALSE));
+		Assert.assertThat(int2.isEqual(int1), Is.is(BooleanValue.FALSE));
+		Assert.assertThat(int1.isEqual(int2), Is.is(BooleanValue.FALSE));
 	}
 
 	@Test
@@ -194,8 +194,8 @@ public class IntervalContainmentChecks {
 
 		Assert.assertThat(int1.isLessOrEqual(int2), Is.is(BooleanValue.TOP));
 		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.TOP));
-		Assert.assertThat(int1.compareEquality(int2), Is.is(BooleanValue.TOP));
-		Assert.assertThat(int2.compareEquality(int1), Is.is(BooleanValue.TOP));
+		Assert.assertThat(int1.isEqual(int2), Is.is(BooleanValue.TOP));
+		Assert.assertThat(int2.isEqual(int1), Is.is(BooleanValue.TOP));
 	}
 
 	@Test
