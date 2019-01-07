@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -945,5 +946,16 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
 			final String[] bitvectorFunctions) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public RValue constructBuiltinFegetround(final ILocation loc) {
+		throw new UnsupportedOperationException("fegetround not supported in non-bitprecise translation");
+	}
+
+	@Override
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		throw new UnsupportedOperationException("fesetround not supported in non-bitprecise translation");
 	}
 }

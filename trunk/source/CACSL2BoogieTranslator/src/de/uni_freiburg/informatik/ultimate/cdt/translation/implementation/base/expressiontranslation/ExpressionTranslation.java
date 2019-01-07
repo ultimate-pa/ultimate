@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -714,5 +715,10 @@ public abstract class ExpressionTranslation {
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
+
+	public abstract RValue constructBuiltinFegetround(final ILocation loc);
+
+	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+			AuxVarInfoBuilder auxVarInfoBuilder);
 
 }

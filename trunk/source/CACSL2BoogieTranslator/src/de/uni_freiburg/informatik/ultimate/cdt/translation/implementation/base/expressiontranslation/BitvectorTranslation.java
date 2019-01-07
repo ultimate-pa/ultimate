@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -38,16 +40,19 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -57,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -64,9 +71,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -83,36 +92,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-		/**
-		 * Round towards the nearest, tie to even.
-		 */
-		RNE("roundNearestTiesToEven"),
+	/**
+	 * Round towards the nearest, tie to even.
+	 */
+	RNE("roundNearestTiesToEven"),
 
-		/**
-		 * Round toward nearest, tie to away.
-		 */
-		RNA("roundNearestTiesToAway"),
+	/**
+	 * Round toward nearest, tie to away.
+	 */
+	RNA("roundNearestTiesToAway"),
 
-		/**
-		 * Round toward positive.
-		 *
-		 * In this mode, a number r is rounded to the least upper floating-point bound.
-		 */
-		RTP("roundTowardPositive"),
+	/**
+	 * Round toward positive.
+	 *
+	 * In this mode, a number r is rounded to the least upper floating-point bound.
+	 */
+	RTP("roundTowardPositive"),
 
-		/**
-		 * Round toward negative.
-		 *
-		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-		 */
-		RTN("roundTowardNegative"),
+	/**
+	 * Round toward negative.
+	 *
+	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+	 */
+	RTN("roundTowardNegative"),
 
-		/**
-		 * Round toward zero.
-		 *
-		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-		 */
-		RTZ("roundTowardZero");
+	/**
+	 * Round toward zero.
+	 *
+	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+	 */
+	RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -885,6 +894,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression getRoundingMode() {
+		// TODO return global var
 		return mActiveRoundingMode;
 	}
 
@@ -1297,4 +1307,45 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
+	@Override
+	public RValue constructBuiltinFegetround(final ILocation loc) {
+		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
+		// https://en.cppreference.com/w/c/numeric/fenv/feround
+
+		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+		final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
+		final BoogieType intBoogieType = (BoogieType) intAstType.getBoogieType();
+
+		final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
+				intBoogieType, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return new RValue(globalVarIdentifier, intCPrimitive);
+	}
+
+	@Override
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
+		// https://en.cppreference.com/w/c/numeric/fenv/feround
+
+		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+		final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
+		Expression[] arguments;
+		arguments = new Expression[1];
+		arguments[0] = arg.getValue();
+
+		final AuxVarInfo auxvar =
+				auxVarInfoBuilder.constructAuxVarInfo(loc, intCPrimitive, intAstType, AUXVAR.RETURNED);
+		final Set<AuxVarInfo> auxVars = new HashSet<>();
+		auxVars.add(auxvar);
+		final LocalLValue llv = new LocalLValue(auxvar.getLhs(), intCPrimitive, null);
+		final CallStatement result = StatementFactory.constructCallStatement(loc, false,
+				new VariableLHS[] { auxvar.getLhs() }, "ULTIMATE.setCurrentRoundingMode", arguments);
+
+		final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
+		resultBuider.addDeclaration(auxvar.getVarDec());
+		resultBuider.addAuxVar(auxvar);
+		resultBuider.addStatement(result);
+		resultBuider.setLrValue(llv);
+		return resultBuider.build();
+	}
 }
