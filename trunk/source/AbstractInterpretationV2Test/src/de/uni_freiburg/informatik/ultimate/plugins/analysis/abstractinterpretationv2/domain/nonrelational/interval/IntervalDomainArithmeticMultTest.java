@@ -83,19 +83,19 @@ public class IntervalDomainArithmeticMultTest {
 	@Test
 	public void testInfiniteIntervalMult() {
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval1 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval1 = HelperFunctions.createIntervalTop();
 		
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval2 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval2 = HelperFunctions.createIntervalTop();
 		
 		// Expected Interval [-\infty, \infty]
-		final IntervalDomainValue expectedResult = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult = HelperFunctions.createIntervalTop();
 		
 		assertTrue(HelperFunctions.computeMultiplicationResult(interval1, interval2, expectedResult));
 		
 		
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval3 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval3 = HelperFunctions.createIntervalTop();
 		
 		// Interval [0, 0]
 		final IntervalDomainValue interval4 = HelperFunctions.createInterval(0, 0);

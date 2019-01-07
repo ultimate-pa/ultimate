@@ -116,7 +116,7 @@ public class IntervalDomainArithmeticDivisionTest {
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, 5);
 
 		// Result should be (-\infty; \infty)
-		final IntervalDomainValue expectedResult = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult = HelperFunctions.createIntervalTop();
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}

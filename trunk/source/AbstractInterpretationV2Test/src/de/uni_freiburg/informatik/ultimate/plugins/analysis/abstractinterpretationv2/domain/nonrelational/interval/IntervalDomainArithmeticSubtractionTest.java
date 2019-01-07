@@ -83,25 +83,25 @@ public class IntervalDomainArithmeticSubtractionTest {
 	@Test
 	public void testInfiniteIntervalSubtraction() {
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval1 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval1 = HelperFunctions.createIntervalTop();
 		
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval2 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval2 = HelperFunctions.createIntervalTop();
 		
 		// Expected Interval [-\infty, \infty]
-		final IntervalDomainValue expectedResult = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult = HelperFunctions.createIntervalTop();
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval2, expectedResult));
 		
 		
 		// Interval [-\infty, \infty]
-		final IntervalDomainValue interval3 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval3 = HelperFunctions.createIntervalTop();
 		
 		// Interval [-5, -1]
 		final IntervalDomainValue interval4 = HelperFunctions.createInterval(-5, -1);
 		
 		// Expected Interval [-\infty, \infty]
-		final IntervalDomainValue expectedResult2 = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult2 = HelperFunctions.createIntervalTop();
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval3, interval4, expectedResult2));
 		

@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalDomainValue implements INonrelationalValue<IntervalDomainValue> {
 
-	private IntervalValue mLower;
-	private IntervalValue mUpper;
+	private final IntervalValue mLower;
+	private final IntervalValue mUpper;
 
-	private boolean mIsBottom;
+	private final boolean mIsBottom;
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}. The interval created will be (-&infin; ; &infin;).
@@ -94,13 +94,14 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 */
 	public IntervalDomainValue(final IntervalValue lower, final IntervalValue upper) {
 		if (!lower.isInfinity() && !upper.isInfinity() && lower.getValue().compareTo(upper.getValue()) > 0) {
+			mLower = null;
+			mUpper = null;
 			mIsBottom = true;
 			return;
 		}
 
 		mLower = lower;
 		mUpper = upper;
-
 		mIsBottom = false;
 	}
 
@@ -574,16 +575,6 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		final IntervalValue upperBound = computeMaxMult(other);
 
 		return new IntervalDomainValue(lowerBound, upperBound);
-	}
-
-	/**
-	 * Sets the current interval to &bot;.
-	 */
-	protected void setToBottom() {
-		mLower = null;
-		mUpper = null;
-
-		mIsBottom = true;
 	}
 
 	/**

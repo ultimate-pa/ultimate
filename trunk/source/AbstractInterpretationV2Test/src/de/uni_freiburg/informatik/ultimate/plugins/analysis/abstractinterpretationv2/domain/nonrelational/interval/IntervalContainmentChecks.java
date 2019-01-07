@@ -187,10 +187,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void isLessOrEqualTop() {
 		// Create Interval TOP
-		final IntervalDomainValue int1 = HelperFunctions.createInterval();
+		final IntervalDomainValue int1 = HelperFunctions.createIntervalTop();
 
 		// Create Interval TOP
-		final IntervalDomainValue int2 = HelperFunctions.createInterval();
+		final IntervalDomainValue int2 = HelperFunctions.createIntervalTop();
 
 		Assert.assertThat(int1.isLessOrEqual(int2), Is.is(BooleanValue.TOP));
 		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.TOP));
@@ -200,8 +200,8 @@ public class IntervalContainmentChecks {
 
 	@Test
 	public void lessOrEqual() {
-		IntervalDomainValue int1 = HelperFunctions.createInterval();
-		IntervalDomainValue int2 = HelperFunctions.createInterval();
+		IntervalDomainValue int1 = HelperFunctions.createIntervalTop();
+		IntervalDomainValue int2 = HelperFunctions.createIntervalTop();
 		IntervalDomainValue result = int1.lessOrEqual(int2);
 		IntervalDomainValue resultRev = int2.lessOrEqual(int1);
 		Assert.assertThat(result.toString(), Is.is(STR_TOP));

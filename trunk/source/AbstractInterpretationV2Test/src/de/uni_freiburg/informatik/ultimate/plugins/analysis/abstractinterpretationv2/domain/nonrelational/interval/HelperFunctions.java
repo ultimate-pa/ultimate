@@ -62,8 +62,12 @@ public final class HelperFunctions {
 		return new IntervalDomainValue(new IntervalValue(lower), new IntervalValue());
 	}
 
-	protected static IntervalDomainValue createInterval() {
+	protected static IntervalDomainValue createIntervalTop() {
 		return new IntervalDomainValue();
+	}
+
+	protected static IntervalDomainValue createIntervalBottom() {
+		return new IntervalDomainValue(true);
 	}
 
 	protected static BinaryExpressionEvaluator<IntervalDomainValue, IntervalDomainState> createBinaryEvaluator(
