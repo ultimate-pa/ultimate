@@ -155,8 +155,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public IntervalDomainValue greaterOrEqual(final IntervalDomainValue other) {
 		assert other != null;
 
-		if (mIsBottom || other.mIsBottom) {
-			return new IntervalDomainValue(true);
+		if (mIsBottom) {
+			return this;
+		}
+		if (other.mIsBottom) {
+			return other;
 		}
 
 		IntervalValue lowerMax;
@@ -190,6 +193,8 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * [a, b] &lt;= [c, d] results in [a, min(b, d)]
 	 * </p>
 	 *
+	 * If c is smaller than a then the result is a bottom value.
+	 *
 	 * @param other
 	 *            The value to compare against.
 	 * @return A new {@link IntervalDomainValue} that is the result of the less or equal operation.
@@ -198,29 +203,29 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public IntervalDomainValue lessOrEqual(final IntervalDomainValue other) {
 		assert other != null;
 
-		if (mIsBottom || other.mIsBottom) {
-			return new IntervalDomainValue(true);
+		if (mIsBottom) {
+			return this;
+		}
+		if (other.mIsBottom) {
+			return other;
 		}
 
-		IntervalValue upperMin;
-
+		final IntervalValue upperMin;
 		if (mUpper.isInfinity()) {
-			upperMin = new IntervalValue(other.mUpper);
+			upperMin = other.mUpper;
 		} else if (other.mUpper.isInfinity()) {
-			upperMin = new IntervalValue(mUpper);
+			upperMin = mUpper;
+		} else if (mUpper.getValue().compareTo(other.mUpper.getValue()) < 0) {
+			upperMin = mUpper;
 		} else {
-			if (mUpper.getValue().compareTo(other.mUpper.getValue()) < 0) {
-				upperMin = new IntervalValue(mUpper);
-			} else {
-				upperMin = new IntervalValue(other.mUpper);
-			}
+			upperMin = other.mUpper;
 		}
 
 		if (!mLower.isInfinity() && mLower.compareTo(upperMin) > 0) {
 			return new IntervalDomainValue(true);
 		}
 
-		return new IntervalDomainValue(new IntervalValue(mLower), upperMin);
+		return new IntervalDomainValue(new IntervalValue(mLower), new IntervalValue(upperMin));
 	}
 
 	/**
@@ -264,7 +269,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return true;
 		}
 
-		if (isInfinity() || other.isInfinity()) {
+		if (isTop() || other.isTop()) {
 			return true;
 		}
 
@@ -301,7 +306,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return false;
 		}
 
-		if (other.isInfinity()) {
+		if (other.isTop()) {
 			return true;
 		}
 
@@ -361,7 +366,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return new IntervalDomainValue(true);
 		}
 
-		if (isInfinity() || other.isInfinity()) {
+		if (isTop() || other.isTop()) {
 			return new IntervalDomainValue();
 		}
 
@@ -395,7 +400,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return false;
 		}
 
-		if (isInfinity()) {
+		if (isTop()) {
 			return true;
 		}
 
@@ -436,7 +441,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return new IntervalDomainValue(true);
 		}
 
-		if (isInfinity() && other.isInfinity()) {
+		if (isTop() && other.isTop()) {
 			return new IntervalDomainValue();
 		}
 
@@ -511,7 +516,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		if (isEqualTo(other)) {
 			if (thisIsBottom) {
 				return new IntervalDomainValue(true);
-			} else if (isInfinity()) {
+			} else if (isTop()) {
 				return new IntervalDomainValue(new IntervalValue(), new IntervalValue());
 			} else {
 				IntervalValue newLower;
@@ -567,17 +572,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	@Override
 	public boolean isTop() {
-		return isInfinity();
-	}
-
-	/**
-	 * @return <code>true</code> if the interval is infinity, i.e. if the interval is (-&infin; ; &infin;).
-	 */
-	public boolean isInfinity() {
-		if (mIsBottom) {
-			return false;
-		}
-		return mLower.isInfinity() && mUpper.isInfinity();
+		return !mIsBottom && mLower.isInfinity() && mUpper.isInfinity();
 	}
 
 	/**
@@ -656,7 +651,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return new IntervalDomainValue(true);
 		}
 
-		if (isInfinity() || other.isInfinity()) {
+		if (isTop() || other.isTop()) {
 			return new IntervalDomainValue();
 		}
 
@@ -870,7 +865,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		boolean valuePresent = false;
 
 		// If both intervals are infinite, the maximum is \infty.
-		if (isInfinity() && other.isInfinity()) {
+		if (isTop() && other.isTop()) {
 			return new IntervalValue();
 		}
 
@@ -1033,7 +1028,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		boolean valuePresent = false;
 
 		// If both intervals are infinite, the minimum is \infty.
-		if (isInfinity() && other.isInfinity()) {
+		if (isTop() && other.isTop()) {
 			return new IntervalValue();
 		}
 
@@ -1259,7 +1254,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		result = divideInternally(other);
 		// }
 
-		if (result.isBottom() || result.isInfinity()) {
+		if (result.isBottom() || result.isTop()) {
 			return result;
 		}
 
@@ -1323,7 +1318,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 */
 	private IntervalValue computeMinDiv(final IntervalDomainValue other) {
 		// If both are infinity, the minimum is infinity.
-		if (isInfinity() && other.isInfinity()) {
+		if (isTop() && other.isTop()) {
 			return new IntervalValue();
 		}
 
@@ -1475,7 +1470,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 */
 	private IntervalValue computeMaxDiv(final IntervalDomainValue other) {
 		// If both are infinity, the maximum is infinity.
-		if (isInfinity() && other.isInfinity()) {
+		if (isTop() && other.isTop()) {
 			return new IntervalValue();
 		}
 
@@ -1635,11 +1630,42 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	@Override
 	public BooleanValue isLessOrEqual(final IntervalDomainValue other) {
+		if (other.isTop() || isTop()) {
+			return BooleanValue.TOP;
+		}
+
 		final IntervalDomainValue leq = lessOrEqual(other);
-		if (leq.isBottom() || leq.isPointInterval()) {
+
+		if (leq.isEqualTo(this)) {
 			return BooleanValue.TRUE;
 		}
+		if (leq.isBottom()) {
+			return BooleanValue.FALSE;
+		}
 		return BooleanValue.TOP;
+	}
+
+	@Override
+	public BooleanValue compareEquality(final IntervalDomainValue other) {
+		if (other.isTop() || isTop()) {
+			return BooleanValue.TOP;
+		}
+
+		if (isPointInterval() && isEqualTo(other)) {
+			return BooleanValue.TRUE;
+		}
+
+		final IntervalDomainValue intersection = intersect(other);
+		if (intersection.isBottom()) {
+			return BooleanValue.FALSE;
+		}
+		return BooleanValue.TOP;
+	}
+
+	@Override
+	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
+		throw new UnsupportedOperationException(
+				"Not equals expressions should have been removed during expression normalization.");
 	}
 
 	@Override
@@ -1700,20 +1726,6 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	@Override
 	public boolean canHandleModulo() {
 		return false;
-	}
-
-	@Override
-	public BooleanValue compareEquality(final IntervalDomainValue secondOther) {
-		if (isPointInterval() && isEqualTo(secondOther)) {
-			return BooleanValue.TRUE;
-		}
-		return BooleanValue.TOP;
-	}
-
-	@Override
-	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
-		throw new UnsupportedOperationException(
-				"Not equals expressions should have been removed during expression normalization.");
 	}
 
 	@Override

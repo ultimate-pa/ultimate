@@ -60,7 +60,7 @@ public class IntervalDomainArithmeticAdditionTest {
 		interval1.getUpper().setToInfinity();
 
 		assertTrue(interval1.isUnbounded());
-		assertFalse(interval1.isInfinity());
+		assertFalse(interval1.isTop());
 
 		// Interval [1,2]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(1, 2);
@@ -85,7 +85,7 @@ public class IntervalDomainArithmeticAdditionTest {
 		final IntervalDomainValue interval4 = HelperFunctions.createInterval(0, 0);
 		interval4.getLower().setToInfinity();
 		assertTrue(interval4.isUnbounded());
-		assertFalse(interval4.isInfinity());
+		assertFalse(interval4.isTop());
 
 		// Result should be [-\infty, 2]
 		final IntervalDomainValue expectedResult3 = HelperFunctions.createInterval(0, 2);
@@ -95,7 +95,7 @@ public class IntervalDomainArithmeticAdditionTest {
 
 		// Interval [\-infty, \infty]
 		final IntervalDomainValue infinite = new IntervalDomainValue();
-		assertTrue(infinite.isInfinity());
+		assertTrue(infinite.isTop());
 		assertFalse(infinite.isBottom());
 		assertTrue(infinite.getLower().isInfinity());
 		assertTrue(infinite.getUpper().isInfinity());
@@ -146,7 +146,7 @@ public class IntervalDomainArithmeticAdditionTest {
 		// Interval \bot
 		final IntervalDomainValue interval1 = new IntervalDomainValue(true);
 		assertTrue(interval1.isBottom());
-		assertFalse(interval1.isInfinity());
+		assertFalse(interval1.isTop());
 
 		// Interval [0, 1]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(0, 1);

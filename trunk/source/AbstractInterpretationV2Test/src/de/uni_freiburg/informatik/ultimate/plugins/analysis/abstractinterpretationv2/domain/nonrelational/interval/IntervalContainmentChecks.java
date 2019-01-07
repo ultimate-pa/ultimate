@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalContainmentChecks {
 
+	private static final String STR_BOT = "{}";
+	private static final String STR_TOP = "[-\\infty;\\infty]";
+
 	@Test
 	public void testContainmentClosedPositive() {
 		// Create Interval [2;3]
@@ -175,6 +178,10 @@ public class IntervalContainmentChecks {
 		// Expected result: true
 		Assert.assertThat(int1.isLessOrEqual(int2), Is.is(BooleanValue.TRUE));
 		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.FALSE));
+		Assert.assertThat(int1.isLessThan(int2), Is.is(BooleanValue.TRUE));
+		Assert.assertThat(int2.isLessThan(int1), Is.is(BooleanValue.FALSE));
+		Assert.assertThat(int2.compareEquality(int1), Is.is(BooleanValue.FALSE));
+		Assert.assertThat(int1.compareEquality(int2), Is.is(BooleanValue.FALSE));
 	}
 
 	@Test
@@ -185,12 +192,35 @@ public class IntervalContainmentChecks {
 		// Create Interval TOP
 		final IntervalDomainValue int2 = HelperFunctions.createInterval();
 
-		// Expected result: true
 		Assert.assertThat(int1.isLessOrEqual(int2), Is.is(BooleanValue.TOP));
 		Assert.assertThat(int2.isLessOrEqual(int1), Is.is(BooleanValue.TOP));
-
 		Assert.assertThat(int1.compareEquality(int2), Is.is(BooleanValue.TOP));
 		Assert.assertThat(int2.compareEquality(int1), Is.is(BooleanValue.TOP));
+	}
+
+	@Test
+	public void lessOrEqual() {
+		IntervalDomainValue int1 = HelperFunctions.createInterval();
+		IntervalDomainValue int2 = HelperFunctions.createInterval();
+		IntervalDomainValue result = int1.lessOrEqual(int2);
+		IntervalDomainValue resultRev = int2.lessOrEqual(int1);
+		Assert.assertThat(result.toString(), Is.is(STR_TOP));
+		Assert.assertThat(resultRev.toString(), Is.is(STR_TOP));
+
+		int1 = HelperFunctions.createInterval(0, 2);
+		int2 = HelperFunctions.createInterval(0, 2);
+		result = int1.lessOrEqual(int2);
+		resultRev = int2.lessOrEqual(int1);
+		Assert.assertThat(result.toString(), Is.is("[0;2]"));
+		Assert.assertThat(resultRev.toString(), Is.is("[0;2]"));
+
+		int1 = HelperFunctions.createInterval(3, 4);
+		int2 = HelperFunctions.createInterval(0, 2);
+		result = int1.lessOrEqual(int2);
+		resultRev = int2.lessOrEqual(int1);
+		Assert.assertThat(result.toString(), Is.is(STR_BOT));
+		Assert.assertThat(resultRev.toString(), Is.is("[0;2]"));
+
 	}
 
 }

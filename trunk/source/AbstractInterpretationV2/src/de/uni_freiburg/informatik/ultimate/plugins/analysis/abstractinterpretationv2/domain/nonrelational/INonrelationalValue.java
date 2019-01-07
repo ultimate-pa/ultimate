@@ -127,6 +127,12 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	V lessOrEqual(final V other);
 
+	/**
+	 * @return {@link BooleanValue#TRUE} if all concrete states represented by this abstract state are smaller or equal
+	 *         than all concrete states represented by the other abstract state, {@link BooleanValue#FALSE} if all
+	 *         concrete states represented by this abstract state are greater than all concrete states represented by
+	 *         the other abstract state, and {@link BooleanValue#TOP} otherwise.
+	 */
 	BooleanValue isLessOrEqual(final V other);
 
 	V inverseModulo(final V referenceValue, final V oldValue, final boolean isLeft);
