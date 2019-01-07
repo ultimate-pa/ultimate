@@ -33,10 +33,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -358,12 +361,17 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 
 	@Override
 	public boolean isLiteral(final Expression formula) {
-		if (formula instanceof IdentifierExpression || formula instanceof BooleanLiteral) {
+		if (formula instanceof IdentifierExpression || formula instanceof BooleanLiteral
+				|| formula instanceof ArrayAccessExpression || formula instanceof ArrayStoreExpression
+				|| formula instanceof FunctionApplication) {
 			return true;
 		}
 		if (formula instanceof UnaryExpression) {
-			final Expression innerExpr = ((UnaryExpression) formula).getExpr();
-			return innerExpr instanceof IdentifierExpression || innerExpr instanceof BooleanLiteral;
+			final UnaryExpression uexpr = ((UnaryExpression) formula);
+			final Expression innerExpr = uexpr.getExpr();
+			return uexpr.getOperator() == UnaryExpression.Operator.LOGICNEG
+					&& (innerExpr instanceof IdentifierExpression || innerExpr instanceof ArrayAccessExpression
+							|| innerExpr instanceof ArrayStoreExpression || innerExpr instanceof FunctionApplication);
 		}
 		return false;
 	}
