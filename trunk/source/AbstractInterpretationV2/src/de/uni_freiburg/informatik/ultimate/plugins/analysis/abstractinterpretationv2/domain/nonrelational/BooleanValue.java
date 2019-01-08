@@ -268,6 +268,10 @@ public enum BooleanValue implements ITermProvider {
 		}
 	}
 
+	/**
+	 * @return true if this {@link BooleanValue} is either {@link BooleanValue#TRUE} or {@link BooleanValue#FALSE}
+	 *         (i.e., represents only a single value), false otherwise.
+	 */
 	public boolean isSingleton() {
 		return this == FALSE || this == TRUE;
 	}

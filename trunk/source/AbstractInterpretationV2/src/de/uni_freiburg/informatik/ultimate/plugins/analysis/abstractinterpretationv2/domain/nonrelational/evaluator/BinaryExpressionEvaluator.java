@@ -181,7 +181,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			returnBool = compareBoolean.apply(first, second);
 		}
 
-		if (returnBool.isSingleton()) {
+		if (!returnBool.isSingleton()) {
 			return both(returnValue, returnBool);
 		}
 
