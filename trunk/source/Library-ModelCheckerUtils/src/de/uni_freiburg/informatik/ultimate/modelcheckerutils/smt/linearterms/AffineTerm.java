@@ -67,7 +67,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * with the SMTInterpol.
  * </p>
  *
- * @author Matthias Heizmann, Jan Leike
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Jan Leike
  */
 public class AffineTerm extends Term {
 	/**
