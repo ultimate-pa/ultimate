@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -50,14 +51,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * Σ c_i * x_i + c,
  * </pre>
  *
- * where c_i, c are rational constants and x_i are variables. The variables x_i can be either TermVariables or array
- * read expressions.
- *
- * Note that this call extends Term but is not supported by the solver. We extend Term only that this can be returned by
- * a TermTransformer.
- *
- * Note that there is a class de.uni_freiburg.informatik.ultimate.smtinterpol.convert.AffineTerm which is similar but
- * unusable in this case because it is closely interweaved with the SMTLIB interiors.
+ * where c_i, c are literals and x_i are variables. We consider every term as a
+ * variable unless is is an {@link ApplicationTerm} whose {@link FunctionSymbol}
+ * is an "affine symbol" {@link AffineTermTransformer#isAffineSymbol}. Hence
+ * variables are e.g., {@link TermVariable}, constants (i.e., 0-ary function
+ * symbols), function applications, array read expressions (i.e., select terms)
+ * <p>
+ * Note that this class extends {@link Term} but it is not supported by the
+ * solver. We extend Term only that this can be returned by a TermTransformer.
+ * </p>
+ * <p>
+ * Note that there is a class (@link
+ * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.AffineTerm} which is
+ * somehow similar but we cannot extend it because it too closely interweaved
+ * with the SMTInterpol.
+ * </p>
  *
  * @author Matthias Heizmann, Jan Leike
  */
@@ -68,7 +76,7 @@ public class AffineTerm extends Term {
 	private final Map<Term, Rational> mVariable2Coefficient;
 
 	/**
-	 * Affine constant.
+	 * Affine constant (the coefficient without variable).
 	 */
 	private final Rational mConstant;
 
@@ -78,7 +86,7 @@ public class AffineTerm extends Term {
 	private final Sort mSort;
 
 	/**
-	 * AffineTerm that represents the Rational r of sort sort.
+	 * AffineTerm that represents the Rational r of sort s.
 	 */
 	public AffineTerm(final Sort s, final Rational r) {
 		super(0);
