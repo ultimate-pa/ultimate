@@ -46,6 +46,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 @RunWith(Parameterized.class)
 public class SystemTest {
 
+	public File mFile;
+
+	public SystemTest(final File file) {
+		mFile = file;
+	}
+
+	@Test
+	public void testSystem() throws FileNotFoundException {
+		performTest(mFile);
+	}
+
 	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
@@ -91,7 +102,7 @@ public class SystemTest {
 		return true;
 	}
 
-	@Parameters // (name = "{0}")
+	@Parameters(name = "{0}")
 	public static Collection<File> testFiles() throws URISyntaxException, IOException {
 
 		final Collection<File> testFiles = new ArrayList<>();
@@ -108,9 +119,20 @@ public class SystemTest {
 			} else {
 				throw new UnsupportedOperationException("unsupported resource protocol");
 			}
-			final File[] lst =
-					f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
-			assert lst != null && lst.length > 0 : "File " + f.getAbsolutePath() + " does not describe any tests";
+
+			// find directory named test below SMTInterpolTest and above f
+			final FilenameFilter filter = (FilenameFilter) (dir, name1) -> name1.equals("test");
+			File parent = f.getParentFile();
+			File[] lst = null;
+			while (parent != null) {
+				lst = parent.listFiles(filter);
+				if (lst != null && lst.length > 0) {
+					break;
+				}
+				parent = parent.getParentFile();
+			}
+			assert lst != null && lst.length > 0 : "Could not find any tests starting from File " + f.getAbsolutePath();
+
 			final ArrayDeque<File> todo = new ArrayDeque<>();
 			if (lst.length > 1) {
 				System.out.println("More than one test directory found");
@@ -141,14 +163,4 @@ public class SystemTest {
 		}
 	}
 
-	public File mFile;
-
-	public SystemTest(final File file) {
-		mFile = file;
-	}
-
-	@Test
-	public void testSystem() throws FileNotFoundException {
-		performTest(mFile);
-	}
 }
