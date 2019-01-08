@@ -30,7 +30,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test</artifactId>
-	<packaging>eclipse-plugin</packaging>
+	<packaging>eclipse-test-plugin</packaging>
 
 	<parent>
 		<artifactId>mavenparent</artifactId>
