@@ -1313,12 +1313,38 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// https://en.cppreference.com/w/c/numeric/fenv/feround
 
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
-		final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
-		final BoogieType intBoogieType = (BoogieType) intAstType.getBoogieType();
+		// final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
+		// final BoogieType intBoogieType = (BoogieType) intAstType.getBoogieType();
 
 		final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
-				intBoogieType, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		return new RValue(globalVarIdentifier, intCPrimitive);
+				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+
+		// creates conditional expressions
+		final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTZ.getBoogieIdentifierExpression());
+		final Expression eqRTN = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTN.getBoogieIdentifierExpression());
+		final Expression eqRTP = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTP.getBoogieIdentifierExpression());
+		final Expression eqRNE = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RNE.getBoogieIdentifierExpression());
+		// final Expression eqRNA = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+		// globalVarIdentifier, SmtRoundingMode.RNA.getBoogieIdentifierExpression());
+
+		// creates integer literal expressions
+		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
+		final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2));
+		final Expression three = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+
+		// creates IfThenElse expression
+		final Expression condRNE = ExpressionFactory.constructIfThenElseExpression(loc, eqRNE, three, fail);
+		final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, two, condRNE);
+		final Expression condRTN = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, one, condRTP);
+		final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRTN);
+
+		return new RValue(condRTZ, intCPrimitive);
 	}
 
 	@Override
