@@ -233,6 +233,8 @@ public class PostProcessor {
 		if (mSettings.isBitvectorTranslation()) {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc));
 
+			decl.addAll(declareRoundingModeDataTypes(loc));
+
 			if (mTypeHandler.areFloatingTypesNeeded()) {
 				decl.addAll(declareFloatDataTypes(loc));
 			}
@@ -283,32 +285,6 @@ public class PostProcessor {
 	public ArrayList<Declaration> declareFloatDataTypes(final ILocation loc) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 
-		final Attribute[] attributesRM;
-		if (mSettings.overapproximateFloatingPointOperations()) {
-			attributesRM = new Attribute[0];
-		} else {
-			final String smtlibRmIdentifier = BitvectorTranslation.ROUNDING_MODE_SMT_TYPE_IDENTIFIER;
-			attributesRM = new Attribute[1];
-			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibRmIdentifier) });
-		}
-		final String[] typeParamsRM = new String[0];
-		decls.add(new TypeDeclaration(loc, attributesRM, false,
-				BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, typeParamsRM));
-
-		for (final SmtRoundingMode mode : SmtRoundingMode.values()) {
-			final Attribute[] attribute;
-			if (mSettings.overapproximateFloatingPointOperations()) {
-				attribute = new Attribute[0];
-			} else {
-				attribute = new Attribute[] { new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, mode.getSmtIdentifier()) }) };
-			}
-			final ConstDeclaration modeDecl =
-					new ConstDeclaration(loc, attribute, false, mode.getBoogieVarlist(), null, false);
-			decls.add(modeDecl);
-		}
-
 		for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
 
 			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
@@ -351,7 +327,39 @@ public class PostProcessor {
 		return decls;
 	}
 
-	private ArrayList<Declaration> declareCurrentRoundingModeVar(final ILocation loc) {
+	public ArrayList<Declaration> declareRoundingModeDataTypes(final ILocation loc) {
+		final ArrayList<Declaration> decls = new ArrayList<>();
+
+		final Attribute[] attributesRM;
+		if (mSettings.overapproximateFloatingPointOperations()) {
+			attributesRM = new Attribute[0];
+		} else {
+			final String smtlibRmIdentifier = BitvectorTranslation.ROUNDING_MODE_SMT_TYPE_IDENTIFIER;
+			attributesRM = new Attribute[1];
+			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibRmIdentifier) });
+		}
+		final String[] typeParamsRM = new String[0];
+		decls.add(new TypeDeclaration(loc, attributesRM, false,
+				BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, typeParamsRM));
+
+		for (final SmtRoundingMode mode : SmtRoundingMode.values()) {
+			final Attribute[] attribute;
+			if (mSettings.overapproximateFloatingPointOperations()) {
+				attribute = new Attribute[0];
+			} else {
+				attribute = new Attribute[] { new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+						new Expression[] { ExpressionFactory.createStringLiteral(loc, mode.getSmtIdentifier()) }) };
+			}
+			final ConstDeclaration modeDecl =
+					new ConstDeclaration(loc, attribute, false, mode.getBoogieVarlist(), null, false);
+			decls.add(modeDecl);
+		}
+
+		return decls;
+	}
+
+	private static ArrayList<Declaration> declareCurrentRoundingModeVar(final ILocation loc) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 
 		final VarList[] mVarlist;
