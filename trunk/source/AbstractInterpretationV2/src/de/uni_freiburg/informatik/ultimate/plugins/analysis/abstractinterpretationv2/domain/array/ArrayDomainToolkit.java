@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -70,6 +71,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 	private final IUltimateServiceProvider mServices;
+	private final Map<Term, EvalResult> mEvaluationCache;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
@@ -90,6 +92,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mMinBound = createVariable("-inf", BoogieType.TYPE_INT);
 		mMaxBound = createVariable("inf", BoogieType.TYPE_INT);
 		mServices = services;
+		mEvaluationCache = new HashMap<>();
 	}
 
 	private TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
@@ -165,7 +168,13 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public EvalResult evaluate(final STATE state, final Term formula) {
-		return mSubDomain.getPostOperator().evaluate(state, formula, getScript());
+		// TODO: Is this valid to cache only the formula (should be because of the aux-vars)?
+		EvalResult result = mEvaluationCache.get(formula);
+		if (result == null) {
+			result = mSubDomain.getPostOperator().evaluate(state, formula, getScript());
+			mEvaluationCache.put(formula, result);
+		}
+		return result;
 	}
 
 	public Expression getExpression(final Term term) {
