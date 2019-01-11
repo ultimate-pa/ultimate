@@ -1588,29 +1588,22 @@ public final class SmtUtils {
 	 *             if ConstantTerm cannot converted to Rational
 	 */
 	public static Rational convertConstantTermToRational(final ConstantTerm constTerm) {
-		Rational rational;
 		assert SmtSortUtils.isNumericSort(constTerm.getSort());
 		final Object value = constTerm.getValue();
 		if (SmtSortUtils.isIntSort(constTerm.getSort())) {
 			if (value instanceof BigInteger) {
-				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
+				return Rational.valueOf((BigInteger) value, BigInteger.ONE);
 			} else if (value instanceof Rational) {
-				rational = (Rational) value;
-			} else {
-				throw new UnsupportedOperationException();
+				return (Rational) value;
 			}
 		} else if (SmtSortUtils.isRealSort(constTerm.getSort())) {
 			if (value instanceof BigDecimal) {
-				rational = toRational((BigDecimal) value);
+				return toRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
-				rational = (Rational) value;
-			} else {
-				throw new UnsupportedOperationException();
+				return (Rational) value;
 			}
-		} else {
-			throw new UnsupportedOperationException();
 		}
-		return rational;
+		throw new UnsupportedOperationException("Cannot convert " + constTerm.toStringDirect() + " to Rational");
 	}
 
 	/**

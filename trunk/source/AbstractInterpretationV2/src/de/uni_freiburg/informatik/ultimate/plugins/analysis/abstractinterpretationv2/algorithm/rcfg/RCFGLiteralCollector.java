@@ -42,8 +42,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -61,14 +68,20 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	private final Set<String> mLiterals;
 	private final Set<BigDecimal> mNumberLiterals;
 	private final StatementLiteralCollector mStatementLiteralCollector;
+	private final SubTermFinder mSubTermFinder;
 	private final LiteralCollection mLiteralCollection;
 
 	public RCFGLiteralCollector(final IIcfg<?> root) {
 		mLiterals = new HashSet<>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
+		mSubTermFinder = new SubTermFinder(RCFGLiteralCollector::isConstant);
 		process(RcfgUtils.getInitialEdges(root));
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
+	}
+
+	private static boolean isConstant(final Term term) {
+		return SmtUtils.isConstant(term) || term instanceof ConstantTerm;
 	}
 
 	@Override
@@ -79,15 +92,6 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	public Collection<BigDecimal> getNumberLiterals() {
 		return Collections.unmodifiableCollection(mNumberLiterals);
 	}
-
-	// private void addBoundaryLiterals(Set<BigDecimal> numbers) {
-	// final Set<BigDecimal> adds = new HashSet<BigDecimal>();
-	// for (final BigDecimal number : numbers) {
-	// adds.add(number.add(BigDecimal.ONE));
-	// adds.add(number.subtract(BigDecimal.ONE));
-	// }
-	// numbers.addAll(adds);
-	// }
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
 		final Deque<IcfgEdge> worklist = new ArrayDeque<>();
@@ -116,6 +120,33 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	protected void visit(final Call c) {
 		super.visit(c);
 		mStatementLiteralCollector.processStatement(c.getCallStatement());
+	}
+
+	@Override
+	protected void visit(final IIcfgCallTransition<?> e) {
+		super.visit(e);
+		addConstantsFromTerms(e.getLocalVarsAssignment().getClosedFormula());
+	}
+
+	@Override
+	protected void visit(final IIcfgInternalTransition<?> e) {
+		super.visit(e);
+		addConstantsFromTerms(e.getTransformula().getClosedFormula());
+	}
+
+	private void addConstantsFromTerms(final Term t) {
+		final Set<Term> results = mSubTermFinder.findMatchingSubterms(t);
+		for (final Term constTerm : results) {
+			if (constTerm instanceof ConstantTerm) {
+				final Rational rat = SmtUtils.convertConstantTermToRational((ConstantTerm) constTerm);
+				mNumberLiterals.add(new BigDecimal(rat.numerator()).divide(new BigDecimal(rat.denominator())));
+			}
+		}
+	}
+
+	@Override
+	public String toString() {
+		return getLiteralCollection().toString();
 	}
 
 	/**
@@ -176,10 +207,5 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 
 			mNegate = false;
 		}
-	}
-
-	@Override
-	public String toString() {
-		return getLiteralCollection().toString();
 	}
 }

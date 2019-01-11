@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,9 +52,27 @@ public class RCFGEdgeVisitor {
 			visit((CodeBlock) e);
 		} else if (e instanceof RootEdge) {
 			visit((RootEdge) e);
+		} else if (e instanceof IIcfgCallTransition<?>) {
+			visit((IIcfgCallTransition<?>) e);
+		} else if (e instanceof IIcfgReturnTransition<?, ?>) {
+			visit((IIcfgReturnTransition<?, ?>) e);
+		} else if (e instanceof IIcfgInternalTransition<?>) {
+			visit((IIcfgInternalTransition<?>) e);
 		} else {
 			throw new UnsupportedOperationException("Extend the new type: " + e.getClass());
 		}
+	}
+
+	protected void visit(final IIcfgInternalTransition<?> e) {
+		// override if you want to use it
+	}
+
+	protected void visit(final IIcfgReturnTransition<?, ?> e) {
+		// override if you want to use it
+	}
+
+	protected void visit(final IIcfgCallTransition<?> e) {
+		// override if you want to use it
 	}
 
 	protected void visit(final RootEdge e) {
