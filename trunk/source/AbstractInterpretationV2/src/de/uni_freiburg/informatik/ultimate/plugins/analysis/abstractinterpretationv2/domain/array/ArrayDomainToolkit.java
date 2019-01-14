@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -38,7 +39,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
@@ -73,10 +77,11 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 	private final IUltimateServiceProvider mServices;
 	private final Map<Term, EvalResult> mEvaluationCache;
+	private final ILogger mLogger;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTableTmpVars variableProvider) {
+			final Boogie2SmtSymbolTableTmpVars variableProvider, final ILogger logger) {
 		mSubDomain = subDomain;
 		final BoogieIcfgContainer rootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
@@ -93,6 +98,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mMinBound = createVariable("-inf", BoogieType.TYPE_INT);
 		mMaxBound = createVariable("inf", BoogieType.TYPE_INT);
 		mServices = services;
+		mLogger = logger;
 		mEvaluationCache = new HashMap<>();
 	}
 
@@ -257,5 +263,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	public ArrayDomainState<STATE> createTopState() {
 		final STATE substate = mSubDomain.createTopState();
 		return new ArrayDomainState<>(substate, substate.getVariables(), this);
+	}
+
+	public Term eliminateQuantifier(final Term term) {
+		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, getManagedScript(), term,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 }
