@@ -603,7 +603,7 @@ public abstract class ExpressionTranslation {
 		return createNanOrInfinity(loc, s);
 	}
 
-	public abstract Expression getRoundingMode();
+	public abstract Expression getCurrentRoundingMode();
 
 	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
 			RValue argument);

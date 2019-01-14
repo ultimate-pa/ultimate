@@ -166,12 +166,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	private final IdentifierExpression mActiveRoundingMode;
+	private final IdentifierExpression mDefaultRoundingMode;
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
-		mActiveRoundingMode = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
+
+		mDefaultRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
 	}
 
 	@Override
@@ -194,7 +195,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			smtFunctionName = "to_fp";
 			final Expression realValue = ExpressionFactory.createRealLiteral(loc, value.toString());
-			arguments = new Expression[] { getRoundingMode(), realValue };
+			arguments = new Expression[] { getCurrentRoundingMode(), realValue };
 		}
 		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
 		return ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
@@ -549,7 +550,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+				new Expression[] { getCurrentRoundingMode(), oldExpression },
+				mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
@@ -561,7 +563,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+				new Expression[] { getCurrentRoundingMode(), oldExpression },
+				mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
@@ -759,7 +762,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 			final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
 			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-					new Expression[] { getRoundingMode(), exp1, exp2 }, mTypeHandler.getBoogieTypeForCType(type1));
+					new Expression[] { getCurrentRoundingMode(), exp1, exp2 },
+					mTypeHandler.getBoogieTypeForCType(type1));
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
@@ -893,9 +897,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression getRoundingMode() {
-		// TODO return global var
-		return mActiveRoundingMode;
+	public Expression getCurrentRoundingMode() {
+		if (mSettings.isFesetroundEnabled()) {
+			return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+					ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		}
+		return mDefaultRoundingMode;
 	}
 
 	@Override
@@ -909,7 +916,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), argument.getValue() },
+					new Expression[] { getCurrentRoundingMode(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("trunc".equals(floatFunction.getFunctionName())) {
@@ -1218,7 +1225,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		Expression expr;
 		if (rounding) {
 			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), first.getValue(), second.getValue() },
+					new Expression[] { getCurrentRoundingMode(), first.getValue(), second.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 		} else {
 			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,

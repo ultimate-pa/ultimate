@@ -836,7 +836,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression getRoundingMode() {
+	public Expression getCurrentRoundingMode() {
 		throw new UnsupportedOperationException("getRoundingMode is unsupported in non-bitprecise translation");
 	}
 
