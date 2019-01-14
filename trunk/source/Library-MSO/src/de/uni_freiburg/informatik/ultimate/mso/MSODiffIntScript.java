@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -83,7 +85,7 @@ public class MSODiffIntScript extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		mLogger.info("INPUT: " + mAssertionTerm);
+		mLogger.info("INPUT: " + mAssertionTerm.toString());
 
 		try {
 
@@ -97,7 +99,7 @@ public class MSODiffIntScript extends NoopScript {
 				final NestedWord<MoNatDiffAlphabetSymbol> word = run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				mModel = MoNatDiffUtils.parseMoNatDiffToTerm(this, word, terms);
+				mModel = MoNatDiffUtils.parseMSODiffIntToTerm(this, word, terms);
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
@@ -361,7 +363,8 @@ public class MSODiffIntScript extends NoopScript {
 
 			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
-
+		
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
 		return result;
 	}
 
@@ -388,6 +391,7 @@ public class MSODiffIntScript extends NoopScript {
 			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
 		}
 
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
 		return result;
 	}
 

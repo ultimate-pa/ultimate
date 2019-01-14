@@ -274,4 +274,48 @@ public final class MoNatDiffUtils {
 
 		return result;
 	}
+	
+	/**
+	 * TODO: 
+	 */
+	public static Map<Term, Term> parseMSODiffIntToTerm(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
+			final Term... terms) {
+
+		final Map<Term, Term> result = new HashMap<>();
+		final Map<Term, Set<BigInteger>> values = new HashMap<>();
+
+		for (final Term term : terms) {
+			values.put(term, new HashSet<BigInteger>());
+		}
+
+		for (int i = 0; i < word.length(); i++) {
+			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+
+			for (final Term term : terms) {
+				if (symbol.getMap().get(term)) {
+					if (i % 2 == 0)
+						values.get(term).add(BigInteger.valueOf(-i/2));
+					else {
+						values.get(term).add(BigInteger.valueOf((i+1)/2));
+					}
+				}
+			}
+		}
+
+		for (final Term term : values.keySet()) {
+			if (SmtSortUtils.isIntSort(term.getSort())) {
+				assert (values.get(term) != null && values.get(term).size() == 1);
+
+				final BigInteger value =
+						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				result.put(term, SmtUtils.constructIntValue(script, value));
+			}
+
+			if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
+				result.put(term, MoNatDiffUtils.constructSetOfIntValue(script, values.get(term)));
+			}
+		}
+
+		return result;
+	}
 }
