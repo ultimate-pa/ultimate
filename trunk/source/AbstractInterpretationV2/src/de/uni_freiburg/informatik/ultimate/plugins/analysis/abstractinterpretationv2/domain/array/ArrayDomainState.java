@@ -1050,10 +1050,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term body = new SubstitutionWithLocalSimplification(managedScript, substitution)
 				.transform(SmtUtils.and(script, conjuncts));
 		final Term existsTerm = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, body);
-		// TODO: Apply quantifier?
+		// TODO: Apply quantifier elimination?
 		// return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds,
 		// mToolkit.eliminateQuantifier(existsTerm));
-		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, mToolkit.eliminateQuantifier(existsTerm));
+		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, existsTerm);
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
