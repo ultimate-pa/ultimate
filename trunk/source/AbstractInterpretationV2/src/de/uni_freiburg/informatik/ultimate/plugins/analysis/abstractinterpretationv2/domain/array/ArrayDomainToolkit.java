@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
@@ -168,7 +169,13 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public EvalResult evaluate(final STATE state, final Term formula) {
-		// TODO: Is this valid to cache only the formula (should be because of the aux-vars)?
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
+		final Set<TermVariable> auxVars =
+				mCreatedVars.stream().map(TemporaryBoogieVar::getTermVariable).collect(Collectors.toSet());
+		final Set<TermVariable> nonAuxVars = DataStructureUtils.difference(freeVars, auxVars);
+		if (!nonAuxVars.isEmpty()) {
+			return mSubDomain.getPostOperator().evaluate(state, formula, getScript());
+		}
 		EvalResult result = mEvaluationCache.get(formula);
 		if (result == null) {
 			result = mSubDomain.getPostOperator().evaluate(state, formula, getScript());
