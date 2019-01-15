@@ -2,22 +2,22 @@
  * Copyright (C) 2009-2015 Björn Buchhold
  * Copyright (C) 2012-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * SerializationRepository
- * 
+ *
  * @author Björn Buchhold
- * 
+ *
  */
 public class SerializationRepository implements IRepository<String, ModelContainer> {
 
@@ -66,7 +67,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	/**
 	 * Constructor for {@link SerializationRepository}. Constructs a repository that uses {@link Serializable} to
 	 * persist objects in the file system .
-	 * 
+	 *
 	 * @param fileSystemDirectory
 	 *            the directory in the local file system used by the repository to store the files containing the
 	 *            persisted objects
@@ -95,9 +96,8 @@ public class SerializationRepository implements IRepository<String, ModelContain
 			} catch (final IOException e) {
 				throw new PersistentObjectNotFoundException(e);
 			} catch (final ClassNotFoundException e) {
-				throw new PersistentObjectTypeMismatchException(
-						"A required class used"
-								+ " in the stored object graph could not be found. Maybe it has been produced by a plug-in that didn't export this package",
+				throw new PersistentObjectTypeMismatchException("A required class used"
+						+ " in the stored object graph could not be found. Maybe it has been produced by a plug-in that didn't export this package",
 						e);
 			}
 		}
@@ -106,7 +106,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 
 	/**
 	 * ModelContainer deserialize
-	 * 
+	 *
 	 * @param key
 	 *            Model key.
 	 * @return Deserialized model.
@@ -125,6 +125,10 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	@Override
 	public List<String> listKeys() {
 		// initialize return value
+		if (mFileSystemDirectory == null || !mFileSystemDirectory.exists() || !mFileSystemDirectory.isDirectory()) {
+			return Collections.emptyList();
+		}
+
 		final List<String> keys = new LinkedList<>();
 		for (final String fileName : mFileSystemDirectory.list()) {
 			final File file = new File(fileName);
@@ -180,7 +184,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 
 	/**
 	 * void serializie
-	 * 
+	 *
 	 * @param key
 	 * @param transientInstance
 	 * @throws IOException
@@ -196,7 +200,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 
 	/**
 	 * String keyToFile
-	 * 
+	 *
 	 * @param key
 	 *            Key to convert.
 	 * @return File to store model represented by key.
@@ -208,7 +212,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	/**
 	 * Should replace all illegal characters in a filename with '_' . It is not sure if it catches all invalid filenames
 	 * on all OS.
-	 * 
+	 *
 	 * @param filename
 	 *            - A string that will be used as a filename (paths will not work!) somewhere else.
 	 * @return A string having converted all illegal characters in filename to '_'
