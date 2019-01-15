@@ -129,6 +129,12 @@ public class InitializationHandler {
 
 	private static final int MINIMAL_NoCELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 10;
 	private static final float MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT = 0.5f;
+	
+	/**
+	 * To recover the old behaviour (before SVCOMP-19), where initialization always happened through a list of 
+	 * assignments/stores (in contrast to the new assume-select strategy), set this flag to false.
+	 */
+	private final boolean USE_SELECT_FOR_ARRAY_CELL_INITIALIZATION_IF_POSSIBLE = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -946,7 +952,7 @@ public class InitializationHandler {
 
 		List<Statement> assigningStatements;
 		if (onHeap) {
-			if (useSelectInsteadOfStoreForOnHeapAssignment) {
+			if (useSelectInsteadOfStoreForOnHeapAssignment && USE_SELECT_FOR_ARRAY_CELL_INITIALIZATION_IF_POSSIBLE) {
 				assigningStatements =
 					mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
 			} else {
