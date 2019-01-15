@@ -117,6 +117,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_USE_CONSTANT_ARRAYS = "Use constant arrays";
 	private static final String DESC_USE_CONSTANT_ARRAYS =
 			"Use SMT constant arrays for default initialization of variables.";
+	public static final String LABEL_USE_STORE_CHAINS = "Use store chains";
 
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
@@ -250,7 +251,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_SIGNEDNESS_CHAR, Signedness.SIGNED, PreferenceType.Combo,
 						Signedness.values()),
-				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
+				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, true, DESC_USE_CONSTANT_ARRAYS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
 						PreferenceType.Boolean), };
+
 	}
 }
