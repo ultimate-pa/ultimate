@@ -39,7 +39,7 @@ public class TraceCheckReasonUnknown {
 
 	/**
 	 * Reasons for {@link TraceCheckReasonUnknown}.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum Reason {
@@ -64,6 +64,11 @@ public class TraceCheckReasonUnknown {
 		 * Formulas in trace use nonlinear arithmetic, but solver does not support non-linear arithmetic.
 		 */
 		UNSUPPORTED_NON_LINEAR_ARITHMETIC,
+
+		/**
+		 * Formulas in trace use const-arrays that are connected by a write chain
+		 */
+		UNSUPPORTED_CONST_ARRAY_WRITE_CHAINS,
 
 		/**
 		 * Formulas in trace contain quantifiers, but solver does not support quantifiers.
@@ -198,7 +203,7 @@ public class TraceCheckReasonUnknown {
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else if (message.equals(CVC4_CONST_ARRAY_WRITE_CHAIN_CONNECTION_MESSAGE)) {
 			// CVC4 crashes because two const-arrays are connected in a write chain
-			reason = Reason.SOLVER_CRASH_OTHER;
+			reason = Reason.UNSUPPORTED_CONST_ARRAY_WRITE_CHAINS;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else if (message.startsWith("Cannot handle literal")) {
 			// SMTInterpol cannot handle quantifiers
