@@ -17,7 +17,11 @@
   </rundefinition>
 
   <tasks name="Initializer">
-    <includesfile>../../../trunk/examples/CToBoogieTranslation/initializer_*.c</includesfile>
+    <includesfile>../../../trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_1.c</includesfile>
+    <includesfile>../../../trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_10.c</includesfile>
+    <includesfile>../../../trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_100.c</includesfile>
+    <includesfile>../../../trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_1000.c</includesfile>
+    <includesfile>../../../trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_10000.c</includesfile>
   </tasks>
 
 </benchmark>
