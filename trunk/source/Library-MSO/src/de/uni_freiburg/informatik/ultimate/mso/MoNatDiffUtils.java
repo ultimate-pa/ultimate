@@ -41,7 +41,8 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See
+	 * {@link UltimateNormalFormUtils}.
 	 */
 	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
 		final Set<Term> terms = new HashSet<>();
@@ -136,16 +137,16 @@ public final class MoNatDiffUtils {
 	 *
 	 * TODO: Check input.
 	 */
-	public static Set<MoNatDiffAlphabetSymbol> createAlphabet(final Term[] terms) {
-		final Set<MoNatDiffAlphabetSymbol> symbols = new HashSet<>();
+	public static Set<MSODAlphabetSymbol> createAlphabet(final Term[] terms) {
+		final Set<MSODAlphabetSymbol> symbols = new HashSet<>();
 
 		if (terms.length == 0) {
-			symbols.add(new MoNatDiffAlphabetSymbol());
+			symbols.add(new MSODAlphabetSymbol());
 			return symbols;
 		}
 
 		for (int i = 0; i < Math.pow(2, terms.length); i++) {
-			final MoNatDiffAlphabetSymbol symbol = new MoNatDiffAlphabetSymbol();
+			final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
 
 			for (int j = 0; j < terms.length; j++) {
 				final int value = (i / (int) Math.pow(2, j)) % 2;
@@ -158,10 +159,47 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
+	 * Returns the alphabet for the given variable names. Alphabet symbols are
+	 * mapped to its string representation.
+	 */
+	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term) {
+		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<String, MSODAlphabetSymbol>();
+
+		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(term, false);
+		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(term, true);
+
+		symbols.put("x0", x0);
+		symbols.put("x1", x1);
+
+		return symbols;
+	}
+
+	/**
+	 * Returns the alphabet for the given variable names. Alphabet symbols are
+	 * mapped to its string representation.
+	 */
+	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term1, final Term term2) {
+		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<String, MSODAlphabetSymbol>();
+
+		final Term[] terms = { term1, term2 };
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(terms, new boolean[] { false, false });
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(terms, new boolean[] { false, true });
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(terms, new boolean[] { true, false });
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(terms, new boolean[] { true, true });
+
+		symbols.put("xy00", xy00);
+		symbols.put("xy01", xy01);
+		symbols.put("xy10", xy10);
+		symbols.put("xy11", xy11);
+
+		return symbols;
+	}
+
+	/**
 	 * Returns the merged alphabet for given inputs.
 	 */
-	public static Set<MoNatDiffAlphabetSymbol> mergeAlphabets(final Set<MoNatDiffAlphabetSymbol> s1,
-			final Set<MoNatDiffAlphabetSymbol> s2) {
+	public static Set<MSODAlphabetSymbol> mergeAlphabets(final Set<MSODAlphabetSymbol> s1,
+			final Set<MSODAlphabetSymbol> s2) {
 
 		final Set<Term> terms = new HashSet<>();
 
@@ -177,14 +215,15 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns the alphabet symbols where all but the excluded variables match the given value.
+	 * Returns the alphabet symbols where all but the excluded variables match the
+	 * given value.
 	 */
-	public static Set<MoNatDiffAlphabetSymbol> allMatchesAlphabet(final Set<MoNatDiffAlphabetSymbol> symbols,
-			final Boolean value, final Term... excludedTerms) {
+	public static Set<MSODAlphabetSymbol> allMatchesAlphabet(final Set<MSODAlphabetSymbol> symbols, final Boolean value,
+			final Term... excludedTerms) {
 
-		final Set<MoNatDiffAlphabetSymbol> matches = new HashSet<>();
+		final Set<MSODAlphabetSymbol> matches = new HashSet<>();
 
-		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
+		for (final MSODAlphabetSymbol symbol : symbols) {
 			if (symbol.allMatches(value, excludedTerms)) {
 				matches.add(symbol);
 			}
@@ -194,17 +233,17 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns the successors which are directly reachable with the given symbols from the given state in the given
-	 * automaton.
+	 * Returns the successors which are directly reachable with the given symbols
+	 * from the given state in the given automaton.
 	 */
 	public static Set<String> hierarchicalSuccessorsOutgoing(
-			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, final String state,
-			final Set<MoNatDiffAlphabetSymbol> symbols) {
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
+			final Set<MSODAlphabetSymbol> symbols) {
 
 		final Set<String> successors = new HashSet<>();
-		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
+		for (final MSODAlphabetSymbol symbol : symbols) {
 
-			for (final OutgoingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
+			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalSuccessors(state, symbol)) {
 
 				successors.add(transition.getSucc());
@@ -215,17 +254,17 @@ public final class MoNatDiffUtils {
 	}
 
 	/**
-	 * Returns the predecessors which are directly reachable with the given symbols from the given state in the given
-	 * automaton.
+	 * Returns the predecessors which are directly reachable with the given symbols
+	 * from the given state in the given automaton.
 	 */
 	public static Set<String> hierarchicalPredecessorsIncoming(
-			final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> automaton, final String state,
-			final Set<MoNatDiffAlphabetSymbol> symbols) {
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
+			final Set<MSODAlphabetSymbol> symbols) {
 
 		final Set<String> predecessors = new HashSet<>();
-		for (final MoNatDiffAlphabetSymbol symbol : symbols) {
+		for (final MSODAlphabetSymbol symbol : symbols) {
 
-			for (final IncomingInternalTransition<MoNatDiffAlphabetSymbol, String> transition : automaton
+			for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalPredecessors(state, symbol)) {
 
 				predecessors.add(transition.getPred());
@@ -238,7 +277,7 @@ public final class MoNatDiffUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
-	public static Map<Term, Term> parseMoNatDiffToTerm(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
+	public static Map<Term, Term> parseMoNatDiffToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
 
 		final Map<Term, Term> result = new HashMap<>();
@@ -249,7 +288,7 @@ public final class MoNatDiffUtils {
 		}
 
 		for (int i = 0; i < word.length(); i++) {
-			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+			final MSODAlphabetSymbol symbol = word.getSymbol(i);
 
 			for (final Term term : terms) {
 				if (symbol.getMap().get(term)) {
@@ -262,8 +301,8 @@ public final class MoNatDiffUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value =
-						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				final BigInteger value = values.get(term) != null ? values.get(term).iterator().next()
+						: BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
@@ -274,11 +313,11 @@ public final class MoNatDiffUtils {
 
 		return result;
 	}
-	
+
 	/**
-	 * TODO: 
+	 * TODO:
 	 */
-	public static Map<Term, Term> parseMSODiffIntToTerm(final Script script, final Word<MoNatDiffAlphabetSymbol> word,
+	public static Map<Term, Term> parseMSODiffIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
 
 		final Map<Term, Term> result = new HashMap<>();
@@ -289,14 +328,14 @@ public final class MoNatDiffUtils {
 		}
 
 		for (int i = 0; i < word.length(); i++) {
-			final MoNatDiffAlphabetSymbol symbol = word.getSymbol(i);
+			final MSODAlphabetSymbol symbol = word.getSymbol(i);
 
 			for (final Term term : terms) {
 				if (symbol.getMap().get(term)) {
 					if (i % 2 == 0)
-						values.get(term).add(BigInteger.valueOf(-i/2));
+						values.get(term).add(BigInteger.valueOf(-i / 2));
 					else {
-						values.get(term).add(BigInteger.valueOf((i+1)/2));
+						values.get(term).add(BigInteger.valueOf((i + 1) / 2));
 					}
 				}
 			}
@@ -306,8 +345,8 @@ public final class MoNatDiffUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value =
-						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				final BigInteger value = values.get(term) != null ? values.get(term).iterator().next()
+						: BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 

@@ -21,21 +21,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffAlphabetSymbol {
+public class MSODAlphabetSymbol {
 
 	private final Map<Term, Boolean> mMap;
 
 	/**
 	 * Constructor for empty alphabet symbol.
 	 */
-	public MoNatDiffAlphabetSymbol() {
+	public MSODAlphabetSymbol() {
 		mMap = new HashMap<>();
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains a single variable.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term term, final boolean value) {
+	public MSODAlphabetSymbol(final Term term, final boolean value) {
 		mMap = new HashMap<>();
 		add(term, value);
 	}
@@ -46,7 +46,7 @@ public class MoNatDiffAlphabetSymbol {
 	 * @throws InvalidParameterException
 	 *             if lengths of terms and values differ.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term[] terms, final boolean[] values) {
+	public MSODAlphabetSymbol(final Term[] terms, final boolean[] values) {
 		if (terms.length != values.length) {
 			throw new InvalidParameterException("Input terms, values of different length.");
 		}
@@ -88,7 +88,7 @@ public class MoNatDiffAlphabetSymbol {
 	/**
 	 * Returns true if all variables of the given alphabet symbol are included in this alphabet symbol.
 	 */
-	public boolean contains(final MoNatDiffAlphabetSymbol alphabetSymbol) {
+	public boolean contains(final MSODAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
 
@@ -145,7 +145,7 @@ public class MoNatDiffAlphabetSymbol {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final MoNatDiffAlphabetSymbol other = (MoNatDiffAlphabetSymbol) obj;
+		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
 		return mMap.equals(other.mMap);
 	}
 }

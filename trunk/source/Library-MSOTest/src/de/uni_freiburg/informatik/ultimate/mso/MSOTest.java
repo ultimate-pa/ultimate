@@ -90,14 +90,14 @@ public class MSOTest {
 		final Term y = mScript.variable("y", mIntSort);
 		final Rational c = Rational.ONE;
 
-		final NestedWordAutomaton<MoNatDiffAlphabetSymbol, String> aut =
-				MoNatDiffAutomatonFactory.strictIneqAutomaton(mAuLibServices, x, y, c);
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> aut =
+				MSODNatAutomatonFactory.strictIneqAutomaton(mAuLibServices, x, y, c);
 
 		mLogger.info("Alphabet: " + aut.getAlphabet());
 
-		final Optional<MoNatDiffAlphabetSymbol> firstSymOpt =
+		final Optional<MSODAlphabetSymbol> firstSymOpt =
 				aut.getAlphabet().stream().filter(a -> a.getTerms()[0].toStringDirect().equals("x")).findFirst();
-		final MoNatDiffAlphabetSymbol firstSym = firstSymOpt.get();
+		final MSODAlphabetSymbol firstSym = firstSymOpt.get();
 
 		mLogger.info("First: " + firstSym);
 
@@ -106,14 +106,14 @@ public class MSOTest {
 
 		final Term xEqZero = mScript.term("=", x, zero);
 
-		final MoNatDiffAlphabetSymbol sym = new MoNatDiffAlphabetSymbol(x, true);
+		final MSODAlphabetSymbol sym = new MSODAlphabetSymbol(x, true);
 		sym.add(y, true);
 		mLogger.info("Trying " + sym);
-		final Word<MoNatDiffAlphabetSymbol> word = new Word<>(sym);
-		final NestedWord<MoNatDiffAlphabetSymbol> nWord = NestedWord.nestedWord(word);
+		final Word<MSODAlphabetSymbol> word = new Word<>(sym);
+		final NestedWord<MSODAlphabetSymbol> nWord = NestedWord.nestedWord(word);
 
 		// mNoException.expect(AutomataLibraryException.class);
-		final Accepts<MoNatDiffAlphabetSymbol, String> accept = new Accepts<>(mAuLibServices, aut, nWord);
+		final Accepts<MSODAlphabetSymbol, String> accept = new Accepts<>(mAuLibServices, aut, nWord);
 		mLogger.info("Result: " + accept.getResult());
 	}
 
