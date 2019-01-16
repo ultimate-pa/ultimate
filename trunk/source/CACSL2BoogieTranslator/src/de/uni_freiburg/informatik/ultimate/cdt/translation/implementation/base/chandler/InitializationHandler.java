@@ -1011,13 +1011,13 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float noCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
-		if (noCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
 
-		final float noInitializerValue = initInfo == null ? noCells : initInfo.getNumberOfValues();
-		final float ratio = noInitializerValue / noCells;
+		final float numberOfInitializerValues = initInfo == null ? 0f : initInfo.getNumberOfValues();
+		final float ratio = numberOfInitializerValues / numberOfCells;
 		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
@@ -1551,6 +1551,9 @@ public class InitializationHandler {
 			return mOverApprs;
 		}
 
+		/**
+		 * @return How many values the initializer provides explicitly.
+		 */
 		public int getNumberOfValues() {
 			int sum = 0;
 			if (hasExpressionResult()) {
