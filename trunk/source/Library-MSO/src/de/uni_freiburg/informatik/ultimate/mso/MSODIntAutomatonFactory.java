@@ -45,7 +45,76 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  */
 
+final class Counter {
+
+	public int prev() {
+		assert value > 1 : "Counter value < 2.";
+		return value - 1;
+	}
+
+	public String prevState() {
+		return "s" + (prev() - 1);
+	}
+
+	public int value() {
+		assert value > 0 : "Counter value < 1.";
+		return value;
+	}
+
+	public String state() {
+		return "s" + (value() - 1);
+	}
+
+	public int next() {
+		return ++value;
+	}
+
+	public String nextState() {
+		return "s" + (next() - 1);
+	}
+
+	private int value = 0;
+};
+
 public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
+
+	public static void exclude(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
+			final Map<String, MSODAlphabetSymbol> symbols, final Counter ctr, final String state, final int n) {
+
+		automaton.addState(false, false, ctr.nextState());
+		automaton.addInternalTransition(state, symbols.get("x0"), ctr.state());
+
+		for (int i = 1; i <= n * 2; i++) {
+			automaton.addState(false, false, ctr.nextState());
+			automaton.addInternalTransition(ctr.prevState(), symbols.get("x0"), ctr.state());
+		}
+	}
+
+	public static void include(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
+			final Map<String, MSODAlphabetSymbol> symbols, final Counter ctr, final String state, final int n) {
+
+		automaton.addInternalTransition(state, symbols.get("x1"), "final");
+
+		for (int i = 1; i <= n * 2; i++) {
+			final String pred = i == 1 ? state : ctr.state();
+
+			automaton.addState(false, false, ctr.nextState());
+			automaton.addInternalTransition(pred, symbols.get("x0"), ctr.state());
+			automaton.addInternalTransition(ctr.state(), symbols.get("x1"), "final");
+		}
+	}
+
+	public static void includeEverySecond(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
+			final Map<String, MSODAlphabetSymbol> symbols, final Counter ctr, final String state) {
+
+		automaton.addState(false, false, ctr.nextState());
+		automaton.addInternalTransition(state, symbols.get("x0"), ctr.state());
+		automaton.addInternalTransition(ctr.state(), symbols.get("x1"), "final");
+
+		automaton.addState(false, false, ctr.nextState());
+		automaton.addInternalTransition(ctr.prevState(), symbols.get("x0"), ctr.state());
+		automaton.addInternalTransition(ctr.state(), symbols.get("x0"), ctr.prevState());
+	}
 
 	/**
 	 * Constructs an automaton that represents "x < c".
@@ -60,72 +129,27 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 
 		final int cInt = SmtUtils.toInt(c).intValueExact();
+		final Counter ctr = new Counter();
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final Map<String, MSODAlphabetSymbol> symbols = MoNatDiffUtils.createAlphabet(x);
 		automaton.getAlphabet().addAll(symbols.values());
 
 		// Add initial, final state and accept trailing zeros.
-		automaton.addState(true, false, "init");
+		automaton.addState(true, false, ctr.nextState());
 		automaton.addState(false, true, "final");
 		automaton.addInternalTransition("final", symbols.get("x0"), "final");
 
-		if (cInt > 0) {
-			// Accept x = 0.
-			automaton.addInternalTransition("init", symbols.get("x1"), "final");
-
-			// Accept x < 0.
-			automaton.addState(false, false, "s0");
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", symbols.get("x0"), "s0");
-			automaton.addInternalTransition("s0", symbols.get("x0"), "s1");
-			automaton.addInternalTransition("s1", symbols.get("x0"), "s0");
-			automaton.addInternalTransition("s1", symbols.get("x1"), "final");
-
-			// Accept x = 1 if c > 1.
-			if (cInt > 1) {
-				automaton.addState(false, false, "c0");
-				automaton.addInternalTransition("init", symbols.get("x0"), "c0");
-				automaton.addInternalTransition("c0", symbols.get("x1"), "final");
-			}
-
-			// Accept x > 1 and x < c.
-			for (int i = 0; i < cInt - 2; i++) {
-				final String predState = "c" + (2 * i);
-				final String state1 = "c" + (2 * i + 1);
-				final String state2 = "c" + (2 * i + 2);
-
-				automaton.addState(false, false, state1);
-				automaton.addState(false, false, state2);
-				automaton.addInternalTransition(predState, symbols.get("x0"), state1);
-				automaton.addInternalTransition(state1, symbols.get("x0"), state2);
-				automaton.addInternalTransition(state2, symbols.get("x1"), "final");
-			}
+		if (cInt <= 0) {
+			exclude(automaton, symbols, ctr, ctr.state(), Math.abs(cInt));
+			includeEverySecond(automaton, symbols, ctr, ctr.state());
 		}
 
-		if (cInt <= 0) {
-			// Exclude x = 0.
-			automaton.addState(false, false, "c0");
-			automaton.addInternalTransition("init", symbols.get("x0"), "c0");
-
-			// Exclude x >= c.
-			for (int i = 0; i < Math.abs(cInt); i++) {
-				final String predState = "c" + (2 * i);
-				final String state1 = "c" + (2 * i + 1);
-				final String state2 = "c" + (2 * i + 2);
-
-				automaton.addState(false, false, state1);
-				automaton.addState(false, false, state2);
-				automaton.addInternalTransition(predState, symbols.get("x0"), state1);
-				automaton.addInternalTransition(state1, symbols.get("x0"), state2);
-			}
-
-			// Accept x < c.
-			final String predState = "c" + (2 * Math.abs(cInt));
-			automaton.addState(false, false, "s0");
-			automaton.addInternalTransition(predState, symbols.get("x0"), "s0");
-			automaton.addInternalTransition("s0", symbols.get("x0"), predState);
-			automaton.addInternalTransition("s0", symbols.get("x1"), "final");
+		if (cInt > 0) {
+			include(automaton, symbols, ctr, ctr.state(), cInt - 1);
+			automaton.addState(false, false, ctr.nextState());
+			automaton.addInternalTransition(ctr.prevState(), symbols.get("x0"), ctr.state());
+			includeEverySecond(automaton, symbols, ctr, ctr.state());
 		}
 
 		return automaton;
