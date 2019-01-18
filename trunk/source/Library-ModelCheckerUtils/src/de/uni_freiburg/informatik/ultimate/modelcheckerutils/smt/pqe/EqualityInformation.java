@@ -42,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * A given term, an equal term and the index at which this equality occurred.
+ * Class that stores information about an equality or disequality
+ * of a given term.
  *
  * @author Matthias Heizmann
  */
@@ -66,22 +67,39 @@ public class EqualityInformation {
 		return mIndex;
 	}
 
-	public Term getVariable() {
+	/**
+	 * @return Term for which the information is provided.
+	 */
+	public Term getGivenTerm() {
 		return mGivenTerm;
 	}
 
-	public Term getTerm() {
+	/**
+	 *
+	 * @return Term that is in relation (equality/disequality) to the given term.
+	 */
+	public Term getRelatedTerm() {
 		return mEqualTerm;
 	}
 
-	public RelationSymbol getRelation() {
+	/**
+	 *
+	 * @return Kind of realation between given term and related term.
+	 */
+	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
 
+
 	/**
-	 * Check all terms in context if they are an equality of the form givenTerm == t, such that t does not contain the
-	 * subterm forbiddenTerm. If this is the case return corresponding equality information, otherwise return null. If
-	 * forbiddenTerm is null all subterms in t are allowed.
+	 * Check all terms in the <code>context</code> if they are an equality of the
+	 * form <code>givenTerm == t</code> (resp. disequality of the form
+	 * <code>givenTerm == t</code>, such that t does not contain the subterm
+	 * <code>forbiddenTerm</code>. If this is the case return corresponding equality
+	 * information, otherwise return null. If forbiddenTerm is null all subterms in
+	 * t are allowed. If <code>quantifier</code> is the existential quantifier, we
+	 * check for equalities otherwise (universal quantifier) we check for
+	 * disequalities.
 	 */
 	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final Term[] context,
 			final Term forbiddenTerm, final int quantifier) {
@@ -192,12 +210,12 @@ public class EqualityInformation {
 			}
 			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
 			if (eqInfo != null) {
-				switch (eqInfo.getRelation()) {
+				switch (eqInfo.getRelationSymbol()) {
 				case DISTINCT:
-					disjointTerms.add(eqInfo.getTerm());
+					disjointTerms.add(eqInfo.getRelatedTerm());
 					break;
 				case EQ:
-					equivalentTerms.add(eqInfo.getTerm());
+					equivalentTerms.add(eqInfo.getRelatedTerm());
 					break;
 				case GEQ:
 				case GREATER:

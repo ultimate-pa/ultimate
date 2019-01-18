@@ -150,7 +150,7 @@ public class SimultaneousUpdate {
 		if (ei == null) {
 			return null;
 		}
-		final Term rhs = ei.getTerm();
+		final Term rhs = ei.getRelatedTerm();
 		final Map<Term, Term> substitutionMapping = computeSubstitutionMapping(rhs, conjuncts, outVar,
 				inVarsReverseMapping, outVarsReverseMapping, mgdScript);
 		final Term renamed = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(rhs);

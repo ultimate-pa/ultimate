@@ -132,7 +132,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping =
-					Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
+					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
 			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
