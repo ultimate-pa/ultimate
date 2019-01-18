@@ -297,24 +297,25 @@ public class ExpressionFactory {
 
 	private static Expression constructBinExprWithLiteralOps_Real(final ILocation loc, final Operator operator,
 			final RealLiteral leftLiteral, final RealLiteral rightLiteral) {
-		final BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
-		final BigDecimal rightValue = new BigDecimal(rightLiteral.getValue());
+
+		final Rational leftValue = toRational(leftLiteral.getValue());
+		final Rational rightValue = toRational(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
-			final BigDecimal result = leftValue.divide(rightValue);
-			return new RealLiteral(loc, result.toString());
+			final Rational result = leftValue.div(rightValue);
+			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHMINUS: {
-			final BigDecimal result = leftValue.subtract(rightValue);
-			return new RealLiteral(loc, result.toString());
+			final Rational result = leftValue.sub(rightValue);
+			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHMUL: {
-			final BigDecimal result = leftValue.multiply(rightValue);
-			return new RealLiteral(loc, result.toString());
+			final Rational result = leftValue.mul(rightValue);
+			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHPLUS: {
-			final BigDecimal result = leftValue.add(rightValue);
-			return new RealLiteral(loc, result.toString());
+			final Rational result = leftValue.add(rightValue);
+			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case COMPEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
