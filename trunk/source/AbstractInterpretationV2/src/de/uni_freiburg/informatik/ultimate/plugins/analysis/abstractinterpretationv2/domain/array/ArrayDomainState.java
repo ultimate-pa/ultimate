@@ -828,11 +828,13 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				continue;
 			}
 			boolean added = false;
+			final boolean useCache = !containsProgramVar(rep);
 			for (int i = 1; i < bounds.size() - 2; i++) {
 				final Term prev = bounds.get(i);
 				final Term next = bounds.get(i + 1);
-				if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, prev, rep)) == EvalResult.TRUE
-						&& mToolkit.evaluate(mSubState, SmtUtils.less(script, rep, next)) == EvalResult.TRUE) {
+				if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, prev, rep), useCache) == EvalResult.TRUE
+						&& mToolkit.evaluate(mSubState, SmtUtils.less(script, rep, next),
+								useCache) == EvalResult.TRUE) {
 					bounds.add(i + 1, rep);
 					values.add(i + 1, values.get(i));
 					added = true;
@@ -840,14 +842,24 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 			}
 			if (!added) {
-				if (mToolkit.evaluate(mSubState,
-						SmtUtils.less(script, bounds.get(bounds.size() - 2), rep)) == EvalResult.TRUE) {
+				if (mToolkit.evaluate(mSubState, SmtUtils.less(script, bounds.get(bounds.size() - 2), rep),
+						useCache) == EvalResult.TRUE) {
 					bounds.add(bounds.size() - 1, rep);
 					values.add(values.get(values.size() - 1));
 				}
 			}
 		}
 		return new Pair<>(getEqClasses(bounds, unionFind, isIncluded), values);
+	}
+
+	private boolean containsProgramVar(final Term term) {
+		for (final TermVariable var : term.getFreeVars()) {
+			final IProgramVarOrConst pv = mToolkit.getBoogieVar((IdentifierExpression) mToolkit.getExpression(var));
+			if (mVariables.contains(pv)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static List<Set<Term>> getEqClasses(final Collection<? extends Term> terms, final UnionFind<Term> unionFind,
@@ -1262,9 +1274,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	public Pair<Integer, Integer> getContainedBoundIndices(final Segmentation segmentation, final Term index) {
 		int min = segmentation.size() - 1;
 		final Script script = mToolkit.getScript();
+		final boolean useCache = !containsProgramVar(index);
 		for (int i = 1; i < segmentation.size(); i++) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bound, index)) != EvalResult.TRUE) {
+			if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bound, index), useCache) != EvalResult.TRUE) {
 				min = i - 1;
 				break;
 			}
@@ -1272,7 +1285,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		int max = min + 1;
 		for (int i = segmentation.size() - 1; i > min; i--) {
 			final TermVariable bound = segmentation.getBound(i).getTermVariable();
-			if (mToolkit.evaluate(mSubState, SmtUtils.less(script, index, bound)) != EvalResult.TRUE) {
+			if (mToolkit.evaluate(mSubState, SmtUtils.less(script, index, bound), useCache) != EvalResult.TRUE) {
 				max = i + 1;
 				break;
 			}
@@ -1325,7 +1338,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final TermVariable currentBound = segmentation.getBound(i).getTermVariable();
 				final TermVariable nextBound = segmentation.getBound(i + 1).getTermVariable();
 				final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
-				if (i + 1 < segmentation.size() && mToolkit.evaluate(mSubState, boundEquality) == EvalResult.TRUE) {
+				if (i + 1 < segmentation.size()
+						&& mToolkit.evaluate(mSubState, boundEquality, true) == EvalResult.TRUE) {
 					continue;
 				}
 				final IProgramVar currentValue = segmentation.getValue(i);

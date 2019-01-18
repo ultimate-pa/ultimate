@@ -129,6 +129,6 @@ public class ArrayDomainPostOperator<STATE extends IAbstractState<STATE>>
 	@Override
 	public EvalResult evaluate(final ArrayDomainState<STATE> state, final Term formula, final Script script) {
 		// TODO: Optimize for arrays (if needed)
-		return mToolkit.evaluate(state.getSubState(), formula);
+		return mToolkit.evaluate(state.getSubState(), formula, false);
 	}
 }
