@@ -30,7 +30,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	 * Constructs an automaton that represents "x < c".
 	 *
 	 * @throws IllegalArgumentException
-	 *             if x is not of type Int or c is smaller than 0.
+	 *             if x is not of type Int or c is less than 0.
 	 */
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
@@ -59,7 +59,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	 * Constructs an automaton that represents "x-y < c".
 	 *
 	 * @throws IllegalArgumentException
-	 *             if x, y are not of type Int or c is smaller than 0.
+	 *             if x, y are not of type Int or c is less than 0.
 	 */
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Term y, final Rational c) {
@@ -97,7 +97,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	 * Constructs an automaton that represents "-x < c".
 	 *
 	 * @throws IllegalArgumentException
-	 *             if x is not of type Int or c is smaller than 0.
+	 *             if x is not of type Int or c is less than 0.
 	 */
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {

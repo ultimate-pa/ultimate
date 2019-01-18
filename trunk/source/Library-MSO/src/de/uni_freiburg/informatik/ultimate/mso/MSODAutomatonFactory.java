@@ -107,4 +107,27 @@ public abstract class MSODAutomatonFactory {
 		return result;
 	}
 
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
