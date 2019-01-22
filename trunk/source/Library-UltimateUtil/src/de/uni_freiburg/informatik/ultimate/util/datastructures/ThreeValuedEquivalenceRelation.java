@@ -385,6 +385,11 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return result;
 	}
 
+	/**
+	 * @return Set of all elements that are known by this
+	 *         {@link ThreeValuedEquivalenceRelation} and are equivalent to
+	 *         <code>elem</code>.
+	 */
 	public Set<E> getEquivalenceClass(final E elem) {
 		return mUnionFind.getEquivalenceClassMembers(elem);
 	}
