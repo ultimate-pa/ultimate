@@ -1,6 +1,6 @@
 //#Unsafe
 /*
- * This example shows how fork and join works for different types as expression.
+ * This example shows how fork and join works for different id types.
  *
  * Author: Lars Nitzke (lars.nitzke@outlook.com)
  * Date: 22.08.2018

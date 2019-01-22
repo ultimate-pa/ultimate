@@ -30,7 +30,7 @@ implementation fistIncrementProcess()
 	var localx : int;
 	var i : int;
 	i := 0;
-	while (i < 5) {
+	while (i < 3) {
 		localx := x;
 		x := localx + 1;
 		i := i + 1;
@@ -46,7 +46,7 @@ implementation secondIncrementProcess()
 	var localx : int;
 	var i : int;
 	i := 0;
-	while (i < 5) {
+	while (i < 3) {
 		localx := x;
 		x := localx + 1;
 		i := i + 1;
