@@ -29,21 +29,24 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.io.Serializable;
 
-public class BoogieTypeConstructor implements Serializable{
+public class BoogieTypeConstructor implements Serializable {
 	/**
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = 4794962965656111904L;
 	private final String name;
 	private final boolean isFinite;
-	private final int    paramCount;
-	private final int[]  paramOrder;
+	private final int paramCount;
+	private final int[] paramOrder;
 	private final BoogieType synonym;
 
-	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount, final int[] paramOrder) {
+	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount,
+			final int[] paramOrder) {
 		this(name, isFinite, paramCount, paramOrder, null);
 	}
-	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount, final int[] paramOrder, final BoogieType synonym) {
+
+	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount,
+			final int[] paramOrder, final BoogieType synonym) {
 		this.name = name;
 		this.isFinite = isFinite;
 		this.paramCount = paramCount;
@@ -54,12 +57,15 @@ public class BoogieTypeConstructor implements Serializable{
 	public String getName() {
 		return name;
 	}
+
 	public int getParamCount() {
 		return paramCount;
 	}
+
 	public int[] getParamOrder() {
 		return paramOrder;
 	}
+
 	public BoogieType getSynonym() {
 		return synonym;
 	}
