@@ -92,36 +92,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-	/**
-	 * Round towards the nearest, tie to even.
-	 */
-	RNE("roundNearestTiesToEven"),
+		/**
+		 * Round towards the nearest, tie to even.
+		 */
+		RNE("roundNearestTiesToEven"),
 
-	/**
-	 * Round toward nearest, tie to away.
-	 */
-	RNA("roundNearestTiesToAway"),
+		/**
+		 * Round toward nearest, tie to away.
+		 */
+		RNA("roundNearestTiesToAway"),
 
-	/**
-	 * Round toward positive.
-	 *
-	 * In this mode, a number r is rounded to the least upper floating-point bound.
-	 */
-	RTP("roundTowardPositive"),
+		/**
+		 * Round toward positive.
+		 *
+		 * In this mode, a number r is rounded to the least upper floating-point bound.
+		 */
+		RTP("roundTowardPositive"),
 
-	/**
-	 * Round toward negative.
-	 *
-	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-	 */
-	RTN("roundTowardNegative"),
+		/**
+		 * Round toward negative.
+		 *
+		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+		 */
+		RTN("roundTowardNegative"),
 
-	/**
-	 * Round toward zero.
-	 *
-	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-	 */
-	RTZ("roundTowardZero");
+		/**
+		 * Round toward zero.
+		 *
+		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+		 */
+		RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -1347,7 +1347,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 		// creates IfThenElse expression
 		final Expression condRNE = ExpressionFactory.constructIfThenElseExpression(loc, eqRNE, three, fail);
-		final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, two, condRNE);
+		final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTP, two, condRNE);
 		final Expression condRTN = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, one, condRTP);
 		final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRTN);
 
