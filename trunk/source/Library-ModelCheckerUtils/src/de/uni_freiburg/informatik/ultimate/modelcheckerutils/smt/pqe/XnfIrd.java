@@ -72,9 +72,9 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] oldParams, final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
 		final Iterator<TermVariable> it = eliminatees.iterator();
-		Term[] result = oldParams;
+		Term[] result = dualJuncts;
 		while (it.hasNext()) {
 			final TermVariable tv = it.next();
 			if (!SmtUtils.getFreeVars(Arrays.asList(result)).contains(tv)) {

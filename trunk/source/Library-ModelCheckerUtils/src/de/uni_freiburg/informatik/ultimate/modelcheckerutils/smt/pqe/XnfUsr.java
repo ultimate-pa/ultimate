@@ -65,11 +65,11 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms, final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
 		final HashRelation<TermVariable, Term> var2arrays = new HashRelation<>();
 		final HashRelation<TermVariable, Term> var2parameters = new HashRelation<>();
 		final Set<TermVariable> blacklist = new HashSet<>();
-		for (final Term param : inputAtoms) {
+		for (final Term param : dualJuncts) {
 			final Set<ApplicationTerm> storeTerms =
 					(new ApplicationTermFinder("store", true)).findMatchingSubterms(param);
 			if (storeTerms.isEmpty()) {
@@ -100,7 +100,7 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 			}
 		}
 		final ArrayList<Term> resultAtoms = new ArrayList<>();
-		for (final Term oldParam : inputAtoms) {
+		for (final Term oldParam : dualJuncts) {
 			if (!superfluousParams.contains(oldParam)) {
 				resultAtoms.add(oldParam);
 			}
