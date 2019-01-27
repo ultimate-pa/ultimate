@@ -26,12 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -48,9 +46,9 @@ public final class TemporaryBoogieVar implements IProgramVar {
 	private TermVariable mTermVariable;
 	private static final long serialVersionUID = 1L;
 
-	public TemporaryBoogieVar(final String identifier, final IBoogieType type, final ManagedScript managedScript) {
+	public TemporaryBoogieVar(final String identifier, final Sort sort, final ManagedScript managedScript) {
 		mId = identifier;
-		mSort = new TypeSortTranslator(managedScript.getScript(), null).constructSort(type, a -> null);
+		mSort = sort;
 		mManagedScript = managedScript;
 	}
 
