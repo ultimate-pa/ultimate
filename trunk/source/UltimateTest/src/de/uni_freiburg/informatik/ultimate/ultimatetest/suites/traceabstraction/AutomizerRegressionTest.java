@@ -43,9 +43,10 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
-		"examples/programs/quantifier/regression",
+//		"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
+//		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim/"
 	};
 	
 	private static final String[] mUltimateRepository_TreeInterpolation = {
@@ -59,10 +60,11 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] mSettings_ForwardPredicates = {
 		"automizer/ForwardPredicates.epf",
+		"automizer/BackwardPredicates.epf",
 	};
 	
 	private static final String[] mSettings_TreeInterpolation = {
-		"automizer/TreeInterpolants.epf",
+//		"automizer/TreeInterpolants.epf",
 	};
 
 	

@@ -10,8 +10,8 @@
 procedure main() returns ()
 {
     var a,b: int;
-//      a := 1;
-//      b := 1;
+     a := 1;
+     b := 1;
     while (
         a-b >= -2
         && b >= 1
