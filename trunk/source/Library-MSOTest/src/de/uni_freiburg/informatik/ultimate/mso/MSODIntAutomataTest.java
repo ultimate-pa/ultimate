@@ -423,4 +423,67 @@ public class MSODIntAutomataTest {
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
 		strictSubsetAutomatonTest(false, x, y, symbols);
 	}
+	
+	private void subsetAutomatonTest(final Boolean result, final Term x, final Term y,
+			final MSODAlphabetSymbol... symbols) throws AutomataLibraryException {
+
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = MSODIntAutomatonFactory
+				.subsetAutomaton(mServices, x, y);
+
+		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<MSODAlphabetSymbol>(symbols));
+		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
+
+		mLogger.info("Test: x nonStrictSubsetInt y | word = " + word);
+		mLogger.info("Result: " + accepts.getResult());
+
+		Assert.assertEquals(result, accepts.getResult());
+	}
+
+	@Test
+	public void subsetAutomaton() throws AutomataLibraryException {
+		MSODAlphabetSymbol[] symbols;
+
+		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
+		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		// x nonStrictSubsetInt y | x = { } and y = { }
+		symbols = new MSODAlphabetSymbol[] { };
+		subsetAutomatonTest(true, x, y, symbols);
+		
+		// x nonStrictSubsetInt y | x = { } and y = { 0 }
+		symbols = new MSODAlphabetSymbol[] { xy01 };
+		subsetAutomatonTest(true, x, y, symbols);
+		
+		// x nonStrictSubsetInt y | x = { 0 } and y = { 0 }
+		symbols = new MSODAlphabetSymbol[] { xy11 };
+		subsetAutomatonTest(true, x, y, symbols);
+
+		// x nonStrictSubsetInt y | x = { 0 } and y = { 0, 1 }
+		symbols = new MSODAlphabetSymbol[] { xy11, xy01 };
+		subsetAutomatonTest(true, x, y, symbols);
+		
+		// x nonStrictSubsetInt y | x = { -1, 3 } and y = { -1, 3 }
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11, xy00, xy00, xy11 };
+		subsetAutomatonTest(true, x, y, symbols);
+
+		// x nonStrictSubsetInt y | x = { -1, 2 } and y = { -2, -1, 0, 2 }
+		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy11, xy11, xy01 };
+		subsetAutomatonTest(true, x, y, symbols);
+
+		// x nonStrictSubsetInt y | x = { 0, 1 } and y = { 0 }
+		symbols = new MSODAlphabetSymbol[] { xy11, xy10 };
+		subsetAutomatonTest(false, x, y, symbols);
+		
+		// x nonStrictSubsetInt y | x = { -2 } and y = { }
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10 };
+		subsetAutomatonTest(false, x, y, symbols);
+
+		// x nonStrictSubsetInt y | x = { -2, 3 } and y = { 2, 3 }
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
+		subsetAutomatonTest(false, x, y, symbols);
+	}
 }

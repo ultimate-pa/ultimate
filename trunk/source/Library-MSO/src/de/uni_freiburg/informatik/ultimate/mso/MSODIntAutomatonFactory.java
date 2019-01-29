@@ -552,6 +552,34 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	}
 
 	/**
+	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type SetOfInt.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(
+			final AutomataLibraryServices services, final Term x, final Term y) {
+
+		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
+			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
+		
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		automaton.addState(true, true, "init");
+		automaton.addInternalTransition("init", xy00, "init");
+		automaton.addInternalTransition("init", xy01, "init");
+		automaton.addInternalTransition("init", xy11, "init");
+
+		return automaton;
+	}
+
+	/**
 	 * Constructs an automaton that represents x - y < c. The automaton consists of
 	 * four parts, one for each of the following case distinctions: x,y < 0; x,y >=
 	 * 0; x < 0, y >= 0 and x >= 0, y < 0.
@@ -900,29 +928,6 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 					automaton.addInternalTransition(prevStateY, symbol.get("xy00"), stateY);
 			}
 		}
-
-		return automaton;
-	}
-
-	/**
-	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
-	 * 
-	 * @throws IllegalArgumentException
-	 *             if x, y are not of type SetOfInt.
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(
-			final AutomataLibraryServices services, final Term x, final Term y) {
-
-		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
-			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final Map<String, MSODAlphabetSymbol> symbol = createAlphabet(automaton, x, y);
-
-		automaton.addState(true, true, "init");
-		automaton.addInternalTransition("init", symbol.get("xy00"), "init");
-		automaton.addInternalTransition("init", symbol.get("xy01"), "init");
-		automaton.addInternalTransition("init", symbol.get("xy11"), "init");
 
 		return automaton;
 	}
