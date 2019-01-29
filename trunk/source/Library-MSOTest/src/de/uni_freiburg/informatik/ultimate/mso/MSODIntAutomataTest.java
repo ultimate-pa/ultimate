@@ -232,6 +232,105 @@ public class MSODIntAutomataTest {
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
 		strictNegIneqAutomatonTest(false, x, c, symbols);
 	}
+	
+	private void constElementAutomatonTest(final Boolean result, final Rational c, final Term x,
+			final MSODAlphabetSymbol... symbols) throws AutomataLibraryException {
+
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = MSODIntAutomatonFactory
+				.constElementAutomaton(mServices, c, x);
+
+		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<MSODAlphabetSymbol>(symbols));
+		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
+
+		mLogger.info("Test: c element x | c = " + c + " | word = " + word);
+		mLogger.info("Result: " + accepts.getResult());
+
+		Assert.assertEquals(result, accepts.getResult());
+	}
+
+	@Test
+	public void constElementAutomaton() throws AutomataLibraryException {
+		MSODAlphabetSymbol[] symbols;
+		Rational c;
+
+		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
+		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
+		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		// c element x and c <= 0
+
+		// 0 element x | x = { 0 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 0 element x | x = { 0, 3 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// -3 element x | x = { -3 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// -3 element x | x = { -3, 0, 4 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x0, x1, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 0 element x | x = { }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { };
+		constElementAutomatonTest(false, c, x, symbols);
+		
+		// 0 element x | x = { -1, 1 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
+		constElementAutomatonTest(false, c, x, symbols);
+		
+		// -2 element x | x = { -1, 1 }
+		c = Rational.valueOf(-2, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
+		constElementAutomatonTest(false, c, x, symbols);
+		
+		// c element x and c > 0
+
+		// 1 element x | x = { 1 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 1 element x | x = { 1, 3 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1, x0, x0, x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 3 element x | x = { 3 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 3 element x | x = { 0, 3, 4 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1, x0, x1 };
+		constElementAutomatonTest(true, c, x, symbols);
+		
+		// 1 element x | x = { }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { };
+		constElementAutomatonTest(false, c, x, symbols);
+		
+		// 1 element x | x = { -1, 2 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x1, x1 };
+		constElementAutomatonTest(false, c, x, symbols);
+		
+		// 2 element x | x = { -1, 1 }
+		c = Rational.valueOf(2, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
+		constElementAutomatonTest(false, c, x, symbols);
+	}
 
 	private void elementAutomatonTest(final Boolean result, final Term x, final Rational c, final Term y,
 			final MSODAlphabetSymbol... symbols) throws AutomataLibraryException {

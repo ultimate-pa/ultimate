@@ -177,6 +177,63 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	}
 
 	/**
+	 * Constructs an automaton that represents "c element X".
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x is not of type SetOfInt.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(
+			final AutomataLibraryServices services, final Rational constant, final Term x) {
+
+		if (!MSODUtils.isSetOfIntVariable(x))
+			throw new IllegalArgumentException("Input x must be a SetOfInt variable.");
+
+		final int c = SmtUtils.toInt(constant).intValueExact();
+
+		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
+		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", x0, "final");
+		automaton.addInternalTransition("final", x1, "final");
+
+		if (c <= 0) {
+			String pred = "init";
+			for (int i = 0; i < 2 * Math.abs(c); i++) {
+				final String state = "c" + i;
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, x0, state);
+				automaton.addInternalTransition(pred, x1, state);
+				pred = state;
+			}
+
+			automaton.addInternalTransition(pred, x1, "final");
+		}
+
+		if (c > 0) {
+			String pred = "init";
+			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
+				final String state = "c" + i;
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, x0, state);
+				automaton.addInternalTransition(pred, x1, state);
+				pred = state;
+			}
+
+			automaton.addState(false, false, "s0");
+			automaton.addInternalTransition(pred, x0, "s0");
+			automaton.addInternalTransition(pred, x1, "s0");
+			automaton.addInternalTransition("s0", x1, "final");
+		}
+
+		return automaton;
+	}
+
+	/**
 	 * Constructs an automaton that represents "x+c element Y".
 	 * 
 	 * @throws AutomataLibraryException
@@ -562,7 +619,7 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
-		
+
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -927,52 +984,6 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 				else
 					automaton.addInternalTransition(prevStateY, symbol.get("xy00"), stateY);
 			}
-		}
-
-		return automaton;
-	}
-
-	/**
-	 * Constructs an automaton that represents "c element X".
-	 * 
-	 * @throws IllegalArgumentException
-	 *             if x is not of type SetOfInt.
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(
-			final AutomataLibraryServices services, final Rational c, final Term x) {
-
-		if (!MSODUtils.isSetOfIntVariable(x))
-			throw new IllegalArgumentException("Input x must be a SetOfInt variable.");
-
-		final int cInt = SmtUtils.toInt(c).intValueExact();
-		final int cIntAbs = Math.abs(cInt);
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final Map<String, MSODAlphabetSymbol> symbol = createAlphabet(automaton, x);
-
-		automaton.addState(true, false, "init");
-		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("final", symbol.get("x0"), "final");
-		automaton.addInternalTransition("final", symbol.get("x1"), "final");
-
-		if (cInt == 0)
-			automaton.addInternalTransition("init", symbol.get("x1"), "final");
-
-		final int loopCond = cInt > 0 ? 2 * cInt - 1 : 2 * cIntAbs;
-
-		for (int i = 1; i <= loopCond; i++) {
-			String prevState = "c" + (i - 1);
-			final String state = "c" + i;
-
-			automaton.addState(false, false, state);
-
-			if (i == 1)
-				prevState = "init";
-
-			automaton.addInternalTransition(prevState, symbol.get("x0"), state);
-			automaton.addInternalTransition(prevState, symbol.get("x1"), state);
-
-			if (i == loopCond)
-				automaton.addInternalTransition(state, symbol.get("x1"), "final");
 		}
 
 		return automaton;
