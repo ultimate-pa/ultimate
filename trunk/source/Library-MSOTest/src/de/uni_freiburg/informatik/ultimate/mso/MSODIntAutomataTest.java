@@ -168,6 +168,81 @@ public class MSODIntAutomataTest {
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
 		strictIneqAutomatonTest(false, c, symbols);
 	}
+	
+	private void strictNegIneqAutomatonTest(final Boolean result, final Rational c, final MSODAlphabetSymbol... symbols)
+			throws AutomataLibraryException {
+
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = MSODIntAutomatonFactory
+				.strictNegIneqAutomaton(mServices, x, c);
+
+		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<MSODAlphabetSymbol>(symbols));
+		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
+
+		mLogger.info("Test: -x < c | c = " + c + " | word = " + word);
+		mLogger.info("Result: " + accepts.getResult());
+
+		Assert.assertEquals(result, accepts.getResult());
+	}
+
+	@Test
+	public void strictNegIneqAutomaton() throws AutomataLibraryException {
+		MSODAlphabetSymbol[] symbols;
+		Rational c;
+
+		// -x < c and c <= 0
+
+		// -x < 0 | x = 1
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+
+		// -x < 0 | x = 3
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+
+		// -x < -2 | x = 3
+		c = Rational.valueOf(-2, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+
+		// -x < 0 | x = 0
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { x1 };
+		strictNegIneqAutomatonTest(false, c, symbols);
+
+		// -x < -2 | x = 1
+		c = Rational.valueOf(-2, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x1 };
+		strictNegIneqAutomatonTest(false, c, symbols);
+
+		// -x < c and c > 0
+		
+		// -x < 1 | x = 0
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+
+		// -x < 1 | x = 3
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+
+		// -x < 3 | x = -2
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x1 };
+		strictNegIneqAutomatonTest(true, c, symbols);
+		
+		// -x < 1 | x = -1
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
+		strictNegIneqAutomatonTest(false, c, symbols);
+
+		// -x < 2 | x = -3
+		c = Rational.valueOf(2, 1);
+		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
+		strictNegIneqAutomatonTest(false, c, symbols);
+	}
 
 	private void elementAutomatonTest(final Boolean result, final Rational c, final MSODAlphabetSymbol... symbols)
 			throws AutomataLibraryException {
