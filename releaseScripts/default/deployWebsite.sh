@@ -92,15 +92,6 @@ function updateWebsite {
         	fi
 	        eoutdent
 	done
-        ebegin "Removing $olddir"
-        eindent
-        if [ ! -d "$olddir" ]; then
-            ewarn "The old webapp directory $olddir does not exist"
-        else
-            exitOnFail rm -r "$olddir"
-        fi
-        eoutdent
-        eend 0
 
         ebegin "Copying $war to $oldwar"
         eindent
