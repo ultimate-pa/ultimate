@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: LassoRanker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;singleton:=true
 Bundle-Version: 0.1.24
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util;bundle-version="0.1.23",
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
@@ -12,7 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util;bundle-version="0.1
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.automata,
- de.uni_freiburg.informatik.ultimate.lib.icfgtransformer;bundle-version="0.0.1",
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
