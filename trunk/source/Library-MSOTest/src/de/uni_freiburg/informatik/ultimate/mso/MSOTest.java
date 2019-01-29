@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.math.BigInteger;
-import java.util.Optional;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,8 +35,8 @@ import org.junit.rules.ExpectedException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -46,10 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -59,103 +55,170 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class MSOTest {
 
-	private IUltimateServiceProvider mServices;
+	private IUltimateServiceProvider mServiceProvider;
+	private AutomataLibraryServices mServices;
 	private Script mScript;
-	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private Term mTrue;
-	private Term mFalse;
-	private AutomataLibraryServices mAuLibServices;
-	private Sort mIntSort;
+
+	private Term x;
+	private Term y;
+	private MSODAlphabetSymbol x0;
+	private MSODAlphabetSymbol x1;
+	private MSODAlphabetSymbol xy00;
+	private MSODAlphabetSymbol xy01;
+	private MSODAlphabetSymbol xy10;
+	private MSODAlphabetSymbol xy11;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
 
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
-		mAuLibServices = new AutomataLibraryServices(mServices);
+		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
+		mServices = new AutomataLibraryServices(mServiceProvider);
 		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
-		mLogger = mServices.getLoggingService().getLogger("lol");
-		mMgdScript = new ManagedScript(mServices, mScript);
+		mLogger = mServiceProvider.getLoggingService().getLogger("lol");
+
 		mScript.setLogic(Logics.ALL);
-		mTrue = mScript.term("true");
-		mFalse = mScript.term("false");
-		mIntSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareSort("SetOfInt", 0);
+
+		x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
+		y = mScript.variable("y", MoNatDiffUtils.getSetOfIntSort(mScript));
+
+		x0 = new MSODAlphabetSymbol(x, false);
+		x1 = new MSODAlphabetSymbol(x, true);
+		xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		xy11 = new MSODAlphabetSymbol(x, y, true, true);
+	}
+
+	private void elementAutomatonTest(final Boolean result, final Rational c, final MSODAlphabetSymbol... symbols)
+			throws AutomataLibraryException {
+
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = MSODIntAutomatonFactory
+				.elementAutomaton(mServices, x, c, y);
+
+		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<MSODAlphabetSymbol>(symbols));
+		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
+
+		mLogger.info("Test: x + c element y | c = " + c + " | word = " + word);
+		mLogger.info("Result: " + accepts.getResult());
+
+		Assert.assertEquals(result, accepts.getResult());
 	}
 
 	@Test
-	public void bla() throws AutomataLibraryException {
-		final Term x = mScript.variable("x", mIntSort);
-		final Term y = mScript.variable("y", mIntSort);
-		final Rational c = Rational.ONE;
+	public void elementAutomaton() throws AutomataLibraryException {
+		MSODAlphabetSymbol[] symbols;
+		Rational c;
 
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> aut =
-				MSODNatAutomatonFactory.strictIneqAutomaton(mAuLibServices, x, y, c);
+		// x + c <= 0 and x <= 0
 
-		mLogger.info("Alphabet: " + aut.getAlphabet());
+		// x + 0 element y | x = 0 and y = { 0 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { xy11 };
+		elementAutomatonTest(true, c, symbols);
 
-		final Optional<MSODAlphabetSymbol> firstSymOpt =
-				aut.getAlphabet().stream().filter(a -> a.getTerms()[0].toStringDirect().equals("x")).findFirst();
-		final MSODAlphabetSymbol firstSym = firstSymOpt.get();
+		// x + (-1) element y | x = 0 and y = { -1 }
+		c = Rational.valueOf(-1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
 
-		mLogger.info("First: " + firstSym);
+		// x + 1 element y | x = -1 and y = { 0 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
 
-		final Term one = mScript.numeral(BigInteger.ONE);
-		final Term zero = mScript.numeral(BigInteger.ZERO);
+		// x + 0 element y | x = -3 and y = { -3 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy00, xy11 };
+		elementAutomatonTest(true, c, symbols);
 
-		final Term xEqZero = mScript.term("=", x, zero);
+		// x + (-3) element y | x = 0 and y = { -3 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
 
-		final MSODAlphabetSymbol sym = new MSODAlphabetSymbol(x, true);
-		sym.add(y, true);
-		mLogger.info("Trying " + sym);
-		final Word<MSODAlphabetSymbol> word = new Word<>(sym);
-		final NestedWord<MSODAlphabetSymbol> nWord = NestedWord.nestedWord(word);
+		// x + 3 element y | x = -3 and y = { 0 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
 
-		// mNoException.expect(AutomataLibraryException.class);
-		final Accepts<MSODAlphabetSymbol, String> accept = new Accepts<>(mAuLibServices, aut, nWord);
-		mLogger.info("Result: " + accept.getResult());
+		// x + c > 0 and x > 0
+
+		// x + 0 element y | x = 1 and y = { 1 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + (-1) element y | x = 2 and y = { 1 }
+		c = Rational.valueOf(-1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + 1 element y | x = 1 and y = { 2 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + 0 element y | x = 3 and y = { 3 }
+		c = Rational.valueOf(0, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy11 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + (-3) element y | x = 4 and y = { 1 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + 3 element y | x = 1 and y = { 4 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + c <= 0 and x > 0
+
+		// x + (-1) element y | x = 1 and y = { 0 }
+		c = Rational.valueOf(-1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + (-3) element y | x = 3 and y = { 0 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + (-3) element y | x = 2 and y = { -1 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + (-3) element y | x = 1 and y = { -2 }
+		c = Rational.valueOf(-3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
+		
+		// x + c > 0 and x <= 0
+		
+		// x + 1 element y | x = 0 and y = { 1 }
+		c = Rational.valueOf(1, 1);
+		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
+		elementAutomatonTest(true, c, symbols);
+		
+		// x + 3 element y | x = -2 and y = { 1 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy10 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + 3 element y | x = -1 and y = { 2 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy10, xy01 };
+		elementAutomatonTest(true, c, symbols);
+
+		// x + 3 element y | x = 0 and y = { 3 }
+		c = Rational.valueOf(3, 1);
+		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy01 };
+		elementAutomatonTest(true, c, symbols);
 	}
-
-	// @Test
-	// public void testSubstitutionWithLocalSimplification1() {
-	//
-	// final Sort intSort = SmtSortUtils.getIntSort(mScript);
-	//
-	// final String names = "ABCDE";
-	// final Term[] values = new Term[] { mScript.term("-", mScript.numeral("1")), mScript.numeral("0"),
-	// mScript.numeral("2"), mScript.numeral("0"), mScript.numeral("0"), };
-	// final Map<Term, Term> substitutionMapping = new HashMap<>();
-	// for (int i = 0; i < names.length(); ++i) {
-	// final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
-	// if (i < values.length) {
-	// final Term value = values[i];
-	// final Term newValue = new UnfTransformer(mScript).transform(value);
-	// substitutionMapping.put(term, newValue);
-	// }
-	// }
-	//
-	// final Term input = TermParseUtils.parseTerm(mScript,
-	// "(and (<= A E) (or (and (= C 2) (<= D E) (<= B D) (not (= A D))) (= C 1) (and (<= C 1) (not (= C 2)) (not (= C
-	// 1)) (= C 3))))");
-	//
-	// final SubstitutionWithLocalSimplification swls =
-	// new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
-	// final Term result = swls.transform(input);
-	// final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mTrue, result));
-	// final boolean isEqualToTrue = result.equals(mTrue);
-	//
-	// mLogger.info("Original: " + input.toStringDirect());
-	// mLogger.info("Witness: " + substitutionMapping.toString());
-	// mLogger.info("After Substitution: " + result.toStringDirect());
-	// mLogger.info("(distinct true result): " + isDistinct);
-	// mLogger.info("isEqualToTrue: " + isEqualToTrue);
-	// Assert.isTrue(isDistinct == LBool.UNSAT && isEqualToTrue);
-	// }
-	//
-	// private Term declareVar(final String name, final Sort sort) {
-	// mScript.declareFun(name, new Sort[0], sort);
-	// return mScript.term(name);
-	// }
-
 }

@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * TODO: Comment.
@@ -38,6 +39,13 @@ public final class MoNatDiffUtils {
 	 */
 	public static Sort getSetOfIntSort(final Script script) {
 		return script.sort(SET_OF_INT_SORT);
+	}
+	
+	/**
+	 * TODO: Comment.
+	 */
+	public static Sort getSetOfIntSort(final ManagedScript script) {
+		return getSetOfIntSort(script.getScript());
 	}
 
 	/**
