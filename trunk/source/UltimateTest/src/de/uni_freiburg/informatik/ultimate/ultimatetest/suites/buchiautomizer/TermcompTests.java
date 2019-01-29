@@ -49,11 +49,25 @@ public class TermcompTests extends AbstractBuchiAutomizerTestSuite {
 
 	private static final String[] mUltimateRepository = {
 
-			"examples/termination/termcomp2016/C/",
-
-			"examples/termination/termcomp2016/C_Integer/Stroeder_15",
-
-			"examples/termination/termcomp2016/C_Integer/Ton_Chanh_15",
+//			"examples/termination/termcomp2016/C/",
+//
+//			"examples/termination/termcomp2016/C_Integer/Stroeder_15",
+//
+//			"examples/termination/termcomp2016/C_Integer/Ton_Chanh_15",
+			
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_Avery-2006FLOPS-Tabel1_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_BrockschmidtCookFuhs-2013CAV-Introduction_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_CookSeeZuleger-2013TACAS-Fig3_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_HarrisLalNoriRajamani-2010SAS-Fig2_false-unreach-label-termination-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_HarrisLalNoriRajamani-2010SAS-Fig3_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_Toulouse-BranchesToLoop_true-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_a.04-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_a.05-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_a.08-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_a.09_assume-alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_array01_alloca.c",
+			"examples/termination/termcomp2016/C/AProVE_memory_alloca/svcomp_array02_alloca.c",
 
 	};
 
@@ -75,7 +89,7 @@ public class TermcompTests extends AbstractBuchiAutomizerTestSuite {
 
 			"buchiAutomizer/termcomp2017-Noproofs.epf",
 
-			"buchiAutomizer/termcomp2017-Noproofs-SBE.epf",
+//			"buchiAutomizer/termcomp2017-Noproofs-SBE.epf",
 
 			// "buchiAutomizer/termcomp2016-Noproofs.epf",
 			// "buchiAutomizer/termcomp2016.epf",

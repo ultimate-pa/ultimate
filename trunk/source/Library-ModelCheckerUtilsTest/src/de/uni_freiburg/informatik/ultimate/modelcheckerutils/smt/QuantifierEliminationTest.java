@@ -382,6 +382,8 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
+
+
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
 		// TODO: DD: Somehow the quantified formulas are too large / strange for TermParseUtils.parseTerm, but this way

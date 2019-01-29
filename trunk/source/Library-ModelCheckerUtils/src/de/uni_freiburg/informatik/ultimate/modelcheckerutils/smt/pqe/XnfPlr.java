@@ -69,10 +69,10 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms, final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
 		if (quantifier == QuantifiedFormula.FORALL) {
 			// TODO: Handle forall case
-			return inputAtoms;
+			return dualJuncts;
 		}
 
 		// inputAtoms are conjuncts
@@ -90,8 +90,8 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		final Term falseTerm = mScript.term("false");
 		while (iter.hasNext()) {
 			final TermVariable var = iter.next();
-			for (int i = 0; i < inputAtoms.length; ++i) {
-				final Term atom = inputAtoms[i];
+			for (int i = 0; i < dualJuncts.length; ++i) {
+				final Term atom = dualJuncts[i];
 				if (atom instanceof ApplicationTerm) {
 					final ApplicationTerm aatom = ((ApplicationTerm) atom);
 					if (aatom.getFunction().getName().equals("not")) {
@@ -115,7 +115,7 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 
 		if (substitutionMapping.isEmpty()) {
 			// cannot remove any variable
-			return inputAtoms;
+			return dualJuncts;
 		}
 
 		// TODO: why does removing variables in DER work, but not here?
@@ -123,9 +123,9 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 
 		final SubstitutionWithLocalSimplification subst =
 				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
-		final Term[] rtr = inputAtoms.clone();
-		for (int i = 0; i < inputAtoms.length; ++i) {
-			rtr[i] = subst.transform(inputAtoms[i]);
+		final Term[] rtr = dualJuncts.clone();
+		for (int i = 0; i < dualJuncts.length; ++i) {
+			rtr[i] = subst.transform(dualJuncts[i]);
 		}
 		return rtr;
 	}

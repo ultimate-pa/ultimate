@@ -55,9 +55,9 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static int mTimeout = 10 * 1000;
 	// @formatter:off
 	private static final String[] mDirectories = {
-			"examples/Automata/regression",
-			"examples/Automata/atsTestFiles",
-			"examples/Automata/website",
+//			"examples/Automata/regression/nwa/operations/buchiComplement",
+//			"examples/Automata/atsTestFiles",
+//			"examples/Automata/website",
 			// common folders
 			// "examples/Automata/regression/nwa/operations/minimization"
 			// the following are to be removed and only contain expensive/random/unimportant examples
@@ -67,10 +67,11 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			// "examples/Automata/nwa",
 			// "examples/Automata/nwaOperations",
 			// the following two have bugs still
-			// "examples/Automata/PetriNet",
+			 "examples/Automata/PetriNet",
 			// "examples/Automata/senwa",
 			// the following is not yet tested
 			// "examples/Automata/syntaxError",
+			 "examples/Automata/regression/pn",
 	};
 	private static final String[] mFileEndings = { ".ats" };
 

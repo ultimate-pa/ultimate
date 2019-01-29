@@ -115,7 +115,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 					final Script script = mToolkit.getScript();
 					for (final IProgramVar v : newSegmentation.getValues()) {
 						final TermVariable tv = v.getTermVariable();
-						final IProgramVar newVar = mToolkit.createValueVar(mToolkit.getType(v.getSort()));
+						final IProgramVar newVar = mToolkit.createValueVar(v.getSort());
 						final Term oldConstraint =
 								SmtUtils.filterFormula(newState.getSubTerm(), Collections.singleton(tv), script);
 						constraints.add(new Substitution(script, Collections.singletonMap(tv, newVar.getTermVariable()))

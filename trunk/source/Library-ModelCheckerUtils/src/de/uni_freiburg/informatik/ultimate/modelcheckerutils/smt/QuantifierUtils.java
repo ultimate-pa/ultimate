@@ -226,6 +226,9 @@ public class QuantifierUtils {
 		}
 	}
 
+	/**
+	 * @return false iff some subformula is a {@link QuantifiedFormula}.
+	 */
 	public static boolean isQuantifierFree(final Term term) {
 		return new SubtermPropertyChecker(x -> !(term instanceof QuantifiedFormula)).isPropertySatisfied(term);
 	}

@@ -77,9 +77,11 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 
 			
 			// TODO: find some better folder
-			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
+//			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
 			
-			"examples/automata-benchmarks/2016TACAS-Complementing_Semi-deterministic_Buchi_Automata"
+//			"examples/automata-benchmarks/2016TACAS-Complementing_Semi-deterministic_Buchi_Automata",
+			
+			"examples/Automata/",
 
 	};
 	
@@ -87,11 +89,12 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 
 	private static final String[] SETTINGS = {
 			"AutomataScript/buchiComplementation/buchiComplementNCSB.epf",
-			"AutomataScript/buchiComplementation/buchiComplementNCSBLazyS.epf",
-			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy.epf",
-			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy2.epf",
-//			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy3.epf",
+//			"AutomataScript/buchiComplementation/buchiComplementNCSBLazyS.epf",
+//			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy.epf",
+//			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy2.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy3.epf",
 			"AutomataScript/buchiComplementation/buchiComplementFKV.epf",
+			"AutomataScript/buchiComplementation/buchiComplementFKVElastic.epf",
 //			"AutomataScript/buchiComplementation/buchiComplementSVW.epf",
 			};
 

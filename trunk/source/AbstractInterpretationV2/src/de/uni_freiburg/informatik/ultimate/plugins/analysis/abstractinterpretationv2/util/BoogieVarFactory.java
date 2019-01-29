@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -48,10 +48,10 @@ public class BoogieVarFactory {
 		mIndices = new HashMap<>();
 	}
 
-	public TemporaryBoogieVar createFreshBoogieVar(final String basename, final IBoogieType type) {
+	public TemporaryBoogieVar createFreshBoogieVar(final String basename, final Sort sort) {
 		final int idx = mIndices.getOrDefault(basename, 0);
 		final String name = basename + "_" + idx;
 		mIndices.put(basename, idx + 1);
-		return new TemporaryBoogieVar(name, type, mManagedScript);
+		return new TemporaryBoogieVar(name, sort, mManagedScript);
 	}
 }
