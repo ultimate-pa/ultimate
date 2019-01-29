@@ -68,11 +68,11 @@ public abstract class MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String> intVariableAutomaton(
 			final AutomataLibraryServices services, final Term x) {
 
-		if (!MoNatDiffUtils.isIntVariable(x))
+		if (!MSODUtils.isIntVariable(x))
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final Map<String, MSODAlphabetSymbol> symbols = MoNatDiffUtils.createAlphabet(x);
+		final Map<String, MSODAlphabetSymbol> symbols = MSODUtils.createAlphabet(x);
 		automaton.getAlphabet().addAll(symbols.values());
 
 		automaton.addState(true, false, "init");

@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>,
+public class MSODStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>,
 		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IMinimizationStateFactory<String> {
 
 	static final String EMPTY = "€";
@@ -29,7 +29,7 @@ public class MoNatDiffStringFactory implements IIntersectionStateFactory<String>
 	static final String SINK = "∅SinkState";
 	BigInteger mCounter;
 
-	public MoNatDiffStringFactory() {
+	public MSODStringFactory() {
 		mCounter = BigInteger.ZERO;
 	}
 

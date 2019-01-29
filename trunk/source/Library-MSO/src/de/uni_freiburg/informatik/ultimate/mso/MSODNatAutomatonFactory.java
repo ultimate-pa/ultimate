@@ -35,7 +35,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
 
-		if (!MoNatDiffUtils.isIntVariable(x) || c.isNegative()) {
+		if (!MSODUtils.isIntVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 		}
 
@@ -64,7 +64,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Term y, final Rational c) {
 
-		if (!MoNatDiffUtils.isIntVariable(x) || !MoNatDiffUtils.isIntVariable(y) || c.isNegative()) {
+		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isIntVariable(y) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x, y must be Int variables and c must be >= 0.");
 		}
 
@@ -102,7 +102,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
 
-		if (!MoNatDiffUtils.isIntVariable(x) || c.isNegative()) {
+		if (!MSODUtils.isIntVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 		}
 
@@ -138,7 +138,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictSubsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y) {
 
-		if (!MoNatDiffUtils.isSetOfIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y)) {
+		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
@@ -171,7 +171,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			subsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y) {
 
-		if (!MoNatDiffUtils.isSetOfIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y)) {
+		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
@@ -204,7 +204,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			elementAutomaton(final AutomataLibraryServices services, final Term x, final Rational c, final Term y) {
 
-		if (!MoNatDiffUtils.isIntVariable(x) || !MoNatDiffUtils.isSetOfIntVariable(y) || c.isNegative()) {
+		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isSetOfIntVariable(y) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x, y must be Int, SetOfInt variables and c must be >= 0.");
 		}
 
@@ -241,7 +241,7 @@ public final class MSODNatAutomatonFactory extends MSODAutomatonFactory {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x) {
 
-		if (!MoNatDiffUtils.isSetOfIntVariable(x) || c.isNegative()) {
+		if (!MSODUtils.isSetOfIntVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable and c must be >= 0.");
 		}
 

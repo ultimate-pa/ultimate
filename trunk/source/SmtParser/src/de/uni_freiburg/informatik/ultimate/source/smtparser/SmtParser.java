@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.mso.MSODiffIntScript;
-import de.uni_freiburg.informatik.ultimate.mso.MoNatDiffScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODNatScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -214,7 +214,7 @@ public class SmtParser implements ISource {
 		} else if (inMsoSolverMode) {
 			mLogger.info("Running our experimental MSO solver on input file");
 			//script = new MoNatDiffScript(mServices, mLogger);
-			script = new MSODiffIntScript(mServices, mLogger);
+			script = new MSODIntScript(mServices, mLogger);
 		} else {
 			mLogger.info("Running solver on smt file");
 //			if (useExternalSolver) {

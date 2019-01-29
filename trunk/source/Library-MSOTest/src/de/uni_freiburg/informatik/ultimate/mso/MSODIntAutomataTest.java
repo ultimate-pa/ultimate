@@ -84,7 +84,7 @@ public class MSODIntAutomataTest {
 		mScript.declareSort("SetOfInt", 0);
 
 		x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
-		y = mScript.variable("y", MoNatDiffUtils.getSetOfIntSort(mScript));
+		y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
 
 		x0 = new MSODAlphabetSymbol(x, false);
 		x1 = new MSODAlphabetSymbol(x, true);

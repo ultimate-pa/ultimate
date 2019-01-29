@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public final class MoNatDiffUtils {
+public final class MSODUtils {
 
 	public static final String SET_OF_INT_SORT = "SetOfInt";
 
@@ -59,8 +59,8 @@ public final class MoNatDiffUtils {
 			terms.add(SmtUtils.constructIntValue(script, number));
 		}
 
-		return MoNatDiffUtils.getSetOfIntSort(script).getTheory().constant(terms,
-				MoNatDiffUtils.getSetOfIntSort(script));
+		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms,
+				MSODUtils.getSetOfIntSort(script));
 	}
 
 	/**
@@ -314,8 +314,8 @@ public final class MoNatDiffUtils {
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
-			if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
-				result.put(term, MoNatDiffUtils.constructSetOfIntValue(script, values.get(term)));
+			if (MSODUtils.isSetOfIntSort(term.getSort())) {
+				result.put(term, MSODUtils.constructSetOfIntValue(script, values.get(term)));
 			}
 		}
 
@@ -358,8 +358,8 @@ public final class MoNatDiffUtils {
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
-			if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
-				result.put(term, MoNatDiffUtils.constructSetOfIntValue(script, values.get(term)));
+			if (MSODUtils.isSetOfIntSort(term.getSort())) {
+				result.put(term, MSODUtils.constructSetOfIntValue(script, values.get(term)));
 			}
 		}
 
