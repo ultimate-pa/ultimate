@@ -11,17 +11,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -43,15 +42,13 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 
 public class MSODIntScript extends NoopScript {
 
@@ -91,8 +88,7 @@ public class MSODIntScript extends NoopScript {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
 
-			final IsEmpty<MSODAlphabetSymbol, String> isEmpty =
-					new IsEmpty<>(mAutomataLibrarayServices, automaton);
+			final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(mAutomataLibrarayServices, automaton);
 
 			if (!isEmpty.getResult()) {
 				final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
@@ -233,8 +229,9 @@ public class MSODIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "forall φ". Performs equivalent transformation to existential quantifier and
-	 * calls {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "forall φ". Performs equivalent
+	 * transformation to existential quantifier and calls
+	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processForall(final QuantifiedFormula term)
 			throws Exception {
@@ -255,10 +252,10 @@ public class MSODIntScript extends NoopScript {
 		mLogger.info("Construct ∃ φ: " + term);
 
 		final Term[] quantifiedVariables = term.getVariables();
-		final Set<MSODAlphabetSymbol> zeros =
-				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-		final Set<MSODAlphabetSymbol> ones =
-				MSODUtils.allMatchesAlphabet(result.getAlphabet(), true, quantifiedVariables);
+		final Set<MSODAlphabetSymbol> zeros = MSODUtils.allMatchesAlphabet(result.getAlphabet(), false,
+				quantifiedVariables);
+		final Set<MSODAlphabetSymbol> ones = MSODUtils.allMatchesAlphabet(result.getAlphabet(), true,
+				quantifiedVariables);
 
 		final Set<String> additionalFinals = new HashSet<>();
 		final Queue<String> states = new LinkedList<>(result.getFinalStates());
@@ -363,14 +360,15 @@ public class MSODIntScript extends NoopScript {
 
 			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
-		
+
 		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 		return result;
 	}
 
 	/**
-	 * Returns automaton that represents "φ or ... or ψ". Performs equivalent transformation to conjunction and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "φ or ... or ψ". Performs equivalent
+	 * transformation to conjunction and calls {@link #traversePostOrder(Term)} with
+	 * the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
 			throws Exception {
@@ -396,8 +394,9 @@ public class MSODIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "φ implies ψ". Performs equivalent transformation to "not φ and ψ" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "φ implies ψ". Performs equivalent
+	 * transformation to "not φ and ψ" and calls {@link #traversePostOrder(Term)}
+	 * with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processImplication(final ApplicationTerm term)
 			throws Exception {
@@ -411,11 +410,11 @@ public class MSODIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t = c". Performs equivalent transformation to "t <= c and not t < c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t = c". Performs equivalent transformation
+	 * to "t <= c and not t < c" and calls {@link #traversePostOrder(Term)} with the
+	 * result".
 	 */
-	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term)
-			throws Exception {
+	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term) throws Exception {
 
 		final Term[] terms = term.getParameters();
 		final Term lessEqual = SmtUtils.leq(this, terms[0], terms[1]);
@@ -426,8 +425,8 @@ public class MSODIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t > c". Performs equivalent transformation to "not t <= c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t > c". Performs equivalent transformation
+	 * to "not t <= c" and calls {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreater(final ApplicationTerm term)
 			throws Exception {
@@ -439,8 +438,9 @@ public class MSODIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t >= c". Performs equivalent transformation to "not t < c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t >= c". Performs equivalent
+	 * transformation to "not t < c" and calls {@link #traversePostOrder(Term)} with
+	 * the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term)
 			throws Exception {
@@ -471,8 +471,7 @@ public class MSODIntScript extends NoopScript {
 
 			if (var.getValue().equals(Rational.ONE)) {
 				mLogger.info("Construct x < c: " + term);
-				return MSODIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(),
-						constant);
+				return MSODIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
@@ -580,7 +579,8 @@ public class MSODIntScript extends NoopScript {
 	 * Returns a automaton where also the given states are final.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
+	 *             if construction of {@link NestedWordAutomatonReachableStates}
+	 *             fails.
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
