@@ -4,11 +4,9 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -237,6 +234,7 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	 * Constructs an automaton that represents "x+c element Y".
 	 * 
 	 * @throws AutomataLibraryException
+	 *             if construction of {@link Union} fails
 	 * 
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int respectively SetOfInt.
@@ -642,32 +640,349 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	 * 0; x < 0, y >= 0 and x >= 0, y < 0.
 	 * 
 	 * @throws AutomataLibraryException
+	 *             if construction of {@link Union} fails
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if x, y are not of type Int.
 	 */
 	public static INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(
-			final AutomataLibraryServices services, final Term x, final Term y, final Rational c)
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant)
 			throws AutomataLibraryException {
 
-		Set<MSODAlphabetSymbol> symbols;
-		final List<INestedWordAutomaton<MSODAlphabetSymbol, String>> automata = new ArrayList<INestedWordAutomaton<MSODAlphabetSymbol, String>>();
-		automata.add(strictIneqAtomatonCase1(services, x, y, c));
-		automata.add(strictIneqAutomatonCase2(services, x, y, c));
-		automata.add(strictIneqAutomatonCase3(services, x, y, c));
-		automata.add(strictIneqAutomatonCase4(services, x, y, c));
+		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isIntVariable(y))
+			throw new IllegalArgumentException("Input x, y must be Int variables.");
 
-		INestedWordAutomaton<MSODAlphabetSymbol, String> result;
-		INestedWordAutomaton<MSODAlphabetSymbol, String> tmp;
+		INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = strictIneqAtomatonPartOne(services, x, y,
+				constant);
 
-		result = automata.get(0);
-		for (int i = 1; i < 4; i++) {
-			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), automata.get(i).getAlphabet());
-			result = reconstruct(services, result, symbols, true);
-			tmp = reconstruct(services, automata.get(i), symbols, true);
-			result = new Union<>(services, new MSODStringFactory(), result, tmp).getResult();
+		automaton = new Union<>(services, new MSODStringFactory(), automaton,
+				strictIneqAtomatonPartTwo(services, x, y, constant)).getResult();
+
+		automaton = new Union<>(services, new MSODStringFactory(), automaton,
+				strictIneqAtomatonPartThree(services, x, y, constant)).getResult();
+
+		automaton = new Union<>(services, new MSODStringFactory(), automaton,
+				strictIneqAtomatonPartFour(services, x, y, constant)).getResult();
+
+		return automaton;
+	}
+
+	/**
+	 * TODO: Comment.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
+
+		final int c = SmtUtils.toInt(constant).intValueExact();
+
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+
+		automaton.addState(false, false, "s0");
+		automaton.addInternalTransition("init", xy00, "s0");
+		automaton.addInternalTransition("s0", xy00, "init");
+
+		automaton.addState(false, false, "s1");
+		automaton.addInternalTransition("init", xy00, "s1");
+
+		if (c <= 0) {
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition("s1", xy10, "s2");
+
+			String pred = "s2";
+			for (int i = 0; i < 2 * Math.abs(c); i++) {
+
+				final String state = "c" + i;
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, xy00, state);
+				pred = state;
+			}
+
+			automaton.addState(false, false, "s3");
+			automaton.addInternalTransition(pred, xy00, "s3");
+			automaton.addInternalTransition("s3", xy01, "final");
+
+			automaton.addState(false, false, "s4");
+			automaton.addInternalTransition("s3", xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, "s3");
 		}
 
-		result = new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
+		if (c > 0) {
+			automaton.addInternalTransition("s1", xy11, "final");
 
-		return result;
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition("s1", xy10, "s2");
+
+			automaton.addState(false, false, "s3");
+			automaton.addInternalTransition("s2", xy00, "s3");
+			automaton.addInternalTransition("s3", xy01, "final");
+
+			automaton.addState(false, false, "s4");
+			automaton.addInternalTransition("s3", xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, "s3");
+
+			String pred = "s1";
+			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
+				final String state0 = "c_" + i + "_0";
+				automaton.addState(false, false, state0);
+				automaton.addInternalTransition(pred, i == 0 ? xy01 : xy00, state0);
+
+				if (i % 2 == 0) {
+					final String state1 = "c_" + i + "_1";
+					automaton.addState(false, false, state1);
+					automaton.addInternalTransition(state0, xy00, state1);
+					automaton.addInternalTransition(state1, xy10, "final");
+				}
+
+				pred = state0;
+			}
+		}
+
+		return automaton;
+	}
+
+	/**
+	 * TODO: Comment.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
+
+		final int c = SmtUtils.toInt(constant).intValueExact();
+
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+
+		automaton.addState(false, false, "s0");
+		automaton.addInternalTransition("init", xy00, "s0");
+		automaton.addInternalTransition("s0", xy00, "init");
+
+		if (c <= 0) {
+			automaton.addState(false, false, "s1");
+			automaton.addInternalTransition("init", xy01, "s1");
+
+			String pred = "s1";
+			for (int i = 0; i < 2 * Math.abs(c); i++) {
+
+				final String state = "c" + i;
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, xy00, state);
+				pred = state;
+			}
+
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition(pred, xy00, "s2");
+			automaton.addInternalTransition("s2", xy10, "final");
+
+			automaton.addState(false, false, "s3");
+			automaton.addInternalTransition("s2", xy00, "s3");
+			automaton.addInternalTransition("s3", xy00, "s2");
+		}
+
+		if (c > 0) {
+			automaton.addInternalTransition("init", xy11, "final");
+
+			automaton.addState(false, false, "s1");
+			automaton.addInternalTransition("init", xy01, "s1");
+
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition("s1", xy00, "s2");
+			automaton.addInternalTransition("s2", xy10, "final");
+
+			automaton.addState(false, false, "s3");
+			automaton.addInternalTransition("s2", xy00, "s3");
+			automaton.addInternalTransition("s3", xy00, "s2");
+
+			String pred = "init";
+			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
+				final String state0 = "c_" + i + "_0";
+				automaton.addState(false, false, state0);
+				automaton.addInternalTransition(pred, i == 0 ? xy10 : xy00, state0);
+
+				if (i % 2 == 0) {
+					final String state1 = "c_" + i + "_1";
+					automaton.addState(false, false, state1);
+					automaton.addInternalTransition(state0, xy00, state1);
+					automaton.addInternalTransition(state1, xy01, "final");
+				}
+
+				pred = state0;
+			}
+		}
+
+		return automaton;
+	}
+
+	/**
+	 * TODO: Comment.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
+
+		final int c = SmtUtils.toInt(constant).intValueExact();
+
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		if (c <= 0)
+			return automaton;
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+
+		String pred = "init";
+		for (int i = 0; i < (Math.abs(c) - 1); i++) {
+			final int n = (int) (0.5 * i + 0.5);
+			String state0 = pred;
+
+			if (i > 0) {
+				state0 = "s" + i + "_0";
+				automaton.addState(false, false, state0);
+				automaton.addInternalTransition(pred, xy00, state0);
+			}
+
+			final String state1 = "s" + i + "_1";
+			automaton.addState(false, false, state1);
+
+			if (i % 2 == 0) {
+				automaton.addInternalTransition(state0, xy01, state1);
+				automaton.addInternalTransition(state1, xy10, "final");
+
+				String predInner = state1;
+				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n - 2); j++) {
+					final String state = "c" + i + "_" + j;
+					automaton.addState(false, false, state);
+					automaton.addInternalTransition(predInner, xy00, state);
+
+					if (j % 2 != 0)
+						automaton.addInternalTransition(state, xy10, "final");
+
+					predInner = state;
+				}
+			}
+
+			if (i % 2 != 0) {
+				automaton.addInternalTransition(state0, xy10, state1);
+				automaton.addInternalTransition(state1, xy01, "final");
+
+				String predInner = state1;
+				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n - 1); j++) {
+					final String state = "c" + i + "_" + j;
+					automaton.addState(false, false, state);
+					automaton.addInternalTransition(predInner, xy00, state);
+
+					if (j % 2 != 0)
+						automaton.addInternalTransition(state, xy01, "final");
+
+					predInner = state;
+				}
+			}
+
+			pred = state0;
+		}
+
+		return automaton;
+	}
+
+	/**
+	 * TODO: Comment.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
+			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
+
+		final int c = SmtUtils.toInt(constant).intValueExact();
+
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
+
+		if (c > 0)
+			return automaton;
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+
+		String pred = "init";
+		for (int i = 0; i < 2 * Math.abs(c) + 1; i++) {
+			final int n = (int) (0.5 * i + 0.5);
+			String state0 = pred;
+
+			if (i > 0) {
+				state0 = "s" + i + "_0";
+				automaton.addState(false, false, state0);
+				automaton.addInternalTransition(pred, xy00, state0);
+			}
+
+			final String state1 = "s" + i + "_1";
+			automaton.addState(false, false, state1);
+			
+			final String state2 = "s" + i + "_2";
+			automaton.addState(false, false, state2);
+			automaton.addInternalTransition(state1, xy00, state2);
+			automaton.addInternalTransition(state2, xy00, state1);
+
+			if (i % 2 == 0) {
+				automaton.addInternalTransition(state0, xy10, state1);
+
+				String predInner = state1;
+				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n); j++) {
+					final String state = "c" + i + "_" + j;
+					automaton.addState(false, false, state);
+					automaton.addInternalTransition(predInner, xy00, state);
+
+					predInner = state;
+				}
+
+				automaton.addInternalTransition(predInner, xy01, "final");
+			}
+
+			if (i % 2 != 0) {
+				automaton.addInternalTransition(state0, xy01, state1);
+
+				String predInner = state1;
+				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n); j++) {
+					final String state = "c" + i + "_" + j;
+					automaton.addState(false, false, state);
+					automaton.addInternalTransition(predInner, xy00, state);
+
+					predInner = state;
+				}
+				
+				automaton.addInternalTransition(predInner, xy10, "final");
+			}
+
+			pred = state0;
+		}
+
+		return automaton;
 	}
 
 	/**
