@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -189,6 +190,19 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 		final STATE newState = mSubState.removeVariables(nonArrayVars);
 		return new ArrayDomainState<>(newState, newSegmentationMap, newVariables, mToolkit).removeUnusedAuxVars();
+	}
+
+	private ArrayDomainState<STATE> removeAuxVars(final Collection<IProgramVar> auxVars) {
+		final List<IProgramVarOrConst> nonArrayVars = new ArrayList<>();
+		final SegmentationMap newSegmentationMap = getSegmentationMap();
+		for (final IProgramVar v : auxVars) {
+			if (v.getSort().isArraySort()) {
+				newSegmentationMap.remove(v);
+			} else {
+				nonArrayVars.add(v);
+			}
+		}
+		return updateState(mSubState.removeVariables(nonArrayVars), newSegmentationMap);
 	}
 
 	@Override
@@ -509,22 +523,24 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final UnionFind<Term> eqClassesOther = eqOther.getEquivalences(otherBounds);
 		final Set<Term> varsAsTerms = mVariables.stream().map(IProgramVarOrConst::getTerm).collect(Collectors.toSet());
 		final Predicate<Term> isVariable = t -> varsAsTerms.containsAll(Arrays.asList(t.getFreeVars()));
-		final Set<Term> oldBoundsThis = unionSets(getEqClasses(thisBounds, eqClassesThis, x -> true));
-		final Set<Term> oldBoundsOther = unionSets(getEqClasses(otherBounds, eqClassesOther, x -> true));
+		final Set<Term> oldBoundsThis = unionSets(getEqClasses(thisBounds, eqClassesThis));
+		final Set<Term> oldBoundsOther = unionSets(getEqClasses(otherBounds, eqClassesOther));
 		final Set<Term> filteredBoundsThis = oldBoundsThis.stream().filter(isVariable).collect(Collectors.toSet());
 		final Set<Term> filteredBoundsOther = oldBoundsOther.stream().filter(isVariable).collect(Collectors.toSet());
 		final Set<Term> newBoundsThis = DataStructureUtils.union(oldBoundsThis, filteredBoundsOther);
 		final Set<Term> newBoundsOther = DataStructureUtils.union(oldBoundsOther, filteredBoundsThis);
 		final UnionFind<Term> eqClassesThisExtended = eqThis.getEquivalences(newBoundsThis);
 		final UnionFind<Term> eqClassesOtherExtended = eqOther.getEquivalences(newBoundsOther);
-		final Pair<List<Set<Term>>, List<IProgramVar>> transformedThis =
+		final Triple<ArrayDomainState<STATE>, List<Set<Term>>, List<IProgramVar>> transformedThis =
 				transformSegmentation(eqClassesThisExtended, simplifiedThisSegmentation, isVariable);
-		final Pair<List<Set<Term>>, List<IProgramVar>> transformedOther =
+		final Triple<ArrayDomainState<STATE>, List<Set<Term>>, List<IProgramVar>> transformedOther =
 				other.transformSegmentation(eqClassesOtherExtended, simplifiedOtherSegmentation, isVariable);
-		final List<Set<Term>> boundEqsThis = transformedThis.getFirst();
-		final List<Set<Term>> boundEqsOther = transformedOther.getFirst();
-		final List<IProgramVar> valuesThis = transformedThis.getSecond();
-		final List<IProgramVar> valuesOther = transformedOther.getSecond();
+		final ArrayDomainState<STATE> thisState = transformedThis.getFirst();
+		final ArrayDomainState<STATE> otherState = transformedOther.getFirst();
+		final List<Set<Term>> boundEqsThis = transformedThis.getSecond();
+		final List<Set<Term>> boundEqsOther = transformedOther.getSecond();
+		final List<IProgramVar> valuesThis = transformedThis.getThird();
+		final List<IProgramVar> valuesOther = transformedOther.getThird();
 		final Set<Term> boundsThisTodo = unionSets(boundEqsThis);
 		final Set<Term> boundsOtherTodo = unionSets(boundEqsOther);
 		final List<Term> constraintsThis = new ArrayList<>();
@@ -673,19 +689,24 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			other.addEquivalence(newValue, valuesOther.get(idxOther), constraintsOther, newSegmentationMapOther);
 			idxOther++;
 		}
-		final List<IProgramVarOrConst> nonNullValuesThis =
+		final List<IProgramVarOrConst> newVariablesThis =
 				newValuesThis.stream().filter(x -> x != null).collect(Collectors.toList());
-		final List<IProgramVarOrConst> nonNullValuesOther =
+		final List<IProgramVarOrConst> newVariablesOther =
 				newValuesOther.stream().filter(x -> x != null).collect(Collectors.toList());
-		nonNullValuesThis.addAll(removedValuesThis);
-		nonNullValuesOther.addAll(removedValuesOther);
-		final STATE substateThis = mToolkit.handleAssumptionBySubdomain(mSubState.addVariables(nonNullValuesThis),
-				SmtUtils.and(script, constraintsThis)).removeVariables(removedValuesThis);
+		newVariablesThis.addAll(removedValuesThis);
+		newVariablesOther.addAll(removedValuesOther);
+		removedValuesThis.addAll(valuesThis);
+		removedValuesThis.removeAll(simplifiedThisSegmentation.getValues());
+		removedValuesOther.addAll(valuesOther);
+		removedValuesOther.removeAll(simplifiedOtherSegmentation.getValues());
+		final STATE substateThis =
+				mToolkit.handleAssumptionBySubdomain(thisState.mSubState.addVariables(newVariablesThis),
+						SmtUtils.and(script, constraintsThis)).removeVariables(removedValuesThis);
 		final STATE substateOther =
-				mToolkit.handleAssumptionBySubdomain(other.mSubState.addVariables(nonNullValuesOther),
+				mToolkit.handleAssumptionBySubdomain(otherState.mSubState.addVariables(newVariablesOther),
 						SmtUtils.and(script, constraintsOther)).removeVariables(removedValuesOther);
-		ArrayDomainState<STATE> currentStateThis = updateState(substateThis, newSegmentationMapThis);
-		ArrayDomainState<STATE> currentStateOther = other.updateState(substateOther, newSegmentationMapOther);
+		ArrayDomainState<STATE> currentStateThis = thisState.updateState(substateThis, newSegmentationMapThis);
+		ArrayDomainState<STATE> currentStateOther = otherState.updateState(substateOther, newSegmentationMapOther);
 		final Map<IProgramVar, EqClassSegmentation> auxVarSegmentations = new HashMap<>();
 		// Unify the aux-vars recursively
 		for (int i = 0; i < newValuesThis.size(); i++) {
@@ -712,7 +733,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	private void addEquivalence(final IProgramVar newVar, final IProgramVar oldVar, final List<Term> constraints,
 			final SegmentationMap segmentationMap) {
 		if (newVar.getSort().isArraySort()) {
-			// TODO: Only use an equivalent array here?
 			segmentationMap.move(newVar, oldVar);
 		} else {
 			constraints.add(mToolkit.connstructEquivalentConstraint(newVar, oldVar, getSubTerm()));
@@ -807,22 +827,49 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return applyDisjunctiveOperator(other, mToolkit.getWideningOperator());
 	}
 
-	private Pair<List<Set<Term>>, List<IProgramVar>> transformSegmentation(final UnionFind<Term> unionFind,
-			final Segmentation segmentation, final Predicate<Term> isIncluded) {
+	private Triple<ArrayDomainState<STATE>, List<Set<Term>>, List<IProgramVar>> transformSegmentation(
+			final UnionFind<Term> unionFind, final Segmentation segmentation, final Predicate<Term> include) {
+		ArrayDomainState<STATE> currentState = this;
+		final List<Set<Term>> boundEqs = new ArrayList<>();
 		final List<Term> bounds = new ArrayList<>();
-		for (final IProgramVar b : segmentation.getBounds()) {
-			bounds.add(b.getTermVariable());
-		}
-		final Set<Term> boundSet = new HashSet<>(bounds);
 		final List<IProgramVar> values = new ArrayList<>(segmentation.getValues());
+		boundEqs.add(Collections.emptySet());
+		bounds.add(mToolkit.getMinBound().getTermVariable());
+		final Set<IProgramVar> freshValues = new HashSet<>();
+		final Set<IProgramVar> removedValues = new HashSet<>();
 		final Script script = mToolkit.getScript();
-		// TODO: Remove empty bounds first
+		for (int i = 1; i < segmentation.size(); i++) {
+			final TermVariable var = segmentation.getBound(i).getTermVariable();
+			final Set<Term> eqClass = getEqClass(var, unionFind, include);
+			if (eqClass.isEmpty()) {
+				final IProgramVar currentValue = values.remove(boundEqs.size());
+				final IProgramVar lastValue = values.remove(boundEqs.size() - 1);
+				removedValues.add(currentValue);
+				removedValues.add(lastValue);
+				// TODO: Merge lastValue and currentValue
+				final IProgramVar newValue = mToolkit.createValueVar(currentValue.getSort());
+				values.add(boundEqs.size() - 1, newValue);
+				currentState = currentState.addAuxVar(newValue);
+				freshValues.add(newValue);
+			} else {
+				bounds.add(var);
+				boundEqs.add(eqClass);
+			}
+		}
+		removedValues.retainAll(freshValues);
+		currentState = currentState.removeAuxVars(removedValues);
+		boundEqs.add(Collections.emptySet());
+		bounds.add(mToolkit.getMaxBound().getTermVariable());
+		final Set<Term> boundSet = new HashSet<>(bounds);
 		for (final Term rep : unionFind.getAllRepresentatives()) {
-			if (DataStructureUtils.haveNonEmptyIntersection(unionFind.getEquivalenceClassMembers(rep), boundSet)) {
+			final Set<Term> eqClass = getEqClass(rep, unionFind, include);
+			if (eqClass.isEmpty() || DataStructureUtils
+					.haveNonEmptyIntersection(unionFind.getEquivalenceClassMembers(rep), boundSet)) {
 				continue;
 			}
 			if (bounds.size() == 2) {
 				bounds.add(1, rep);
+				boundEqs.add(1, eqClass);
 				values.add(1, values.get(0));
 				continue;
 			}
@@ -835,20 +882,22 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 						&& mToolkit.evaluate(mSubState, SmtUtils.less(script, rep, next),
 								useCache) == EvalResult.TRUE) {
 					bounds.add(i + 1, rep);
+					boundEqs.add(i + 1, eqClass);
 					values.add(i + 1, values.get(i));
 					added = true;
 					break;
 				}
 			}
 			if (!added) {
-				if (mToolkit.evaluate(mSubState, SmtUtils.less(script, bounds.get(bounds.size() - 2), rep),
+				if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bounds.get(bounds.size() - 2), rep),
 						useCache) == EvalResult.TRUE) {
 					bounds.add(bounds.size() - 1, rep);
+					boundEqs.add(boundEqs.size() - 1, eqClass);
 					values.add(values.get(values.size() - 1));
 				}
 			}
 		}
-		return new Pair<>(getEqClasses(bounds, unionFind, isIncluded), values);
+		return new Triple<>(currentState, boundEqs, values);
 	}
 
 	private boolean containsProgramVar(final Term term) {
@@ -861,16 +910,15 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return false;
 	}
 
-	private static List<Set<Term>> getEqClasses(final Collection<? extends Term> terms, final UnionFind<Term> unionFind,
+	private static Set<Term> getEqClass(final Term term, final UnionFind<Term> unionFind,
 			final Predicate<Term> include) {
-		final List<Set<Term>> eqClasses = new ArrayList<>();
-		for (final Term b : terms) {
-			unionFind.findAndConstructEquivalenceClassIfNeeded(b);
-			final Set<Term> filteredEqClass =
-					unionFind.getEquivalenceClassMembers(b).stream().filter(include).collect(Collectors.toSet());
-			eqClasses.add(filteredEqClass);
-		}
-		return eqClasses;
+		unionFind.findAndConstructEquivalenceClassIfNeeded(term);
+		return unionFind.getEquivalenceClassMembers(term).stream().filter(include).collect(Collectors.toSet());
+	}
+
+	private static List<Set<Term>> getEqClasses(final Collection<? extends Term> terms,
+			final UnionFind<Term> unionFind) {
+		return terms.stream().map(x -> getEqClass(x, unionFind, y -> true)).collect(Collectors.toList());
 	}
 
 	@Override
@@ -1061,9 +1109,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term body = new SubstitutionWithLocalSimplification(managedScript, substitution)
 				.transform(SmtUtils.and(script, conjuncts));
 		final Term existsTerm = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, body);
-		// TODO: Apply quantifier elimination?
 		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, mToolkit.eliminateQuantifier(existsTerm));
-		// return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, existsTerm);
 	}
 
 	private static Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {

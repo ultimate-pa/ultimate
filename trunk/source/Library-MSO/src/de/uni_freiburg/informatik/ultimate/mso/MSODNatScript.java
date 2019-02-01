@@ -94,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffScript extends NoopScript {
+public class MSODNatScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
@@ -102,7 +102,7 @@ public class MoNatDiffScript extends NoopScript {
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
-	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
+	public MSODNatScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
@@ -140,7 +140,7 @@ public class MoNatDiffScript extends NoopScript {
 				final NestedWord<MSODAlphabetSymbol> word = run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				mModel = MoNatDiffUtils.parseMoNatDiffToTerm(this, word, terms);
+				mModel = MSODUtils.parseMoNatDiffToTerm(this, word, terms);
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
@@ -194,8 +194,8 @@ public class MoNatDiffScript extends NoopScript {
 					value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
 				}
 
-				if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
-					value = MoNatDiffUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
+				if (MSODUtils.isSetOfIntSort(term.getSort())) {
+					value = MSODUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
 				}
 			}
 			values.put(term, value);
@@ -320,15 +320,15 @@ public class MoNatDiffScript extends NoopScript {
 
 		final Term[] quantifiedVariables = term.getVariables();
 		final Set<MSODAlphabetSymbol> zeros =
-				MoNatDiffUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
+				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
 		final Set<MSODAlphabetSymbol> ones =
-				MoNatDiffUtils.allMatchesAlphabet(result.getAlphabet(), true, quantifiedVariables);
+				MSODUtils.allMatchesAlphabet(result.getAlphabet(), true, quantifiedVariables);
 
 		final Set<String> additionalFinals = new HashSet<>();
 		final Queue<String> states = new LinkedList<>(result.getFinalStates());
 
 		while (!states.isEmpty()) {
-			final Set<String> preds = MoNatDiffUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+			final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
 
 			for (final String pred : preds) {
 				if (!result.isFinal(pred) && additionalFinals.add(pred)) {
@@ -341,7 +341,7 @@ public class MoNatDiffScript extends NoopScript {
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		Set<MSODAlphabetSymbol> reducedAlphabet;
-		reducedAlphabet = MoNatDiffUtils.createAlphabet(freeVars.toArray(new Term[0]));
+		reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 		result = makeStatesFinal(result, additionalFinals);
 
@@ -378,13 +378,13 @@ public class MoNatDiffScript extends NoopScript {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct not φ: " + term);
 
-		result = new Complement<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+		result = new Complement<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 		if (result.getAlphabet().isEmpty()) {
 			return result;
 		}
 
 		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
-		intVars.removeIf(o -> !MoNatDiffUtils.isIntVariable(o));
+		intVars.removeIf(o -> !MSODUtils.isIntVariable(o));
 
 		for (final Term intVar : intVars) {
 			NestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
@@ -392,13 +392,13 @@ public class MoNatDiffScript extends NoopScript {
 			varAutomaton = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton,
 					result.getAlphabet(), true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, varAutomaton)
+			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, varAutomaton)
 					.getResult();
 		}
 
 		// TODO: Find best place for minimization.
 		final INestedWordAutomaton<MSODAlphabetSymbol, String> minimized;
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 
 		return result;
 	}
@@ -420,12 +420,12 @@ public class MoNatDiffScript extends NoopScript {
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
 			Set<MSODAlphabetSymbol> symbols;
-			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
+			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
 
 		return result;
@@ -455,12 +455,12 @@ public class MoNatDiffScript extends NoopScript {
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
 			Set<MSODAlphabetSymbol> symbols;
-			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODNatAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
+			result = new Union<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
 
 		return result;

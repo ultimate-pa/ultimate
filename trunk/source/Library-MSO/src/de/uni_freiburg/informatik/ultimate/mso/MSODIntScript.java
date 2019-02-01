@@ -11,17 +11,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -43,17 +42,15 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 
-public class MSODiffIntScript extends NoopScript {
+public class MSODIntScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
@@ -61,7 +58,7 @@ public class MSODiffIntScript extends NoopScript {
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
-	public MSODiffIntScript(final IUltimateServiceProvider services, final ILogger logger) {
+	public MSODIntScript(final IUltimateServiceProvider services, final ILogger logger) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
@@ -91,15 +88,14 @@ public class MSODiffIntScript extends NoopScript {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
 
-			final IsEmpty<MSODAlphabetSymbol, String> isEmpty =
-					new IsEmpty<>(mAutomataLibrarayServices, automaton);
+			final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(mAutomataLibrarayServices, automaton);
 
 			if (!isEmpty.getResult()) {
 				final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
 				final NestedWord<MSODAlphabetSymbol> word = run.getWord();
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-				mModel = MoNatDiffUtils.parseMSODiffIntToTerm(this, word, terms);
+				mModel = MSODUtils.parseMSODiffIntToTerm(this, word, terms);
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
@@ -136,8 +132,8 @@ public class MSODiffIntScript extends NoopScript {
 					value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
 				}
 
-				if (MoNatDiffUtils.isSetOfIntSort(term.getSort())) {
-					value = MoNatDiffUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
+				if (MSODUtils.isSetOfIntSort(term.getSort())) {
+					value = MSODUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
 				}
 			}
 			values.put(term, value);
@@ -233,8 +229,9 @@ public class MSODiffIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "forall φ". Performs equivalent transformation to existential quantifier and
-	 * calls {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "forall φ". Performs equivalent
+	 * transformation to existential quantifier and calls
+	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processForall(final QuantifiedFormula term)
 			throws Exception {
@@ -255,16 +252,16 @@ public class MSODiffIntScript extends NoopScript {
 		mLogger.info("Construct ∃ φ: " + term);
 
 		final Term[] quantifiedVariables = term.getVariables();
-		final Set<MSODAlphabetSymbol> zeros =
-				MoNatDiffUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-		final Set<MSODAlphabetSymbol> ones =
-				MoNatDiffUtils.allMatchesAlphabet(result.getAlphabet(), true, quantifiedVariables);
+		final Set<MSODAlphabetSymbol> zeros = MSODUtils.allMatchesAlphabet(result.getAlphabet(), false,
+				quantifiedVariables);
+		final Set<MSODAlphabetSymbol> ones = MSODUtils.allMatchesAlphabet(result.getAlphabet(), true,
+				quantifiedVariables);
 
 		final Set<String> additionalFinals = new HashSet<>();
 		final Queue<String> states = new LinkedList<>(result.getFinalStates());
 
 		while (!states.isEmpty()) {
-			final Set<String> preds = MoNatDiffUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+			final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
 
 			for (final String pred : preds) {
 				if (!result.isFinal(pred) && additionalFinals.add(pred)) {
@@ -277,7 +274,7 @@ public class MSODiffIntScript extends NoopScript {
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		Set<MSODAlphabetSymbol> reducedAlphabet;
-		reducedAlphabet = MoNatDiffUtils.createAlphabet(freeVars.toArray(new Term[0]));
+		reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 		result = makeStatesFinal(result, additionalFinals);
 
@@ -314,13 +311,13 @@ public class MSODiffIntScript extends NoopScript {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct not φ: " + term);
 
-		result = new Complement<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+		result = new Complement<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 		if (result.getAlphabet().isEmpty()) {
 			return result;
 		}
 
 		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
-		intVars.removeIf(o -> !MoNatDiffUtils.isIntVariable(o));
+		intVars.removeIf(o -> !MSODUtils.isIntVariable(o));
 
 		for (final Term intVar : intVars) {
 			NestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
@@ -328,13 +325,13 @@ public class MSODiffIntScript extends NoopScript {
 			varAutomaton = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton,
 					result.getAlphabet(), true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, varAutomaton)
+			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, varAutomaton)
 					.getResult();
 		}
 
 		// TODO: Find best place for minimization.
 		final INestedWordAutomaton<MSODAlphabetSymbol, String> minimized;
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 
 		return result;
 	}
@@ -356,21 +353,22 @@ public class MSODiffIntScript extends NoopScript {
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
 			Set<MSODAlphabetSymbol> symbols;
-			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
+			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
-		
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 		return result;
 	}
 
 	/**
-	 * Returns automaton that represents "φ or ... or ψ". Performs equivalent transformation to conjunction and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "φ or ... or ψ". Performs equivalent
+	 * transformation to conjunction and calls {@link #traversePostOrder(Term)} with
+	 * the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
 			throws Exception {
@@ -383,21 +381,22 @@ public class MSODiffIntScript extends NoopScript {
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
 			Set<MSODAlphabetSymbol> symbols;
-			symbols = MoNatDiffUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODIntAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Union<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result, tmp).getResult();
+			result = new Union<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
 
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(), result).getResult();
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 		return result;
 	}
 
 	/**
-	 * Returns automaton that represents "φ implies ψ". Performs equivalent transformation to "not φ and ψ" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "φ implies ψ". Performs equivalent
+	 * transformation to "not φ and ψ" and calls {@link #traversePostOrder(Term)}
+	 * with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processImplication(final ApplicationTerm term)
 			throws Exception {
@@ -411,11 +410,11 @@ public class MSODiffIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t = c". Performs equivalent transformation to "t <= c and not t < c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t = c". Performs equivalent transformation
+	 * to "t <= c and not t < c" and calls {@link #traversePostOrder(Term)} with the
+	 * result".
 	 */
-	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term)
-			throws Exception {
+	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term) throws Exception {
 
 		final Term[] terms = term.getParameters();
 		final Term lessEqual = SmtUtils.leq(this, terms[0], terms[1]);
@@ -426,8 +425,8 @@ public class MSODiffIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t > c". Performs equivalent transformation to "not t <= c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t > c". Performs equivalent transformation
+	 * to "not t <= c" and calls {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreater(final ApplicationTerm term)
 			throws Exception {
@@ -439,8 +438,9 @@ public class MSODiffIntScript extends NoopScript {
 	}
 
 	/**
-	 * Returns automaton that represents "t >= c". Performs equivalent transformation to "not t < c" and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "t >= c". Performs equivalent
+	 * transformation to "not t < c" and calls {@link #traversePostOrder(Term)} with
+	 * the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term)
 			throws Exception {
@@ -471,8 +471,7 @@ public class MSODiffIntScript extends NoopScript {
 
 			if (var.getValue().equals(Rational.ONE)) {
 				mLogger.info("Construct x < c: " + term);
-				return MSODIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(),
-						constant);
+				return MSODIntAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
@@ -580,7 +579,8 @@ public class MSODiffIntScript extends NoopScript {
 	 * Returns a automaton where also the given states are final.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
+	 *             if construction of {@link NestedWordAutomatonReachableStates}
+	 *             fails.
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)

@@ -29,15 +29,24 @@ public class MSODAlphabetSymbol {
 	 * Constructor for empty alphabet symbol.
 	 */
 	public MSODAlphabetSymbol() {
-		mMap = new HashMap<>();
+		mMap = new HashMap<Term, Boolean>();
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains a single variable.
 	 */
 	public MSODAlphabetSymbol(final Term term, final boolean value) {
-		mMap = new HashMap<>();
+		mMap = new HashMap<Term, Boolean>();
 		add(term, value);
+	}
+	
+	/**
+	 * Constructor for alphabet symbol that contains two variables.
+	 */
+	public MSODAlphabetSymbol(final Term term1, final Term term2, final boolean value1, final boolean value2) {
+		mMap = new HashMap<Term, Boolean>();
+		add(term1, value1);
+		add(term2, value2);
 	}
 
 	/**
@@ -51,7 +60,7 @@ public class MSODAlphabetSymbol {
 			throw new InvalidParameterException("Input terms, values of different length.");
 		}
 
-		mMap = new HashMap<>();
+		mMap = new HashMap<Term, Boolean>();
 		for (int i = 0; i < terms.length; i++) {
 			add(terms[i], values[i]);
 		}
@@ -78,7 +87,7 @@ public class MSODAlphabetSymbol {
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
-		if (!MoNatDiffUtils.isVariable(term)) {
+		if (!MSODUtils.isVariable(term)) {
 			throw new IllegalArgumentException("Input term must be an Int or SetOfInt variable.");
 		}
 
@@ -136,15 +145,14 @@ public class MSODAlphabetSymbol {
 
 	@Override
 	public boolean equals(final Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
+		
 		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
 		return mMap.equals(other.mMap);
 	}
