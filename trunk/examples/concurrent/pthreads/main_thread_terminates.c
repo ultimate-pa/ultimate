@@ -10,12 +10,13 @@
  */
 
 #include <pthread.h>
+#include <stdio.h>
 
 typedef unsigned long int pthread_t;
 
 void *worker_thread(void *arg) {
     int x = 0;
-    while (x < 10) {
+    while (x < 100) {
         x++;
     }
     //@ assert 1 == 2;
