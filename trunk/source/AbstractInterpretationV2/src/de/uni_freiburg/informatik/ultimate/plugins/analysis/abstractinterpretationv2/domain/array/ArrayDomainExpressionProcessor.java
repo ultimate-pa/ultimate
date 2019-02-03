@@ -51,8 +51,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				final Pair<Integer, Integer> bounds = tmpState.getContainedBoundIndices(segmentation, index);
 				final int min = bounds.getFirst();
 				final int max = bounds.getSecond();
-				final IProgramVar auxVar =
-						mToolkit.createAuxVar(mToolkit.getType(TypeUtils.getValueSort(currentTerm.getSort())));
+				final IProgramVar auxVar = mToolkit.createAuxVar(TypeUtils.getValueSort(currentTerm.getSort()));
 				final Sort sort = auxVar.getSort();
 				if (sort.isArraySort()) {
 					final List<Segmentation> segmentations = new ArrayList<>();
@@ -188,7 +187,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			final Term selectTerm = select.getSelectTerm();
 			final Pair<ArrayDomainState<STATE>, Term> oldValueResult = processTerm(newState, selectTerm);
 			final Term oldValue = oldValueResult.getSecond();
-			final IProgramVar auxVar = mToolkit.createAuxVar(mToolkit.getType(selectTerm.getSort()));
+			final IProgramVar auxVar = mToolkit.createAuxVar(selectTerm.getSort());
 			final TermVariable auxVarTv = auxVar.getTermVariable();
 			substitution.put(selectTerm, auxVarTv);
 			constraints.add(SmtUtils.binaryEquality(script, auxVarTv, oldValue));

@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	// private static final int FILES_PER_DIR_LIMIT = 1;
+//	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+	 private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c";
@@ -155,7 +155,7 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 30 * 1000;
 	}
 
 	/**
@@ -163,14 +163,16 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default-PENGUIN.epf",
+//		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 	};
 	
 	private static final String[] SETTINGS_64BIT = {
 		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default-PENGUIN.epf",
+//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 	};
 	

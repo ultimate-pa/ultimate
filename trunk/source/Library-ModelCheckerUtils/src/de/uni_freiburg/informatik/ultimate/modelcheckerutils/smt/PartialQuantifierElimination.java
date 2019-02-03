@@ -74,6 +74,7 @@ public class PartialQuantifierElimination {
 	private static final boolean USE_IRD = true;
 	private static final boolean USE_TIR = true;
 	private static final boolean USE_SSD = true;
+	private static final boolean USE_MAX = false;
 	private static final boolean USE_SOS = false;
 	private static final boolean USE_USR = false;
 	private static final boolean USE_PUSH_PULL = true;
@@ -157,10 +158,9 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Returns formula equivalent to the one constructed by
-	 * {@link SmtUtils#quantifier}. The resulting formula is not quantified if the
-	 * quantified variables are not in the input formula or if quantifiers can be
-	 * eliminated by using the specified {@link PqeTechniques}.
+	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
+	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using the
+	 * specified {@link PqeTechniques}.
 	 */
 	public static Term quantifierCustom(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final PqeTechniques techniques, final int quantifier,
@@ -287,11 +287,24 @@ public class PartialQuantifierElimination {
 			result = applyUnconnectedParameterDeletion(mgdScript, quantifier, eliminatees, services,
 					xnfConversionTechnique, script, result);
 		}
+		if (USE_MAX) {
 
+			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
+			final EliminationTask esp = new ArrayQuantifierEliminationMain(mgdScript, services, simplificationTechnique)
+					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));		
+			
+			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
+					+ esp + " Input:" + inputEliminationTask;
+			result = esp.getTerm();
+			eliminatees.clear();
+			eliminatees.addAll(esp.getEliminatees());
+		}
 		if (USE_SSD) {
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
 					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
+			
+			
 			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
 					+ esp + " Input:" + inputEliminationTask;
 			if (DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION) {

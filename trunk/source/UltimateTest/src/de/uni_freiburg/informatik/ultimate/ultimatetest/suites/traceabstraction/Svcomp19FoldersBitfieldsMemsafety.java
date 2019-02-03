@@ -406,7 +406,7 @@ public class Svcomp19FoldersBitfieldsMemsafety extends AbstractTraceAbstractionT
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 20 * 1000;
 	}
 
 	/**
@@ -427,7 +427,8 @@ public class Svcomp19FoldersBitfieldsMemsafety extends AbstractTraceAbstractionT
 
 
 	private static final String[] TOOLCHAINS = {
-		"AutomizerC.xml",
+//		"AutomizerC.xml",
+		"CTranslationOnly.xml",
 	};
 	// @formatter:on
 

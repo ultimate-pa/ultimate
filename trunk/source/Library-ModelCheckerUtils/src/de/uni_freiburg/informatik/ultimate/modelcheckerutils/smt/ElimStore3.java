@@ -507,7 +507,7 @@ public class ElimStore3 {
 					mNewAuxVars.add(auxVar);
 					mValues[i] = auxVar;
 				} else {
-					mValues[i] = eqInfo.getTerm();
+					mValues[i] = eqInfo.getRelatedTerm();
 				}
 				mSelectTerm2Value.put(mSelectTerm[i], mValues[i]);
 			}

@@ -66,20 +66,20 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 		};
 	
 	private static final String[] ULTIMATE_REPOSITORY_INTEGER_SETTINGS = {
-//			"automizer/interpolationRegression/SpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/SpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
 			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
-//			"automizer/interpolationRegression/SpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
-//			"automizer/interpolationRegression/WpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/SpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/WpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
 			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
-//			"automizer/interpolationRegression/WpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/WpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
 	};
 	
 	private static final String[] ULTIMATE_REPOSITORY_BITVECTOR_SETTINGS = {
 //			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
 //			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf",
 //			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
 //			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf", 
 	};
 
@@ -87,12 +87,12 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 
 	private static final String[] BOOGIE_TOOLCHAINS = { 
 			"AutomizerBpl.xml",
-			// "AutomizerBplInline.xml",
+			"AutomizerBplInline.xml",
 	};
 
 	private static final String[] C_TOOLCHAINS = { 
 			"AutomizerC.xml",
-			// "AutomizerCInline.xml",
+			"AutomizerCInline.xml",
 	};
 	// @formatter:on
 

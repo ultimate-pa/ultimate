@@ -5,9 +5,9 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.chc
 Bundle-Version: 0.1.24
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils;bundle-version="0.1.19",
- de.uni_freiburg.informatik.ultimate.core;bundle-version="0.1.19",
- de.uni_freiburg.informatik.ultimate.lib.util;bundle-version="0.1.19",
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.lib.boogieast

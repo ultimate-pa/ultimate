@@ -51,7 +51,7 @@ public class ArrayDomain<STATE extends IAbstractState<STATE>>
 			final IBoogieSymbolTableVariableProvider variableProvider) {
 		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
 		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, boogieSymbolTable,
-				(Boogie2SmtSymbolTableTmpVars) variableProvider);
+				(Boogie2SmtSymbolTableTmpVars) variableProvider, logger);
 	}
 
 	@Override

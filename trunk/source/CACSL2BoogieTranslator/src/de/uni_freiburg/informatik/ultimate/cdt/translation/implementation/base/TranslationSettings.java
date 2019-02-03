@@ -74,6 +74,7 @@ public final class TranslationSettings {
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mCheckSignedIntegerBounds;
 	private final boolean mUseConstantArrays;
+	private final boolean mUseStoreChains;
 	private final boolean mEnableFesetround;
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 
@@ -116,6 +117,7 @@ public final class TranslationSettings {
 		mOverapproximateFloatingPointOperations =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
+		mUseStoreChains = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_STORE_CHAINS);
 
 		mEnableFesetround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND);
 		mInitialRoundingMode =
@@ -237,6 +239,14 @@ public final class TranslationSettings {
 
 	public boolean useConstantArrays() {
 		return mUseConstantArrays;
+	}
+
+	/**
+	 * To recover the old behaviour (before SVCOMP-19), where initialization always happened through a list of
+	 * assignments/stores (in contrast to the new assume-select strategy), set this to true.
+	 */
+	public boolean useStoreChains() {
+		return mUseStoreChains;
 	}
 
 	public boolean isFesetroundEnabled() {

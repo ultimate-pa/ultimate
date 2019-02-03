@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script that deploys a generated website and webeclipsebridge to the tomcat on this machine 
+# Script that deploys a generated website and webeclipsebridge to the tomcat on this machine
 
 ### Settings
 WARS=(
@@ -8,10 +8,12 @@ WARS=(
 )
 
 BACKUP_DIR="./war-backup"
-TOMCAT_WEBAPP_DIR="/var/lib/tomcat-8-ultimate/webapps/"
+TOMCAT_DIR="/var/lib/tomcat-8-ultimate"
+TOMCAT_WEBAPP_DIR="${TOMCAT_DIR}/webapps/"
+TOMCAT_CATALINA_DIR="${TOMCAT_DIR}/work/Catalina/"
 TOMCAT_INIT_SCRIPT="/etc/init.d/tomcat-8-ultimate"
 
-### ACTUAL SCRIPT 
+### ACTUAL SCRIPT
 source /etc/init.d/functions.sh
 DATE=`date +"%F %T"`
 
@@ -53,7 +55,7 @@ function backupWebsite {
         eindent
         if [ ! -f "$oldwar" ]; then
             ewarn "The old .war file $oldwar does not exist"
-        else 
+        else
             exitOnFail mv "$oldwar" "$backup"
         fi
         eoutdent
@@ -65,9 +67,11 @@ function updateWebsite {
     for (( i = 0 ; i < ${#WARS[@]} ; i=$i+1 ));
     do
         local war="${WARS[${i}]}"
-        local oldwar="$TOMCAT_WEBAPP_DIR"`basename "${war}"`
+	local warnameonly=`basename "${war}"`
+	local warnamenoext="${warnameonly%.war}"
+        local oldwar="${TOMCAT_WEBAPP_DIR}${warnameonly}"
         local olddir="${oldwar%.war}"
-        
+
         ebegin "Removing $olddir"
         eindent
         if [ ! -d "$olddir" ]; then
@@ -77,7 +81,18 @@ function updateWebsite {
         fi
         eoutdent
         eend 0
-        
+
+	for catdir in `find "$TOMCAT_CATALINA_DIR" -type d -name "$warnamenoext"` ; do
+        	ebegin "Removing $catdir"
+	        eindent
+        	if [ ! -d "$catdir" ]; then
+	            ewarn "The old local webapp directory $catdir does not exist"
+        	else
+	            exitOnFail rm -r "$catdir"
+        	fi
+	        eoutdent
+	done
+
         ebegin "Copying $war to $oldwar"
         eindent
         exitOnFail cp "$war" "$oldwar"

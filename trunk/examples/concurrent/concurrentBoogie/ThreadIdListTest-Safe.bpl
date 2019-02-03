@@ -1,6 +1,6 @@
 //#Safe
 /* 
- * Safe because there is thread that was forked with thread ID 2
+ * Safe because there is no thread that was forked with thread ID 2
  *
  * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 2018-09-12

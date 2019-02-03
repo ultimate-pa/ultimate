@@ -336,7 +336,10 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		for (int i = 0; i < states.size(); i++) {
 			final IAbstractPostOperator postOperator = state.getDomainList().get(i).getPostOperator();
 			final EvalResult result = postOperator.evaluate(states.get(i), formula, script);
-			if (rtr == EvalResult.UNKNOWN || result == EvalResult.UNKNOWN) {
+			if (result == EvalResult.UNKNOWN) {
+				continue;
+			}
+			if (rtr == EvalResult.UNKNOWN) {
 				rtr = result;
 			} else if (result != rtr) {
 				assert false : "One state said " + rtr + " another said " + result;

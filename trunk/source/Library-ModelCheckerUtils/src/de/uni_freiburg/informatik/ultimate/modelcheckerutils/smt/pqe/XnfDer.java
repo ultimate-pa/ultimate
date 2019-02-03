@@ -82,8 +82,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms, final Set<TermVariable> eliminatees) {
-		Term[] resultAtoms = inputAtoms;
+	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
+		Term[] resultAtoms = dualJuncts;
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
 		// repeat the following until no variable was eliminated
@@ -94,7 +94,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			while (it.hasNext()) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(), "eliminating " + eliminatees.size()
-							+ " quantified variables from " + inputAtoms.length + " xjuncts");
+							+ " quantified variables from " + dualJuncts.length + " xjuncts");
 				}
 				final TermVariable tv = it.next();
 				if (!freeVarsInResultAtoms.contains(tv)) {
@@ -132,7 +132,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping =
-					Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
+					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
 			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);

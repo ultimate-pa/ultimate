@@ -1,8 +1,8 @@
 //#Safe
 /*
- * This example shows how the fork statement handles multiple parameter.
+ * Check if forking a procedure with multiple parameter works correctly.
  *
- * Author: Lars Nitzke (lars.nitzke@outlook.com)
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com)
  * Date: 21.08.2018
  * 
  */
@@ -29,5 +29,6 @@ procedure add(num1 : int, num2 : int) returns(sum : int);
 
 implementation add(num1 : int, num2: int) returns (sum : int)
 {
+    assert num1 == 1;
     sum := num1 + num2;
 }

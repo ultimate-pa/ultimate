@@ -1,8 +1,8 @@
 //#Safe
 /*
- * This example shows how the join statement handles multiple return values.
+ * Check if join statement assigns the correct values to a list of variables.
  *
- * Author: Lars Nitzke (lars.nitzke@outlook.com)
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com)
  * Date: 22.08.2018
  * 
  */

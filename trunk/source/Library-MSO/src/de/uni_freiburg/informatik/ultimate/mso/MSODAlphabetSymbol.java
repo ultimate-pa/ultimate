@@ -21,23 +21,32 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MoNatDiffAlphabetSymbol {
+public class MSODAlphabetSymbol {
 
 	private final Map<Term, Boolean> mMap;
 
 	/**
 	 * Constructor for empty alphabet symbol.
 	 */
-	public MoNatDiffAlphabetSymbol() {
-		mMap = new HashMap<>();
+	public MSODAlphabetSymbol() {
+		mMap = new HashMap<Term, Boolean>();
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains a single variable.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term term, final boolean value) {
-		mMap = new HashMap<>();
+	public MSODAlphabetSymbol(final Term term, final boolean value) {
+		mMap = new HashMap<Term, Boolean>();
 		add(term, value);
+	}
+	
+	/**
+	 * Constructor for alphabet symbol that contains two variables.
+	 */
+	public MSODAlphabetSymbol(final Term term1, final Term term2, final boolean value1, final boolean value2) {
+		mMap = new HashMap<Term, Boolean>();
+		add(term1, value1);
+		add(term2, value2);
 	}
 
 	/**
@@ -46,12 +55,12 @@ public class MoNatDiffAlphabetSymbol {
 	 * @throws InvalidParameterException
 	 *             if lengths of terms and values differ.
 	 */
-	public MoNatDiffAlphabetSymbol(final Term[] terms, final boolean[] values) {
+	public MSODAlphabetSymbol(final Term[] terms, final boolean[] values) {
 		if (terms.length != values.length) {
 			throw new InvalidParameterException("Input terms, values of different length.");
 		}
 
-		mMap = new HashMap<>();
+		mMap = new HashMap<Term, Boolean>();
 		for (int i = 0; i < terms.length; i++) {
 			add(terms[i], values[i]);
 		}
@@ -78,7 +87,7 @@ public class MoNatDiffAlphabetSymbol {
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
-		if (!MoNatDiffUtils.isVariable(term)) {
+		if (!MSODUtils.isVariable(term)) {
 			throw new IllegalArgumentException("Input term must be an Int or SetOfInt variable.");
 		}
 
@@ -88,7 +97,7 @@ public class MoNatDiffAlphabetSymbol {
 	/**
 	 * Returns true if all variables of the given alphabet symbol are included in this alphabet symbol.
 	 */
-	public boolean contains(final MoNatDiffAlphabetSymbol alphabetSymbol) {
+	public boolean contains(final MSODAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
 	}
 
@@ -136,16 +145,15 @@ public class MoNatDiffAlphabetSymbol {
 
 	@Override
 	public boolean equals(final Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final MoNatDiffAlphabetSymbol other = (MoNatDiffAlphabetSymbol) obj;
+		
+		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
 		return mMap.equals(other.mMap);
 	}
 }

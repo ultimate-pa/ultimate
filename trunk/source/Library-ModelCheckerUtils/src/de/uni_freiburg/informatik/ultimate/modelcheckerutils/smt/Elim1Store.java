@@ -1381,7 +1381,7 @@ public class Elim1Store {
 				if (eqInfo == null) {
 					return null;
 				} else {
-					return eqInfo.getTerm();
+					return eqInfo.getRelatedTerm();
 				}
 			}
 		}

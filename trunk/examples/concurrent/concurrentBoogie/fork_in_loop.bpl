@@ -2,8 +2,8 @@
  * This example shows, that the fork statement is not working in a loop if it 
  * is not getting joined until the next iteration. Except the loop has only 
  * one iteration. 
- * 
- * Author: Lars Nitzke (lars.nitzke@outlook.com)
+ *  
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com)
  * Date: 24.08.2018
  * 
  */
@@ -23,6 +23,7 @@ implementation ULTIMATE.start()
         x := x + 1;
     }
     x := 1;
+    join x;
     while (x < 3) {
         fork x foo(x);
         x := x + 1;

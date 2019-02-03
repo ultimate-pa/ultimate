@@ -3,7 +3,7 @@
  * Check that we support several forked threads if each one was
  * forked by a different fork statement.
  *
- * Author: Lars Nitzke (lars.nitzke@outlook.com), Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com), Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 24.08.2018
  * 
  */

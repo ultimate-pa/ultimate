@@ -1,10 +1,10 @@
 //#Safe
 /*
- * This example shows how fork and join works for different types as expression.
+ * This example shows how fork and join works for different id types.
  * Only the thread that executes foo is joined because for the other
  * the return type does not match.
  *
- * Author: Lars Nitzke (lars.nitzke@outlook.com)
+ * Author: Lars Nitzke (lars.nitzke@mailfence.com)
  * Date: 24.08.2018
  * 
  */

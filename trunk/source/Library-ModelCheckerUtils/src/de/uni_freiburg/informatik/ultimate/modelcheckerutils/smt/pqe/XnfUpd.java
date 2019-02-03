@@ -68,15 +68,15 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] parameters, final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
 		final Set<TermVariable> occuringVars = new HashSet<>();
-		for (final Term param : parameters) {
+		for (final Term param : dualJuncts) {
 			occuringVars.addAll(Arrays.asList(param.getFreeVars()));
 		}
 
 		eliminatees.retainAll(occuringVars);
 
-		final ConnectionPartition connection = new ConnectionPartition(Arrays.asList(parameters));
+		final ConnectionPartition connection = new ConnectionPartition(Arrays.asList(dualJuncts));
 		final List<TermVariable> removeableTvs = new ArrayList<>();
 		final List<TermVariable> unremoveableTvs = new ArrayList<>();
 		final List<Term> removeableTerms = new ArrayList<>();
@@ -126,7 +126,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		}
 		final List<Term> termsWithoutTvs = connection.getTermsWithNonTheorySymbols();
 		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
-		assert parameters.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
+		assert dualJuncts.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
 		for (final Term termWithoutTvs : termsWithoutTvs) {
 			final LBool sat = Util.checkSat(mScript, termWithoutTvs);
 			if (sat == LBool.UNSAT) {
@@ -155,7 +155,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
 			}
-			return parameters;
+			return dualJuncts;
 		}
 		eliminatees.removeAll(removeableTvs);
 		if (mLogger.isDebugEnabled()) {

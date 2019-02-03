@@ -20,7 +20,7 @@ implementation ULTIMATE.start()
     while (x < 3) {
         fork x foo();
         resOld := res;
-        join 1 assign res;
+        join x assign res;
         if (x > 0) {
             assert resOld == res;
         }
