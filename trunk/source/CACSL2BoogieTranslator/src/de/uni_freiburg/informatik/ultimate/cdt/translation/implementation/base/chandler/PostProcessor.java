@@ -239,9 +239,11 @@ public class PostProcessor {
 				decl.addAll(declareFloatDataTypes(loc));
 			}
 
-			decl.addAll(declareCurrentRoundingModeVar(loc));
+			if (mSettings.isFesetroundEnabled()) {
+				decl.addAll(declareCurrentRoundingModeVar(loc));
 
-			decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
+				decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
+			}
 
 			final String[] importantFunctions = new String[] { "bvadd" };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
@@ -367,8 +369,6 @@ public class PostProcessor {
 
 		mVarlist[0] = new VarList(loc, new String[] { roundingModeVariableName },
 				BitvectorTranslation.ROUNDING_MODE_BOOGIE_AST_TYPE);
-		// mVarlist[0] = new VarList(loc, new String[] { roundingModeVariableName },
-		// mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression().getType());
 		final Attribute[] attribute;
 		attribute = new Attribute[0];
 		decls.add(new VariableDeclaration(loc, attribute, mVarlist));
@@ -378,7 +378,9 @@ public class PostProcessor {
 
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
 		/*
-		 * rtz = 0 RNE = 1 rtp = 2 rtn = 3
+		 * hardcoded to values from https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS -1 the default rounding
+		 * direction is not known 0 toward zero, FE_TOWARDZERO RTZ 1 to nearest, FE_TONEAREST RNE 2 towards positive
+		 * infinity, FE_UPWARD RTP 3 towards negative infinity, FE_DOWNWARD RTN
 		 */
 
 		final String functionName = "ULTIMATE.setCurrentRoundingMode";
@@ -437,18 +439,18 @@ public class PostProcessor {
 				StatementFactory.constructSingleAssignmentStatement(loc, returnVariableLHS, minusOneLiteralExpression);
 
 		// create statements for setting rounding modes and failure
-		final Statement[] RTZStatemens = new Statement[2];
-		final Statement[] RNEStatemens = new Statement[2];
-		final Statement[] RTPStatemens = new Statement[2];
-		final Statement[] RTNStatemens = new Statement[2];
-		RTZStatemens[0] = assignRTZ;
-		RNEStatemens[0] = assignRNE;
-		RTPStatemens[0] = assignRTP;
-		RTNStatemens[0] = assignRTN;
-		RTZStatemens[1] = assignSuccessReturnValueStatement;
-		RNEStatemens[1] = assignSuccessReturnValueStatement;
-		RTPStatemens[1] = assignSuccessReturnValueStatement;
-		RTNStatemens[1] = assignSuccessReturnValueStatement;
+		final Statement[] RTZStatements = new Statement[2];
+		final Statement[] RNEStatements = new Statement[2];
+		final Statement[] RTPStatements = new Statement[2];
+		final Statement[] RTNStatements = new Statement[2];
+		RTZStatements[0] = assignRTZ;
+		RNEStatements[0] = assignRNE;
+		RTPStatements[0] = assignRTP;
+		RTNStatements[0] = assignRTN;
+		RTZStatements[1] = assignSuccessReturnValueStatement;
+		RNEStatements[1] = assignSuccessReturnValueStatement;
+		RTPStatements[1] = assignSuccessReturnValueStatement;
+		RTNStatements[1] = assignSuccessReturnValueStatement;
 		final Statement[] failureStatements;
 		failureStatements = new Statement[1];
 		failureStatements[0] = assignFailureRetunrValueStatement;
@@ -469,12 +471,12 @@ public class PostProcessor {
 
 		// construct if statements
 		final Statement ifRTNAssignElseFail =
-				StatementFactory.constructIfStatement(loc, condRTN, RTNStatemens, failureStatements);
-		final Statement ifRTPAssignElseRTNIf = StatementFactory.constructIfStatement(loc, condRTP, RTPStatemens,
+				StatementFactory.constructIfStatement(loc, condRTN, RTNStatements, failureStatements);
+		final Statement ifRTPAssignElseRTNIf = StatementFactory.constructIfStatement(loc, condRTP, RTPStatements,
 				new Statement[] { ifRTNAssignElseFail });
-		final Statement ifRNEAssignElseRTPIf = StatementFactory.constructIfStatement(loc, condRNE, RNEStatemens,
+		final Statement ifRNEAssignElseRTPIf = StatementFactory.constructIfStatement(loc, condRNE, RNEStatements,
 				new Statement[] { ifRTPAssignElseRTNIf });
-		final Statement ifRTZAssignElseRNEIf = StatementFactory.constructIfStatement(loc, condRTZ, RTZStatemens,
+		final Statement ifRTZAssignElseRNEIf = StatementFactory.constructIfStatement(loc, condRTZ, RTZStatements,
 				new Statement[] { ifRNEAssignElseRTPIf });
 
 		statements.add(ifRTZAssignElseRNEIf);
@@ -827,7 +829,8 @@ public class PostProcessor {
 		}
 
 		// initializes current rounding mode var
-		if (mSettings.isBitvectorTranslation() && mSettings.getInitialRoundingMode() != null) {
+		if (mSettings.isBitvectorTranslation() && mSettings.getInitialRoundingMode() != null
+				&& mSettings.isFesetroundEnabled()) {
 			final Expression value;
 
 			value = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
