@@ -47,7 +47,7 @@ public class ArrayQuantifierEliminationTest {
 		mScript.exit();
 	}
 
-	@Test
+//	@Test
 	public void argentina() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("a", new Sort[0], intintArraySort);
@@ -85,7 +85,7 @@ public class ArrayQuantifierEliminationTest {
 
 	}
 
-	@Test
+//	@Test
 	public void finland() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
@@ -94,7 +94,7 @@ public class ArrayQuantifierEliminationTest {
 		Assert.assertTrue(testIS(result, "(not (= i k))"));
 	}
 
-	@Test
+//	@Test
 	public void finland1() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
@@ -105,7 +105,7 @@ public class ArrayQuantifierEliminationTest {
 		Assert.assertTrue(testIS(result, "(or (not (= i k)) (not (= j x)))"));
 	}
 
-	@Test
+//	@Test
 	public void finland2() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
@@ -116,7 +116,7 @@ public class ArrayQuantifierEliminationTest {
 		Assert.assertTrue(testIS(result, "false"));
 	}
 
-	@Test // finland with forall and disjunction VERIFY RESULT
+//	@Test // finland with forall and disjunction VERIFY RESULT
 	public void sweden() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
@@ -138,7 +138,7 @@ public class ArrayQuantifierEliminationTest {
 		Term result = parseAndElim(formulaAsString);
 		Assert.assertTrue(testQuantifireFree(result));
 	}
-	 @Test //eliminiating Array Equailitys, dealing with Partial Equailitys
+//	 @Test //eliminiating Array Equailitys, dealing with Partial Equailitys
 	public void saudiarabia() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
@@ -150,7 +150,7 @@ public class ArrayQuantifierEliminationTest {
 		Term result = parseAndElim(formulaAsString);
 		Assert.assertTrue(testQuantifireFree(result));
 	}
-	 @Test //eliminiating Array Equailitys, dealing with Partial Equailitys
+//	 @Test //eliminiating Array Equailitys, dealing with Partial Equailitys
 	public void saudiarabia2() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
@@ -164,7 +164,7 @@ public class ArrayQuantifierEliminationTest {
 		Term result = parseAndElim(formulaAsString);
 		Assert.assertTrue(testQuantifireFree(result));
 	}
-	 @Test // 2 Stores
+//	 @Test // 2 Stores
 	public void brazil() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
@@ -174,7 +174,7 @@ public class ArrayQuantifierEliminationTest {
 		Term result = parseAndElim(formulaAsString);
 		Assert.assertTrue(testQuantifireFree(result));
 	}
-	@Test // 2 Stores and partial Equality
+//	@Test // 2 Stores and partial Equality
 	public void laplata() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
@@ -186,7 +186,7 @@ public class ArrayQuantifierEliminationTest {
 		Assert.assertTrue(testQuantifireFree(result));
 	}
 	
-	@Test // 2 Stores, 2 Quantified Array, Arrays with Sort (Array Int Bool) and partial Equality
+//	@Test // 2 Stores, 2 Quantified Array, Arrays with Sort (Array Int Bool) and partial Equality
 	public void germany() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mBoolSort);
 		mScript.declareFun("b", new Sort[0], intintArraySort);
@@ -194,7 +194,7 @@ public class ArrayQuantifierEliminationTest {
 		Term result = parseAndElim(formulaAsString);
 		Assert.assertTrue(testQuantifireFree(result));
 	}
-	@Test // 2 Quantified Array, Arrays with Sort (Array Int Bool) and partial Equality
+//	@Test // 2 Quantified Array, Arrays with Sort (Array Int Bool) and partial Equality
 	public void france() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
