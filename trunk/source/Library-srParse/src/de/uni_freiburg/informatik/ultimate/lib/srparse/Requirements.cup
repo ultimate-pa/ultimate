@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pa
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain21Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDelayed;
 
 
 parser ReqParser;
@@ -118,9 +120,9 @@ terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
 terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
 terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE, AFTERWARDS;
 terminal THEN, PREVIOUSLY, AS, WELL;
-terminal WAS, PRECEDED, SUCCEEDED, BY;
+terminal WAS, PRECEDED, SUCCEEDED, BY, TOGGLES;
 terminal WHERE, DOES, NOT;
-terminal ONCE, BECOMES, SATISFIED, FOR, EVERY;
+terminal ONCE, BECOMES, SATISFIED, FOR, EVERY, LATER;
 terminal MOST, LEAST, LESS, THAN;
 terminal TIME, UNITS, SEC, USEC, MSEC;
 terminal THERE, ONE, EXECUTION, SEQUENCE, SUCH;
@@ -136,7 +138,6 @@ terminal String ID;
 terminal String TYPE;
 terminal String REALNUMBER;
 terminal String NUMBER;
-
 
 /* Non-terminals */
 non terminal String propid;
@@ -227,6 +228,8 @@ opattern ::= IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
 				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain21Pattern.class); RESULT.addCdd(s,r,q,p); :}
   			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r WHERE expression:s DOES NOT HOLD BETWEEN expression:t AND expression:u
 				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(u,s,t,r,q,p); :}
+			| IF expression:p HOLDS COMMA? THEN expression:s TOGGLES expression:t
+      			{: RESULT = new PatternBuilder(); RESULT.setType(TogglePattern.class); RESULT.addCdd(p,s,t); :}
   			;
   
 rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:d
@@ -249,6 +252,8 @@ rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(BndPossResponsePattern.class).addCdd(q,p).addDuration(d); :}
   			| AFTER expression:p HOLDS FOR duration:d COMMA? THEN expression:q HOLDS
 				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(q,p).addDuration(d); :}
+			| IF expression:p HOLDS COMMA? THEN expression:s TOGGLES expression:t AT MOST duration:d LATER
+      			{: RESULT = new PatternBuilder(); RESULT.setType(TogglePatternDelayed.class); RESULT.addCdd(p,s,t).addDuration(d); :}
   			;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}

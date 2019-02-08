@@ -88,6 +88,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "least"          { return symbol(ReqSymbols.LEAST); }
    "initially"      { return symbol(ReqSymbols.INITIALLY); }
    "less"           { return symbol(ReqSymbols.LESS); }
+   "later"           { return symbol(ReqSymbols.LATER); }
    "most"           { return symbol(ReqSymbols.MOST); }
    "msec"           { return symbol(ReqSymbols.MSEC); }
    "ms"             { return symbol(ReqSymbols.MSEC); }
@@ -107,6 +108,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "then"           { return symbol(ReqSymbols.THEN); }
    "time"           { return symbol(ReqSymbols.TIME); }
    "to"             { return symbol(ReqSymbols.TO); }
+   "toggles"        { return symbol(ReqSymbols.TOGGLES); }
    "transitions"    { return symbol(ReqSymbols.TRANSITIONS); }
    "twice"          { return symbol(ReqSymbols.TWICE); }
    "units"          { return symbol(ReqSymbols.UNITS); }
