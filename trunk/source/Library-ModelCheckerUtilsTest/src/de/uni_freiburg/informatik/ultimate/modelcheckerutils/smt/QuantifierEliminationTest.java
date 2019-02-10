@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -114,7 +115,7 @@ public class QuantifierEliminationTest {
 		final Sort sort_Array = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 
 		// Constants
-		final Term con_0 = mScript.numeral("0");
+		final Term con_0 = Rational.ZERO.toTerm(mIntSort);
 		final Term con_1 = mScript.numeral("1");
 
 		// Vars
@@ -134,8 +135,7 @@ public class QuantifierEliminationTest {
 										new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
 										mScript.term("or",
 												mScript.term("=", var_v_oldvalid_88, mScript.term("store",
-														mScript.term("store", var_v_valid_207, var_v_probe3_6_p9base_40,
-																con_1),
+														var_v_valid_207,
 														var_v_probe3_6_p9base_40, con_0)),
 												mScript.term("=", var_v_probe3_6_p9base_40, con_0),
 												mScript.term("not",
