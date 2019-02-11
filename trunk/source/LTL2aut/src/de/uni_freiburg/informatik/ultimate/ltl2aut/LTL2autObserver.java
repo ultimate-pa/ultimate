@@ -39,15 +39,19 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -126,17 +130,15 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private static LTLPropertyCheck createCheckFromProperty(final String ltlProperty) throws Throwable {
+	private LTLPropertyCheck createCheckFromProperty(final String ltlProperty) throws Throwable {
 		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
 		final Pattern pattern = Pattern.compile("AP\\((.*)\\)");
 		final Matcher matcher = pattern.matcher(ltlProperty);
-		final CheckableExpression trueLit =
-				new CheckableExpression(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true), Collections.emptyList());
 
 		while (matcher.find()) {
 			final String key = matcher.group(0);
-			final String expr = matcher.group(1);
-			apIrs.put(key, trueLit);
+			final CheckableExpression expr = createCheckableExpression(matcher.group(1));
+			apIrs.put(key, expr);
 		}
 		if (apIrs.isEmpty()) {
 			throw new IllegalArgumentException("No atomic propositions in " + ltlProperty);
@@ -154,6 +156,30 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 
 		return new LTLPropertyCheck(newLtlProperty, irs, null);
+	}
+
+	private CheckableExpression createCheckableExpression(final String expr) {
+
+		final String niceProgram = "procedure main() { #thevar := %s ;}";
+
+		final String localProg = String.format(niceProgram, expr.trim());
+		final BoogieSymbolFactory symFac = new BoogieSymbolFactory();
+		final de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer lexer =
+				new de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer(IOUtils.toInputStream(localProg));
+		lexer.setSymbolFactory(symFac);
+		final de.uni_freiburg.informatik.ultimate.boogie.parser.Parser p =
+				new de.uni_freiburg.informatik.ultimate.boogie.parser.Parser(lexer, symFac);
+
+		try {
+			final Unit x = (Unit) p.parse().value;
+			final Procedure proc = (Procedure) x.getDeclarations()[0];
+			final AssignmentStatement stmt = (AssignmentStatement) proc.getBody().getBlock()[0];
+			final Expression bExpr = stmt.getRhs()[0];
+			return new CheckableExpression(bExpr, Collections.emptyList());
+		} catch (final Exception e) {
+			mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", expr, e));
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static String getAPSymbol(final int i) {
