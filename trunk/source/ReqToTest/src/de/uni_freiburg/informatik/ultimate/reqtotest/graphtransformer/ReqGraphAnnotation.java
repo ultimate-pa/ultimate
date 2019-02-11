@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -12,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 
 public class ReqGraphAnnotation extends ModernAnnotations {
 
