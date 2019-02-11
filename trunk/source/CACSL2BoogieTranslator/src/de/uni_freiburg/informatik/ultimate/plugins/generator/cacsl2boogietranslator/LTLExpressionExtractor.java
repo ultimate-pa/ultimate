@@ -55,7 +55,7 @@ public class LTLExpressionExtractor {
 	private LinkedHashMap<String, Expression> mMap;
 
 	// alphabet without X, U, F, G
-	private static final String sAlpha = "ABCDEHIJKLMNOPQRSTVWYZ";
+	private static final String ALPHABET = "ABCDEHIJKLMNOPQRSTVWYZ";
 
 	/**
 	 * @return true iff ACSLNode is a GlobalLTLInvariant and everything is done, false otherwise
@@ -91,15 +91,15 @@ public class LTLExpressionExtractor {
 	}
 
 	public static String getAPSymbol(final int i) {
-		if (i < sAlpha.length()) {
-			return String.valueOf(sAlpha.charAt(i));
+		if (i < ALPHABET.length()) {
+			return String.valueOf(ALPHABET.charAt(i));
 		}
 
 		String rtr = "A";
 		int idx = i;
-		while (idx > sAlpha.length()) {
-			idx = idx - sAlpha.length();
-			rtr += String.valueOf(sAlpha.charAt(idx % sAlpha.length()));
+		while (idx > ALPHABET.length()) {
+			idx = idx - ALPHABET.length();
+			rtr += String.valueOf(ALPHABET.charAt(idx % ALPHABET.length()));
 		}
 		return rtr;
 	}

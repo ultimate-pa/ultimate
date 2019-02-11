@@ -127,7 +127,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private String getLTL2BAProperty(final String ltlProperty) {
+	private static String getLTL2BAProperty(final String ltlProperty) {
 		String rtr = ltlProperty.toLowerCase();
 		rtr = rtr.replaceAll("\\bf\\b", " <> ");
 		rtr = rtr.replaceAll("\\bg\\b", " [] ");
@@ -140,7 +140,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return rtr;
 	}
 
-	private String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
+	private static String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
 		String rtr = property;
 		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
 			rtr = rtr.replaceAll(entry.getKey(),
@@ -172,19 +172,18 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		if (properties.isEmpty()) {
 			mLogger.info("No LTL specification in input file.");
 			return new String[0];
-		} else {
-			if (properties.size() > 1) {
-				throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
-			}
-			final String[] rtr = new String[1 + irs.size()];
-			rtr[0] = properties.get(0);
-			int i = 1;
-			for (final String entry : irs) {
-				rtr[i] = entry;
-				i++;
-			}
-			return rtr;
 		}
+		if (properties.size() > 1) {
+			throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
+		}
+		final String[] rtr = new String[1 + irs.size()];
+		rtr[0] = properties.get(0);
+		int i = 1;
+		for (final String entry : irs) {
+			rtr[i] = entry;
+			i++;
+		}
+		return rtr;
 	}
 
 	private void readInputFile(final List<String> properties, final List<String> irs) throws IOException {
@@ -203,7 +202,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			br.close();
 		} catch (final IOException e) {
 			mLogger.error("Error while reading " + mInputFile + ": " + e);
-			line = null;
 			throw e;
 		}
 	}
@@ -218,7 +216,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private Map<String, CheckableExpression> getIRS(final String[] entries) throws Throwable {
+	private static Map<String, CheckableExpression> getIRS(final String[] entries) throws Throwable {
 		// TODO: finish
 		// mLogger.debug("Parsing mapping from AP to BoogieCode...");
 		// Map<String, CheckableExpression> aps = new HashMap<>();
