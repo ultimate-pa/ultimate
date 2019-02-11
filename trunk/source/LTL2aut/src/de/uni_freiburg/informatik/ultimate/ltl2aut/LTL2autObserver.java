@@ -31,18 +31,23 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -66,7 +71,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class LTL2autObserver implements IUnmanagedObserver {
 
 	private static final String LTL_MARKER = "#LTLProperty:";
-	private static final String IRS_MARKER = "#IRS:";
+
+	// alphabet without X, U, F, G
+	private static final String ALPHABET = "ABCDEHIJKLMNOPQRSTVWYZ";
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
@@ -93,29 +100,21 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
-		// TODO: Change s.t. this plugin returns an NWA with Boogie code
-		String ltlProperty;
-		Map<String, CheckableExpression> irs;
-		if (mCheck != null) {
-			// if there is a check, there is already boogie code
-			// the ltl string is in our ACSL format, we should convert it to
-			// ltl2aut format
-			// see http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/
-			ltlProperty = mCheck.getLTLProperty();
-			irs = mCheck.getCheckableAtomicPropositions();
-		} else {
-			// there is no check, so we either need to read the property from
-			// the boogie file or from the settings
-			// both formats are in ltl2aut format
-			// we need to create a check with boogie-code
-			final String[] specification = getSpecification();
-			if (specification == null || specification.length == 0 || specification[0].isEmpty()) {
-				throw new UnsupportedOperationException("No specification given");
+		// if there is a check, there is already boogie code
+		// the ltl string is in our ACSL format, we should convert it to
+		// ltl2aut format see http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/
+		if (mCheck == null) {
+			// there is no check, so we either need to read the property from the boogie file or from the settings
+			// both formats are in ltl2aut format and we need to create a check with boogie-code
+			final String[] specification = getLTLProperty();
+			if (specification.length > 1) {
+				throw new UnsupportedOperationException(
+						"We currently support only one LTL property at a time, but found " + specification.length);
 			}
-			ltlProperty = specification[0];
-			irs = getIRS(Arrays.copyOfRange(specification, 1, specification.length));
-			mCheck = new LTLPropertyCheck(ltlProperty, irs, null);
+			mCheck = createCheckFromProperty(specification[0]);
 		}
+		final String ltlProperty = mCheck.getLTLProperty();
+		final Map<String, CheckableExpression> irs = mCheck.getCheckableAtomicPropositions();
 
 		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		final AstNode node = getNeverClaim(ltl2baProperty);
@@ -125,6 +124,50 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		mNWAContainer = new NWAContainer(nwa);
 		mCheck.annotate(mNWAContainer);
+	}
+
+	private static LTLPropertyCheck createCheckFromProperty(final String ltlProperty) throws Throwable {
+		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
+		final Pattern pattern = Pattern.compile("AP\\((.*)\\)");
+		final Matcher matcher = pattern.matcher(ltlProperty);
+		final CheckableExpression trueLit =
+				new CheckableExpression(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true), Collections.emptyList());
+
+		while (matcher.find()) {
+			final String key = matcher.group(0);
+			final String expr = matcher.group(1);
+			apIrs.put(key, trueLit);
+		}
+		if (apIrs.isEmpty()) {
+			throw new IllegalArgumentException("No atomic propositions in " + ltlProperty);
+		}
+
+		// we need to rename the AP(...) expressions to symbols s.t. ltl2ba does not get confused
+		final Map<String, CheckableExpression> irs = new LinkedHashMap<>();
+		String newLtlProperty = ltlProperty;
+		int i = 0;
+		for (final Entry<String, CheckableExpression> entry : apIrs.entrySet()) {
+			final String freshSymbol = getAPSymbol(i);
+			++i;
+			newLtlProperty = newLtlProperty.replaceAll(Pattern.quote(entry.getKey()), freshSymbol);
+			irs.put(freshSymbol, entry.getValue());
+		}
+
+		return new LTLPropertyCheck(newLtlProperty, irs, null);
+	}
+
+	public static String getAPSymbol(final int i) {
+		if (i < ALPHABET.length()) {
+			return String.valueOf(ALPHABET.charAt(i));
+		}
+
+		String rtr = "A";
+		int idx = i;
+		while (idx > ALPHABET.length()) {
+			idx = idx - ALPHABET.length();
+			rtr += String.valueOf(ALPHABET.charAt(idx % ALPHABET.length()));
+		}
+		return rtr;
 	}
 
 	private static String getLTL2BAProperty(final String ltlProperty) {
@@ -149,54 +192,35 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return rtr;
 	}
 
-	private String[] getSpecification() throws IOException {
+	private String[] getLTLProperty() throws IOException {
+		final String[] properties;
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
-			final String[] property = extractPropertyFromFile();
-			if (property.length > 0) {
-				return property;
+			properties = extractPropertyFromInputFile();
+			if (properties.length > 0) {
+				return properties;
 			}
+			throw new IllegalArgumentException("File " + mInputFile + " did not contain an LTL property");
 		}
 
-		mLogger.info("Using LTL specification from settings.");
-		final String property =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_PPROPERTY);
-		return property.split("\n");
+		mLogger.info("Using LTL properties from settings");
+		properties = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PreferenceInitializer.LABEL_PPROPERTY).split("\n");
+		if (properties.length > 0 && !properties[0].isEmpty()) {
+			return properties;
+		}
+		throw new IllegalArgumentException("Settings did not contain an LTL property");
 	}
 
-	private String[] extractPropertyFromFile() throws IOException {
-		final List<String> properties = new ArrayList<>();
-		final List<String> irs = new ArrayList<>();
-		readInputFile(properties, irs);
-
-		if (properties.isEmpty()) {
-			mLogger.info("No LTL specification in input file.");
-			return new String[0];
-		}
-		if (properties.size() > 1) {
-			throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
-		}
-		final String[] rtr = new String[1 + irs.size()];
-		rtr[0] = properties.get(0);
-		int i = 1;
-		for (final String entry : irs) {
-			rtr[i] = entry;
-			i++;
-		}
-		return rtr;
-	}
-
-	private void readInputFile(final List<String> properties, final List<String> irs) throws IOException {
+	private String[] extractPropertyFromInputFile() throws IOException {
 		BufferedReader br;
 		String line = null;
+		final List<String> properties = new ArrayList<>();
 		try {
 			br = new BufferedReader(new FileReader(mInputFile));
 			while ((line = br.readLine()) != null) {
 				if (line.contains(LTL_MARKER)) {
 					properties.add(line.replaceFirst("//", "").replaceAll(LTL_MARKER, "").trim());
-				}
-				if (line.contains(IRS_MARKER)) {
-					irs.add(line.replaceFirst("//", "").replaceAll(IRS_MARKER, "").trim());
 				}
 			}
 			br.close();
@@ -204,6 +228,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			mLogger.error("Error while reading " + mInputFile + ": " + e);
 			throw e;
 		}
+		return properties.toArray(new String[properties.size()]);
 	}
 
 	private AstNode getNeverClaim(final String property) throws Throwable {
@@ -214,36 +239,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			mLogger.fatal(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;
 		}
-	}
-
-	private static Map<String, CheckableExpression> getIRS(final String[] entries) throws Throwable {
-		// TODO: finish
-		// mLogger.debug("Parsing mapping from AP to BoogieCode...");
-		// Map<String, CheckableExpression> aps = new HashMap<>();
-		// for (String entry : entries) {
-		// try {
-		//
-		//
-		// de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer lexer = new
-		// Lexer(new InputStreamReader(
-		// IOUtils.toInputStream(entry.trim())));
-		// de.uni_freiburg.informatik.ultimate.boogie.parser.Parser p = new
-		// Parser(lexer);
-		// Object x = p.parse().value;
-		// // AstNode nodea = (AstNode) p.parse().value;
-		// // append node to dictionary of atomic propositions
-		// // if (nodea instanceof AtomicProposition) {
-		// // aps.put(((AtomicProposition) nodea).getIdent(),
-		// // nodea.getOutgoingNodes().get(0));
-		// // }
-		// } catch (Throwable e) {
-		// mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s",
-		// entry, e));
-		// throw e;
-		// }
-		// }
-		throw new UnsupportedOperationException("Unfinished");
-		// return aps;
 	}
 
 	private INestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(final AstNode neverclaim,
