@@ -2,8 +2,7 @@
 // Based on the small program from section 2 of the paper
 // manually translated by DD
 //
-// #LTLProperty: <>[]a1
-// #IRS: a1: x = 1
+// #LTLProperty: <>[]AP(x==1)
 // 
 // Property should hold 
 // 
