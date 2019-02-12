@@ -166,16 +166,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	// Rounding mode used when feround functions are disabled in the settings.
-	// Initialized by default with RNE (FE_TONEAREST)
-	// When feround is disabled, fegetround returns 1 (see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS)
-	// without checking the value of this variable, and fesetround always return the fail value.
-	private final IdentifierExpression mDefaultRoundingMode;
-
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
-		mDefaultRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
 	}
 
 	@Override
@@ -900,16 +893,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	/*
-	 * If changing rounding mode is enabled, returns the value of the boogie global variable currentRoundingMode,
-	 * otherwise returns the hardcoded value from mDefaultRoundingMode (RNE)
-	 */
 	public Expression getCurrentRoundingMode() {
-		if (mSettings.isFesetroundEnabled()) {
-			return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
-					ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		}
-		return mDefaultRoundingMode;
+		return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	@Override
@@ -1329,45 +1315,33 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
 
-		if (mSettings.isFesetroundEnabled()) {
-			/*
-			 * hardcoded to values from https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS -1 the default rounding
-			 * direction is not known 0 toward zero, FE_TOWARDZERO 1 to nearest, FE_TONEAREST 2 towards positive
-			 * infinity, FE_UPWARD 3 towards negative infinity, FE_DOWNWARD
-			 */
+		final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
+				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
-			final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
-					ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		// creates conditional expressions
+		final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTZ.getBoogieIdentifierExpression());
+		final Expression eqRTN = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTN.getBoogieIdentifierExpression());
+		final Expression eqRTP = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTP.getBoogieIdentifierExpression());
+		final Expression eqRNE = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RNE.getBoogieIdentifierExpression());
 
-			// creates conditional expressions
-			final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-					globalVarIdentifier, SmtRoundingMode.RTZ.getBoogieIdentifierExpression());
-			final Expression eqRTN = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-					globalVarIdentifier, SmtRoundingMode.RTN.getBoogieIdentifierExpression());
-			final Expression eqRTP = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-					globalVarIdentifier, SmtRoundingMode.RTP.getBoogieIdentifierExpression());
-			final Expression eqRNE = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-					globalVarIdentifier, SmtRoundingMode.RNE.getBoogieIdentifierExpression());
+		// creates integer literal expressions
+		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
 
-			// creates integer literal expressions
-			final Expression fail =
-					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+		final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2));
+		final Expression three = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
 
-			final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2));
-			final Expression three =
-					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+		// creates IfThenElse expression
+		final Expression condRTN = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, three, fail);
+		final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTP, two, condRTN);
+		final Expression condRNE = ExpressionFactory.constructIfThenElseExpression(loc, eqRNE, one, condRTP);
+		final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRNE);
 
-			// creates IfThenElse expression
-			final Expression condRTN = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, three, fail);
-			final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTP, two, condRTN);
-			final Expression condRNE = ExpressionFactory.constructIfThenElseExpression(loc, eqRNE, one, condRTP);
-			final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRNE);
-
-			return new RValue(condRTZ, intCPrimitive);
-		}
-		// harcoded to return value of RNE (round nearest ties to even)
-		return new RValue(one, intCPrimitive);
+		return new RValue(condRTZ, intCPrimitive);
 	}
 
 	@Override

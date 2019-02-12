@@ -239,9 +239,8 @@ public class PostProcessor {
 				decl.addAll(declareFloatDataTypes(loc));
 			}
 
+			decl.addAll(declareCurrentRoundingModeVar(loc));
 			if (mSettings.isFesetroundEnabled()) {
-				decl.addAll(declareCurrentRoundingModeVar(loc));
-
 				decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
 			}
 
@@ -829,8 +828,7 @@ public class PostProcessor {
 		}
 
 		// initializes current rounding mode var
-		if (mSettings.isBitvectorTranslation() && mSettings.getInitialRoundingMode() != null
-				&& mSettings.isFesetroundEnabled()) {
+		if (mSettings.isBitvectorTranslation()) {
 			final Expression value;
 
 			value = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
