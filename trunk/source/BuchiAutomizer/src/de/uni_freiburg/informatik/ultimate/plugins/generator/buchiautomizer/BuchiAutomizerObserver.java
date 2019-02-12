@@ -223,7 +223,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			case TIMEOUT:
 			case UNKNOWN:
 				// use the standard report, but say its the LTL property
-				whatToProve = ltlAnnot.getLTLProperty();
+				whatToProve = ltlAnnot.getUltimateLTLProperty();
 				break;
 			default:
 				throw new AssertionError("Extend the switch with the new enum member " + result);
@@ -286,7 +286,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private void reportLTLPropertyHolds(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
 		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
-				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
+				"Buchi Automizer proved that the LTL property " + ltlAnnot.getUltimateLTLProperty() + " holds");
 		reportResult(result);
 	}
 
@@ -328,7 +328,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
-					ltlAnnot.getLTLProperty()));
+					ltlAnnot.getUltimateLTLProperty()));
 		}
 	}
 

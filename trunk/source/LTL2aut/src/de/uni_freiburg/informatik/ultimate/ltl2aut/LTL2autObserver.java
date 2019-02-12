@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -117,14 +116,13 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			}
 			mCheck = createCheckFromProperty(specification[0]);
 		}
-		final String ltlProperty = mCheck.getLTLProperty();
 		final Map<String, CheckableExpression> irs = mCheck.getCheckableAtomicPropositions();
 
-		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
+		final String ltl2baProperty = mCheck.getLTL2BALTLProperty();
 		final AstNode node = getNeverClaim(ltl2baProperty);
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory(mStorage);
 		final INestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
-		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
+		mLogger.info("LTL Property is: " + mCheck.getUltimateLTLProperty());
 
 		mNWAContainer = new NWAContainer(nwa);
 		mCheck.annotate(mNWAContainer);
@@ -192,28 +190,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		while (idx > ALPHABET.length()) {
 			idx = idx - ALPHABET.length();
 			rtr += String.valueOf(ALPHABET.charAt(idx % ALPHABET.length()));
-		}
-		return rtr;
-	}
-
-	private static String getLTL2BAProperty(final String ltlProperty) {
-		String rtr = ltlProperty.toLowerCase();
-		rtr = rtr.replaceAll("\\bf\\b", " <> ");
-		rtr = rtr.replaceAll("\\bg\\b", " [] ");
-		rtr = rtr.replaceAll("\\bx\\b", " X ");
-		rtr = rtr.replaceAll("\\bu\\b", " U ");
-		rtr = rtr.replaceAll("\\br\\b", " V ");
-		rtr = rtr.replaceAll("<==>", "<->");
-		rtr = rtr.replaceAll("==>", "->");
-		rtr = rtr.replaceAll("\\s+", " ");
-		return rtr;
-	}
-
-	private static String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
-		String rtr = property;
-		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
-			rtr = rtr.replaceAll(entry.getKey(),
-					"(" + BoogiePrettyPrinter.print(entry.getValue().getExpression()) + ")");
 		}
 		return rtr;
 	}

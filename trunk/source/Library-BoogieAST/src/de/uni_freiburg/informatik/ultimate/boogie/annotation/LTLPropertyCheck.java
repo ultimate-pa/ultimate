@@ -27,12 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.boogie.annotation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -53,9 +56,10 @@ public class LTLPropertyCheck extends Check {
 	private static final String KEY = LTLPropertyCheck.class.getSimpleName();
 
 	@Visualizable
-	private final String mLTLProptery;
+	private final String mUltimateLTLProptery;
 	private final Map<String, CheckableExpression> mCheckableAtomicPropositions;
-	private List<VariableDeclaration> mGlobalDeclarations;
+	private final List<VariableDeclaration> mGlobalDeclarations;
+	private final String mLTL2BALTLProptery;
 
 	public LTLPropertyCheck(final String ltlPropertyAsString,
 			final Map<String, CheckableExpression> checkableAtomicPropositions,
@@ -65,9 +69,14 @@ public class LTLPropertyCheck extends Check {
 		assert checkableAtomicPropositions != null : "There is a property the map between APs and Boogie expressions is not there";
 		assert !checkableAtomicPropositions
 				.isEmpty() : "The map between APs and Boogie expressions is empty (remember, even true and false are Boogie expressions)";
-		mLTLProptery = ltlPropertyAsString;
+		mUltimateLTLProptery = prettyPrintProperty(checkableAtomicPropositions, ltlPropertyAsString);
+		mLTL2BALTLProptery = getLTL2BAProperty(ltlPropertyAsString);
 		mCheckableAtomicPropositions = checkableAtomicPropositions;
-		mGlobalDeclarations = globalDeclarations;
+		if (globalDeclarations == null) {
+			mGlobalDeclarations = Collections.emptyList();
+		} else {
+			mGlobalDeclarations = globalDeclarations;
+		}
 	}
 
 	public Map<String, CheckableExpression> getCheckableAtomicPropositions() {
@@ -75,24 +84,47 @@ public class LTLPropertyCheck extends Check {
 	}
 
 	public List<VariableDeclaration> getGlobalDeclarations() {
-		if (mGlobalDeclarations == null) {
-			mGlobalDeclarations = new ArrayList<>(0);
-		}
 		return mGlobalDeclarations;
 	}
 
-	public String getLTLProperty() {
-		return mLTLProptery;
+	public String getUltimateLTLProperty() {
+		return mUltimateLTLProptery;
+	}
+
+	public String getLTL2BALTLProperty() {
+		return mLTL2BALTLProptery;
 	}
 
 	@Override
 	public String getNegativeMessage() {
-		return "The LTL property " + mLTLProptery + " was violated.";
+		return "The LTL property " + mUltimateLTLProptery + " was violated.";
 	}
 
 	@Override
 	public String getPositiveMessage() {
-		return "The LTL property " + mLTLProptery + " holds.";
+		return "The LTL property " + mUltimateLTLProptery + " holds.";
+	}
+
+	private static String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
+		String rtr = property;
+		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
+			rtr = rtr.replaceAll(entry.getKey(),
+					"(" + BoogiePrettyPrinter.print(entry.getValue().getExpression()) + ")");
+		}
+		return rtr;
+	}
+
+	private static String getLTL2BAProperty(final String ltlProperty) {
+		String rtr = ltlProperty.toLowerCase();
+		rtr = rtr.replaceAll("\\bf\\b", " <> ");
+		rtr = rtr.replaceAll("\\bg\\b", " [] ");
+		rtr = rtr.replaceAll("\\bx\\b", " X ");
+		rtr = rtr.replaceAll("\\bu\\b", " U ");
+		rtr = rtr.replaceAll("\\br\\b", " V ");
+		rtr = rtr.replaceAll("<==>", "<->");
+		rtr = rtr.replaceAll("==>", "->");
+		rtr = rtr.replaceAll("\\s+", " ");
+		return rtr;
 	}
 
 	@Override
