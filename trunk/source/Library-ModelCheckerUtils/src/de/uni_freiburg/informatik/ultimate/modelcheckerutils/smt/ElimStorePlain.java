@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -75,13 +75,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  * <li>(store aElim storeIndex newValue) by aNew, and
  * <li>(select aElim i) by oldCell_i for each i∈Idx.
  * </ul>
- * Furthermore, we add the following conjuncts for each i∈Idx. 
+ * Furthermore, we add the following conjuncts for each i∈Idx.
  * <ul>
- * <li> (i == storeIndex)==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) 
+ * <li> (i == storeIndex)==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k)
  * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
  * </ul>
- * 
- * Optimizations: 
+ *
+ * Optimizations:
  * <ul>
  * <li> Optim1: We check equality and disequality for each pair of
  * indices and evaluate (dis)equalities in the formula above directly. Each
@@ -89,12 +89,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  * to be added as an additional conjunct.
  * <li> Optim2: We do not work with all
  * indices but build equivalence classes and work only with the representatives.
- * (We introduce only one oldCell variable for each equivalence class) 
+ * (We introduce only one oldCell variable for each equivalence class)
  * <li> Optim3: For each index i that is disjoint for the store index we do not introduce the
- * variable oldCell_i, but use aNew[i] instead. 
+ * variable oldCell_i, but use aNew[i] instead.
  * <li> Optim4: For each i∈Idx we check
  * the context if we find some term tEq that is equivalent to oldCell_i. In case
- * we found some we use tEq instead of oldCell_i. 
+ * we found some we use tEq instead of oldCell_i.
  * <li> Optim5: (Only sound in
  * combination with Optim3. For each pair i,k∈Idx that are both disjoint from
  * storeIndex, we can drop the "i == k ==> oldCell_i == oldCell_k" term.
@@ -112,7 +112,7 @@ public class ElimStorePlain {
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private int mRecursiveCallCounter = -1;
-	
+
 	public ElimStorePlain(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		super();
@@ -126,7 +126,7 @@ public class ElimStorePlain {
 	 * Old, iterative elimination. Is sound but if we cannot eliminate all
 	 * quantifiers it sometimes produces a large number of similar
 	 * disjuncts/conjuncts that is too large for simplification.
-	 * 
+	 *
 	 */
 	public EliminationTask elimAll(final EliminationTask eTask) {
 
@@ -185,7 +185,7 @@ public class ElimStorePlain {
 		return new EliminationTask(eTask.getQuantifier(), resultEliminatees, QuantifierUtils
 				.applyCorrespondingFiniteConnective(mMgdScript.getScript(), eTask.getQuantifier(), resultDisjuncts));
 	}
-	
+
 	/**
 	 * New recursive elimination. Not yet finished but should be sound.
 	 */
@@ -204,8 +204,8 @@ public class ElimStorePlain {
 				mRecursiveCallCounter, eTask.getEliminatees().size(), inputSize, outputSize));
 		return result;
 	}
-	
-	
+
+
 	private EliminationTask doElimOneRec(final Term context, final EliminationTask eTask) {
 		// input one ?
 		// split in disjunction
@@ -271,8 +271,8 @@ public class ElimStorePlain {
 		}
 		return finalResult;
 	}
-	
-	
+
+
 
 	private Term compose(final Term additionalContext, final int quantifier, final List<Term> resSameJuncts) {
 		final Term resSameJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(), quantifier,
@@ -323,7 +323,7 @@ public class ElimStorePlain {
 
 	public static EliminationTask applyNonSddEliminations(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final EliminationTask eTask, final PqeTechniques techniques) {
-		
+
 		final Term xnf = QuantifierUtils.transformToXnf(services, mgdScript.getScript(), eTask.getQuantifier(),
 				mgdScript, eTask.getTerm(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
@@ -361,6 +361,11 @@ public class ElimStorePlain {
 		return result;
 	}
 
+	/**
+	 * Given a set of {@link TermVariables} a_1,...,a_n, let dim(a_i) be the "array
+	 * dimension" of variable a_i. Returns a tree relation that contains (dim(a_i),
+	 * a_i) for all i\in{1,...,n}.
+	 */
 	private static TreeRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
 		final TreeRelation<Integer, TermVariable> tr = new TreeRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
@@ -369,8 +374,8 @@ public class ElimStorePlain {
 		}
 		return tr;
 	}
-	
-	
+
+
 	private static boolean maxSizeIncrease(final TreeRelation<Integer, TermVariable> tr1, final TreeRelation<Integer, TermVariable> tr2) {
 		if (tr2.isEmpty()) {
 			return false;
@@ -389,7 +394,7 @@ public class ElimStorePlain {
 			return false;
 		}
 		return maxElemsTr2.size() > maxElemsTr1.size();
-		
+
 	}
 
 }
