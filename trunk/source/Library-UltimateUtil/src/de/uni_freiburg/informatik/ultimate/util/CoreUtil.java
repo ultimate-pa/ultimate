@@ -630,6 +630,15 @@ public class CoreUtil {
 		return builder.toString();
 	}
 
+	public static <T> String join(final T[] collection, final String delimiter) {
+		final StringBuilder builder = new StringBuilder();
+		for (final T elem : collection) {
+			builder.append(elem);
+			builder.append(delimiter);
+		}
+		return builder.toString();
+	}
+
 	/**
 	 * Returns a String representation of time as a fraction of the largest whole unit.
 	 *

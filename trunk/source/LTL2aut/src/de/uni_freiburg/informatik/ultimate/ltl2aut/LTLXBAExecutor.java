@@ -37,6 +37,7 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -75,12 +76,12 @@ public class LTLXBAExecutor {
 	public AstNode ltl2Ast(final String ltlFormula) throws Exception {
 		final String toolOutput = execLTLXBA(ltlFormula.trim());
 		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
-		final InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
+		final InputStreamReader isReader = new InputStreamReader(IOUtils.toInputStream(toolOutput));
 		try {
-			return (AstNode) new Parser(new Lexer(file)).parse().value;
+			return (AstNode) new Parser(new Lexer(isReader)).parse().value;
 		} catch (final Exception ex) {
 			mLogger.fatal("Exception during parsing of LTLXBA output for formula " + ltlFormula, ex);
-			mLogger.fatal("Tool said:");
+			mLogger.fatal("Parser input was:");
 			mLogger.fatal(toolOutput);
 			throw ex;
 		}
@@ -98,9 +99,19 @@ public class LTLXBAExecutor {
 	private String execLTLXBA(final String ltlFormula) throws IOException, InterruptedException {
 		final String[] command = getCommand(ltlFormula);
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
-		final String rtr = convertStreamToString(process.getInputStream());
-		process.waitfor();
-		return rtr;
+		final MonitoredProcessState state = process.waitfor();
+		final String in = convertStreamToString(process.getInputStream());
+		final String err = convertStreamToString(process.getErrorStream());
+
+		if (in == null || in.isEmpty()) {
+			final String cmd = CoreUtil.join(command, " ");
+			mLogger.fatal(cmd + " did not produce any output on stdout");
+			mLogger.fatal("stderr output:");
+			mLogger.fatal(err);
+			mLogger.fatal("Returncode: " + state.getReturnCode());
+			throw new IllegalArgumentException(cmd + " did not produce any output on stdout");
+		}
+		return in;
 	}
 
 	private static String convertStreamToString(final InputStream is) {
@@ -113,6 +124,7 @@ public class LTLXBAExecutor {
 			}
 			reader.close();
 		} catch (final IOException e) {
+			throw new RuntimeException(e);
 		}
 		return out.toString();
 	}
