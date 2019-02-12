@@ -42,10 +42,13 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory;
@@ -109,12 +112,12 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		if (mCheck == null) {
 			// there is no check, so we either need to read the property from the boogie file or from the settings
 			// both formats are in ltl2aut format and we need to create a check with boogie-code
-			final String[] specification = getLTLProperty();
+			final String[] specification = getLTLPropertyString();
 			if (specification.length > 1) {
 				throw new UnsupportedOperationException(
 						"We currently support only one LTL property at a time, but found " + specification.length);
 			}
-			mCheck = createCheckFromProperty(specification[0]);
+			mCheck = createCheckFromPropertyString(specification[0]);
 		}
 		final Map<String, CheckableExpression> irs = mCheck.getCheckableAtomicPropositions();
 
@@ -128,7 +131,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private LTLPropertyCheck createCheckFromProperty(final String ltlProperty) throws Throwable {
+	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty) throws Throwable {
 		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
 		final Pattern pattern = Pattern.compile("AP\\((.*)\\)");
 		final Matcher matcher = pattern.matcher(ltlProperty);
@@ -173,7 +176,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			final Procedure proc = (Procedure) x.getDeclarations()[0];
 			final AssignmentStatement stmt = (AssignmentStatement) proc.getBody().getBlock()[0];
 			final Expression bExpr = stmt.getRhs()[0];
-			return new CheckableExpression(bExpr, Collections.emptyList());
+			final Expression newBExpr = bExpr.accept(new DeclarationInformationAdder());
+			return new CheckableExpression(newBExpr, Collections.emptyList());
 		} catch (final Exception e) {
 			mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", expr, e));
 			throw new RuntimeException(e);
@@ -194,7 +198,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return rtr;
 	}
 
-	private String[] getLTLProperty() throws IOException {
+	private String[] getLTLPropertyString() throws IOException {
 		final String[] properties;
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
@@ -293,6 +297,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	public NWAContainer getNWAContainer() {
 		return mNWAContainer;
+	}
+
+	private static final class DeclarationInformationAdder extends GeneratedBoogieAstTransformer {
+		@Override
+		public Expression transform(final IdentifierExpression node) {
+			return new IdentifierExpression(node.getLocation(), node.getType(), node.getIdentifier(),
+					DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		}
 	}
 
 }
