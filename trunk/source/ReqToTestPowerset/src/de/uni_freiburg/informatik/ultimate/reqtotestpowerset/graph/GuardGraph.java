@@ -14,6 +14,7 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 	private final int mNodeLabel;
 	private HashMap<Integer, GuardGraph> mNodesMap;
 	private final Set<GuardGraph> mBuildingNodes;
+	private int nrOfEdges = 0;
 	
 	public GuardGraph(int label) {
 		mNodeLabel = label;
@@ -25,6 +26,18 @@ public class GuardGraph extends ModifiableLabeledEdgesMultigraph<GuardGraph, Ter
 		mNodeLabel = label;
 		mNodesMap = new HashMap<Integer, GuardGraph>();
 		mBuildingNodes = neighbours;
+	}
+	
+	public int getNrOfNodes() {
+		return getAllNodes().size();
+	}
+	
+	public void incEdges() {
+		nrOfEdges++;
+	}
+	
+	public int getNrOfEdges() {
+		return nrOfEdges;
 	}
 	
 	public Set<GuardGraph> getBuildingNodes() {
