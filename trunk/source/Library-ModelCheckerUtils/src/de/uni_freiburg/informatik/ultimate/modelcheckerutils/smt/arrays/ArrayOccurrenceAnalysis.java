@@ -28,8 +28,17 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Analyse for a given term and a given (wanted) array in which kinds of
@@ -105,5 +114,105 @@ public class ArrayOccurrenceAnalysis {
 		return mOtherFunctionApplications;
 	}
 
+	private class ArrOccFinder extends NonRecursive {
 
+		private Set<Term> mTermsInWhichWeAlreadyDescended;
+
+		class MyWalker extends TermWalker {
+			MyWalker(final Term term) {
+				super(term);
+			}
+
+			@Override
+			public void walk(final NonRecursive walker) {
+					if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
+						// do nothing
+					} else {
+						super.walk(walker);
+					}
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final ConstantTerm term) {
+				// cannot descend
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+				mTermsInWhichWeAlreadyDescended.add(term);
+				walker.enqueueWalker(new MyWalker(term.getSubterm()));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final ApplicationTerm term) {
+				mTermsInWhichWeAlreadyDescended.add(term);
+				final String fun = term.getFunction().getName();
+				if (fun.equals("=")) {
+					if (term.getParameters().length != 2) {
+						throw new UnsupportedOperationException("expecting equality with two parameters");
+					} else {
+						if (term.getParameters()[0] == mWantedArray) {
+							final Term equivalentArray = term.getParameters()[1];
+							mArrayEqualities.add(equivalentArray);
+							walker.enqueueWalker(new MyWalker(equivalentArray));
+						} else if (term.getParameters()[1] == mWantedArray) {
+							final Term equivalentArray = term.getParameters()[0];
+							mArrayEqualities.add(equivalentArray);
+							walker.enqueueWalker(new MyWalker(equivalentArray));
+						} else {
+							walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
+							walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
+						}
+					}
+				} else if (fun.equals("distinct")) {
+					throw new UnsupportedOperationException("UNF requires negated equality");
+				} else if (fun.equals("not")) {
+					assert term.getParameters().length == 1;
+					if (!SmtUtils.isAtomicFormula(term.getParameters()[0])) {
+						throw new UnsupportedOperationException("expected NNF");
+					}
+					final Term negatedAtom = term.getParameters()[0];
+//					if (fun.equals("=")) {
+//						if (term.getParameters().length != 2) {
+//							throw new UnsupportedOperationException("expecting equality with two parameters");
+//						} else {
+//							if (term.getParameters()[0] == mWantedArray) {
+//								final Term equivalentArray = term.getParameters()[1];
+//								mArrayEqualities.add(equivalentArray);
+//								walker.enqueueWalker(new MyWalker(equivalentArray));
+//							} else if (term.getParameters()[1] == mWantedArray) {
+//								final Term equivalentArray = term.getParameters()[0];
+//								mArrayEqualities.add(equivalentArray);
+//								walker.enqueueWalker(new MyWalker(equivalentArray));
+//							} else {
+//								walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
+//								walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
+//							}
+//						}
+//					} else {
+//						walker.enqueueWalker(new MyWalker(negatedAtom));
+//					}
+				}
+				for (final Term t : term.getParameters()) {
+					walker.enqueueWalker(new MyWalker(t));
+				}
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final LetTerm term) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+				walker.enqueueWalker(new MyWalker(term.getSubformula()));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final TermVariable term) {
+				// cannot descend
+			}
+		}
+
+	}
 }
