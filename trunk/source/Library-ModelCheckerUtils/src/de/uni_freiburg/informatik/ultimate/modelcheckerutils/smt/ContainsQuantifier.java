@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,18 +41,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Check if term contains some quantified subformula.
  * @author Matthias Heizmann
+ * @deprecated Use {@link QuantifierUtils#isQuantifierFree(Term)} instead.
  *
  */
+@Deprecated
 public class ContainsQuantifier extends NonRecursive {
-	
+
 	private boolean mQuantifierFound;
 	private int mFirstQuantifierFound = -1;
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
-	
+
 	class QuantifierFinder extends TermWalker {
 		QuantifierFinder(final Term term) { super(term); }
-		
-		
+
+
 		@Override
 		public void walk(final NonRecursive walker) {
 			if (mQuantifierFound) {
@@ -65,7 +67,7 @@ public class ContainsQuantifier extends NonRecursive {
 				}
 			}
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// cannot descend
@@ -96,7 +98,7 @@ public class ContainsQuantifier extends NonRecursive {
 			// cannot descend
 		}
 	}
-	
+
 	/**
 	 * Returns true iff this term contains the subterm of this ContainsSubterm
 	 * object.
@@ -110,7 +112,7 @@ public class ContainsQuantifier extends NonRecursive {
 		mTermsInWhichWeAlreadyDescended = null;
 		return mQuantifierFound;
 	}
-	
+
 	public int getFirstQuantifierFound() {
 		if (mFirstQuantifierFound == -1) {
 			throw new IllegalStateException("no quantifier found");
