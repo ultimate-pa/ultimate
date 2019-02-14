@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Analyse for a given term and a given (wanted) array in which kinds of
+ * Analyze for a given term and a given (wanted) array in which kinds of
  * subterms the array occurs.
  *
  * @author Matthias Heizmann
@@ -61,6 +62,7 @@ public class ArrayOccurrenceAnalysis {
 		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
+		new ArrOccFinder(mAnalyzedTerm);
 	}
 	/**
 	 * @return from the analyzed term all select-over-store subterms whose array is the wantedArray
@@ -115,8 +117,11 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	private class ArrOccFinder extends NonRecursive {
+		private final Set<Term> mTermsInWhichWeAlreadyDescended = new HashSet<>();
 
-		private Set<Term> mTermsInWhichWeAlreadyDescended;
+		public ArrOccFinder(final Term term) {
+			run(new MyWalker(term));
+		}
 
 		class MyWalker extends TermWalker {
 			MyWalker(final Term term) {
@@ -172,29 +177,74 @@ public class ArrayOccurrenceAnalysis {
 						throw new UnsupportedOperationException("expected NNF");
 					}
 					final Term negatedAtom = term.getParameters()[0];
-//					if (fun.equals("=")) {
-//						if (term.getParameters().length != 2) {
-//							throw new UnsupportedOperationException("expecting equality with two parameters");
-//						} else {
-//							if (term.getParameters()[0] == mWantedArray) {
-//								final Term equivalentArray = term.getParameters()[1];
-//								mArrayEqualities.add(equivalentArray);
-//								walker.enqueueWalker(new MyWalker(equivalentArray));
-//							} else if (term.getParameters()[1] == mWantedArray) {
-//								final Term equivalentArray = term.getParameters()[0];
-//								mArrayEqualities.add(equivalentArray);
-//								walker.enqueueWalker(new MyWalker(equivalentArray));
-//							} else {
-//								walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
-//								walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
-//							}
-//						}
-//					} else {
-//						walker.enqueueWalker(new MyWalker(negatedAtom));
-//					}
-				}
-				for (final Term t : term.getParameters()) {
-					walker.enqueueWalker(new MyWalker(t));
+					if (fun.equals("=")) {
+						if (term.getParameters().length != 2) {
+							throw new UnsupportedOperationException("expecting equality with two parameters");
+						} else {
+							if (term.getParameters()[0] == mWantedArray) {
+								final Term equivalentArray = term.getParameters()[1];
+								mArrayDisequalities.add(equivalentArray);
+								walker.enqueueWalker(new MyWalker(equivalentArray));
+							} else if (term.getParameters()[1] == mWantedArray) {
+								final Term equivalentArray = term.getParameters()[0];
+								mArrayDisequalities.add(equivalentArray);
+								walker.enqueueWalker(new MyWalker(equivalentArray));
+							} else {
+								walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
+								walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
+							}
+						}
+					} else {
+						walker.enqueueWalker(new MyWalker(negatedAtom));
+					}
+				} else if (fun.equals("store")) {
+					final NestedArrayStore nas = NestedArrayStore.convert(term);
+					if(nas != null && nas.getArray().equals(mWantedArray)) {
+						mNestedArrayStores.add(nas);
+						for (final Term index : nas.getIndices()) {
+							walker.enqueueWalker(new MyWalker(index));
+						}
+						for (final Term value : nas.getValues()) {
+							walker.enqueueWalker(new MyWalker(value));
+						}
+					} else {
+						for (final Term t : term.getParameters()) {
+							walker.enqueueWalker(new MyWalker(t));
+						}
+					}
+				} else if (fun.equals("select")) {
+					final ArraySelectOverStore asos = ArraySelectOverStore.convert(term);
+					if (asos != null) {
+						if (asos.getArrayStore().getArray().equals(mWantedArray)) {
+							mArraySelectOverStores.add(asos);
+							walker.enqueueWalker(new MyWalker(asos.getIndex()));
+							walker.enqueueWalker(new MyWalker(asos.getArrayStore().getIndex()));
+							walker.enqueueWalker(new MyWalker(asos.getArrayStore().getValue()));
+						} else {
+							for (final Term t : term.getParameters()) {
+								walker.enqueueWalker(new MyWalker(t));
+							}
+						}
+					} else {
+						final ArraySelect as = ArraySelect.convert(term);
+						if (as != null && as.getArray().equals(mWantedArray)) {
+							mArraySelects.add(as);
+							walker.enqueueWalker(new MyWalker(as.getIndex()));
+						} else {
+							for (final Term t : term.getParameters()) {
+								walker.enqueueWalker(new MyWalker(t));
+							}
+						}
+					}
+
+				} else {
+					for (final Term t : term.getParameters()) {
+						if (t.equals(mWantedArray)) {
+							mOtherFunctionApplications.add(t);
+ 						} else {
+ 							walker.enqueueWalker(new MyWalker(t));
+ 						}
+					}
 				}
 			}
 
