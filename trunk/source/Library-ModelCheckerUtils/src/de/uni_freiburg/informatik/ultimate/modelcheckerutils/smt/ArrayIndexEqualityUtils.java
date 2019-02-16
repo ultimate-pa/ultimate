@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class IndexEqualityUtils {
+public class ArrayIndexEqualityUtils {
 
 	/**
 	 * Add equality information for term that are obtained from context by only
