@@ -237,7 +237,7 @@ public class Elim1Store {
 					if (mdsos.getStore().getArray().equals(eliminatee)) {
 						final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 						final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-						final ThreeValuedEquivalenceRelation<Term> tver = IndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
+						final ThreeValuedEquivalenceRelation<Term> tver = ArrayIndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
 						final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
 						switch (indexEquality) {
 						case EQUAL:
@@ -281,7 +281,7 @@ public class Elim1Store {
 				preprocessedInput, context);
 
 
-		final ThreeValuedEquivalenceRelation<Term> equalityInformation = IndexEqualityUtils.collectComplimentaryEqualityInformation(
+		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(
 				mMgdScript.getScript(), quantifier, preprocessedInputWithContext, selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
