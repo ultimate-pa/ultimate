@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -38,16 +40,19 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -57,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -64,9 +71,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -83,36 +92,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-		/**
-		 * Round towards the nearest, tie to even.
-		 */
-		RNE("roundNearestTiesToEven"),
+	/**
+	 * Round towards the nearest, tie to even.
+	 */
+	RNE("roundNearestTiesToEven"),
 
-		/**
-		 * Round toward nearest, tie to away.
-		 */
-		RNA("roundNearestTiesToAway"),
+	/**
+	 * Round toward nearest, tie to away.
+	 */
+	RNA("roundNearestTiesToAway"),
 
-		/**
-		 * Round toward positive.
-		 *
-		 * In this mode, a number r is rounded to the least upper floating-point bound.
-		 */
-		RTP("roundTowardPositive"),
+	/**
+	 * Round toward positive.
+	 *
+	 * In this mode, a number r is rounded to the least upper floating-point bound.
+	 */
+	RTP("roundTowardPositive"),
 
-		/**
-		 * Round toward negative.
-		 *
-		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-		 */
-		RTN("roundTowardNegative"),
+	/**
+	 * Round toward negative.
+	 *
+	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+	 */
+	RTN("roundTowardNegative"),
 
-		/**
-		 * Round toward zero.
-		 *
-		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-		 */
-		RTZ("roundTowardZero");
+	/**
+	 * Round toward zero.
+	 *
+	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+	 */
+	RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -157,12 +166,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_PLUS_ZERO = "+zero";
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
-	private final IdentifierExpression mActiveRoundingMode;
-
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
-		mActiveRoundingMode = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
 	}
 
 	@Override
@@ -185,7 +191,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			smtFunctionName = "to_fp";
 			final Expression realValue = ExpressionFactory.createRealLiteral(loc, value.toString());
-			arguments = new Expression[] { getRoundingMode(), realValue };
+			arguments = new Expression[] { getCurrentRoundingMode(), realValue };
 		}
 		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
 		return ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
@@ -540,7 +546,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+				new Expression[] { getCurrentRoundingMode(), oldExpression },
+				mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
@@ -552,7 +559,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
+				new Expression[] { getCurrentRoundingMode(), oldExpression },
+				mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
@@ -750,7 +758,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 			final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
 			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-					new Expression[] { getRoundingMode(), exp1, exp2 }, mTypeHandler.getBoogieTypeForCType(type1));
+					new Expression[] { getCurrentRoundingMode(), exp1, exp2 },
+					mTypeHandler.getBoogieTypeForCType(type1));
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
@@ -884,8 +893,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression getRoundingMode() {
-		return mActiveRoundingMode;
+	public Expression getCurrentRoundingMode() {
+		return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	@Override
@@ -899,7 +909,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), argument.getValue() },
+					new Expression[] { getCurrentRoundingMode(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("trunc".equals(floatFunction.getFunctionName())) {
@@ -1208,7 +1218,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		Expression expr;
 		if (rounding) {
 			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), first.getValue(), second.getValue() },
+					new Expression[] { getCurrentRoundingMode(), first.getValue(), second.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
 		} else {
 			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
@@ -1297,4 +1307,73 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
+	@Override
+	public RValue constructBuiltinFegetround(final ILocation loc) {
+		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
+		// https://en.cppreference.com/w/c/numeric/fenv/feround
+
+		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
+
+		final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
+				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+
+		// creates conditional expressions
+		final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTZ.getBoogieIdentifierExpression());
+		final Expression eqRTN = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTN.getBoogieIdentifierExpression());
+		final Expression eqRTP = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RTP.getBoogieIdentifierExpression());
+		final Expression eqRNE = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				globalVarIdentifier, SmtRoundingMode.RNE.getBoogieIdentifierExpression());
+
+		// creates integer literal expressions
+		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+
+		final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2));
+		final Expression three = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+
+		// creates IfThenElse expression
+		final Expression condRTN = ExpressionFactory.constructIfThenElseExpression(loc, eqRTN, three, fail);
+		final Expression condRTP = ExpressionFactory.constructIfThenElseExpression(loc, eqRTP, two, condRTN);
+		final Expression condRNE = ExpressionFactory.constructIfThenElseExpression(loc, eqRNE, one, condRTP);
+		final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRNE);
+
+		return new RValue(condRTZ, intCPrimitive);
+	}
+
+	@Override
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
+		// https://en.cppreference.com/w/c/numeric/fenv/feround
+		if (mSettings.isFesetroundEnabled()) {
+			final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+			final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
+			Expression[] arguments;
+			arguments = new Expression[1];
+			arguments[0] = arg.getValue();
+
+			final AuxVarInfo auxvar =
+					auxVarInfoBuilder.constructAuxVarInfo(loc, intCPrimitive, intAstType, AUXVAR.RETURNED);
+			final Set<AuxVarInfo> auxVars = new HashSet<>();
+			auxVars.add(auxvar);
+			final LocalLValue llv = new LocalLValue(auxvar.getLhs(), intCPrimitive, null);
+			final CallStatement result = StatementFactory.constructCallStatement(loc, false,
+					new VariableLHS[] { auxvar.getLhs() }, "ULTIMATE.setCurrentRoundingMode", arguments);
+
+			final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
+			resultBuider.addDeclaration(auxvar.getVarDec());
+			resultBuider.addAuxVar(auxvar);
+			resultBuider.addStatement(result);
+			resultBuider.setLrValue(llv);
+			return resultBuider.build();
+		}
+		// always returns fail value when feround is disabled in settings
+		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
+		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+		return new ExpressionResultBuilder().setLrValue(new RValue(fail, intCPrimitive)).build();
+	}
 }

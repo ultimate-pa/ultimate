@@ -107,7 +107,8 @@ public abstract class BoogieType implements IBoogieType {
 	 *
 	 * @
 	 */
-	public static BoogieConstructedType createConstructedType(final BoogieTypeConstructor constr, final BoogieType... params) {
+	public static BoogieConstructedType createConstructedType(final BoogieTypeConstructor constr,
+			final BoogieType... params) {
 		assert constr.getParamCount() == params.length;
 		int hashcode = constr.hashCode();
 		for (int i = 0; i < params.length; i++) {
@@ -118,7 +119,7 @@ public abstract class BoogieType implements IBoogieType {
 				continue;
 			}
 			final BoogieConstructedType c = (BoogieConstructedType) t;
-			if (c.getConstr() != constr) {
+			if (!c.getConstr().equals(constr)) {
 				continue;
 			}
 			for (int i = 0; true; i++) {

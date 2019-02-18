@@ -11,16 +11,16 @@ int main(void)
 {
 	
 	
-	__VERIFIER_assert(fesetround(0)==1); 
+	__VERIFIER_assert(fesetround(0)==0); 
 	__VERIFIER_assert(fegetround()==0); 
 	
-	__VERIFIER_assert(fesetround(1)==1); 
+	__VERIFIER_assert(fesetround(1)==0); 
 	__VERIFIER_assert(fegetround()==1);
 	
-	__VERIFIER_assert(fesetround(2)==1); 
+	__VERIFIER_assert(fesetround(2)==0); 
 	__VERIFIER_assert(fegetround()==2); 
 	
-	__VERIFIER_assert(fesetround(3)==1); 
+	__VERIFIER_assert(fesetround(3)==0); 
 	__VERIFIER_assert(fegetround()==3); 
 	
 	__VERIFIER_assert(fesetround(4)==0); 

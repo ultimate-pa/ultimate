@@ -28,22 +28,26 @@
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
-public class BoogieTypeConstructor implements Serializable{
+public class BoogieTypeConstructor implements Serializable {
 	/**
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = 4794962965656111904L;
 	private final String name;
 	private final boolean isFinite;
-	private final int    paramCount;
-	private final int[]  paramOrder;
+	private final int paramCount;
+	private final int[] paramOrder;
 	private final BoogieType synonym;
 
-	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount, final int[] paramOrder) {
+	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount,
+			final int[] paramOrder) {
 		this(name, isFinite, paramCount, paramOrder, null);
 	}
-	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount, final int[] paramOrder, final BoogieType synonym) {
+
+	public BoogieTypeConstructor(final String name, final boolean isFinite, final int paramCount,
+			final int[] paramOrder, final BoogieType synonym) {
 		this.name = name;
 		this.isFinite = isFinite;
 		this.paramCount = paramCount;
@@ -54,12 +58,15 @@ public class BoogieTypeConstructor implements Serializable{
 	public String getName() {
 		return name;
 	}
+
 	public int getParamCount() {
 		return paramCount;
 	}
+
 	public int[] getParamOrder() {
 		return paramOrder;
 	}
+
 	public BoogieType getSynonym() {
 		return synonym;
 	}
@@ -85,5 +92,55 @@ public class BoogieTypeConstructor implements Serializable{
 
 	public boolean isFinite() {
 		return isFinite;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (isFinite ? 1231 : 1237);
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + paramCount;
+		result = prime * result + Arrays.hashCode(paramOrder);
+		result = prime * result + ((synonym == null) ? 0 : synonym.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final BoogieTypeConstructor other = (BoogieTypeConstructor) obj;
+		if (isFinite != other.isFinite) {
+			return false;
+		}
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		if (paramCount != other.paramCount) {
+			return false;
+		}
+		if (!Arrays.equals(paramOrder, other.paramOrder)) {
+			return false;
+		}
+		if (synonym == null) {
+			if (other.synonym != null) {
+				return false;
+			}
+		} else if (!synonym.equals(other.synonym)) {
+			return false;
+		}
+		return true;
 	}
 }

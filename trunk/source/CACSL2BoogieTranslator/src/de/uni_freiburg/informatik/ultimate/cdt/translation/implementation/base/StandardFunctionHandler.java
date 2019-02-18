@@ -1271,41 +1271,9 @@ public class StandardFunctionHandler {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 0, name, arguments);
-		// TODO: See handleBuiltinFesetround
-		return handleByUnsupportedSyntaxException(loc, name);
+		final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
 
-		// final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
-		//
-
-		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
-		// https://en.cppreference.com/w/c/numeric/fenv/feround
-
-		// final CPrimitive resultCType = new CPrimitive(CPrimitives.INT);
-		// Expression resultExpression;
-		// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-		//
-		// switch (((IdentifierExpression) getRoundingMode()).getIdentifier()) {
-		// case "~roundTowardZero":
-		// resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
-		// break;
-		// case "~roundNearestTiesToEven":
-		// resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		// break;
-		// case "~roundTowardPositive":
-		// resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("2"));
-		// break;
-		// case "~roundTowardNegative":
-		// resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("3"));
-		// break;
-		// default:
-		// resultExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, new BigInteger("-1"));
-		// break;
-		// }
-		//
-		// return new RValue(resultExpression, resultCType);
-
-		// return new ExpressionResultBuilder().setLrValue(rvalue).build();
-
+		return new ExpressionResultBuilder().setLrValue(rvalue).build();
 	}
 
 	private Result handleBuiltinFesetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1314,59 +1282,13 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
-		// TODO: This is more compliacted
-		return handleByUnsupportedSyntaxException(loc, name);
-		//
-		// final ExpressionResult decayedArgument =
-		// mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
-		// final ExpressionResult convertedArgument =
-		// mExpressionTranslation.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
-		// final ExpressionResult arg = convertedArgument;
-		//
-		// final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(arg);
-		//
-		// if (mSettings.isFesetroundEnabled()) {
-		// final Expression returnExpression;
-		// final CPrimitive cInt = new CPrimitive(CPrimitives.INT);
-		// final Expression argExpr = arg.getLrValue().getValue();
-		// final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, cInt, BigInteger.ZERO);
-		// final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, cInt, BigInteger.ONE);
-		// final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, cInt, BigInteger.valueOf(2));
-		// final Expression three = mTypeSizes.constructLiteralForIntegerType(loc, cInt, BigInteger.valueOf(3));
-		// // build if-then-else that evaluates the argument and reassign the activeroundmode global var
-		// final Expression eqZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-		// IASTBinaryExpression.op_equals, argExpr, arg.getLrValue().getCType(), zero, cInt);
-		//
-		//
-		// Expression notZeroIte = ExpressionFactory.constructIfThenElseExpression(loc, eqZero,
-		// SmtRoundingMode.RTZ.getBoogieIdentifierExpression(), notZeroIte);
-		// Expression ite = ExpressionFactory.constructIfThenElseExpression(loc, eqZero,
-		// SmtRoundingMode.RTZ.getBoogieIdentifierExpression(), notZeroIte);
-		// final BigInteger returnExprValue;
-		// if ("0".equals(value)) {
-		// mActiveRoundingMode = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
-		// returnExprValue = BigInteger.ZERO;
-		// } else if ("1".equals(value)) {
-		// mActiveRoundingMode = SmtRoundingMode.RNE.getBoogieIdentifierExpression();
-		// returnExprValue = BigInteger.ZERO;
-		// } else if ("2".equals(value)) {
-		// mActiveRoundingMode = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
-		// returnExprValue = BigInteger.ZERO;
-		// } else if ("3".equals(value)) {
-		// mActiveRoundingMode = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
-		// returnExprValue = BigInteger.ZERO;
-		// } else {
-		// returnExprValue = BigInteger.ONE;
-		// }
-		// returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cInt, returnExprValue);
-		// } else {
-		// returnExpression = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
-		// }
-		// return new RValue(returnExpression, cPrimitive);
-		//
-		// final RValue rvalue = mExpressionTranslation.constructBuiltinFesetround(loc, (RValue) arg.getLrValue());
-		//
-		// return builder.build();
+		final ExpressionResult decayedArgument =
+				mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arguments[0]);
+		final ExpressionResult convertedArgument =
+				mExpressionTranslation.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
+		final ExpressionResult arg = convertedArgument;
+
+		return mExpressionTranslation.constructBuiltinFesetround(loc, (RValue) arg.getLrValue(), mAuxVarInfoBuilder);
 	}
 
 	private Result handleMemset(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1486,8 +1408,8 @@ public class StandardFunctionHandler {
 		} else {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
-		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc,
-				memArea));
+		erb.addStatement(
+				mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
