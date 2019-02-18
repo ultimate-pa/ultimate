@@ -14,6 +14,8 @@ import java.util.List;
 public class SearchGraphTable {
 	private final Script mScript;
 	private final ILogger mLogger;
+	private int mNrOfFoundTests;
+	private int mNrOfFinalStates;
 	
 	private Map<GuardGraph, TableElement> mElements;
 	
@@ -21,15 +23,26 @@ public class SearchGraphTable {
 		mLogger = logger;
 		mScript = script;
 		mElements = new HashMap<>();
+		mNrOfFoundTests = 0;
+		mNrOfFinalStates = 0;
 	}
 	
 	public void makeTests() {
 		for ( GuardGraph key : mElements.keySet() ) {
 			TableElement tEle = mElements.get(key);
 			if ( tEle.getFinalFlag() ) {
-				mLogger.warn(makePath(tEle));
+				mNrOfFinalStates++;
+				mNrOfFoundTests += tEle.getNodeId().getOutgoingNodes().size();
 			}
 		}
+	}
+	
+	public int getNrOfTests() {
+		return mNrOfFoundTests;
+	}
+	
+	public int getNrOfFinals() {
+		return mNrOfFinalStates;
 	}
 	
 	public String makePath(TableElement tElement) {

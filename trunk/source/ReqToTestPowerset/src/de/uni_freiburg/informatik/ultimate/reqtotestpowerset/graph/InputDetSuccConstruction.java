@@ -52,6 +52,8 @@ public class InputDetSuccConstruction {
 		populateSearchGraph();
 		mLogger.warn(mSGTable);
 		mSGTable.makeTests();
+		mLogger.warn(mSGTable.getNrOfFinals());
+		mLogger.warn(mSGTable.getNrOfTests());
 	}
 
 	private void makeTrueAndFalse() {
@@ -185,9 +187,13 @@ public class InputDetSuccConstruction {
 					Term newLabel = SmtUtils.or(mScript, thisInpDetANode.getOutgoingEdgeLabel(targetNode), edgelabel);
 					thisInpDetANode.disconnectOutgoing(targetNode);
 					thisInpDetANode.connectOutgoing(targetNode, newLabel);
+					initialPowerNode.incEdges();
+					
 				} else {
 					thisInpDetANode.connectOutgoing(targetNode, edgelabel);
+					initialPowerNode.incEdges();
 				}
+				
 			}
 		}
 		return initialPowerNode;

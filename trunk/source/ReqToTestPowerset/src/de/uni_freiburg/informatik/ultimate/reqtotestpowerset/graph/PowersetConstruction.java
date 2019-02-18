@@ -77,6 +77,7 @@ public class PowersetConstruction {
 				conjTerm = SmtUtils.and(mScript, X, Y);
 				if (!SmtUtils.isFalse(conjTerm))
 					mProductAutStates.get(fromIndex).connectOutgoing(mProductAutStates.get(toIndex), conjTerm);
+					mProductAutStates.get(0).incEdges();
 			}
 		}
 	}

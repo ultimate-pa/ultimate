@@ -1,17 +1,15 @@
 #!/bin/bash
+# This script builds Ultimate with maven and then calls makeZip.sh for all tools that can be deployed. 
 
-function exitOnFail {
-    "$@"
-    local status=$?
-    if [ $status -ne 0 ]; then
-		echo "$@ failed with $1"
-		exit $status
-    fi
-    return $status
-}
+## include the makeSettings shared functions 
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/makeSettings.sh"
 
+
+## start the actual script 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-exitOnFail mvn -T 1C clean install -Pmaterialize
+test mvn -T 1C clean install -Pmaterialize
 popd > /dev/null
 
 for platform in {linux,win32}; do

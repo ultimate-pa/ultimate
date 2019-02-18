@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySel
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -159,6 +160,19 @@ public class Elim1Store {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
 
+
+		if (false) {
+			final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
+					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
+			if (!mdsoss.isEmpty()) {
+				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, inputTerm, quantifier, mLogger, mMgdScript);
+				final MultiDimensionalSelectOverStore mdsos = mdsoss.get(0);
+				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
+				aiem.unlockSolver();
+				return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
+			}
+		}
 		if (false && SELECT_OVER_STORE_PREPROCESSING) {
 			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
 			for (final ApplicationTerm selectTerm : allSelectTerms) {
@@ -237,7 +251,7 @@ public class Elim1Store {
 					if (mdsos.getStore().getArray().equals(eliminatee)) {
 						final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 						final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-						final ThreeValuedEquivalenceRelation<Term> tver = analyzeIndexEqualities(selectIndex, storeIndex, quantifier, xjunctsOuter);
+						final ThreeValuedEquivalenceRelation<Term> tver = ArrayIndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
 						final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
 						switch (indexEquality) {
 						case EQUAL:
@@ -281,7 +295,7 @@ public class Elim1Store {
 				preprocessedInput, context);
 
 
-		final ThreeValuedEquivalenceRelation<Term> equalityInformation = collectComplimentaryEqualityInformation(
+		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(
 				mMgdScript.getScript(), quantifier, preprocessedInputWithContext, selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
@@ -547,16 +561,7 @@ public class Elim1Store {
 		return EqualityStatus.EQUAL;
 	}
 
-	private ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final ArrayIndex selectIndex, final ArrayIndex storeIndex, final int quantifier, final Term[] context) {
-		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-		for (final Term term : selectIndex) {
-			addComplimentaryEqualityInformation(mScript, quantifier, context, term, tver);
-		}
-		for (final Term term : storeIndex) {
-			addComplimentaryEqualityInformation(mScript, quantifier, context, term, tver);
-		}
-		return tver;
-	}
+
 
 	private Term equivalencesToTerm(final Script script, final ThreeValuedEquivalenceRelation<Term> tver, final int quantifier) {
 
@@ -782,6 +787,74 @@ public class Elim1Store {
 			return new Pair<>(tver, relationsDetectedViaSolver);
 		}
 
+		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities2(final int mQuantifier,
+				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
+
+			mScript.echo(new QuotedObject("starting to analyze index equalities"));
+
+			final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, preprocessedInput, mQuantifier, mLogger, mMgdScript);
+			if (aiem.contextIsAbsorbingElement()) {
+				aiem.unlockSolver();
+				return null;
+			}
+
+			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
+			for (final ArrayStore store : stores) {
+				allIndicesList.add(store.getIndex());
+			}
+
+			final List<Term> allValues = new ArrayList<>();
+			final Map<Term, Term> value2selectIndex = new HashMap<>();
+			final Map<Term, Term> selectIndex2value = new HashMap<>();
+			for (final Term selectIndex : selectIndices) {
+				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
+				allValues.add(oldSelect);
+				value2selectIndex.put(oldSelect, selectIndex);
+				selectIndex2value.put(selectIndex, oldSelect);
+			}
+			for (final ArrayStore arrayStore : stores) {
+				allValues.add(arrayStore.getValue());
+			}
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+
+
+			for (int i = 0; i < allIndicesList.size(); i++) {
+				for (int j = i + 1; j < allIndicesList.size(); j++) {
+					//TODO: try to obtain equal term with few variables
+					final Term index1 = allIndicesList.get(i);
+					final Term index2 = allIndicesList.get(j);
+					if (tver.getEqualityStatus(index1, index2) != EqualityStatus.UNKNOWN) {
+						// result already known we do not have to check
+						continue;
+						// TODO: for some the solver result might have been unknown
+						// we should avoid to these are checked again
+					}
+					aiem.getEqualityStatus(index1, index2);
+				}
+			}
+
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+			for (int i = 0; i < allValues.size(); i++) {
+				for (int j = i + 1; j < allValues.size(); j++) {
+					final Term value1 = allValues.get(i);
+					final Term value2 = allValues.get(j);
+					if (tver.getEqualityStatus(value1, value2) != EqualityStatus.UNKNOWN) {
+						// result already known we do not have to check
+						continue;
+						// TODO: for some the solver result might have been unknown
+						// we should avoid to these are checked again
+					}
+					aiem.getEqualityStatus(value1, value2);
+				}
+			}
+
+
+			aiem.unlockSolver();
+//			mMgdScript.requestLockRelease();
+			mScript.echo(new QuotedObject("finished analysis of index equalities"));
+			return new Pair<>(tver, Collections.emptyList());
+		}
+
 
 
 
@@ -842,75 +915,9 @@ public class Elim1Store {
 		}
 
 
-		/**
-		 * Add equality information for term that are obtained from context by
-		 * only looking at (dis)eqality terms.
-		 * @return
-		 * @return true if an inconsitency was detected
-		 */
-	private static boolean addComplimentaryEqualityInformation(final Script script, final int quantifier,
-			final Term[] context, final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
-			equalityInformation.addElement(term);
-			final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(script, term, context, null);
-			Set<Term> derTerms;
-			Set<Term> antiDerTerms;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				derTerms = indexEqual.getFirst();
-				antiDerTerms = indexEqual.getSecond();
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				derTerms = indexEqual.getSecond();
-				antiDerTerms = indexEqual.getFirst();
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			for (final Term equal : derTerms) {
-				equalityInformation.addElement(equal);
-				equalityInformation.reportEquality(term, equal);
-				if (equalityInformation.isInconsistent()) {
-					return true;
-				}
-			}
-			for (final Term disequal : antiDerTerms) {
-				equalityInformation.addElement(disequal);
-				equalityInformation.reportDisequality(term, disequal);
-				if (equalityInformation.isInconsistent()) {
-					return true;
-				}
-			}
-			return false;
-		}
 
 
-		private ThreeValuedEquivalenceRelation<Term> collectComplimentaryEqualityInformation(final Script script, final int quantifier,
-				final Term preprocessedInput, final List<ApplicationTerm> selectTerms, final List<ArrayStore> stores) {
-			final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
-			final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
-			boolean inconsistencyDetected = false;
-			for (final ApplicationTerm selectTerm : selectTerms) {
-				final Term selectIndex = getIndexOfSelect(selectTerm);
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectIndex, equalityInformation);
-				if (inconsistencyDetected) {
-					return null;
-				}
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectTerm, equalityInformation);
-				if (inconsistencyDetected) {
-					return null;
-				}
 
-			}
-			for (final ArrayStore arrayStore : stores) {
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, arrayStore.getIndex(), equalityInformation);
-				if (inconsistencyDetected) {
-					return null;
-				}
-
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, arrayStore.getValue(), equalityInformation);
-				if (inconsistencyDetected) {
-					return null;
-				}
-			}
-			return equalityInformation;
-		}
 
 
 	private Term constructStoredValueInformation(final int quantifier, final TermVariable eliminatee,
