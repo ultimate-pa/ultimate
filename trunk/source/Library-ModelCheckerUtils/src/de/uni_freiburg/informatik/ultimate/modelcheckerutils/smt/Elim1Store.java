@@ -773,6 +773,74 @@ public class Elim1Store {
 			return new Pair<>(tver, relationsDetectedViaSolver);
 		}
 
+		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities2(final int mQuantifier,
+				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
+
+			mScript.echo(new QuotedObject("starting to analyze index equalities"));
+
+			final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, preprocessedInput, mQuantifier, mLogger, mMgdScript);
+			if (aiem.contextIsAbsorbingElement()) {
+				aiem.unlockSolver();
+				return null;
+			}
+
+			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
+			for (final ArrayStore store : stores) {
+				allIndicesList.add(store.getIndex());
+			}
+
+			final List<Term> allValues = new ArrayList<>();
+			final Map<Term, Term> value2selectIndex = new HashMap<>();
+			final Map<Term, Term> selectIndex2value = new HashMap<>();
+			for (final Term selectIndex : selectIndices) {
+				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
+				allValues.add(oldSelect);
+				value2selectIndex.put(oldSelect, selectIndex);
+				selectIndex2value.put(selectIndex, oldSelect);
+			}
+			for (final ArrayStore arrayStore : stores) {
+				allValues.add(arrayStore.getValue());
+			}
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+
+
+			for (int i = 0; i < allIndicesList.size(); i++) {
+				for (int j = i + 1; j < allIndicesList.size(); j++) {
+					//TODO: try to obtain equal term with few variables
+					final Term index1 = allIndicesList.get(i);
+					final Term index2 = allIndicesList.get(j);
+					if (tver.getEqualityStatus(index1, index2) != EqualityStatus.UNKNOWN) {
+						// result already known we do not have to check
+						continue;
+						// TODO: for some the solver result might have been unknown
+						// we should avoid to these are checked again
+					}
+					aiem.getEqualityStatus(index1, index2);
+				}
+			}
+
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+			for (int i = 0; i < allValues.size(); i++) {
+				for (int j = i + 1; j < allValues.size(); j++) {
+					final Term value1 = allValues.get(i);
+					final Term value2 = allValues.get(j);
+					if (tver.getEqualityStatus(value1, value2) != EqualityStatus.UNKNOWN) {
+						// result already known we do not have to check
+						continue;
+						// TODO: for some the solver result might have been unknown
+						// we should avoid to these are checked again
+					}
+					aiem.getEqualityStatus(value1, value2);
+				}
+			}
+
+
+			aiem.unlockSolver();
+//			mMgdScript.requestLockRelease();
+			mScript.echo(new QuotedObject("finished analysis of index equalities"));
+			return new Pair<>(tver, Collections.emptyList());
+		}
+
 
 
 
