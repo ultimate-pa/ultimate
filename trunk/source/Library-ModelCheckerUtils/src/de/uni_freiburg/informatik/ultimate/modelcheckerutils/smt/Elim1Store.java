@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySel
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -159,6 +160,19 @@ public class Elim1Store {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
 
+
+		if (false) {
+			final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
+					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
+			if (!mdsoss.isEmpty()) {
+				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, inputTerm, quantifier, mLogger, mMgdScript);
+				final MultiDimensionalSelectOverStore mdsos = mdsoss.get(0);
+				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
+				aiem.unlockSolver();
+				return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
+			}
+		}
 		if (false && SELECT_OVER_STORE_PREPROCESSING) {
 			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
 			for (final ApplicationTerm selectTerm : allSelectTerms) {
