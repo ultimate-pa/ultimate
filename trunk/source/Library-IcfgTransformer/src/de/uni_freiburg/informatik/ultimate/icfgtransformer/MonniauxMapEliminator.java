@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2018 Luca Bruder (luca.bruder@gmx.de)
- * Copyright (C) 2018 Lisa Kleinlein (lisa.kleinlein@web.de)
+ * Copyright (C) 2019 Luca Bruder (luca.bruder@gmx.de)
  *
  * This file is part of the ULTIMATE Library-ModelCheckerUtils library.
  *
@@ -66,14 +65,16 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private final IIcfg<IcfgLocation> mResultIcfg;
 	private final ILogger mLogger;
 	private final IBacktranslationTracker mBacktranslationTracker;
+	private final Integer mCells;
 
 	public MonniauxMapEliminator(final ILogger logger, final IIcfg<IcfgLocation> icfg,
-			final IBacktranslationTracker backtranslationTracker) {
+			final IBacktranslationTracker backtranslationTracker, final int cells) {
 		mIcfg = Objects.requireNonNull(icfg);
 		mMgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mBacktranslationTracker = backtranslationTracker;
 		mResultIcfg = eliminateMaps();
+		mCells = cells;
 	}
 
 	@Override
@@ -101,91 +102,44 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private void iterate(final TransformedIcfgBuilder<?, IcfgLocation> lst) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(mIcfg);
 		final Script script = mMgdScript.getScript();
+		
+		// Create mappings from original ProgramVars to a set of mCells new ProgramVars
+		final Map<IProgramVar, Set<IProgramVar>> idxD = null;
+		final Map<IProgramVar, Set<IProgramVar>> valD = null;
+		final Set<?> globals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
+		//globals.forEach(action); ?? To be discussed
+		
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
-
-			int step = 0;
-
-			final int index = 0;
-
+			
+			final Map<IProgramVar, Integer> lowD = null;
+			final Map<IProgramVar, Integer> highD = null;
+			
 			if (transition instanceof IIcfgInternalTransition) {
 
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
 				UnmodifiableTransFormula tf = internalTransition.getTransformula();
 				Term tfTerm = tf.getFormula();
-				// keep or modify tf
-				final StoreSelectCollector ssc = new StoreSelectCollector();
-				ssc.transform(tfTerm);
+				final SSECollector ssec = new SSECollector();
+				ssec.transform(tfTerm);
 				final Map<Term, Term> subst = new HashMap<>();
 
-				for (final Term selectTerm : ssc.mSelectTerms) {
-					final ApplicationTerm aterm = (ApplicationTerm) selectTerm;
-					final Term[] xy = aterm.getParameters();
-					final Term x = xy[0];
-					final Term y = xy[1];
-
-					// Stringcreation for variable names
-					final String a_step_i = "a_step_i".replace("step", Integer.toString(step));
-					a_step_i.replace("i", Integer.toString(index));
-					final String i_step = "i_step".replace("step", Integer.toString(step));
-					final String x_i = "x_i".replace("i", Integer.toString(index));
-
-					// Creation of variables to be put into the new transformula
-					final TermVariable varA =
-							mMgdScript.constructFreshTermVariable("a", SmtSortUtils.getIntSort(script));
-					final TermVariable i_step_var =
-							mMgdScript.constructFreshTermVariable(i_step, SmtSortUtils.getIntSort(script));
-					final TermVariable x_i_var =
-							mMgdScript.constructFreshTermVariable(x_i, SmtSortUtils.getIntSort(script));
-					final Term replacementVariable =
-							mMgdScript.constructFreshTermVariable(a_step_i, SmtSortUtils.getIntSort(script));
-
-					final Term replacement = SmtUtils.and(script,
-							SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, i_step_var),
-									SmtUtils.binaryEquality(script, replacementVariable, x_i_var)));
-
-					subst.put(selectTerm, replacementVariable);
-					final Term exprTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst).transform(tfTerm);
-					tfTerm = SmtUtils.and(script, SmtUtils.and(script, exprTerm, replacement), script.term("true"));
-
-					final Collection<IProgramVar> inVarsToRemove = null;
-					final Collection<IProgramVar> outVarsToRemove = null;
-					final HashMap<IProgramVar, TermVariable> additionalOutVars = null;
-					// additionalOutVars.put(varA, replacementVariable);
-
-					tf = TransFormulaBuilder.constructCopy(mMgdScript, tf, inVarsToRemove, outVarsToRemove,
-							additionalOutVars);
-
-					step++;
+				for (final Term selectTerm : ssec.mSelectTerms) {
+					// To be implemented
 				}
-				for (final Term storeTerm : ssc.mStoreTerms) {
-					// To be implemented step++;
+				for (final Term storeTerm : ssec.mStoreTerms) {
+					// To be implemented
+				}
+				for (final Term equalityTerm : ssec.mEqualityTerms) {
+					// To be implemented
 				}
 			} else {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 		}
-
-		// TODO: Create new transition (maybe substitute the formula in tf with tfTerm?)
-
 	}
 
-	// _______________________________________________________________________
 
-	/*
-	 * if(transition instanceof IIcfgInternalTransition)
-	 *
-	 * { final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition; final
-	 * UnmodifiableTransFormula tf2 = internalTransition.getTransformula(); final Term tfTerm = tf2.getFormula(); //
-	 * keep or modify tf final StoreSelectCollector ssc = new StoreSelectCollector(); ssc.transform(tfTerm); final
-	 * Map<Term, Term> subst = new HashMap<>();
-	 *
-	 * for (final Term selectTerm : ssc.mSelectTerms) { mLogger.info(selectTerm); final TermVariable varA =
-	 * mMgdScript.constructFreshTermVariable("a", SmtSortUtils.getIntSort(script)); final Term replacement = null;
-	 * subst.put(selectTerm, replacement); final Term exprTerm = new SubstitutionWithLocalSimplification(mMgdScript,
-	 * subst).transform(tfTerm); final Term newTerm = SmtUtils.and(script, exprTerm, script.term("true")); } }else {
-	 * throw new UnsupportedOperationException("not yet implemented"); }
-	 */
 
 	private UnmodifiableTransFormula buildTransitionFormula(final UnmodifiableTransFormula oldFormula,
 			final Term newTfFormula, final Map<IProgramVar, TermVariable> inVars,
@@ -204,10 +158,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		return tfb.finishConstruction(mMgdScript);
 	}
 
-	private final class StoreSelectCollector extends TermTransformer {
+	private final class SSECollector extends TermTransformer {
 
 		private final Set<Term> mStoreTerms = new HashSet<>();
 		private final Set<Term> mSelectTerms = new HashSet<>();
+		private final Set<Term> mEqualityTerms = new HashSet<>();
 
 		@Override
 		protected void convert(final Term term) {
@@ -215,11 +170,15 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final ApplicationTerm aterm = (ApplicationTerm) term;
 				final String funName = aterm.getFunction().getName();
 				if (funName.equals("store")) {
-					// its a store
+					// It's a store term
 					mStoreTerms.add(aterm);
 				} else if (funName.equals("select")) {
+					// It's a select term
 					mSelectTerms.add(aterm);
-				}
+				} 
+			} else if (term.toString().contains("=")) {
+				// It's an equality term
+				mEqualityTerms.add(term);
 			}
 			super.convert(term);
 		}
