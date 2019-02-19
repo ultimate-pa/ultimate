@@ -95,6 +95,7 @@ public final class SFO {
 	 * String holding "ULTIMATE.start".
 	 */
 	public static final String START = "ULTIMATE.start";
+
 	/**
 	 * The empty String.
 	 */
@@ -172,7 +173,7 @@ public final class SFO {
 	/**
 	 * combined SFOs for memory arrays:
 	 */
-//	public static final String MEMORY_INT = MEMORY + "_" + INT;
+	// public static final String MEMORY_INT = MEMORY + "_" + INT;
 	public static final String MEMORY_REAL = MEMORY + "_" + REAL;
 	public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
 
@@ -215,10 +216,6 @@ public final class SFO {
 
 	public static final String SELECT_SUBARRAY_AT_ADDRESS = "selectAtPointerBaseAddress~";
 
-
-
-
-
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
@@ -232,7 +229,6 @@ public final class SFO {
 		 * variable used for an increasing address offset in a loop that we introduce through the translation
 		 */
 		OFFSET("offset"),
-
 
 		/**
 		 * Auxiliary variable used to store the result of a call of a function pointer.
@@ -328,7 +324,6 @@ public final class SFO {
 		 */
 		COMPOUNDLITERAL("compoundliteral"),
 
-
 		/**
 		 * Auxiliary variable used for struct initialisation.
 		 */
@@ -368,14 +363,12 @@ public final class SFO {
 
 		/**
 		 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used
-		 * anywhere and thus should get an error BoogieType.
-		 * (note that this string has to fit the regex that is checked during creation of an IdentifierExpression...)
+		 * anywhere and thus should get an error BoogieType. (note that this string has to fit the regex that is checked
+		 * during creation of an IdentifierExpression...)
 		 */
 		DUMMY_VOID("#dummy~void~value"),
 
-
 		;
-
 
 		private final String mId;
 
