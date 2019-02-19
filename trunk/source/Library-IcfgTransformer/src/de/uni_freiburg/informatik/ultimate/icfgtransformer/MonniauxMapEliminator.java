@@ -49,9 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -65,7 +62,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private final IIcfg<IcfgLocation> mResultIcfg;
 	private final ILogger mLogger;
 	private final IBacktranslationTracker mBacktranslationTracker;
-	private final Integer mCells;
+	private final int mCells;
 
 	public MonniauxMapEliminator(final ILogger logger, final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationTracker backtranslationTracker, final int cells) {
@@ -102,24 +99,24 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private void iterate(final TransformedIcfgBuilder<?, IcfgLocation> lst) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(mIcfg);
 		final Script script = mMgdScript.getScript();
-		
+
 		// Create mappings from original ProgramVars to a set of mCells new ProgramVars
 		final Map<IProgramVar, Set<IProgramVar>> idxD = null;
 		final Map<IProgramVar, Set<IProgramVar>> valD = null;
 		final Set<?> globals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
-		//globals.forEach(action); ?? To be discussed
-		
+		// globals.forEach(action); ?? To be discussed
+
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
-			
+
 			final Map<IProgramVar, Integer> lowD = null;
 			final Map<IProgramVar, Integer> highD = null;
-			
+
 			if (transition instanceof IIcfgInternalTransition) {
 
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
-				UnmodifiableTransFormula tf = internalTransition.getTransformula();
-				Term tfTerm = tf.getFormula();
+				final UnmodifiableTransFormula tf = internalTransition.getTransformula();
+				final Term tfTerm = tf.getFormula();
 				final SSECollector ssec = new SSECollector();
 				ssec.transform(tfTerm);
 				final Map<Term, Term> subst = new HashMap<>();
@@ -138,8 +135,6 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 			}
 		}
 	}
-
-
 
 	private UnmodifiableTransFormula buildTransitionFormula(final UnmodifiableTransFormula oldFormula,
 			final Term newTfFormula, final Map<IProgramVar, TermVariable> inVars,
@@ -175,7 +170,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				} else if (funName.equals("select")) {
 					// It's a select term
 					mSelectTerms.add(aterm);
-				} 
+				}
 			} else if (term.toString().contains("=")) {
 				// It's an equality term
 				mEqualityTerms.add(term);
