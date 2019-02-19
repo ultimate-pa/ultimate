@@ -155,10 +155,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	public static final String ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
 	public static final String ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
+
 	public static final BoogieType ROUNDING_MODE_BOOGIE_TYPE = BoogieType.createConstructedType(
 			new BoogieTypeConstructor(ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, false, 0, new int[0]));
 	public static final ASTType ROUNDING_MODE_BOOGIE_AST_TYPE =
 			ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
+
+	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "currentRoundingMode";
+
+	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCurrentRoundingMode";
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
@@ -895,7 +900,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression getCurrentRoundingMode() {
 		return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
-				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+				ROUNDING_MODE_BOOGIE_TYPE, ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	@Override
@@ -1303,8 +1309,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
 
-		final IdentifierExpression globalVarIdentifier = ExpressionFactory.constructIdentifierExpression(loc,
-				ROUNDING_MODE_BOOGIE_TYPE, "currentRoundingMode", DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final IdentifierExpression globalVarIdentifier =
+				ExpressionFactory.constructIdentifierExpression(loc, ROUNDING_MODE_BOOGIE_TYPE,
+						ULTIMATE_VAR_CURRENT_ROUNDING_MODE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 		// creates conditional expressions
 		final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
@@ -1350,7 +1357,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			auxVars.add(auxvar);
 			final LocalLValue llv = new LocalLValue(auxvar.getLhs(), intCPrimitive, null);
 			final CallStatement result = StatementFactory.constructCallStatement(loc, false,
-					new VariableLHS[] { auxvar.getLhs() }, "ULTIMATE.setCurrentRoundingMode", arguments);
+					new VariableLHS[] { auxvar.getLhs() }, ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
 
 			final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
 			resultBuider.addDeclaration(auxvar.getVarDec());

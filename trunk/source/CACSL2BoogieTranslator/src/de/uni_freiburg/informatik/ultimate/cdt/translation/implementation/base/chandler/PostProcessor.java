@@ -109,7 +109,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @date 12.10.2012
  */
 public class PostProcessor {
-	private static final String roundingModeVariableName = "currentRoundingMode";
 
 	private final ILogger mLogger;
 
@@ -233,13 +232,12 @@ public class PostProcessor {
 		if (mSettings.isBitvectorTranslation()) {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc));
 
-			decl.addAll(declareRoundingModeDataTypes(loc));
-
 			if (mTypeHandler.areFloatingTypesNeeded()) {
+				decl.addAll(declareRoundingModeDataTypes(loc));
 				decl.addAll(declareFloatDataTypes(loc));
+				decl.addAll(declareCurrentRoundingModeVar(loc));
 			}
 
-			decl.addAll(declareCurrentRoundingModeVar(loc));
 			if (mSettings.isFesetroundEnabled()) {
 				decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
 			}
@@ -366,7 +364,7 @@ public class PostProcessor {
 		final VarList[] mVarlist;
 		mVarlist = new VarList[1];
 
-		mVarlist[0] = new VarList(loc, new String[] { roundingModeVariableName },
+		mVarlist[0] = new VarList(loc, new String[] { BitvectorTranslation.ULTIMATE_VAR_CURRENT_ROUNDING_MODE },
 				BitvectorTranslation.ROUNDING_MODE_BOOGIE_AST_TYPE);
 		final Attribute[] attribute;
 		attribute = new Attribute[0];
@@ -382,7 +380,7 @@ public class PostProcessor {
 		 * infinity, FE_UPWARD RTP 3 towards negative infinity, FE_DOWNWARD RTN
 		 */
 
-		final String functionName = "ULTIMATE.setCurrentRoundingMode";
+		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
 		final String functionArgumentVariableName = "i";
 		final String returnVariableName = "r";
 
@@ -414,9 +412,9 @@ public class PostProcessor {
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
 						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, functionName));
-		final VariableLHS roundingModeGlobalVariableLHS =
-				ExpressionFactory.constructVariableLHS(loc, BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE,
-						roundingModeVariableName, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final VariableLHS roundingModeGlobalVariableLHS = ExpressionFactory.constructVariableLHS(loc,
+				BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE, BitvectorTranslation.ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final VariableLHS returnVariableLHS = ExpressionFactory.constructVariableLHS(loc, intBoogieType,
 				returnVariableName, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, functionName));
 
@@ -828,17 +826,16 @@ public class PostProcessor {
 		}
 
 		// initializes current rounding mode var
-		if (mSettings.isBitvectorTranslation()) {
-			final Expression value;
-
-			value = mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
+		if (mSettings.isBitvectorTranslation() && mTypeHandler.areFloatingTypesNeeded()) {
+			final Expression value =
+					mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
 
 			final VariableLHS globalVariableLHS = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-					BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE, roundingModeVariableName,
+					BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE,
+					BitvectorTranslation.ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			final Statement statement =
 					StatementFactory.constructSingleAssignmentStatement(translationUnitLoc, globalVariableLHS, value);
-
 			initStatements.add(statement);
 		}
 
