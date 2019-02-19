@@ -60,11 +60,10 @@ public final class ProductLocationNameGenerator {
 	 * @return a String representing the name of this location in the product
 	 */
 	protected static DebugIdentifier generateStateName(final BoogieIcfgLocation loc, final String nwaName) {
-		final DebugIdentifier icfgDebugIdentifier = loc.getDebugIdentifier();
 		if (nwaName == null) {
-			return new BuchiProgramDebugIdentifier(icfgDebugIdentifier, NONWA);
+			return new BuchiProgramDebugIdentifier(loc, NONWA);
 		}
-		return new BuchiProgramDebugIdentifier(icfgDebugIdentifier, nwaName);
+		return new BuchiProgramDebugIdentifier(loc, nwaName);
 	}
 
 	protected DebugIdentifier generateHelperStateName(final DebugIdentifier location) {
@@ -84,11 +83,13 @@ public final class ProductLocationNameGenerator {
 
 	private static final class BuchiProgramDebugIdentifier extends DebugIdentifier {
 
+		private final int mIcfgHashcode;
 		private final DebugIdentifier mIcfgIdentifier;
 		private final String mNwaLocation;
 
-		public BuchiProgramDebugIdentifier(final DebugIdentifier icfgIdentifier, final String nwaLocation) {
-			mIcfgIdentifier = Objects.requireNonNull(icfgIdentifier);
+		public BuchiProgramDebugIdentifier(final BoogieIcfgLocation loc, final String nwaLocation) {
+			mIcfgIdentifier = Objects.requireNonNull(loc).getDebugIdentifier();
+			mIcfgHashcode = loc.hashCode();
 			mNwaLocation = Objects.requireNonNull(nwaLocation);
 		}
 
@@ -101,7 +102,7 @@ public final class ProductLocationNameGenerator {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + mIcfgIdentifier.hashCode();
+			result = prime * result + mIcfgHashcode;
 			result = prime * result + mNwaLocation.hashCode();
 			return result;
 		}
@@ -118,7 +119,7 @@ public final class ProductLocationNameGenerator {
 				return false;
 			}
 			final BuchiProgramDebugIdentifier other = (BuchiProgramDebugIdentifier) obj;
-			if (!mIcfgIdentifier.equals(other.mIcfgIdentifier)) {
+			if (mIcfgHashcode != other.mIcfgHashcode) {
 				return false;
 			}
 			if (!mNwaLocation.equals(other.mNwaLocation)) {
