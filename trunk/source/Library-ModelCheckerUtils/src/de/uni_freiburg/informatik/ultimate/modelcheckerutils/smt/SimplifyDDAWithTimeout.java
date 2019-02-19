@@ -90,7 +90,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 
 	public SimplifyDDAWithTimeout(final Script script, final boolean simplifyRepeatedly,
 			final IUltimateServiceProvider services) {
-		this(script, simplifyRepeatedly, services, null, true);
+		this(script, simplifyRepeatedly, services, null, false);
 	}
 
 	/**
