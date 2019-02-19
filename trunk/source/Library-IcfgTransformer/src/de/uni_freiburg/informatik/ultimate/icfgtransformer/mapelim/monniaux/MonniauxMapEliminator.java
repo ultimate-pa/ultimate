@@ -21,24 +21,26 @@
  * licensors of the ULTIMATE Library-ModelCheckerUtils library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -48,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -103,7 +106,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		// Create mappings from original ProgramVars to a set of mCells new ProgramVars
 		final Map<IProgramVar, Set<IProgramVar>> idxD = null;
 		final Map<IProgramVar, Set<IProgramVar>> valD = null;
-		final Set<?> globals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
+		final IIcfgSymbolTable symboltable = mIcfg.getCfgSmtToolkit().getSymbolTable();
+		final Set<IProgramNonOldVar> globals = symboltable.getGlobals();
+		// mIcfg.getProcedureEntryNodes().keySet(); // set of procedures of this icfg
+		// symboltable.getLocals(procedurename) //for each procedure, get the local variables
+
 		// globals.forEach(action); ?? To be discussed
 
 		while (iter.hasNext()) {
@@ -117,7 +124,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
 				final UnmodifiableTransFormula tf = internalTransition.getTransformula();
 				final Term tfTerm = tf.getFormula();
-				final SSECollector ssec = new SSECollector();
+				final StoreSelectEqualityCollector ssec = new StoreSelectEqualityCollector();
 				ssec.transform(tfTerm);
 				final Map<Term, Term> subst = new HashMap<>();
 
@@ -151,32 +158,6 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		auxVars.stream().forEach(tfb::addAuxVar);
 		return tfb.finishConstruction(mMgdScript);
-	}
-
-	private final class SSECollector extends TermTransformer {
-
-		private final Set<Term> mStoreTerms = new HashSet<>();
-		private final Set<Term> mSelectTerms = new HashSet<>();
-		private final Set<Term> mEqualityTerms = new HashSet<>();
-
-		@Override
-		protected void convert(final Term term) {
-			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm aterm = (ApplicationTerm) term;
-				final String funName = aterm.getFunction().getName();
-				if (funName.equals("store")) {
-					// It's a store term
-					mStoreTerms.add(aterm);
-				} else if (funName.equals("select")) {
-					// It's a select term
-					mSelectTerms.add(aterm);
-				}
-			} else if (term.toString().contains("=")) {
-				// It's an equality term
-				mEqualityTerms.add(term);
-			}
-			super.convert(term);
-		}
 	}
 
 }
