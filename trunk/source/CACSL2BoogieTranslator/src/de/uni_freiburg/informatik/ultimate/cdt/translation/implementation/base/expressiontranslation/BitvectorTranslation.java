@@ -92,36 +92,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-	/**
-	 * Round towards the nearest, tie to even.
-	 */
-	RNE("roundNearestTiesToEven"),
+		/**
+		 * Round towards the nearest, tie to even.
+		 */
+		RNE("roundNearestTiesToEven"),
 
-	/**
-	 * Round toward nearest, tie to away.
-	 */
-	RNA("roundNearestTiesToAway"),
+		/**
+		 * Round toward nearest, tie to away.
+		 */
+		RNA("roundNearestTiesToAway"),
 
-	/**
-	 * Round toward positive.
-	 *
-	 * In this mode, a number r is rounded to the least upper floating-point bound.
-	 */
-	RTP("roundTowardPositive"),
+		/**
+		 * Round toward positive.
+		 *
+		 * In this mode, a number r is rounded to the least upper floating-point bound.
+		 */
+		RTP("roundTowardPositive"),
 
-	/**
-	 * Round toward negative.
-	 *
-	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-	 */
-	RTN("roundTowardNegative"),
+		/**
+		 * Round toward negative.
+		 *
+		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+		 */
+		RTN("roundTowardNegative"),
 
-	/**
-	 * Round toward zero.
-	 *
-	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-	 */
-	RTZ("roundTowardZero");
+		/**
+		 * Round toward zero.
+		 *
+		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+		 */
+		RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -1198,11 +1198,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
 			final String smtFunctionName) {
-		return delegateOtherBinaryFloatOperationToSmt(loc, first, second, smtFunctionName, false);
-	}
-
-	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
-			final String smtFunctionName, final Boolean rounding) {
 		checkIsFloatPrimitive(first);
 		checkIsFloatPrimitive(second);
 		final CPrimitive firstArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
@@ -1211,20 +1206,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (!firstArgumentType.equals(secondArgumentType)) {
 			throw new IllegalArgumentException("No mixed type arguments allowed");
 		}
-		declareFloatingPointFunction(loc, smtFunctionName, false, rounding, firstArgumentType, firstArgumentType,
+		declareFloatingPointFunction(loc, smtFunctionName, false, false, firstArgumentType, firstArgumentType,
 				secondArgumentType);
 		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, firstArgumentType);
 		final CPrimitive resultType = firstArgumentType;
-		Expression expr;
-		if (rounding) {
-			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getCurrentRoundingMode(), first.getValue(), second.getValue() },
-					mTypeHandler.getBoogieTypeForCType(resultType));
-		} else {
-			expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { first.getValue(), second.getValue() },
-					mTypeHandler.getBoogieTypeForCType(resultType));
-		}
+		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+				new Expression[] { first.getValue(), second.getValue() },
+				mTypeHandler.getBoogieTypeForCType(resultType));
 		return new RValue(expr, resultType);
 	}
 
