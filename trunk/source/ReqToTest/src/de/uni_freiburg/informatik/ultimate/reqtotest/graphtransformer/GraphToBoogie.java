@@ -353,7 +353,7 @@ public class GraphToBoogie {
 		stmts.add(new HavocStatement(mDummyLocation, 
 				new VariableLHS[] {new VariableLHS(mDummyLocation, GraphToBoogie.GLOBAL_CLOCK_VAR)} ));
 		stmts.add(new AssumeStatement(mDummyLocation,
-				new BinaryExpression(mDummyLocation, BinaryExpression.Operator.COMPGT,
+				new BinaryExpression(mDummyLocation, BinaryExpression.Operator.COMPGEQ,
 						new IdentifierExpression(mDummyLocation, GraphToBoogie.GLOBAL_CLOCK_VAR), new RealLiteral(mDummyLocation, "1.0"))
 				));
 		for(String clockVar: mSymbolTable.getClockVars()) {

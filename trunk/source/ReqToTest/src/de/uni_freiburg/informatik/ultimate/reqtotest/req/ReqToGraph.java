@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -73,6 +74,7 @@ public class ReqToGraph {
     	InvariantPattern				X
     	InstAbsPattern					X
       	UniversalityPattern				X
+      	TogglePatternDelayed			X
 	*/
 
 	public ReqGuardGraph patternToTestAutomaton(PatternType pattern){
@@ -90,6 +92,8 @@ public class ReqToGraph {
 			return getInstAbsPattern(pattern);
 		} else if(pattern instanceof BndResponsePatternTU){
 			return getBndResponsePatternTUPattern(pattern);
+		} else if(pattern instanceof TogglePatternDelayed){
+			return getTogglePatternDelayed(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
 		}
@@ -322,7 +326,7 @@ public class ReqToGraph {
 			//create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q1, S);
 			final String duration = pattern.getDuration().get(0);
-			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q1);
+			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
 			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));	
@@ -489,6 +493,59 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS)));
 			
 			return q0;		
+		} else {
+			scopeNotImplementedWarning(pattern);
+			return null;
+		}
+	}
+	
+	/*
+	 *  * "{scope}, it is always the case that if P holds then S toggles T at most c1 time units later."
+	 */
+	private ReqGuardGraph getTogglePatternDelayed(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term P = mCddToSmt.toSmt(args.get(0)); 
+			final Term S = mCddToSmt.toSmt(args.get(1));
+			final Term T = mCddToSmt.toSmt(args.get(2));
+			String id = pattern.getId();
+			final ReqGuardGraph q0 = new ReqGuardGraph(0, id);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1, id);
+			final ReqGuardGraph q2 = new ReqGuardGraph(2, id);
+			final ReqGuardGraph q3 = new ReqGuardGraph(3, id);
+			final ReqGuardGraph q12 = new ReqGuardGraph(-1, id);
+			mThreeValuedAuxVarGen.setEffectLabel(q0, T);
+			//define labels 
+			final Term dT = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndT = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uP = mThreeValuedAuxVarGen.getUseGuard(P);
+			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
+			final Term nuP = SmtUtils.not(mScript, uP);
+			final Term nuS = SmtUtils.not(mScript, uS);
+			final Term nP = SmtUtils.not(mScript, P);
+			final Term nS = SmtUtils.not(mScript, S);
+			final String duration = pattern.getDuration().get(0);
+			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
+			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));	
+			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, getDurationTerm(duration));
+			//edges
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, 
+					SmtUtils.or(mScript, SmtUtils.and(mScript, uP, nP), SmtUtils.and(mScript, nS, uS)), ndT)));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, P, S, uP, uS, ndT)));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, S, uS, ndT)));
+			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uS, nS, ndT), clockIdent));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uS, nS, ndT, clockGuardLess)));
+			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, uS, nS, dT, T, clockGuardGeq)));
+			q3.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, uS, nS, dT, T)));
+			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, ndT, T)));
+			q3.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, dT, T)));
+			q0.connectOutgoing(q12, new TimedLabel(SmtUtils.and(mScript, nuP, nuS, ndT)));
+			//q12.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript,
+					//SmtUtils.or(mScript, SmtUtils.and(mScript, uP, nP),SmtUtils.and(mScript, uS, nS)), ndT)));
+			//q12.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, P, S, uP, uS, ndT)));
+			return q0; 
+
 		} else {
 			scopeNotImplementedWarning(pattern);
 			return null;

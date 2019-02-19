@@ -15,9 +15,11 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 
 public class ReqToInOut {
@@ -74,6 +76,7 @@ public class ReqToInOut {
     	InvariantPattern				X
     	InstAbsPattern					X
       	UniversalityPattern				X
+      	TogglePatternDelayed			X
 	*/
 
 	public void addRequirement(PatternType pattern){
@@ -91,6 +94,8 @@ public class ReqToInOut {
 			addInstAbsPattern(pattern);
 		} else if(pattern instanceof BndResponsePatternTU){
 			addBndResponsePatternTUPattern(pattern);
+		} else if(pattern instanceof TogglePatternDelayed){
+			addTogglePatternDelayed(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
 		}
@@ -259,6 +264,21 @@ public class ReqToInOut {
 			scopeNotImplementedWarning(pattern);
 		}
 	}
+	
+	private void addTogglePatternDelayed(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term P = mCddToSmt.toSmt(args.get(0)); 
+			final Term S = mCddToSmt.toSmt(args.get(1));
+			final Term T = mCddToSmt.toSmt(args.get(2));
+			addTriggerSet(P.getFreeVars());
+			addTriggerSet(S.getFreeVars());
+			addEffectSet(T.getFreeVars());	
+		} else {
+			scopeNotImplementedWarning(pattern);
+		}
+	}
+	
 	
 	private void scopeNotImplementedWarning(PatternType pattern) {
 		StringBuilder sb = new StringBuilder();

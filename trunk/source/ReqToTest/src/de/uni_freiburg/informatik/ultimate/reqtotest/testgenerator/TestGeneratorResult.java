@@ -200,7 +200,6 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sbout = new StringBuilder();
 		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
-			mLogger.warn(dependencyNode.getIncomingNodes());
 			//inputs
 			if(dependencyNode.getInputs().size() > 0) {
 				sbin.append("Input ---------- (");
