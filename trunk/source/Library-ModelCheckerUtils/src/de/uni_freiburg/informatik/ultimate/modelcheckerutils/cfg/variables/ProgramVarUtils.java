@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -45,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 
 /**
  * Provides static methods for {@link IProgramVar}s.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class ProgramVarUtils {
 
 	private static final String AUX_VAR_PREFIX = "c_aux_";
-
 
 	private ProgramVarUtils() {
 		// do not instantiate
@@ -61,13 +62,16 @@ public class ProgramVarUtils {
 		return AUX_VAR_PREFIX + auxVar.getName();
 	}
 
-
 	/**
 	 * Construct primed constant for a {@link IProgramVar}
-	 * @param script {@link ManagedScript} for which constant is constructed.
-	 * @param lockOwner Object that currently locks the {@link ManagedScript}.
+	 *
+	 * @param script
+	 *            {@link ManagedScript} for which constant is constructed.
+	 * @param lockOwner
+	 *            Object that currently locks the {@link ManagedScript}.
 	 */
-	public static ApplicationTerm constructPrimedConstant(final ManagedScript script, final Object lockOwner, final Sort sort, final String name) {
+	public static ApplicationTerm constructPrimedConstant(final ManagedScript script, final Object lockOwner,
+			final Sort sort, final String name) {
 		ApplicationTerm primedConstant;
 		{
 			final String primedConstantName = "c_" + name + "_primed";
@@ -78,13 +82,16 @@ public class ProgramVarUtils {
 	}
 
 	/**
-	 * Construct default constant for a {@link IProgramVar}
-	 * (The default constant is used in {@link IPredicate}s and as unprimed
-	 * instance of variables in {@link TransFormula}s
-	 * @param script {@link ManagedScript} for which constant is constructed.
-	 * @param lockOwner Object that currently locks the {@link ManagedScript}.
+	 * Construct default constant for a {@link IProgramVar} (The default constant is used in {@link IPredicate}s and as
+	 * unprimed instance of variables in {@link TransFormula}s
+	 *
+	 * @param script
+	 *            {@link ManagedScript} for which constant is constructed.
+	 * @param lockOwner
+	 *            Object that currently locks the {@link ManagedScript}.
 	 */
-	public static ApplicationTerm constructDefaultConstant(final ManagedScript script, final Object lockOwner, final Sort sort, final String name) {
+	public static ApplicationTerm constructDefaultConstant(final ManagedScript script, final Object lockOwner,
+			final Sort sort, final String name) {
 		ApplicationTerm defaultConstant;
 		{
 			final String defaultConstantName = "c_" + name;
@@ -95,8 +102,8 @@ public class ProgramVarUtils {
 	}
 
 	/**
-	 * Construct constant for an aux var. (The default constant is used to
-	 * represent the aux var in the closed formulas of {@link TransFormula}s.
+	 * Construct constant for an aux var. (The default constant is used to represent the aux var in the closed formulas
+	 * of {@link TransFormula}s.
 	 *
 	 * @param mgdScript
 	 *            {@link ManagedScript} for which constant is constructed.
@@ -115,10 +122,8 @@ public class ProgramVarUtils {
 		return defaultConstant;
 	}
 
-
 	/**
-	 * Get the constant that represents an auxVar. Requires that this constant
-	 * has already been declared.
+	 * Get the constant that represents an auxVar. Requires that this constant has already been declared.
 	 */
 	public static ApplicationTerm getAuxVarConstant(final ManagedScript mgdScript, final TermVariable auxVar) {
 		final String defaultConstantName = generateConstantIdentifierForAuxVar(auxVar);
@@ -147,11 +152,10 @@ public class ProgramVarUtils {
 		return result;
 	}
 
-	public static Term renameNonOldGlobalsToOldGlobals(final Term term,
-			final IIcfgSymbolTable symbolTable,
+	public static Term renameNonOldGlobalsToOldGlobals(final Term term, final IIcfgSymbolTable symbolTable,
 			final ManagedScript mgdScript) {
 		final Set<IProgramNonOldVar> nonOldVars = extractNonOldVars(term, symbolTable);
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramNonOldVar pv : nonOldVars) {
 			if (pv instanceof IProgramNonOldVar) {
 				final IProgramOldVar oldVar = pv.getOldVar();
@@ -162,11 +166,10 @@ public class ProgramVarUtils {
 		return result;
 	}
 
-	public static Term renameOldGlobalsToNonOldGlobals(final Term term,
-			final IIcfgSymbolTable symbolTable,
+	public static Term renameOldGlobalsToNonOldGlobals(final Term term, final IIcfgSymbolTable symbolTable,
 			final ManagedScript mgdScript) {
 		final Set<IProgramOldVar> oldVars = extractOldVars(term, symbolTable);
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramOldVar pv : oldVars) {
 			if (pv instanceof IProgramOldVar) {
 				final IProgramNonOldVar nonoldVar = pv.getNonOldVar();
@@ -177,9 +180,8 @@ public class ProgramVarUtils {
 		return result;
 	}
 
-
-	public static String buildBoogieVarName(final String identifier, final String procedure,
-			final boolean isGlobal, final boolean isOldvar) {
+	public static String buildBoogieVarName(final String identifier, final String procedure, final boolean isGlobal,
+			final boolean isOldvar) {
 		String name;
 		if (isGlobal) {
 			assert procedure == null;
@@ -195,10 +197,9 @@ public class ProgramVarUtils {
 		return name;
 	}
 
-
 	/**
-	 * Construct global {@link BoogieNonOldVar} together with corresponding
-	 * {@link BoogieOldVar} and return the {@link BoogieNonOldVar}
+	 * Construct global {@link BoogieNonOldVar} together with corresponding {@link BoogieOldVar} and return the
+	 * {@link BoogieNonOldVar}
 	 */
 	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
@@ -208,8 +209,10 @@ public class ProgramVarUtils {
 			final boolean isOldVar = true;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mgdScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm defaultConstant =
+					ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm primedConstant =
+					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
 			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
 		}
@@ -218,13 +221,30 @@ public class ProgramVarUtils {
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mgdScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm defaultConstant =
+					ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm primedConstant =
+					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
 			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
+	}
+
+	/**
+	 * Construct a new {@link ILocalProgramVar}. The caller has to ensure that the identifier is unique and that the
+	 * variable is inserted into a symbol table (if needed).
+	 */
+	public static ILocalProgramVar constructLocalProgramVar(final String identifier, final String procedure,
+			final Sort sort, final ManagedScript mgdScript, final Object lockOwner) {
+		final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, false, false);
+		final TermVariable termVariable = mgdScript.variable(name, sort);
+		final ApplicationTerm defaultConstant =
+				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
+		final ApplicationTerm primedConstant =
+				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
+		return new LocalBoogieVar(identifier, procedure, null, termVariable, defaultConstant, primedConstant);
 	}
 
 }

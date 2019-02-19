@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -41,7 +40,8 @@ public class MemlocArrayManager {
 
 	private final Map<Integer, Sort> mDimToLocSort = new HashMap<>();
 
-	private final NestedMap3<EdgeInfo, Term, Integer, LocArrayInfo> mEdgeToArrayTermToDimToLocArray = new NestedMap3<>();
+	private final NestedMap3<EdgeInfo, Term, Integer, LocArrayInfo> mEdgeToArrayTermToDimToLocArray =
+			new NestedMap3<>();
 
 	/**
 	 * used for internal caching
@@ -69,9 +69,8 @@ public class MemlocArrayManager {
 	}
 
 	/**
-	 * We have different sorts for different dimensions. Note that it does not make
-	 * sense to have different sorts for different arrays (perhaps for
-	 * differentarray groups..)
+	 * We have different sorts for different dimensions. Note that it does not make sense to have different sorts for
+	 * different arrays (perhaps for differentarray groups..)
 	 *
 	 * @param dim
 	 * @return
@@ -103,8 +102,8 @@ public class MemlocArrayManager {
 	 * @param edgeInfo
 	 * @param baseArrayTerm
 	 * @param dim
-	 * @param calledFromProcessSelect not called during preprocessing before abstract interpretation but because
-	 *   of an array read..
+	 * @param calledFromProcessSelect
+	 *            not called during preprocessing before abstract interpretation but because of an array read..
 	 * @return
 	 */
 	public LocArrayInfo getOrConstructLocArray(final EdgeInfo edgeInfo, final Term baseArrayTerm, final int dim,
@@ -125,9 +124,9 @@ public class MemlocArrayManager {
 				mMgdScript.unlock(this);
 
 				/*
-				 *  because there is no update to the array, no LocArray was constructed here during pre-ai-processing
-				 *  also, the loc-array is not updated, and not read in the ai-preprocessed program, thus, in the
-				 *  EqualityProvidingIntermediateState, it must be queried via the standard-pvoc-term
+				 * because there is no update to the array, no LocArray was constructed here during pre-ai-processing
+				 * also, the loc-array is not updated, and not read in the ai-preprocessed program, thus, in the
+				 * EqualityProvidingIntermediateState, it must be queried via the standard-pvoc-term
 				 */
 				result = new LocArrayReadInfo(edgeInfo, locPvoc, locPvoc.getTerm());
 				mEdgeToArrayTermToDimToLocArray.put(edgeInfo, baseArrayTerm, dim, result);
@@ -148,18 +147,15 @@ public class MemlocArrayManager {
 						if (invar != null) {
 							pvoc = getLocArrayPvocForArrayPvoc(invar, dim, locArraySort);
 							term = mMgdScript.constructFreshTermVariable(
-									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-									locArraySort);
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim), locArraySort);
 						} else if (outvar != null) {
 							pvoc = getLocArrayPvocForArrayPvoc(outvar, dim, locArraySort);
 							term = mMgdScript.constructFreshTermVariable(
-									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-									locArraySort);
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim), locArraySort);
 						} else if (isAuxVar) {
 							pvoc = null;
 							term = mMgdScript.constructFreshTermVariable(
-									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim),
-									locArraySort);
+									sanitizeVarName(LOC_ARRAY_PREFIX + baseArrayTerm + "_" + dim), locArraySort);
 						} else {
 							throw new AssertionError();
 						}
@@ -179,8 +175,7 @@ public class MemlocArrayManager {
 		return result;
 	}
 
-	public Term getInitConstArrayForGlobalLocArray(final IProgramNonOldVar pnov,
-			final Object lockOwner) {
+	public Term getInitConstArrayForGlobalLocArray(final IProgramNonOldVar pnov, final Object lockOwner) {
 		final Sort locArraySort = pnov.getSort();
 		final int dim = new MultiDimensionalSort(locArraySort).getDimension();
 		final HeapSepProgramConst initLocLit = getOrConstructInitLocLitForLocArraySort(locArraySort, dim);
@@ -206,7 +201,7 @@ public class MemlocArrayManager {
 			result = new HeapSepProgramConst(locLitTerm);
 			mInitLocLitTermToPvoc.put(locLitTerm, result);
 			mLocArraySortToInitLocLit.put(locArraySort, result);
-			mInitLocPvocToNoStoreInfo.put(result, new NoStoreInfo(mNoStoreInfoCounter --));
+			mInitLocPvocToNoStoreInfo.put(result, new NoStoreInfo(mNoStoreInfoCounter--));
 		}
 		return result;
 	}
@@ -219,11 +214,13 @@ public class MemlocArrayManager {
 		if (result == null) {
 			if (pvoc instanceof IProgramNonOldVar) {
 				result = ProgramVarUtils.constructGlobalProgramVarPair(
-						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort), locArraySort, mMgdScript, this);
+						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort), locArraySort, mMgdScript,
+						this);
 				mGlobalLocArrays.add((IProgramNonOldVar) result);
 			} else if (pvoc instanceof ILocalProgramVar) {
-				result = constructLocalBoogieVar(sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort),
-						((ILocalProgramVar) pvoc).getProcedure(), locArraySort);
+				result = ProgramVarUtils.constructLocalProgramVar(
+						sanitizeVarName(LOC_ARRAY_PREFIX + "_" + pvoc + "_" + locArraySort),
+						((ILocalProgramVar) pvoc).getProcedure(), locArraySort, mMgdScript, this);
 			} else if (pvoc instanceof IProgramConst) {
 				throw new UnsupportedOperationException("todo: deal with constants");
 			} else {
@@ -234,26 +231,8 @@ public class MemlocArrayManager {
 		return result;
 	}
 
-	private IProgramVarOrConst constructLocalBoogieVar(final String identifier, final String procedure,
-			final Sort sort) {
-		// (mostly copied from Boogie2SmtSymbolTable#constructLocalBoogieVar
-
-		final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, false, false);
-
-		final TermVariable termVariable = mMgdScript.variable(name, sort);
-
-		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mMgdScript, this, sort, name);
-		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
-
-		final LocalBoogieVar bv =
-				new LocalBoogieVar(identifier, procedure, null, termVariable, defaultConstant, primedConstant);
-		// where is this added to the symbol table? automatically by TransformedIcfgBuilder or so?..
-		return bv;
-	}
-
 	private String sanitizeVarName(final String string) {
-		final String result = string.replaceAll("\\|", "")
-				.replaceAll("\\ ", "-");
+		final String result = string.replaceAll("\\|", "").replaceAll("\\ ", "-");
 		if (result.isEmpty()) {
 			throw new AssertionError();
 		}
@@ -262,8 +241,8 @@ public class MemlocArrayManager {
 
 	/**
 	 * Replace the last entry in the given array sort by the loc array sort. Also account for the given dimension by
-	 * dropping the innermost dimensions.
-	 * (e.g.  if sort is Int x Real -> Int, and dim is 1, then construct the sort Int -> locsort1
+	 * dropping the innermost dimensions. (e.g. if sort is Int x Real -> Int, and dim is 1, then construct the sort Int
+	 * -> locsort1
 	 *
 	 *
 	 * @param sort
@@ -281,7 +260,7 @@ public class MemlocArrayManager {
 		}
 		assert sortDeque.size() == dim;
 
-//		Sort resultSort = getMemlocSort(mds.getDimension());
+		// Sort resultSort = getMemlocSort(mds.getDimension());
 		Sort resultSort = getMemlocSort(dim);
 
 		while (!sortDeque.isEmpty()) {
