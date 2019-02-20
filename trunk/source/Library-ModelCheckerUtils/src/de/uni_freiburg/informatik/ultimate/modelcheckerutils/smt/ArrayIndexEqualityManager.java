@@ -69,7 +69,7 @@ public class ArrayIndexEqualityManager {
 		mLogger = logger;
 		mMgdScript = mgdScript;
 		mFreeVarsOfContext = Arrays.stream(mContext.getFreeVars()).collect(Collectors.toSet());
-		mCheckEqualityStatusOnDemand = false;
+		mCheckEqualityStatusOnDemand = true;
 		mAlreadyCheckedBySolver = new HashRelation<>();
 
 		final Plication plication;
@@ -90,7 +90,7 @@ public class ArrayIndexEqualityManager {
 		}
 	}
 
-	public EqualityStatus getEqualityStatus(final Term elem1, final Term elem2) {
+	public EqualityStatus checkEqualityStatus(final Term elem1, final Term elem2) {
 		if (allFreeVarsOccurInContext(elem1)) {
 			return EqualityStatus.UNKNOWN;
 		}

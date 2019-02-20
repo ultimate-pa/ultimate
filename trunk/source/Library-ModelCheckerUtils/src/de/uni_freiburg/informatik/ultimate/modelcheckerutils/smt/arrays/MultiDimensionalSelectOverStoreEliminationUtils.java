@@ -77,7 +77,7 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 	private static EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex,
 			final ArrayIndexEqualityManager aiem) {
 		for (int i=0; i<selectIndex.size(); i++) {
-			final EqualityStatus eqStaus = aiem.getEqualityStatus(selectIndex.get(i), storeIndex.get(i));
+			final EqualityStatus eqStaus = aiem.checkEqualityStatus(selectIndex.get(i), storeIndex.get(i));
 			if (eqStaus == EqualityStatus.NOT_EQUAL || eqStaus == EqualityStatus.UNKNOWN) {
 				return eqStaus;
 			}

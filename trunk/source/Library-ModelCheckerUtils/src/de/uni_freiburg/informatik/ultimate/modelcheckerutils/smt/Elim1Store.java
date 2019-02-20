@@ -290,7 +290,7 @@ public class Elim1Store {
 //			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
 //		}
 
-		Term polarizedContext;
+		final Term polarizedContext;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			polarizedContext = context;
 		} else if (quantifier == QuantifiedFormula.FORALL) {
@@ -318,7 +318,7 @@ public class Elim1Store {
 
 		final long startTime = System.nanoTime();
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
-				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
+				analyzeIndexEqualities2(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -836,7 +836,7 @@ public class Elim1Store {
 						// TODO: for some the solver result might have been unknown
 						// we should avoid to these are checked again
 					}
-					aiem.getEqualityStatus(index1, index2);
+					aiem.checkEqualityStatus(index1, index2);
 				}
 			}
 
@@ -851,7 +851,7 @@ public class Elim1Store {
 						// TODO: for some the solver result might have been unknown
 						// we should avoid to these are checked again
 					}
-					aiem.getEqualityStatus(value1, value2);
+					aiem.checkEqualityStatus(value1, value2);
 				}
 			}
 
