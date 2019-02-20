@@ -48,8 +48,7 @@ public class CounterExampleToTest {
 	public IResult convertCounterExampleToTest(final IResult result) {
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			return generateTestSequence((CounterExampleResult<?, ?, ?>)result);
-		} else {
-			// report that no test is possible
+		} else {	
 			return null;
 		}
 	}
@@ -112,7 +111,7 @@ public class CounterExampleToTest {
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
-				RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+				IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
 					i =  Double.parseDouble(ilit.getValue());
 			}
 		}

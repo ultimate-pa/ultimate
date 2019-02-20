@@ -204,7 +204,7 @@ public class GraphToBoogie {
 		Statement[] body;
 		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());	
 		if (label.getReset() != null) {
-			Statement resetClock = generateVarRealAssignment(label.getReset().getName(), 0.0f);
+			Statement resetClock = generateVarIntAssignment(label.getReset().getName(), 0);
 			body = new Statement[] {resetClock, setPcNextState};
 		} else {
 			body = new Statement[] {setPcNextState};
@@ -230,7 +230,7 @@ public class GraphToBoogie {
 		VarList[] varListPrimed = new VarList[] { new VarList(mDummyLocation, identsPrimed,  BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varListPrimed));
 		//add encoding variable "delta"
-		varList = new VarList[] { new VarList(mDummyLocation, new String[] {GLOBAL_CLOCK_VAR},  BoogieType.TYPE_REAL.toASTType(mDummyLocation)) };
+		varList = new VarList[] { new VarList(mDummyLocation, new String[] {GLOBAL_CLOCK_VAR},  BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varList));
 		return statements;
 	}
@@ -308,9 +308,9 @@ public class GraphToBoogie {
 	private List<Statement> generateClockInitialization() {
 		final List<Statement> statements = new ArrayList<>();
 		for(String clock: mSymbolTable.getClockVars()) {
-			statements.add(generateVarRealAssignment(clock, 0.0f));
+			statements.add(generateVarIntAssignment(clock, 0));
 		}
-		statements.add(generateVarRealAssignment(GraphToBoogie.GLOBAL_CLOCK_VAR, 0.0f));
+		statements.add(generateVarIntAssignment(GraphToBoogie.GLOBAL_CLOCK_VAR, 0));
 		return statements;
 	}
 	
@@ -341,8 +341,6 @@ public class GraphToBoogie {
 		for(ReqGuardGraph reqId: guards.keySet()) {
 			Term guard = guards.get(reqId);
 			assertion = new AssertStatement(mDummyLocation, mTerm2Expression.translate(guard));
-			//ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, guard);
-			//annotation.annotate(assertion);
 			oracles.add(assertion);
 		}
 		return oracles;
@@ -354,7 +352,7 @@ public class GraphToBoogie {
 				new VariableLHS[] {new VariableLHS(mDummyLocation, GraphToBoogie.GLOBAL_CLOCK_VAR)} ));
 		stmts.add(new AssumeStatement(mDummyLocation,
 				new BinaryExpression(mDummyLocation, BinaryExpression.Operator.COMPGEQ,
-						new IdentifierExpression(mDummyLocation, GraphToBoogie.GLOBAL_CLOCK_VAR), new RealLiteral(mDummyLocation, "1.0"))
+						new IdentifierExpression(mDummyLocation, GraphToBoogie.GLOBAL_CLOCK_VAR), new IntegerLiteral(mDummyLocation, "1"))
 				));
 		for(String clockVar: mSymbolTable.getClockVars()) {
 			stmts.add(new AssignmentStatement(mDummyLocation, new VariableLHS[] {new VariableLHS(mDummyLocation, clockVar)},

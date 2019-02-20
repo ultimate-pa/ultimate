@@ -61,9 +61,9 @@ public class ReqToGraph {
 	
 	private Term getDurationTerm(String duration) {
 		if (mReqSymbolTable.isConstVar(duration)) {
-			return mScript.variable(duration, mScript.sort("Real"));
+			return mScript.variable(duration, mScript.sort("Integer"));
 		} else {
-			return mScript.decimal(duration);
+			return mScript.numeral(duration);
 		}
 	}
 	
