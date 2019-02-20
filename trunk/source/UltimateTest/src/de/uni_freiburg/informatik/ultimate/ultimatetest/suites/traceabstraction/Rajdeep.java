@@ -61,6 +61,7 @@ public class Rajdeep extends AbstractTraceAbstractionTestSuite {
 //		"svcomp2016/svcomp-Reach-32bit-Automizer_Default.epf",
 //		"svcomp2016/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 		"automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf",
+		"automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf",
 //		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf",
 //		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcWpLv-Bitvector.epf",
 //		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf",
