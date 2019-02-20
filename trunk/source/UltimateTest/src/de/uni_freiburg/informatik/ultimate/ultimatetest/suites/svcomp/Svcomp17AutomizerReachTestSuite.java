@@ -39,24 +39,24 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
  *
  */
 public class Svcomp17AutomizerReachTestSuite extends AbstractSvcompTestSuite {
-	
+
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompReachTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 120 * 1000;
+		return 60 * 1000;
 	}
-	
+
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
 		return -1;
 	}
-	
+
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
@@ -75,29 +75,29 @@ public class Svcomp17AutomizerReachTestSuite extends AbstractSvcompTestSuite {
 //		ReachSafety-Sequentialized.set
 //		Systems_DeviceDriversLinux64_ReachSafety.set
 		//@formatter:on
-		
-		rtr.addAll(getForAll("ReachSafety-Arrays", 10));
-		rtr.addAll(getForAll("ReachSafety-BitVectors", 20));
-		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
-		rtr.addAll(getForAll("ReachSafety-ECA", 10));
-		rtr.addAll(getForAll("ReachSafety-Heap", 20));
-		rtr.addAll(getForAll("ReachSafety-Loops", 40));
-		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
+
+//		rtr.addAll(getForAll("ReachSafety-Arrays", 10));
+//		rtr.addAll(getForAll("ReachSafety-BitVectors", 20));
+//		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
+//		rtr.addAll(getForAll("ReachSafety-ECA", 10));
+//		rtr.addAll(getForAll("ReachSafety-Heap", 20));
+//		rtr.addAll(getForAll("ReachSafety-Loops", 40));
+//		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
 //		rtr.addAll(getForAll("ReachSafety-ProductLines", 70));
 //		rtr.addAll(getForAll("ReachSafety-Sequentialized", 70));
-//		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 500));
+		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 500));
 //		rtr.addAll(getForAll("ReachSafety-Floats", 9999));
 		return rtr;
 	}
-	
+
 	private List<SvcompTestDefinition> getForAll(final String set, final int limit) {
 		return getForAll(set, getTimeout(), limit);
 	}
-	
+
 	private List<SvcompTestDefinition> getForAll(final String set) {
 		return getForAll(set, getTimeout(), getFilesPerCategory());
 	}
-	
+
 	private List<SvcompTestDefinition> getForAll(final String set, final long timeout, final int limit) {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf",

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 import org.junit.Before;
+import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -75,7 +76,7 @@ public class MuensterbergBenchmark {
 	}
 
 	/**
-	 * Old quantifier elimination needs seconds, 
+	 * Old quantifier elimination needs seconds,
 	 * new quantifier elimination needs minutes and produces more than 500 conjuncts
 	 */
 	public void rajdeepIteration5wp() {
@@ -102,7 +103,7 @@ public class MuensterbergBenchmark {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info(result);
 	}
-	
+
 
 	/**
 	 * Old quantifier elimination produces smaller result (approx factor 2)
@@ -111,25 +112,26 @@ public class MuensterbergBenchmark {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
 		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
-		
+
 		mScript.declareFun("#memory_$Pointer$.base", new Sort[0], intintintArraySort);
 		mScript.declareFun("#valid", new Sort[0], intintArraySort);
 		mScript.declareFun("DUPFFnew_~ans~6.base", new Sort[0], intSort);
 		mScript.declareFun("DUPFFnew_~ans~6.offset", new Sort[0], intSort);
-		
+
 		final String formulaAsString = "(forall ((|v_#memory_$Pointer$.base_279| (Array Int (Array Int Int)))) (or (= (select |#valid| (select (select |v_#memory_$Pointer$.base_279| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 8))) 1) (not (= (store |#memory_$Pointer$.base| DUPFFnew_~ans~6.base (store (select |#memory_$Pointer$.base| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 4) (select (select |v_#memory_$Pointer$.base_279| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 4)))) |v_#memory_$Pointer$.base_279|))))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-	
+
 	final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 			SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	mLogger.info(result);
 	}
 
-	
-	
+
+
 	/**
 	 * Old PQE size 43, new PQE size 96
 	 */
+	@Test
 	public void memsafet_test_0232_false_valid_free_ias() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
@@ -141,15 +143,15 @@ public class MuensterbergBenchmark {
 		mScript.declareFun("ULTIMATE.start_main_~#list~5.offset", new Sort[0], intSort);
 		mScript.declareFun("ULTIMATE.start_append_~item~4.base", new Sort[0], intSort);
 		final String formulaAsString = "(forall ((|#memory_$Pointer$.base| (Array Int (Array Int Int)))) (= (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) (select (select (store |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.base)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|)) (+ (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|) 4)) 0))";
-		
+
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		
+
 	final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 			SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	mLogger.info(result);
 	}
 
-	
+
 	/**
 	 * Too many recursive steps in new PQE
 	 */
@@ -163,16 +165,17 @@ public class MuensterbergBenchmark {
 		mScript.declareFun("main_#t~malloc5.base", new Sort[0], intSort);
 		final String formulaAsString = "(forall ((v_prenex_8 (Array Int (Array Int Int))) (v_prenex_6 Int) (v_prenex_7 (Array Int (Array Int Int))) (v_DerPreprocessor_4 Int) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (|main_#t~mem7.offset| Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (v_DerPreprocessor_6 Int)) (and (= (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (select (select (store (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (store (store (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset)) (select (select (store (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 0) (+ (select (select (store (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_4)) main_~head~5.base) main_~head~5.offset)) (= (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) (select (select (store (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (store (store (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 0) (+ (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_6)) main_~head~5.base) main_~head~5.offset))))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		
+
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info(result);
 	}
-	
-	
+
+
 	/**
 	 * Too many recursive steps in new PQE
 	 */
+	@Test
 	public void dll_queue_false_unreach_call_false_valid_memcleanup_2() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
@@ -188,7 +191,7 @@ public class MuensterbergBenchmark {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	mLogger.info(result);
 }
-	
-	
-	
+
+
+
 }

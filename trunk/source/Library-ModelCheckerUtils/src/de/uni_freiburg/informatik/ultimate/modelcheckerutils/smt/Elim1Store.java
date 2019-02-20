@@ -290,9 +290,16 @@ public class Elim1Store {
 //			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
 //		}
 
-
+		Term polarizedContext;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			polarizedContext = context;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			polarizedContext = SmtUtils.not(mScript, context);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
 		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				preprocessedInput, context);
+				preprocessedInput, polarizedContext);
 
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(

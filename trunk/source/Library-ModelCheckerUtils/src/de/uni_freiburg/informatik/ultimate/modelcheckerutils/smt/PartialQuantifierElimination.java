@@ -291,8 +291,8 @@ public class PartialQuantifierElimination {
 
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ArrayQuantifierEliminationMain(mgdScript, services, simplificationTechnique)
-					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));		
-			
+					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
+
 			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
 					+ esp + " Input:" + inputEliminationTask;
 			result = esp.getTerm();
@@ -302,9 +302,9 @@ public class PartialQuantifierElimination {
 		if (USE_SSD) {
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
-					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
-			
-			
+					.startRecursiveElimination(new EliminationTask(quantifier, eliminatees, result));
+
+
 			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
 					+ esp + " Input:" + inputEliminationTask;
 			if (DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION) {

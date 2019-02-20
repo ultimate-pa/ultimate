@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
@@ -187,18 +188,23 @@ public class ElimStorePlain {
 	}
 
 	/**
-	 * New recursive elimination. Not yet finished but should be sound.
+	 * New recursive elimination. Public method for starting the algorithm, not
+	 * suitable for recursive calls.
 	 */
-	public EliminationTask elimAllRec(final EliminationTask eTask) {
+	public EliminationTask startRecursiveElimination(final EliminationTask eTask) {
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		if (tr.isEmpty() || (tr.getDomain().size() == 1 && tr.getDomain().contains(0))) {
+			// return immediately if we do not have quantified arrays.
 			return eTask;
 		}
 		mRecursiveCallCounter = 0;
 		final long inputSize = new DAGSize().treesize(eTask.getTerm());
-		final EliminationTask result = doElimAllRec(
-				QuantifierUtils.getAbsorbingElement(mMgdScript.getScript(), eTask.getQuantifier()), eTask);
+		// Initially, the context is "true" (context is independent quantifier)
+		final Term initialContext = mMgdScript.getScript().term("true");
+		final EliminationTask result = doElimAllRec(initialContext, eTask);
 		final long outputSize = new DAGSize().treesize(result.getTerm());
+		// TODO 2019-02-20 Matthias: If implementation is more matured then show this
+		// output only if there was a big increase in the size of the formula.
 		mLogger.info(String.format(
 				"Needed %s recursive calls to eliminate %s variables, input treesize:%s, output treesize:%s",
 				mRecursiveCallCounter, eTask.getEliminatees().size(), inputSize, outputSize));
@@ -217,6 +223,9 @@ public class ElimStorePlain {
 		assert eTask.getEliminatees().size() == 1;
 		final TermVariable eliminatee = eTask.getEliminatees().iterator().next();
 		assert SmtSortUtils.isArraySort(eliminatee.getSort());
+
+//		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
+
 		final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
 				eTask.getQuantifier()).elim1(eTask.getQuantifier(), eliminatee,
 						eTask.getTerm(), context);
@@ -229,43 +238,69 @@ public class ElimStorePlain {
 	private EliminationTask doElimAllRec(final Term inputContext, final EliminationTask eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
-		final EliminationTask eTaskWithoutSos = ArrayQuantifierEliminationUtils.elimAllSos(eTask, mMgdScript, mServices, mLogger);
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTaskWithoutSos.getEliminatees());
-		Term currentTerm = eTaskWithoutSos.getTerm();
+		final EliminationTask preprocessed;
+		final boolean doPrematureNaiveSelectOverStoreElimination = !false;
+		if (doPrematureNaiveSelectOverStoreElimination) {
+			preprocessed = ArrayQuantifierEliminationUtils.elimAllSos(eTask, mMgdScript, mServices, mLogger);
+		} else {
+			preprocessed = eTask;
+		}
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(preprocessed.getEliminatees());
+		Term currentTerm = preprocessed.getTerm();
+
+		// Set of newly introduced quantified variables
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
 		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
+			// iterate over all eliminatees, lower dimensions first, but skip dimension zero
 			if (entry.getKey() != 0) {
-				// get all disjuncts for exists
-				final Pair<Term[], Term> split = split(eTaskWithoutSos.getQuantifier(), entry.getValue(), currentTerm);
-				final Term[] sameJuncts = split.getFirst();
-				final Term additionalContext = split.getSecond();
-				final Term totalContext = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
-						eTask.getQuantifier(), inputContext, additionalContext);
-				final List<Term> resSameJuncts = new ArrayList<>();
-				for (final Term sameJunct : sameJuncts) {
-					if (Arrays.asList(sameJunct.getFreeVars()).contains(entry.getValue())) {
-						final EliminationTask res = doElimOneRec(totalContext, new EliminationTask(
-								eTaskWithoutSos.getQuantifier(), Collections.singleton(entry.getValue()), sameJunct));
-						newElimnatees.addAll(res.getEliminatees());
-						resSameJuncts.add(res.getTerm());
+				// split term
+				final Term[] correspondingJunctiveNormalForm;
+				final Term dualJunctWithoutEliminatee;
+				{
+					final Pair<Term[], Term> split = split(preprocessed.getQuantifier(), entry.getValue(), currentTerm);
+					correspondingJunctiveNormalForm = split.getFirst();
+					dualJunctWithoutEliminatee = split.getSecond();
+				}
+				final Term additionalContext;
+				if (eTask.getQuantifier() == QuantifiedFormula.EXISTS) {
+					additionalContext = dualJunctWithoutEliminatee;
+				} else if (eTask.getQuantifier() == QuantifiedFormula.FORALL) {
+					additionalContext = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.IS_ATOM)
+							.transform(SmtUtils.not(mMgdScript.getScript(), dualJunctWithoutEliminatee));
+				} else {
+					throw new AssertionError("unknown quantifier");
+				}
+				final Term totalContext = SmtUtils.and(mMgdScript.getScript(), inputContext, additionalContext);
+				final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
+				for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
+					final Term correspondingJunct = correspondingJunctiveNormalForm[i];
+					if (!Arrays.asList(correspondingJunct.getFreeVars()).contains(entry.getValue())) {
+						// ignore correspondingJuncts that do not contain eliminatee
+						resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
 					} else {
-						resSameJuncts.add(sameJunct);
+						final EliminationTask res = doElimOneRec(totalContext,
+								new EliminationTask(preprocessed.getQuantifier(),
+										Collections.singleton(entry.getValue()), correspondingJunct));
+						newElimnatees.addAll(res.getEliminatees());
+						resultingCorrespondingJuncts[i] = res.getTerm();
 					}
 				}
-				currentTerm = compose(additionalContext, eTaskWithoutSos.getQuantifier(), resSameJuncts);
-				final boolean contextIsDisjunctive = (eTask.getQuantifier() == QuantifiedFormula.FORALL);
-				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, inputContext, contextIsDisjunctive)
+				currentTerm = compose(dualJunctWithoutEliminatee, preprocessed.getQuantifier(),
+						Arrays.asList(resultingCorrespondingJuncts));
+				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, inputContext, false)
 						.getSimplifiedTerm(currentTerm);
 			}
 		}
-		final Set<TermVariable> resultEliminatees = new HashSet<>(newElimnatees);
-		resultEliminatees.addAll(eTaskWithoutSos.getEliminatees());
-		final EliminationTask resultEliminationTask = new EliminationTask(eTaskWithoutSos.getQuantifier(), resultEliminatees, currentTerm);
-		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript,
-				resultEliminationTask, PqeTechniques.ALL_LOCAL);
+		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
+		resultingEliminatees.addAll(preprocessed.getEliminatees());
+		final EliminationTask preliminaryResult = new EliminationTask(preprocessed.getQuantifier(),
+				resultingEliminatees, currentTerm);
+		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
+				PqeTechniques.ALL_LOCAL);
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr) + " End of recursive call: "
-					+ printVarInfo(classifyEliminatees(finalResult.getEliminatees())) + " and "
+			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr)
+					+ " End of recursive call: " + printVarInfo(classifyEliminatees(finalResult.getEliminatees()))
+					+ " and "
 					+ QuantifierUtils.getXjunctsOuter(finalResult.getQuantifier(), finalResult.getTerm()).length
 					+ " xjuncts.");
 		}
@@ -273,12 +308,11 @@ public class ElimStorePlain {
 	}
 
 
-
-	private Term compose(final Term additionalContext, final int quantifier, final List<Term> resSameJuncts) {
-		final Term resSameJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(), quantifier,
-				resSameJuncts);
-		final Term result = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(), quantifier, additionalContext,
-				resSameJunction);
+	private Term compose(final Term dualJunct, final int quantifier, final List<Term> correspondingJuncts) {
+		final Term correspondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
+				quantifier, correspondingJuncts);
+		final Term result = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(), quantifier, dualJunct,
+				correspondingJunction);
 		return result;
 	}
 
@@ -293,12 +327,15 @@ public class ElimStorePlain {
 				dualJunctsWithoutEliminatee.add(xjunct);
 			}
 		}
-		final Term dualJunctionWithElimantee = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(), quantifier, dualJunctsWithEliminatee);
-		final Term dualJunctionWithoutElimantee = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(), quantifier, dualJunctsWithoutEliminatee);
-		final Term xnf = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(), quantifier, mMgdScript, dualJunctionWithElimantee,
+		final Term dualJunctionWithElimantee = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
+				quantifier, dualJunctsWithEliminatee);
+		final Term dualJunctionWithoutElimantee = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
+				quantifier, dualJunctsWithoutEliminatee);
+		final Term correspondingJunctiveNormalForm = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(),
+				quantifier, mMgdScript, dualJunctionWithElimantee,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Term[] result = QuantifierUtils.getXjunctsOuter(quantifier, xnf);
-		return new Pair<Term[], Term >(result, dualJunctionWithoutElimantee);
+		final Term[] correspodingJuncts = QuantifierUtils.getXjunctsOuter(quantifier, correspondingJunctiveNormalForm);
+		return new Pair<Term[], Term>(correspodingJuncts, dualJunctionWithoutElimantee);
 	}
 
 	private String printVarInfo(final TreeRelation<Integer, TermVariable> tr) {

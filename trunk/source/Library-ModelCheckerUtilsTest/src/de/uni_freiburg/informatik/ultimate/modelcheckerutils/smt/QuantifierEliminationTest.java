@@ -383,6 +383,25 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void critConsReform01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
+		mScript.declareFun("memPtr", new Sort[0], intintArraySort);
+		mScript.declareFun("p2", new Sort[0], intSort);
+		mScript.declareFun("b", new Sort[0], intSort);
+		mScript.declareFun("p1", new Sort[0], intSort);
+		mScript.declareFun("a", new Sort[0], intSort);
+		mScript.declareFun("v_DerPreprocessor_1", new Sort[0], intSort);
+		mScript.declareFun("v_DerPreprocessor_3", new Sort[0], intSort);
+		final String formulaAsString = "(= (select (store (store (store (store memPtr p2 b) p1 b) a v_DerPreprocessor_1) b v_DerPreprocessor_3) p1) b)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result.toStringDirect());
+	}
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {

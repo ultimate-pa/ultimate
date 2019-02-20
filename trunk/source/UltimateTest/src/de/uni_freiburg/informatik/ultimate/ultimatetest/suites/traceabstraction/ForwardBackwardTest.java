@@ -129,8 +129,8 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] mSettings = {
 //		"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-		"automizer/ForwardPredicates.epf",
-//		"automizer/BackwardPredicates.epf",
+//		"automizer/ForwardPredicates.epf",
+		"automizer/BackwardPredicates.epf",
 //		"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 //		"automizer/AutomizerReach-DumpPathPrograms.epf",
 	};
