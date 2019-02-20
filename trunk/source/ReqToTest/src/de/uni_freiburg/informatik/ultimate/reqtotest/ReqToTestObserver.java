@@ -39,6 +39,9 @@ public class ReqToTestObserver extends BaseObserver{
 	
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
+	
+	//set true for outputting the whole counter example instead of a test representation of the cs.
+	private final boolean RETURN_RESULT_AS_COUNTEREXAMPLE = false;
 
 	public ReqToTestObserver(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
@@ -77,9 +80,11 @@ public class ReqToTestObserver extends BaseObserver{
 		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, auxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 		
-		mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen);
-		final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
-		mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
+		if (!RETURN_RESULT_AS_COUNTEREXAMPLE) {
+			mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen);
+			final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
+			mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
+		}
 		
 		return false;
 	}

@@ -34,6 +34,8 @@ public class ReqToGraph {
 	private final AuxVarGen mThreeValuedAuxVarGen;
 	private final Script mScript;
 	
+	private final boolean UNIVERSALITY_IS_DEFINITNG = true;
+	
 	public ReqToGraph(final ILogger logger, AuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt,
 			ReqSymbolTable reqSymbolTable){
 		mLogger = logger;
@@ -423,10 +425,13 @@ public class ReqToGraph {
 			String id = pattern.getId();
 			final ReqGuardGraph q0 = new ReqGuardGraph(0, id);
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			//define labels 
-			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
-			//normal labels
-			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
+			if (UNIVERSALITY_IS_DEFINITNG) {
+				final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+				q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS)));
+			} else {
+				final Term ndS = SmtUtils.not(mScript, mThreeValuedAuxVarGen.getDefineGuard(q0));
+				q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, ndS)));
+			}
 			return q0;
 		} else {
 			scopeNotImplementedWarning(pattern);

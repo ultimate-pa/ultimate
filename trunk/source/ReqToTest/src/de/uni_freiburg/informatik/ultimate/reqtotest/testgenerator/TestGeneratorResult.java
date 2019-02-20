@@ -116,10 +116,10 @@ public class TestGeneratorResult implements IResult  {
 	
 	private void connectOutput(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
-		Set<String> inputVariables = mReqSymbolTable.getOutputVars();
+		Set<String> outputVariables = mReqSymbolTable.getOutputVars();
 		Set<TermVariable> outputs = new HashSet<TermVariable>();
 		for(TermVariable var: varsToJustify) {
-			if(inputVariables.contains(var.getName())) {
+			if(outputVariables.contains(var.getName())) {
 				outputs.add(var);
 			}
 		}
