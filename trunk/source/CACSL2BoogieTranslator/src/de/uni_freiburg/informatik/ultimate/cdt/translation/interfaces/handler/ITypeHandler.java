@@ -171,6 +171,8 @@ public interface ITypeHandler extends IHandler {
 
 	BoogieType getBoogieTypeForCType(CType resultType);
 
+	void setFloatingTypesNeeded(final boolean b);
+
 	ASTType byteSize2AstType(ILocation loc, CPrimitiveCategory inttype, int bytesize);
 
 	boolean areFloatingTypesNeeded();

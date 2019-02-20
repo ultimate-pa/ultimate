@@ -198,6 +198,10 @@ public class TypeHandler implements ITypeHandler {
 		mIncompleteType = prerunTypeHandler.mIncompleteType;
 	}
 
+	public void setFloatingTypesNeeded(final boolean b) {
+		mFloatingTypesNeeded = b;
+	}
+
 	@Override
 	public Result visit(final IDispatcher main, final IASTNode node) {
 		final String msg = "TypeHandler: Not yet implemented: " + node.toString();
