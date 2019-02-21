@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
@@ -186,7 +188,26 @@ public class ArrayIndexEqualityManager {
 	}
 
 
-
+	public Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			final EqualityStatus indexEquality = checkEqualityStatus(index1.get(i), index2.get(i));
+			switch (indexEquality) {
+			case EQUAL:
+				// do nothing
+				break;
+			case NOT_EQUAL:
+				return mMgdScript.getScript().term("false");
+			case UNKNOWN:
+				conjuncts.add(SmtUtils.binaryEquality(mMgdScript.getScript(), index1.get(i), index2.get(i)));
+				break;
+			default:
+				throw new AssertionError();
+			}
+		}
+		return SmtUtils.and(mMgdScript.getScript(), conjuncts);
+	}
 
 
 }
