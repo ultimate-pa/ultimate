@@ -123,27 +123,24 @@ public class TestGeneratorResult implements IResult  {
 				outputs.add(var);
 			}
 		}
+		if (outputs.isEmpty()) {
+			mLogger.warn("failed to justify output:" + toJustifyAnnotation.getGuard().toString());
+		}
 		dependencyNode.addOutputs(outputs);	
 	}
 	
 	
 	private void trimTestPlan() {
 		for(int step = mDependenciesGraphNodes.size()-1; step >= 0 ; step--) {
-			mLogger.warn("Pruing  ..." + Integer.toString(step));
-			Set<ReqGuardGraph> keepNodes = new HashSet<>();
+			Set<ReqGuardGraph> removeableNodes = new HashSet<>();
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
 			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 				DirectTriggerDependency depNode = stepDependencyGraphNodes.get(reqAut);
-				mLogger.warn("Calc ..." + Integer.toString(step));
-				mLogger.warn("Outdegreee              ..." + Integer.toString(depNode.getIncomingNodes().size()));
-				if(depNode.getIncomingNodes().size() > 0 && depNode.getOutputs().size() > 0) {
-					for(DirectTriggerDependency targetNode: depNode.getOutgoingNodes()) {
-						mLogger.warn("Disconnecting ..." + targetNode.getReqAut().getName());
-					}
-					keepNodes.add(reqAut);
+				if(depNode.getIncomingNodes().size() <= 0 && depNode.getOutputs().size() <= 0) {
+					removeableNodes.add(reqAut);
 				}
 			}
-			stepDependencyGraphNodes.keySet().removeAll(keepNodes);
+			stepDependencyGraphNodes.keySet().removeAll(removeableNodes);
 		}
 	}
 

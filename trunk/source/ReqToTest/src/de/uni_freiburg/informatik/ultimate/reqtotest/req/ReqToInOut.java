@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDela
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 
 public class ReqToInOut {

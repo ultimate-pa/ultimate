@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -22,8 +21,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
@@ -117,35 +114,6 @@ public class CounterExampleToTest {
 		}
 		return new SystemState(observableState, i);
 	}
-	
-	private boolean isDefinedFlagSet(String ident, ProgramState<Expression> state) {
-		String useIdent = AuxVarGen.USE_PREFIX + ident;
-		for(Expression e: state.getVariables()) {
-			if(e instanceof IdentifierExpression && ((IdentifierExpression) e).getIdentifier().equals(useIdent)){
-				Collection<Expression> values = state.getValues(e);
-				for(Expression v: values) {
-					return v instanceof BooleanLiteral && ((BooleanLiteral)v).getValue() == true;
-				}
-			}
-				
-		}
-		return false;
-	}
-	
-	private boolean isLargerZero(String ident, ProgramState<Expression> state) {
-		for(Expression e: state.getVariables()) {
-			if(e instanceof IdentifierExpression && ((IdentifierExpression) e).getIdentifier().equals(ident)){
-				Collection<Expression> values = state.getValues(e);
-				for(Expression v: values) {
-					return v instanceof IntegerLiteral && Integer.parseInt(((IntegerLiteral)v).getValue()) > 0;
-				}
-			}
-				
-		}
-		return false;
-	}
-	
-
 	
 }
 
