@@ -193,13 +193,17 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private ArrayDomainState<STATE> removeAuxVars(final Collection<IProgramVar> auxVars) {
+		final LinkedList<IProgramVar> auxVarQueue = new LinkedList<>(auxVars);
 		final List<IProgramVarOrConst> nonArrayVars = new ArrayList<>();
 		final SegmentationMap newSegmentationMap = getSegmentationMap();
-		for (final IProgramVar v : auxVars) {
-			if (v.getSort().isArraySort()) {
-				newSegmentationMap.remove(v);
+		while (!auxVarQueue.isEmpty()) {
+			final IProgramVar var = auxVarQueue.removeFirst();
+			if (var.getSort().isArraySort()) {
+				final Segmentation segmentation = getSegmentation(var);
+				auxVarQueue.addAll(segmentation.getValues());
+				newSegmentationMap.remove(var);
 			} else {
-				nonArrayVars.add(v);
+				nonArrayVars.add(var);
 			}
 		}
 		return updateState(mSubState.removeVariables(nonArrayVars), newSegmentationMap);
@@ -545,14 +549,14 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Set<Term> boundsOtherTodo = unionSets(boundEqsOther);
 		final List<Term> constraintsThis = new ArrayList<>();
 		final List<Term> constraintsOther = new ArrayList<>();
-		final SegmentationMap newSegmentationMapThis = getSegmentationMap();
-		final SegmentationMap newSegmentationMapOther = other.getSegmentationMap();
+		final SegmentationMap newSegmentationMapThis = thisState.getSegmentationMap();
+		final SegmentationMap newSegmentationMapOther = otherState.getSegmentationMap();
 		// Here unification starts
 		final List<Set<Term>> newBounds = new ArrayList<>();
 		final List<IProgramVar> newValuesThis = new ArrayList<>();
 		final List<IProgramVar> newValuesOther = new ArrayList<>();
-		final List<IProgramVarOrConst> removedValuesThis = new ArrayList<>();
-		final List<IProgramVarOrConst> removedValuesOther = new ArrayList<>();
+		final List<IProgramVar> removedValuesThis = new ArrayList<>();
+		final List<IProgramVar> removedValuesOther = new ArrayList<>();
 		final IProgramVar thisValue0 = valuesThis.get(0);
 		final IProgramVar otherValue0 = valuesOther.get(0);
 		final Sort valueSort = thisValue0.getSort();
@@ -699,14 +703,14 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		removedValuesThis.removeAll(simplifiedThisSegmentation.getValues());
 		removedValuesOther.addAll(valuesOther);
 		removedValuesOther.removeAll(simplifiedOtherSegmentation.getValues());
-		final STATE substateThis =
-				mToolkit.handleAssumptionBySubdomain(thisState.mSubState.addVariables(newVariablesThis),
-						SmtUtils.and(script, constraintsThis)).removeVariables(removedValuesThis);
-		final STATE substateOther =
-				mToolkit.handleAssumptionBySubdomain(otherState.mSubState.addVariables(newVariablesOther),
-						SmtUtils.and(script, constraintsOther)).removeVariables(removedValuesOther);
-		ArrayDomainState<STATE> currentStateThis = thisState.updateState(substateThis, newSegmentationMapThis);
-		ArrayDomainState<STATE> currentStateOther = otherState.updateState(substateOther, newSegmentationMapOther);
+		final STATE substateThis = mToolkit.handleAssumptionBySubdomain(
+				thisState.mSubState.addVariables(newVariablesThis), SmtUtils.and(script, constraintsThis));
+		final STATE substateOther = mToolkit.handleAssumptionBySubdomain(
+				otherState.mSubState.addVariables(newVariablesOther), SmtUtils.and(script, constraintsOther));
+		ArrayDomainState<STATE> currentStateThis =
+				thisState.updateState(substateThis, newSegmentationMapThis).removeAuxVars(removedValuesThis);
+		ArrayDomainState<STATE> currentStateOther =
+				otherState.updateState(substateOther, newSegmentationMapOther).removeAuxVars(removedValuesOther);
 		final Map<IProgramVar, EqClassSegmentation> auxVarSegmentations = new HashMap<>();
 		// Unify the aux-vars recursively
 		for (int i = 0; i < newValuesThis.size(); i++) {
@@ -837,6 +841,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		bounds.add(mToolkit.getMinBound().getTermVariable());
 		final Set<IProgramVar> freshValues = new HashSet<>();
 		final Set<IProgramVar> removedValues = new HashSet<>();
+		// final List<Term> constraints = new ArrayList<>();
 		final Script script = mToolkit.getScript();
 		for (int i = 1; i < segmentation.size(); i++) {
 			final TermVariable var = segmentation.getBound(i).getTermVariable();
