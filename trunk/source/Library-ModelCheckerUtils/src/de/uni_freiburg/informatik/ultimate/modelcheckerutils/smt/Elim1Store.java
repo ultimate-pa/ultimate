@@ -161,12 +161,20 @@ public class Elim1Store {
 		}
 
 
-		if (false) {
+		if (true) {
 			final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
 					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
 			if (!mdsoss.isEmpty()) {
+				final Term polarizedContext;
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					polarizedContext = context;
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					polarizedContext = SmtUtils.not(mScript, context);
+				} else {
+					throw new AssertionError("unknown quantifier");
+				}
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, inputTerm, quantifier, mLogger, mMgdScript);
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier, mLogger, mMgdScript);
 				final MultiDimensionalSelectOverStore mdsos = mdsoss.get(0);
 				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
 				aiem.unlockSolver();

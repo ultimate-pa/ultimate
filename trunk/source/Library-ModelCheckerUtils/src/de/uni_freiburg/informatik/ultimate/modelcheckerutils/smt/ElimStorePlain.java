@@ -239,7 +239,7 @@ public class ElimStorePlain {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
 		final EliminationTask preprocessed;
-		final boolean doPrematureNaiveSelectOverStoreElimination = !false;
+		final boolean doPrematureNaiveSelectOverStoreElimination = false;
 		if (doPrematureNaiveSelectOverStoreElimination) {
 			preprocessed = ArrayQuantifierEliminationUtils.elimAllSos(eTask, mMgdScript, mServices, mLogger);
 		} else {
