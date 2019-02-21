@@ -1306,6 +1306,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
 		// https://en.cppreference.com/w/c/numeric/fenv/feround
 
+		// TODO: Check if rounding mode is changeable, and if not, directly return a constant nstead of introducing a
+		// variable
+		mTypeHandler.requestFloatingTypes();
+
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
 
@@ -1345,6 +1349,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
 		// https://en.cppreference.com/w/c/numeric/fenv/feround
 		if (mSettings.isFesetroundEnabled()) {
+			mTypeHandler.requestFloatingTypes();
 			final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 			final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
 			Expression[] arguments;

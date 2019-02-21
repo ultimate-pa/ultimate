@@ -171,7 +171,11 @@ public interface ITypeHandler extends IHandler {
 
 	BoogieType getBoogieTypeForCType(CType resultType);
 
-	void setFloatingTypesNeeded(final boolean b);
+	/**
+	 * Can be called if a type-independent construct (such as a function or procedure) leads to the introduction of
+	 * floating points. Examples are calls to fesetround of fegetround that require the RoundingModeSort in the solver.
+	 */
+	void requestFloatingTypes();
 
 	ASTType byteSize2AstType(ILocation loc, CPrimitiveCategory inttype, int bytesize);
 

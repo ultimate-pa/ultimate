@@ -198,8 +198,9 @@ public class TypeHandler implements ITypeHandler {
 		mIncompleteType = prerunTypeHandler.mIncompleteType;
 	}
 
-	public void setFloatingTypesNeeded(final boolean b) {
-		mFloatingTypesNeeded = b;
+	@Override
+	public void requestFloatingTypes() {
+		mFloatingTypesNeeded = true;
 	}
 
 	@Override

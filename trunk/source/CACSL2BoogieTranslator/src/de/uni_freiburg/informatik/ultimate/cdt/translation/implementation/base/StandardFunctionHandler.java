@@ -198,10 +198,6 @@ public class StandardFunctionHandler {
 				.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
 		final String name = astIdExpression.getName().toString();
 
-		if (name.equals("fesetround") || name.equals("fegetround")) {
-			mTypeHandler.setFloatingTypesNeeded(true);
-		}
-
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {
 			final String transformedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), name);
