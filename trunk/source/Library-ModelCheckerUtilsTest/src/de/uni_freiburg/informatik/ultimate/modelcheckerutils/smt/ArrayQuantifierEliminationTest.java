@@ -35,14 +35,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -72,7 +69,6 @@ public class ArrayQuantifierEliminationTest {
 	public void tearDown() {
 		mScript.exit();
 	}
-/*
 	 @Test //Store Over Store
 	public void butan4() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
@@ -85,15 +81,15 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("u", new Sort[0], mIntSort);
 		mScript.declareFun("n", new Sort[0], mIntSort);
 		mScript.declareFun("m", new Sort[0], mIntSort);
-		
+
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and   (=(store a0 p u)a) (= (select (store (store a0 i n)k m) j )v) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 
-	}	
+	}
 
-	
-	 
+/*
+
 //   @Test
 	public void congo() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
@@ -101,8 +97,8 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("a", new Sort[0], multiDimArraySort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int (Array Int Int)))) (and  (= (select (select a0 5) 7)10)  (= a (store a0 7 (store (select a0 7) 8 23) ))))";
-		Term result = parseAndElim(formulaAsString);
-		 Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		 Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 
 //		final String testFormulaAsString = "";
 
@@ -113,15 +109,15 @@ public class ArrayQuantifierEliminationTest {
 	 @Test //Select Over Store
 	public void butan() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
-		
+
 		mScript.declareFun("a", new Sort[0], intintArraySort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (= (store a0 4 1337) a ) (= (select (store a0 2 42) 4) 1337) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
- 
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
+
 	}
 
 	 @Test //Store Over Store7
@@ -132,11 +128,11 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (= i k)(=(store a0 k 32)a) (=(store (store a0 i 666)k 13327) a) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 
 	}
-	 
+
 	 @Test //Store Over Store
 	public void butan3() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
@@ -145,11 +141,11 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (not(= i k)) (=(store a0 k 32)a) (=(store (store a0 i 666) k 13327) a) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 
 	}
-	 
+
 	 @Test //Store Over Store
 	public void tunis() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
@@ -158,8 +154,8 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int)))   (=(select a0 j )1)  )";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 		 }
 	 @Test //Store Over Store
 	public void italy() {
@@ -169,25 +165,25 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int)))    (= (store a0 j 32) a)  )";
-		
-		Term result = parseAndElim(formulaAsString);
-		String testFormulaAsString = "(= (select a j) 32)";
 
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		final String testFormulaAsString = "(= (select a j) 32)";
+
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 		 }
-	
+
 	 @Test
 	public void argentina() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("a", new Sort[0], intintArraySort);
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (=(select a0 7)42) (=(select a0 k)23) (=(store a0 2 1337) a))))";
-		Term result = parseAndElim(formulaAsString);
+		final Term result = parseAndElim(formulaAsString);
 		// Assert.assertTrue(testEquivalenz(formulaAsString, result));
 
 		final String testFormulaAsString = "(or (and (= 1337 (select a 2)) (= (select a 7) 42) (= k 2)) (and (= 1337 (select a 2)) (= (select a 7) 42) (= (select a k) 23)))";
 
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 	}
 
 
@@ -198,9 +194,9 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		mScript.declareFun("x", new Sort[0], mIntSort);
 		final String formulaAsString = "(forall ((a0 (Array Int Int))) (and (or  (not(=(select a0 k)42)) (not(=(select a0 i)23)) )  (or  (not(=(select a0 j)44)) (not(=(select a0 x)2324) )) ))";
-		Term result = parseAndElim(formulaAsString);
+		final Term result = parseAndElim(formulaAsString);
 		final String testFormulaAsString = "(and (= j x) (= i k))";
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 	}
 
 	 @Test
@@ -210,9 +206,9 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		mScript.declareFun("x", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (or (and  (=(select a0 k)42) (=(select a0 i)23) )  (and  (=(select a0 j)44) (=(select a0 x)2324) )  ))";
-		Term result = parseAndElim(formulaAsString);
+		final Term result = parseAndElim(formulaAsString);
 		final String testFormulaAsString = "(or(not(= k i)) (not (= j x)) )";
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 	}
 
 	 @Test // finland with forall and disjunction Result is equivalent to false
@@ -222,8 +218,8 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		mScript.declareFun("x", new Sort[0], mIntSort);
 		final String formulaAsString = "(forall ((a0 (Array Int Int))) (or  (not(=(select a0 k)42)) (not(=(select a0 i)23))) ) ";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
 
 	 @Test
@@ -234,8 +230,8 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("a1", new Sort[0], intintArraySort);
 		mScript.declareFun("a2", new Sort[0], intintArraySort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (=(store a0 k v) a1) (=(store a0 k v) a2) (not(= a1 a2)) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
 
 	 @Test //eliminiating Array Equailitys, dealing with Partial Equailitys
@@ -247,9 +243,9 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("a1", new Sort[0], intintArraySort);
 		mScript.declareFun("a2", new Sort[0], intintArraySort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (=(store a0 k v) a1) (=(store a0 i v) a2) (not(= a1 a2)) ))";
-		Term result = parseAndElim(formulaAsString);
+		final Term result = parseAndElim(formulaAsString);
 		final String testFormulaAsString = "(and (forall ((j_0 Int)) (or (= k j_0) (= i j_0) (= (select a2 j_0) (select a1 j_0)))) (not (= a1 a2)) (= (select a2 i) v) (= (select a1 k) v))";
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 
 	}
 
@@ -259,8 +255,8 @@ public class ArrayQuantifierEliminationTest {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mBoolSort);
 		mScript.declareFun("b", new Sort[0], intintArraySort);
 		final String formulaAsString = "(exists ((a0 (Array Int Bool))(a1 (Array Int Bool))) (and (= (store a1 2 true) b) (= (store a0 1 false) b) (= (select a0 2) true)(= (select a1 1) false)))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));	
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
 
 	 @Test // 2 Stores
@@ -270,8 +266,8 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("v", new Sort[0], mIntSort);
 		mScript.declareFun("a1", new Sort[0], intintArraySort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and (=(store a0 1 3) a1) (= (select a0 k) 4)  (=(store a0 2 4) a1) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
 
 	 @Test // 2 Stores and partial Equality
@@ -282,9 +278,9 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("a1", new Sort[0], intintArraySort);
 		mScript.declareFun("a2", new Sort[0], intintArraySort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and (=(store a0 k 3) a1) (= a1 a2)  (=(store a0 i 4) a2) ))";
-		Term result = parseAndElim(formulaAsString);
+		final Term result = parseAndElim(formulaAsString);
 		final String testFormulaAsString = "(and (forall ((j_0 Int)) (or (= k j_0) (= i j_0) (= (select a2 j_0) (select a1 j_0)))) (= (select a2 i) 4) (= (select a1 k) 3) (= a1 a2))";
-		Assert.assertTrue(testEquivalenz(testFormulaAsString, result));
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, testFormulaAsString));
 	}
 
 	 @Test // 2 Quantified Array, Arrays with Sort (Array Int Bool) and partial
@@ -293,53 +289,31 @@ public class ArrayQuantifierEliminationTest {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("j", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))(a1 (Array Int Int))) (and (=(select a1 k)3) (=(select a1 k)2) (= k 1) (=(select a0 k)2) (=(select a0 k)3)))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
-	*/		
-	
-	
+
+
 	 @Test
 	public void finland() {
 		mScript.declareFun("k", new Sort[0], mIntSort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
 		final String formulaAsString = "(exists ((a0 (Array Int Int))) (and  (=(select a0 k)42) (=(select a0 i)23) ))";
-		Term result = parseAndElim(formulaAsString);
-		Assert.assertTrue(testEquivalenz(formulaAsString, result));
-	}
-	
-	
-	
-	public boolean testTRUE(Term result) {
-		return SmtUtils.isTrue(result);
+		final Term result = parseAndElim(formulaAsString);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, result, formulaAsString));
 	}
 
-	public boolean testEquivalenz(String formulaAsString, Term result) {
-		Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		Term equi = SmtUtils.not(mScript, SmtUtils.binaryEquality(mScript, formulaAsTerm, result));
-		System.out.print("TEST: " + SmtUtils.checkSatTerm(mScript, equi) + "\n");
-		return (SmtUtils.checkSatTerm(mScript, equi) == LBool.UNSAT);
-	}
+*/
 
-	public boolean testQuantifireFree(Term result) {
-		return QuantifierUtils.isQuantifierFree(result);
+	public boolean testQuantifireFree(final Term term) {
+		return QuantifierUtils.isQuantifierFree(term);
 
 	}
 
-	public boolean testIS(Term result, String formulaAsString) {
+
+	public Term parseAndElim(final String formulaAsString) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		return result == formulaAsTerm;
-	}
-
-	public boolean testValid(String formulaAsString) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final LBool checkSatResult = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mTrueTerm, formulaAsTerm));
-		return (checkSatResult == LBool.UNSAT);
-	}
-
-	public Term parseAndElim(String formulaAsString) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		// Term result = NewPartialQuantiElim.tryToEliminate(mServices, mLogger,
 		// mMgdScript, formulaAsTerm,

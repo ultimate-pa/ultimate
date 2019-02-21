@@ -109,6 +109,7 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(checkSatRes == LBool.SAT);
 	}
 
+	@Test
 	public void varStilThereBug() {
 
 		// Sorts
@@ -399,6 +400,25 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result.toStringDirect());
+	}
+
+
+	@Test
+	public void sosTest() {
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
+		mScript.declareFun("b", new Sort[0], intintArraySort);
+		mScript.declareFun("i", new Sort[0], mIntSort);
+		mScript.declareFun("k", new Sort[0], mIntSort);
+		mScript.declareFun("v", new Sort[0], mIntSort);
+		final String formulaAsString =
+				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (not (= i k))))";
+
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		Assert.assertTrue(!SmtUtils.isTrue(result));
 	}
 
 
