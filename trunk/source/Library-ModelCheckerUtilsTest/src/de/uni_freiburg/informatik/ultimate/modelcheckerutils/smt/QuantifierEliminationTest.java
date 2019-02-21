@@ -404,7 +404,7 @@ public class QuantifierEliminationTest {
 
 
 	@Test
-	public void sosTest() {
+	public void selectOverStoreTest01() {
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
 		mScript.declareFun("b", new Sort[0], intintArraySort);
 		mScript.declareFun("i", new Sort[0], mIntSort);
@@ -412,13 +412,55 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("v", new Sort[0], mIntSort);
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (not (= i k))))";
-
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result);
-		Assert.assertTrue(!SmtUtils.isTrue(result));
+		final String expectedResultAsString = "(or (not (= v 7)) (not (= i k)))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
+	@Test
+	public void selectOverStoreTest02() {
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
+		mScript.declareFun("b", new Sort[0], intintArraySort);
+		mScript.declareFun("i", new Sort[0], mIntSort);
+		mScript.declareFun("k", new Sort[0], mIntSort);
+		mScript.declareFun("v", new Sort[0], mIntSort);
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (= (select (store a k v) i) 7) (= i k)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(and (= v 7) (= i k))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
+	@Test
+	public void selectOverStoreTest03() {
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
+		mScript.declareFun("b", new Sort[0], intintArraySort);
+		mScript.declareFun("i", new Sort[0], mIntSort);
+		mScript.declareFun("k", new Sort[0], mIntSort);
+		mScript.declareFun("v", new Sort[0], mIntSort);
+		final String formulaAsString =
+				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (= i k)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(= i k)";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
 
 
