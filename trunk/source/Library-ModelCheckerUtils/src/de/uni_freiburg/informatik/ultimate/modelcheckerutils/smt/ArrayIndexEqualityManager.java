@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -91,10 +90,10 @@ public class ArrayIndexEqualityManager {
 	}
 
 	public EqualityStatus checkEqualityStatus(final Term elem1, final Term elem2) {
-		if (allFreeVarsOccurInContext(elem1)) {
+		if (!allFreeVarsOccurInContext(elem1)) {
 			return EqualityStatus.UNKNOWN;
 		}
-		if (allFreeVarsOccurInContext(elem2)) {
+		if (!allFreeVarsOccurInContext(elem2)) {
 			return EqualityStatus.UNKNOWN;
 		}
 		mTver.addElement(elem1);
@@ -106,7 +105,7 @@ public class ArrayIndexEqualityManager {
 			if (mAlreadyCheckedBySolver.containsPair(elem1Rep, elem2Rep)) {
 				return EqualityStatus.UNKNOWN;
 			}
-			checkEqualityStatusViaSolver(mQuantifier, mTver, null, iea, elem1Rep, elem2Rep);
+			checkEqualityStatusViaSolver(mQuantifier, mTver, iea, elem1Rep, elem2Rep);
 			mAlreadyCheckedBySolver.addPair(elem1Rep, elem2Rep);
 			return mTver.getEqualityStatus(elem1Rep, elem2Rep);
 		}
@@ -129,7 +128,7 @@ public class ArrayIndexEqualityManager {
 
 
 	private void checkEqualityStatusViaSolver(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
-			final List<Term> relationsDetectedViaSolver, final IncrementalPlicationChecker iea, final Term index1,
+			final IncrementalPlicationChecker iea, final Term index1,
 			final Term index2) throws AssertionError {
 		final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), index1, index2);
 		if (SmtUtils.isTrue(eq)) {
@@ -154,7 +153,6 @@ public class ArrayIndexEqualityManager {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				relationsDetectedViaSolver.add(eq);
 				mLogger.info("detected equality via solver");
 			} else {
 				final Validity notEqualsHolds = iea.checkPlication(neq);
@@ -174,7 +172,6 @@ public class ArrayIndexEqualityManager {
 						throw new AssertionError("unknown quantifier");
 					}
 					mLogger.info("detected not equals via solver");
-					relationsDetectedViaSolver.add(neq);
 				}
 			}
 		}
