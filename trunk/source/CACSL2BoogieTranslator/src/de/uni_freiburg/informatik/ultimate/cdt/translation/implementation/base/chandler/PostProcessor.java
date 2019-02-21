@@ -235,13 +235,11 @@ public class PostProcessor {
 			if (mTypeHandler.areFloatingTypesNeeded()) {
 				decl.addAll(declareRoundingModeDataTypes(loc));
 				decl.addAll(declareFloatDataTypes(loc));
-				decl.addAll(declareCurrentRoundingModeVar(loc));
+				if (mSettings.isFesetroundEnabled()) {
+					decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
+					decl.addAll(declareCurrentRoundingModeVar(loc));
+				}
 			}
-
-			if (mSettings.isFesetroundEnabled()) {
-				decl.addAll(createUltimateSetCurrentRoundingProcedure(loc, hook));
-			}
-
 			final String[] importantFunctions = new String[] { "bvadd" };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
@@ -826,7 +824,8 @@ public class PostProcessor {
 		}
 
 		// initializes current rounding mode var
-		if (mSettings.isBitvectorTranslation() && mTypeHandler.areFloatingTypesNeeded()) {
+		if (mSettings.isBitvectorTranslation() && mTypeHandler.areFloatingTypesNeeded()
+				&& mSettings.isFesetroundEnabled()) {
 			final Expression value =
 					mSettings.getInitialRoundingMode().getSmtRoundingMode().getBoogieIdentifierExpression();
 
