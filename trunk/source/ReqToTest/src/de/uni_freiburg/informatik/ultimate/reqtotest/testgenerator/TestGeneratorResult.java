@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -39,7 +41,6 @@ public class TestGeneratorResult implements IResult  {
 	
 
 	private void calculateDependencyGraph() {
-		
 		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes;
 		Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencyNodes = new HashMap<>();
 		for(List<ReqGraphAnnotation> stepAnnotations: mStepsAnnotations) {
@@ -51,19 +52,19 @@ public class TestGeneratorResult implements IResult  {
 	}
 	
 	/*
-	 * Calculate relations between Requiremens in one test step.
+	 * Calculate relations between Requirements in one test step.
 	 * A relation looks like req1 ---- var1,var2 ----> req2, read as req2's trigger vars depend on effects var1, var2 set by req1.
 	 */
 	private Map<ReqGuardGraph, DirectTriggerDependency> calculateDependencyGraphStep(List<ReqGraphAnnotation> stepAnnotations, 
 			Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencies) {
-		//generate Nodes for every requirement 
+		//initialize dependency nodes: each requirement is represented by a node (in each test step)
 		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes = new HashMap<>();
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
 			ReqGuardGraph reqAut = annotation.getRequirementAut();
 			DirectTriggerDependency dependencyNode = new DirectTriggerDependency(reqAut);
 			stepDependencyNodes.put(reqAut, dependencyNode);
 		}
-		//find dependees justifying every annotation
+		//for a requirement find an effect that is responsible for triggering the quirement
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
 			DirectTriggerDependency dependencyNode = stepDependencyNodes.get(annotation.getRequirementAut());
 			connectEffectDependencies(dependencyNode, stepDependencyNodes, annotation, stepAnnotations);
@@ -143,6 +144,7 @@ public class TestGeneratorResult implements IResult  {
 			stepDependencyGraphNodes.keySet().removeAll(removeableNodes);
 		}
 	}
+	
 
 	@Override
 	public String getPlugin() {

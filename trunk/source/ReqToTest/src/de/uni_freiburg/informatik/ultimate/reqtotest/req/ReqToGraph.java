@@ -61,7 +61,7 @@ public class ReqToGraph {
 	
 	private Term getDurationTerm(String duration) {
 		if (mReqSymbolTable.isConstVar(duration)) {
-			return mScript.variable(duration, mScript.sort("Integer"));
+			return mScript.variable(duration, mScript.sort("Int"));
 		} else {
 			return mScript.numeral(duration);
 		}
@@ -405,7 +405,7 @@ public class ReqToGraph {
 			final Term nR = SmtUtils.not(mScript, R);
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript,
 					SmtUtils.and(mScript, nuR, ndS), 
-					SmtUtils.and(mScript, uR, R, ndS, S),
+					SmtUtils.and(mScript, uR, R, dS, S),
 					SmtUtils.and(mScript, uR, nR, ndS),
 					SmtUtils.and(mScript, S, uS, ndS))));
 			return q0;
