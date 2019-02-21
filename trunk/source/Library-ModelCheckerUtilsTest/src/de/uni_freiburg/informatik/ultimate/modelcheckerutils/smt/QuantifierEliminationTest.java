@@ -482,6 +482,28 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void selectOverStoreMultiDimSomeIndex() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("kOuter", new Sort[0], intSort);
+		mScript.declareFun("iOuter", new Sort[0], intSort);
+		mScript.declareFun("kInner", new Sort[0], intSort);
+		mScript.declareFun("iInner", new Sort[0], intSort);
+		mScript.declareFun("v", new Sort[0], intSort);
+		final String formulaAsString =
+				"(forall ((a (Array Int (Array Int Int)))) (or (not (= (select (select (store a kOuter (store (select a kOuter) kInner v)) iOuter) iInner) 7)) (not (= iOuter kOuter))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(and (or (not (= iOuter kOuter)) (= iInner kInner)) (or (not (= iOuter kOuter)) (not (= v 7))))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
