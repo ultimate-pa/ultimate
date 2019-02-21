@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Extend
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
@@ -140,7 +139,7 @@ public class Elim1Store {
 	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
 
-	private static final boolean SELECT_OVER_STORE_PREPROCESSING = false;
+	private static final boolean SELECT_OVER_STORE_PREPROCESSING = true;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
@@ -161,7 +160,7 @@ public class Elim1Store {
 		}
 
 
-		if (true) {
+		if (SELECT_OVER_STORE_PREPROCESSING) {
 			final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
 					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
 			if (!mdsoss.isEmpty()) {
@@ -179,44 +178,6 @@ public class Elim1Store {
 				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
 				aiem.unlockSolver();
 				return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
-			}
-		}
-		if (false && SELECT_OVER_STORE_PREPROCESSING) {
-			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
-			for (final ApplicationTerm selectTerm : allSelectTerms) {
-				final ArraySelectOverStore asos = ArraySelectOverStore.convert(selectTerm);
-				if (asos != null) {
-					if (asos.getArrayStore().getArray().equals(eliminatee)) {
-						final Term selectIndex = asos.getIndex();
-						final Term storeIndex = asos.getArrayStore().getIndex();
-						Term derCase;
-						{
-							final Term replacement = asos.getArrayStore().getValue();
-							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
-									replacement);
-							final Term updated = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(inputTerm);
-							final Term derTerm = QuantifierUtils.applyDerOperator(mScript, quantifier, selectIndex,
-									storeIndex);
-							derCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, derTerm, updated);
-						}
-						Term antiDerCase;
-						{
-							final Term replacement = SmtUtils.select(mScript, asos.getArrayStore().getArray(),
-									selectIndex);
-							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
-									replacement);
-							final Term updated = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(inputTerm);
-							final Term antiDerTerm = QuantifierUtils.applyAntiDerOperator(mScript, quantifier,
-									selectIndex, storeIndex);
-							antiDerCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, antiDerTerm,
-									updated);
-						}
-						final Term simpl = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier,
-								derCase, antiDerCase);
-						return new EliminationTask(quantifier, Collections.singleton(eliminatee), simpl);
-						// throw new AssertionError("select-over-store");
-					}
-				}
 			}
 		}
 
@@ -248,49 +209,6 @@ public class Elim1Store {
 
 		final List<ApplicationTerm> selectTerms = extractArrayReads(eliminatee, preprocessedInput);
 		final Set<Term> selectIndices = new HashSet<>();
-		if (SELECT_OVER_STORE_PREPROCESSING) {
-			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(preprocessedInput);
-			final Map<Term, Term> substitutionMappingPre = new HashMap<>();
-			int singleCaseReplacements = 0;
-			int multiCaseReplacements = 0;
-			for (final ApplicationTerm selectTerm : allSelectTerms) {
-				final MultiDimensionalSelectOverStore mdsos = MultiDimensionalSelectOverStore.convert(selectTerm);
-				if (mdsos != null) {
-					if (mdsos.getStore().getArray().equals(eliminatee)) {
-						final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
-						final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-						final ThreeValuedEquivalenceRelation<Term> tver = ArrayIndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
-						final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
-						switch (indexEquality) {
-						case EQUAL:
-							substitutionMappingPre.put(selectTerm, mdsos.constructEqualsReplacement());
-							singleCaseReplacements++;
-							break;
-						case NOT_EQUAL:
-							substitutionMappingPre.put(selectTerm, mdsos.constructNotEqualsReplacement(mScript));
-							singleCaseReplacements++;
-							break;
-						case UNKNOWN:
-							substitutionMappingPre.put(selectTerm, ArrayQuantifierEliminationUtils
-									.transformMultiDimensionalSelectOverStoreToIte(mdsos, mMgdScript));
-							multiCaseReplacements++;
-							// do nothing
-							break;
-						default:
-							throw new AssertionError();
-						}
-					}
-				}
-			}
-			if (multiCaseReplacements > 0 || singleCaseReplacements > 0) {
-				preprocessedInput = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMappingPre).transform(preprocessedInput);
-				if (multiCaseReplacements > 0) {
-					newAuxVars.add(eliminatee);
-					final Term newTerm = new IteRemover(mMgdScript).transform(preprocessedInput);
-					return new EliminationTask(quantifier, newAuxVars, newTerm);
-				}
-			}
-		}
 
 
 		final List<ArrayStore> stores = extractStores(eliminatee, inputTerm);
