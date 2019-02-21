@@ -94,9 +94,10 @@ public class ArrayQuantifierEliminationUtils {
 			return eTask;
 		}
 	}
-	
-	
-	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos, final ManagedScript mgdScript) {
+
+
+	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos,
+			final ManagedScript mgdScript) {
 		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
 		final Term eq = ArrayIndex.constructPairwiseEquality(selectIndex, storeIndex, mgdScript.getScript());
@@ -104,6 +105,16 @@ public class ArrayQuantifierEliminationUtils {
 		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
 		return Util.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
 	}
-	
+
+	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos,
+			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
+		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
+		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
+		final Term eq = aiem.constructPairwiseEquality(selectIndex, storeIndex);
+		final Term equalsReplacement = mdsos.constructEqualsReplacement();
+		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
+		return Util.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
+	}
+
 
 }

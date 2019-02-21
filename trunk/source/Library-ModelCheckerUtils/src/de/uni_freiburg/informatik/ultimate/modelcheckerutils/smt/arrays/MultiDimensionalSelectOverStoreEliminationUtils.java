@@ -62,8 +62,8 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 			result = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term);
 			break;
 		case UNKNOWN:
-			substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
-					ArrayQuantifierEliminationUtils.transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript));
+			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), ArrayQuantifierEliminationUtils
+					.transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript, aiem));
 			final Term resultWithIte = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
 					.transform(term);
 			result = new IteRemover(mgdScript).transform(resultWithIte);
