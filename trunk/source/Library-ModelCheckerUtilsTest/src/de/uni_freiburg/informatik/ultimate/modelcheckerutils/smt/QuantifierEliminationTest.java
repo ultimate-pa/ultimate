@@ -463,6 +463,24 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
 
+	@Test
+	public void selectOverStoreBug01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("k", new Sort[0], intSort);
+		mScript.declareFun("i", new Sort[0], intSort);
+		mScript.declareFun("v", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((a (Array Int Bool))) (not (select (store (store a k true) i true) v)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(and (not (= i v)) (not (= k v)))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
 
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
