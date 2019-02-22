@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -114,6 +116,21 @@ public class ArrayQuantifierEliminationUtils {
 		final Term equalsReplacement = mdsos.constructEqualsReplacement();
 		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
 		return Util.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
+	}
+
+	public static Term transformMultiDimensionalSelectOverNestedStoreToIte(
+			final MultiDimensionalSelectOverNestedStore mdsos, final ManagedScript mgdScript,
+			final ArrayIndexEqualityManager aiem) {
+		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
+		final List<ArrayIndex> storeIndices = mdsos.getNestedStore().getIndices();
+		Term ite = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
+		for (int i = 0; i < storeIndices.size(); i++) {
+			final ArrayIndex indexOfCurrentStore = mdsos.getNestedStore().getIndices().get(i);
+			final Term eq = aiem.constructPairwiseEquality(selectIndex, indexOfCurrentStore);
+			final Term valueOfCurrentStore = mdsos.getNestedStore().getValues().get(i);
+			ite = Util.ite(mgdScript.getScript(), eq, valueOfCurrentStore, ite);
+		}
+		return ite;
 	}
 
 

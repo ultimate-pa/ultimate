@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
+import java.util.LinkedList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Data structure that represents a sequence of {@link MultiDimensionalStore}s
@@ -41,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MultiDimensionalNestedStore {
 	private final Term mArray;
 	private final List<ArrayIndex> mIndices;
-	private final List<ArrayIndex> mValues;
+	private final List<Term> mValues;
 
 	public MultiDimensionalNestedStore(final Term array, final List<ArrayIndex> indices,
-			final List<ArrayIndex> values) {
+			final List<Term> values) {
 		mArray = array;
 		mIndices = indices;
 		mValues = values;
@@ -58,17 +61,17 @@ public class MultiDimensionalNestedStore {
 		return mIndices;
 	}
 
-	public List<ArrayIndex> getValues() {
+	public List<Term> getValues() {
 		return mValues;
 	}
 
-//	public Term toTerm(final Script script) {
-//		Term array = mArray;
-//		for (int i = 0; i < mIndices.size(); i++) {
-//			array = SmtUtils.store(script, array, mIndices.get(i), mValues.get(i));
-//		}
-//		return array;
-//	}
+	public Term toTerm(final Script script) {
+		Term array = mArray;
+		for (int i = 0; i < mIndices.size(); i++) {
+			array = SmtUtils.multiDimensionalStore(script, array, mIndices.get(i), mValues.get(i));
+		}
+		return array;
+	}
 
 //	@Override
 //	public String toString() {
@@ -78,24 +81,24 @@ public class MultiDimensionalNestedStore {
 //		}
 //		return s;
 //	}
-//
-//	public static MultiDimensionalNestedStore convert(final Term term) {
-//		if (!term.getSort().isArraySort()) {
-//			throw new IllegalArgumentException("no array");
-//		}
-//		final LinkedList<Term> indices = new LinkedList<>();
-//		final LinkedList<Term> values = new LinkedList<>();
-//		Term currentArray = term;
-//		ArrayStore currentStore = ArrayStore.convert(term);
-//		if (currentStore == null) {
-//			return null;
-//		}
-//		while (currentStore != null) {
-//			indices.addFirst(currentStore.getIndex());
-//			values.addFirst(currentStore.getValue());
-//			currentArray = currentStore.getArray();
-//			currentStore = ArrayStore.convert(currentArray);
-//		}
-//		return new MultiDimensionalNestedStore(currentArray, indices, values);
-//	}
+
+	public static MultiDimensionalNestedStore convert(final Term term) {
+		if (!term.getSort().isArraySort()) {
+			throw new IllegalArgumentException("no array");
+		}
+		final LinkedList<ArrayIndex> indices = new LinkedList<>();
+		final LinkedList<Term> values = new LinkedList<>();
+		Term currentArray = term;
+		MultiDimensionalStore currentStore = MultiDimensionalStore.convert(term);
+		if (currentStore == null) {
+			return null;
+		}
+		while (currentStore != null) {
+			indices.addFirst(currentStore.getIndex());
+			values.addFirst(currentStore.getValue());
+			currentArray = currentStore.getArray();
+			currentStore = MultiDimensionalStore.convert(currentArray);
+		}
+		return new MultiDimensionalNestedStore(currentArray, indices, values);
+	}
 }

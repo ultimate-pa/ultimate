@@ -32,8 +32,10 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Data structure for a (possibly) nested array select expression.
@@ -62,6 +64,15 @@ public class MultiDimensionalStore {
 	private final Term mValue;
 	private final ApplicationTerm mStoreTerm;
 
+
+	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value, final Script script) {
+		super();
+		mArray = array;
+		mIndex = index;
+		mValue = value;
+		mStoreTerm = (ApplicationTerm) SmtUtils.multiDimensionalStore(script, array, index, value);
+	}
+
 	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		final ArrayList<Term> index = new ArrayList<Term>();
@@ -73,7 +84,7 @@ public class MultiDimensionalStore {
 			while (isStore(remainder) && isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], mArray, index)) {
 				index.add(((ApplicationTerm) remainder).getParameters()[1]);
 				remainder = ((ApplicationTerm) remainder).getParameters()[2];
-				
+
 			}
 		} else {
 			mArray = null;
@@ -82,7 +93,7 @@ public class MultiDimensionalStore {
 		mValue = remainder;
 		assert classInvariant();
 	}
-	
+
 	private boolean isStore(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().equals("store");
@@ -120,6 +131,18 @@ public class MultiDimensionalStore {
 
 	public ApplicationTerm getStoreTerm() {
 		return mStoreTerm;
+	}
+
+	public static MultiDimensionalStore convert(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			return null;
+		}
+		final MultiDimensionalStore mds = new MultiDimensionalStore(term);
+		if (mds.getArray() == null) {
+			return null;
+		} else {
+			return mds;
+		}
 	}
 
 	@Override

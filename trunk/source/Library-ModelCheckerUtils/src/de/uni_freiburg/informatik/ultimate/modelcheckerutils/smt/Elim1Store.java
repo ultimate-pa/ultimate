@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
@@ -161,23 +162,44 @@ public class Elim1Store {
 
 
 		if (SELECT_OVER_STORE_PREPROCESSING) {
-			final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
-					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
-			if (!mdsoss.isEmpty()) {
-				final Term polarizedContext;
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					polarizedContext = context;
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					polarizedContext = SmtUtils.not(mScript, context);
-				} else {
-					throw new AssertionError("unknown quantifier");
+			if (true) {
+				final List<MultiDimensionalSelectOverNestedStore> mdsoss = MultiDimensionalSelectOverNestedStore
+						.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
+				if (!mdsoss.isEmpty()) {
+					final Term polarizedContext;
+					if (quantifier == QuantifiedFormula.EXISTS) {
+						polarizedContext = context;
+					} else if (quantifier == QuantifiedFormula.FORALL) {
+						polarizedContext = SmtUtils.not(mScript, context);
+					} else {
+						throw new AssertionError("unknown quantifier");
+					}
+					final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+					final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier, mLogger, mMgdScript);
+					final MultiDimensionalSelectOverNestedStore mdsos = mdsoss.get(0);
+					final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
+					aiem.unlockSolver();
+					return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
 				}
-				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier, mLogger, mMgdScript);
-				final MultiDimensionalSelectOverStore mdsos = mdsoss.get(0);
-				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
-				aiem.unlockSolver();
-				return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
+			} else {
+				final List<MultiDimensionalSelectOverStore> mdsoss = MultiDimensionalSelectOverStore
+						.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
+				if (!mdsoss.isEmpty()) {
+					final Term polarizedContext;
+					if (quantifier == QuantifiedFormula.EXISTS) {
+						polarizedContext = context;
+					} else if (quantifier == QuantifiedFormula.FORALL) {
+						polarizedContext = SmtUtils.not(mScript, context);
+					} else {
+						throw new AssertionError("unknown quantifier");
+					}
+					final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+					final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier, mLogger, mMgdScript);
+					final MultiDimensionalSelectOverStore mdsos = mdsoss.get(0);
+					final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem, inputTerm, mdsos);
+					aiem.unlockSolver();
+					return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
+				}
 			}
 		}
 
