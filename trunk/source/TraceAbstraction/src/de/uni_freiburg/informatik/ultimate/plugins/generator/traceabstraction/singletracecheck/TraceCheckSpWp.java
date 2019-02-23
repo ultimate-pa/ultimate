@@ -56,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -246,9 +246,15 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 			} else {
 				numberOfConjunctsInUnsatCore = unsatCore.size();
 			}
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
-				mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
+			if (mLogger.isInfoEnabled()) {
+				final String logMessage = "Trace formula consists of " + numberOfConjunctsInTrace + " conjuncts, "
+						+ unsatCore.size() + " conjunts are in the unsatisfiable core";
+				// if 50% or more of all conjucts are in the unsat core we output a warning
+				if (unsatCore.size() * 2 >= numberOfConjunctsInTrace) {
+					mLogger.warn(logMessage);
+				} else {
+					mLogger.info(logMessage);
+				}
 			}
 			mTraceCheckBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
