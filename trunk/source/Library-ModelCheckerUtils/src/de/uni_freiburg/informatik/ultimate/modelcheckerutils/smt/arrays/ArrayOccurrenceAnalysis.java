@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 
 /**
  * Analyze for a given term and a given (wanted) array in which kinds of
@@ -51,11 +53,11 @@ public class ArrayOccurrenceAnalysis {
 	private final Term mAnalyzedTerm;
 	private final Term mWantedArray;
 
-	private final List<ArraySelectOverStore> mArraySelectOverStores = new ArrayList<>();
+	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
 	private final List<NestedArrayStore> mNestedArrayStores = new ArrayList<>();
 	private final List<ArraySelect> mArraySelects = new ArrayList<>();
-	private final List<Term> mArrayEqualities = new ArrayList<>();
-	private final List<Term> mArrayDisequalities = new ArrayList<>();
+	private final List<BinaryEqualityRelation> mArrayEqualities = new ArrayList<>();
+	private final List<BinaryEqualityRelation> mArrayDisequalities = new ArrayList<>();
 	private final List<Term> mOtherFunctionApplications = new ArrayList<>();
 
 	public ArrayOccurrenceAnalysis(final Term analyzedTerm, final Term wantedArray) {
@@ -67,7 +69,7 @@ public class ArrayOccurrenceAnalysis {
 	/**
 	 * @return from the analyzed term all select-over-store subterms whose array is the wantedArray
 	 */
-	public List<ArraySelectOverStore> getArraySelectOverStores() {
+	public List<MultiDimensionalSelectOverNestedStore> getArraySelectOverStores() {
 		return mArraySelectOverStores;
 	}
 	/**
@@ -86,22 +88,17 @@ public class ArrayOccurrenceAnalysis {
 
 	/**
 	 * @return from the analyzed term all binary equality subterms such that the
-	 *         wanted array occurs on one side of the equality. The resulting
-	 *         equality is represented by the term that occurs on the other side of
-	 *         the binary equality
+	 *         wanted array occurs on one side of the equality.
 	 */
-	public List<Term> getArrayEqualities() {
+	public List<BinaryEqualityRelation> getArrayEqualities() {
 		return mArrayEqualities;
 	}
 
 	/**
 	 * @return from the analyzed term all binary disequality subterms such that the
-	 *         wanted array occurs on one side of the disequality. The resulting
-	 *         disequality is represented by the term that occurs on the other side of
-	 *         the binary disequality
+	 *         wanted array occurs on one side of the disequality.
 	 */
-
-	public List<Term> getArrayDisequalities() {
+	public List<BinaryEqualityRelation> getArrayDisequalities() {
 		return mArrayDisequalities;
 	}
 
@@ -158,11 +155,11 @@ public class ArrayOccurrenceAnalysis {
 					} else {
 						if (term.getParameters()[0] == mWantedArray) {
 							final Term equivalentArray = term.getParameters()[1];
-							mArrayEqualities.add(equivalentArray);
+							mArrayEqualities.add(constructBinaryEqualityRelation(term));
 							walker.enqueueWalker(new MyWalker(equivalentArray));
 						} else if (term.getParameters()[1] == mWantedArray) {
 							final Term equivalentArray = term.getParameters()[0];
-							mArrayEqualities.add(equivalentArray);
+							mArrayEqualities.add(constructBinaryEqualityRelation(term));
 							walker.enqueueWalker(new MyWalker(equivalentArray));
 						} else {
 							walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
@@ -177,22 +174,28 @@ public class ArrayOccurrenceAnalysis {
 						throw new UnsupportedOperationException("expected NNF");
 					}
 					final Term negatedAtom = term.getParameters()[0];
-					if (fun.equals("=")) {
-						if (term.getParameters().length != 2) {
-							throw new UnsupportedOperationException("expecting equality with two parameters");
-						} else {
-							if (term.getParameters()[0] == mWantedArray) {
-								final Term equivalentArray = term.getParameters()[1];
-								mArrayDisequalities.add(equivalentArray);
-								walker.enqueueWalker(new MyWalker(equivalentArray));
-							} else if (term.getParameters()[1] == mWantedArray) {
-								final Term equivalentArray = term.getParameters()[0];
-								mArrayDisequalities.add(equivalentArray);
-								walker.enqueueWalker(new MyWalker(equivalentArray));
+					if (negatedAtom instanceof ApplicationTerm) {
+						if (((ApplicationTerm) negatedAtom).getFunction().getName().equals("=")) {
+							if (((ApplicationTerm) negatedAtom).getParameters().length != 2) {
+								throw new UnsupportedOperationException("expecting equality with two parameters");
 							} else {
-								walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
-								walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
+								if (((ApplicationTerm) negatedAtom).getParameters()[0] == mWantedArray) {
+									final Term equivalentArray = ((ApplicationTerm) negatedAtom).getParameters()[1];
+									mArrayDisequalities.add(constructBinaryEqualityRelation(term));
+									walker.enqueueWalker(new MyWalker(equivalentArray));
+								} else if (((ApplicationTerm) negatedAtom).getParameters()[1] == mWantedArray) {
+									final Term equivalentArray = term.getParameters()[0];
+									mArrayDisequalities.add(constructBinaryEqualityRelation(term));
+									walker.enqueueWalker(new MyWalker(equivalentArray));
+								} else {
+									walker.enqueueWalker(
+											new MyWalker(((ApplicationTerm) negatedAtom).getParameters()[0]));
+									walker.enqueueWalker(
+											new MyWalker(((ApplicationTerm) negatedAtom).getParameters()[1]));
+								}
 							}
+						} else {
+							walker.enqueueWalker(new MyWalker(negatedAtom));
 						}
 					} else {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
@@ -213,13 +216,23 @@ public class ArrayOccurrenceAnalysis {
 						}
 					}
 				} else if (fun.equals("select")) {
-					final ArraySelectOverStore asos = ArraySelectOverStore.convert(term);
+					final MultiDimensionalSelectOverNestedStore asos = MultiDimensionalSelectOverNestedStore.convert(term);
 					if (asos != null) {
-						if (asos.getArrayStore().getArray().equals(mWantedArray)) {
+						if (asos.getNestedStore().getArray().equals(mWantedArray)) {
 							mArraySelectOverStores.add(asos);
-							walker.enqueueWalker(new MyWalker(asos.getIndex()));
-							walker.enqueueWalker(new MyWalker(asos.getArrayStore().getIndex()));
-							walker.enqueueWalker(new MyWalker(asos.getArrayStore().getValue()));
+							for (final Term indexEntry : asos.getSelect().getIndex()) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
+							for (final ArrayIndex ai : asos.getNestedStore().getIndices()) {
+								for (final Term indexEntry : ai) {
+									walker.enqueueWalker(new MyWalker(indexEntry));
+								}
+
+							}
+							for (final Term value : asos.getNestedStore().getValues()) {
+								walker.enqueueWalker(new MyWalker(value));
+
+							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));
@@ -245,6 +258,14 @@ public class ArrayOccurrenceAnalysis {
  							walker.enqueueWalker(new MyWalker(t));
  						}
 					}
+				}
+			}
+
+			private BinaryEqualityRelation constructBinaryEqualityRelation(final ApplicationTerm term) {
+				try {
+					return new BinaryEqualityRelation(term);
+				} catch (final NoRelationOfThisKindException e) {
+					throw new AssertionError("Cannot convert relation");
 				}
 			}
 
