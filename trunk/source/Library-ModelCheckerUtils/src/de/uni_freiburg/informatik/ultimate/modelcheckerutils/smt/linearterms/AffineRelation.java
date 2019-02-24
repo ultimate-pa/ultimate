@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
  * @author Matthias Heizmann
  */
 public class AffineRelation {
+	private static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
+			"No affine representation where desired variable is on left hand side";
 	private final Term mOriginalTerm;
 	private final RelationSymbol mRelationSymbol;
 	private final TrivialityStatus mTrivialityStatus;
@@ -287,7 +289,7 @@ public class AffineRelation {
 		assert mAffineTerm.getVariable2Coefficient().containsKey(var);
 		final Rational termsCoeff = mAffineTerm.getVariable2Coefficient().get(var);
 		if (termsCoeff.equals(Rational.ZERO)) {
-			throw new NotAffineException("No affine representation " + "where desired variable is on left hand side");
+			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 		}
 		final List<Term> rhsSummands = new ArrayList<>(mAffineTerm.getVariable2Coefficient().size());
 		for (final Entry<Term, Rational> entry : mAffineTerm.getVariable2Coefficient().entrySet()) {
@@ -300,7 +302,7 @@ public class AffineRelation {
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
 					throw new NotAffineException(
-							"No affine representation " + "where desired variable is on left hand side");
+							NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 				}
 			}
 		}
@@ -308,7 +310,7 @@ public class AffineRelation {
 			if (!mAffineTerm.getSort().isNumericSort() && !termsCoeff.abs().equals(Rational.ONE)) {
 				// for bitvectors we may only divide by 1 or -1
 				throw new NotAffineException(
-						"No affine representation " + "where desired variable is on left hand side");
+						NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 			}
 			final Rational newConstant = mAffineTerm.getConstant().div(termsCoeff);
 			if (newConstant.isIntegral() && newConstant.isRational()
@@ -319,7 +321,7 @@ public class AffineRelation {
 				}
 			} else {
 				throw new NotAffineException(
-						"No affine representation " + "where desired variable is on left hand side");
+						NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 			}
 		}
 		final Term rhsTerm =
