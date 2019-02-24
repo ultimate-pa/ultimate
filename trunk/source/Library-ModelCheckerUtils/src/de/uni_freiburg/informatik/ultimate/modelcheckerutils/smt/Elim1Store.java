@@ -55,12 +55,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlic
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.EqualityInformation;
@@ -160,6 +162,15 @@ public class Elim1Store {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
 
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(inputTerm, eliminatee);
+//		if (!aoa.getArrayDisequalities().isEmpty()) {
+//			throw new AssertionError("disequality");
+//		}
+//		if (!aoa.getArrayEqualities().isEmpty()) {
+//			throw new AssertionError("equality");
+//		}
+
+
 
 		if (SELECT_OVER_STORE_PREPROCESSING) {
 			if (true) {
@@ -209,8 +220,17 @@ public class Elim1Store {
 
 		{
 			//anti-DER preprocessing
-			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eliminatee, quantifier);
-			final Term antiDerPreprocessed = aadk.transform(inputTerm);
+			List<BinaryEqualityRelation> antiDerRelations;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				antiDerRelations = aoa.getArrayDisequalities();
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				antiDerRelations = aoa.getArrayEqualities();
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, quantifier, eliminatee,
+					inputTerm, antiDerRelations);
+			final Term antiDerPreprocessed = aadk.getResultTerm();
 			newAuxVars.addAll(aadk.getNewAuxVars());
 			final DerPreprocessor dp = new DerPreprocessor(mServices, mMgdScript, eliminatee, quantifier);
 			final Term withReplacement = dp.transform(antiDerPreprocessed);

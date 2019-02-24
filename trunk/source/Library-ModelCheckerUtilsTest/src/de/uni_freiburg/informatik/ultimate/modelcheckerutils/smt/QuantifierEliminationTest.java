@@ -504,6 +504,26 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void antiDerPreprocessing() {
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, mIntSort, mIntSort);
+		mScript.declareFun("b", new Sort[0], intintArraySort);
+		mScript.declareFun("k", new Sort[0], mIntSort);
+		mScript.declareFun("v", new Sort[0], mIntSort);
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (not (= a b)) (= (store b k v) a)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(not (= v (select b k)))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {

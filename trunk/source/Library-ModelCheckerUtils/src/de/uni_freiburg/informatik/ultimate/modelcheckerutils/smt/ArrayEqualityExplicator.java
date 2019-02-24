@@ -27,138 +27,104 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Preprocessing step for partial array quantifier elimination.
- * If we have a term of the form
- *     arr1 != arr2
- * (the negation of the form where we can apply DER) we replace it by
- *     ∃ aux. arr1[aux] != arr2[aux]
- * (Analogously for universal quantification.)
- * Presumes that the input has NNF. Provides all auxiliary variables that
- * have been introduced.
+ * Preprocessing step for partial array quantifier elimination. If we have a
+ * term of the form <code>arr1 != arr2</ code> (the negation of the form where
+ * we can apply DER) we replace it by <code>∃ aux. arr1[aux] != arr2[aux]</
+ * code> (Analogously for universal quantification.) Presumes that the input has
+ * NNF. Provides all auxiliary variables that have been introduced.
+ *
  * @author Matthias Heizmann
  *
  */
-public class ArrayEqualityExplicator extends TermTransformer {
+public class ArrayEqualityExplicator {
 
 	private final static String AUX_VAR_PREFIX = "antiDerIndex";
 
-	private final Script mScript;
-	private final ManagedScript mMgdScript;
-	private final TermVariable mEliminatee;
-	private final int mQuantifier;
-	private final List<TermVariable> mNewAuxVars = new ArrayList<>();
+	private final List<TermVariable> mNewAuxVars;
+	private final Term mResultTerm;
 
-	public ArrayEqualityExplicator(final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
-		mScript = mgdScript.getScript();
-		mMgdScript = mgdScript;
-		mEliminatee = eliminatee;
-		mQuantifier = quantifier;
+	public ArrayEqualityExplicator(final ManagedScript mgdScript, final int quantifier, final TermVariable eliminatee,
+			final Term inputTerm, final List<BinaryEqualityRelation> bers) {
+		final List<TermVariable> newAuxVars = new ArrayList();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final BinaryEqualityRelation ber : bers) {
+			if (ber.getRelationSymbol() != BinaryRelation.negateRelation(getDerRelationSymbol(quantifier))) {
+				throw new IllegalArgumentException("incompatible relation");
+			}
+			final Term elementwiseEquality = constructElementwiseEquality(mgdScript, ber.getLhs(), ber.getRhs(),
+					newAuxVars);
+			final Term replacement;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				replacement = elementwiseEquality;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				// does not use SmtUtils method because no simplification possible
+				replacement = mgdScript.getScript().term("not", elementwiseEquality);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), replacement);
+		}
+		mResultTerm = new Substitution(mgdScript, substitutionMapping).transform(inputTerm);
+		mNewAuxVars = newAuxVars;
+	}
+
+	private static RelationSymbol getDerRelationSymbol(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return RelationSymbol.EQ;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return RelationSymbol.DISTINCT;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
+	public Term getResultTerm() {
+		return mResultTerm;
 	}
 
 	public List<TermVariable> getNewAuxVars() {
 		return mNewAuxVars;
 	}
 
-	@Override
-	protected void convert(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final String fun = appTerm.getFunction().getName();
-			if (fun.equals("=")) {
-				if (appTerm.getParameters().length != 2) {
-					throw new UnsupportedOperationException("only binary equality supported");
-				}
-				final Term lhs = appTerm.getParameters()[0];
-				final Term rhs = appTerm.getParameters()[1];
-				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						setResult(term);
-						return;
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-						setResult(elementwiseEquality);
-						return;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-				}
-			} else if (fun.equals("distinct")) {
-				// TODO: do not allow distinct after our convention does not allow it nay more
-				// throw new AssertionError("distinct should have been removed");
-				if (appTerm.getParameters().length != 2) {
-					throw new UnsupportedOperationException("only binary equality supported");
-				}
-				final Term lhs = appTerm.getParameters()[0];
-				final Term rhs = appTerm.getParameters()[1];
-				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-						final Term result = mScript.term("not", elementwiseEquality);
-						setResult(result);
-						return;
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						setResult(term);
-						return;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-				}
-			} else if (fun.equals("not")) {
-				assert appTerm.getParameters().length == 1;
-				final Term argNot = appTerm.getParameters()[0];
-				if (argNot instanceof ApplicationTerm) {
-					final ApplicationTerm appTermNot = (ApplicationTerm) argNot;
-					if (NonCoreBooleanSubTermTransformer.isCoreBoolean(appTermNot)) {
-						throw new AssertionError("should have been transformed to NNF");
-					}
-					final String funNot = appTermNot.getFunction().getName();
-					if (funNot.equals("=")) {
-						if (appTermNot.getParameters().length != 2) {
-							throw new UnsupportedOperationException("only binary equality supported");
-						}
-						final Term lhs = appTermNot.getParameters()[0];
-						final Term rhs = appTermNot.getParameters()[1];
-						if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-							if (mQuantifier == QuantifiedFormula.EXISTS) {
-								final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-								final Term result = mScript.term("not", elementwiseEquality);
-								setResult(result);
-								return;
-							} else if (mQuantifier == QuantifiedFormula.FORALL) {
-								setResult(term);
-								return;
-							} else {
-								throw new AssertionError("unknown quantifier");
-							}
-						}
-					}
-				}
-			}
-		}
-
-		super.convert(term);
+	private Term constructElementwiseEquality(final ManagedScript mgdScript, final Term lhsArray, final Term rhsArray,
+			final List<TermVariable> newAuxVars) {
+		final MultiDimensionalSort mds = new MultiDimensionalSort(lhsArray.getSort());
+		final ArrayIndex auxIndex = constructAuxIndex(mgdScript, mds, newAuxVars);
+		final Term lhsSelect = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), lhsArray, auxIndex);
+		final Term rhsSelect = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), rhsArray, auxIndex);
+		// does not use SmtUtils method because no simplification possible
+		final Term result = mgdScript.getScript().term("=", lhsSelect, rhsSelect);
+		return result;
 	}
 
-	private Term constructElementwiseEquality(final Term lhsArray, final Term rhsArray) {
-		final Sort indexSort = mEliminatee.getSort().getArguments()[0];
-		final TermVariable auxIndex = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, indexSort);
-		mNewAuxVars.add(auxIndex);
-		final Term lhsSelect = SmtUtils.select(mScript, lhsArray, auxIndex);
-		final Term rhsSelect = SmtUtils.select(mScript, rhsArray, auxIndex);
-		final Term result = mScript.term("=", lhsSelect, rhsSelect);
-		return result;
+	private static ArrayIndex constructAuxIndex(final ManagedScript mgdScript, final MultiDimensionalSort mds,
+			final List<TermVariable> newAuxVars) {
+		final List<Term> indexEntries = new ArrayList<>();
+		int offset = 0;
+		for (final Sort sort : mds.getIndexSorts()) {
+			final TermVariable auxIndex = mgdScript.constructFreshTermVariable(AUX_VAR_PREFIX + "_entry" + offset,
+					sort);
+			indexEntries.add(auxIndex);
+			newAuxVars.add(auxIndex);
+			offset++;
+		}
+		return new ArrayIndex(indexEntries);
 	}
 
 }
