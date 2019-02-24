@@ -140,6 +140,10 @@ public abstract class BinaryRelation {
 		return result;
 	}
 
+	public Term toTerm(final Script script) {
+		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
+	}
+
 	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
 			final Term rhsTerm) {
 		Term result;
