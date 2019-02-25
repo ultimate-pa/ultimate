@@ -88,7 +88,7 @@ public class TestGeneratorResult implements IResult  {
 			ReqGraphAnnotation toJustifyAnnotation, List<ReqGraphAnnotation> stepAnnotations) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
-			if(annotation == toJustifyAnnotation) {
+			if(annotation == toJustifyAnnotation || !annotation.getLabel().isEffect()) {
 				continue;
 			}
 			Set<TermVariable> varsJustifyable = SmtUtils.getFreeVars( Arrays.asList(annotation.getGuard()) );
@@ -118,6 +118,9 @@ public class TestGeneratorResult implements IResult  {
 	}
 	
 	private void connectOutput(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
+		if (!toJustifyAnnotation.getLabel().isEffect()) {
+			return;
+		}
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
 		Set<String> outputVariables = mReqSymbolTable.getOutputVars();
 		Set<TermVariable> outputs = new HashSet<TermVariable>();

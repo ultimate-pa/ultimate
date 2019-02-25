@@ -213,7 +213,7 @@ public class GraphToBoogie {
 		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
 		if (successor.getLabel() > 0) {
 			//Annotate all non-powerset non-initial transitions 
-			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label.getGuard(), source);
+			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
 			annotation.annotate(ifStatement);
 		}
 		return new Statement[] {ifStatement};

@@ -9,16 +9,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 
 public class ReqGraphAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	
 	private final ReqGuardGraph mReqAut;
-	private final Term mSourceLabel;
+	private final TimedLabel mSourceLabel;
 	private final ReqGuardGraph mSource;
 	
-	public ReqGraphAnnotation(ReqGuardGraph reqId, Term label, ReqGuardGraph source) {
+	public ReqGraphAnnotation(ReqGuardGraph reqId, TimedLabel label, ReqGuardGraph source) {
 		mReqAut = reqId;
 		mSourceLabel = label;
 		mSource = source;
@@ -28,12 +29,16 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 		return mReqAut;
 	}
 	
-	public Term getGuard() {
-		return mSourceLabel;
-	}
-	
 	public ReqGuardGraph getSourceLocation() {
 		return mSource;
+	}
+	
+	public Term getGuard() {
+		return mSourceLabel.getGuard();
+	}
+	
+	public TimedLabel getLabel() {
+		return mSourceLabel;
 	}
 	
 	@Override

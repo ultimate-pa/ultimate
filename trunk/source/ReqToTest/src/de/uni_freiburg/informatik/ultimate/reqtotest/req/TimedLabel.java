@@ -38,6 +38,10 @@ public class TimedLabel{
 		return mGuard;
 	}
 	
+	public boolean isEffect() {
+		return mIsEffectEdge;
+	}
+	
 	public TermVariable getReset() {
 		return mReset;
 	}
