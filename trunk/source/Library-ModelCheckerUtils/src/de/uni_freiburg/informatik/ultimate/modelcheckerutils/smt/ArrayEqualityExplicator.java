@@ -80,7 +80,7 @@ public class ArrayEqualityExplicator {
 			}
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), replacement);
 		}
-		mResultTerm = new Substitution(mgdScript, substitutionMapping).transform(inputTerm);
+		mResultTerm = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(inputTerm);
 		mNewAuxVars = newAuxVars;
 	}
 
