@@ -50,7 +50,7 @@ public class TestGeneratorResult implements IResult  {
 		}
 		
 	}
-	
+	 
 	/*
 	 * Calculate relations between Requirements in one test step.
 	 * A relation looks like req1 ---- var1,var2 ----> req2, read as req2's trigger vars depend on effects var1, var2 set by req1.
@@ -105,6 +105,8 @@ public class TestGeneratorResult implements IResult  {
 	
 	private void connectInputDependencies(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		mLogger.warn(toJustifyAnnotation.getGuard());
+		mLogger.warn(varsToJustify);
 		Set<String> inputVariables = mReqSymbolTable.getInputVars();
 		Set<TermVariable> justifyingInputs = new HashSet<TermVariable>();
 		for(TermVariable var: varsToJustify) {
@@ -123,9 +125,6 @@ public class TestGeneratorResult implements IResult  {
 			if(outputVariables.contains(var.getName())) {
 				outputs.add(var);
 			}
-		}
-		if (outputs.isEmpty()) {
-			mLogger.warn("failed to justify output:" + toJustifyAnnotation.getGuard().toString());
 		}
 		dependencyNode.addOutputs(outputs);	
 	}

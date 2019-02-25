@@ -26,7 +26,6 @@ public class AuxVarGen {
 	public final static String CLOCK_PREFIX = "t_";
 	
 	private final Sort mSortBool;
-	private final Sort mSortReal;
 	private final Sort mSortInt;
 	private final Term mSmtTrue;
 		
@@ -55,7 +54,6 @@ public class AuxVarGen {
 		mReqToId = new LinkedHashMap<>();
 		mSortInt = mScript.sort("Int");
 		mSortBool = mScript.sort("Bool");
-		mSortReal = mScript.sort("Real");
 		mSmtTrue = mScript.term("true");
 	}
 	
@@ -213,6 +211,7 @@ public class AuxVarGen {
 			Term varTerm = SmtUtils.and(mScript, 
 					SmtUtils.filterFormula(effect, effectVar, mScript),
 					createDefineAnnotation(var, mReqToId.get(reqId)));
+					getDefineGuard(reqId);
 			use = SmtUtils.not(mScript, varTerm);
 		}
 		return use;

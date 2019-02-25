@@ -32,6 +32,8 @@ public class ReqToInOut {
 	private final LinkedHashSet<TermVariable> mHidden;
 	private final LinkedHashSet<TermVariable> mOutputs;
 	
+	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
+	
 	public ReqToInOut(final ILogger logger, final ReqSymbolTable reqSymbolExpressionTable, CddToSmt cddToSmt){
 		mLogger = logger;
 		mReqSymbolTable = reqSymbolExpressionTable;
@@ -212,6 +214,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
 	private void addInvariantPattern(PatternType pattern){
+		if(UNIVERSALITY_IS_DEFINITNG) return;
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
