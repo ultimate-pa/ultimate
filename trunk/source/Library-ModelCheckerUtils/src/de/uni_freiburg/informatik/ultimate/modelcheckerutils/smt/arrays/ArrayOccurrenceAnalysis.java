@@ -113,6 +113,26 @@ public class ArrayOccurrenceAnalysis {
 		return mOtherFunctionApplications;
 	}
 
+	public List<BinaryEqualityRelation> getDerRelations(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return getArrayEqualities();
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return getArrayDisequalities();
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
+	public List<BinaryEqualityRelation> getAntiDerRelations(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return getArrayDisequalities();
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return getArrayEqualities();
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
 	private class ArrOccFinder extends NonRecursive {
 		private final Set<Term> mTermsInWhichWeAlreadyDescended = new HashSet<>();
 
