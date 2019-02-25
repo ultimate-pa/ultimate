@@ -524,6 +524,25 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void derPreprocessingBug() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
+		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		mScript.declareFun("main_~#p~0.offset", new Sort[0], intSort);
+		mScript.declareFun("#memory_$Pointer$.base", new Sort[0], intintintArraySort);
+		mScript.declareFun("#valid", new Sort[0], intintArraySort);
+		mScript.declareFun("main_#t~mem1.base", new Sort[0], intSort);
+		mScript.declareFun("main_~#p~0.base", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((|v_#memory_$Pointer$.base_14| (Array Int (Array Int Int))) (|main_#t~mem1.offset| Int)) (or (not (= |v_#memory_$Pointer$.base_14| (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) (select (select |v_#memory_$Pointer$.base_14| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28)))))) (= 1 (select |#valid| (select (select |v_#memory_$Pointer$.base_14| |main_~#p~0.base|) |main_~#p~0.offset|)))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+
+	}
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
