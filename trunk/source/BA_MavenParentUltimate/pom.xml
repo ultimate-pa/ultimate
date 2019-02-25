@@ -731,8 +731,10 @@
 			</build>
 
 			<modules>
-				<!-- <module>../Library-UltimateTest</module>
+				<!-- modules containing test utilities -->
+				<module>../Library-UltimateTest</module>
 
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
@@ -748,8 +750,6 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
-
- -->
 			</modules>
 		</profile>
 
