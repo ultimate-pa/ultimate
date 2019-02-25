@@ -539,7 +539,9 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result);
-
+		final String expectedResultAsString = "(forall ((|main_#t~mem1.offset| Int) (v_DerPreprocessor_2 Int)) (= 1 (select |#valid| (select (select (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) v_DerPreprocessor_2)) |main_~#p~0.base|) |main_~#p~0.offset|))))";
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
 
 
