@@ -204,7 +204,7 @@ public class ArrayOccurrenceAnalysis {
 									mArrayDisequalities.add(constructBinaryEqualityRelation(term));
 									walker.enqueueWalker(new MyWalker(equivalentArray));
 								} else if (((ApplicationTerm) negatedAtom).getParameters()[1] == mWantedArray) {
-									final Term equivalentArray = term.getParameters()[0];
+									final Term equivalentArray = ((ApplicationTerm) negatedAtom).getParameters()[0];
 									mArrayDisequalities.add(constructBinaryEqualityRelation(term));
 									walker.enqueueWalker(new MyWalker(equivalentArray));
 								} else {
