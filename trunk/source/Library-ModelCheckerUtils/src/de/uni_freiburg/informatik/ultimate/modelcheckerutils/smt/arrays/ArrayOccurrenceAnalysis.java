@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -54,8 +55,8 @@ public class ArrayOccurrenceAnalysis {
 	private final Term mWantedArray;
 
 	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
-	private final List<NestedArrayStore> mNestedArrayStores = new ArrayList<>();
-	private final List<ArraySelect> mArraySelects = new ArrayList<>();
+	private final List<MultiDimensionalStore> mNestedArrayStores = new ArrayList<>();
+	private final List<MultiDimensionalSelect> mArraySelects = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayEqualities = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayDisequalities = new ArrayList<>();
 	private final List<Term> mOtherFunctionApplications = new ArrayList<>();
@@ -76,13 +77,13 @@ public class ArrayOccurrenceAnalysis {
 	 * @return from the analyzed term all (possibly nested) store subterms whose array is the wantedArray
 	 * such that the store subterms are not part of a select-over-store subterm.
 	 */
-	public List<NestedArrayStore> getNestedArrayStores() {
+	public List<MultiDimensionalStore> getNestedArrayStores() {
 		return mNestedArrayStores;
 	}
 	/**
-	 * @return from the analyzed term all (possibly nested) store subterms whose array is the wantedArray
+	 * @return from the analyzed term all select subterms whose array is the wantedArray
 	 */
-	public List<ArraySelect> getArraySelects() {
+	public List<MultiDimensionalSelect> getArraySelects() {
 		return mArraySelects;
 	}
 
@@ -131,6 +132,17 @@ public class ArrayOccurrenceAnalysis {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+
+	public TreeSet<Integer> computeSelectAndStoreDimensions() {
+		final TreeSet<Integer> result = new TreeSet<>();
+		for (final MultiDimensionalSelect mds : getArraySelects()) {
+			result.add(mds.getIndex().size());
+		}
+		for (final MultiDimensionalStore mds : getNestedArrayStores()) {
+			result.add(mds.getIndex().size());
+		}
+		return result;
 	}
 
 	private class ArrOccFinder extends NonRecursive {
@@ -221,15 +233,18 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					final NestedArrayStore nas = NestedArrayStore.convert(term);
+					final MultiDimensionalStore nas = MultiDimensionalStore.convert(term);
 					if(nas != null && nas.getArray().equals(mWantedArray)) {
 						mNestedArrayStores.add(nas);
-						for (final Term index : nas.getIndices()) {
-							walker.enqueueWalker(new MyWalker(index));
-						}
-						for (final Term value : nas.getValues()) {
-							walker.enqueueWalker(new MyWalker(value));
-						}
+//						for (final ArrayIndex ai : nas.getIndex()) {
+							for (final Term indexEntry : nas.getIndex()) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
+//						}
+//						for (final Term value : nas.getValues()) {
+//							walker.enqueueWalker(new MyWalker(value));
+//						}
+						walker.enqueueWalker(new MyWalker(nas.getValue()));
 					} else {
 						for (final Term t : term.getParameters()) {
 							walker.enqueueWalker(new MyWalker(t));
@@ -247,11 +262,9 @@ public class ArrayOccurrenceAnalysis {
 								for (final Term indexEntry : ai) {
 									walker.enqueueWalker(new MyWalker(indexEntry));
 								}
-
 							}
 							for (final Term value : asos.getNestedStore().getValues()) {
 								walker.enqueueWalker(new MyWalker(value));
-
 							}
 						} else {
 							for (final Term t : term.getParameters()) {
@@ -259,17 +272,18 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						final ArraySelect as = ArraySelect.convert(term);
+						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
 						if (as != null && as.getArray().equals(mWantedArray)) {
 							mArraySelects.add(as);
-							walker.enqueueWalker(new MyWalker(as.getIndex()));
+							for (final Term indexEntry : as.getIndex()) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));
 							}
 						}
 					}
-
 				} else {
 					for (final Term t : term.getParameters()) {
 						if (t.equals(mWantedArray)) {
