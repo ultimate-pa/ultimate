@@ -279,7 +279,7 @@ public class ArrayIndex implements List<Term> {
 		assert index1.size() == index2.size();
 		final ArrayList<Term> sameJuncts = new ArrayList<>(index1.size());
 		for (int i = 0; i < index1.size(); i++) {
-			sameJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+			sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
 		}
 		return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, sameJuncts);
 	}
