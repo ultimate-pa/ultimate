@@ -342,7 +342,7 @@ public class Elim1Store {
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				newArrayMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
-				indexEqualityInformation);
+				indexEqualityInformation, mScript);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -497,19 +497,20 @@ public class Elim1Store {
 	 * @param auxVarConstructor
 	 * @param eliminatee
 	 * @param quantifier
+	 * @param script
 	 */
-	private Map<ArrayIndex, Term> constructOldCellValueMapping(final List<ArrayIndex> selectIndexRepresentatives,
+	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final List<ArrayIndex> selectIndexRepresentatives,
 			final Map<MultiDimensionalStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final AuxVarConstructor auxVarConstructor,
 			final TermVariable eliminatee, final int quantifier,
-			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation) {
+			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final Script script) {
 		final IValueConstruction<MultiDimensionalSelect, TermVariable> valueConstruction = new IValueConstruction<MultiDimensionalSelect, TermVariable>() {
 
 			@Override
 			public TermVariable constructValue(final MultiDimensionalSelect mds) {
 				final TermVariable oldCell = auxVarConstructor.constructAuxVar(AUX_VAR_ARRAYCELL,
-						mds.toTerm(mScript).getSort());
+						mds.toTerm(script).getSort());
 				return oldCell;
 			}
 
@@ -519,44 +520,43 @@ public class Elim1Store {
 		for (final ArrayIndex selectIndexRepresentative : selectIndexRepresentatives) {
 			Term oldCellValue;
 			final Term oldValueInNewArray = getOldValueInNewArray(newArrayMapping, indexEqualityInformation,
-					indexMapping, selectIndexRepresentative);
+					indexMapping, selectIndexRepresentative, script);
 			if (oldValueInNewArray != null) {
 				oldCellValue = oldValueInNewArray;
 			} else {
-				oldCellValue = constructOldCellValue(equalityInformation, eliminatee, cc, selectIndexRepresentative);
+				oldCellValue = constructOldCellValue(equalityInformation, eliminatee, cc, selectIndexRepresentative, script);
 			}
 			oldCellMapping.put(selectIndexRepresentative, oldCellValue);
 		}
 		return oldCellMapping;
 	}
 
-	private Term getOldValueInNewArray(final Map<MultiDimensionalStore, Term> newArrayMapping,
+	private static Term getOldValueInNewArray(final Map<MultiDimensionalStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
-			final Map<ArrayIndex, ArrayIndex> indexMapping, final ArrayIndex selectIndexRepresentative) {
+			final Map<ArrayIndex, ArrayIndex> indexMapping, final ArrayIndex selectIndexRepresentative,
+			final Script script) {
 		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
 			final ArrayIndex storeIndex = entry.getKey().getIndex();
 			if (indexEqualityInformation.getEqualityStatus(selectIndexRepresentative,
 					storeIndex) == EqualityStatus.NOT_EQUAL) {
 				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
 				final Term newAuxArray = entry.getValue();
-				final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex,
-						mMgdScript.getScript()).toTerm(mMgdScript.getScript());
+				final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex, script)
+						.toTerm(script);
 				return newSelect;
-				// oldCellMapping.put(selectIndexRepresentative, newSelect);
-
 			}
 		}
 		return null;
 	}
 
-	private Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+	private static Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final TermVariable eliminatee, final ConstructionCache<MultiDimensionalSelect, TermVariable> cc,
-			final ArrayIndex selectIndexRepresentative) {
+			final ArrayIndex selectIndexRepresentative, final Script script) {
 		Term oldCellValue;
 		{
 			final MultiDimensionalSelect oldSelect = new MultiDimensionalSelect(eliminatee, selectIndexRepresentative,
-					mScript);
-			final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect.toTerm(mScript));
+					script);
+			final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect.toTerm(script));
 			final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRepresentative, eliminatee,
 					equalityInformation);
 			if (eqTerm != null) {
