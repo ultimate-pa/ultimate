@@ -707,8 +707,6 @@ public class Elim1Store {
 			for (final ArrayStore arrayStore : stores) {
 				allValues.add(arrayStore.getValue());
 			}
-			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
-
 
 			for (int i = 0; i < allIndicesList.size(); i++) {
 				for (int j = i + 1; j < allIndicesList.size(); j++) {
@@ -725,7 +723,6 @@ public class Elim1Store {
 				}
 			}
 
-			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
 			for (int i = 0; i < allValues.size(); i++) {
 				for (int j = i + 1; j < allValues.size(); j++) {
 					final Term value1 = allValues.get(i);
@@ -751,56 +748,7 @@ public class Elim1Store {
 
 
 
-		private void cheapAndSimpleIndexValueAnalysis(final ArrayList<Term> allIndicesList, final Map<Term, Term> selectIndex2value,
-				final List<Term> allValues, final Map<Term, Term> value2selectIndex, final ThreeValuedEquivalenceRelation<Term> tver) {
-			final LocalSimplificationsEqualityChecker lsec = new LocalSimplificationsEqualityChecker();
-			for (int i = 0; i < allIndicesList.size(); i++) {
-				for (int j = i + 1; j < allIndicesList.size(); j++) {
-					final Term index1 = allIndicesList.get(i);
-					final Term index2 = allIndicesList.get(j);
-					EqualityStatus eq = tver.getEqualityStatus(index1, index2);
-					if (eq == EqualityStatus.UNKNOWN) {
-						eq = lsec.checkEquality(index1, index2);
-						if (eq == EqualityStatus.EQUAL) {
-							tver.reportEquality(index1, index2);
-						} else if (eq == EqualityStatus.NOT_EQUAL) {
-							tver.reportDisequality(index1, index2);
-						}
-					}
-					if (eq == EqualityStatus.EQUAL) {
-						final Term oldSelect1 = selectIndex2value.get(index1);
-						final Term oldSelect2 = selectIndex2value.get(index2);
-						if (oldSelect1 != null && oldSelect2 != null) {
-							tver.reportEquality(oldSelect1, oldSelect2);
-						}
-					}
-				}
-			}
-			for (int i = 0; i < allValues.size(); i++) {
-				for (int j = i + 1; j < allValues.size(); j++) {
-					final Term value1 = allValues.get(i);
-					final Term value2 = allValues.get(j);
-					EqualityStatus eq = tver.getEqualityStatus(value1, value2);
-					if (eq == EqualityStatus.UNKNOWN) {
-						eq = lsec.checkEquality(value1, value2);
-						if (eq == EqualityStatus.EQUAL) {
-							tver.reportEquality(value1, value2);
-						} else if (eq == EqualityStatus.NOT_EQUAL) {
-							tver.reportDisequality(value1, value2);
-						}
-					}
-					if (eq == EqualityStatus.NOT_EQUAL) {
-						final Term index1 = value2selectIndex.get(value1);
-						final Term index2 = value2selectIndex.get(value2);
-						if (index1 != null && index2 != null) {
-							tver.reportDisequality(index1, index2);
-						}
-					}
-				}
-			}
-		}
-
-		private Term getIndexOfSelect(final ApplicationTerm appTerm) {
+		private static Term getIndexOfSelect(final ApplicationTerm appTerm) {
 			assert (appTerm.getParameters().length == 2) : "no select";
 			assert (appTerm.getFunction().getName().equals("select")) : "no select";
 			return appTerm.getParameters()[1];
