@@ -277,9 +277,12 @@ public class Elim1Store {
 			selectIndices.add(selectIndex);
 		}
 
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation, preprocessedInput,
+				quantifier, mLogger, mMgdScript);
+
 		final long startTime = System.nanoTime();
-		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
-				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
+		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult = analyzeIndexEqualities(quantifier,
+				selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -626,65 +629,13 @@ public class Elim1Store {
 	}
 
 
-		private void checkEqualityStatus(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
-			final List<Term> relationsDetectedViaSolver, final IncrementalPlicationChecker iea, final Term index1,
-			final Term index2) throws AssertionError {
-		final Term eq = SmtUtils.binaryEquality(mScript, index1, index2);
-		if (SmtUtils.isTrue(eq)) {
-			tver.reportEquality(index1, index2);
-			assert !tver.isInconsistent() : "inconsistent equality information";
-		} else if (SmtUtils.isFalse(eq)) {
-			tver.reportDisequality(index1, index2);
-			assert !tver.isInconsistent() : "inconsistent equality information";
-		} else {
-			final Term neq = SmtUtils.not(mScript, eq);
-			final Validity isEqual = iea.checkPlication(eq);
-			if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-				mLogger.warn("solver failed to check if following equality is implied: " + eq);
-			}
-			if (isEqual == Validity.VALID) {
-				if (mQuantifier == QuantifiedFormula.EXISTS) {
-					tver.reportEquality(index1, index2);
-					assert !tver.isInconsistent() : "inconsistent equality information";
-				} else if (mQuantifier == QuantifiedFormula.FORALL) {
-					tver.reportDisequality(index1, index2);
-					assert !tver.isInconsistent() : "inconsistent equality information";
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-				relationsDetectedViaSolver.add(eq);
-				mLogger.info("detected equality via solver");
-			} else {
-				final Validity notEqualsHolds = iea.checkPlication(neq);
-				if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-					mLogger.warn("solver failed to check if following not equals relation is implied: "
-							+ eq);
-				}
+	private static Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
+			final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput,
+			final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee,
+			final ManagedScript mgdScript,  final ArrayIndexEqualityManager aiem) {
 
-				if (notEqualsHolds == Validity.VALID) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						tver.reportDisequality(index1, index2);
-						assert !tver.isInconsistent() : "inconsistent equality information";
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						tver.reportEquality(index1, index2);
-						assert !tver.isInconsistent() : "inconsistent equality information";
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-					mLogger.info("detected not equals via solver");
-					relationsDetectedViaSolver.add(neq);
-				}
-			}
-		}
-	}
+			mgdScript.getScript().echo(new QuotedObject("starting to analyze index equalities"));
 
-
-		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
-				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
-
-			mScript.echo(new QuotedObject("starting to analyze index equalities"));
-
-			final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, preprocessedInput, mQuantifier, mLogger, mMgdScript);
 			if (aiem.contextIsAbsorbingElement()) {
 				aiem.unlockSolver();
 				return null;
@@ -699,7 +650,7 @@ public class Elim1Store {
 			final Map<Term, Term> value2selectIndex = new HashMap<>();
 			final Map<Term, Term> selectIndex2value = new HashMap<>();
 			for (final Term selectIndex : selectIndices) {
-				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
+				final Term oldSelect = constructOldSelectTerm(mgdScript, eliminatee, selectIndex);
 				allValues.add(oldSelect);
 				value2selectIndex.put(oldSelect, selectIndex);
 				selectIndex2value.put(selectIndex, oldSelect);
@@ -740,7 +691,7 @@ public class Elim1Store {
 
 			aiem.unlockSolver();
 //			mMgdScript.requestLockRelease();
-			mScript.echo(new QuotedObject("finished analysis of index equalities"));
+			mgdScript.getScript().echo(new QuotedObject("finished analysis of index equalities"));
 			return new Pair<>(tver, Collections.emptyList());
 		}
 
