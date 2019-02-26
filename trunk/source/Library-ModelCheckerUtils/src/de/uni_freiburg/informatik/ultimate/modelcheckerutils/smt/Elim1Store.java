@@ -281,7 +281,7 @@ public class Elim1Store {
 				quantifier, mLogger, mMgdScript);
 
 		final long startTime = System.nanoTime();
-		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult = analyzeIndexEqualities(quantifier,
+		final ThreeValuedEquivalenceRelation<Term> analysisResult = analyzeIndexEqualities(quantifier,
 				selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
@@ -339,12 +339,10 @@ public class Elim1Store {
 		final Map<Term, Term> indexMapping = imp.getIndexReplacementMapping();
 		final List<Term> indexMappingDefinitions = imp.getIndexMappingDefinitions();
 
-		final Term equalitiesDetectedBySolver = QuantifierUtils.applyDualFiniteConnective(mScript,
-				quantifier, analysisResult.getSecond());
 		final Term indexDefinitionsTerm =
 				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, indexMappingDefinitions);
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexDefinitionsTerm, preprocessedInput, equalitiesDetectedBySolver, indexEqualityInformationTerm);
+				indexDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
 
 		final Map<ArrayStore, Term> newArrayMapping = new HashMap<>();
 		for (final ArrayStore store : stores) {
@@ -629,7 +627,7 @@ public class Elim1Store {
 	}
 
 
-	private static Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
+	private static ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final int mQuantifier,
 			final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput,
 			final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee,
 			final ManagedScript mgdScript,  final ArrayIndexEqualityManager aiem) {
@@ -692,7 +690,7 @@ public class Elim1Store {
 			aiem.unlockSolver();
 //			mMgdScript.requestLockRelease();
 			mgdScript.getScript().echo(new QuotedObject("finished analysis of index equalities"));
-			return new Pair<>(tver, Collections.emptyList());
+			return tver;
 		}
 
 
