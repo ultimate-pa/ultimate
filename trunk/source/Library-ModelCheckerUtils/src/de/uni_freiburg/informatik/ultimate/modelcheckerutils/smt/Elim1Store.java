@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
@@ -667,28 +665,6 @@ public class Elim1Store {
 							.transform(entry.getKey().getValue())));
 		}
 		return QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, storedValueInformation);
-	}
-
-	private static List<ApplicationTerm> extractArrayReads(final TermVariable eliminatee, final Term term) {
-		final List<ApplicationTerm> result = new ArrayList<>();
-		final Set<ApplicationTerm> selectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(term);
-		for (final ApplicationTerm selectTerm : selectTerms) {
-			if (selectTerm.getParameters()[0].equals(eliminatee)) {
-				result.add(selectTerm);
-			}
-		}
-		return result;
-	}
-
-	private List<ArrayStore> extractStores(final TermVariable eliminatee, final Term term) {
-		final List<ArrayStore> result = new ArrayList<>();
-		final Set<ApplicationTerm> stores = new ApplicationTermFinder("store", false).findMatchingSubterms(term);
-		for (final ApplicationTerm appTerm : stores) {
-			if (appTerm.getParameters()[0].equals(eliminatee)) {
-				result.add(new ArrayStore(appTerm));
-			}
-		}
-		return result;
 	}
 
 	private static boolean occursIn(final TermVariable tv, final ArrayIndex index) {
