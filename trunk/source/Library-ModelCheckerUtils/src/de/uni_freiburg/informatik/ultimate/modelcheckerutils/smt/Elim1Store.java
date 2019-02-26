@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -280,7 +279,7 @@ public class Elim1Store {
 
 		final long startTime = System.nanoTime();
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
-				analyzeIndexEqualities2(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
+				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -681,82 +680,6 @@ public class Elim1Store {
 
 
 		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
-				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
-
-			mScript.echo(new QuotedObject("starting to analyze index equalities"));
-			final List<Term> relationsDetectedViaSolver = new ArrayList<>();
-			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
-			for (final ArrayStore store : stores) {
-				allIndicesList.add(store.getIndex());
-			}
-			final Plication plication;
-			if (mQuantifier == QuantifiedFormula.EXISTS) {
-				plication = Plication.IMPLICATION;
-			} else if (mQuantifier == QuantifiedFormula.FORALL) {
-				plication = Plication.EXPLICATION;
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			final IncrementalPlicationChecker iea = new IncrementalPlicationChecker(plication, mMgdScript, preprocessedInput);
-			final Term absorbingElement = QuantifierUtils.getNeutralElement(mScript, mQuantifier);
-			final Validity validity = iea.checkPlication(absorbingElement);
-			if (validity == Validity.VALID) {
-				iea.unlockSolver();
-				return null;
-			}
-
-			final List<Term> allValues = new ArrayList<>();
-			final Map<Term, Term> value2selectIndex = new HashMap<>();
-			final Map<Term, Term> selectIndex2value = new HashMap<>();
-			for (final Term selectIndex : selectIndices) {
-				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
-				allValues.add(oldSelect);
-				value2selectIndex.put(oldSelect, selectIndex);
-				selectIndex2value.put(selectIndex, oldSelect);
-			}
-			for (final ArrayStore arrayStore : stores) {
-				allValues.add(arrayStore.getValue());
-			}
-			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
-
-
-			for (int i = 0; i < allIndicesList.size(); i++) {
-				for (int j = i + 1; j < allIndicesList.size(); j++) {
-					//TODO: try to obtain equal term with few variables
-					final Term index1 = allIndicesList.get(i);
-					final Term index2 = allIndicesList.get(j);
-					if (tver.getEqualityStatus(index1, index2) != EqualityStatus.UNKNOWN) {
-						// result already known we do not have to check
-						continue;
-						// TODO: for some the solver result might have been unknown
-						// we should avoid to these are checked again
-					}
-					checkEqualityStatus(mQuantifier, tver, relationsDetectedViaSolver, iea, index1, index2);
-				}
-			}
-
-			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
-			for (int i = 0; i < allValues.size(); i++) {
-				for (int j = i + 1; j < allValues.size(); j++) {
-					final Term value1 = allValues.get(i);
-					final Term value2 = allValues.get(j);
-					if (tver.getEqualityStatus(value1, value2) != EqualityStatus.UNKNOWN) {
-						// result already known we do not have to check
-						continue;
-						// TODO: for some the solver result might have been unknown
-						// we should avoid to these are checked again
-					}
-					checkEqualityStatus(mQuantifier, tver, relationsDetectedViaSolver, iea, value1, value2);
-				}
-			}
-
-
-			iea.unlockSolver();
-			mScript.echo(new QuotedObject("finished analysis of index equalities"));
-			return new Pair<>(tver, relationsDetectedViaSolver);
-		}
-
-		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities2(final int mQuantifier,
 				final Set<Term> selectIndices, final List<ArrayStore> stores, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
 
 			mScript.echo(new QuotedObject("starting to analyze index equalities"));
