@@ -133,6 +133,11 @@ public class MultiDimensionalStore {
 		return mStoreTerm;
 	}
 
+	public Term toTerm(final Script script) {
+		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
+	}
+
+
 	public static MultiDimensionalStore convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;

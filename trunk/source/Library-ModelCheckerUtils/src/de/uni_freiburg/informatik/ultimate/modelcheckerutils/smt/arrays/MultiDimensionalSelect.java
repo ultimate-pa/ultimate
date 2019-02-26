@@ -126,6 +126,11 @@ public class MultiDimensionalSelect {
 		return mSelectTerm;
 	}
 
+	public Term toTerm(final Script script) {
+		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
+	}
+
+
 	public static MultiDimensionalSelect convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;
