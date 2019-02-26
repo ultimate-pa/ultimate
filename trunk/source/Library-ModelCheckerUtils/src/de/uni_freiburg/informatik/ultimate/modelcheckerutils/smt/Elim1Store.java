@@ -305,11 +305,12 @@ public class Elim1Store {
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
 		}
-		if (equalityInformation.isInconsistent()) {
+		if (aiem.contextIsAbsorbingElement()) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
 			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
 		}
+		assert analysisResult != null;
 
 		final List<ArrayIndex> selectIndexRepresentatives = new ArrayList<>();
 		final List<ArrayIndex> allIndexRepresentatives = new ArrayList<>();
@@ -397,12 +398,14 @@ public class Elim1Store {
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
+			assert entry.getKey().toTerm(mScript).getSort() == entry.getValue().getSort() : "incompatible sorts";
 			substitutionMapping.put(entry.getKey().toTerm(mScript), entry.getValue());
 		}
 		for (final ArrayIndex selectIndex : selectIndices) {
 			final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
 			final ArrayIndex indexRepresentative = indexEqualityInformation.getRepresentative(selectIndex);
 			if (oldCellMapping.containsKey(indexRepresentative)) {
+				assert oldSelect.getSort() == oldCellMapping.get(indexRepresentative).getSort() : "incompatible sorts";
 				substitutionMapping.put(oldSelect, oldCellMapping.get(indexRepresentative));
 			} else {
 				throw new AssertionError("should be dead code by now");
@@ -582,17 +585,16 @@ public class Elim1Store {
 			final Map<ArrayIndex, ArrayIndex> indexMapping,
 			final AuxVarConstructor auxVarConstructor, final TermVariable eliminatee,
 			final int quantifier, final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation) {
-		final Sort valueSort = eliminatee.getSort().getArguments()[1];
-		final IValueConstruction<ArrayIndex, TermVariable> valueConstruction = new IValueConstruction<ArrayIndex, TermVariable>() {
+		final IValueConstruction<MultiDimensionalSelect, TermVariable> valueConstruction = new IValueConstruction<MultiDimensionalSelect, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(final ArrayIndex index) {
-				final TermVariable oldCell = auxVarConstructor.constructAuxVar(AUX_VAR_ARRAYCELL, valueSort);
+			public TermVariable constructValue(final MultiDimensionalSelect mds) {
+				final TermVariable oldCell = auxVarConstructor.constructAuxVar(AUX_VAR_ARRAYCELL, mds.toTerm(mScript).getSort());
 				return oldCell;
 			}
 
 		};
-		final ConstructionCache<ArrayIndex, TermVariable> cc = new ConstructionCache<>(valueConstruction);
+		final ConstructionCache<MultiDimensionalSelect, TermVariable> cc = new ConstructionCache<>(valueConstruction);
 		final Map<ArrayIndex, Term> oldCellMapping = new HashMap<>();
 		for (final ArrayIndex selectIndexRepresentative : selectIndexRepresentatives) {
 			Term oldCellValue;
@@ -627,17 +629,17 @@ public class Elim1Store {
 	}
 
 	private Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-			final TermVariable eliminatee, final ConstructionCache<ArrayIndex, TermVariable> cc,
+			final TermVariable eliminatee, final ConstructionCache<MultiDimensionalSelect, TermVariable> cc,
 			final ArrayIndex selectIndexRepresentative) {
 		Term oldCellValue;
 		{
-			final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndexRepresentative);
-			final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect);
+			final MultiDimensionalSelect oldSelect = new MultiDimensionalSelect(eliminatee, selectIndexRepresentative, mScript);
+			final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect.toTerm(mScript));
 			final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRepresentative, eliminatee, equalityInformation);
 			if (eqTerm != null) {
 				oldCellValue = eqTerm;
 			} else {
-				final TermVariable oldCellVariable = cc.getOrConstruct(selectIndexRepresentative);
+				final TermVariable oldCellVariable = cc.getOrConstruct(oldSelect);
 				oldCellValue = oldCellVariable;
 			}
 		}
@@ -676,6 +678,9 @@ public class Elim1Store {
 			}
 
 			final ThreeValuedEquivalenceRelation<ArrayIndex> result = new ThreeValuedEquivalenceRelation<>();
+			for (int i = 0; i < allIndicesList.size(); i++) {
+				result.addElement(allIndicesList.get(i));
+			}
 			for (int i = 0; i < allIndicesList.size(); i++) {
 				for (int j = i + 1; j < allIndicesList.size(); j++) {
 					//TODO: try to obtain equal term with few variables
@@ -1098,7 +1103,7 @@ public class Elim1Store {
 					final List<Term> indexEntries = new ArrayList<>();
 					for (int i = 0; i < index.size(); i++) {
 						final TermVariable entryReplacement = auxVarConstructor
-								.constructAuxVar("dim" + i + AUX_VAR_INDEX, indexEntries.get(i).getSort());
+								.constructAuxVar("dim" + i + AUX_VAR_INDEX, index.get(i).getSort());
 						indexEntries.add(entryReplacement);
 					}
 					return new ArrayIndex(indexEntries);
