@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -167,7 +168,10 @@ public class Elim1Store {
 //		if (!aoa.getArrayEqualities().isEmpty()) {
 //			throw new AssertionError("equality");
 //		}
-
+		final TreeSet<Integer> dims = aoa.computeSelectAndStoreDimensions();
+		if (dims.size() > 1) {
+			throw new AssertionError("Dims before preprocessing " + dims);
+		}
 
 
 		if (SELECT_OVER_STORE_PREPROCESSING) {
@@ -225,6 +229,11 @@ public class Elim1Store {
 			newAuxVars.addAll(aadk.getNewAuxVars());
 
 			aoa = new ArrayOccurrenceAnalysis(antiDerPreprocessed, eliminatee);
+
+			final TreeSet<Integer> dims2 = aoa.computeSelectAndStoreDimensions();
+			if (dims.size() > 1) {
+				throw new AssertionError("Dims after anti-DER " + dims2);
+			}
 
 			final DerPreprocessor dp = new DerPreprocessor(mServices, mMgdScript, quantifier, eliminatee,
 					antiDerPreprocessed, aoa.getDerRelations(quantifier));
