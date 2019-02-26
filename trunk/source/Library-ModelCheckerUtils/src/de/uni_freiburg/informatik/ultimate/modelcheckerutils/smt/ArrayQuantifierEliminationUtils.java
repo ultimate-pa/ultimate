@@ -26,17 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
@@ -48,65 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class ArrayQuantifierEliminationUtils {
-
-	public static EliminationTask elimAllSos(final EliminationTask eTask, final ManagedScript mgdScript,
-			final IUltimateServiceProvider services, final ILogger logger) {
-		final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(eTask.getTerm());
-		final Map<Term, Term> substitutionMappingPre = new HashMap<>();
-		final int singleCaseReplacements = 0;
-		int multiCaseReplacements = 0;
-		for (final ApplicationTerm selectTerm : allSelectTerms) {
-			final MultiDimensionalSelectOverStore mdsos = MultiDimensionalSelectOverStore.convert(selectTerm);
-			if (mdsos != null) {
-				if (eTask.getEliminatees().contains(mdsos.getStore().getArray())) {
-					final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
-					final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-//					final ThreeValuedEquivalenceRelation<Term> tver = analyzeIndexEqualities(selectIndex, storeIndex, quantifier, xjunctsOuter);
-//					final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
-//					switch (indexEquality) {
-//					case EQUAL:
-//						substitutionMappingPre.put(selectTerm, mdsos.constructEqualsReplacement());
-//						singleCaseReplacements++;
-//						break;
-//					case NOT_EQUAL:
-//						substitutionMappingPre.put(selectTerm, mdsos.constructNotEqualsReplacement(mScript));
-//						singleCaseReplacements++;
-//						break;
-//					case UNKNOWN:
-						substitutionMappingPre.put(selectTerm, transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript));
-						multiCaseReplacements++;
-//						// do nothing
-//						break;
-//					default:
-//						throw new AssertionError();
-//					}
-				}
-			}
-		}
-		if (multiCaseReplacements > 0 || singleCaseReplacements > 0) {
-			final Term replaced = new SubstitutionWithLocalSimplification(mgdScript, substitutionMappingPre).transform(eTask.getTerm());
-//			if (multiCaseReplacements > 0) {
-//				newAuxVars.add(eliminatee);
-				final Term newTerm = new IteRemover(mgdScript).transform(replaced);
-				final Term normal = new CommuhashNormalForm(services, mgdScript.getScript()).transform(newTerm);
-				final Term simplified = SmtUtils.simplify(mgdScript, normal, services, SimplificationTechnique.SIMPLIFY_DDA);
-				return new EliminationTask(eTask.getQuantifier(), eTask.getEliminatees(), simplified);
-//			}
-		} else {
-			return eTask;
-		}
-	}
-
-
-	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos,
-			final ManagedScript mgdScript) {
-		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
-		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-		final Term eq = ArrayIndex.constructPairwiseEquality(selectIndex, storeIndex, mgdScript.getScript());
-		final Term equalsReplacement = mdsos.constructEqualsReplacement();
-		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
-		return Util.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
-	}
 
 	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos,
 			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {

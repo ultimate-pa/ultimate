@@ -254,16 +254,6 @@ public class ArrayIndex implements List<Term> {
 	}
 
 
-	public static Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2,
-			final Script script) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			conjuncts.add(SmtUtils.binaryEquality(script, index1.get(i), index2.get(i)));
-		}
-		return SmtUtils.and(script, conjuncts);
-	}
-
 	public static Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
 			final ArrayIndex index2) {
 		assert index1.size() == index2.size();

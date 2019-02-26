@@ -243,7 +243,6 @@ public class Elim1Store {
 		aoa = new ArrayOccurrenceAnalysis(preprocessedInput, eliminatee);
 
 		final List<MultiDimensionalSelect> selectTerms = aoa.getArraySelects();
-		final Set<ArrayIndex> selectIndices = new HashSet<>();
 
 		final List<MultiDimensionalStore> stores = aoa.getNestedArrayStores();
 
@@ -268,6 +267,7 @@ public class Elim1Store {
 			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
 		}
 
+		final Set<ArrayIndex> selectIndices = new HashSet<>();
 		for (final MultiDimensionalSelect selectTerm : selectTerms) {
 			selectIndices.add(selectTerm.getIndex());
 		}
@@ -310,10 +310,6 @@ public class Elim1Store {
 			allIndexRepresentatives.add(storeIndexRepresentative);
 		}
 
-		final Set<ArrayIndex> allIndices = new HashSet<>(selectIndices);
-		for (final MultiDimensionalStore store : stores) {
-			allIndices.add(store.getIndex());
-		}
 
 		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analysisResult;
 		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,

@@ -238,15 +238,8 @@ public class ElimStorePlain {
 	private EliminationTask doElimAllRec(final Term inputContext, final EliminationTask eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
-		final EliminationTask preprocessed;
-		final boolean doPrematureNaiveSelectOverStoreElimination = false;
-		if (doPrematureNaiveSelectOverStoreElimination) {
-			preprocessed = ArrayQuantifierEliminationUtils.elimAllSos(eTask, mMgdScript, mServices, mLogger);
-		} else {
-			preprocessed = eTask;
-		}
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(preprocessed.getEliminatees());
-		Term currentTerm = preprocessed.getTerm();
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
+		Term currentTerm = eTask.getTerm();
 
 		// Set of newly introduced quantified variables
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
@@ -257,7 +250,7 @@ public class ElimStorePlain {
 				final Term[] correspondingJunctiveNormalForm;
 				final Term dualJunctWithoutEliminatee;
 				{
-					final Pair<Term[], Term> split = split(preprocessed.getQuantifier(), entry.getValue(), currentTerm);
+					final Pair<Term[], Term> split = split(eTask.getQuantifier(), entry.getValue(), currentTerm);
 					correspondingJunctiveNormalForm = split.getFirst();
 					dualJunctWithoutEliminatee = split.getSecond();
 				}
@@ -279,21 +272,21 @@ public class ElimStorePlain {
 						resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
 					} else {
 						final EliminationTask res = doElimOneRec(totalContext,
-								new EliminationTask(preprocessed.getQuantifier(),
+								new EliminationTask(eTask.getQuantifier(),
 										Collections.singleton(entry.getValue()), correspondingJunct));
 						newElimnatees.addAll(res.getEliminatees());
 						resultingCorrespondingJuncts[i] = res.getTerm();
 					}
 				}
-				currentTerm = compose(dualJunctWithoutEliminatee, preprocessed.getQuantifier(),
+				currentTerm = compose(dualJunctWithoutEliminatee, eTask.getQuantifier(),
 						Arrays.asList(resultingCorrespondingJuncts));
 				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, inputContext, false)
 						.getSimplifiedTerm(currentTerm);
 			}
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
-		resultingEliminatees.addAll(preprocessed.getEliminatees());
-		final EliminationTask preliminaryResult = new EliminationTask(preprocessed.getQuantifier(),
+		resultingEliminatees.addAll(eTask.getEliminatees());
+		final EliminationTask preliminaryResult = new EliminationTask(eTask.getQuantifier(),
 				resultingEliminatees, currentTerm);
 		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
 				PqeTechniques.ALL_LOCAL);
