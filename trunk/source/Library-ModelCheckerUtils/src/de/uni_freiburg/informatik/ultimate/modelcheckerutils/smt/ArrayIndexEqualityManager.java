@@ -187,6 +187,16 @@ public class ArrayIndexEqualityManager {
 		return mContextIsAbsorbingElement;
 	}
 
+	public EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex) {
+		for (int i=0; i<selectIndex.size(); i++) {
+			final EqualityStatus eqStaus = checkEqualityStatus(selectIndex.get(i), storeIndex.get(i));
+			if (eqStaus == EqualityStatus.NOT_EQUAL || eqStaus == EqualityStatus.UNKNOWN) {
+				return eqStaus;
+			}
+		}
+		return EqualityStatus.EQUAL;
+	}
+
 
 	public Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2) {
 		assert index1.size() == index2.size();

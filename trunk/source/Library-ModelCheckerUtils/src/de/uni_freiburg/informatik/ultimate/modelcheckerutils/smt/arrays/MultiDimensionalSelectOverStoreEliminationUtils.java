@@ -49,7 +49,7 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
 		// final ThreeValuedEquivalenceRelation<Term> tver = ArrayIndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
-		final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, aiem);
+		final EqualityStatus indexEquality = aiem.checkIndexEquality(selectIndex, storeIndex);
 		Term result;
 		switch (indexEquality) {
 		case EQUAL:
@@ -74,16 +74,6 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		return result;
 	}
 
-	private static EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex,
-			final ArrayIndexEqualityManager aiem) {
-		for (int i=0; i<selectIndex.size(); i++) {
-			final EqualityStatus eqStaus = aiem.checkEqualityStatus(selectIndex.get(i), storeIndex.get(i));
-			if (eqStaus == EqualityStatus.NOT_EQUAL || eqStaus == EqualityStatus.UNKNOWN) {
-				return eqStaus;
-			}
-		}
-		return EqualityStatus.EQUAL;
-	}
 
 
 	public static Term replace(final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem, final Term term,
