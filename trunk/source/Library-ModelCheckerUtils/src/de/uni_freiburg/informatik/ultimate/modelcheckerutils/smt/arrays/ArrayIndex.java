@@ -34,10 +34,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -251,27 +249,6 @@ public class ArrayIndex implements List<Term> {
 			}
 		}
 		return true;
-	}
-
-
-	public static Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
-			final ArrayIndex index2) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> dualJuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
-		}
-		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
-	}
-
-	public static Term constructAntiDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
-			final ArrayIndex index2) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> sameJuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
-		}
-		return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, sameJuncts);
 	}
 
 }

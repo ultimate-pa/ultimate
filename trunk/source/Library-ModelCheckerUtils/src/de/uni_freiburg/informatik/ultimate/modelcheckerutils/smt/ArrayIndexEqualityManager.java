@@ -123,12 +123,6 @@ public class ArrayIndexEqualityManager {
 		return true;
 	}
 
-	public boolean addComplimentaryEqualityInformation(final Script script, final int quantifier, final Term term) {
-		return ArrayIndexEqualityUtils.addComplimentaryEqualityInformation(script, quantifier,
-				QuantifierUtils.getXjunctsInner(quantifier, mContext), term, mTver);
-	}
-
-
 	private void checkEqualityStatusViaSolver(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
 			final IncrementalPlicationChecker iea, final Term index1,
 			final Term index2) throws AssertionError {
@@ -217,6 +211,26 @@ public class ArrayIndexEqualityManager {
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), conjuncts);
+	}
+
+	public Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
+			final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> dualJuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+		}
+		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
+	}
+
+	public Term constructAntiDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
+			final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> sameJuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+		}
+		return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, sameJuncts);
 	}
 
 

@@ -311,11 +311,11 @@ public class Elim1Store {
 
 		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analysisResult;
 		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,
-				quantifier);
+				quantifier, aiem);
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
 		final IndexMappingProvider imp = new IndexMappingProvider(allIndexRepresentatives, eliminatee,
-				indexEqualityInformation, auxVarConstructor, quantifier);
+				indexEqualityInformation, auxVarConstructor, quantifier, aiem);
 
 		final Map<ArrayIndex, ArrayIndex> indexMapping = imp.getIndexReplacementMapping();
 		final List<Term> indexMappingDefinitions = imp.getIndexMappingDefinitions();
@@ -367,13 +367,13 @@ public class Elim1Store {
 
 		final Pair<List<Term>, List<Term>> wc = constructWriteConstraints(selectIndexRepresentatives,
 				indexEqualityInformation, mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier,
-				newArrayMapping, substitutionMapping, equalityInformation);
+				newArrayMapping, substitutionMapping, equalityInformation, aiem);
 		singleCaseJuncts.addAll(wc.getFirst());
 		doubleCaseJuncts.addAll(wc.getSecond());
 
 		final Pair<List<Term>, List<Term>> cc = constructIndexValueConnection(selectIndexRepresentatives,
 				indexEqualityInformation, mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier,
-				equalityInformation);
+				equalityInformation, aiem);
 		singleCaseJuncts.addAll(cc.getFirst());
 		doubleCaseJuncts.addAll(cc.getSecond());
 
@@ -469,12 +469,12 @@ public class Elim1Store {
 
 
 	private static Term indexEquivalencesToTerm(final Script script,
-			final ThreeValuedEquivalenceRelation<ArrayIndex> tver, final int quantifier) {
+			final ThreeValuedEquivalenceRelation<ArrayIndex> tver, final int quantifier, final ArrayIndexEqualityManager aiem) {
 		final List<Term> elementEqualities = tver.getSupportingEqualities().entrySet().stream()
-				.map(en -> ArrayIndex.constructDerRelation(script, quantifier, en.getKey(), en.getValue()))
+				.map(en -> aiem.constructDerRelation(script, quantifier, en.getKey(), en.getValue()))
 				.collect(Collectors.toList());
 		final List<Term> elementDisequalities = tver.getDisequalities().entrySet().stream()
-				.map(pair -> ArrayIndex.constructAntiDerRelation(script, quantifier, pair.getKey(), pair.getValue()))
+				.map(pair -> aiem.constructAntiDerRelation(script, quantifier, pair.getKey(), pair.getValue()))
 				.collect(Collectors.toList());
 
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
@@ -682,13 +682,14 @@ public class Elim1Store {
 	 * </ul>
 	 *
 	 * @param equalityInformation
+	 * @param aiem
 	 */
 	private static Pair<List<Term>, List<Term>> constructIndexValueConnection(
 			final List<ArrayIndex> selectIndexRepresentatives,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
 			final TermVariable eliminatee, final int quantifier,
-			final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final ArrayIndexEqualityManager aiem) {
 		final List<Term> resultConjuncts1case = new ArrayList<Term>();
 		final List<Term> resultConjuncts2cases = new ArrayList<Term>();
 		for (int i = 0; i < selectIndexRepresentatives.size(); i++) {
@@ -725,7 +726,7 @@ public class Elim1Store {
 					assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
 					final ArrayIndex replacementIndex2 = indexMapping.get(index2);
 					assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
-					indexEqualityTerm = ArrayIndex.constructDerRelation(mgdScript.getScript(), quantifier,
+					indexEqualityTerm = aiem.constructDerRelation(mgdScript.getScript(), quantifier,
 							replacementIndex1, replacementIndex2);
 					break;
 				default:
@@ -797,13 +798,15 @@ public class Elim1Store {
 		 * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
 		 * </ul>
 		 * @param equalityInformation
+		 * @param aiem
 		 */
 	private static Pair<List<Term>, List<Term>> constructWriteConstraints(
 			final List<ArrayIndex> selectIndexRepresentatives,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
 			final TermVariable eliminatee, final int quantifier, final Map<MultiDimensionalStore, Term> newArrayMapping,
-			final Map<Term, Term> substitutionMapping, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+			final Map<Term, Term> substitutionMapping, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+			final ArrayIndexEqualityManager aiem) {
 		final List<Term> resultConjuncts1case = new ArrayList<Term>();
 		final List<Term> resultConjuncts2cases = new ArrayList<Term>();
 		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
@@ -821,7 +824,7 @@ public class Elim1Store {
 				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
 				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
 				assert !occursIn(eliminatee, replacementSelectIndex) : "var is still there";
-				final Term indexEquality = ArrayIndex.constructDerRelation(mgdScript.getScript(), quantifier,
+				final Term indexEquality = aiem.constructDerRelation(mgdScript.getScript(), quantifier,
 						replacementStoreIndex, replacementSelectIndex);
 
 				final MultiDimensionalSelect newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex,
@@ -932,7 +935,7 @@ public class Elim1Store {
 
 		public IndexMappingProvider(final List<ArrayIndex> allIndexRepresentatives, final TermVariable eliminatee,
 				final ThreeValuedEquivalenceRelation<ArrayIndex> equalityInformation,
-				final AuxVarConstructor auxVarConstructor, final int quantifier) {
+				final AuxVarConstructor auxVarConstructor, final int quantifier, final ArrayIndexEqualityManager aiem) {
 
 			final IValueConstruction<ArrayIndex, ArrayIndex> valueConstruction = new IValueConstruction<ArrayIndex, ArrayIndex>() {
 
@@ -959,7 +962,7 @@ public class Elim1Store {
 					final ArrayIndex indexReplacement = cc.getOrConstruct(indexRepresentative);
 					mIndexReplacementMapping.put(index, indexReplacement);
 					mIndexMappingDefinitions
-							.add(ArrayIndex.constructDerRelation(mScript, quantifier, indexReplacement, index));
+							.add(aiem.constructDerRelation(mScript, quantifier, indexReplacement, index));
 				}
 			}
 		}
