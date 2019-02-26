@@ -87,6 +87,10 @@ public class MonniauxMapEliminatorTest {
 		sseCollector.transform(formulaAsTerm);
 		Assert.assertThat(sseCollector.mSelectTerms.size(), Is.is(1));
 		Assert.assertThat(sseCollector.mStoreTerms.size(), Is.is(1));
+		
+		// TBD: Tests for the sets idxD and valD
+		
+		// TBD: Tests for the sets lowD and highD
 	}
 
 	@After
