@@ -157,16 +157,16 @@ public class ElimStorePlain {
 					thisIterationEliminatee = it.next();
 					it.remove();
 				}
-
+				final EliminationTaskWithContext etwc = new EliminationTaskWithContext(currentETask.getQuantifier(),
+						Collections.singleton(thisIterationEliminatee), currentETask.getTerm(), null);
 				final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-						eTask.getQuantifier()).elim1(currentETask.getQuantifier(), thisIterationEliminatee,
-								currentETask.getTerm(), QuantifierUtils.getAbsorbingElement(mMgdScript.getScript(), eTask.getQuantifier()));
+						eTask.getQuantifier()).elim1(etwc);
 				arrayEliminatees.addAll(ssdElimRes.getEliminatees());
 				// also add non-array eliminatees
 				arrayEliminatees.addAll(tr.getImage(0));
-				final EliminationTask eliminationTask1 = new EliminationTask(ssdElimRes.getQuantifier(),
-						arrayEliminatees, ssdElimRes.getTerm());
-				final EliminationTask eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
+				final EliminationTaskWithContext eliminationTask1 = new EliminationTaskWithContext(ssdElimRes.getQuantifier(),
+						arrayEliminatees, ssdElimRes.getTerm(), null);
+				final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 						eliminationTask1, PqeTechniques.ALL_LOCAL);
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
@@ -201,7 +201,8 @@ public class ElimStorePlain {
 		final long inputSize = new DAGSize().treesize(eTask.getTerm());
 		// Initially, the context is "true" (context is independent quantifier)
 		final Term initialContext = mMgdScript.getScript().term("true");
-		final EliminationTask result = doElimAllRec(initialContext, eTask);
+		final EliminationTask result = doElimAllRec(new EliminationTaskWithContext(eTask.getQuantifier(),
+				eTask.getEliminatees(), eTask.getTerm(), initialContext));
 		final long outputSize = new DAGSize().treesize(result.getTerm());
 		// TODO 2019-02-20 Matthias: If implementation is more matured then show this
 		// output only if there was a big increase in the size of the formula.
@@ -212,7 +213,7 @@ public class ElimStorePlain {
 	}
 
 
-	private EliminationTask doElimOneRec(final Term context, final EliminationTask eTask) {
+	private EliminationTaskWithContext doElimOneRec(final EliminationTaskWithContext eTask) {
 		// input one ?
 		// split in disjunction
 		// elim1store, output many
@@ -226,16 +227,36 @@ public class ElimStorePlain {
 
 //		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
 
-		final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-				eTask.getQuantifier()).elim1(eTask.getQuantifier(), eliminatee,
-						eTask.getTerm(), context);
-		final EliminationTask eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
-				ssdElimRes, PqeTechniques.ALL_LOCAL);
-		return doElimAllRec(context, eliminationTask2);
+		final Pair<Term[], Term> split = split(eTask.getQuantifier(), eliminatee, eTask.getTerm());
+		if (split.getFirst().length != 1) {
+			throw new AssertionError("no XNF");
+		}
+		final Term additionalContext;
+		if (eTask.getQuantifier() == QuantifiedFormula.EXISTS) {
+			additionalContext = split.getSecond();
+		} else if (eTask.getQuantifier() == QuantifiedFormula.FORALL) {
+			additionalContext = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.IS_ATOM)
+					.transform(SmtUtils.not(mMgdScript.getScript(), split.getSecond()));
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
+		final EliminationTaskWithContext revisedInput = new EliminationTaskWithContext(eTask.getQuantifier(),
+				eTask.getEliminatees(), eTask.getTerm(), totalContext);
 
+
+		final EliminationTaskWithContext ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
+				eTask.getQuantifier()).elim1(revisedInput);
+		final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
+				ssdElimRes, PqeTechniques.ALL_LOCAL);
+		final EliminationTaskWithContext resultOfRecursiveCall = doElimAllRec(eliminationTask2);
+		final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(), eTask.getQuantifier(),
+				resultOfRecursiveCall.getTerm(), split.getSecond());
+		return new EliminationTaskWithContext(resultOfRecursiveCall.getQuantifier(),
+				resultOfRecursiveCall.getEliminatees(), resultTerm, eTask.getContext());
 	}
 
-	private EliminationTask doElimAllRec(final Term inputContext, final EliminationTask eTask) {
+	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
@@ -263,7 +284,7 @@ public class ElimStorePlain {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				final Term totalContext = SmtUtils.and(mMgdScript.getScript(), inputContext, additionalContext);
+				final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
 				final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
 				for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
 					final Term correspondingJunct = correspondingJunctiveNormalForm[i];
@@ -271,24 +292,24 @@ public class ElimStorePlain {
 						// ignore correspondingJuncts that do not contain eliminatee
 						resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
 					} else {
-						final EliminationTask res = doElimOneRec(totalContext,
-								new EliminationTask(eTask.getQuantifier(),
-										Collections.singleton(entry.getValue()), correspondingJunct));
+						final EliminationTask res = doElimOneRec(
+								new EliminationTaskWithContext(eTask.getQuantifier(),
+										Collections.singleton(entry.getValue()), correspondingJunct, totalContext));
 						newElimnatees.addAll(res.getEliminatees());
 						resultingCorrespondingJuncts[i] = res.getTerm();
 					}
 				}
 				currentTerm = compose(dualJunctWithoutEliminatee, eTask.getQuantifier(),
 						Arrays.asList(resultingCorrespondingJuncts));
-				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, inputContext, false)
+				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, eTask.getContext(), false)
 						.getSimplifiedTerm(currentTerm);
 			}
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
 		resultingEliminatees.addAll(eTask.getEliminatees());
-		final EliminationTask preliminaryResult = new EliminationTask(eTask.getQuantifier(),
-				resultingEliminatees, currentTerm);
-		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
+		final EliminationTaskWithContext preliminaryResult = new EliminationTaskWithContext(eTask.getQuantifier(),
+				resultingEliminatees, currentTerm, null);
+		final EliminationTaskWithContext finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
 				PqeTechniques.ALL_LOCAL);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr)
@@ -351,8 +372,8 @@ public class ElimStorePlain {
 		}
 	}
 
-	public static EliminationTask applyNonSddEliminations(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final EliminationTask eTask, final PqeTechniques techniques) {
+	public static EliminationTaskWithContext applyNonSddEliminations(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final EliminationTaskWithContext eTask, final PqeTechniques techniques) {
 
 		final Term xnf = QuantifierUtils.transformToXnf(services, mgdScript.getScript(), eTask.getQuantifier(),
 				mgdScript, eTask.getTerm(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -378,7 +399,7 @@ public class ElimStorePlain {
 		} else {
 			throw new AssertionError();
 		}
-		return new EliminationTask(eTask.getQuantifier(), eliminatees1, matrix);
+		return new EliminationTaskWithContext(eTask.getQuantifier(), eliminatees1, matrix, eTask.getContext());
 	}
 
 	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeRelation<Integer, TermVariable> tr) {

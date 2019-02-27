@@ -160,8 +160,15 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 
-	public EliminationTask elim1(final int quantifier, final TermVariable eliminatee, final Term inputTerm,
-			final Term context) {
+	public EliminationTaskWithContext elim1(final EliminationTaskWithContext input) {
+		final Term inputTerm = input.getTerm();
+		if (input.getEliminatees().size() != 1) {
+			throw new IllegalArgumentException("Can only eliminate one variable");
+		}
+		final int quantifier = input.getQuantifier();
+		final TermVariable eliminatee = input.getEliminatees().iterator().next();
+		final Term context = input.getContext();
+
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
 		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
 		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
@@ -201,7 +208,8 @@ public class Elim1Store {
 				final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem,
 						inputTerm, mdsos);
 				aiem.unlockSolver();
-				return new EliminationTask(quantifier, Collections.singleton(eliminatee), replaced);
+				return new EliminationTaskWithContext(quantifier, Collections.singleton(eliminatee), replaced,
+						input.getContext());
 			}
 		}
 
@@ -230,11 +238,12 @@ public class Elim1Store {
 			preprocessedInput = dp.getResult();
 			if (dp.introducedDerPossibility()) {
 				// do DER
-				final EliminationTask afterDer = ElimStorePlain.applyNonSddEliminations(mServices, mMgdScript,
-						new EliminationTask(quantifier, Collections.singleton(eliminatee), preprocessedInput),
+				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(
+						mServices, mMgdScript, new EliminationTaskWithContext(quantifier,
+								Collections.singleton(eliminatee), preprocessedInput, input.getContext()),
 						PqeTechniques.ONLY_DER);
 				newAuxVars.addAll(afterDer.getEliminatees());
-				return new EliminationTask(quantifier, newAuxVars, afterDer.getTerm());
+				return new EliminationTaskWithContext(quantifier, newAuxVars, afterDer.getTerm(), input.getContext());
 			}
 
 		}
@@ -261,7 +270,7 @@ public class Elim1Store {
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement, input.getContext());
 		}
 
 		final Set<ArrayIndex> selectIndices = new HashSet<>();
@@ -282,7 +291,8 @@ public class Elim1Store {
 		if (aiem.contextIsAbsorbingElement()) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement,
+					input.getContext());
 		}
 		assert analysisResult != null;
 
@@ -432,7 +442,7 @@ public class Elim1Store {
 					new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTask resultEt;
+		final EliminationTaskWithContext resultEt;
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result,
@@ -455,9 +465,9 @@ public class Elim1Store {
 				mLogger.info(sizeMessage);
 			}
 			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTask(quantifier, newAuxVars, simplified);
+			resultEt = new EliminationTaskWithContext(quantifier, newAuxVars, simplified, input.getContext());
 		} else {
-			resultEt = new EliminationTask(quantifier, newAuxVars, result);
+			resultEt = new EliminationTaskWithContext(quantifier, newAuxVars, result, input.getContext());
 		}
 		assert !DEBUG_EXTENDED_RESULT_CHECK
 				|| EliminationTask
