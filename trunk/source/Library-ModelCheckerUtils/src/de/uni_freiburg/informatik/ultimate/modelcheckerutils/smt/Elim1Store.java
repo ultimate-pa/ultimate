@@ -253,12 +253,11 @@ public class Elim1Store {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
-		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				preprocessedInput, polarizedContext);
+
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils
 				.collectComplimentaryEqualityInformation(mMgdScript.getScript(), quantifier,
-						preprocessedInputWithContext, selectTerms, stores);
+						polarizedContext, selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
@@ -270,12 +269,12 @@ public class Elim1Store {
 			selectIndices.add(selectTerm.getIndex());
 		}
 
-		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation, preprocessedInput,
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation, polarizedContext,
 				quantifier, mLogger, mMgdScript);
 
 		final long startTime = System.nanoTime();
 		final ThreeValuedEquivalenceRelation<ArrayIndex> analysisResult = analyzeIndexEqualities(quantifier,
-				selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee, mMgdScript, aiem);
+				selectIndices, stores, polarizedContext, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -310,8 +309,6 @@ public class Elim1Store {
 
 
 		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analysisResult;
-		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,
-				quantifier, aiem);
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
 		final IndexMappingProvider imp = new IndexMappingProvider(allIndexRepresentatives, eliminatee,
@@ -322,10 +319,10 @@ public class Elim1Store {
 
 		final Term indexDefinitionsTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				indexMappingDefinitions);
-		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
 
 		final Map<MultiDimensionalStore, Term> newArrayMapping = new HashMap<>();
+		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+				preprocessedInput, polarizedContext);
 		for (final MultiDimensionalStore store : stores) {
 			final Term newArray;
 			final EqProvider eqProvider = new EqProvider(preprocessedInputWithContext, eliminatee, quantifier);
@@ -376,6 +373,12 @@ public class Elim1Store {
 				equalityInformation, aiem);
 		singleCaseJuncts.addAll(cc.getFirst());
 		doubleCaseJuncts.addAll(cc.getSecond());
+
+		aiem.unlockSolver();
+		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,
+				quantifier, aiem);
+		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+				indexDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
@@ -639,7 +642,6 @@ public class Elim1Store {
 			}
 		}
 
-		aiem.unlockSolver();
 		// mMgdScript.requestLockRelease();
 		mgdScript.getScript().echo(new QuotedObject("finished analysis of index equalities"));
 		return result;

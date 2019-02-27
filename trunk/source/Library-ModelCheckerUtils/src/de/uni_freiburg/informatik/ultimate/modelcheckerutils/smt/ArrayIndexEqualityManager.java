@@ -91,6 +91,15 @@ public class ArrayIndexEqualityManager {
 		}
 	}
 
+	boolean alreadyCheckedUsesRepresenatives() {
+		for (final Term t : mAlreadyCheckedBySolver.getDomain()) {
+			if (!mTver.isRepresentative(t)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public EqualityStatus checkEqualityStatus(final Term elem1, final Term elem2) {
 		if (!allFreeVarsOccurInContext(elem1)) {
 			return EqualityStatus.UNKNOWN;
@@ -104,11 +113,13 @@ public class ArrayIndexEqualityManager {
 		if (status == EqualityStatus.UNKNOWN && mCheckEqualityStatusOnDemand) {
 			final Term elem1Rep = mTver.getRepresentative(elem1);
 			final Term elem2Rep = mTver.getRepresentative(elem2);
+			assert alreadyCheckedUsesRepresenatives() : "outdated checked by solver relation";
 			if (mAlreadyCheckedBySolver.containsPair(elem1Rep, elem2Rep)) {
 				return EqualityStatus.UNKNOWN;
 			}
 			checkEqualityStatusViaSolver(mQuantifier, mTver, iea, elem1Rep, elem2Rep);
 			mAlreadyCheckedBySolver.addPair(elem1Rep, elem2Rep);
+			mAlreadyCheckedBySolver.addPair(elem2Rep, elem1Rep);
 			return mTver.getEqualityStatus(elem1Rep, elem2Rep);
 		}
 		return status;
@@ -218,7 +229,19 @@ public class ArrayIndexEqualityManager {
 		assert index1.size() == index2.size();
 		final ArrayList<Term> dualJuncts = new ArrayList<>(index1.size());
 		for (int i = 0; i < index1.size(); i++) {
-			dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+			final EqualityStatus entryEquality = checkEqualityStatus(index1.get(i), index2.get(i));
+			switch (entryEquality) {
+			case EQUAL:
+				// do nothing
+				break;
+			case NOT_EQUAL:
+				return QuantifierUtils.getNeutralElement(script, quantifier);
+			case UNKNOWN:
+				dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+				break;
+			default:
+				throw new AssertionError();
+			}
 		}
 		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
 	}
@@ -228,7 +251,19 @@ public class ArrayIndexEqualityManager {
 		assert index1.size() == index2.size();
 		final ArrayList<Term> sameJuncts = new ArrayList<>(index1.size());
 		for (int i = 0; i < index1.size(); i++) {
-			sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+			final EqualityStatus entryEquality = checkEqualityStatus(index1.get(i), index2.get(i));
+			switch (entryEquality) {
+			case EQUAL:
+				// do nothing
+				break;
+			case NOT_EQUAL:
+				return QuantifierUtils.getAbsorbingElement(script, quantifier);
+			case UNKNOWN:
+				sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+				break;
+			default:
+				throw new AssertionError();
+			}
 		}
 		return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, sameJuncts);
 	}
