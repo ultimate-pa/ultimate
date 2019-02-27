@@ -190,31 +190,48 @@ public class AuxVarGen {
 	public Map<ReqGuardGraph, Term> getOracleAssertions(){
 		final Map<ReqGuardGraph, Term> guards = new HashMap<>();
 		for(ReqGuardGraph reqId: mEffects.keySet()) {
-			Term effect = mEffects.get(reqId);
-			Term use = this.getOracleEffectAssertionTerm(reqId, effect);
-			if (use != null && use != mSmtTrue) {
-				guards.put(reqId, use);	
+			Term guard =  getOracleAssertion(reqId);
+			if (guard != null && guard != mSmtTrue) {
+				guards.put(reqId, guard);
 			}
+			
 		}
 		return guards;
 	}
 	
+	public Term getOracleAssertion(ReqGuardGraph reqId) {
+		Term effect = mEffects.get(reqId);
+		Term guard = getOracleEffectAssertionTerm(reqId, effect);
+		Term denyOthersGuard = getOracleDenyOthers(reqId, effect);
+		return SmtUtils.not(mScript, SmtUtils.and(mScript, guard, denyOthersGuard));
+	}
+	
 	public Term getOracleEffectAssertionTerm(ReqGuardGraph reqId, Term effect) {
-		Term use = mSmtTrue;
+		Term guard = mSmtTrue;
 		for(TermVariable var: effect.getFreeVars()) {
 			if (!mReqSymbolTable.isOutput(var.toString())) {
 				continue;
 			} 
 			Set<TermVariable> effectVar = new HashSet<>();
 			effectVar.add(var);
-			mLogger.warn(SmtUtils.filterFormula(effect, effectVar, mScript).toString());
 			Term varTerm = SmtUtils.and(mScript, 
 					SmtUtils.filterFormula(effect, effectVar, mScript),
 					createDefineAnnotation(var, mReqToId.get(reqId)));
-					getDefineGuard(reqId);
-			use = SmtUtils.not(mScript, varTerm);
+			guard = SmtUtils.and(mScript, guard, varTerm);
 		}
-		return use;
+		return guard;
+	}
+	
+	public Term getOracleDenyOthers(ReqGuardGraph reqId, Term effect) {
+		Term guard = mSmtTrue;
+		for(TermVariable var: effect.getFreeVars()) {
+			Term exclude = createDefineAnnotation(var, mReqToId.get(reqId));
+			for(Term defineTerm: mVariableToDefineTerm.get(var)) {
+				if (defineTerm == exclude) continue;
+				guard = SmtUtils.and(mScript, guard, SmtUtils.not(mScript, defineTerm));
+			}
+		}
+		return guard;
 	}
 	
 }
