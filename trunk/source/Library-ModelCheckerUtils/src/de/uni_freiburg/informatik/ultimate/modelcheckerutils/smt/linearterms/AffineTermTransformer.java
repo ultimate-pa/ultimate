@@ -57,6 +57,14 @@ public class AffineTermTransformer extends TermTransformer {
 
 	@Override
 	protected void convert(final Term term) {
+		final Rational valueOfConstant = tryToConvertToConstant(mScript, term);
+		if (valueOfConstant != null) {
+			final AffineTerm result = new AffineTerm(term.getSort(), valueOfConstant);
+			setResult(result);
+			return;
+
+		}
+
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
 			if (tv.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(tv.getSort())) {
@@ -129,6 +137,27 @@ public class AffineTermTransformer extends TermTransformer {
 			return;
 		}
 		super.convert(term);
+	}
+
+	private Rational tryToConvertToConstant(final Script script, final Term term) {
+		final Rational result;
+		if (SmtSortUtils.isBitvecSort(term.getSort())) {
+			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
+			if (bc != null) {
+				result = Rational.valueOf(bc.getValue(), BigInteger.ONE);
+			} else {
+				result = null;
+			}
+		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
+			if (term instanceof ConstantTerm) {
+				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
+			} else {
+				result = null;
+			}
+		} else {
+			result = null;
+		}
+		return result;
 	}
 
 	/**
