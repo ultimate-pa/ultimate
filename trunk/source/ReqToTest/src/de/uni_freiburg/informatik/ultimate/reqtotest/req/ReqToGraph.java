@@ -35,7 +35,7 @@ public class ReqToGraph {
 	private final Script mScript;
 	
 	// set if the universality pattern sets define flags or not (true: unsound but helpful, false: sound but often no tests found)
-	private final boolean UNIVERSALITY_IS_DEFINITNG = true;
+	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
 	
 	public ReqToGraph(final ILogger logger, AuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt,
 			ReqSymbolTable reqSymbolTable){
@@ -438,7 +438,6 @@ public class ReqToGraph {
 				final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 				q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS), true));
 			} else {
-				final Term ndS = SmtUtils.not(mScript, mThreeValuedAuxVarGen.getDefineGuard(q0));
 				q0.connectOutgoing(q0, new TimedLabel(S));
 			}
 			return q0;

@@ -255,12 +255,6 @@ public class GraphToBoogie {
 		return new AssignmentStatement(mDummyLocation,lhs,rhs );
 	}
 	
-	private Statement generateVarRealAssignment(String asignee, float value) {
-		final LeftHandSide[] lhs = new LeftHandSide[] {new VariableLHS(mDummyLocation, asignee)};
-		final Expression[] rhs = new Expression[] {new RealLiteral(mDummyLocation, Float.toString(value))};
-		return new AssignmentStatement(mDummyLocation,lhs,rhs );
-	}
-	
 	private VariableLHS[] generateHavocVariableList(){
 		final List<String> modifiedVarsList = new ArrayList<>();
 
