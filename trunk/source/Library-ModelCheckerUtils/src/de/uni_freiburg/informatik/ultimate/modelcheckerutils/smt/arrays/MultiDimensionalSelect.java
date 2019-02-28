@@ -103,6 +103,14 @@ public class MultiDimensionalSelect {
 		mSelectTerm = (ApplicationTerm) tmp;
 	}
 
+	/**
+	 * TODO: add documentation
+	 */
+	public MultiDimensionalSelect getInnermost(final Script script, final int dim) {
+		final ArrayIndex newIndex = mIndex.getLast(dim);
+		return new MultiDimensionalSelect(mArray, newIndex, script);
+	}
+
 
 
 	private boolean classInvariant() {
@@ -124,6 +132,10 @@ public class MultiDimensionalSelect {
 
 	public ApplicationTerm getSelectTerm() {
 		return mSelectTerm;
+	}
+
+	public int getDimension() {
+		return getIndex().size();
 	}
 
 	public Term toTerm(final Script script) {

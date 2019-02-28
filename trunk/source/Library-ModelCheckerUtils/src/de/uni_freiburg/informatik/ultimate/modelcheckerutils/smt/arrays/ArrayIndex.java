@@ -230,6 +230,19 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
+	 * Returns an new ArrayIndex that consists of the last k entries of this
+	 * index.
+	 */
+	public ArrayIndex getLast(final int k) {
+		final List<Term> indexEntries = new ArrayList<>();
+		for (int i = mIndexEntries.size() - k; i < mIndexEntries.size(); i++) {
+			indexEntries.add(mIndexEntries.get(i));
+		}
+		return new ArrayIndex(indexEntries);
+	}
+
+
+	/**
 	 * Returns the free variable of all entries.
 	 */
 	public Set<TermVariable> getFreeVars() {
