@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,7 @@ public class ArrayIndexEqualityManager {
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	private final HashRelation<Term, Term> mAlreadyCheckedBySolver;
-	final IncrementalPlicationChecker iea;
+	final IncrementalPlicationChecker mIea;
 
 	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term context, final int quantifier, final ILogger logger, final ManagedScript mgdScript) {
 		super();
@@ -81,9 +82,9 @@ public class ArrayIndexEqualityManager {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
-		iea = new IncrementalPlicationChecker(plication, mMgdScript, mContext);
+		mIea = new IncrementalPlicationChecker(plication, mMgdScript, mContext);
 		final Term absorbingElement = QuantifierUtils.getNeutralElement(mMgdScript.getScript(), mQuantifier);
-		final Validity validity = iea.checkPlication(absorbingElement);
+		final Validity validity = mIea.checkPlication(absorbingElement);
 		if (validity == Validity.VALID) {
 			mContextIsAbsorbingElement = true;
 		} else {
@@ -91,6 +92,10 @@ public class ArrayIndexEqualityManager {
 		}
 	}
 
+	/**
+	 * Find out if the HashRelation mAlreadyCheckedBySolver stores only Terms that
+	 * are representatives of the ThreeValuedEquivalenceRelation.
+	 */
 	boolean alreadyCheckedUsesRepresenatives() {
 		for (final Term t : mAlreadyCheckedBySolver.getDomain()) {
 			if (!mTver.isRepresentative(t)) {
@@ -113,13 +118,14 @@ public class ArrayIndexEqualityManager {
 		if (status == EqualityStatus.UNKNOWN && mCheckEqualityStatusOnDemand) {
 			final Term elem1Rep = mTver.getRepresentative(elem1);
 			final Term elem2Rep = mTver.getRepresentative(elem2);
-			assert alreadyCheckedUsesRepresenatives() : "outdated checked by solver relation";
+			assert alreadyCheckedUsesRepresenatives() : "the mAlreadyCheckedBySolver relation is outdated";
 			if (mAlreadyCheckedBySolver.containsPair(elem1Rep, elem2Rep)) {
 				return EqualityStatus.UNKNOWN;
 			}
-			checkEqualityStatusViaSolver(mQuantifier, mTver, iea, elem1Rep, elem2Rep);
 			mAlreadyCheckedBySolver.addPair(elem1Rep, elem2Rep);
 			mAlreadyCheckedBySolver.addPair(elem2Rep, elem1Rep);
+			checkEqualityStatusViaSolver(mQuantifier, mTver, mIea, elem1Rep, elem2Rep);
+			assert alreadyCheckedUsesRepresenatives() : "the mAlreadyCheckedBySolver relation is outdated";
 			return mTver.getEqualityStatus(elem1Rep, elem2Rep);
 		}
 		return status;
@@ -139,7 +145,7 @@ public class ArrayIndexEqualityManager {
 			final Term index2) throws AssertionError {
 		final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), index1, index2);
 		if (SmtUtils.isTrue(eq)) {
-			tver.reportEquality(index1, index2);
+			reportEquality(index1, index2);
 			assert !tver.isInconsistent() : "inconsistent equality information";
 		} else if (SmtUtils.isFalse(eq)) {
 			tver.reportDisequality(index1, index2);
@@ -152,7 +158,7 @@ public class ArrayIndexEqualityManager {
 			}
 			if (isEqual == Validity.VALID) {
 				if (mQuantifier == QuantifiedFormula.EXISTS) {
-					tver.reportEquality(index1, index2);
+					reportEquality(index1, index2);
 					assert !tver.isInconsistent() : "inconsistent equality information";
 				} else if (mQuantifier == QuantifiedFormula.FORALL) {
 					tver.reportDisequality(index1, index2);
@@ -173,7 +179,7 @@ public class ArrayIndexEqualityManager {
 						tver.reportDisequality(index1, index2);
 						assert !tver.isInconsistent() : "inconsistent equality information";
 					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						tver.reportEquality(index1, index2);
+						reportEquality(index1, index2);
 						assert !tver.isInconsistent() : "inconsistent equality information";
 					} else {
 						throw new AssertionError("unknown quantifier");
@@ -184,8 +190,55 @@ public class ArrayIndexEqualityManager {
 		}
 	}
 
+	/**
+	 * Report to the ThreeValuedEquivalenceRelation that both input Terms are
+	 * equivalent. As a consequence, equivalence classes will be merged.
+	 * This method also updates the mAlreadyCheckedBySolver HashRelation in
+	 * order to maintain the class invariant that mAlreadyCheckedBySolver stores
+	 * only representatives.
+	 */
+	private void reportEquality(final Term index1, final Term index2) {
+		final Term t1rep = mTver.getRepresentative(index1);
+		final Term t2rep = mTver.getRepresentative(index2);
+		mTver.reportEquality(index1, index2);
+		Term newRepresentative;
+		Term outdatedRepresentative;
+		if (t1rep == mTver.getRepresentative(index1)) {
+			newRepresentative = t1rep;
+			outdatedRepresentative = t2rep;
+			assert t2rep == mTver.getRepresentative(index2);
+		} else {
+			newRepresentative = t2rep;
+			outdatedRepresentative = t1rep;
+			assert t2rep == mTver.getRepresentative(index1);
+		}
+		final HashRelation<Term, Term> outdatedEntries = new HashRelation<>();
+		for (final Entry<Term, Term> entry : mAlreadyCheckedBySolver.entrySet()) {
+			if (entry.getKey() == outdatedRepresentative || entry.getValue() == outdatedRepresentative) {
+				outdatedEntries.addPair(entry.getKey(), entry.getValue());
+			}
+		}
+		for (final Entry<Term, Term> entry : outdatedEntries.entrySet()) {
+			if (entry.getKey() == outdatedRepresentative) {
+				final boolean removed = mAlreadyCheckedBySolver.removePair(outdatedRepresentative, entry.getValue());
+				if (!removed) {
+					throw new AssertionError("element does not exist");
+				}
+				mAlreadyCheckedBySolver.addPair(newRepresentative, entry.getValue());
+			} else if (entry.getValue() == outdatedRepresentative) {
+				final boolean removed = mAlreadyCheckedBySolver.removePair(entry.getKey(), outdatedRepresentative);
+				if (!removed) {
+					throw new AssertionError("element does not exist");
+				}
+				mAlreadyCheckedBySolver.addPair(entry.getKey(), newRepresentative);
+			} else {
+				throw new AssertionError("some element has to be outdated.");
+			}
+		}
+	}
+
 	public void unlockSolver() {
-		iea.unlockSolver();
+		mIea.unlockSolver();
 	}
 
 	public boolean contextIsAbsorbingElement() {
