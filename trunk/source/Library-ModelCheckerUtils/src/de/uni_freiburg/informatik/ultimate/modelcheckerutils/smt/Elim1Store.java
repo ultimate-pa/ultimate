@@ -282,7 +282,7 @@ public class Elim1Store {
 				quantifier, mLogger, mMgdScript);
 
 		final long startTime = System.nanoTime();
-		final ThreeValuedEquivalenceRelation<ArrayIndex> analysisResult = analyzeIndexEqualities(quantifier,
+		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analyzeIndexEqualities(quantifier,
 				selectIndices, stores, polarizedContext, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
@@ -294,12 +294,12 @@ public class Elim1Store {
 			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement,
 					input.getContext());
 		}
-		assert analysisResult != null;
+		assert indexEqualityInformation != null;
 
 		final List<ArrayIndex> selectIndexRepresentatives = new ArrayList<>();
 		final List<ArrayIndex> allIndexRepresentatives = new ArrayList<>();
 		for (final ArrayIndex selectIndex : selectIndices) {
-			final ArrayIndex selectIndexRepresentative = analysisResult.getRepresentative(selectIndex);
+			final ArrayIndex selectIndexRepresentative = indexEqualityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
 			allIndexRepresentatives.add(selectIndexRepresentative);
 			// following is needed because we may now construct
@@ -312,13 +312,11 @@ public class Elim1Store {
 		}
 		final List<ArrayIndex> storeIndexRepresentatives = new ArrayList<>();
 		for (final MultiDimensionalStore store : stores) {
-			final ArrayIndex storeIndexRepresentative = analysisResult.getRepresentative(store.getIndex());
+			final ArrayIndex storeIndexRepresentative = indexEqualityInformation.getRepresentative(store.getIndex());
 			storeIndexRepresentatives.add(storeIndexRepresentative);
 			allIndexRepresentatives.add(storeIndexRepresentative);
 		}
 
-
-		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analysisResult;
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
 		final IndexMappingProvider imp = new IndexMappingProvider(allIndexRepresentatives, eliminatee,
@@ -387,6 +385,7 @@ public class Elim1Store {
 		aiem.unlockSolver();
 		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,
 				quantifier, aiem);
+		assert indexEqualityInformationTerm == QuantifierUtils.getAbsorbingElement(mScript, quantifier) : "strange equivalences";
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				indexDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
 
