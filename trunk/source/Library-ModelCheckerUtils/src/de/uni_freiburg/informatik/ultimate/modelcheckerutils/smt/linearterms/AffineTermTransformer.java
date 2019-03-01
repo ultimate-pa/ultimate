@@ -229,7 +229,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * casting every single element. In case an element of the input is our
 	 * auxiliary error term we return null instead.
 	 */
-	private AffineTerm[] castAndCheckForNonAffineArguments(final Term[] terms) {
+	private static AffineTerm[] castAndCheckForNonAffineArguments(final Term[] terms) {
 		final AffineTerm[] affineTerms = new AffineTerm[terms.length];
 		for (int i = 0; i < affineTerms.length; i++) {
 			if (terms[i] instanceof AffineTerm) {
@@ -247,7 +247,7 @@ public class AffineTermTransformer extends TermTransformer {
 	/**
 	 * Construct an {@link AffineTerm} that is the sum of all inputs.
 	 */
-	private AffineTerm add(final AffineTerm[] affineArgs) {
+	private static AffineTerm add(final AffineTerm[] affineArgs) {
 		final AffineTerm result = new AffineTerm(affineArgs);
 		return result;
 	}
@@ -255,7 +255,7 @@ public class AffineTermTransformer extends TermTransformer {
 	/**
 	 * Construct negation (unary minus).
 	 */
-	private AffineTerm negate(final AffineTerm affineTerm) {
+	private static AffineTerm negate(final AffineTerm affineTerm) {
 		return new AffineTerm(affineTerm, Rational.MONE);
 	}
 
@@ -265,7 +265,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * i.e., the {@link AffineTerm} that is equivalent to
 	 * <code>t1-(t2+...+tn)</code>
 	 */
-	private AffineTerm subtract(final AffineTerm[] input) {
+	private static AffineTerm subtract(final AffineTerm[] input) {
 		assert input.length > 1;
 		final AffineTerm[] argumentsForSum = new AffineTerm[input.length];
 		// negate all arguments but the first (at position 0)
@@ -281,7 +281,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Multiply an array of AffineTerms. If more that one argument is not a literal
 	 * the result is not affine and we return null.
 	 */
-	private AffineTerm tryToMultiply(final Sort sort, final AffineTerm[] affineTerms) {
+	private static AffineTerm tryToMultiply(final Sort sort, final AffineTerm[] affineTerms) {
 		AffineTerm result;
 		AffineTerm nonLiteralArgument = null;
 		Rational multiplier = Rational.ONE;
@@ -313,7 +313,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * defined the sort of reals. For integer division we have the function "div"
 	 * which is currently not supported by our affine terms.
 	 */
-	private AffineTerm divide(final Sort sort, final AffineTerm[] affineArgs) {
+	private static AffineTerm divide(final Sort sort, final AffineTerm[] affineArgs) {
 		assert SmtSortUtils.isRealSort(sort);
 		final AffineTerm affineTerm;
 		Rational multiplier;
