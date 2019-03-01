@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,7 +65,8 @@ public class ArrayIndexEqualityManager {
 	private final HashRelation<Term, Term> mAlreadyCheckedBySolver;
 	final IncrementalPlicationChecker mIea;
 
-	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term context, final int quantifier, final ILogger logger, final ManagedScript mgdScript) {
+	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term context,
+			final int quantifier, final ILogger logger, final ManagedScript mgdScript) {
 		super();
 		mTver = tver;
 		mContext = context;
@@ -141,8 +144,7 @@ public class ArrayIndexEqualityManager {
 	}
 
 	private void checkEqualityStatusViaSolver(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
-			final IncrementalPlicationChecker iea, final Term index1,
-			final Term index2) throws AssertionError {
+			final IncrementalPlicationChecker iea, final Term index1, final Term index2) throws AssertionError {
 		final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), index1, index2);
 		if (SmtUtils.isTrue(eq)) {
 			reportEquality(index1, index2);
@@ -170,8 +172,7 @@ public class ArrayIndexEqualityManager {
 			} else {
 				final Validity notEqualsHolds = iea.checkPlication(neq);
 				if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-					mLogger.warn("solver failed to check if following not equals relation is implied: "
-							+ eq);
+					mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
 				}
 
 				if (notEqualsHolds == Validity.VALID) {
@@ -192,10 +193,9 @@ public class ArrayIndexEqualityManager {
 
 	/**
 	 * Report to the ThreeValuedEquivalenceRelation that both input Terms are
-	 * equivalent. As a consequence, equivalence classes will be merged.
-	 * This method also updates the mAlreadyCheckedBySolver HashRelation in
-	 * order to maintain the class invariant that mAlreadyCheckedBySolver stores
-	 * only representatives.
+	 * equivalent. As a consequence, equivalence classes will be merged. This method
+	 * also updates the mAlreadyCheckedBySolver HashRelation in order to maintain
+	 * the class invariant that mAlreadyCheckedBySolver stores only representatives.
 	 */
 	private void reportEquality(final Term index1, final Term index2) {
 		final Term t1rep = mTver.getRepresentative(index1);
@@ -246,7 +246,7 @@ public class ArrayIndexEqualityManager {
 	}
 
 	public EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex) {
-		for (int i=0; i<selectIndex.size(); i++) {
+		for (int i = 0; i < selectIndex.size(); i++) {
 			final EqualityStatus eqStaus = checkEqualityStatus(selectIndex.get(i), storeIndex.get(i));
 			if (eqStaus == EqualityStatus.NOT_EQUAL || eqStaus == EqualityStatus.UNKNOWN) {
 				return eqStaus;
@@ -255,8 +255,7 @@ public class ArrayIndexEqualityManager {
 		return EqualityStatus.EQUAL;
 	}
 
-
-	public Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2) {
+	public Term constructIndexEquality(final ArrayIndex index1, final ArrayIndex index2) {
 		assert index1.size() == index2.size();
 		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
 		for (int i = 0; i < index1.size(); i++) {
@@ -277,12 +276,68 @@ public class ArrayIndexEqualityManager {
 		return SmtUtils.and(mMgdScript.getScript(), conjuncts);
 	}
 
-	public Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
-			final ArrayIndex index2) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> dualJuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			final EqualityStatus entryEquality = checkEqualityStatus(index1.get(i), index2.get(i));
+	/**
+	 * <pre>
+	 * t1 == t2 for existential quantifier and
+	 * t1 != t2 for universal quantifier
+	 * </pre>
+	 */
+	public Term constructDerRelation(final Script script, final int quantifier, final Term t1, final Term t2) {
+		final EqualityStatus eq = checkEqualityStatus(t1, t2);
+		final Term result;
+		switch (eq) {
+		case EQUAL:
+			result = QuantifierUtils.getAbsorbingElement(script, quantifier);
+			break;
+		case NOT_EQUAL:
+			result = QuantifierUtils.getNeutralElement(script, quantifier);
+			break;
+		case UNKNOWN:
+			result = QuantifierUtils.applyDerOperator(script, quantifier, t1, t2);
+			break;
+		default:
+			throw new AssertionError();
+		}
+		return result;
+	}
+
+	/**
+	 * <pre>
+	 * t1 != t2 for existential quantifier and
+	 * t1 == t2 for universal quantifier
+	 * </pre>
+	 */
+	public Term constructAntiDerRelation(final Script script, final int quantifier, final Term t1, final Term t2) {
+		final EqualityStatus eq = checkEqualityStatus(t1, t2);
+		final Term result;
+		switch (eq) {
+		case EQUAL:
+			result = QuantifierUtils.getNeutralElement(script, quantifier);
+			break;
+		case NOT_EQUAL:
+			result = QuantifierUtils.getAbsorbingElement(script, quantifier);
+			break;
+		case UNKNOWN:
+			result = QuantifierUtils.applyDerOperator(script, quantifier, t1, t2);
+			break;
+		default:
+			throw new AssertionError();
+		}
+		return result;
+	}
+
+	/**
+	 * <pre>
+	 * idx1 == idx2 for existential quantifier and
+	 * idx1 != idx2 for universal quantifier
+	 * </pre>
+	 */
+	public Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex idx1,
+			final ArrayIndex idx2) {
+		assert idx1.size() == idx2.size();
+		final ArrayList<Term> dualJuncts = new ArrayList<>(idx1.size());
+		for (int i = 0; i < idx1.size(); i++) {
+			final EqualityStatus entryEquality = checkEqualityStatus(idx1.get(i), idx2.get(i));
 			switch (entryEquality) {
 			case EQUAL:
 				// do nothing
@@ -290,7 +345,7 @@ public class ArrayIndexEqualityManager {
 			case NOT_EQUAL:
 				return QuantifierUtils.getNeutralElement(script, quantifier);
 			case UNKNOWN:
-				dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+				dualJuncts.add(QuantifierUtils.applyDerOperator(script, quantifier, idx1.get(i), idx2.get(i)));
 				break;
 			default:
 				throw new AssertionError();
@@ -299,12 +354,18 @@ public class ArrayIndexEqualityManager {
 		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
 	}
 
-	public Term constructAntiDerRelation(final Script script, final int quantifier, final ArrayIndex index1,
-			final ArrayIndex index2) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> sameJuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			final EqualityStatus entryEquality = checkEqualityStatus(index1.get(i), index2.get(i));
+	/**
+	 * <pre>
+	 * idx1 != idx2 for existential quantifier and
+	 * idx1 == idx2 for universal quantifier
+	 * </pre>
+	 */
+	public Term constructAntiDerRelation(final Script script, final int quantifier, final ArrayIndex idx1,
+			final ArrayIndex idx2) {
+		assert idx1.size() == idx2.size();
+		final ArrayList<Term> sameJuncts = new ArrayList<>(idx1.size());
+		for (int i = 0; i < idx1.size(); i++) {
+			final EqualityStatus entryEquality = checkEqualityStatus(idx1.get(i), idx2.get(i));
 			switch (entryEquality) {
 			case EQUAL:
 				// do nothing
@@ -312,7 +373,7 @@ public class ArrayIndexEqualityManager {
 			case NOT_EQUAL:
 				return QuantifierUtils.getAbsorbingElement(script, quantifier);
 			case UNKNOWN:
-				sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, index1.get(i), index2.get(i)));
+				sameJuncts.add(QuantifierUtils.applyAntiDerOperator(script, quantifier, idx1.get(i), idx2.get(i)));
 				break;
 			default:
 				throw new AssertionError();
@@ -321,5 +382,52 @@ public class ArrayIndexEqualityManager {
 		return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, sameJuncts);
 	}
 
+	/**
+	 * Given one "reference index" idx_ref and a list of indices idx1,...,idxn,
+	 * construct the following formula.
+	 *
+	 * <pre>
+	 * (idx_ref == idx1 ∨ ... ∨ idx_ref == idxn) for existential quantifier and
+	 * (idx_ref != idx1 ∧ ... ∧ idx_ref != idxn) for universal quantifier
+	 * </pre>
+	 *
+	 * In words
+	 *
+	 * <pre>
+	 * some index is equivalent -- for existential quantifier and
+	 * all indices are different -- for universal quantifier
+	 * </pre>
+	 */
+	public Term constructSameJunctionOfAntiDerRelations(final Script script, final int quantifier,
+			final ArrayIndex idxRef, final Collection<ArrayIndex> otherIndices) {
+		final List<Term> dualFiniteJuncts = otherIndices.stream()
+				.map(x -> constructDerRelation(script, quantifier, idxRef, x)).collect(Collectors.toList());
+		final Term dualFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, dualFiniteJuncts);
+		return dualFiniteJunction;
+	}
+
+	/**
+	 * Given one "reference index" idx_ref, a list of indices idx1,...,idxn and two
+	 * values val1, val2, construct the following formula.
+	 *
+	 * <pre>
+	 * (idx_ref == idx1 ∨ ... ∨ idx_ref == idxn ∨ val1 == val2) for existential quantifier and
+	 * (idx_ref != idx1 ∧ ... ∧ idx_ref != idxn ∧ val1 != val2) for universal quantifier
+	 * </pre>
+	 *
+	 * In words
+	 *
+	 * <pre>
+	 * some index is equivalent or the values are equivalent -- for existential quantifier and
+	 * all indices are different and the values are different -- for universal quantifier
+	 * </pre>
+	 */
+	public Term constructSameJunctionOfAntiDerRelations(final Script script, final int quantifier, final ArrayIndex idxRef,
+			final Collection<ArrayIndex> otherIndices, final Term val1, final Term val2) {
+		final Term indexConnection = constructSameJunctionOfAntiDerRelations(script, quantifier, idxRef, otherIndices);
+		final Term valueConnection = constructDerRelation(script, quantifier, val1, val2);
+		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, indexConnection, valueConnection);
+		return result;
+	}
 
 }

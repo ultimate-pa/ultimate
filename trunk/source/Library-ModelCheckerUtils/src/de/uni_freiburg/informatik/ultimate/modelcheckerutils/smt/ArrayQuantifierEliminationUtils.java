@@ -46,7 +46,7 @@ public class ArrayQuantifierEliminationUtils {
 			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
 		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
 		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-		final Term eq = aiem.constructPairwiseEquality(selectIndex, storeIndex);
+		final Term eq = aiem.constructIndexEquality(selectIndex, storeIndex);
 		final Term equalsReplacement = mdsos.constructEqualsReplacement();
 		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
 		return Util.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
@@ -60,7 +60,7 @@ public class ArrayQuantifierEliminationUtils {
 		Term ite = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
 		for (int i = 0; i < storeIndices.size(); i++) {
 			final ArrayIndex indexOfCurrentStore = mdsos.getNestedStore().getIndices().get(i);
-			final Term eq = aiem.constructPairwiseEquality(selectIndex, indexOfCurrentStore);
+			final Term eq = aiem.constructIndexEquality(selectIndex, indexOfCurrentStore);
 			final Term valueOfCurrentStore = mdsos.getNestedStore().getValues().get(i);
 			ite = Util.ite(mgdScript.getScript(), eq, valueOfCurrentStore, ite);
 		}
