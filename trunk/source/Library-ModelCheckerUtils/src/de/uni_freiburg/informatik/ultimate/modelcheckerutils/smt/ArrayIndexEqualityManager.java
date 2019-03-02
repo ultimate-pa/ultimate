@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
@@ -277,10 +277,10 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * <pre>
-	 * t1 == t2 for existential quantifier and
-	 * t1 != t2 for universal quantifier
-	 * </pre>
+	 * <ul>
+	 * <li>t1 == t2 for existential quantifier and
+	 * <li>t1 != t2 for universal quantifier
+	 * </ul>
 	 */
 	public Term constructDerRelation(final Script script, final int quantifier, final Term t1, final Term t2) {
 		final EqualityStatus eq = checkEqualityStatus(t1, t2);
@@ -302,10 +302,10 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * <pre>
-	 * t1 != t2 for existential quantifier and
-	 * t1 == t2 for universal quantifier
-	 * </pre>
+	 * <ul>
+	 * <li>t1 != t2 for existential quantifier and
+	 * <li>t1 == t2 for universal quantifier
+	 * </ul>
 	 */
 	public Term constructAntiDerRelation(final Script script, final int quantifier, final Term t1, final Term t2) {
 		final EqualityStatus eq = checkEqualityStatus(t1, t2);
@@ -327,10 +327,10 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * <pre>
-	 * idx1 == idx2 for existential quantifier and
-	 * idx1 != idx2 for universal quantifier
-	 * </pre>
+	 * <ul>
+	 * <li>idx1 == idx2 for existential quantifier and
+	 * <li>idx1 != idx2 for universal quantifier
+	 * </ul>
 	 */
 	public Term constructDerRelation(final Script script, final int quantifier, final ArrayIndex idx1,
 			final ArrayIndex idx2) {
@@ -355,10 +355,10 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * <pre>
-	 * idx1 != idx2 for existential quantifier and
-	 * idx1 == idx2 for universal quantifier
-	 * </pre>
+	 * <ul>
+	 * <li>idx1 != idx2 for existential quantifier and
+	 * <li>idx1 == idx2 for universal quantifier
+	 * </ul>
 	 */
 	public Term constructAntiDerRelation(final Script script, final int quantifier, final ArrayIndex idx1,
 			final ArrayIndex idx2) {
@@ -383,50 +383,48 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * Given one "reference index" idx_ref and a list of indices idx1,...,idxn,
-	 * construct the following formula.
-	 *
-	 * <pre>
-	 * (idx_ref == idx1 ∨ ... ∨ idx_ref == idxn) for existential quantifier and
-	 * (idx_ref != idx1 ∧ ... ∧ idx_ref != idxn) for universal quantifier
-	 * </pre>
-	 *
-	 * In words
-	 *
-	 * <pre>
-	 * some index is equivalent -- for existential quantifier and
-	 * all indices are different -- for universal quantifier
-	 * </pre>
-	 */
-	public Term constructSameJunctionOfAntiDerRelations(final Script script, final int quantifier,
-			final ArrayIndex idxRef, final Collection<ArrayIndex> otherIndices) {
-		final List<Term> dualFiniteJuncts = otherIndices.stream()
-				.map(x -> constructDerRelation(script, quantifier, idxRef, x)).collect(Collectors.toList());
-		final Term dualFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, dualFiniteJuncts);
-		return dualFiniteJunction;
-	}
-
-	/**
 	 * Given one "reference index" idx_ref, a list of indices idx1,...,idxn and two
 	 * values val1, val2, construct the following formula.
 	 *
-	 * <pre>
-	 * (idx_ref == idx1 ∨ ... ∨ idx_ref == idxn ∨ val1 == val2) for existential quantifier and
-	 * (idx_ref != idx1 ∧ ... ∧ idx_ref != idxn ∧ val1 != val2) for universal quantifier
-	 * </pre>
+	 * <ul>
+	 * <li>(idx == luidx1 ∨ ... ∨ idx == idxn ∨ idx != uidx ∨ (select arrRes idx) ==
+	 * uval) for existential quantifier and
+	 * <li>(idx != luidx1 ∧ ... ∧ idx != idxn ∧ idx == uidx ∧ (select arrRes idx) !=
+	 * uval) for universal quantifier
+	 * </ul>
 	 *
-	 * In words
-	 *
-	 * <pre>
-	 * some index is equivalent or the values are equivalent -- for existential quantifier and
-	 * all indices are different and the values are different -- for universal quantifier
-	 * </pre>
 	 */
-	public Term constructSameJunctionOfAntiDerRelations(final Script script, final int quantifier, final ArrayIndex idxRef,
-			final Collection<ArrayIndex> otherIndices, final Term val1, final Term val2) {
-		final Term indexConnection = constructSameJunctionOfAntiDerRelations(script, quantifier, idxRef, otherIndices);
-		final Term valueConnection = constructDerRelation(script, quantifier, val1, val2);
-		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, indexConnection, valueConnection);
+	public Term constructNestedStoreUpdateConstraintForOnePosition(final Script script, final int quantifier,
+			final Term arrayRes, final ArrayIndex idx, final List<ArrayIndex> laterUpdateIndices,
+			final ArrayIndex updateIndex, final Term updateValue) {
+		final List<Term> correspondingFiniteJuncts = laterUpdateIndices.stream()
+				.map(x -> constructDerRelation(script, quantifier, idx, x)).collect(Collectors.toList());
+		final Term correspondingFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
+				correspondingFiniteJuncts);
+		final Term idxAntiDerUidx = constructAntiDerRelation(script, quantifier, idx, updateIndex);
+		final MultiDimensionalSelect idxCellOfArrayRes = new MultiDimensionalSelect(arrayRes, idx, script);
+		final Term updateValueDerRelation = constructDerRelation(script, quantifier, idxCellOfArrayRes.toTerm(script),
+				updateValue);
+		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
+				correspondingFiniteJunction, idxAntiDerUidx, updateValueDerRelation);
+		return result;
+	}
+
+	public Term constructNestedStoreUpdateConstraint(final Script script, final int quantifier, final Term resArray,
+			final ArrayIndex idx, final List<ArrayIndex> storeIndices, final List<Term> storeValues,
+			final Term inputArrayValue) {
+		assert storeIndices.size() == storeValues.size();
+		final List<Term> resultDualJuncts = new ArrayList<>();
+		final Term inputCase = constructNestedStoreUpdateConstraintForOnePosition(script, quantifier, resArray, idx,
+				storeIndices, idx, inputArrayValue);
+		final List<ArrayIndex> tmp = new ArrayList<>(storeIndices);
+		for (int i = 0; i < storeIndices.size(); i++) {
+			final ArrayIndex innermost = tmp.remove(tmp.size() - 1);
+			final Term correspondingValue = storeValues.get(storeValues.size() - 1 - i);
+			final Term term = constructNestedStoreUpdateConstraintForOnePosition(script, quantifier, resArray, idx, tmp,
+					innermost, correspondingValue);
+		}
+		final Term result = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultDualJuncts);
 		return result;
 	}
 
