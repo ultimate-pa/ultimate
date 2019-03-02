@@ -59,8 +59,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
@@ -157,10 +159,11 @@ public class NestedInterpolantsBuilder {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mMgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = new TermTransferrer(mMgdScriptCfg.getScript(), const2RepTv);
+			mConst2RepTvSubst = new TermTransferrer(mMgdScriptCfg.getScript(), const2RepTv, true);
 		} else {
-			mConst2RepTvSubst = new Substitution(mMgdScriptCfg.getScript(), const2RepTv);
+			mConst2RepTvSubst = new SubstitutionWithLocalSimplification(mMgdScriptCfg, const2RepTv);
 		}
+
 
 		computeCraigInterpolants();
 		traceCheck.cleanupAndUnlockSolver();

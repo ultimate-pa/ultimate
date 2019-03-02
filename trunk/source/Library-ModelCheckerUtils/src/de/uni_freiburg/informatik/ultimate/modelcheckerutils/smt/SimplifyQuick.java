@@ -44,35 +44,35 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
  * @author Matthias Heizmann
  */
 public class SimplifyQuick {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private IToolchainStorage mStorage;
 	private static final int TIMOUT_IN_SECONDS = 10;
-	
+
 	public SimplifyQuick(final Script script, final IUltimateServiceProvider services) {
 		mScript = script;
 		mServices = services;
 	}
-	
+
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {
-		
+
 		final SolverSettings settings =
 				new SolverBuilder.SolverSettings(false, false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
 		final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 		simplificationScript.setLogic(Logics.CORE);
 		final TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
 		final Term foreign = towards.transform(inputTerm);
-		
+
 		simplificationScript.setOption(":check-type", "QUICK");
 		final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
 		final Term foreignsimplified = dda.getSimplifiedTerm(foreign);
 		// simplificationScript.setOption(":check-type", "FULL");
-		
-		final TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
+
+		final TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping(), false);
 		final Term simplified = back.transform(foreignsimplified);
 		simplificationScript.exit();
-		
+
 		return simplified;
 	}
 }
