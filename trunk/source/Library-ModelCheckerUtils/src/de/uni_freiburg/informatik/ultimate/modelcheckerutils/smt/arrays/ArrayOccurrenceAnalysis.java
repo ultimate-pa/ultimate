@@ -137,10 +137,10 @@ public class ArrayOccurrenceAnalysis {
 	public TreeSet<Integer> computeSelectAndStoreDimensions() {
 		final TreeSet<Integer> result = new TreeSet<>();
 		for (final MultiDimensionalSelect mds : getArraySelects()) {
-			result.add(mds.getIndex().size());
+			result.add(mds.getDimension());
 		}
 		for (final MultiDimensionalStore mds : getNestedArrayStores()) {
-			result.add(mds.getIndex().size());
+			result.add(mds.getDimension());
 		}
 		return result;
 	}
