@@ -36,21 +36,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.NestedArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -87,12 +85,12 @@ public class DerPreprocessor extends TermTransformer {
 		SELF_UPDATE, EQ_STORE, EQ_SELECT
 	};
 
-	private final List<TermVariable> mNewAuxVars = new ArrayList<>();
+	private final List<TermVariable> mNewAuxVars;
 	private final Term mResult;
 	private final boolean mIntroducedDerPossibility;
 
 	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final int quantifier,
-			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers) {
+			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers, final ArrayIndexEqualityManager aiem) {
 		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(bers, eliminatee);
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
@@ -121,32 +119,12 @@ public class DerPreprocessor extends TermTransformer {
 			}
 		}
 
-		final List<Term> mAuxVarDefinitions = new ArrayList<>();
-		final ConstructionCache<Term, TermVariable> auxVarCc;
-		{
-			final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
-				@Override
-				public TermVariable constructValue(final Term term) {
-					final TermVariable auxVar = mgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, term.getSort());
-					Term definition = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, auxVar, term);
-
-					// TODO: let Prenex transformer deal with non-NNF terms and
-					// remove the following line
-					definition = new NnfTransformer(mgdScript, services, QuantifierHandling.CRASH)
-							.transform(definition);
-
-					mAuxVarDefinitions.add(definition);
-					mNewAuxVars.add(auxVar);
-					return auxVar;
-				}
-			};
-			auxVarCc = new ConstructionCache<>(valueConstruction);
-		}
+		final ArrayIndexReplacementConstructor airc = new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_PREFIX, eliminatee);
 
 		final Map<Term, Term> substitutionMapping;
 		if (someTopLevelEquality != null) {
 			final Term derEnabler = constructDerEnabler(someTopLevelEquality, mgdScript, eliminatee, quantifier,
-					derCase, auxVarCc);
+					derCase, airc, aiem);
 			substitutionMapping = Collections.singletonMap(someTopLevelEquality.toTerm(mgdScript.getScript()),
 					derEnabler);
 			mIntroducedDerPossibility = true;
@@ -155,26 +133,26 @@ public class DerPreprocessor extends TermTransformer {
 				throw new AssertionError("Some non-self update cases but no top-level DER relation");
 			}
 			substitutionMapping = handleAllSelfUpdates(classification.getImage(DerCase.SELF_UPDATE), mgdScript,
-					eliminatee, quantifier, auxVarCc);
+					eliminatee, quantifier, airc, aiem);
 			mIntroducedDerPossibility = false;
 		}
 		final Term inputReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
 				.transform(input);
-		final Term allAuxVarDefs = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
-				mAuxVarDefinitions);
+		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
+		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
 		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,
 				allAuxVarDefs);
 	}
 
 	private static Map<Term, Term> handleAllSelfUpdates(final Set<BinaryEqualityRelation> selfupdates,
 			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
-			final ConstructionCache<Term, TermVariable> auxVarCc) {
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
 			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
-			final NestedArrayStore nas = NestedArrayStore.convert(otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
 			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
-					auxVarCc);
+					airc, aiem);
 			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
 		}
 		return substitutionMapping;
@@ -182,18 +160,18 @@ public class DerPreprocessor extends TermTransformer {
 
 	private static Term constructDerEnabler(final BinaryEqualityRelation someTopLevelEquality,
 			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier, final DerCase derCase,
-			final ConstructionCache<Term, TermVariable> auxVarCc) {
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
 		final Term otherSide = getOtherSide(someTopLevelEquality, eliminatee);
 		Term result;
 		switch (derCase) {
 		case EQ_SELECT:
-			final ArraySelect as = ArraySelect.convert(otherSide);
+			final MultiDimensionalSelect as = MultiDimensionalSelect.convert(otherSide);
 			result = constructReplacementForSelectCase(as.getArray(), as.getIndex(), mgdScript, eliminatee, quantifier,
-					auxVarCc);
+					airc);
 			break;
 		case EQ_STORE:
-			final NestedArrayStore nas = NestedArrayStore.convert(otherSide);
-			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, auxVarCc);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
+			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
 			break;
 		case SELF_UPDATE:
 		default:
@@ -262,21 +240,33 @@ public class DerPreprocessor extends TermTransformer {
 		return mIntroducedDerPossibility;
 	}
 
-	private static Term constructReplacementForStoreCase(final NestedArrayStore nas, final ManagedScript mgdScript,
-			final TermVariable eliminatee, final int quantifier, final ConstructionCache<Term, TermVariable> auxVarCc) {
-		final List<Term> newIndices = constructReplacementsIfNeeded(nas.getIndices(), auxVarCc, eliminatee);
-		final List<Term> newValues = constructReplacementsIfNeeded(nas.getValues(), auxVarCc, eliminatee);
+	private static Term constructReplacementForStoreCase(final MultiDimensionalNestedStore nas,
+			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
+		final List<ArrayIndex> newIndices = new ArrayList<>();
+		for (final ArrayIndex idx : nas.getIndices()) {
+			final ArrayIndex newIdx = airc.constructIndexReplacementIfNeeded(idx);
+			newIndices.add(newIdx);
+		}
+		final List<Term> newValues = new ArrayList<>();
+		for (final Term value : nas.getValues()) {
+			final Term newValue = airc.constructTermReplacementIfNeeded(value);
+			newValues.add(newValue);
+		}
 		final Term result;
 		if (nas.getArray().equals(eliminatee)) {
+			final ThreeValuedEquivalenceRelation<Term> tver;
+			final Term context;
+			final ILogger logger;
 			// is (possibly nested) self-update
-			final LinkedList<Term> indices = new LinkedList<>(newIndices);
+			final LinkedList<ArrayIndex> indices = new LinkedList<>(newIndices);
 			final LinkedList<Term> values = new LinkedList<>(newValues);
 			final Term[] resultDualFiniteJuncts = new Term[indices.size()];
 			for (int i = 0; i < newIndices.size(); i++) {
-				final Term innermostIndex = indices.removeFirst();
+				final ArrayIndex innermostIndex = indices.removeFirst();
 				final Term innermostValue = values.removeFirst();
 				resultDualFiniteJuncts[i] = constructDisjointIndexImplication(innermostIndex, indices, innermostValue,
-						eliminatee, mgdScript.getScript(), quantifier);
+						eliminatee, mgdScript.getScript(), quantifier, aiem);
 			}
 			assert indices.isEmpty();
 			values.isEmpty();
@@ -288,7 +278,8 @@ public class DerPreprocessor extends TermTransformer {
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
 			result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
-					new NestedArrayStore(nas.getArray(), newIndices, newValues).toTerm(mgdScript.getScript()),
+					new MultiDimensionalNestedStore(nas.getArray(), newIndices, newValues)
+							.toTerm(mgdScript.getScript()),
 					eliminatee);
 		}
 		return result;
@@ -315,22 +306,16 @@ public class DerPreprocessor extends TermTransformer {
 		}
 	}
 
-	private static Term constructReplacementForSelectCase(final Term array, final Term index,
+	private static Term constructReplacementForSelectCase(final Term array, final ArrayIndex arrayIndex,
 			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
-			final ConstructionCache<Term, TermVariable> auxVarCc) {
-		final Term newIndex;
-		if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
-			newIndex = auxVarCc.getOrConstruct(index);
-		} else {
-			newIndex = index;
+			final ArrayIndexReplacementConstructor airc) {
+		final ArrayIndex newIndex = airc.constructIndexReplacementIfNeeded(arrayIndex);
+		if (newIndex == arrayIndex) {
+			throw new AssertionError("no need to replace index");
 		}
-		final Term store = SmtUtils.select(mgdScript.getScript(), array, newIndex);
-		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee, store);
-
-		// TODO: let Prenex transformer deal with non-NNF terms and remove the
-		// following line
-		// result = new NnfTransformer(mMgdScript, mServices,
-		// QuantifierHandling.CRASH).transform(result);
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex, mgdScript.getScript());
+		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee,
+				mds.toTerm(mgdScript.getScript()));
 		return result;
 	}
 
@@ -342,17 +327,19 @@ public class DerPreprocessor extends TermTransformer {
 	 *
 	 * @param quantifier
 	 * @param script
+	 * @param aiem
 	 */
-	private static Term constructDisjointIndexImplication(final Term idx, final List<Term> otherIndices,
-			final Term value, final Term arr, final Script script, final int quantifier) {
-		final Term select = SmtUtils.select(script, arr, idx);
-		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(script, quantifier, select, value);
-		final List<Term> dualFiniteJuncts = otherIndices.stream()
-				.map(x -> QuantifierUtils.applyAntiDerOperator(script, quantifier, idx, x))
-				.collect(Collectors.toList());
-		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualFiniteJuncts);
+	private static Term constructDisjointIndexImplication(final ArrayIndex innermostIndex,
+			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
+			final int quantifier, final ArrayIndexEqualityManager aiem) {
+		final Term select = new MultiDimensionalSelect(arr, innermostIndex, script).toTerm(script);
+		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
+				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
+						.collect(Collectors.toList()));
+		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(script, quantifier, select, innermostValue);
+		correspondingFiniteJuncts.add(selectEqualsValue);
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
-				SmtUtils.not(script, dualFiniteJunction), selectEqualsValue);
+				correspondingFiniteJuncts);
 		return result;
 	}
 

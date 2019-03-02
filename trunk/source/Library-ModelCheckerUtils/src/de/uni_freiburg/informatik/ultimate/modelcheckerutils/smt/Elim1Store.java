@@ -189,18 +189,18 @@ public class Elim1Store {
 		}
 
 
+		final Term polarizedContext;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			polarizedContext = context;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			polarizedContext = SmtUtils.not(mScript, context);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
 		if (SELECT_OVER_STORE_PREPROCESSING) {
 			final List<MultiDimensionalSelectOverNestedStore> mdsoss = MultiDimensionalSelectOverNestedStore
 					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
 			if (!mdsoss.isEmpty()) {
-				final Term polarizedContext;
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					polarizedContext = context;
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					polarizedContext = SmtUtils.not(mScript, context);
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
 						mLogger, mMgdScript);
@@ -231,9 +231,12 @@ public class Elim1Store {
 			if (dims.size() > 1) {
 				throw new AssertionError("Dims after anti-DER " + dims2);
 			}
-
+			final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+			final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
+					mLogger, mMgdScript);
 			final DerPreprocessor dp = new DerPreprocessor(mServices, mMgdScript, quantifier, eliminatee,
-					antiDerPreprocessed, aoa.getDerRelations(quantifier));
+					antiDerPreprocessed, aoa.getDerRelations(quantifier), aiem);
+			aiem.unlockSolver();
 			newAuxVars.addAll(dp.getNewAuxVars());
 			preprocessedInput = dp.getResult();
 			if (dp.introducedDerPossibility()) {
@@ -252,16 +255,6 @@ public class Elim1Store {
 		final List<MultiDimensionalSelect> selectTerms = aoa.getArraySelects();
 
 		final List<MultiDimensionalStore> stores = aoa.getNestedArrayStores();
-
-
-		final Term polarizedContext;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			polarizedContext = context;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			polarizedContext = SmtUtils.not(mScript, context);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
 
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils
