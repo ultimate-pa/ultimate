@@ -319,14 +319,13 @@ public class Elim1Store {
 
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
-		final IndexMappingProvider imp = new IndexMappingProvider(allIndexRepresentatives, eliminatee,
-				indexEqualityInformation, auxVarConstructor, quantifier, aiem);
+		final IndexMappingProvider imp = new IndexMappingProvider(mMgdScript, allIndexRepresentatives, eliminatee,
+				indexEqualityInformation);
 
 		final Map<ArrayIndex, ArrayIndex> indexMapping = imp.getIndexReplacementMapping();
-		final List<Term> indexMappingDefinitions = imp.getIndexMappingDefinitions();
 
-		final Term indexDefinitionsTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexMappingDefinitions);
+		newAuxVars.addAll(imp.getConstructedAuxVars());
+		final Term indexAuxVarDefinitionsTerm = imp.constructAuxVarDefinitions(mScript, quantifier);
 
 		final Map<MultiDimensionalStore, Term> newArrayMapping = new HashMap<>();
 		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
@@ -387,7 +386,7 @@ public class Elim1Store {
 				quantifier, aiem);
 		assert indexEqualityInformationTerm == QuantifierUtils.getAbsorbingElement(mScript, quantifier) : "strange equivalences";
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
+				indexAuxVarDefinitionsTerm, preprocessedInput, indexEqualityInformationTerm);
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
@@ -939,41 +938,26 @@ public class Elim1Store {
 	 * auxiliary variable. As an optimization, we only construct one auxiliary
 	 * variable for each equivalence class of indices.
 	 */
-	private class IndexMappingProvider {
+	private static class IndexMappingProvider {
 
+		private final ArrayIndexReplacementConstructor mReplacementConstructor;
 		private final Map<ArrayIndex, ArrayIndex> mIndexReplacementMapping = new HashMap<>();
-		private final List<Term> mIndexMappingDefinitions = new ArrayList<>();
 
-		public IndexMappingProvider(final List<ArrayIndex> allIndexRepresentatives, final TermVariable eliminatee,
-				final ThreeValuedEquivalenceRelation<ArrayIndex> equalityInformation,
-				final AuxVarConstructor auxVarConstructor, final int quantifier, final ArrayIndexEqualityManager aiem) {
+		public IndexMappingProvider(final ManagedScript mgdScript, final List<ArrayIndex> allIndexRepresentatives,
+				final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<ArrayIndex> equalityInformation) {
 
-			final IValueConstruction<ArrayIndex, ArrayIndex> valueConstruction = new IValueConstruction<ArrayIndex, ArrayIndex>() {
+			mReplacementConstructor = new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_INDEX, eliminatee);
 
-				@Override
-				public ArrayIndex constructValue(final ArrayIndex index) {
-					final List<Term> indexEntries = new ArrayList<>();
-					for (int i = 0; i < index.size(); i++) {
-						final TermVariable entryReplacement = auxVarConstructor
-								.constructAuxVar("dim" + i + AUX_VAR_INDEX, index.get(i).getSort());
-						indexEntries.add(entryReplacement);
-					}
-					return new ArrayIndex(indexEntries);
-				}
-
-			};
-			final ConstructionCache<ArrayIndex, ArrayIndex> cc = new ConstructionCache<>(valueConstruction);
 			for (final ArrayIndex index : allIndexRepresentatives) {
 				final ArrayIndex eqTerm = findNiceReplacementForRepresentative(index, eliminatee, equalityInformation);
 				if (eqTerm != null) {
 					mIndexReplacementMapping.put(index, eqTerm);
 				} else {
-					// need to introduce auxiliary variable
+					// need to introduce auxiliary variables
 					final ArrayIndex indexRepresentative = equalityInformation.getRepresentative(index);
-					final ArrayIndex indexReplacement = cc.getOrConstruct(indexRepresentative);
+					final ArrayIndex indexReplacement = mReplacementConstructor
+							.constructIndexReplacementIfNeeded(indexRepresentative);
 					mIndexReplacementMapping.put(index, indexReplacement);
-					mIndexMappingDefinitions
-							.add(aiem.constructDerRelation(mScript, quantifier, indexReplacement, index));
 				}
 			}
 		}
@@ -982,8 +966,12 @@ public class Elim1Store {
 			return mIndexReplacementMapping;
 		}
 
-		public List<Term> getIndexMappingDefinitions() {
-			return mIndexMappingDefinitions;
+		public Term constructAuxVarDefinitions(final Script script, final int quantifier) {
+			return mReplacementConstructor.constructDefinitions(script, quantifier);
+		}
+
+		public Set<TermVariable> getConstructedAuxVars() {
+			return mReplacementConstructor.getConstructedAuxVars();
 		}
 
 	}
