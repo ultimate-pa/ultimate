@@ -104,9 +104,28 @@ public class MultiDimensionalSelect {
 	}
 
 	/**
-	 * TODO: add documentation
+	 * Extract from this {@link MultiDimensionalSelect} the
+	 * {@link MultiDimensionalSelect} on the innermost dim dimensions. That is the
+	 * {@link MultiDimensionalSelect}
+	 * <ul>
+	 * <li>whose array is the same as the array of this
+	 * {@link MultiDimensionalSelect}
+	 * <li>whose index consists only of the last dim entries of this arrays' index,
+	 * and
+	 * <li>whose SMT sort is dim dimensions higher than the sort of this
+	 * {@link MultiDimensionalSelect}. E.g., if the sort of this
+	 * {@link MultiDimensionalSelect} is Int (hence 0-dimensional) and dim=2 then
+	 * the sort of the returned {@link MultiDimensionalSelect} is a 2-dimensional
+	 * array.
+	 * </ul>
 	 */
 	public MultiDimensionalSelect getInnermost(final Script script, final int dim) {
+		if (dim < 1) {
+			throw new IllegalArgumentException("result must have at least dimension one");
+		}
+		if (dim > getDimension()) {
+			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
+		}
 		final ArrayIndex newIndex = mIndex.getLast(dim);
 		return new MultiDimensionalSelect(mArray, newIndex, script);
 	}

@@ -133,8 +133,39 @@ public class MultiDimensionalStore {
 		return mStoreTerm;
 	}
 
+	public int getDimension() {
+		return getIndex().size();
+	}
+
 	public Term toTerm(final Script script) {
 		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
+	}
+
+
+	/**
+	 * Extract from this {@link MultiDimensionalStore} the
+	 * {@link MultiDimensionalStore} on the innermost dim dimensions That is the
+	 * {@link MultiDimensionalStore}
+	 * <ul>
+	 * <li>whose array has a dimension that is dim dimensions lower than the
+	 * dimension of this array,
+	 * <li>whose index consists only of the last dim entries of this arrays' index,
+	 * and
+	 * <li>whose (written) value is the same as the (written) value of this array.
+	 * </ul>
+	 */
+	public MultiDimensionalStore getInnermost(final Script script, final int dim) {
+		if (dim < 1) {
+			throw new IllegalArgumentException("result must have at least dimension one");
+		}
+		if (dim > getDimension()) {
+			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
+		}
+		ArrayStore as = ArrayStore.convert(mStoreTerm);
+		for (int i = 0; i < getDimension() - dim; i++) {
+			as = ArrayStore.convert(as.getValue());
+		}
+		return MultiDimensionalStore.convert(as.toTerm(script));
 	}
 
 
