@@ -544,6 +544,30 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
 
+	@Test
+	public void nestedSelfUpdateTest() {
+		mScript.declareFun("i", new Sort[0], mIntSort);
+		mScript.declareFun("j", new Sort[0], mIntSort);
+		mScript.declareFun("k", new Sort[0], mIntSort);
+		mScript.declareFun("ai", new Sort[0], mIntSort);
+		mScript.declareFun("aj", new Sort[0], mIntSort);
+		mScript.declareFun("ak", new Sort[0], mIntSort);
+		mScript.declareFun("vi", new Sort[0], mIntSort);
+		mScript.declareFun("vj", new Sort[0], mIntSort);
+		mScript.declareFun("vk", new Sort[0], mIntSort);
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (not (= i k)) (= (select a i) ai) (= (select a j) aj) (= (select a k) ak)  (= (store (store (store a i vi) j vj) k vk) a)))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final String expectedResultAsString = "(let ((.cse0 (= ai vi)) (.cse5 (= j k)) (.cse1 (= ak vk)) (.cse2 (= i j)) (.cse3 (= aj vj)) (.cse4 (not (= i k)))) (or (and .cse0 .cse1 (not .cse2) .cse3 .cse4 (not .cse5)) (and .cse0 .cse1 (= aj vk) .cse4 .cse5) (and .cse1 .cse2 .cse3 .cse4 (= ai aj))))";
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
+
 
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
