@@ -112,7 +112,20 @@ public class ArrayIndexReplacementConstructor {
 		if (indexContainsForbiddenTv(index)) {
 			result = mIndexConstrCache.getOrConstruct(index);
 		} else {
-			result = null;
+			result = index;
+		}
+		return result;
+	}
+
+	public Term constructTermReplacementIfNeeded(final Term term) {
+		if (mConstructionDone) {
+			throw new IllegalStateException("Definitions already constructed or auxVars already returned");
+		}
+		final Term result;
+		if (entryContainsForbiddenTv(term)) {
+			result = mEntryConstrCache.getOrConstruct(term);
+		} else {
+			result = term;
 		}
 		return result;
 	}
