@@ -164,7 +164,7 @@ public class TermTransferrer extends TermTransformer {
 				result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
 						appTerm.getFunction().getIndices(), newArgs);
 			} else {
-				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
+				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
 			}
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
@@ -176,7 +176,7 @@ public class TermTransferrer extends TermTransformer {
 					result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
 							appTerm.getFunction().getIndices(), newArgs);
 				} else {
-					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
+					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
 				}
 			} else {
 				throw e;
