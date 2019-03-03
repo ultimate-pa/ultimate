@@ -162,6 +162,9 @@ public class Elim1Store {
 
 	public EliminationTaskWithContext elim1(final EliminationTaskWithContext input) {
 		final Term inputTerm = input.getTerm();
+		if (!QuantifierUtils.isQuantifierFree(inputTerm)) {
+			throw new AssertionError("Alternating quantifiers not yet supported");
+		}
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
