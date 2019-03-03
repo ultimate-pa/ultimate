@@ -231,15 +231,8 @@ public class ElimStorePlain {
 		if (split.getFirst().length != 1) {
 			throw new AssertionError("no XNF");
 		}
-		final Term additionalContext;
-		if (eTask.getQuantifier() == QuantifiedFormula.EXISTS) {
-			additionalContext = split.getSecond();
-		} else if (eTask.getQuantifier() == QuantifiedFormula.FORALL) {
-			additionalContext = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.IS_ATOM)
-					.transform(SmtUtils.not(mMgdScript.getScript(), split.getSecond()));
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
+		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
+				split.getSecond());
 		final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
 		final EliminationTaskWithContext revisedInput = new EliminationTaskWithContext(eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm(), totalContext);
@@ -275,16 +268,9 @@ public class ElimStorePlain {
 					correspondingJunctiveNormalForm = split.getFirst();
 					dualJunctWithoutEliminatee = split.getSecond();
 				}
-				final Term additionalContext;
-				if (eTask.getQuantifier() == QuantifiedFormula.EXISTS) {
-					additionalContext = dualJunctWithoutEliminatee;
-				} else if (eTask.getQuantifier() == QuantifiedFormula.FORALL) {
-					additionalContext = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.IS_ATOM)
-							.transform(SmtUtils.not(mMgdScript.getScript(), dualJunctWithoutEliminatee));
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-				final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
+				final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
+						dualJunctWithoutEliminatee);
+				final Term parentContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
 				final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
 				for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
 					final Term correspondingJunct = correspondingJunctiveNormalForm[i];
@@ -294,7 +280,7 @@ public class ElimStorePlain {
 					} else {
 						final EliminationTask res = doElimOneRec(
 								new EliminationTaskWithContext(eTask.getQuantifier(),
-										Collections.singleton(entry.getValue()), correspondingJunct, totalContext));
+										Collections.singleton(entry.getValue()), correspondingJunct, parentContext));
 						newElimnatees.addAll(res.getEliminatees());
 						resultingCorrespondingJuncts[i] = res.getTerm();
 					}
@@ -321,6 +307,23 @@ public class ElimStorePlain {
 		return finalResult;
 	}
 
+	/**
+	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
+	 * quantifier is universal.
+	 */
+	private static Term negateIfUniversal(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = inputTerm;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
+					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
 
 	private Term compose(final Term dualJunct, final int quantifier, final List<Term> correspondingJuncts) {
 		final Term correspondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
