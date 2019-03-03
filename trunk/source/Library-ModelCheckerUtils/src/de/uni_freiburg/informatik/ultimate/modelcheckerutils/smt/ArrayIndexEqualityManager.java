@@ -206,7 +206,7 @@ public class ArrayIndexEqualityManager {
 		if (t1rep == mTver.getRepresentative(index1)) {
 			newRepresentative = t1rep;
 			outdatedRepresentative = t2rep;
-			assert t2rep == mTver.getRepresentative(index2);
+			assert t1rep == mTver.getRepresentative(index2);
 		} else {
 			newRepresentative = t2rep;
 			outdatedRepresentative = t1rep;
