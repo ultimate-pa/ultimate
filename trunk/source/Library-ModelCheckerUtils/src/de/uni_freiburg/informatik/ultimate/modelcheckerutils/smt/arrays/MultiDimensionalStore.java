@@ -149,7 +149,7 @@ public class MultiDimensionalStore {
 	 * <ul>
 	 * <li>whose array has a dimension that is dim dimensions lower than the
 	 * dimension of this array,
-	 * <li>whose index consists only of the last dim entries of this arrays' index,
+	 * <li>whose index consists only of the first dim entries of this arrays' index,
 	 * and
 	 * <li>whose (written) value is the same as the (written) value of this array.
 	 * </ul>

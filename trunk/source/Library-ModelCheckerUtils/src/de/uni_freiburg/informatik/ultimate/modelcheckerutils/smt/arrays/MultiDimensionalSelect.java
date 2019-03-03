@@ -110,7 +110,7 @@ public class MultiDimensionalSelect {
 	 * <ul>
 	 * <li>whose array is the same as the array of this
 	 * {@link MultiDimensionalSelect}
-	 * <li>whose index consists only of the last dim entries of this arrays' index,
+	 * <li>whose index consists only of the first dim entries of this arrays' index,
 	 * and
 	 * <li>whose SMT sort is dim dimensions higher than the sort of this
 	 * {@link MultiDimensionalSelect}. E.g., if the sort of this
@@ -126,7 +126,7 @@ public class MultiDimensionalSelect {
 		if (dim > getDimension()) {
 			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
 		}
-		final ArrayIndex newIndex = mIndex.getLast(dim);
+		final ArrayIndex newIndex = mIndex.getFirst(dim);
 		return new MultiDimensionalSelect(mArray, newIndex, script);
 	}
 
