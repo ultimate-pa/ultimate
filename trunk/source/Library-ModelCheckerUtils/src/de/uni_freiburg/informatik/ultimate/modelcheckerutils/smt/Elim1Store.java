@@ -173,7 +173,7 @@ public class Elim1Store {
 		final Term context = input.getContext();
 
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
-		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
+//		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
 		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);

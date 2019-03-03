@@ -278,9 +278,17 @@ public class ElimStorePlain {
 						// ignore correspondingJuncts that do not contain eliminatee
 						resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
 					} else {
+						Term context;
+						final boolean addSiblingContext = true;
+						if (addSiblingContext) {
+							context = addSiblingContext(mServices, mMgdScript, eTask.getQuantifier(),
+									resultingCorrespondingJuncts, correspondingJunctiveNormalForm, i, parentContext);
+						} else {
+							context = parentContext;
+						}
 						final EliminationTask res = doElimOneRec(
 								new EliminationTaskWithContext(eTask.getQuantifier(),
-										Collections.singleton(entry.getValue()), correspondingJunct, parentContext));
+										Collections.singleton(entry.getValue()), correspondingJunct, context));
 						newElimnatees.addAll(res.getEliminatees());
 						resultingCorrespondingJuncts[i] = res.getTerm();
 					}
@@ -307,6 +315,22 @@ public class ElimStorePlain {
 		return finalResult;
 	}
 
+	private Term addSiblingContext(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final int quantifier, final Term[] resultingCorrespondingJuncts,
+			final Term[] correspondingJunctiveNormalForm, final int pos, final Term parentContext) {
+		final ArrayList<Term> contextConjuncts = new ArrayList<>();
+		contextConjuncts.add(parentContext);
+		for (int i = 0; i < pos; i++) {
+			contextConjuncts
+					.add(negateIfExistential(services, mgdScript, quantifier, resultingCorrespondingJuncts[i]));
+		}
+		for (int i = pos + 1; i < correspondingJunctiveNormalForm.length; i++) {
+			contextConjuncts
+					.add(negateIfExistential(services, mgdScript, quantifier, correspondingJunctiveNormalForm[i]));
+		}
+		return SmtUtils.and(mgdScript.getScript(), contextConjuncts);
+	}
+
 	/**
 	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
 	 * quantifier is universal.
@@ -319,6 +343,24 @@ public class ElimStorePlain {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
 					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	/**
+	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
+	 * quantifier is universal.
+	 */
+	private static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
+					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = inputTerm;
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
