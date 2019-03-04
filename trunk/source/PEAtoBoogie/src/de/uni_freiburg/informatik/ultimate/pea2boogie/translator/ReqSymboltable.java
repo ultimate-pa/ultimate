@@ -206,8 +206,14 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		}
 	}
 
+	@Override
 	public IdentifierExpression getIdentifierExpression(final String name) {
-		return mId2IdExpr.get(name);
+		final IdentifierExpression idExpr = mId2IdExpr.get(name);
+		if (idExpr == null || idExpr.getType() == null) {
+			throw new AssertionError();
+		}
+		assert idExpr != null && idExpr.getType() != null;
+		return idExpr;
 	}
 
 	public Map<PatternType, BoogieLocation> getLocations() {

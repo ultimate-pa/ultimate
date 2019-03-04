@@ -30,10 +30,13 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
@@ -116,8 +119,10 @@ public class CddToSmt {
 					// rewrite expression s.t. identifier expressions have declarations
 					final Expression expr = ((BoogieBooleanExpressionDecision) decision).getExpression();
 					final AddDeclarationInformationToIdentifiers visitor = new AddDeclarationInformationToIdentifiers();
-					final Expression transformedExpr = expr.accept(visitor);
-					decisionTerm = toSmt(transformedExpr);
+					final TypeAdder typeVisitor = new TypeAdder();
+					final Expression exprWithDeclInfos = expr.accept(visitor);
+					final Expression exprWithTypes = exprWithDeclInfos.accept(typeVisitor);
+					decisionTerm = toSmt(exprWithTypes);
 				} else if (decision instanceof BooleanDecision) {
 					// TODO: This also covers RelationDecisions, is this intended?
 					decisionTerm = getTermVarTerm(((BooleanDecision) decision).getVar());
@@ -224,6 +229,21 @@ public class CddToSmt {
 			return mBoogieSymboltable.getIdentifierExpression(node.getIdentifier());
 		}
 
+	}
+
+	private final class TypeAdder extends GeneratedBoogieAstTransformer {
+		@Override
+		public Expression transform(final BinaryExpression node) {
+			final Expression leftT = node.getLeft().accept(this);
+			final Expression rightT = node.getRight().accept(this);
+			return ExpressionFactory.newBinaryExpression(node.getLocation(), node.getOperator(), leftT, rightT);
+		}
+
+		@Override
+		public Expression transform(final UnaryExpression node) {
+			final Expression leftT = node.getExpr().accept(this);
+			return ExpressionFactory.constructUnaryExpression(node.getLocation(), node.getOperator(), leftT);
+		}
 	}
 
 }
