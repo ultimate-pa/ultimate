@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
  * Analyze for a given term and a given (wanted) array in which kinds of
  * subterms the array occurs.
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArrayOccurrenceAnalysis {
 	private final Term mAnalyzedTerm;
@@ -319,5 +320,9 @@ public class ArrayOccurrenceAnalysis {
 			}
 		}
 
+	}
+
+	public static Set<ArrayIndex> extractSelectIndices(final List<MultiDimensionalSelect> arraySelects) {
+		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
 	}
 }
