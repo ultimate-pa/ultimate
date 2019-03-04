@@ -325,4 +325,8 @@ public class ArrayOccurrenceAnalysis {
 	public static Set<ArrayIndex> extractSelectIndices(final List<MultiDimensionalSelect> arraySelects) {
 		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
 	}
+
+	public static Set<ArrayIndex> extractStoreIndices(final List<MultiDimensionalStore> arraySelects) {
+		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
+	}
 }

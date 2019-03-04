@@ -57,12 +57,22 @@ public class ArrayIndexBasedCostEstimation {
 			final TermVariable eliminatee) {
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(term, eliminatee);
 		final Set<ArrayIndex> selectIndices = ArrayOccurrenceAnalysis.extractSelectIndices(aoa.getArraySelects());
-		final List<ArrayIndex> asList = new ArrayList<>(selectIndices);
+		final List<ArrayIndex> selectIndicesAsList = new ArrayList<>(selectIndices);
 		int totalCost = 0;
-		for (int i = 0; i < asList.size(); i++) {
+		for (int i = 0; i < selectIndicesAsList.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				final ArrayIndex indexI = asList.get(i);
-				final ArrayIndex indexJ = asList.get(j);
+				final ArrayIndex indexI = selectIndicesAsList.get(i);
+				final ArrayIndex indexJ = selectIndicesAsList.get(j);
+				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
+				totalCost = costForPair + totalCost;
+			}
+		}
+		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis.extractStoreIndices(aoa.getNestedArrayStores());
+		final List<ArrayIndex> storeIndicesAsList = new ArrayList<>(storeIndices);
+		for (int i = 0; i < storeIndicesAsList.size(); i++) {
+			for (int j = 0; j < selectIndicesAsList.size(); j++) {
+				final ArrayIndex indexI = storeIndicesAsList.get(i);
+				final ArrayIndex indexJ = selectIndicesAsList.get(j);
 				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
 				totalCost = costForPair + totalCost;
 			}
