@@ -39,7 +39,7 @@ public class ArraySelectOverStore {
 
 	public ArraySelectOverStore(final Term term) {
 		try {
-			final ArraySelect arraySelect = new ArraySelect(term);
+			final ArraySelect arraySelect = ArraySelect.convert(term);
 			mArrayStore = ArrayStore.convert(arraySelect.getArray());
 			mIndex = arraySelect.getIndex();
 		} catch (final IllegalArgumentException iae) {

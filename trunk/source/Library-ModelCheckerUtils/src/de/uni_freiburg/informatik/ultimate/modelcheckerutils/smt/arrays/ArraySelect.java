@@ -27,33 +27,21 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
-
- * @author Matthias Heizmann
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArraySelect {
 	private final Term mArray;
 	private final Term mIndex;
+	private final Term mTermRepresentation;
 
-	public ArraySelect(final Term array, final Term index) {
+	public ArraySelect(final Term array, final Term index, final Term termRepresentation) {
 		mArray = array;
 		mIndex = index;
-	}
-
-	public ArraySelect(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
-			throw new IllegalArgumentException();
-		}
-		final ApplicationTerm appTerm = (ApplicationTerm) term;
-		if (!appTerm.getFunction().getName().equals("select")) {
-			throw new IllegalArgumentException();
-		}
-		assert appTerm.getParameters().length == 2;
-		mArray = appTerm.getParameters()[0];
-		mIndex = appTerm.getParameters()[1];
+		mTermRepresentation = termRepresentation;
 	}
 
 	public Term getArray() {
@@ -64,17 +52,14 @@ public class ArraySelect {
 		return mIndex;
 	}
 
-	public Term toTerm(final Script script) {
-		return script.term("select", getArray(), getIndex());
+	public Term asTerm() {
+		return mTermRepresentation;
 	}
-
 
 	@Override
 	public String toString() {
-		return String.format("(select %s %s)", getArray(), getIndex());
+		return String.valueOf(mTermRepresentation);
 	}
-
-
 
 	public static ArraySelect convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
@@ -88,6 +73,6 @@ public class ArraySelect {
 			return null;
 		}
 		assert (appTerm.getParameters().length == 2);
-		return new ArraySelect(appTerm.getParameters()[0], appTerm.getParameters()[1]);
+		return new ArraySelect(appTerm.getParameters()[0], appTerm.getParameters()[1], term);
 	}
 }
