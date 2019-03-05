@@ -51,7 +51,7 @@ public class HcHeadVar extends HcVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcHeadVar(final HcPredicateSymbol headPredSym, final int index, final Sort sort,
+	HcHeadVar(final HcPredicateSymbol headPredSym, final int index, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
 		super(true, headPredSym, index, sort, mgdScript, lockOwner);
 	}

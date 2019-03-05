@@ -18,11 +18,13 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -111,17 +113,56 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		final ApplicationTerm atTransferred = (ApplicationTerm) mTermTransferrer.transform(at);
 		final FunctionSymbol fsym = atTransferred.getFunction();
 
-		final String functionName = fsym.getName();
-		final Sort[] functionParamenterSorts = fsym.getParameterSorts();
-		final List<Sort> convertedFunctionParamenterSorts = Arrays.asList(functionParamenterSorts);//Arrays.asList(transferSorts(functionParamenterSorts));
+		final Sort[] functionParameterSorts = fsym.getParameterSorts();
+		final List<Sort> convertedFunctionParameterSorts = Arrays.asList(functionParameterSorts);
+
+		return getOrConstructHornClausePredicateSymbol(fsym, convertedFunctionParameterSorts);
+	}
+
+
+	/**
+	 * (declares a {@link FunctionSymbol} of the given name if necessary)
+	 *
+	 * @param functionName
+	 * @param functionParameterSorts
+	 * @return
+	 */
+	public HcPredicateSymbol getOrConstructHornClausePredicateSymbol(final String functionName,
+			final List<Sort> functionParameterSorts) {
+
+		// declare symbol if necessary
+		try {
+			mManagedScript.getScript().declareFun(functionName,
+					functionParameterSorts.toArray(new Sort[functionParameterSorts.size()]),
+					SmtSortUtils.getBoolSort(mManagedScript));
+		} catch (final SMTLIBException slex) {
+			// symbol already exists
+		}
+
+		final ApplicationTerm dummyAt;
+		{
+			final List<Term> dummyTerms = new ArrayList<>();
+			int dummyVarCounter = 0;
+			for (final Sort sort : functionParameterSorts) {
+				dummyTerms.add(mManagedScript.variable("dummyVar" + dummyVarCounter++, sort));
+			}
+			dummyAt = (ApplicationTerm) mManagedScript.getScript().term(functionName,
+					dummyTerms.toArray(new Term[dummyTerms.size()]));
+
+		}
+		return getOrConstructHornClausePredicateSymbol(dummyAt);
+
+	}
+
+	private HcPredicateSymbol getOrConstructHornClausePredicateSymbol(final FunctionSymbol functionSymbol,
+			final List<Sort> functionParameterSorts) {
 
 		HcPredicateSymbol result = mNameToSortsToHornClausePredicateSymbol.get(
-				functionName,
-				convertedFunctionParamenterSorts);
+				functionSymbol.getName(),
+				functionParameterSorts);
 		if (result == null) {
-			result = new HcPredicateSymbol(this, fsym);
-			mNameToSortsToHornClausePredicateSymbol.put(functionName, convertedFunctionParamenterSorts, result);
-
+			result = new HcPredicateSymbol(this, functionSymbol);
+			mNameToSortsToHornClausePredicateSymbol.put(functionSymbol.getName(), functionParameterSorts, result);
 		}
 		return result;
 	}

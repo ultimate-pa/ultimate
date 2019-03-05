@@ -67,30 +67,29 @@ public class HornClause implements IRankedLetter {
 
 
 	/**
-	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint
-	 * --> false. Where b1 .. bn are uninterpreted predicates and constraint is
-	 * a Term.
+	 * Constructor for a query/goal clause, i.e., a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> false.
+	 * Where b1 .. bn are uninterpreted predicates and constraint is a Term.
 	 *
 	 * @param script
-	 * @param symbolTable
+	 * @param hcSymbolTable
 	 * @param constraint
 	 * @param bodyPreds
 	 * @param bodyPredToArguments
 	 */
-	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
+	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
 			final Set<HcBodyVar> bodyVars
 			) {
-		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
+		this(mgdScript, hcSymbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
 				bodyVars, false);
 	}
 
-	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
+	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
 			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
 			final Set<HcBodyVar> bodyVars
 			) {
-		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
+		this(mgdScript, hcSymbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 

@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;

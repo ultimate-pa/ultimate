@@ -80,6 +80,10 @@ public class HornAnnot implements IAnnotations {
 		return mHornClauses;
 	}
 
+	/**
+	 *
+	 * @return true if a (check-sat) command occurred in the input smt script
+	 */
 	public boolean hasCheckSat() {
 		return mHasCheckSat;
 	}
