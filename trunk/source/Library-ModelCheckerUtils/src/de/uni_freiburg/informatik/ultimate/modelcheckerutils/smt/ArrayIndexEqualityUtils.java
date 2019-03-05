@@ -34,7 +34,8 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -86,30 +87,33 @@ public class ArrayIndexEqualityUtils {
 	}
 
 	static ThreeValuedEquivalenceRelation<Term> collectComplimentaryEqualityInformation(final Script script,
-			final int quantifier, final Term preprocessedInput, final List<ApplicationTerm> selectTerms,
-			final List<ArrayStore> stores) {
+			final int quantifier, final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
+			final List<MultiDimensionalStore> stores) {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
 		final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
 		boolean inconsistencyDetected = false;
-		for (final ApplicationTerm selectTerm : selectTerms) {
-			final Term selectIndex = getIndexOfSelect(selectTerm);
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectIndex,
-					equalityInformation);
-			if (inconsistencyDetected) {
-				return null;
+		for (final MultiDimensionalSelect selectTerm : selectTerms) {
+			for (final Term entry : selectTerm.getIndex()) {
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, entry,
+						equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
 			}
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectTerm,
+			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectTerm.toTerm(script),
 					equalityInformation);
 			if (inconsistencyDetected) {
 				return null;
 			}
 
 		}
-		for (final ArrayStore arrayStore : stores) {
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-					arrayStore.getIndex(), equalityInformation);
-			if (inconsistencyDetected) {
-				return null;
+		for (final MultiDimensionalStore arrayStore : stores) {
+			for (final Term entry : arrayStore.getIndex()) {
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
+						entry, equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
 			}
 
 			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,

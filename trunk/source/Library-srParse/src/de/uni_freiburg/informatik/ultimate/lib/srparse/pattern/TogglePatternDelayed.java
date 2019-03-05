@@ -92,7 +92,7 @@ public class TogglePatternDelayed extends PatternType {
 		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" at most \"");
 		sb.append(getDuration().get(0));
-		sb.append("\" time units later\"");
+		sb.append("\" time units later");
 		return sb.toString();
 	}
 

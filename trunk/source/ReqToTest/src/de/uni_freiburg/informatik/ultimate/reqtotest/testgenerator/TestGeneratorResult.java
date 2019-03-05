@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -39,7 +41,6 @@ public class TestGeneratorResult implements IResult  {
 	
 
 	private void calculateDependencyGraph() {
-		
 		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes;
 		Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencyNodes = new HashMap<>();
 		for(List<ReqGraphAnnotation> stepAnnotations: mStepsAnnotations) {
@@ -49,21 +50,21 @@ public class TestGeneratorResult implements IResult  {
 		}
 		
 	}
-	
+	 
 	/*
-	 * Calculate relations between Requiremens in one test step.
+	 * Calculate relations between Requirements in one test step.
 	 * A relation looks like req1 ---- var1,var2 ----> req2, read as req2's trigger vars depend on effects var1, var2 set by req1.
 	 */
 	private Map<ReqGuardGraph, DirectTriggerDependency> calculateDependencyGraphStep(List<ReqGraphAnnotation> stepAnnotations, 
 			Map<ReqGuardGraph, DirectTriggerDependency> lastStepDependencies) {
-		//generate Nodes for every requirement 
+		//initialize dependency nodes: each requirement is represented by a node (in each test step)
 		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes = new HashMap<>();
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
 			ReqGuardGraph reqAut = annotation.getRequirementAut();
 			DirectTriggerDependency dependencyNode = new DirectTriggerDependency(reqAut);
 			stepDependencyNodes.put(reqAut, dependencyNode);
 		}
-		//find dependees justifying every annotation
+		//for a requirement find an effect that is responsible for triggering the quirement
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
 			DirectTriggerDependency dependencyNode = stepDependencyNodes.get(annotation.getRequirementAut());
 			connectEffectDependencies(dependencyNode, stepDependencyNodes, annotation, stepAnnotations);
@@ -87,7 +88,7 @@ public class TestGeneratorResult implements IResult  {
 			ReqGraphAnnotation toJustifyAnnotation, List<ReqGraphAnnotation> stepAnnotations) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
-			if(annotation == toJustifyAnnotation) {
+			if(annotation == toJustifyAnnotation || !annotation.getLabel().isEffect()) {
 				continue;
 			}
 			Set<TermVariable> varsJustifyable = SmtUtils.getFreeVars( Arrays.asList(annotation.getGuard()) );
@@ -104,6 +105,8 @@ public class TestGeneratorResult implements IResult  {
 	
 	private void connectInputDependencies(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		mLogger.warn(toJustifyAnnotation.getGuard());
+		mLogger.warn(varsToJustify);
 		Set<String> inputVariables = mReqSymbolTable.getInputVars();
 		Set<TermVariable> justifyingInputs = new HashSet<TermVariable>();
 		for(TermVariable var: varsToJustify) {
@@ -115,11 +118,14 @@ public class TestGeneratorResult implements IResult  {
 	}
 	
 	private void connectOutput(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
+		if (!toJustifyAnnotation.getLabel().isEffect()) {
+			return;
+		}
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
-		Set<String> inputVariables = mReqSymbolTable.getOutputVars();
+		Set<String> outputVariables = mReqSymbolTable.getOutputVars();
 		Set<TermVariable> outputs = new HashSet<TermVariable>();
 		for(TermVariable var: varsToJustify) {
-			if(inputVariables.contains(var.getName())) {
+			if(outputVariables.contains(var.getName())) {
 				outputs.add(var);
 			}
 		}
@@ -129,23 +135,18 @@ public class TestGeneratorResult implements IResult  {
 	
 	private void trimTestPlan() {
 		for(int step = mDependenciesGraphNodes.size()-1; step >= 0 ; step--) {
-			mLogger.warn("Pruing  ..." + Integer.toString(step));
-			Set<ReqGuardGraph> keepNodes = new HashSet<>();
+			Set<ReqGuardGraph> removeableNodes = new HashSet<>();
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
 			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 				DirectTriggerDependency depNode = stepDependencyGraphNodes.get(reqAut);
-				mLogger.warn("Calc ..." + Integer.toString(step));
-				mLogger.warn("Outdegreee              ..." + Integer.toString(depNode.getIncomingNodes().size()));
-				if(depNode.getIncomingNodes().size() > 0 && depNode.getOutputs().size() > 0) {
-					for(DirectTriggerDependency targetNode: depNode.getOutgoingNodes()) {
-						mLogger.warn("Disconnecting ..." + targetNode.getReqAut().getName());
-					}
-					keepNodes.add(reqAut);
+				if(depNode.getIncomingNodes().size() <= 0 && depNode.getOutputs().size() <= 0) {
+					removeableNodes.add(reqAut);
 				}
 			}
-			stepDependencyGraphNodes.keySet().removeAll(keepNodes);
+			stepDependencyGraphNodes.keySet().removeAll(removeableNodes);
 		}
 	}
+	
 
 	@Override
 	public String getPlugin() {
@@ -200,7 +201,6 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sbout = new StringBuilder();
 		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
-			mLogger.warn(dependencyNode.getIncomingNodes());
 			//inputs
 			if(dependencyNode.getInputs().size() > 0) {
 				sbin.append("Input ---------- (");

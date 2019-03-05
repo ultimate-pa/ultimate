@@ -3,9 +3,11 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -24,7 +26,8 @@ public class AuxVarGen {
 	public final static String CLOCK_PREFIX = "t_";
 	
 	private final Sort mSortBool;
-	private final Sort mSortReal;
+	private final Sort mSortInt;
+	private final Term mSmtTrue;
 		
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
@@ -49,8 +52,9 @@ public class AuxVarGen {
 		mReqToDefineAnnotation = new LinkedHashMap<>();
 		mReqToNonDefineAnnotation = new LinkedHashMap<>();
 		mReqToId = new LinkedHashMap<>();
+		mSortInt = mScript.sort("Int");
 		mSortBool = mScript.sort("Bool");
-		mSortReal = mScript.sort("Real");
+		mSmtTrue = mScript.term("true");
 	}
 	
 	
@@ -122,8 +126,8 @@ public class AuxVarGen {
 	
 	public TermVariable generateClockIdent(ReqGuardGraph req) {
 		final String auxIdent = AuxVarGen.CLOCK_PREFIX + Integer.toString(getReqToId(req));
-		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_REAL);
-		return mScript.variable(auxIdent,  mSortReal);
+		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_INT);
+		return mScript.variable(auxIdent,  mSortInt);
 	}
 	
 	private Term createUseTerm(TermVariable ident) {
@@ -178,7 +182,7 @@ public class AuxVarGen {
 		}
 		return guards;
 	}
-	
+	 
 	/*
 	 * For each requirement, build a negated Term which combines the effect of the requirement and the define guard of the requirement,
 	 * so that the assertion can only be violated if the effect is set, and it is set by the requirement itself.
@@ -186,20 +190,48 @@ public class AuxVarGen {
 	public Map<ReqGuardGraph, Term> getOracleAssertions(){
 		final Map<ReqGuardGraph, Term> guards = new HashMap<>();
 		for(ReqGuardGraph reqId: mEffects.keySet()) {
-			Term effect = mEffects.get(reqId);
-			Term use =  effect;
-			for(TermVariable var: effect.getFreeVars()) {
-				if (!mReqSymbolTable.isOutput(var.toString())) {
-					continue;
-				} 
-				use = SmtUtils.and(mScript, effect, createDefineAnnotation(var, mReqToId.get(reqId)));
-				
+			Term guard =  getOracleAssertion(reqId);
+			if (guard != null && guard != mSmtTrue) {
+				guards.put(reqId, guard);
 			}
-			if (use != effect) {
-				guards.put(reqId, SmtUtils.not(mScript, use));	
-			}
+			
 		}
 		return guards;
+	}
+	
+	public Term getOracleAssertion(ReqGuardGraph reqId) {
+		Term effect = mEffects.get(reqId);
+		Term guard = getOracleEffectAssertionTerm(reqId, effect);
+		Term denyOthersGuard = getOracleDenyOthers(reqId, effect);
+		return SmtUtils.not(mScript, SmtUtils.and(mScript, guard, denyOthersGuard));
+	}
+	
+	public Term getOracleEffectAssertionTerm(ReqGuardGraph reqId, Term effect) {
+		Term guard = mSmtTrue;
+		for(TermVariable var: effect.getFreeVars()) {
+			if (!mReqSymbolTable.isOutput(var.toString())) {
+				continue;
+			} 
+			Set<TermVariable> effectVar = new HashSet<>();
+			effectVar.add(var);
+			Term varTerm = SmtUtils.and(mScript, 
+					SmtUtils.filterFormula(effect, effectVar, mScript),
+					createDefineAnnotation(var, mReqToId.get(reqId)));
+			guard = SmtUtils.and(mScript, guard, varTerm);
+		}
+		return guard;
+	}
+	
+	public Term getOracleDenyOthers(ReqGuardGraph reqId, Term effect) {
+		Term guard = mSmtTrue;
+		for(TermVariable var: effect.getFreeVars()) {
+			Term exclude = createDefineAnnotation(var, mReqToId.get(reqId));
+			for(Term defineTerm: mVariableToDefineTerm.get(var)) {
+				if (defineTerm == exclude) continue;
+				guard = SmtUtils.and(mScript, guard, SmtUtils.not(mScript, defineTerm));
+			}
+		}
+		return guard;
 	}
 	
 }

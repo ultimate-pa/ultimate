@@ -32,8 +32,10 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Data structure for a (possibly) nested array select expression.
@@ -62,6 +64,15 @@ public class MultiDimensionalStore {
 	private final Term mValue;
 	private final ApplicationTerm mStoreTerm;
 
+
+	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value, final Script script) {
+		super();
+		mArray = array;
+		mIndex = index;
+		mValue = value;
+		mStoreTerm = (ApplicationTerm) SmtUtils.multiDimensionalStore(script, array, index, value);
+	}
+
 	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		final ArrayList<Term> index = new ArrayList<Term>();
@@ -73,7 +84,7 @@ public class MultiDimensionalStore {
 			while (isStore(remainder) && isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], mArray, index)) {
 				index.add(((ApplicationTerm) remainder).getParameters()[1]);
 				remainder = ((ApplicationTerm) remainder).getParameters()[2];
-				
+
 			}
 		} else {
 			mArray = null;
@@ -82,7 +93,7 @@ public class MultiDimensionalStore {
 		mValue = remainder;
 		assert classInvariant();
 	}
-	
+
 	private boolean isStore(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().equals("store");
@@ -120,6 +131,54 @@ public class MultiDimensionalStore {
 
 	public ApplicationTerm getStoreTerm() {
 		return mStoreTerm;
+	}
+
+	public int getDimension() {
+		return getIndex().size();
+	}
+
+	public Term toTerm(final Script script) {
+		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
+	}
+
+
+	/**
+	 * Extract from this {@link MultiDimensionalStore} the
+	 * {@link MultiDimensionalStore} on the innermost dim dimensions That is the
+	 * {@link MultiDimensionalStore}
+	 * <ul>
+	 * <li>whose array has a dimension that is dim dimensions lower than the
+	 * dimension of this array,
+	 * <li>whose index consists only of the first dim entries of this arrays' index,
+	 * and
+	 * <li>whose (written) value is the same as the (written) value of this array.
+	 * </ul>
+	 */
+	public MultiDimensionalStore getInnermost(final Script script, final int dim) {
+		if (dim < 1) {
+			throw new IllegalArgumentException("result must have at least dimension one");
+		}
+		if (dim > getDimension()) {
+			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
+		}
+		ArrayStore as = ArrayStore.convert(mStoreTerm);
+		for (int i = 0; i < getDimension() - dim; i++) {
+			as = ArrayStore.convert(as.getValue());
+		}
+		return MultiDimensionalStore.convert(as.toTerm(script));
+	}
+
+
+	public static MultiDimensionalStore convert(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			return null;
+		}
+		final MultiDimensionalStore mds = new MultiDimensionalStore(term);
+		if (mds.getArray() == null) {
+			return null;
+		} else {
+			return mds;
+		}
 	}
 
 	@Override

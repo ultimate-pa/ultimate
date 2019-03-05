@@ -28,24 +28,28 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.NestedArrayStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Preprocessor for array partial quantifier elimination that handles the
@@ -77,195 +81,218 @@ public class DerPreprocessor extends TermTransformer {
 
 	private static final String AUX_VAR_PREFIX = "DerPreprocessor";
 
-	private final IUltimateServiceProvider mServices;
-	private final Script mScript;
-	private final ManagedScript mMgdScript;
-	private final TermVariable mEliminatee;
-	private final int mQuantifier;
-	private final List<TermVariable> mNewAuxVars = new ArrayList<>();
-	private final ConstructionCache<Term, TermVariable> mAuxVarCc;
-	private final List<Term> mAuxVarDefinitions = new ArrayList<>();
-	private boolean mIntroducedDerPossibility = false;
+	private enum DerCase {
+		SELF_UPDATE, EQ_STORE, EQ_SELECT
+	};
 
-	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final TermVariable eliminatee, final int quantifier) {
-		mServices = services;
-		mScript = mgdScript.getScript();
-		mMgdScript = mgdScript;
-		mEliminatee = eliminatee;
-		mQuantifier = quantifier;
-		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
+	private final List<TermVariable> mNewAuxVars;
+	private final Term mResult;
+	private final boolean mIntroducedDerPossibility;
 
-			@Override
-			public TermVariable constructValue(final Term term) {
-				final TermVariable auxVar = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, term.getSort());
-				Term definition = QuantifierUtils.applyDerOperator(mScript, mQuantifier, auxVar, term);
-
-				// TODO: let Prenex transformer deal with non-NNF terms and
-				// remove the following line
-				definition = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(definition);
-
-				mAuxVarDefinitions.add(definition);
-				mNewAuxVars.add(auxVar);
-				return auxVar;
+	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final int quantifier,
+			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers, final ArrayIndexEqualityManager aiem) {
+		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(bers, eliminatee);
+		boolean existsEqualityThatIsNotOnTopLevel = false;
+		BinaryEqualityRelation someTopLevelEquality = null;
+		DerCase derCase = null;
+		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getXjunctsInner(quantifier, input))
+				.collect(Collectors.toSet());
+		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.EQ_SELECT)) {
+			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
+				if (someTopLevelEquality == null) {
+					someTopLevelEquality = ber;
+					derCase = DerCase.EQ_SELECT;
+				}
+			} else {
+				existsEqualityThatIsNotOnTopLevel = true;
 			}
-		};
-		mAuxVarCc = new ConstructionCache<>(valueConstruction);
+		}
+		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.EQ_STORE)) {
+			final Term toterm = ber.toTerm(mgdScript.getScript());
+			if (topLevelDualJuncts.contains(toterm)) {
+				if (someTopLevelEquality == null) {
+					someTopLevelEquality = ber;
+					derCase = DerCase.EQ_STORE;
+				}
+			} else {
+				existsEqualityThatIsNotOnTopLevel = true;
+			}
+		}
+
+		final ArrayIndexReplacementConstructor airc = new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_PREFIX, eliminatee);
+
+		final Map<Term, Term> substitutionMapping;
+		if (someTopLevelEquality != null) {
+			final Term derEnabler = constructDerEnabler(someTopLevelEquality, mgdScript, eliminatee, quantifier,
+					derCase, airc, aiem);
+			substitutionMapping = Collections.singletonMap(someTopLevelEquality.toTerm(mgdScript.getScript()),
+					derEnabler);
+			mIntroducedDerPossibility = true;
+		} else {
+			if (existsEqualityThatIsNotOnTopLevel) {
+				throw new AssertionError("Some non-self update cases but no top-level DER relation");
+			}
+			substitutionMapping = handleAllSelfUpdates(classification.getImage(DerCase.SELF_UPDATE), mgdScript,
+					eliminatee, quantifier, airc, aiem);
+			mIntroducedDerPossibility = false;
+		}
+		final Term inputReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
+				.transform(input);
+		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
+		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
+		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,
+				allAuxVarDefs);
+	}
+
+	private static Map<Term, Term> handleAllSelfUpdates(final Set<BinaryEqualityRelation> selfupdates,
+			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
+			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
+			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
+					airc, aiem);
+			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
+		}
+		return substitutionMapping;
+	}
+
+	private static Term constructDerEnabler(final BinaryEqualityRelation someTopLevelEquality,
+			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier, final DerCase derCase,
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
+		final Term otherSide = getOtherSide(someTopLevelEquality, eliminatee);
+		Term result;
+		switch (derCase) {
+		case EQ_SELECT:
+			final MultiDimensionalSelect as = MultiDimensionalSelect.convert(otherSide);
+			result = constructReplacementForSelectCase(as.getArray(), as.getIndex(), mgdScript, eliminatee, quantifier,
+					airc);
+			break;
+		case EQ_STORE:
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
+			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
+			break;
+		case SELF_UPDATE:
+		default:
+			throw new AssertionError("only select case and store case possible");
+		}
+		return result;
+	}
+
+	private static HashRelation<DerCase, BinaryEqualityRelation> classify(final List<BinaryEqualityRelation> bers,
+			final TermVariable eliminatee) {
+		final HashRelation<DerCase, BinaryEqualityRelation> result = new HashRelation<>();
+		for (final BinaryEqualityRelation ber : bers) {
+			final Term otherSide = getOtherSide(ber, eliminatee);
+			final DerCase derCase = classify(otherSide, eliminatee);
+			result.addPair(derCase, ber);
+		}
+		return result;
+	}
+
+	private static Term getOtherSide(final BinaryEqualityRelation ber, final TermVariable oneSide) {
+		Term otherSide;
+		if (ber.getLhs().equals(oneSide)) {
+			otherSide = ber.getRhs();
+		} else if (ber.getRhs().equals(oneSide)) {
+			otherSide = ber.getLhs();
+		} else {
+			throw new AssertionError("has to be on one side");
+		}
+		return otherSide;
+	}
+
+	private static DerCase classify(final Term otherSide, final TermVariable eliminatee) {
+		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("This case should habe been handled by DER");
+		}
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(otherSide);
+		if (mdns != null) {
+			if (mdns.getArray() == eliminatee) {
+				return DerCase.SELF_UPDATE;
+			} else {
+				if (Arrays.asList(mdns.getArray().getFreeVars()).contains(eliminatee)) {
+					throw new AssertionError("Complicated and unsupported kind of self-update: " + mdns.getArray());
+				} else {
+					return DerCase.EQ_STORE;
+				}
+			}
+		}
+		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.convert(otherSide);
+		if (arraySelect != null) {
+			return DerCase.EQ_SELECT;
+		}
+		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
 	}
 
 	public List<TermVariable> getNewAuxVars() {
 		return mNewAuxVars;
 	}
 
-	public List<Term> getAuxVarDefinitions() {
-		return mAuxVarDefinitions;
+
+
+	public Term getResult() {
+		return mResult;
 	}
 
 	public boolean introducedDerPossibility() {
 		return mIntroducedDerPossibility;
 	}
 
-	@Override
-	protected void convert(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final String fun = appTerm.getFunction().getName();
-			if (fun.equals("=")) {
-				if (appTerm.getParameters().length != 2) {
-					throw new UnsupportedOperationException("only binary equality supported");
-				}
-				final Term lhs = appTerm.getParameters()[0];
-				final Term rhs = appTerm.getParameters()[1];
-				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						final Term result = constructReplacement(lhs, rhs);
-						setResult(result);
-						return;
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						return;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-				}
-			} else if (fun.equals("distinct")) {
-				// TODO: do not allow distinct after our convention does not
-				// allow it nay more
-				// throw new AssertionError("distinct should have been
-				// removed");
-				if (appTerm.getParameters().length != 2) {
-					throw new UnsupportedOperationException("only binary equality supported");
-				}
-				final Term lhs = appTerm.getParameters()[0];
-				final Term rhs = appTerm.getParameters()[1];
-				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						return;
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						final Term result = constructReplacement(lhs, rhs);
-						setResult(result);
-						return;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-				}
-			} else if (fun.equals("not")) {
-				assert appTerm.getParameters().length == 1;
-				final Term argNot = appTerm.getParameters()[0];
-				if (argNot instanceof ApplicationTerm) {
-					final ApplicationTerm appTermNot = (ApplicationTerm) argNot;
-					if (NonCoreBooleanSubTermTransformer.isCoreBoolean(appTermNot)) {
-						throw new AssertionError("should have been transformed to NNF");
-					}
-					final String funNot = appTermNot.getFunction().getName();
-					if (funNot.equals("=")) {
-						if (appTermNot.getParameters().length != 2) {
-							throw new UnsupportedOperationException("only binary equality supported");
-						}
-						final Term lhs = appTermNot.getParameters()[0];
-						final Term rhs = appTermNot.getParameters()[1];
-						if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
-							if (mQuantifier == QuantifiedFormula.EXISTS) {
-								return;
-							} else if (mQuantifier == QuantifiedFormula.FORALL) {
-								final Term result = constructReplacement(lhs, rhs);
-								setResult(result);
-								return;
-							} else {
-								throw new AssertionError("unknown quantifier");
-							}
-						}
-					}
-				}
-			}
+	private static Term constructReplacementForStoreCase(final MultiDimensionalNestedStore nas,
+			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
+			final ArrayIndexReplacementConstructor airc, final ArrayIndexEqualityManager aiem) {
+		final List<ArrayIndex> newIndices = new ArrayList<>();
+		for (final ArrayIndex idx : nas.getIndices()) {
+			final ArrayIndex newIdx = airc.constructIndexReplacementIfNeeded(idx);
+			newIndices.add(newIdx);
 		}
-
-		super.convert(term);
-	}
-
-	private Term constructReplacement(final Term lhs, final Term rhs) {
-		if (lhs.equals(mEliminatee)) {
-			return constructReplacement(rhs);
-		} else if (rhs.equals(mEliminatee)) {
-			return constructReplacement(lhs);
-		} else {
-			throw new AssertionError("has to be on one side");
-		}
-	}
-
-	private Term constructReplacement(final Term otherSide) {
-		if (!Arrays.asList(otherSide.getFreeVars()).contains(mEliminatee)) {
-			throw new AssertionError("This case should habe been handled by DER");
-		}
-		final NestedArrayStore nas = NestedArrayStore.convert(otherSide);
-		if (nas != null) {
-			return constructReplacementForStoreCase(nas);
-		}
-		final ArraySelect arraySelect = ArraySelect.convert(otherSide);
-		if (arraySelect != null) {
-			return constructReplacementForSelectCase(arraySelect.getArray(), arraySelect.getIndex());
-		}
-		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
-	}
-
-	private Term constructReplacementForStoreCase(final NestedArrayStore nas) {
-		final List<Term> newIndices = constructReplacementsIfNeeded(nas.getIndices());
-		final List<Term> newValues = constructReplacementsIfNeeded(nas.getValues());
-		if (newIndices != nas.getIndices() || newValues != nas.getValues()) {
-			mIntroducedDerPossibility = true;
+		final List<Term> newValues = new ArrayList<>();
+		for (final Term value : nas.getValues()) {
+			final Term newValue = airc.constructTermReplacementIfNeeded(value);
+			newValues.add(newValue);
 		}
 		final Term result;
-		if (nas.getArray().equals(mEliminatee)) {
+		if (nas.getArray().equals(eliminatee)) {
+			final ThreeValuedEquivalenceRelation<Term> tver;
+			final Term context;
+			final ILogger logger;
 			// is (possibly nested) self-update
-			final LinkedList<Term> indices = new LinkedList<>(newIndices);
+			final LinkedList<ArrayIndex> indices = new LinkedList<>(newIndices);
 			final LinkedList<Term> values = new LinkedList<>(newValues);
 			final Term[] resultDualFiniteJuncts = new Term[indices.size()];
 			for (int i = 0; i < newIndices.size(); i++) {
-				final Term innermostIndex = indices.removeFirst();
+				final ArrayIndex innermostIndex = indices.removeFirst();
 				final Term innermostValue = values.removeFirst();
 				resultDualFiniteJuncts[i] = constructDisjointIndexImplication(innermostIndex, indices, innermostValue,
-						mEliminatee);
+						eliminatee, mgdScript.getScript(), quantifier, aiem);
 			}
 			assert indices.isEmpty();
 			values.isEmpty();
-			result = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, resultDualFiniteJuncts);
+			result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
+					resultDualFiniteJuncts);
 		} else {
-			if (Arrays.asList(nas.getArray().getFreeVars()).contains(mEliminatee)) {
+			if (Arrays.asList(nas.getArray().getFreeVars()).contains(eliminatee)) {
 				throw new UnsupportedOperationException(
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
-			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier,
-					new NestedArrayStore(nas.getArray(), newIndices, newValues).toTerm(mScript), mEliminatee);
+			result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
+					new MultiDimensionalNestedStore(nas.getArray(), newIndices, newValues)
+							.toTerm(mgdScript.getScript()),
+					eliminatee);
 		}
 		return result;
 	}
 
-	private List<Term> constructReplacementsIfNeeded(final List<Term> indices) {
+	private static List<Term> constructReplacementsIfNeeded(final List<Term> indices,
+			final ConstructionCache<Term, TermVariable> auxVarCc, final TermVariable eliminatee) {
 		final List<Term> newIndices = new ArrayList<>();
 		boolean replacementMade = false;
 		for (final Term index : indices) {
 			Term newIndex;
-			if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
-				newIndex = mAuxVarCc.getOrConstruct(index);
+			if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
+				newIndex = auxVarCc.getOrConstruct(index);
 				replacementMade = true;
 			} else {
 				newIndex = index;
@@ -279,44 +306,40 @@ public class DerPreprocessor extends TermTransformer {
 		}
 	}
 
-	private Term constructReplacementForSelectCase(final Term array, final Term index) {
-		final Term newIndex;
-		if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
-			newIndex = mAuxVarCc.getOrConstruct(index);
-		} else {
-			newIndex = index;
+	private static Term constructReplacementForSelectCase(final Term array, final ArrayIndex arrayIndex,
+			final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier,
+			final ArrayIndexReplacementConstructor airc) {
+		final ArrayIndex newIndex = airc.constructIndexReplacementIfNeeded(arrayIndex);
+		if (newIndex == arrayIndex) {
+			throw new AssertionError("no need to replace index");
 		}
-		Term result;
-		if (newIndex != index) {
-			mIntroducedDerPossibility = true;
-		}
-		final Term store = SmtUtils.select(mScript, array, newIndex);
-		result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
-
-		// TODO: let Prenex transformer deal with non-NNF terms and remove the
-		// following line
-		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex, mgdScript.getScript());
+		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee,
+				mds.toTerm(mgdScript.getScript()));
 		return result;
 	}
 
 	/**
-	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula
-	 * ((idx != oi_1) /\ ... /\ (idx != oi_n)) ==> ((select arr idx) = value)
-	 * for existential quantification and the formula
-	 * (not ((idx == oi_1) \/ ... \/ (idx == oi_n))) /\ ((select arr idx) != value)
-	 * for universal quantification.
+	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula ((idx
+	 * != oi_1) /\ ... /\ (idx != oi_n)) ==> ((select arr idx) = value) for
+	 * existential quantification and the formula (not ((idx == oi_1) \/ ... \/ (idx
+	 * == oi_n))) /\ ((select arr idx) != value) for universal quantification.
+	 *
+	 * @param quantifier
+	 * @param script
+	 * @param aiem
 	 */
-	private Term constructDisjointIndexImplication(final Term idx, final List<Term> otherIndices, final Term value,
-			final Term arr) {
-		final Term select = SmtUtils.select(mScript, arr, idx);
-		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, value);
-		final List<Term> dualFiniteJuncts = otherIndices.stream()
-				.map(x -> QuantifierUtils.applyAntiDerOperator(mScript, mQuantifier, idx, x))
-				.collect(Collectors.toList());
-		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier,
-				dualFiniteJuncts);
-		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, mQuantifier,
-				SmtUtils.not(mScript, dualFiniteJunction), selectEqualsValue);
+	private static Term constructDisjointIndexImplication(final ArrayIndex innermostIndex,
+			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
+			final int quantifier, final ArrayIndexEqualityManager aiem) {
+		final Term select = new MultiDimensionalSelect(arr, innermostIndex, script).toTerm(script);
+		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
+				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
+						.collect(Collectors.toList()));
+		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(script, quantifier, select, innermostValue);
+		correspondingFiniteJuncts.add(selectEqualsValue);
+		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
+				correspondingFiniteJuncts);
 		return result;
 	}
 

@@ -750,8 +750,6 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
-
-
 			</modules>
 		</profile>
 

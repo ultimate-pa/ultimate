@@ -26,11 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -43,13 +44,30 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * Transform a Term into an AffineTerm. Result is an auxiliary error term if the input was not affine.
+ * Transforms a {@link Term} which is "affine" into our {@link AffineTerm} data
+ * structure. The result is an auxiliary error term if the input was not affine.
  *
- * @author Matthias Heizmann
+ * The transformation is done by an recursive algorithm. However, in order to
+ * circumvent the problem that the performance of Java virtual machines is
+ * rather poor for recursive methods calls we implement the algorithm by using
+ * our {@link TermTransformer}. The {@link TermTransformer} allows us to
+ * implement recursive algorithms for {@link Term}s without recursive methods
+ * calls by explicitly using a stack.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class AffineTermTransformer extends TermTransformer {
 	private final Script mScript;
+	/**
+	 * Predicate that defines which Terms might be variables of the
+	 * {@link AffineTerm}. Currently, every {@link TermVariable} and every
+	 * {@link ApplicationTerm} can be a variable of the result. In
+	 * the future this may become a parameter in order to allow users
+	 * of this class to be more restrictive.
+	 */
+	private final Predicate<Term> mIsAffineVariable = (x -> ((x instanceof TermVariable)
+			|| (x instanceof ApplicationTerm)));
 
 	public AffineTermTransformer(final Script script) {
 		mScript = script;
@@ -57,79 +75,278 @@ public class AffineTermTransformer extends TermTransformer {
 
 	@Override
 	protected void convert(final Term term) {
-		if (term instanceof TermVariable) {
-			final TermVariable tv = (TermVariable) term;
-			if (tv.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(tv.getSort())) {
-				final AffineTerm result = new AffineTerm(tv);
-				setResult(result);
-				return;
-			}
-		} else if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final String funName = appTerm.getFunction().getName();
-			if (BitvectorUtils.isBitvectorConstant(appTerm.getFunction())) {
-				final BitvectorConstant bv = BitvectorUtils.constructBitvectorConstant(appTerm);
-				final Rational rational = Rational.valueOf(bv.getValue(), BigInteger.ONE);
-				final AffineTerm result = new AffineTerm(appTerm.getSort(), rational);
-				setResult(result);
-				return;
-			}
-			if (isAffineSymbol(funName)) {
-				super.convert(term);
-				return;
-			} else if (term.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(term.getSort())) {
-				final AffineTerm result = new AffineTerm(appTerm);
-				setResult(result);
-				return;
-			} else {
-				resultIsNotAffine();
-				return;
-			}
-			// } else if (funName.equals("to_real")) {
-			// final AffineTerm result = convertToReal(appTerm);
-			// setResult(result);
-			// return;
-			// } else if (funName.equals("select")) {
-			// final AffineTerm result = new AffineTerm(appTerm);
-			// setResult(result);
-			// return;
-			// } else if (funName.equals("mod")) {
-			// final AffineTerm result;
-			// final Term simplified = SmtUtils.termWithLocalSimplification(
-			// mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
-			// if (simplified instanceof ApplicationTerm) {
-			// result = new AffineTerm((ApplicationTerm) simplified);
-			// } else if (simplified instanceof ConstantTerm) {
-			// result = new AffineTerm(simplified.getSort(),
-			// SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
-			// } else {
-			// throw new AssertionError(
-			// "should be either ApplicationTerm or ConstantTerm " + simplified);
-			// }
-			// setResult(result);
-			// return;
-			// } else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
-			// // appTerm is a constant (0-ary function)
-			// final AffineTerm result = new AffineTerm(appTerm);
-			// setResult(result);
-			// return;
-			// } else {
-			// resultIsNotAffine();
-			// return;
-			// }
-		} else if (term instanceof ConstantTerm) {
-			final ConstantTerm constTerm = (ConstantTerm) term;
-			if (constTerm.getSort().isNumericSort()) {
-				final AffineTerm result = convertConstantNumericTerm(constTerm);
-				setResult(result);
-				return;
-			}
-			final AffineTerm errorTerm = new AffineTerm();
-			setResult(errorTerm);
+		// If the term has a sort that is not supported, we report
+		// that the input cannot be converted into an AffineTerm.
+		// This is implemented by returning an special kind
+		// of AffineTerm.
+		if (!hasSupportedSort(term)) {
+			inputIsNotAffine();
 			return;
 		}
-		super.convert(term);
+		// Otherwise, if the terms represents a literal, we convert the literal
+		// to an AffineTerm and tell the TermTransformer that this
+		// is the result (i.e., it should not descend to subformulas).
+		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
+		if (valueOfLiteral != null) {
+			final AffineTerm result = new AffineTerm(term.getSort(), valueOfLiteral);
+			setResult(result);
+			return;
+		}
+		// Otherwise, if the term represents an "affine function" we tell
+		// TermTransformer to descend to subformulas.
+		if (isAffineFunction(term)) {
+			super.convert(term);
+			return;
+		}
+		// Otherwise, the term is considered as a variable of our AffineTerms,
+		// we construct an AffineTerm that represents a variable and tell the
+		// TermTransformer that this
+		// is the result (i.e., it should not descend to subformulas).
+		if (mIsAffineVariable.test(term)) {
+			final AffineTerm result = new AffineTerm(term);
+			setResult(result);
+			return;
+		}
+		// Otherwise, the input cannot be converted to an AffineTerm.
+		inputIsNotAffine();
+		return;
 	}
+
+	/**
+	 * Sets result to auxiliary error term.
+	 */
+	private void inputIsNotAffine() {
+		setResult(new AffineTerm());
+	}
+
+	/**
+	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric
+	 * sorts) and the bitvector sorts.
+	 */
+	private static boolean hasSupportedSort(final Term term) {
+		return SmtSortUtils.isNumericSort(term.getSort()) || SmtSortUtils.isBitvecSort(term.getSort());
+	}
+
+	/**
+	 * Check if term represents a literal. If this is the case, then return its
+	 * value as a {@link Rational} otherwisereturn true.
+	 */
+	private static Rational tryToConvertToLiteral(final Script script, final Term term) {
+		final Rational result;
+		if (SmtSortUtils.isBitvecSort(term.getSort())) {
+			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
+			if (bc != null) {
+				result = Rational.valueOf(bc.getValue(), BigInteger.ONE);
+			} else {
+				result = null;
+			}
+		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
+			if (term instanceof ConstantTerm) {
+				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
+			} else {
+				result = null;
+			}
+		} else {
+			result = null;
+		}
+		return result;
+	}
+
+	/**
+	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
+	 * represents an "affine function". We call a function an "affine function" if
+	 * it implements an addition, subtraction, multiplication, or real number
+	 * division.
+	 */
+	private static boolean isAffineFunction(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			return isAffineFunctionSymbol(appTerm.getFunction().getName());
+		} else {
+			return false;
+		}
+	}
+
+	private static boolean isAffineFunctionSymbol(final String funName) {
+		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
+				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
+	}
+
+	@Override
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+		// This method is called for every subformula for which we let the
+		// TermTransformer descend to subformulas.
+		// Here, the arguments are the result of the "recursive" calls for the
+		// subformulas.
+		assert (isAffineFunctionSymbol(appTerm.getFunction().getName())) : "We only descended for affine functions";
+		// First, we check if some of this arguments is the auxiliary error term.
+		// If this is the case, we report that input is not affine.
+		final AffineTerm[] affineArgs = castAndCheckForNonAffineArguments(newArgs);
+		if (affineArgs == null) {
+			inputIsNotAffine();
+			return;
+		}
+		final String funName = appTerm.getFunction().getName();
+		if (funName.equals("*") || funName.equals("bvmul")) {
+			final Sort sort = appTerm.getSort();
+			final AffineTerm result = tryToMultiply(sort, affineArgs);
+			if (result == null) {
+				inputIsNotAffine();
+				return;
+			}
+			setResult(result);
+			return;
+		} else if (funName.equals("+") || funName.equals("bvadd")) {
+			final AffineTerm result = add(affineArgs);
+			setResult(result);
+			return;
+		} else if (funName.equals("-") || funName.equals("bvsub")) {
+			final AffineTerm result;
+			if (affineArgs.length == 1) {
+				// unary minus
+				result = negate(affineArgs[0]);
+			} else {
+				result = subtract(affineArgs);
+			}
+			setResult(result);
+			return;
+		} else if (funName.equals("/")) {
+			final Sort sort = appTerm.getSort();
+			final AffineTerm result = divide(sort, affineArgs);
+			if (result == null) {
+				inputIsNotAffine();
+				return;
+			}
+			setResult(result);
+			return;
+		} else {
+			throw new UnsupportedOperationException("unsupported symbol " + funName);
+		}
+	}
+
+	/**
+	 * Convert an array of {@link Term}s into an an array of {@link AffineTerm}s by
+	 * casting every single element. In case an element of the input is our
+	 * auxiliary error term we return null instead.
+	 */
+	private static AffineTerm[] castAndCheckForNonAffineArguments(final Term[] terms) {
+		final AffineTerm[] affineTerms = new AffineTerm[terms.length];
+		for (int i = 0; i < affineTerms.length; i++) {
+			if (terms[i] instanceof AffineTerm) {
+				affineTerms[i] = (AffineTerm) terms[i];
+				if (affineTerms[i].isErrorTerm()) {
+					return null;
+				}
+			} else {
+				throw new AssertionError();
+			}
+		}
+		return affineTerms;
+	}
+
+	/**
+	 * Construct an {@link AffineTerm} that is the sum of all inputs.
+	 */
+	private static AffineTerm add(final AffineTerm[] affineArgs) {
+		final AffineTerm result = new AffineTerm(affineArgs);
+		return result;
+	}
+
+	/**
+	 * Construct negation (unary minus).
+	 */
+	private static AffineTerm negate(final AffineTerm affineTerm) {
+		return new AffineTerm(affineTerm, Rational.MONE);
+	}
+
+	/**
+	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an
+	 * {@link AffineTerm} that represents the difference <code>t1-t2-...-tn</code>,
+	 * i.e., the {@link AffineTerm} that is equivalent to
+	 * <code>t1-(t2+...+tn)</code>
+	 */
+	private static AffineTerm subtract(final AffineTerm[] input) {
+		assert input.length > 1;
+		final AffineTerm[] argumentsForSum = new AffineTerm[input.length];
+		// negate all arguments but the first (at position 0)
+		argumentsForSum[0] = input[0];
+		for (int i = 1; i < argumentsForSum.length; i++) {
+			argumentsForSum[i] = new AffineTerm(input[i], Rational.MONE);
+		}
+		// construct the sum
+		return add(argumentsForSum);
+	}
+
+	/**
+	 * Multiply an array of AffineTerms. If more that one argument is not a literal
+	 * the result is not affine and we return null.
+	 */
+	private static AffineTerm tryToMultiply(final Sort sort, final AffineTerm[] affineTerms) {
+		AffineTerm result;
+		AffineTerm nonLiteralArgument = null;
+		Rational multiplier = Rational.ONE;
+		for (final AffineTerm affineTerm : affineTerms) {
+			if (affineTerm.isConstant()) {
+				multiplier = multiplier.mul(affineTerm.getConstant());
+			} else {
+				if (nonLiteralArgument == null) {
+					nonLiteralArgument = affineTerm;
+				} else {
+					// we have at least two arguments that are not literals
+					return null;
+				}
+			}
+		}
+		if (nonLiteralArgument == null) {
+			result = new AffineTerm(sort, multiplier);
+		} else {
+			result = new AffineTerm(nonLiteralArgument, multiplier);
+		}
+		return result;
+	}
+
+	/**
+	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an
+	 * {@link AffineTerm} that represents the quotinet <code>t1/t2/.../tn</code>,
+	 * i.e., the {@link AffineTerm} that is equivalent to
+	 * <code>t1*((1/t2)+...+(1/tn))</code>. Note that the function "/" is only
+	 * defined the sort of reals. For integer division we have the function "div"
+	 * which is currently not supported by our affine terms.
+	 */
+	private static AffineTerm divide(final Sort sort, final AffineTerm[] affineArgs) {
+		assert SmtSortUtils.isRealSort(sort);
+		final AffineTerm affineTerm;
+		Rational multiplier;
+		if (affineArgs[0].isConstant()) {
+			affineTerm = null;
+			multiplier = affineArgs[0].getConstant();
+		} else {
+			affineTerm = affineArgs[0];
+			multiplier = Rational.ONE;
+		}
+		final AffineTerm result;
+		for (int i = 1; i < affineArgs.length; i++) {
+			if (affineArgs[i].isConstant()) {
+				multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
+			} else {
+				// Only the argument at position 0 may be a non-constant
+				// all other arguments must be literals
+				return null;
+			}
+		}
+		if (affineTerm == null) {
+			result = new AffineTerm(sort, multiplier);
+		} else {
+			result = new AffineTerm(affineTerm, multiplier);
+		}
+		return result;
+	}
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Unused auxiliary methods that we may use in the future.
 
 	/**
 	 * Convert ConstantTerm with numericSort to AffineTerm
@@ -142,8 +359,9 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Convert input term of the form "to_real(param)" to affine term. If the input term is an integer literal we
-	 * convert it to a real literal, otherwise we consider the "to_real" term as a variable of an affine term.
+	 * Convert input term of the form "to_real(param)" to affine term. If the input
+	 * term is an integer literal we convert it to a real literal, otherwise we
+	 * consider the "to_real" term as a variable of an affine term.
 	 */
 	private static AffineTerm convertToReal(final ApplicationTerm term) {
 		if (!term.getFunction().getName().equals("to_real")) {
@@ -167,140 +385,6 @@ public class AffineTermTransformer extends TermTransformer {
 			result = new AffineTerm(term);
 		}
 		return result;
-	}
-
-	private static boolean isAffineSymbol(final String funName) {
-		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
-				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
-	}
-
-	@Override
-	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-		final AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
-		for (int i = 0; i < affineArgs.length; i++) {
-			if (newArgs[i] instanceof AffineTerm) {
-				affineArgs[i] = (AffineTerm) newArgs[i];
-				if (affineArgs[i].isErrorTerm()) {
-					resultIsNotAffine();
-					return;
-				}
-			} else {
-				resultIsNotAffine();
-				return;
-			}
-		}
-
-		if (appTerm.getParameters().length == 0) {
-			final AffineTerm result = new AffineTerm(appTerm);
-			setResult(result);
-			return;
-		}
-		final String funName = appTerm.getFunction().getName();
-		if (funName.equals("*") || funName.equals("bvmul")) {
-			// the result is the product of at most one affineTerm and one
-			// multiplier (that may be obtained from a product of constants)
-			AffineTerm affineTerm = null;
-			Rational multiplier = Rational.ONE;
-			final Sort sort = appTerm.getSort();
-			for (final Term termArg : affineArgs) {
-				final AffineTerm affineArg = (AffineTerm) termArg;
-				// assert affineArg.getSort() == sort;
-				if (affineArg.isConstant()) {
-					multiplier = multiplier.mul(affineArg.getConstant());
-				} else {
-					if (affineTerm == null) {
-						affineTerm = affineArg;
-					} else {
-						resultIsNotAffine();
-						return;
-					}
-				}
-			}
-			final AffineTerm result;
-			if (affineTerm == null) {
-				result = new AffineTerm(sort, multiplier);
-			} else {
-				result = new AffineTerm(affineTerm, multiplier);
-			}
-			setResult(result);
-			return;
-		} else if (funName.equals("+") || funName.equals("bvadd")) {
-			final AffineTerm result = new AffineTerm(affineArgs);
-			setResult(result);
-			return;
-		} else if (funName.equals("-") || funName.equals("bvsub")) {
-			AffineTerm result;
-			if (affineArgs.length == 1) {
-				// unary minus
-				final AffineTerm param = affineArgs[0];
-				result = new AffineTerm(param, Rational.MONE);
-			} else {
-				final AffineTerm[] resAffineArgs = new AffineTerm[affineArgs.length];
-				resAffineArgs[0] = affineArgs[0];
-				for (int i = 1; i < resAffineArgs.length; i++) {
-					resAffineArgs[i] = new AffineTerm(affineArgs[i], Rational.MONE);
-				}
-				result = new AffineTerm(resAffineArgs);
-			}
-			setResult(result);
-			return;
-		} else if (funName.equals("/")) {
-			// the result is the product of at most one affineTerm and one
-			// multiplier (that may be obtained from a division of constants)
-			final AffineTerm affineTerm;
-			Rational multiplier;
-			if (affineArgs[0].isConstant()) {
-				affineTerm = null;
-				multiplier = affineArgs[0].getConstant();
-			} else {
-				affineTerm = affineArgs[0];
-				multiplier = Rational.ONE;
-			}
-			for (int i = 1; i < affineArgs.length; i++) {
-				if (affineArgs[i].isConstant()) {
-					multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
-				} else {
-					// unsupported terms in divisor
-					resultIsNotAffine();
-					return;
-				}
-			}
-			final Sort sort = appTerm.getSort();
-			final AffineTerm result;
-			if (affineTerm == null) {
-				result = new AffineTerm(sort, multiplier);
-			} else {
-				result = new AffineTerm(affineTerm, multiplier);
-			}
-			setResult(result);
-			return;
-		} else {
-			throw new UnsupportedOperationException("unsupported symbol " + funName);
-		}
-	}
-
-	/**
-	 * set result to auxiliary error term
-	 */
-	private void resultIsNotAffine() {
-		setResult(new AffineTerm());
-	}
-
-	/**
-	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
-	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
-	 */
-	public static Rational decimalToRational(final BigDecimal d) {
-		Rational rat;
-		if (d.scale() <= 0) {
-			final BigInteger num = d.toBigInteger();
-			rat = Rational.valueOf(num, BigInteger.ONE);
-		} else {
-			final BigInteger num = d.unscaledValue();
-			final BigInteger denom = BigInteger.TEN.pow(d.scale());
-			rat = Rational.valueOf(num, denom);
-		}
-		return rat;
 	}
 
 }

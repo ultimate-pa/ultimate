@@ -1,0 +1,13 @@
+//State machine model
+CONST State1 IS 1
+CONST State2 IS 2
+CONST State3 IS 3
+
+INTERNAL State IS int
+INPUT trigger IS bool
+INPUT reset IS bool
+OUTPUT statuslamp2 IS bool
+
+req01: Globally, it is always the case that if "reset" holds then "State == State1"  holds after at most 10 time units.
+
+req02tr: Globally, it is always the case that if "State == State1" holds then "trigger" toggles "State == State2 && statuslamp2" at most 50 time units later.

@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -30,6 +31,8 @@ public class ReqToInOut {
 	private final LinkedHashSet<TermVariable> mInputs;
 	private final LinkedHashSet<TermVariable> mHidden;
 	private final LinkedHashSet<TermVariable> mOutputs;
+	
+	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
 	
 	public ReqToInOut(final ILogger logger, final ReqSymbolTable reqSymbolExpressionTable, CddToSmt cddToSmt){
 		mLogger = logger;
@@ -74,6 +77,7 @@ public class ReqToInOut {
     	InvariantPattern				X
     	InstAbsPattern					X
       	UniversalityPattern				X
+      	TogglePatternDelayed			X
 	*/
 
 	public void addRequirement(PatternType pattern){
@@ -91,6 +95,8 @@ public class ReqToInOut {
 			addInstAbsPattern(pattern);
 		} else if(pattern instanceof BndResponsePatternTU){
 			addBndResponsePatternTUPattern(pattern);
+		} else if(pattern instanceof TogglePatternDelayed){
+			addTogglePatternDelayed(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
 		}
@@ -208,6 +214,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
 	private void addInvariantPattern(PatternType pattern){
+		if(UNIVERSALITY_IS_DEFINITNG) return;
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -259,6 +266,21 @@ public class ReqToInOut {
 			scopeNotImplementedWarning(pattern);
 		}
 	}
+	
+	private void addTogglePatternDelayed(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term P = mCddToSmt.toSmt(args.get(0)); 
+			final Term S = mCddToSmt.toSmt(args.get(1));
+			final Term T = mCddToSmt.toSmt(args.get(2));
+			addTriggerSet(P.getFreeVars());
+			addTriggerSet(S.getFreeVars());
+			addEffectSet(T.getFreeVars());	
+		} else {
+			scopeNotImplementedWarning(pattern);
+		}
+	}
+	
 	
 	private void scopeNotImplementedWarning(PatternType pattern) {
 		StringBuilder sb = new StringBuilder();

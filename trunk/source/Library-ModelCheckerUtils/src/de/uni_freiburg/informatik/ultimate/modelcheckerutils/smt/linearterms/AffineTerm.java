@@ -97,24 +97,14 @@ public class AffineTerm extends Term {
 	}
 
 	/**
-	 * AffineTerm that consists of the single variable tv.
+	 * {@linkAffineTerm} that consists of the single variable that is represented by
+	 * the {@link Term} t.
 	 */
-	public AffineTerm(final TermVariable tv) {
+	public AffineTerm(final Term t) {
 		super(0);
-		mSort = tv.getSort();
+		mSort = t.getSort();
 		mConstant = Rational.ZERO;
-		mVariable2Coefficient = Collections.singletonMap((Term) tv, Rational.ONE);
-	}
-
-	/**
-	 * AffineTerm that consists of the single variable which is an application term.
-	 */
-	public AffineTerm(final ApplicationTerm appTerm) {
-		super(0);
-		mSort = appTerm.getSort();
-		mConstant = Rational.ZERO;
-		mVariable2Coefficient = Collections.singletonMap((Term) appTerm, Rational.ONE);
-
+		mVariable2Coefficient = Collections.singletonMap(t, Rational.ONE);
 	}
 
 	/**

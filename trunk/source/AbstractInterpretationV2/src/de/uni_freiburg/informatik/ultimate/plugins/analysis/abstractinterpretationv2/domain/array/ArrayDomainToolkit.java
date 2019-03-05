@@ -4,11 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -68,7 +64,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final CallInfoCache mCallInfoCache;
 	private final TemporaryBoogieVar mMinBound;
 	private final TemporaryBoogieVar mMaxBound;
-	private final Set<TemporaryBoogieVar> mCreatedVars;
+	private final Map<TermVariable, String> mAuxVarNameMap;
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 	private final IUltimateServiceProvider mServices;
@@ -89,7 +85,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), managedScript);
 		mVariableProvider = variableProvider;
-		mCreatedVars = new HashSet<>();
+		mAuxVarNameMap = new HashMap<>();
 		mMinBound = createVariable("-inf", SmtSortUtils.getIntSort(script));
 		mMaxBound = createVariable("inf", SmtSortUtils.getIntSort(script));
 		mServices = services;
@@ -99,7 +95,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	private TemporaryBoogieVar createVariable(final String name, final Sort sort) {
 		final TemporaryBoogieVar result = mBoogieVarFactory.createFreshBoogieVar(name, sort);
-		mCreatedVars.add(result);
+		mAuxVarNameMap.put(result.getTermVariable(), result.getGloballyUniqueId());
 		mVariableProvider.addTemporaryVariable(result);
 		return result;
 	}
@@ -182,10 +178,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public Expression getExpression(final Term term) {
-		final Map<TermVariable, String> namesMap =
-				mCreatedVars.stream().filter(TemporaryBoogieVar::hasTermVariable).collect(
-						Collectors.toMap(TemporaryBoogieVar::getTermVariable, TemporaryBoogieVar::getGloballyUniqueId));
-		return mMappedTerm2Expression.translate(term, Collections.emptySet(), namesMap);
+		return mMappedTerm2Expression.translate(term, Collections.emptySet(), mAuxVarNameMap);
 	}
 
 	public Term getTerm(final Expression expression) {

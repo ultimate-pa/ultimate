@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -174,11 +175,11 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
 		 	| INTERNAL cid:i IS ID:t
 		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.HIDDEN); :}
 		 	| CONST cid:i IS NUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$), v)); :}
+		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)); :}
 		 	| CONST cid:i IS REALNUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$), v)); :}
+		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)); :}
 		 	| CONST cid:i IS bool:v
-		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$), v)); :}		  	   		  	   		  	   
+		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v)); :}		  	   		  	   		  	   
            ;
 
 propid ::= ID:id IDSEP
@@ -328,10 +329,10 @@ expr7NI ::= LNOT expr7NI:e
         | expr9NI:e {:RESULT = e;:}
         ;
 
-expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$), n); :}
-	    | NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$), n); :}
+expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$), BoogieType.TYPE_REAL, n); :}
+	    | NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$), BoogieType.TYPE_INT, n); :}
      	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
-	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$),b);:}
+	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$),BoogieType.TYPE_BOOL,b);:}
 	    | LPAR expr1NI:e RPAR {: RESULT = e; :}
 	    ;
 	

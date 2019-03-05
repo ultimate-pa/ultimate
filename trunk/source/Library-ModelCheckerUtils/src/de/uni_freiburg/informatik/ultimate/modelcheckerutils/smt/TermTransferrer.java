@@ -54,6 +54,7 @@ public class TermTransferrer extends TermTransformer {
 	public enum TransferMode {
 		ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC
 	}
+	private final boolean mApplyLocalSimplifications;
 
 	protected final Script mScript;
 	private final Set<Sort> mDeclaredSorts = new HashSet<>();
@@ -68,11 +69,14 @@ public class TermTransferrer extends TermTransformer {
 	public TermTransferrer(final Script script) {
 		mScript = script;
 		mTransferMapping = Collections.emptyMap();
+		mApplyLocalSimplifications = false;
 	}
 
-	public TermTransferrer(final Script script, final Map<Term, Term> transferMapping) {
+	public TermTransferrer(final Script script, final Map<Term, Term> transferMapping,
+			final boolean applyLocalSimplifications) {
 		mScript = script;
 		mTransferMapping = transferMapping;
+		mApplyLocalSimplifications = applyLocalSimplifications;
 	}
 
 	@Override
@@ -149,19 +153,31 @@ public class TermTransferrer extends TermTransformer {
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		Term result;
 		try {
-			final BigInteger[] indices = appTerm.getFunction().getIndices();
 			final FunctionSymbol fsymb = appTerm.getFunction();
-			/* Note that resultSort must be non-null if and only if we have an explicitly instantiated polymorphic
-			 * FunctionSymbol, i.e., a function of the form (as <name> <sort>). Otherwise mScript.term(..) will fail.*/
+			/*
+			 * Note that resultSort must be non-null if and only if we have an explicitly
+			 * instantiated polymorphic FunctionSymbol, i.e., a function of the form (as
+			 * <name> <sort>). Otherwise mScript.term(..) will fail.
+			 */
 			final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
-			result = mScript.term(fsymb.getName(), indices, resultSort, newArgs);
+			if (mApplyLocalSimplifications) {
+				result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
+						appTerm.getFunction().getIndices(), newArgs);
+			} else {
+				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
+			}
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				final FunctionSymbol fsymb = appTerm.getFunction();
 				final Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
 				final Sort resultSort = transferSort(fsymb.getReturnSort());
 				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
-				result = mScript.term(appTerm.getFunction().getName(), newArgs);
+				if (mApplyLocalSimplifications) {
+					result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
+							appTerm.getFunction().getIndices(), newArgs);
+				} else {
+					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
+				}
 			} else {
 				throw e;
 			}

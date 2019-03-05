@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -231,6 +230,19 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
+	 * Returns an new ArrayIndex that consists of the last k entries of this
+	 * index.
+	 */
+	public ArrayIndex getLast(final int k) {
+		final List<Term> indexEntries = new ArrayList<>();
+		for (int i = mIndexEntries.size() - k; i < mIndexEntries.size(); i++) {
+			indexEntries.add(mIndexEntries.get(i));
+		}
+		return new ArrayIndex(indexEntries);
+	}
+
+
+	/**
 	 * Returns the free variable of all entries.
 	 */
 	public Set<TermVariable> getFreeVars() {
@@ -250,17 +262,6 @@ public class ArrayIndex implements List<Term> {
 			}
 		}
 		return true;
-	}
-
-
-	public static Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2,
-			final Script script) {
-		assert index1.size() == index2.size();
-		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
-		for (int i = 0; i < index1.size(); i++) {
-			conjuncts.add(SmtUtils.binaryEquality(script, index1.get(i), index2.get(i)));
-		}
-		return SmtUtils.and(script, conjuncts);
 	}
 
 }
