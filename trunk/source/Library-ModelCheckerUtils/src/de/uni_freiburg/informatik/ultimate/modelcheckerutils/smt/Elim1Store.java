@@ -253,28 +253,11 @@ public class Elim1Store {
 			}
 
 		}
-		aoa = new ArrayOccurrenceAnalysis(preprocessedInput, eliminatee);
+		aoa = new ArrayOccurrenceAnalysis(preprocessedInput, eliminatee).downgradeDimensionsIfNecessary();
+		assert aoa.computeSelectAndStoreDimensions().size() <= 1 : "incompatible";
 
-
-
-		final List<MultiDimensionalSelect> selectTerms;
-		final List<MultiDimensionalStore> stores;
-
-		final TreeSet<Integer> dims2 = aoa.computeSelectAndStoreDimensions();
-		if (dims.size() > 1) {
-			// downgrade to lowest dimension
-			final int lowestDim = dims2.first();
-			selectTerms = aoa.getArraySelects().stream().map(x -> x.getInnermost(mScript, lowestDim)).collect(Collectors.toList());
-			stores = aoa.getNestedArrayStores().stream().map(x -> x.getInnermost(mScript, lowestDim)).collect(Collectors.toList());
-			if (!stores.isEmpty()) {
-				throw new AssertionError("store downgrading not yet supported");
-			}
-		} else {
-			selectTerms = aoa.getArraySelects();
-			stores= aoa.getNestedArrayStores();
-		}
-
-
+		final List<MultiDimensionalSelect> selectTerms = aoa.getArraySelects();
+		final List<MultiDimensionalStore> stores = aoa.getNestedArrayStores();
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils
 				.collectComplimentaryEqualityInformation(mMgdScript.getScript(), quantifier,

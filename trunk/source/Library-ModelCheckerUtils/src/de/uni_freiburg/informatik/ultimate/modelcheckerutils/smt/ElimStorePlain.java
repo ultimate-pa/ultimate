@@ -257,12 +257,7 @@ public class ElimStorePlain {
 
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		Term currentTerm = eTask.getTerm();
-		if (false){
-			final Set<TermVariable> eliminatees = null;
-			final TreeRelation<Integer, TermVariable> costs = computeCostEtimation(eTask, eliminatees);
-			costs.toString();
 
-		}
 
 		// Set of newly introduced quantified variables
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();

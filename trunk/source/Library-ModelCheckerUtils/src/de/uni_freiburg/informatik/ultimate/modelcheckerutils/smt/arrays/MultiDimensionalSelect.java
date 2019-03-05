@@ -119,15 +119,18 @@ public class MultiDimensionalSelect {
 	 * array.
 	 * </ul>
 	 */
-	public MultiDimensionalSelect getInnermost(final Script script, final int dim) {
+	public MultiDimensionalSelect getInnermost(final int dim) {
 		if (dim < 1) {
 			throw new IllegalArgumentException("result must have at least dimension one");
 		}
 		if (dim > getDimension()) {
 			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
 		}
-		final ArrayIndex newIndex = mIndex.getFirst(dim);
-		return new MultiDimensionalSelect(mArray, newIndex, script);
+		ArraySelect as = ArraySelect.convert(mSelectTerm);
+		for (int i = 0; i < getDimension() - dim; i++) {
+			as = ArraySelect.convert(as.getArray());
+		}
+		return MultiDimensionalSelect.convert(as.asTerm());
 	}
 
 

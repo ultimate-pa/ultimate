@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
 public class ArrayOccurrenceAnalysis {
 	private final Term mAnalyzedTerm;
 	private final Term mWantedArray;
+	private final int mDimensionUpperLimit;
 
 	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
 	private final List<MultiDimensionalStore> mNestedArrayStores = new ArrayList<>();
@@ -66,8 +67,18 @@ public class ArrayOccurrenceAnalysis {
 		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
+		mDimensionUpperLimit = Integer.MAX_VALUE;
 		new ArrOccFinder(mAnalyzedTerm);
 	}
+
+	public ArrayOccurrenceAnalysis(final Term analyzedTerm, final Term wantedArray, final int dimensionUpperLimit) {
+		super();
+		mAnalyzedTerm = analyzedTerm;
+		mWantedArray = wantedArray;
+		mDimensionUpperLimit = dimensionUpperLimit;
+		new ArrOccFinder(mAnalyzedTerm);
+	}
+
 	/**
 	 * @return from the analyzed term all select-over-store subterms whose array is the wantedArray
 	 */
@@ -144,6 +155,17 @@ public class ArrayOccurrenceAnalysis {
 			result.add(mds.getDimension());
 		}
 		return result;
+	}
+
+	public ArrayOccurrenceAnalysis downgradeDimensionsIfNecessary() {
+		final TreeSet<Integer> dims = computeSelectAndStoreDimensions();
+		if (dims.size() <= 1) {
+			return this;
+		} else {
+			final int dimensionUpperLimit = dims.first();
+			assert dimensionUpperLimit >= 1;
+			return new ArrayOccurrenceAnalysis(mAnalyzedTerm, mWantedArray, dimensionUpperLimit);
+		}
 	}
 
 	private class ArrOccFinder extends NonRecursive {
@@ -234,17 +256,16 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					final MultiDimensionalStore nas = MultiDimensionalStore.convert(term);
+					MultiDimensionalStore nas = MultiDimensionalStore.convert(term);
 					if(nas != null && nas.getArray().equals(mWantedArray)) {
+						if (nas.getDimension() > mDimensionUpperLimit) {
+							nas = nas.getInnermost(mDimensionUpperLimit);
+							assert nas.getArray() == mWantedArray;
+						}
 						mNestedArrayStores.add(nas);
-//						for (final ArrayIndex ai : nas.getIndex()) {
-							for (final Term indexEntry : nas.getIndex()) {
-								walker.enqueueWalker(new MyWalker(indexEntry));
-							}
-//						}
-//						for (final Term value : nas.getValues()) {
-//							walker.enqueueWalker(new MyWalker(value));
-//						}
+						for (final Term indexEntry : nas.getIndex()) {
+							walker.enqueueWalker(new MyWalker(indexEntry));
+						}
 						walker.enqueueWalker(new MyWalker(nas.getValue()));
 					} else {
 						for (final Term t : term.getParameters()) {
@@ -273,8 +294,12 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
+						MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
 						if (as != null && as.getArray().equals(mWantedArray)) {
+							if (as.getDimension() > mDimensionUpperLimit) {
+								as = as.getInnermost(mDimensionUpperLimit);
+								assert as.getArray() == mWantedArray;
+							}
 							mArraySelects.add(as);
 							for (final Term indexEntry : as.getIndex()) {
 								walker.enqueueWalker(new MyWalker(indexEntry));
