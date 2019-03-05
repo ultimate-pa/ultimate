@@ -300,9 +300,6 @@ public class ElimStorePlain {
 
 			}
 		}
-		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
-
-		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
 		resultingEliminatees.addAll(eTask.getEliminatees());
 		final EliminationTaskWithContext preliminaryResult = new EliminationTaskWithContext(eTask.getQuantifier(),

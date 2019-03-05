@@ -54,7 +54,8 @@ public class ArrayIndexBasedCostEstimation {
 
 	private static int computeCostElimation(final ArrayIndexEqualityManager aiem, final Term term,
 			final TermVariable eliminatee) {
-		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(term, eliminatee);
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(term, eliminatee)
+				.downgradeDimensionsIfNecessary();
 		final Set<ArrayIndex> selectIndices = ArrayOccurrenceAnalysis.extractSelectIndices(aoa.getArraySelects());
 		final List<ArrayIndex> selectIndicesAsList = new ArrayList<>(selectIndices);
 		int totalCost = 0;
