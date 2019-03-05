@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndexBasedCostEstimation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
@@ -253,25 +254,59 @@ public class ElimStorePlain {
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
+
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		Term currentTerm = eTask.getTerm();
+		if (false){
+			final Set<TermVariable> eliminatees = null;
+			final TreeRelation<Integer, TermVariable> costs = computeCostEtimation(eTask, eliminatees);
+			costs.toString();
+
+		}
 
 		// Set of newly introduced quantified variables
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
-		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
+		for (final int dim : tr.getDomain()) {
 			// iterate over all eliminatees, lower dimensions first, but skip dimension zero
-			if (entry.getKey() != 0) {
-				// split term
-				final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
-						Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
-				if(eTaskForVar.getEliminatees().isEmpty()) {
-					mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
+			if (dim != 0) {
+				final boolean useCostEstimation = !false;
+				if (useCostEstimation) {
+					final TreeRelation<Integer, TermVariable> costs = computeCostEtimation(eTask, tr.getImage(dim));
+					if (costs.getDomain().size() > 1) {
+						mLogger.info("Different consts " + costs);
+					}
+					for (final Entry<Integer, TermVariable> entry : costs) {
+						// split term
+						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
+						if(eTaskForVar.getEliminatees().isEmpty()) {
+							mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
+						} else {
+							final EliminationTask res = eliminateOne(eTaskForVar);
+							currentTerm = res.getTerm();
+							newElimnatees.addAll(res.getEliminatees());
+						}
+					}
 				} else {
-					final EliminationTask res = eliminateOne(eTaskForVar);
-					currentTerm = res.getTerm();
-					newElimnatees.addAll(res.getEliminatees());
+					for (final TermVariable eliminatee : tr.getImage(dim)) {
+						// split term
+						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(eliminatee), currentTerm, eTask.getContext());
+						if(eTaskForVar.getEliminatees().isEmpty()) {
+							mLogger.info("Eliminatee " + eliminatee + " vanished before elimination");
+						} else {
+							final EliminationTask res = eliminateOne(eTaskForVar);
+							currentTerm = res.getTerm();
+							newElimnatees.addAll(res.getEliminatees());
+						}
+
+					}
 				}
+
 			}
+		}
+		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
+
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
 		resultingEliminatees.addAll(eTask.getEliminatees());
@@ -287,6 +322,25 @@ public class ElimStorePlain {
 					+ " xjuncts.");
 		}
 		return finalResult;
+	}
+
+	private TreeRelation<Integer, TermVariable> computeCostEtimation(final EliminationTaskWithContext eTask,
+			final Set<TermVariable> eliminatees) throws AssertionError {
+		final int quantifier = eTask.getQuantifier();
+		final Term polarizedContext;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			polarizedContext = eTask.getContext();
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			polarizedContext = SmtUtils.not(mMgdScript.getScript(), eTask.getContext());
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
+						mLogger, mMgdScript);
+		final TreeRelation<Integer, TermVariable> costs = ArrayIndexBasedCostEstimation.computeCostEstimation(aiem, eliminatees, eTask.getTerm());
+		aiem.unlockSolver();
+		return costs;
 	}
 
 	private EliminationTask eliminateOne(final EliminationTaskWithContext eTaskForVar) {

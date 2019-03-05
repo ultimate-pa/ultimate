@@ -33,7 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ArrayIndexEqualityManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
@@ -44,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
 public class ArrayIndexBasedCostEstimation {
 
 	public static TreeRelation<Integer, TermVariable> computeCostEstimation(final ArrayIndexEqualityManager aiem,
-			final EliminationTask eTask) {
+			final Set<TermVariable> eliminatees, final Term term) {
 		final TreeRelation<Integer, TermVariable> result = new TreeRelation<>();
-		for (final TermVariable eliminatee : eTask.getEliminatees()) {
-			final Integer costs = computeCostElimation(aiem, eTask.getTerm(), eliminatee);
+		for (final TermVariable eliminatee : eliminatees) {
+			final Integer costs = computeCostElimation(aiem, term, eliminatee);
 			result.addPair(costs, eliminatee);
 		}
 		return result;
