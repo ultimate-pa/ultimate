@@ -45,10 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToC
  */
 public class IcfgToChc implements IGenerator {
 
-//	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-//	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-//			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-
 	private ILogger mLogger;
 	private IcfgToChcObserver mObserver;
 	private IUltimateServiceProvider mServices;
@@ -78,8 +74,6 @@ public class IcfgToChc implements IGenerator {
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
 		mObserver = new IcfgToChcObserver(mLogger, mServices);
-//				mBacktranslator, SIMPLIFICATION_TECHNIQUE,
-//				XNF_CONVERSION_TECHNIQUE);
 		observers.add(mObserver);
 		return observers;
 	}

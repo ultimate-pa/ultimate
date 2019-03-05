@@ -77,10 +77,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-//	private final XnfConversionTechnique mXnfConversionTechnique;
-//	private final SimplificationTechnique mSimplificationTechnique;
 
-//	private IIcfg<?> mResult;
 	private IElement mResult;
 
 	private ManagedScript mMgdScript;
@@ -90,15 +87,10 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	private final Map<String, List<IProgramVar>> mProcToVarList;
 
 	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
-//			final ITranslator backtranslator, final SimplificationTechnique simplTech,
-//			final XnfConversionTechnique xnfConvTech) {
 		mLogger = logger;
 		mServices = services;
-//		mSimplificationTechnique = simplTech;
-//		mXnfConversionTechnique = xnfConvTech;
-//		mResult = null;
-		mProcToVarList = new LinkedHashMap<>();
 
+		mProcToVarList = new LinkedHashMap<>();
 	}
 
 	@Override
@@ -236,9 +228,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					}
 				}
 
-
 				final Term constraint = new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
-
 
 				/* construct the horn clause and add it to the resulting chc set */
 
@@ -250,8 +240,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 							bodyPredToArguments, bodyVars));
 				}
 			} else if (currentEdge instanceof IIcfgCallTransition<?>) {
-				final IIcfgCallTransition<IcfgLocation> currentCallEdge =
-						(IIcfgCallTransition<IcfgLocation>) currentEdge;
+				// nothing to do for a call edge
 
 			} else if (currentEdge instanceof IIcfgReturnTransition<?, ?>) {
 				final IIcfgReturnTransition<IcfgLocation, Call> currentReturnEdge =
@@ -322,6 +311,5 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	private String computePredicateNameForIcfgLocation(final IcfgLocation loc) {
 		return loc.toString();
 	}
-
 
 }
