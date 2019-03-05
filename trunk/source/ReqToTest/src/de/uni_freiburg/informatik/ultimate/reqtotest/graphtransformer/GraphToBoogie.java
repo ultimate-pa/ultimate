@@ -211,11 +211,8 @@ public class GraphToBoogie {
 		}
 		final Expression guard = mTerm2Expression.translate(label.getGuard());
 		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
-		if (successor.getLabel() > 0) {
-			//Annotate all non-powerset non-initial transitions 
-			ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
-			annotation.annotate(ifStatement);
-		}
+		ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
+		annotation.annotate(ifStatement);
 		return new Statement[] {ifStatement};
 	}
 	
@@ -334,10 +331,17 @@ public class GraphToBoogie {
 		final Map<ReqGuardGraph, Term> guards = mThreeValuedAuxVarGen.getOracleAssertions();
 		for(ReqGuardGraph reqId: guards.keySet()) {
 			Term guard = guards.get(reqId);
-			assertion = new AssertStatement(mDummyLocation, mTerm2Expression.translate(guard));
-			oracles.add(assertion);
+			oracles.add(generateTestOracleAssertion(reqId, guard));
 		}
 		return oracles;
+	}
+	
+	private Statement generateTestOracleAssertion(ReqGuardGraph reqId, Term guard) {
+		AssertStatement assertion = new AssertStatement(mDummyLocation, mTerm2Expression.translate(guard));
+		ReqGraphOracleAnnotation annotation = 
+				new ReqGraphOracleAnnotation(reqId, guard, mThreeValuedAuxVarGen.getEffectVariables(reqId));
+		annotation.annotate(assertion);
+		return assertion;
 	}
 	
 	private List<Statement> generateClockUpdates(){

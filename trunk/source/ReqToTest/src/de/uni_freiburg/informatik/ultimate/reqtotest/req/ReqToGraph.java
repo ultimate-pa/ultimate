@@ -472,6 +472,7 @@ public class ReqToGraph {
 	/*	This pattern is for discrete Step LTL
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds in the next Step.
 	 */
+	@SuppressWarnings("unused")
 	private ReqGuardGraph getImmediateResponsePatternToAutomaton(PatternType pattern){
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
@@ -534,8 +535,8 @@ public class ReqToGraph {
 			//normal labels
 			final Term uP = mThreeValuedAuxVarGen.getUseGuard(P);
 			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
-			final Term nuP = SmtUtils.not(mScript, uP);
-			final Term nuS = SmtUtils.not(mScript, uS);
+			//final Term nuP = SmtUtils.not(mScript, uP);
+			//final Term nuS = SmtUtils.not(mScript, uS);
 			final Term nP = SmtUtils.not(mScript, P);
 			final Term nS = SmtUtils.not(mScript, S);
 			final String duration = pattern.getDuration().get(0);

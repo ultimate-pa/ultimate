@@ -35,7 +35,7 @@ public class AuxVarGen {
 	private final Script mScript;
 	
 	private final Map<TermVariable, Term> mVariableToUseTerm;
-	private final Map<TermVariable, List<Term>> mVariableToDefineTerm;
+	private final Map<TermVariable, Set<Term>> mVariableToDefineTerm;
 	private final Map<ReqGuardGraph, Integer> mReqToId;
 	private int mReqId = 0;
 	private final HashMap<ReqGuardGraph, Term> mEffects;
@@ -156,7 +156,7 @@ public class AuxVarGen {
 	public Term createDefineAnnotation(TermVariable ident, int reqId) {
 		final Term annotation = createDefineTerm(ident, reqId);
 		if (!mVariableToDefineTerm.containsKey(ident)) {
-			mVariableToDefineTerm.put(ident, new ArrayList<Term>());
+			mVariableToDefineTerm.put(ident, new HashSet<Term>());
 		}
 		mVariableToDefineTerm.get(ident).add(annotation);
 		return annotation;
@@ -232,8 +232,7 @@ public class AuxVarGen {
 	public Term getOracleDenyOthers(ReqGuardGraph reqId, Term effect) {
 		Term guard = mSmtTrue;
 		for(TermVariable var: effect.getFreeVars()) {
-			if ( mReqSymbolTable.isConstVar(var.toString()) ||
-				   mReqSymbolTable.isInput(var.toString())) {
+			if (!mReqSymbolTable.isOutput(var.toString())) {
 				continue;
 			}
 			Term exclude = createDefineAnnotation(var, mReqToId.get(reqId));
