@@ -165,7 +165,7 @@ public class MultiDimensionalStore {
 		for (int i = 0; i < getDimension() - dim; i++) {
 			as = ArrayStore.convert(as.getValue());
 		}
-		return MultiDimensionalStore.convert(as.toTerm(script));
+		return MultiDimensionalStore.convert(as.asTerm());
 	}
 
 
