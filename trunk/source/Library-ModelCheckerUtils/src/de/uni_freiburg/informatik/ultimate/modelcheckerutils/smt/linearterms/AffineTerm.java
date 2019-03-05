@@ -126,7 +126,7 @@ public class AffineTerm extends Term {
 		mSort = s;
 		mConstant = constant;
 		if (terms.length != coefficients.length) {
-			throw new IllegalArgumentException("numer of variables and coefficients different");
+			throw new IllegalArgumentException("number of variables and coefficients different");
 		}
 		switch (terms.length) {
 		case 0:
