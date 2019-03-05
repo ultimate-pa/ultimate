@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
@@ -261,42 +262,15 @@ public class ElimStorePlain {
 			// iterate over all eliminatees, lower dimensions first, but skip dimension zero
 			if (entry.getKey() != 0) {
 				// split term
-				final Term[] correspondingJunctiveNormalForm;
-				final Term dualJunctWithoutEliminatee;
-				{
-					final Pair<Term[], Term> split = split(eTask.getQuantifier(), entry.getValue(), currentTerm);
-					correspondingJunctiveNormalForm = split.getFirst();
-					dualJunctWithoutEliminatee = split.getSecond();
+				final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+						Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
+				if(eTaskForVar.getEliminatees().isEmpty()) {
+					mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
+				} else {
+					final EliminationTask res = eliminateOne(eTaskForVar);
+					currentTerm = res.getTerm();
+					newElimnatees.addAll(res.getEliminatees());
 				}
-				final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
-						dualJunctWithoutEliminatee);
-				final Term parentContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
-				final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
-				for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
-					final Term correspondingJunct = correspondingJunctiveNormalForm[i];
-					if (!Arrays.asList(correspondingJunct.getFreeVars()).contains(entry.getValue())) {
-						// ignore correspondingJuncts that do not contain eliminatee
-						resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
-					} else {
-						Term context;
-						final boolean addSiblingContext = true;
-						if (addSiblingContext) {
-							context = addSiblingContext(mServices, mMgdScript, eTask.getQuantifier(),
-									resultingCorrespondingJuncts, correspondingJunctiveNormalForm, i, parentContext);
-						} else {
-							context = parentContext;
-						}
-						final EliminationTask res = doElimOneRec(
-								new EliminationTaskWithContext(eTask.getQuantifier(),
-										Collections.singleton(entry.getValue()), correspondingJunct, context));
-						newElimnatees.addAll(res.getEliminatees());
-						resultingCorrespondingJuncts[i] = res.getTerm();
-					}
-				}
-				currentTerm = compose(dualJunctWithoutEliminatee, eTask.getQuantifier(),
-						Arrays.asList(resultingCorrespondingJuncts));
-				currentTerm = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, eTask.getContext(), false)
-						.getSimplifiedTerm(currentTerm);
 			}
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
@@ -313,6 +287,49 @@ public class ElimStorePlain {
 					+ " xjuncts.");
 		}
 		return finalResult;
+	}
+
+	private EliminationTask eliminateOne(final EliminationTaskWithContext eTaskForVar) {
+		final TermVariable eliminatee = eTaskForVar.getEliminatees().iterator().next();
+		final Set<TermVariable> newElimnateesForVar = new LinkedHashSet<>();
+		final Term[] correspondingJunctiveNormalForm;
+		final Term dualJunctWithoutEliminatee;
+		{
+			final Pair<Term[], Term> split = split(eTaskForVar.getQuantifier(), eliminatee, eTaskForVar.getTerm());
+			correspondingJunctiveNormalForm = split.getFirst();
+			dualJunctWithoutEliminatee = split.getSecond();
+		}
+		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTaskForVar.getQuantifier(),
+				dualJunctWithoutEliminatee);
+		final Term parentContext = SmtUtils.and(mMgdScript.getScript(), eTaskForVar.getContext(), additionalContext);
+		final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
+		for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
+			final Term correspondingJunct = correspondingJunctiveNormalForm[i];
+			if (!Arrays.asList(correspondingJunct.getFreeVars()).contains(eliminatee)) {
+				// ignore correspondingJuncts that do not contain eliminatee
+				resultingCorrespondingJuncts[i] = correspondingJunctiveNormalForm[i];
+			} else {
+				Term context;
+				final boolean addSiblingContext = true;
+				if (addSiblingContext) {
+					context = addSiblingContext(mServices, mMgdScript, eTaskForVar.getQuantifier(),
+							resultingCorrespondingJuncts, correspondingJunctiveNormalForm, i, parentContext);
+				} else {
+					context = parentContext;
+				}
+				final EliminationTask res = doElimOneRec(
+						new EliminationTaskWithContext(eTaskForVar.getQuantifier(),
+								Collections.singleton(eliminatee), correspondingJunct, context));
+				newElimnateesForVar.addAll(res.getEliminatees());
+				resultingCorrespondingJuncts[i] = res.getTerm();
+			}
+		}
+		Term currentTerm2 = compose(dualJunctWithoutEliminatee, eTaskForVar.getQuantifier(),
+				Arrays.asList(resultingCorrespondingJuncts));
+		currentTerm2 = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, eTaskForVar.getContext(), false)
+				.getSimplifiedTerm(currentTerm2);
+		final EliminationTask res = new EliminationTask(eTaskForVar.getQuantifier(), newElimnateesForVar, currentTerm2);
+		return res;
 	}
 
 	private Term addSiblingContext(final IUltimateServiceProvider services, final ManagedScript mgdScript,
