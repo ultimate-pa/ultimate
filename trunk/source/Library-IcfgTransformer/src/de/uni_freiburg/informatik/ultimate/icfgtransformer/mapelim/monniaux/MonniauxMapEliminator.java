@@ -50,11 +50,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -114,18 +112,21 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		// mIcfg.getProcedureEntryNodes().keySet(); // set of procedures of this icfg
 		// symboltable.getLocals(procedurename) //for each procedure, get the local variables
 
-		// Fill the sets idxD and valD with a certain number (mCells) of new program variables for each old program variable of the sort array
-		for (IProgramVar var : globals) {
+		// Fill the sets idxD and valD with a certain number (mCells) of new program variables for each old program
+		// variable of the sort array
+		for (final IProgramVar var : globals) {
 			if (var.getSort().isArraySort()) {
 				final Set<IProgramVar> idx = null;
 				final Set<IProgramVar> val = null;
 				for (int i = 0; i < mCells; i++) {
 					final String name1 = (var.toString() + "_idx_" + Integer.toString(i));
 					final String name2 = (var.toString() + "_val_" + Integer.toString(i));
-					/*final IProgramVar newVar1 = ProgramVarUtils.constructLocalProgramVar(name1, procedure, var.getSort(), mMgdScript, lockOwner);
-					final IProgramVar newVar2 = ProgramVarUtils.constructLocalProgramVar(name2, procedure, var.getSort(), mMgdScript, lockOwner);
-					idx.add(newVar1);
-					val.add(newVar2);*/
+					/*
+					 * final IProgramVar newVar1 = ProgramVarUtils.constructLocalProgramVar(name1, procedure,
+					 * var.getSort(), mMgdScript, lockOwner); final IProgramVar newVar2 =
+					 * ProgramVarUtils.constructLocalProgramVar(name2, procedure, var.getSort(), mMgdScript, lockOwner);
+					 * idx.add(newVar1); val.add(newVar2);
+					 */
 				}
 				idxD.put(var, idx);
 				valD.put(var, val);
@@ -150,15 +151,15 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Map<Term, Term> subst = new HashMap<>();
 
 				for (final Term selectTerm : ssec.mSelectTerms) {
-					ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
+					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
 					EliminateSelects(tf, newtf, idxD, valD, aSelectTerm, lowD, highD);
 				}
 				for (final Term storeTerm : ssec.mStoreTerms) {
-					ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
+					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
 					EliminateStores(tf, newtf, idxD, valD, aStoreTerm, lowD, highD);
 				}
 				for (final Term equalityTerm : ssec.mEqualityTerms) {
-					ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
+					final ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
 					EliminateEqualities(tf, newtf, idxD, valD, aEqualityTerm, lowD, highD);
 				}
 			} else {
@@ -183,30 +184,37 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		auxVars.stream().forEach(tfb::addAuxVar);
 		return tfb.finishConstruction(mMgdScript);
 	}
-	
-	
+
 	private void EliminateSelects(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
 			final ApplicationTerm selectTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
 		final Term[] params = selectTerm.getParameters();
 		final Term x = params[0];
 		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {lowD.put(x, j);}
-		if (highD.get(x) < j) {highD.put(x, j);}
+		if (lowD.get(x) > j) {
+			lowD.put(x, j);
+		}
+		if (highD.get(x) < j) {
+			highD.put(x, j);
+		}
 		// TBD: Actually eliminate the array
 	}
-	
+
 	private void EliminateStores(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
 			final ApplicationTerm storeTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
 		final Term[] params = storeTerm.getParameters();
 		final Term x = params[0];
 		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {lowD.put(x, j);}
-		if (highD.get(x) < j) {highD.put(x, j);}
+		if (lowD.get(x) > j) {
+			lowD.put(x, j);
+		}
+		if (highD.get(x) < j) {
+			highD.put(x, j);
+		}
 		// TBD: Actually eliminate the array
 	}
-	
+
 	private void EliminateEqualities(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
 			final ApplicationTerm equalityTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
@@ -216,10 +224,18 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term[] paramsY = equalityTerm.getParameters();
 		final Term y = paramsY[1];
 		final int k = Integer.parseInt(y.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {lowD.put(x, j);}
-		if (highD.get(x) < j) {highD.put(x, j);}
-		if (lowD.get(y) > k) {lowD.put(y, k);}
-		if (highD.get(y) < k) {highD.put(y, k);}
+		if (lowD.get(x) > j) {
+			lowD.put(x, j);
+		}
+		if (highD.get(x) < j) {
+			highD.put(x, j);
+		}
+		if (lowD.get(y) > k) {
+			lowD.put(y, k);
+		}
+		if (highD.get(y) < k) {
+			highD.put(y, k);
+		}
 		// TBD: Actually eliminate the array
 	}
 
