@@ -78,7 +78,6 @@ public class PolynomialTerm extends Term {
 	
 	/**
 	 * PolynomialTerm that consists of the single variable which is an application term.
-	 * TODO: Find out whether adding an exponent could be of use here?
 	 */
 	public PolynomialTerm(final ApplicationTerm appTerm) {
 		super(0);
@@ -217,7 +216,6 @@ public class PolynomialTerm extends Term {
 		return constant;
 	}
 	
-	//TODO: Make multiplication available for more terms than two
 	/**
 	 * Polynomial Term that represents the product of exactly two PolynomialTerms.
 	 */
@@ -334,7 +332,9 @@ public class PolynomialTerm extends Term {
 	
 	//TODO: Find out whether the error constructor is necessary -- Indeed it is, handle this when writing the transformer.
 	//TODO: Find out how to realize toTerm.
-	//TODO: Flatten ApplicationTerms
+	//TODO: IsLinear.
+	//TODO: Write Tests.
+	//TODO: Flatten ApplicationTerms. Ask Matthias how to identify a Multiplication or Addition/ Ask him about the theory this uses.
 	
 	/**
 	 * Use modulo operation to bring Rational in the range of representable values.
@@ -354,6 +354,39 @@ public class PolynomialTerm extends Term {
 		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
 		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
+	}
+	
+	/**
+	 * Transforms this PolynomialTerm into a Term that is supported by the solver.
+	 *
+	 * @param script
+	 *            Script for that this term is constructed.
+	 */
+	public Term toTerm(final Script script) {
+		Term[] summands;
+		if (mConstant.equals(Rational.ZERO)) {
+			summands = new Term[mMonomial2Coefficient.size()];
+		} else {
+			summands = new Term[mMonomial2Coefficient.size() + 1];
+		}
+		int i = 0;
+		for (final Map.Entry<Term, Rational> entry : mMonomial2Coefficient.entrySet()) {
+			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal coefficient in PolynomialTerm";
+			if (entry.getValue().equals(Rational.ONE)) {
+				summands[i] = entry.getKey();
+			} else {
+				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
+				//TODO: Ask Matthias why he never calls toTerm in AffineTerm himself.
+				summands[i] = SmtUtils.mul(script, mSort, coeff, ((Monomial) entry.getKey()).toTerm(script));
+			}
+			++i;
+		}
+		if (!mConstant.equals(Rational.ZERO)) {
+			assert mConstant.isIntegral() || SmtSortUtils.isRealSort(mSort);
+			summands[i] = SmtUtils.rational2Term(script, mConstant, mSort);
+		}
+		final Term result = SmtUtils.sum(script, mSort, summands);
+		return result;
 	}
 	
 	/**

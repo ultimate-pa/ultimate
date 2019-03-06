@@ -4,13 +4,17 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.math.BigInteger;
+
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * This represents a Monomial in the form of
@@ -174,6 +178,33 @@ public class Monomial extends Term {
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
+	}
+	
+	/**
+	 * Transforms this Monomial into a Term that is supported by the solver.
+	 *
+	 * @param script
+	 *            Script for that this term is constructed.
+	 */
+	public Term toTerm(final Script script) {
+		Term[] factors;
+		factors = new Term[mVariable2Exponent.size()];
+		int i = 0;
+		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
+			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
+			Term factor = entry.getKey();
+			BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
+			//Make sure that the exponent is an integer.
+			assert entry.getValue().numerator().gcd(entry.getValue().denominator()) != new BigInteger("1");
+			//Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
+			for (int j = 1; j < exponent.intValue() ; j++) {
+				factor = SmtUtils.mul(script, mSort, factor, factor);
+			}
+			factors[i] = factor;
+			++i;
+		}
+		final Term result = SmtUtils.mul(script, mSort, factors);
+		return result;
 	}
 	
 	@Override
