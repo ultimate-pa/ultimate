@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndexBasedCostEstimation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
@@ -251,8 +252,49 @@ public class ElimStorePlain {
 	}
 
 	private EliminationTaskWithContext applyComplexEliminationRules(final EliminationTaskWithContext eTask) {
-		return new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-				eTask.getQuantifier()).elim1(eTask);
+		TermVariable eliminatee;
+		if (eTask.getEliminatees().size() != 1) {
+			throw new AssertionError("need exactly one eliminatee");
+		} else {
+			eliminatee = eTask.getEliminatees().iterator().next();
+		}
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
+
+		Term termAfterPreprocessing;
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
+		if (aoa.getDerRelations(eTask.getQuantifier()).isEmpty()) {
+			termAfterPreprocessing = eTask.getTerm();
+		} else {
+			final DerPreprocessor de;
+			{
+				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+				final Term polarizedContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
+						eTask.getContext());
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
+						eTask.getQuantifier(), mLogger, mMgdScript);
+				de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
+						aoa.getDerRelations(eTask.getQuantifier()), aiem);
+				aiem.unlockSolver();
+			}
+			newAuxVars.addAll(de.getNewAuxVars());
+			termAfterPreprocessing = de.getResult();
+			if (de.introducedDerPossibility()) {
+				// do DER
+				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(mServices,
+						mMgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(eliminatee), termAfterPreprocessing, eTask.getContext()),
+						PqeTechniques.ONLY_DER);
+				assert afterDer.getEliminatees().isEmpty() : " unsuccessful DER";
+				newAuxVars.addAll(afterDer.getEliminatees());
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
+						eTask.getContext());
+			} else {
+				newAuxVars.add(eliminatee);
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterPreprocessing,
+						eTask.getContext());
+			}
+		}
+		return new Elim1Store(mMgdScript, mServices, mSimplificationTechnique, eTask.getQuantifier()).elim1(eTask);
 	}
 
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
