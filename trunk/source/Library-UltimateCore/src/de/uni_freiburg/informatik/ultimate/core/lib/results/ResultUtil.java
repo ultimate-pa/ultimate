@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -96,6 +97,20 @@ public final class ResultUtil {
 		return filteredList;
 	}
 
+	public static Map<String, List<IResult>> filterResultMap(final Map<String, List<IResult>> results,
+			final Predicate<IResult> pred) {
+		final Map<String, List<IResult>> filteredResults = new LinkedHashMap<>();
+		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
+			final List<IResult> newResultList = entry.getValue().stream().filter(pred).collect(Collectors.toList());
+			if (newResultList.size() == entry.getValue().size()) {
+				filteredResults.put(entry.getKey(), entry.getValue());
+			} else {
+				filteredResults.put(entry.getKey(), newResultList);
+			}
+		}
+		return filteredResults;
+	}
+
 	public static <E extends IResult> Collection<E> filterResults(final List<IResult> results,
 			final Class<E> resClass) {
 		final List<E> filteredList = new ArrayList<>();
@@ -153,19 +168,19 @@ public final class ResultUtil {
 	 *
 	 * @param logger
 	 *            The {@link ILogger} instance to which the results should be written.
-	 * @param resultService
-	 *            The {@link IResultService} instance from which the results should be fetched.
+	 * @param results
+	 *            A map from plugin name to list of {@link IResult}s that represents the results that should be printed
 	 * @param appendCompleteLongDescription
 	 *            true if the complete long descriptions of the results should be written, false if only the first line
 	 *            of the long description should be written.
 	 */
-	public static void logResults(final ILogger logger, final IResultService resultService,
+	public static void logResults(final ILogger logger, final Map<String, List<IResult>> results,
 			final boolean appendCompleteLongDescription) {
-		if (logger == null || resultService == null) {
-			throw new IllegalArgumentException("logger or resultService is null");
+		if (logger == null || results == null) {
+			throw new IllegalArgumentException("logger or results is null");
 		}
 		logger.info(" --- Results ---");
-		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
 			logger.info(String.format(" * Results from %s:", entry.getKey()));
 
 			for (final IResult result : entry.getValue()) {

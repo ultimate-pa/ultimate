@@ -174,6 +174,9 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following plugins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
+	public static final String LABEL_PRINT_STATISTICS_RESULTS = "Print statistic results";
+	private static final boolean VALUE_PRINT_STATISTICS_RESULTS = true;
+	private static final String DESC_PRINT_STATISTICS_RESULTS = "Print results of type StatisticsResult";
 
 	static {
 		final String tmpDir = System.getProperty("java.io.tmpdir");
@@ -201,6 +204,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BENCHMARK, VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LONG_RESULT, VALUE_LONG_RESULT_DEFAULT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PRINT_STATISTICS_RESULTS, VALUE_PRINT_STATISTICS_RESULTS,
+						DESC_PRINT_STATISTICS_RESULTS, PreferenceType.Boolean),
 
 				// Log files
 				new UltimatePreferenceItem<String>(DESC_LOGFILE, null, PreferenceType.Label),
