@@ -240,8 +240,7 @@ public class ElimStorePlain {
 				eTask.getEliminatees(), eTask.getTerm(), totalContext);
 
 
-		final EliminationTaskWithContext ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-				eTask.getQuantifier()).elim1(revisedInput);
+		final EliminationTaskWithContext ssdElimRes = applyComplexEliminationRules(revisedInput);
 		final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 				ssdElimRes, PqeTechniques.ALL_LOCAL);
 		final EliminationTaskWithContext resultOfRecursiveCall = doElimAllRec(eliminationTask2);
@@ -249,6 +248,11 @@ public class ElimStorePlain {
 				resultOfRecursiveCall.getTerm(), split.getSecond());
 		return new EliminationTaskWithContext(resultOfRecursiveCall.getQuantifier(),
 				resultOfRecursiveCall.getEliminatees(), resultTerm, eTask.getContext());
+	}
+
+	private EliminationTaskWithContext applyComplexEliminationRules(final EliminationTaskWithContext eTask) {
+		return new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
+				eTask.getQuantifier()).elim1(eTask);
 	}
 
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
