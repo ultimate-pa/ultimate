@@ -129,7 +129,7 @@ public class AffineTermTransformer extends TermTransformer {
 
 	/**
 	 * Check if term represents a literal. If this is the case, then return its
-	 * value as a {@link Rational} otherwisereturn true.
+	 * value as a {@link Rational} otherwise return true.
 	 */
 	private static Rational tryToConvertToLiteral(final Script script, final Term term) {
 		final Rational result;
@@ -307,7 +307,7 @@ public class AffineTermTransformer extends TermTransformer {
 
 	/**
 	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link AffineTerm} that represents the quotinet <code>t1/t2/.../tn</code>,
+	 * {@link AffineTerm} that represents the quotient <code>t1/t2/.../tn</code>,
 	 * i.e., the {@link AffineTerm} that is equivalent to
 	 * <code>t1*((1/t2)+...+(1/tn))</code>. Note that the function "/" is only
 	 * defined the sort of reals. For integer division we have the function "div"

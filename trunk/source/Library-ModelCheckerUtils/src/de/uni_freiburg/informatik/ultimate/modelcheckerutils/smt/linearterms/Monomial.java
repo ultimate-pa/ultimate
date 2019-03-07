@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  * where x_i's are variables and e_i are literals.
  * 
- * @author LeonardFichtner
+ * @author Leonard Fichtner
  *
  */
 public class Monomial extends Term {
@@ -143,6 +143,25 @@ public class Monomial extends Term {
 					}
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Monomial that represents the inverse Monomial in the sense of Product (i.e. 1/Monomial)
+	 */
+	public Monomial(final Monomial monomial) {
+		super(0);
+		mSort = monomial.getSort();
+		if (monomial.getVariable2Exponent().size() == 1) {
+			Term variable = monomial.getVariable2Exponent().keySet().iterator().next();
+			Rational exponent = monomial.getVariable2Exponent().values().iterator().next().negate();
+			mVariable2Exponent = Collections.singletonMap(variable, exponent);
+			return;
+		}else {
+			mVariable2Exponent = new HashMap<>();
+		}
+		for (final Map.Entry<Term, Rational> variabletoexponent : monomial.getVariable2Exponent().entrySet()) {
+			mVariable2Exponent.put(variabletoexponent.getKey(), variabletoexponent.getValue().negate());
 		}
 	}
 	

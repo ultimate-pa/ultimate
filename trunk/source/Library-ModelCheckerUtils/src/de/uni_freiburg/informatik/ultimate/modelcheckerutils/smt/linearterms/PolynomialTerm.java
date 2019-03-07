@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  * where c_i, c, e_i are literals, and x_i are variables.
  * 
- * @author LeonardFichtner
+ * @author Leonard Fichtner
  *
  */
 public class PolynomialTerm extends Term {
@@ -172,7 +172,7 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Calculate the Map of a sum of given PolynomialTerms.
+	 * Calculate the map of a sum of given PolynomialTerms.
 	 */
 	private Map<Term, Rational> CalculateSumMap(final PolynomialTerm... polynomialTerms){
 		Map<Term, Rational> map = new HashMap<>();
@@ -202,7 +202,7 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Calculate the Constant of a sum of given PolynomialTerms.
+	 * Calculate the constant of a sum of given PolynomialTerms.
 	 */
 	private Rational CalculateSumConstant(final PolynomialTerm...polynomialTerms) {
 		Rational constant = Rational.ZERO;
@@ -217,7 +217,7 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Polynomial Term that represents the product of exactly two PolynomialTerms.
+	 * Polynomial perm that represents the product of exactly two PolynomialTerms.
 	 */
 	private PolynomialTerm(final PolynomialTerm poly1, final PolynomialTerm poly2) {
 		super(0);
@@ -276,7 +276,9 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Calculate the Map of a product of given PolynomialTerms.
+	 * Calculate the product of given PolynomialTerms (but without setting the members).
+	 * It has arisen out of the necessity of constructors being different and the "final" on member variables
+	 * (I did not want to abolish the "final").
 	 */
 	private PolynomialTerm CalculateProduct(PolynomialTerm... polynomialTerms) {
 		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], polynomialTerms[1]);
@@ -287,8 +289,53 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
+	 * PolynomialTerm that represents the inverse polynomial in sense of the product.
+	 */
+	public PolynomialTerm(PolynomialTerm polynomialTerm) {
+		super(0);
+		if (polynomialTerm.getMonomial2Coefficient().size() == 1 && polynomialTerm.getConstant() == Rational.ZERO) {
+			mSort = polynomialTerm.getSort();
+			Term variable = new Monomial((Monomial) polynomialTerm.getMonomial2Coefficient().keySet().iterator().next());
+			Rational exponent = polynomialTerm.getMonomial2Coefficient().values().iterator().next().inverse();
+			mMonomial2Coefficient = Collections.singletonMap(variable, exponent);
+			mConstant = Rational.ZERO;
+			return;
+		}else if (polynomialTerm.getMonomial2Coefficient().size() == 0) {
+			mSort = polynomialTerm.getSort();
+			mMonomial2Coefficient = Collections.emptyMap();
+			mConstant = polynomialTerm.getConstant().inverse();
+		}else {
+			//throw new IllegalArgumentException("For now division by a sum is not supported");
+			mSort = null;
+			mMonomial2Coefficient = null;
+			mConstant = null;
+		}
+	}
+	
+	/**
+	 * Calculate the division of given PolynomialTerms i.e. t1/t2/.../tn (but without setting the members).
+	 * It has arisen out of the necessity of constructors being different and the "final" on member variables
+	 * (I did not want to abolish the "final").
+	 */
+	private PolynomialTerm CalculateDivision(PolynomialTerm...polynomialTerms) {
+		if (polynomialTerms[1].getMonomial2Coefficient().size() > 1) {
+			//throw new IllegalArgumentException("For now division by a sum is not supported");
+			return new PolynomialTerm();
+		}
+		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], new PolynomialTerm(polynomialTerms[1]));
+		for (int i = 2; i < polynomialTerms.length; i++) {
+			if (polynomialTerms[i].getMonomial2Coefficient().size() > 1) {
+				//throw new IllegalArgumentException("For now division by a sum is not supported");
+				return new PolynomialTerm();
+			}
+			poly = new PolynomialTerm(poly, new PolynomialTerm(polynomialTerms[i]));
+		}
+		return poly;
+	}
+	
+	/**
 	 * PolynomialTerm that represents either the sum or the product of polynomialTerms. What function
-	 * is to be applied is specified by the "fun" argument.
+	 * is to be applied is specified by the "fun" argument. Do not pass arrays with empty entries!
 	 */
 	public PolynomialTerm(String functionSymbol, PolynomialTerm... polynomialTerms) {
 		super(0);
@@ -301,8 +348,13 @@ public class PolynomialTerm extends Term {
 			PolynomialTerm clone = CalculateProduct(polynomialTerms);
 			mMonomial2Coefficient = clone.mMonomial2Coefficient;
 			mConstant = clone.mConstant;
+		}else if (functionSymbol.equals("/")) {
+			//This may look weird but I think its the best option right now.
+			PolynomialTerm clone = CalculateDivision(polynomialTerms);
+			mMonomial2Coefficient = clone.mMonomial2Coefficient;
+			mConstant = clone.mConstant;
 		}else {
-			throw new IllegalArgumentException("FunctionSymbol must either be a + or a *");
+			throw new IllegalArgumentException("FunctionSymbol must either be +, * or /");
 		}
 	}
 	
@@ -330,12 +382,35 @@ public class PolynomialTerm extends Term {
 		}
 	}
 	
-	//TODO: Find out whether the error constructor is necessary -- Indeed it is, handle this when writing the transformer.
-	//TODO: Find out how to realize toTerm.
 	//TODO: IsLinear.
 	//TODO: Write Tests.
-	//TODO: Flatten ApplicationTerms. Ask Matthias how to identify a Multiplication or Addition/ Ask him about the theory this uses.
+	//TODO: Flatten ApplicationTerms.
 	
+	/**
+	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had wrong sorts.
+	 */
+	public PolynomialTerm() {
+		super(0);
+		mMonomial2Coefficient = null;
+		mConstant = null;
+		mSort = null;
+	}
+
+	/**
+	 * True if this represents not an polynomial term but an error during the translation process, e.g., if original term
+	 * had wrong sorts.
+	 */
+	public boolean isErrorTerm() {
+		if (mMonomial2Coefficient == null) {
+			assert mConstant == null;
+			assert mSort == null;
+			return true;
+		} else {
+			assert mConstant != null;
+			assert mSort != null;
+			return false;
+		}
+	}
 	/**
 	 * Use modulo operation to bring Rational in the range of representable values.
 	 *
@@ -376,7 +451,7 @@ public class PolynomialTerm extends Term {
 				summands[i] = entry.getKey();
 			} else {
 				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
-				//TODO: Ask Matthias why he never calls toTerm in AffineTerm himself.
+				//TODO: Ask Matthias why he never calls toTerm of the "TermVariables" in AffineTerm itself.
 				summands[i] = SmtUtils.mul(script, mSort, coeff, ((Monomial) entry.getKey()).toTerm(script));
 			}
 			++i;
