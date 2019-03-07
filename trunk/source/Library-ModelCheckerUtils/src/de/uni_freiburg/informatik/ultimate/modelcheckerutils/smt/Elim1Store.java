@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -218,41 +217,8 @@ public class Elim1Store {
 
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
-		Term preprocessedInput;
+		final Term preprocessedInput = input.getTerm();
 
-		{
-			// anti-DER preprocessing
-
-			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, quantifier, eliminatee,
-					inputTerm, aoa.getAntiDerRelations(quantifier));
-			final Term antiDerPreprocessed = aadk.getResultTerm();
-			newAuxVars.addAll(aadk.getNewAuxVars());
-
-			aoa = new ArrayOccurrenceAnalysis(antiDerPreprocessed, eliminatee);
-
-			final TreeSet<Integer> dims2 = aoa.computeSelectAndStoreDimensions();
-//			if (dims.size() > 1) {
-//				throw new AssertionError("Dims after anti-DER " + dims2);
-//			}
-			final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-			final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
-					mLogger, mMgdScript);
-			final DerPreprocessor dp = new DerPreprocessor(mServices, mMgdScript, quantifier, eliminatee,
-					antiDerPreprocessed, aoa.getDerRelations(quantifier), aiem);
-			aiem.unlockSolver();
-			newAuxVars.addAll(dp.getNewAuxVars());
-			preprocessedInput = dp.getResult();
-			if (dp.introducedDerPossibility()) {
-				// do DER
-				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(
-						mServices, mMgdScript, new EliminationTaskWithContext(quantifier,
-								Collections.singleton(eliminatee), preprocessedInput, input.getContext()),
-						PqeTechniques.ONLY_DER);
-				newAuxVars.addAll(afterDer.getEliminatees());
-				return new EliminationTaskWithContext(quantifier, newAuxVars, afterDer.getTerm(), input.getContext());
-			}
-
-		}
 		aoa = new ArrayOccurrenceAnalysis(preprocessedInput, eliminatee).downgradeDimensionsIfNecessary();
 		assert aoa.computeSelectAndStoreDimensions().size() <= 1 : "incompatible";
 

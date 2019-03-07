@@ -260,10 +260,14 @@ public class ElimStorePlain {
 		}
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
 
-		Term termAfterPreprocessing;
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
+
+		// Step 1: DER preprocessing
+		final Term termAfterDerPreprocessing;
+		final ArrayOccurrenceAnalysis aoaAfterDerPreprocessing;
 		if (aoa.getDerRelations(eTask.getQuantifier()).isEmpty()) {
-			termAfterPreprocessing = eTask.getTerm();
+			termAfterDerPreprocessing = eTask.getTerm();
+			aoaAfterDerPreprocessing = aoa;
 		} else {
 			final DerPreprocessor de;
 			{
@@ -277,24 +281,60 @@ public class ElimStorePlain {
 				aiem.unlockSolver();
 			}
 			newAuxVars.addAll(de.getNewAuxVars());
-			termAfterPreprocessing = de.getResult();
+			termAfterDerPreprocessing = de.getResult();
 			if (de.introducedDerPossibility()) {
 				// do DER
 				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(mServices,
 						mMgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
-								Collections.singleton(eliminatee), termAfterPreprocessing, eTask.getContext()),
+								Collections.singleton(eliminatee), termAfterDerPreprocessing, eTask.getContext()),
 						PqeTechniques.ONLY_DER);
-				assert afterDer.getEliminatees().isEmpty() : " unsuccessful DER";
+				if (!afterDer.getEliminatees().isEmpty()) {
+					throw new AssertionError(" unsuccessful DER");
+				}
 				newAuxVars.addAll(afterDer.getEliminatees());
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
 						eTask.getContext());
 			} else {
+				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterDerPreprocessing, eliminatee);
 				newAuxVars.add(eliminatee);
-				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterPreprocessing,
+				throw new AssertionError("self-update");
+			}
+		}
+
+		// Step 2: anti-DER preprocessing
+		final Term termAfterAntiDerPreprocessing;
+		final ArrayOccurrenceAnalysis aoaAfterAntiDerPreprocessing;
+		if (aoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
+			termAfterAntiDerPreprocessing = termAfterDerPreprocessing;
+			aoaAfterAntiDerPreprocessing = aoaAfterDerPreprocessing;
+		} else {
+			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eTask.getQuantifier(), eliminatee,
+					termAfterDerPreprocessing, aoa.getAntiDerRelations(eTask.getQuantifier()));
+			termAfterAntiDerPreprocessing = aadk.getResultTerm();
+			newAuxVars.addAll(aadk.getNewAuxVars());
+			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterAntiDerPreprocessing, eliminatee);
+			if (!Arrays.stream(termAfterAntiDerPreprocessing.getFreeVars()).anyMatch(x -> (x == eliminatee))) {
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
 						eTask.getContext());
 			}
 		}
-		return new Elim1Store(mMgdScript, mServices, mSimplificationTechnique, eTask.getQuantifier()).elim1(eTask);
+
+//		if (!aoaAfterAntiDerPreprocessing.getArraySelectOverStores().isEmpty()) {
+//			throw new AssertionError("sos " + aoaAfterAntiDerPreprocessing.getArraySelectOverStores().size());
+//		}
+
+		final EliminationTaskWithContext eTaskForStoreElimination = new EliminationTaskWithContext(
+				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterAntiDerPreprocessing,
+				eTask.getContext());
+		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mMgdScript, mServices,
+				mSimplificationTechnique, eTask.getQuantifier()).elim1(eTaskForStoreElimination);
+		// if (res.getEliminatees().contains(eliminatee)) {
+		// throw new AssertionError("elimination failed");
+		// }
+		newAuxVars.addAll(resOfStoreElimination.getEliminatees());
+		final EliminationTaskWithContext eliminationResult = new EliminationTaskWithContext(eTask.getQuantifier(),
+				newAuxVars, resOfStoreElimination.getTerm(), eTask.getContext());
+		return eliminationResult;
 	}
 
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
