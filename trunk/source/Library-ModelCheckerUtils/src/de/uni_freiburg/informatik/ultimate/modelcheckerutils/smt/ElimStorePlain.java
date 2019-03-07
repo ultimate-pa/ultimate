@@ -54,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -234,7 +232,7 @@ public class ElimStorePlain {
 		if (split.getFirst().length != 1) {
 			throw new AssertionError("no XNF");
 		}
-		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
+		final Term additionalContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
 				split.getSecond());
 		final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
 		final EliminationTaskWithContext revisedInput = new EliminationTaskWithContext(eTask.getQuantifier(),
@@ -272,8 +270,8 @@ public class ElimStorePlain {
 			final DerPreprocessor de;
 			{
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-				final Term polarizedContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
-						eTask.getContext());
+				final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+						eTask.getQuantifier(), eTask.getContext());
 				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
 						eTask.getQuantifier(), mLogger, mMgdScript);
 				de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
@@ -431,8 +429,8 @@ public class ElimStorePlain {
 			correspondingJunctiveNormalForm = split.getFirst();
 			dualJunctWithoutEliminatee = split.getSecond();
 		}
-		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTaskForVar.getQuantifier(),
-				dualJunctWithoutEliminatee);
+		final Term additionalContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+				eTaskForVar.getQuantifier(), dualJunctWithoutEliminatee);
 		final Term parentContext = SmtUtils.and(mMgdScript.getScript(), eTaskForVar.getContext(), additionalContext);
 		final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
 		for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
@@ -470,50 +468,14 @@ public class ElimStorePlain {
 		final ArrayList<Term> contextConjuncts = new ArrayList<>();
 		contextConjuncts.add(parentContext);
 		for (int i = 0; i < pos; i++) {
-			contextConjuncts
-					.add(negateIfExistential(services, mgdScript, quantifier, resultingCorrespondingJuncts[i]));
+			contextConjuncts.add(QuantifierUtils.negateIfExistential(services, mgdScript, quantifier,
+					resultingCorrespondingJuncts[i]));
 		}
 		for (int i = pos + 1; i < correspondingJunctiveNormalForm.length; i++) {
-			contextConjuncts
-					.add(negateIfExistential(services, mgdScript, quantifier, correspondingJunctiveNormalForm[i]));
+			contextConjuncts.add(QuantifierUtils.negateIfExistential(services, mgdScript, quantifier,
+					correspondingJunctiveNormalForm[i]));
 		}
 		return SmtUtils.and(mgdScript.getScript(), contextConjuncts);
-	}
-
-	/**
-	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
-	 * quantifier is universal.
-	 */
-	private static Term negateIfUniversal(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final int quantifier, final Term inputTerm) {
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = inputTerm;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
-					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return result;
-	}
-
-	/**
-	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
-	 * quantifier is universal.
-	 */
-	private static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final int quantifier, final Term inputTerm) {
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
-					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = inputTerm;
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return result;
 	}
 
 	private Term compose(final Term dualJunct, final int quantifier, final List<Term> correspondingJuncts) {

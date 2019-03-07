@@ -191,14 +191,7 @@ public class Elim1Store {
 //		}
 
 
-		final Term polarizedContext;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			polarizedContext = context;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			polarizedContext = SmtUtils.not(mScript, context);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
+		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, context);
 		if (SELECT_OVER_STORE_PREPROCESSING) {
 			final List<MultiDimensionalSelectOverNestedStore> mdsoss = MultiDimensionalSelectOverNestedStore
 					.extractMultiDimensionalSelectOverStores(inputTerm, eliminatee);
