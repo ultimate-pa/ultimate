@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 
 /**
  * Provides static methods for handling of quantifiers and their finite connectives
@@ -215,6 +217,41 @@ public class QuantifierUtils {
 		}
 	}
 
+	/**
+	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
+	 * quantifier is universal.
+	 */
+	public static Term negateIfUniversal(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = inputTerm;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
+					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	/**
+	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
+	 * quantifier is universal.
+	 */
+	public static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
+					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = inputTerm;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
 
 	public static int getDualQuantifier(final int quantifier) {
 		if (quantifier == 0) {

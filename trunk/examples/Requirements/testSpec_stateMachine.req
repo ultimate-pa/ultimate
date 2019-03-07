@@ -31,7 +31,7 @@ req07: Globally, it is always the case that if "State == State3" holds then "!se
 // t= 10: trigger, (!reset)
 // t= 11: !trigger
 // t= 53: !trigger, reset
-// t= 55: trigger, reset				-> warnblinker (✔)
+// t= 55: trigger, reset				-> warnblinker (✔) 
 // t= 57: !trigger, reset
 // t= 62: !trigger
 // t=106: !trigger						-> statuslamp3 (✔)

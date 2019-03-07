@@ -188,7 +188,7 @@ public class GenerateGotoBoogieAst {
 		declarations.add(constructMainEntryPointProcedure(loc,
 				predLabelToNumber.get(predSymbolToLabel.get(mHelper.getBottomPredSym()))));
 
-		declarations.addAll(mHelper.getDeclarationsForSkolemFunctions());
+		declarations.addAll(mHelper.getAuxDeclarations());
 
 		return new Unit(loc,
 				declarations.toArray(new Declaration[declarations.size()]));
@@ -469,7 +469,7 @@ public class GenerateGotoBoogieAst {
 		} else if ("Real".equals(sort.getName())) {
 			return ExpressionFactory.createRealLiteral(mHelper.getLoc(), "0");
 		} else {
-			throw new UnsupportedOperationException("sort not yet supported");
+			return mHelper.getDummyArgForArraySort(sort);
 		}
 	}
 

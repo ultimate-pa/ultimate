@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,13 @@ public class GenerateBoogieAstHelper {
 	private final HcPredicateSymbol mBottomPredSym;
 	private final String mNameOfEntryPointProc;
 
+	/**
+	 * Stores for each array sort for which we need a dummy var the name of that dummy var.
+	 * Updated on demand.
+	 * Is used to declare the dummy vars in the Boogie program.
+	 */
+	private final Map<Sort, String> mArraySortToDummyVarName;
+
 	public GenerateBoogieAstHelper(final ILocation location, final HcSymbolTable hcSymbolTable,
 			final Term2Expression term2Expression, final TypeSortTranslator typeSortTranslator,
 			final String nameOfMainEntryPointProc) {
@@ -56,6 +66,9 @@ public class GenerateBoogieAstHelper {
 		mTerm2Expression = term2Expression;
 
 		mBottomPredSym = mHcSymbolTable.getFalseHornClausePredicateSymbol();
+		
+		mArraySortToDummyVarName = new LinkedHashMap<>();
+//		mAuxDeclarations = new ArrayList<>();
 	}
 
 	ILocation getLoc() {
@@ -156,6 +169,38 @@ public class GenerateBoogieAstHelper {
 	public String getNameOfMainEntryPointProc() {
 		return mNameOfEntryPointProc;
 	}
+	
+	
+	/**
+	 * Auxiliary declarations that should be added to the Boogie program.
+	 * (here, auxiliary means "not one of the procedures that provide the main behaviour of the program, the main proc 
+	 *  and the goto proc..)
+	 * 
+	 * This should be called at the end of the construction of the program.
+	 * 
+	 * @return
+	 */
+	public List<Declaration> getAuxDeclarations() {
+		final List<Declaration> declarations = new ArrayList<>();
+
+		declarations.addAll(getDeclarationsForSkolemFunctions());
+		
+		declarations.addAll(getDeclarationsForArrayDummyVars());
+
+		return declarations;
+	}
+
+	private List<Declaration> getDeclarationsForArrayDummyVars() {
+		final List<Declaration> declarations = new ArrayList<>();
+		for (Entry<Sort, String> en : mArraySortToDummyVarName.entrySet()) {
+			declarations.add(new VariableDeclaration(mLocation, new Attribute[0], 
+					new VarList[] { 
+							new VarList(mLocation, 
+									new String[] { en.getValue() }, 
+									getType(en.getKey()).toASTType(mLocation)) }));
+		}
+		return declarations;
+	}
 
 	public List<Declaration> getDeclarationsForSkolemFunctions() {
 		final List<Declaration> declarations = new ArrayList<>();
@@ -213,6 +258,13 @@ public class GenerateBoogieAstHelper {
 		return resultList.toArray(new VariableLHS[resultList.size()]);
 	}
 
-
-
+	public Expression getDummyArgForArraySort(Sort sort) {
+		String varName = mArraySortToDummyVarName.get(sort);
+		if (varName == null) {
+			String dummyArrayPrefix = "#dummy~";
+			varName = dummyArrayPrefix + sort;
+			mArraySortToDummyVarName.put(sort, varName);
+		}
+		return ExpressionFactory.constructIdentifierExpression(mLocation, getType(sort), varName, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	}
 }

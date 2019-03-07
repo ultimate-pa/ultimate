@@ -47,16 +47,17 @@ public class HcPredicateSymbol {
 	private final List<Sort> mParameterSorts;
 
 	/**
+	 * Create this only via {@link HcSymbolTable}!
 	 *
 	 * @param symbolTable
 	 * @param fsym  -- must be from solver (not parser) theory!
 	 * @param functionParameters
 	 */
-	public HcPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym) {
+	HcPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym) {
 		mFunctionSymbol = fsym;
 		if (fsym == null) {
 			assert this instanceof HornClauseDontCarePredicateSymbol;
-			mFunctionName = this.getName();
+			mFunctionName = getName();
 			mParameterSorts = null;
 		} else {
 			mFunctionName = fsym.getName();
@@ -87,7 +88,7 @@ public class HcPredicateSymbol {
 
 	public abstract static class HornClauseConstantPredicateSymbol extends HcPredicateSymbol {
 
-		public HornClauseConstantPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym,
+		HornClauseConstantPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym,
 				final List<Sort> functionParameters) {
 			super(symbolTable, fsym);
 		}

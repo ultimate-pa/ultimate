@@ -128,10 +128,6 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return mClockVars;
 	}
 	
-	public boolean isNonInputNonConstVar(String ident) {
-		return (!mConstVars.contains(ident) && !mInputVars.contains(ident));
-	}
-	
 	public boolean isOutput(String ident) {
 		return mOutputVars.contains(ident);
 	}

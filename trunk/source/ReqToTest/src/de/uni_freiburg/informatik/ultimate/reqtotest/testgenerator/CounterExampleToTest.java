@@ -21,9 +21,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphOracleAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
 public class CounterExampleToTest {
@@ -44,19 +46,19 @@ public class CounterExampleToTest {
 	
 	public IResult convertCounterExampleToTest(final IResult result) {
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
-			return generateTestSequence((CounterExampleResult<?, ?, ?>)result);
+			return transformCounterExampleToExecutionSteps((CounterExampleResult<?, ?, ?>)result);
 		} else {	
 			return null;
 		}
 	}
 	
-	private IResult generateTestSequence(final CounterExampleResult<?, ?, ?> result){
+	private IResult transformCounterExampleToExecutionSteps(final CounterExampleResult<?, ?, ?> result){
 		IProgramExecution<?, ?> translatedPe = mServices.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		
 		List<SystemState> systemStates = new ArrayList<>();
 		List<List<ReqGraphAnnotation>> stepGuards = new ArrayList<>();
 		List<ReqGraphAnnotation> stepGuard = new ArrayList<>();
-		ReqGraphAnnotation oracles = null;
+		ReqGraphOracleAnnotation oracle = null;
 		for(int i = 0; i < translatedPe.getLength(); i++) {
 			AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
 			IElement element = ate.getTraceElement();
@@ -74,13 +76,13 @@ public class CounterExampleToTest {
 					ReqGraphAnnotation.getAnnotation(element) != null) {
 					stepGuard.add( ReqGraphAnnotation.getAnnotation(element));
 			}
-			//retrieve oracle annotation
-			if (ReqGraphAnnotation.getAnnotation(element) != null) {
-				oracles = ReqGraphAnnotation.getAnnotation(element);
+			//retrieve oracle annotation (note: guard of the last assert statement)
+			if (ReqGraphOracleAnnotation.getAnnotation(element) != null) {
+				oracle = ReqGraphOracleAnnotation.getAnnotation(element);
 			}
 		}
-		mLogger.warn(oracles);
-		TestGeneratorResult testSequence = new TestGeneratorResult(mLogger, systemStates, stepGuards, oracles, mReqSymbolTable, mAuxVarGen);
+		mLogger.warn("Oracle: " + oracle.getAnnotationsAsMap().toString());
+		TestGeneratorResult testSequence = new TestGeneratorResult(mLogger, systemStates, stepGuards, oracle, mReqSymbolTable, mAuxVarGen);
 		return testSequence;
 	}
 	

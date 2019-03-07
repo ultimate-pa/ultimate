@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndexBasedCostEstimation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
@@ -52,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -232,15 +232,14 @@ public class ElimStorePlain {
 		if (split.getFirst().length != 1) {
 			throw new AssertionError("no XNF");
 		}
-		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
+		final Term additionalContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
 				split.getSecond());
 		final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
 		final EliminationTaskWithContext revisedInput = new EliminationTaskWithContext(eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm(), totalContext);
 
 
-		final EliminationTaskWithContext ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-				eTask.getQuantifier()).elim1(revisedInput);
+		final EliminationTaskWithContext ssdElimRes = applyComplexEliminationRules(revisedInput);
 		final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 				ssdElimRes, PqeTechniques.ALL_LOCAL);
 		final EliminationTaskWithContext resultOfRecursiveCall = doElimAllRec(eliminationTask2);
@@ -250,27 +249,139 @@ public class ElimStorePlain {
 				resultOfRecursiveCall.getEliminatees(), resultTerm, eTask.getContext());
 	}
 
+	private EliminationTaskWithContext applyComplexEliminationRules(final EliminationTaskWithContext eTask) {
+		TermVariable eliminatee;
+		if (eTask.getEliminatees().size() != 1) {
+			throw new AssertionError("need exactly one eliminatee");
+		} else {
+			eliminatee = eTask.getEliminatees().iterator().next();
+		}
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
+
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
+
+		// Step 1: DER preprocessing
+		final Term termAfterDerPreprocessing;
+		final ArrayOccurrenceAnalysis aoaAfterDerPreprocessing;
+		if (aoa.getDerRelations(eTask.getQuantifier()).isEmpty()) {
+			termAfterDerPreprocessing = eTask.getTerm();
+			aoaAfterDerPreprocessing = aoa;
+		} else {
+			final DerPreprocessor de;
+			{
+				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+				final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+						eTask.getQuantifier(), eTask.getContext());
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
+						eTask.getQuantifier(), mLogger, mMgdScript);
+				de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
+						aoa.getDerRelations(eTask.getQuantifier()), aiem);
+				aiem.unlockSolver();
+			}
+			newAuxVars.addAll(de.getNewAuxVars());
+			termAfterDerPreprocessing = de.getResult();
+			if (de.introducedDerPossibility()) {
+				// do DER
+				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(mServices,
+						mMgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(eliminatee), termAfterDerPreprocessing, eTask.getContext()),
+						PqeTechniques.ONLY_DER);
+				if (!afterDer.getEliminatees().isEmpty()) {
+					throw new AssertionError(" unsuccessful DER");
+				}
+				newAuxVars.addAll(afterDer.getEliminatees());
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
+						eTask.getContext());
+			} else {
+				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterDerPreprocessing, eliminatee);
+				newAuxVars.add(eliminatee);
+				throw new AssertionError("self-update");
+			}
+		}
+
+		// Step 2: anti-DER preprocessing
+		final Term termAfterAntiDerPreprocessing;
+		final ArrayOccurrenceAnalysis aoaAfterAntiDerPreprocessing;
+		if (aoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
+			termAfterAntiDerPreprocessing = termAfterDerPreprocessing;
+			aoaAfterAntiDerPreprocessing = aoaAfterDerPreprocessing;
+		} else {
+			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eTask.getQuantifier(), eliminatee,
+					termAfterDerPreprocessing, aoa.getAntiDerRelations(eTask.getQuantifier()));
+			termAfterAntiDerPreprocessing = aadk.getResultTerm();
+			newAuxVars.addAll(aadk.getNewAuxVars());
+			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterAntiDerPreprocessing, eliminatee);
+			if (!Arrays.stream(termAfterAntiDerPreprocessing.getFreeVars()).anyMatch(x -> (x == eliminatee))) {
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
+						eTask.getContext());
+			}
+		}
+
+//		if (!aoaAfterAntiDerPreprocessing.getArraySelectOverStores().isEmpty()) {
+//			throw new AssertionError("sos " + aoaAfterAntiDerPreprocessing.getArraySelectOverStores().size());
+//		}
+
+		final EliminationTaskWithContext eTaskForStoreElimination = new EliminationTaskWithContext(
+				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterAntiDerPreprocessing,
+				eTask.getContext());
+		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mMgdScript, mServices,
+				mSimplificationTechnique, eTask.getQuantifier()).elim1(eTaskForStoreElimination);
+		// if (res.getEliminatees().contains(eliminatee)) {
+		// throw new AssertionError("elimination failed");
+		// }
+		newAuxVars.addAll(resOfStoreElimination.getEliminatees());
+		final EliminationTaskWithContext eliminationResult = new EliminationTaskWithContext(eTask.getQuantifier(),
+				newAuxVars, resOfStoreElimination.getTerm(), eTask.getContext());
+		return eliminationResult;
+	}
+
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
+
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		Term currentTerm = eTask.getTerm();
 
+
 		// Set of newly introduced quantified variables
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
-		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
+		for (final int dim : tr.getDomain()) {
 			// iterate over all eliminatees, lower dimensions first, but skip dimension zero
-			if (entry.getKey() != 0) {
-				// split term
-				final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
-						Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
-				if(eTaskForVar.getEliminatees().isEmpty()) {
-					mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
+			if (dim != 0) {
+				final boolean useCostEstimation = !false;
+				if (useCostEstimation) {
+					final TreeRelation<Integer, TermVariable> costs = computeCostEtimation(eTask, tr.getImage(dim));
+					if (costs.getDomain().size() > 1) {
+						mLogger.info("Different consts " + costs);
+					}
+					for (final Entry<Integer, TermVariable> entry : costs) {
+						// split term
+						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
+						if(eTaskForVar.getEliminatees().isEmpty()) {
+							mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
+						} else {
+							final EliminationTask res = eliminateOne(eTaskForVar);
+							currentTerm = res.getTerm();
+							newElimnatees.addAll(res.getEliminatees());
+						}
+					}
 				} else {
-					final EliminationTask res = eliminateOne(eTaskForVar);
-					currentTerm = res.getTerm();
-					newElimnatees.addAll(res.getEliminatees());
+					for (final TermVariable eliminatee : tr.getImage(dim)) {
+						// split term
+						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+								Collections.singleton(eliminatee), currentTerm, eTask.getContext());
+						if(eTaskForVar.getEliminatees().isEmpty()) {
+							mLogger.info("Eliminatee " + eliminatee + " vanished before elimination");
+						} else {
+							final EliminationTask res = eliminateOne(eTaskForVar);
+							currentTerm = res.getTerm();
+							newElimnatees.addAll(res.getEliminatees());
+						}
+
+					}
 				}
+
 			}
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
@@ -289,6 +400,25 @@ public class ElimStorePlain {
 		return finalResult;
 	}
 
+	private TreeRelation<Integer, TermVariable> computeCostEtimation(final EliminationTaskWithContext eTask,
+			final Set<TermVariable> eliminatees) throws AssertionError {
+		final int quantifier = eTask.getQuantifier();
+		final Term polarizedContext;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			polarizedContext = eTask.getContext();
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			polarizedContext = SmtUtils.not(mMgdScript.getScript(), eTask.getContext());
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
+						mLogger, mMgdScript);
+		final TreeRelation<Integer, TermVariable> costs = ArrayIndexBasedCostEstimation.computeCostEstimation(aiem, eliminatees, eTask.getTerm());
+		aiem.unlockSolver();
+		return costs;
+	}
+
 	private EliminationTask eliminateOne(final EliminationTaskWithContext eTaskForVar) {
 		final TermVariable eliminatee = eTaskForVar.getEliminatees().iterator().next();
 		final Set<TermVariable> newElimnateesForVar = new LinkedHashSet<>();
@@ -299,8 +429,8 @@ public class ElimStorePlain {
 			correspondingJunctiveNormalForm = split.getFirst();
 			dualJunctWithoutEliminatee = split.getSecond();
 		}
-		final Term additionalContext = negateIfUniversal(mServices, mMgdScript, eTaskForVar.getQuantifier(),
-				dualJunctWithoutEliminatee);
+		final Term additionalContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+				eTaskForVar.getQuantifier(), dualJunctWithoutEliminatee);
 		final Term parentContext = SmtUtils.and(mMgdScript.getScript(), eTaskForVar.getContext(), additionalContext);
 		final Term[] resultingCorrespondingJuncts = new Term[correspondingJunctiveNormalForm.length];
 		for (int i = 0; i < correspondingJunctiveNormalForm.length; i++) {
@@ -338,50 +468,14 @@ public class ElimStorePlain {
 		final ArrayList<Term> contextConjuncts = new ArrayList<>();
 		contextConjuncts.add(parentContext);
 		for (int i = 0; i < pos; i++) {
-			contextConjuncts
-					.add(negateIfExistential(services, mgdScript, quantifier, resultingCorrespondingJuncts[i]));
+			contextConjuncts.add(QuantifierUtils.negateIfExistential(services, mgdScript, quantifier,
+					resultingCorrespondingJuncts[i]));
 		}
 		for (int i = pos + 1; i < correspondingJunctiveNormalForm.length; i++) {
-			contextConjuncts
-					.add(negateIfExistential(services, mgdScript, quantifier, correspondingJunctiveNormalForm[i]));
+			contextConjuncts.add(QuantifierUtils.negateIfExistential(services, mgdScript, quantifier,
+					correspondingJunctiveNormalForm[i]));
 		}
 		return SmtUtils.and(mgdScript.getScript(), contextConjuncts);
-	}
-
-	/**
-	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
-	 * quantifier is universal.
-	 */
-	private static Term negateIfUniversal(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final int quantifier, final Term inputTerm) {
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = inputTerm;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
-					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return result;
-	}
-
-	/**
-	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
-	 * quantifier is universal.
-	 */
-	private static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final int quantifier, final Term inputTerm) {
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
-					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = inputTerm;
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return result;
 	}
 
 	private Term compose(final Term dualJunct, final int quantifier, final List<Term> correspondingJuncts) {

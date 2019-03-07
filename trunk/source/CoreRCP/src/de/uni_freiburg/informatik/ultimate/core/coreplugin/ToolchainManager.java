@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
@@ -335,11 +336,22 @@ public class ToolchainManager {
 
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
 				// TODO: Move all result logging to the different controllers
+				final ILogger controllerLogger = currentToolchainServices.getLoggingService().getControllerLogger();
+
 				final boolean appendCompleteLongDescription =
 						CorePreferenceInitializer.getPreferenceProvider(currentToolchainServices)
 								.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
-				final ILogger controllerLogger = currentToolchainServices.getLoggingService().getControllerLogger();
-				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
+				final boolean printStatisticResults =
+						CorePreferenceInitializer.getPreferenceProvider(currentToolchainServices)
+								.getBoolean(CorePreferenceInitializer.LABEL_PRINT_STATISTICS_RESULTS);
+				final Map<String, List<IResult>> results;
+				if (printStatisticResults) {
+					results = resultService.getResults();
+				} else {
+					results = ResultUtil.filterResultMap(resultService.getResults(),
+							p -> !(p instanceof StatisticsResult<?>));
+				}
+				ResultUtil.logResults(controllerLogger, results, appendCompleteLongDescription);
 				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
 				mToolchainWalker.endToolchain();

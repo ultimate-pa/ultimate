@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
@@ -38,6 +40,19 @@ public class DirectTriggerDependency extends ModifiableLabeledEdgesMultigraph<Di
 	
 	public Set<TermVariable> getOutputs(){
 		return mOutputs;
+	}
+	
+	public void disconnect() {
+		for(DirectTriggerDependency in: getIncomingNodes()) {
+			in.disconnectOutgoing(this);
+		}
+		List<DirectTriggerDependency> remove = new ArrayList<>();
+		for(DirectTriggerDependency out: getOutgoingNodes()) {
+			remove.add(out);
+		}
+		for(DirectTriggerDependency out: remove) {
+			removeOutgoingNode(out);
+		}
 	}
 
 }

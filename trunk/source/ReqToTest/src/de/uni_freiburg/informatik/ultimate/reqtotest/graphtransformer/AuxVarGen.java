@@ -28,13 +28,14 @@ public class AuxVarGen {
 	private final Sort mSortBool;
 	private final Sort mSortInt;
 	private final Term mSmtTrue;
+	private final Term mSmtFalse;
 		
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
 	private final Script mScript;
 	
 	private final Map<TermVariable, Term> mVariableToUseTerm;
-	private final Map<TermVariable, List<Term>> mVariableToDefineTerm;
+	private final Map<TermVariable, Set<Term>> mVariableToDefineTerm;
 	private final Map<ReqGuardGraph, Integer> mReqToId;
 	private int mReqId = 0;
 	private final HashMap<ReqGuardGraph, Term> mEffects;
@@ -55,6 +56,7 @@ public class AuxVarGen {
 		mSortInt = mScript.sort("Int");
 		mSortBool = mScript.sort("Bool");
 		mSmtTrue = mScript.term("true");
+		mSmtFalse = mScript.term("false");
 	}
 	
 	
@@ -65,7 +67,9 @@ public class AuxVarGen {
 		if(SmtUtils.getDisjuncts(effectEdge).length <= 1) {
 			mEffects.put(req, effectEdge);
 			idents = effectEdge.getFreeVars();
-		} 
+		} else {
+			mLogger.error("Nondeterministic requirement: " + req.getName());
+		}
 		final List<TermVariable> effectVars = getNonInputNonConstantVars(idents);
 		final int reqId = getReqToId(req);
 		final Term effectGuard = SmtUtils.and(mScript, varsToDefineAnnotations(effectVars, reqId));
@@ -85,9 +89,12 @@ public class AuxVarGen {
 	private List<TermVariable> getNonInputNonConstantVars(TermVariable[] vars){
 		final List<TermVariable> nonInputNonConstVars = new ArrayList<>();
 		for(TermVariable var: vars) {
-			if (mReqSymbolTable.isNonInputNonConstVar(var.toString())) {
+			String varname = var.toString();
+			if ( !mReqSymbolTable.isConstVar(varname) &&
+			     !mReqSymbolTable.isInput(varname)) {
 				nonInputNonConstVars.add(var);
 			}
+			
 		}
 		return nonInputNonConstVars;
 	}
@@ -149,7 +156,7 @@ public class AuxVarGen {
 	public Term createDefineAnnotation(TermVariable ident, int reqId) {
 		final Term annotation = createDefineTerm(ident, reqId);
 		if (!mVariableToDefineTerm.containsKey(ident)) {
-			mVariableToDefineTerm.put(ident, new ArrayList<Term>());
+			mVariableToDefineTerm.put(ident, new HashSet<Term>());
 		}
 		mVariableToDefineTerm.get(ident).add(annotation);
 		return annotation;
@@ -191,7 +198,7 @@ public class AuxVarGen {
 		final Map<ReqGuardGraph, Term> guards = new HashMap<>();
 		for(ReqGuardGraph reqId: mEffects.keySet()) {
 			Term guard =  getOracleAssertion(reqId);
-			if (guard != null && guard != mSmtTrue) {
+			if (guard != null && guard != mSmtTrue && guard != mSmtFalse) {
 				guards.put(reqId, guard);
 			}
 			
@@ -225,6 +232,9 @@ public class AuxVarGen {
 	public Term getOracleDenyOthers(ReqGuardGraph reqId, Term effect) {
 		Term guard = mSmtTrue;
 		for(TermVariable var: effect.getFreeVars()) {
+			if (!mReqSymbolTable.isOutput(var.toString())) {
+				continue;
+			}
 			Term exclude = createDefineAnnotation(var, mReqToId.get(reqId));
 			for(Term defineTerm: mVariableToDefineTerm.get(var)) {
 				if (defineTerm == exclude) continue;

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
+import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphOracleAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
 
@@ -27,16 +29,18 @@ public class TestGeneratorResult implements IResult  {
 	private final AuxVarGen mAuxVarGen;
 	private final ReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
+	private final ReqGraphOracleAnnotation mOracleAnnotation;
 	
 	public TestGeneratorResult (ILogger logger, List<SystemState> testStates, List<List<ReqGraphAnnotation>> stepsAnnotations, 
-			ReqGraphAnnotation oracleAnnotation, ReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen) {
+			ReqGraphOracleAnnotation oracleAnnotation, ReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen) {
 		mTestStates = testStates;
 		mStepsAnnotations = stepsAnnotations;
 		mAuxVarGen = auxVarGen;
 		mReqSymbolTable = reqSymbolTable;
 		mLogger = logger;
+		mOracleAnnotation = oracleAnnotation;
 		calculateDependencyGraph();	
-		trimTestPlan();
+		//trimTestPlan();
 	}
 	
 
@@ -105,8 +109,6 @@ public class TestGeneratorResult implements IResult  {
 	
 	private void connectInputDependencies(DirectTriggerDependency dependencyNode, ReqGraphAnnotation toJustifyAnnotation) {
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
-		mLogger.warn(toJustifyAnnotation.getGuard());
-		mLogger.warn(varsToJustify);
 		Set<String> inputVariables = mReqSymbolTable.getInputVars();
 		Set<TermVariable> justifyingInputs = new HashSet<TermVariable>();
 		for(TermVariable var: varsToJustify) {
@@ -130,23 +132,7 @@ public class TestGeneratorResult implements IResult  {
 			}
 		}
 		dependencyNode.addOutputs(outputs);	
-	}
-	
-	
-	private void trimTestPlan() {
-		for(int step = mDependenciesGraphNodes.size()-1; step >= 0 ; step--) {
-			Set<ReqGuardGraph> removeableNodes = new HashSet<>();
-			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
-			for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
-				DirectTriggerDependency depNode = stepDependencyGraphNodes.get(reqAut);
-				if(depNode.getIncomingNodes().size() <= 0 && depNode.getOutputs().size() <= 0) {
-					removeableNodes.add(reqAut);
-				}
-			}
-			stepDependencyGraphNodes.keySet().removeAll(removeableNodes);
-		}
-	}
-	
+	}	
 
 	@Override
 	public String getPlugin() {
@@ -163,24 +149,50 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("Test Vector:"+System.getProperty("line.separator"));
-
-		sb.append(getStepsTestPlan());
+		
+		Set<DirectTriggerDependency> testNodes = getOracleReverseWalkTestPlan();
+		//TODO: Using the test nodes as a filter for the old test generation is just a hack.
+		// The resulting nodes edges should be unrolled to generate the test plan by themselves.
+		sb.append(getStepsTestPlan(testNodes));
 		return sb.toString();
 	}
 	
-	private Set<TermVariable> getOracleTermVars(){
-		Set<TermVariable> oracleVars = new HashSet<>();
-		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(mDependenciesGraphNodes.size()-1);
-		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
-			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
-			if(dependencyNode.getOutputs().size() > 0) {
-				oracleVars.addAll(dependencyNode.getOutputs());
-			}
-		}
-		return oracleVars;
+	private Set<DirectTriggerDependency> getOracleReverseWalkTestPlan(){
+		Set<DirectTriggerDependency> oracleDepNodes = getOracleDependencyNodes();
+		Set<DirectTriggerDependency> testNodes = reverseTraverseDependencyGraph(oracleDepNodes);
+		return testNodes;
 	}
 	
-	private String getStepsTestPlan() {
+	private Set<DirectTriggerDependency> getOracleDependencyNodes(){
+		Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyNodes = mDependenciesGraphNodes.get(mDependenciesGraphNodes.size()-1);
+		Set<DirectTriggerDependency> outputNodes = new HashSet<>();
+		for (DirectTriggerDependency depNode: stepDependencyNodes.values()) {
+			if(! Collections.disjoint(depNode.getOutputs(), mOracleAnnotation.getOracleVars())){
+				outputNodes.add(depNode);
+			}
+		}
+		return outputNodes;
+	}
+	
+	private Set<DirectTriggerDependency> reverseTraverseDependencyGraph(Set<DirectTriggerDependency> outputNodes) {
+		Set<DirectTriggerDependency> dependencyNodes = new HashSet<>();
+		Queue<DirectTriggerDependency> queue = new LinkedList<>();
+		queue.addAll(outputNodes);
+		while(!queue.isEmpty()) {
+			DirectTriggerDependency peek = queue.poll();
+			dependencyNodes.add(peek);
+			for(DirectTriggerDependency determinesPeek: peek.getOutgoingNodes()) {
+				//there may be loopes in the dependency graph (think a -> b, b -> a) so prevent unrolling)
+				if(!queue.contains(determinesPeek) && !dependencyNodes.contains(determinesPeek)) {
+					queue.add(determinesPeek);
+				}
+			}
+		}
+		return dependencyNodes; 
+	}
+	
+	
+	private String getStepsTestPlan(Set<DirectTriggerDependency> filter) {
 		StringBuilder sb = new StringBuilder();
 		for(int step = 0; step < mDependenciesGraphNodes.size(); step++) {
 			SystemState state = mTestStates.get(step);
@@ -189,18 +201,19 @@ public class TestGeneratorResult implements IResult  {
 			sb.append("|-------------------------------------------------------------------------------------------");
 			sb.append(System.getProperty("line.separator"));
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
-			sb.append(getStepTestPlan(stepDependencyGraphNodes, state));
+			sb.append(getStepTestPlan(stepDependencyGraphNodes, state, filter));
 		}
 		return sb.toString();
 	}
 
 	
-	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state) {
+	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter) {
 		StringBuilder sbin = new StringBuilder();
 		StringBuilder sbtrans = new StringBuilder();
 		StringBuilder sbout = new StringBuilder();
 		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+			if (!filter.contains(dependencyNode)) continue;
 			//inputs
 			if(dependencyNode.getInputs().size() > 0) {
 				sbin.append("Input ---------- (");
@@ -236,7 +249,7 @@ public class TestGeneratorResult implements IResult  {
 	
 	
 	public String toString() {
-		return String.format("Found Test for: %s", getOracleTermVars());
+		return String.format("Found Test for: %s", mOracleAnnotation.getOracleVars());
 	}
 	
 }

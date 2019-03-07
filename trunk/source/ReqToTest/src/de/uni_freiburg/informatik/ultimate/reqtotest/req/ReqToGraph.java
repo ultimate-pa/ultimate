@@ -35,7 +35,7 @@ public class ReqToGraph {
 	private final Script mScript;
 	
 	// set if the universality pattern sets define flags or not (true: unsound but helpful, false: sound but often no tests found)
-	private final boolean UNIVERSALITY_IS_DEFINITNG = true;
+	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
 	
 	public ReqToGraph(final ILogger logger, AuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt,
 			ReqSymbolTable reqSymbolTable){
@@ -438,7 +438,6 @@ public class ReqToGraph {
 				final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
 				q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, dS), true));
 			} else {
-				final Term ndS = SmtUtils.not(mScript, mThreeValuedAuxVarGen.getDefineGuard(q0));
 				q0.connectOutgoing(q0, new TimedLabel(S));
 			}
 			return q0;
@@ -473,6 +472,7 @@ public class ReqToGraph {
 	/*	This pattern is for discrete Step LTL
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds in the next Step.
 	 */
+	@SuppressWarnings("unused")
 	private ReqGuardGraph getImmediateResponsePatternToAutomaton(PatternType pattern){
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
@@ -535,8 +535,8 @@ public class ReqToGraph {
 			//normal labels
 			final Term uP = mThreeValuedAuxVarGen.getUseGuard(P);
 			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
-			final Term nuP = SmtUtils.not(mScript, uP);
-			final Term nuS = SmtUtils.not(mScript, uS);
+			//final Term nuP = SmtUtils.not(mScript, uP);
+			//final Term nuS = SmtUtils.not(mScript, uS);
 			final Term nP = SmtUtils.not(mScript, P);
 			final Term nS = SmtUtils.not(mScript, S);
 			final String duration = pattern.getDuration().get(0);

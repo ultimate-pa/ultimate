@@ -154,7 +154,7 @@ public class MultiDimensionalStore {
 	 * <li>whose (written) value is the same as the (written) value of this array.
 	 * </ul>
 	 */
-	public MultiDimensionalStore getInnermost(final Script script, final int dim) {
+	public MultiDimensionalStore getInnermost(final int dim) {
 		if (dim < 1) {
 			throw new IllegalArgumentException("result must have at least dimension one");
 		}
@@ -165,7 +165,7 @@ public class MultiDimensionalStore {
 		for (int i = 0; i < getDimension() - dim; i++) {
 			as = ArrayStore.convert(as.getValue());
 		}
-		return MultiDimensionalStore.convert(as.toTerm(script));
+		return MultiDimensionalStore.convert(as.asTerm());
 	}
 
 
