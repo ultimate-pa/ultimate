@@ -174,9 +174,9 @@ public class Elim1Store {
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
 //		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
 		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
-		if (xjunctsOuter.length > 1) {
-			throw new AssertionError("several disjuncts! " + inputTerm);
-		}
+//		if (xjunctsOuter.length > 1) {
+//			throw new AssertionError("several disjuncts! " + inputTerm);
+//		}
 
 		ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(inputTerm, eliminatee);
 //		if (!aoa.getArrayDisequalities().isEmpty()) {

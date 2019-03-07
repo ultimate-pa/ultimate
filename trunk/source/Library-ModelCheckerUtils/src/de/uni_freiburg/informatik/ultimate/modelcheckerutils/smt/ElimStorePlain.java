@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndexBasedCostEstimation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverNestedStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
@@ -54,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -109,6 +113,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  */
 public class ElimStorePlain {
 
+	private static final boolean RETURN_AFTER_SOS = false;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -256,6 +261,8 @@ public class ElimStorePlain {
 		} else {
 			eliminatee = eTask.getEliminatees().iterator().next();
 		}
+		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+				eTask.getQuantifier(), eTask.getContext());
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
@@ -270,8 +277,6 @@ public class ElimStorePlain {
 			final DerPreprocessor de;
 			{
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-				final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
-						eTask.getQuantifier(), eTask.getContext());
 				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
 						eTask.getQuantifier(), mLogger, mMgdScript);
 				de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
@@ -311,18 +316,38 @@ public class ElimStorePlain {
 			termAfterAntiDerPreprocessing = aadk.getResultTerm();
 			newAuxVars.addAll(aadk.getNewAuxVars());
 			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterAntiDerPreprocessing, eliminatee);
-			if (!Arrays.stream(termAfterAntiDerPreprocessing.getFreeVars()).anyMatch(x -> (x == eliminatee))) {
+			if (!varOccurs(eliminatee, termAfterAntiDerPreprocessing)) {
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
 						eTask.getContext());
 			}
 		}
 
-//		if (!aoaAfterAntiDerPreprocessing.getArraySelectOverStores().isEmpty()) {
-//			throw new AssertionError("sos " + aoaAfterAntiDerPreprocessing.getArraySelectOverStores().size());
-//		}
+		// Step 3: select-over-store preprocessing
+		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, eTask.getQuantifier(),
+				mLogger, mMgdScript);
+		ArrayOccurrenceAnalysis sosAoa = aoaAfterAntiDerPreprocessing;
+		Term sosTerm = termAfterAntiDerPreprocessing;
+		while (!sosAoa.getArraySelectOverStores().isEmpty()) {
+			final MultiDimensionalSelectOverNestedStore mdsos = sosAoa.getArraySelectOverStores().get(0);
+			final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem,
+					sosTerm, mdsos);
+			final Term replacedInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(replaced);
+			sosTerm = replacedInNnf;
+			sosAoa = new ArrayOccurrenceAnalysis(sosTerm, eliminatee);
+			if(!varOccurs(eliminatee, replaced) || RETURN_AFTER_SOS) {
+				aiem.unlockSolver();
+				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars,
+						replaced, eTask.getContext());
+			}
+		}
+		aiem.unlockSolver();
+		final Term termAfterSos = sosTerm;
+		final ArrayOccurrenceAnalysis aoaAfterSos = sosAoa;
+
 
 		final EliminationTaskWithContext eTaskForStoreElimination = new EliminationTaskWithContext(
-				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterAntiDerPreprocessing,
+				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterSos,
 				eTask.getContext());
 		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mMgdScript, mServices,
 				mSimplificationTechnique, eTask.getQuantifier()).elim1(eTaskForStoreElimination);
@@ -333,6 +358,10 @@ public class ElimStorePlain {
 		final EliminationTaskWithContext eliminationResult = new EliminationTaskWithContext(eTask.getQuantifier(),
 				newAuxVars, resOfStoreElimination.getTerm(), eTask.getContext());
 		return eliminationResult;
+	}
+
+	private boolean varOccurs(final TermVariable var, final Term term) {
+		return Arrays.stream(term.getFreeVars()).anyMatch(x -> (x == var));
 	}
 
 	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask) {
