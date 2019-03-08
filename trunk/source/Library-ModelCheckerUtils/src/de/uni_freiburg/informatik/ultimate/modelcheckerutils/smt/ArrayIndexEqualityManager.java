@@ -394,13 +394,18 @@ public class ArrayIndexEqualityManager {
 	 * </ul>
 	 *
 	 */
-	public Term constructNestedStoreUpdateConstraintForOnePosition(final Script script, final int quantifier,
+	private Term constructNestedStoreUpdateConstraintForOnePosition(final Script script, final int quantifier,
 			final Term arrayRes, final ArrayIndex idx, final List<ArrayIndex> laterUpdateIndices,
 			final ArrayIndex updateIndex, final Term updateValue) {
 		final List<Term> correspondingFiniteJuncts = laterUpdateIndices.stream()
 				.map(x -> constructDerRelation(script, quantifier, idx, x)).collect(Collectors.toList());
 		final Term correspondingFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
 				correspondingFiniteJuncts);
+		if (correspondingFiniteJunction == QuantifierUtils.getAbsorbingElement(script, quantifier)) {
+			// already true (resp. false), no need to construct remaining
+			// disjuncts (resp. conjuncts)
+			return correspondingFiniteJunction;
+		}
 		final Term idxAntiDerUidx = constructAntiDerRelation(script, quantifier, idx, updateIndex);
 		final MultiDimensionalSelect idxCellOfArrayRes = new MultiDimensionalSelect(arrayRes, idx, script);
 		final Term updateValueDerRelation = constructDerRelation(script, quantifier, idxCellOfArrayRes.toTerm(script),
@@ -412,17 +417,26 @@ public class ArrayIndexEqualityManager {
 
 	public Term constructNestedStoreUpdateConstraint(final Script script, final int quantifier, final Term resArray,
 			final ArrayIndex idx, final List<ArrayIndex> storeIndices, final List<Term> storeValues,
-			final Term inputArrayValue) {
+			final Term defaultValue) {
 		assert storeIndices.size() == storeValues.size();
 		final List<Term> resultDualJuncts = new ArrayList<>();
+		// if different from all store indices
+		// resArray[idx] == defaultValue
 		final Term inputCase = constructNestedStoreUpdateConstraintForOnePosition(script, quantifier, resArray, idx,
-				storeIndices, idx, inputArrayValue);
+				storeIndices, idx, defaultValue);
+		resultDualJuncts.add(inputCase);
+		// if different from all store indices but the innermost
+		// resArray[idx] is equivalent to the innermost value
+		// if different from all outer store indices but the second innermost
+		// resArray[idx] is equivalent to the second innermost value
+		// ....
 		final List<ArrayIndex> tmp = new ArrayList<>(storeIndices);
 		for (int i = 0; i < storeIndices.size(); i++) {
 			final ArrayIndex innermost = tmp.remove(tmp.size() - 1);
 			final Term correspondingValue = storeValues.get(storeValues.size() - 1 - i);
 			final Term term = constructNestedStoreUpdateConstraintForOnePosition(script, quantifier, resArray, idx, tmp,
 					innermost, correspondingValue);
+			resultDualJuncts.add(term);
 		}
 		final Term result = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultDualJuncts);
 		return result;
