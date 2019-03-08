@@ -297,7 +297,7 @@ public class Elim1Store {
 		final List<Term> singleCaseJuncts = new ArrayList<>();
 		final List<Term> doubleCaseJuncts = new ArrayList<>();
 
-		final Pair<List<Term>, List<Term>> wc = constructWriteConstraints(selectIndexRepresentatives,
+		final Pair<List<Term>, List<Term>> wc = constructWriteConstraints2(selectIndexRepresentatives,
 				indexEqualityInformation, mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier,
 				newArrayMapping, substitutionMapping, equalityInformation, aiem);
 		singleCaseJuncts.addAll(wc.getFirst());
@@ -323,7 +323,7 @@ public class Elim1Store {
 		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 				indexMapping, substitutionMapping, indexEqualityInformation);
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
-				storedValueInformation, singleCaseTerm);
+				singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 					doubleCaseJuncts);
@@ -830,6 +830,83 @@ public class Elim1Store {
 					throw new AssertionError();
 				}
 			}
+		}
+		return new Pair<List<Term>, List<Term>>(resultConjuncts1case, resultConjuncts2cases);
+	}
+
+
+	/**
+	 * <ul>
+	 * <li> (i == storeIndex)==> (aNew[i] == newValue)
+	 * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
+	 * </ul>
+	 * @param equalityInformation
+	 * @param aiem
+	 */
+	private static Pair<List<Term>, List<Term>> constructWriteConstraints2(
+			final List<ArrayIndex> selectIndexRepresentatives,
+			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
+			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
+			final TermVariable eliminatee, final int quantifier, final Map<MultiDimensionalStore, Term> newArrayMapping,
+			final Map<Term, Term> substitutionMapping, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+			final ArrayIndexEqualityManager aiem) {
+		final List<Term> resultConjuncts1case = new ArrayList<Term>();
+		final List<Term> resultConjuncts2cases = new ArrayList<Term>();
+		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
+			final List<ArrayIndex> storeIndexReplacements;
+			final List<Term> storeValueReplacements;
+			final Term resArray = entry.getValue();
+			{
+				ArrayIndex storeIndexRepresentative;
+				{
+					final ArrayIndex storeIndex = entry.getKey().getIndex();
+					storeIndexRepresentative = indexEqualityInformation.getRepresentative(storeIndex);
+				}
+				final ArrayIndex replacementStoreIndex = indexMapping.get(storeIndexRepresentative);
+				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
+				final Term storeValue = entry.getKey().getValue();
+				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
+						substitutionMapping).transform(storeValue);
+				storeIndexReplacements = Collections.singletonList(replacementStoreIndex);
+				storeValueReplacements = Collections.singletonList(storeValueReplacement);
+			}
+			for (final ArrayIndex selectIndexRepresentative : selectIndexRepresentatives) {
+				assert indexEqualityInformation.isRepresentative(selectIndexRepresentative) : "no representative: "
+						+ selectIndexRepresentative;
+				final ArrayIndex selectIndexReplacement = indexMapping.get(selectIndexRepresentative);
+				assert !occursIn(eliminatee, selectIndexReplacement) : "var is still there";
+
+				final Term inputArrayValue = oldCellMapping.get(selectIndexRepresentative);
+				final Term constraintForSelectIndex = aiem.constructNestedStoreUpdateConstraint(mgdScript.getScript(),
+						quantifier, resArray, selectIndexReplacement, storeIndexReplacements, storeValueReplacements,
+						inputArrayValue);
+				if (SmtUtils.isAtomicFormula(constraintForSelectIndex)) {
+					resultConjuncts1case.add(constraintForSelectIndex);
+				} else {
+					resultConjuncts2cases.add(constraintForSelectIndex);
+				}
+			}
+			final Set<ArrayIndex> storeIndexRepresentatives = new HashSet<>();
+			for (final ArrayIndex storeIndex : Collections.singleton(entry.getKey().getIndex())) {
+				storeIndexRepresentatives.add(indexEqualityInformation.getRepresentative(storeIndex));
+			}
+			for (final ArrayIndex storeIndexRepresentative : storeIndexRepresentatives) {
+				assert indexEqualityInformation.isRepresentative(storeIndexRepresentative) : "no representative: "
+						+ storeIndexRepresentative;
+				final ArrayIndex storeIndexReplacement = indexMapping.get(storeIndexRepresentative);
+				assert !occursIn(eliminatee, storeIndexReplacement) : "var is still there";
+
+				final Term defaultValue = null;
+				final Term constraintForStoreIndex = aiem.constructNestedStoreUpdateConstraint(mgdScript.getScript(),
+						quantifier, resArray, storeIndexReplacement, storeIndexReplacements, storeValueReplacements,
+						defaultValue);
+				if (SmtUtils.isAtomicFormula(constraintForStoreIndex)) {
+					resultConjuncts1case.add(constraintForStoreIndex);
+				} else {
+					resultConjuncts2cases.add(constraintForStoreIndex);
+				}
+			}
+
 		}
 		return new Pair<List<Term>, List<Term>>(resultConjuncts1case, resultConjuncts2cases);
 	}
