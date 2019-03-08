@@ -389,7 +389,11 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					.transform(oldVarsAssignment.getFormula())
 							);
 
-		assert assertNoFreeVars(headVars, bodyVars, constraint);
+//		assert assertNoFreeVars(headVars, bodyVars, constraint);
+		if (!assertNoFreeVars(headVars, bodyVars, constraint)) {
+			throw new UnsupportedOperationException("implement this");
+		}
+
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();

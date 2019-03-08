@@ -21,10 +21,10 @@
 
 var g : int;
 
-procedure foo();
+procedure ULTIMATE.start();
 modifies g;
 
-implementation foo() {
+implementation ULTIMATE.start() {
   var x, y, z: int;
 
   x := 1;
