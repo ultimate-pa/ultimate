@@ -63,6 +63,10 @@ public class HornClause implements IRankedLetter {
 
 	private final boolean mHeadIsFalse;
 
+	/**
+	 * Variables occurring in the body. We will quantify over these and those occurring in the head.
+	 * (this includes "auxVars", i.e., variables occurring in the constraint only.
+	 */
 	private final Set<HcBodyVar> mBodyVariables;
 
 

@@ -236,27 +236,36 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
-	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSymName, final int index, final Sort sort) {
+	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSym, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
-		HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSymName, index, transferredSort);
+		HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSym, index, transferredSort);
 		if (result == null) {
+
+			final String globallyUniqueId = HornUtilConstants.computeNameForHcVar(HornUtilConstants.HEADVARPREFIX,
+				predSym, index, sort.toString());
+
+
 			mManagedScript.lock(this);
-			result = new HcHeadVar(predSymName, index, transferredSort, mManagedScript, this);
+			result = new HcHeadVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
 			mManagedScript.unlock(this);
-			mPredSymNameToIndexToSortToHcHeadVar.put(predSymName, index, transferredSort, result);
+			mPredSymNameToIndexToSortToHcHeadVar.put(predSym, index, transferredSort, result);
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
 		}
 		return result;
 	}
 
-	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSymName, final int index, final Sort sort) {
+	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
-		HcBodyVar result = mPredSymNameToIndexToSortToHcBodyVar.get(predSymName, index, transferredSort);
+		HcBodyVar result = mPredSymNameToIndexToSortToHcBodyVar.get(predSym, index, transferredSort);
 		if (result == null) {
+			final String globallyUniqueId =
+						HornUtilConstants.computeNameForHcVar(HornUtilConstants.BODYVARPREFIX,
+							predSym, index, sort.toString());
+
 			mManagedScript.lock(this);
-			result = new HcBodyVar(predSymName, index, transferredSort, mManagedScript, this);
+			result = new HcBodyVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
 			mManagedScript.unlock(this);
-			mPredSymNameToIndexToSortToHcBodyVar.put(predSymName, index, transferredSort, result);
+			mPredSymNameToIndexToSortToHcBodyVar.put(predSym, index, transferredSort, result);
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
 		}
 		return result;

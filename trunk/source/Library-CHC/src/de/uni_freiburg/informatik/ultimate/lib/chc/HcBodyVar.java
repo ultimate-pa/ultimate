@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HcBodyVar extends HcVar implements ILocalProgramVar {
+public class HcBodyVar extends HcPredVar implements ILocalProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
@@ -53,9 +53,9 @@ public class HcBodyVar extends HcVar implements ILocalProgramVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcBodyVar(final HcPredicateSymbol headPredSym, final int index, final Sort sort,
+	public HcBodyVar(final String globallyUniqueId, final HcPredicateSymbol headPredSym, final int index, final Sort sort,
 			final ManagedScript script, final Object lockOwner) {
-		super(false, headPredSym, index, sort, script, lockOwner);
+		super(globallyUniqueId, false, headPredSym, index, sort, script, lockOwner);
 	}
 
 

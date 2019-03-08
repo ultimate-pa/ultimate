@@ -27,7 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
@@ -37,22 +39,37 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HcHeadVar extends HcPredVar {
+public class HcBodyAuxVar extends HcVar implements ILocalProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
+
+
 
 	/**
 	 * Identified by the first three parameters (headPredSymProcName, index, sort)
 	 *
-	 * @param headPredSymProcName
+	 * @param headPredSym
 	 * @param index
 	 * @param sort
-	 * @param v
+	 * @param termVar
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	HcHeadVar(final String globallyUniqueId, final HcPredicateSymbol headPredSym, final int index, final Sort sort,
-			final ManagedScript mgdScript, final Object lockOwner) {
-		super(globallyUniqueId, true, headPredSym, index, sort, mgdScript, lockOwner);
+	public HcBodyAuxVar(final TermVariable tv, final ManagedScript mgdScript, final Object lockOwner) {
+		super(tv.toString(),
+				tv,
+				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, tv.getSort(), tv.getName()),
+				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, tv.getSort(), tv.getName()),
+				false,
+				"noproc-hcbodyauxvar"
+				);
+
 	}
+
+
+	@Override
+	public String getIdentifier() {
+		return getGloballyUniqueId();
+	}
+
 }
