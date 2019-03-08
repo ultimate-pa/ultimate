@@ -217,6 +217,13 @@ public class Elim1Store {
 
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation, polarizedContext,
 				quantifier, mLogger, mMgdScript);
+		if (aiem.contextIsAbsorbingElement()) {
+			aiem.unlockSolver();
+			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
+			mLogger.warn("Array PQE input equivalent to " + absobingElement);
+			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement,
+					input.getContext());
+		}
 
 		final long startTime = System.nanoTime();
 		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analyzeIndexEqualities(quantifier,
@@ -225,38 +232,22 @@ public class Elim1Store {
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
 		}
-		if (aiem.contextIsAbsorbingElement()) {
-			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
-			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement,
-					input.getContext());
-		}
 		assert indexEqualityInformation != null;
 
+		// inferences of select term equalities might lead
+		// to better index replacements because a select term
+		// might be part of an index
+		inferCellEqualitiesViaCongruence(mMgdScript, eliminatee, indexEqualityInformation, equalityInformation);
+
 		final List<ArrayIndex> selectIndexRepresentatives = new ArrayList<>();
-		final List<ArrayIndex> allIndexRepresentatives = new ArrayList<>();
 		for (final ArrayIndex selectIndex : selectIndices) {
 			final ArrayIndex selectIndexRepresentative = indexEqualityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
-			allIndexRepresentatives.add(selectIndexRepresentative);
-			// following is needed because we may now construct
-			// a[selectIndexRepresentative] instead of
-			// a[selectIndex]
-			final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
-			final Term oldSelectForRep = constructOldSelectTerm(mMgdScript, eliminatee, selectIndexRepresentative);
-			equalityInformation.addElement(oldSelectForRep);
-			equalityInformation.reportEquality(oldSelectForRep, oldSelect);
-		}
-		final List<ArrayIndex> storeIndexRepresentatives = new ArrayList<>();
-		for (final MultiDimensionalStore store : stores) {
-			final ArrayIndex storeIndexRepresentative = indexEqualityInformation.getRepresentative(store.getIndex());
-			storeIndexRepresentatives.add(storeIndexRepresentative);
-			allIndexRepresentatives.add(storeIndexRepresentative);
 		}
 
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
-		final IndexMappingProvider imp = new IndexMappingProvider(mMgdScript, allIndexRepresentatives, eliminatee,
+		final IndexMappingProvider imp = new IndexMappingProvider(mMgdScript, eliminatee,
 				indexEqualityInformation);
 
 		final Map<ArrayIndex, ArrayIndex> indexMapping = imp.getIndexReplacementMapping();
@@ -412,6 +403,29 @@ public class Elim1Store {
 												+ resultEt;
 		return resultEt;
 
+	}
+
+
+	/**
+	 * Add for each pair of equivalent indices i1, i2, the equality
+	 * select(i1)==select(i2). Even if the equalityInformation
+	 * {@link ThreeValuedEquivalenceRelation} was obtained by
+	 * a congruence aware reasoning, this information might be new
+	 * because the select terms might have not been in the
+	 * {@link ThreeValuedEquivalenceRelation} before.
+	 */
+	private static void inferCellEqualitiesViaCongruence(final ManagedScript mgdScript, final TermVariable eliminatee,
+			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
+			final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+		for (final Entry<ArrayIndex, ArrayIndex> supp : indexEqualityInformation.getSupportingEqualities().entrySet()) {
+			final ArrayIndex lhsIndex = supp.getKey();
+			final ArrayIndex rhsIndex = supp.getValue();
+			final Term lhsSelect = constructOldSelectTerm(mgdScript, eliminatee, lhsIndex);
+			final Term rhsSelect = constructOldSelectTerm(mgdScript, eliminatee, rhsIndex);
+			equalityInformation.addElement(lhsSelect);
+			equalityInformation.addElement(rhsSelect);
+			equalityInformation.reportEquality(lhsSelect, rhsSelect);
+		}
 	}
 
 
@@ -880,18 +894,18 @@ public class Elim1Store {
 		private final ArrayIndexReplacementConstructor mReplacementConstructor;
 		private final Map<ArrayIndex, ArrayIndex> mIndexReplacementMapping = new HashMap<>();
 
-		public IndexMappingProvider(final ManagedScript mgdScript, final List<ArrayIndex> allIndexRepresentatives,
-				final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<ArrayIndex> equalityInformation) {
+		public IndexMappingProvider(final ManagedScript mgdScript,
+				final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation) {
 
 			mReplacementConstructor = new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_INDEX, eliminatee);
 
-			for (final ArrayIndex index : allIndexRepresentatives) {
-				final ArrayIndex eqTerm = findNiceReplacementForRepresentative(index, eliminatee, equalityInformation);
+			for (final ArrayIndex index : indexEqualityInformation.getAllRepresentatives()) {
+				final ArrayIndex eqTerm = findNiceReplacementForRepresentative(index, eliminatee, indexEqualityInformation);
 				if (eqTerm != null) {
 					mIndexReplacementMapping.put(index, eqTerm);
 				} else {
 					// need to introduce auxiliary variables
-					final ArrayIndex indexRepresentative = equalityInformation.getRepresentative(index);
+					final ArrayIndex indexRepresentative = indexEqualityInformation.getRepresentative(index);
 					final ArrayIndex indexReplacement = mReplacementConstructor
 							.constructIndexReplacementIfNeeded(indexRepresentative);
 					mIndexReplacementMapping.put(index, indexReplacement);
