@@ -83,6 +83,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	private Term mInputTerm;
 	private final Term mContext;
 	private final boolean mContextIsDisjunctive;
+	private long mStartTime;
 
 	public SimplifyDDAWithTimeout(final Script script, final IUltimateServiceProvider services) {
 		this(script, true, services);
@@ -116,8 +117,8 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	@Override
 	protected Redundancy getRedundancy(final Term term) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(this.getClass(),
-					"simplifying term of DAG size " + (new DAGSize().size(mInputTerm)));
+			throw new ToolchainCanceledException(this.getClass(), "simplifying term of DAG size "
+					+ (new DAGSize().size(mInputTerm)) + " for " + getElapsedTimeInMilliseconds() + "ms.");
 		}
 		return super.getRedundancy(term);
 	}
@@ -141,6 +142,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	@Override
 	public Term getSimplifiedTerm(final Term inputTerm) {
 		mInputTerm = inputTerm;
+		mStartTime = System.nanoTime();
 		// mLogger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
 		if (!SmtSortUtils.isBoolSort(inputTerm.getSort())) {
@@ -211,6 +213,10 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		// assert PushPopChecker.atLevel(mScript, lvl);
 		mInputTerm = null;
 		return term;
+	}
+
+	private long getElapsedTimeInMilliseconds() {
+		return (System.nanoTime() - mStartTime) / 1000000;
 	}
 
 }
