@@ -255,11 +255,14 @@ public class ElimStorePlain {
 	}
 
 	private EliminationTaskWithContext applyComplexEliminationRules(final EliminationTaskWithContext eTask) {
-		TermVariable eliminatee;
+		final TermVariable eliminatee;
 		if (eTask.getEliminatees().size() != 1) {
 			throw new AssertionError("need exactly one eliminatee");
 		} else {
 			eliminatee = eTask.getEliminatees().iterator().next();
+		}
+		if (!QuantifierUtils.isQuantifierFree(eTask.getTerm())) {
+			throw new AssertionError("Alternating quantifiers not yet supported");
 		}
 		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
 				eTask.getQuantifier(), eTask.getContext());
