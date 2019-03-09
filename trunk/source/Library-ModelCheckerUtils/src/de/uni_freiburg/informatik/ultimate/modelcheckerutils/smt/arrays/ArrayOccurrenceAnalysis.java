@@ -52,12 +52,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArrayOccurrenceAnalysis {
+
+	private static final boolean THROW_ERROR_BEFORE_DOWNGRADE = false;
+
 	private final Term mAnalyzedTerm;
 	private final Term mWantedArray;
 	private final int mDimensionUpperLimit;
 
 	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
-	private final List<MultiDimensionalStore> mNestedArrayStores = new ArrayList<>();
+	private final List<MultiDimensionalNestedStore> mNestedArrayStores = new ArrayList<>();
 	private final List<MultiDimensionalSelect> mArraySelects = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayEqualities = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayDisequalities = new ArrayList<>();
@@ -89,7 +92,7 @@ public class ArrayOccurrenceAnalysis {
 	 * @return from the analyzed term all (possibly nested) store subterms whose array is the wantedArray
 	 * such that the store subterms are not part of a select-over-store subterm.
 	 */
-	public List<MultiDimensionalStore> getNestedArrayStores() {
+	public List<MultiDimensionalNestedStore> getNestedArrayStores() {
 		return mNestedArrayStores;
 	}
 	/**
@@ -151,7 +154,7 @@ public class ArrayOccurrenceAnalysis {
 		for (final MultiDimensionalSelect mds : getArraySelects()) {
 			result.add(mds.getDimension());
 		}
-		for (final MultiDimensionalStore mds : getNestedArrayStores()) {
+		for (final MultiDimensionalNestedStore mds : getNestedArrayStores()) {
 			result.add(mds.getDimension());
 		}
 		return result;
@@ -176,6 +179,7 @@ public class ArrayOccurrenceAnalysis {
 		}
 
 		class MyWalker extends TermWalker {
+
 			MyWalker(final Term term) {
 				super(term);
 			}
@@ -256,17 +260,25 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					MultiDimensionalStore nas = MultiDimensionalStore.convert(term);
+					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(term);
 					if(nas != null && nas.getArray().equals(mWantedArray)) {
+						if (THROW_ERROR_BEFORE_DOWNGRADE && nas
+								.getDimension() != new MultiDimensionalSort(mWantedArray.getSort()).getDimension()) {
+							throw new AssertionError("downgrade");
+						}
 						if (nas.getDimension() > mDimensionUpperLimit) {
-							nas = nas.getInnermost(mDimensionUpperLimit);
+							nas = new MultiDimensionalNestedStore(nas.getInnermost(null).getInnermost(mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
 						mNestedArrayStores.add(nas);
-						for (final Term indexEntry : nas.getIndex()) {
-							walker.enqueueWalker(new MyWalker(indexEntry));
+						for (final ArrayIndex ai : nas.getIndices()) {
+							for (final Term indexEntry : ai) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
 						}
-						walker.enqueueWalker(new MyWalker(nas.getValue()));
+						for (final Term value : nas.getValues()) {
+							walker.enqueueWalker(new MyWalker(value));
+						}
 					} else {
 						for (final Term t : term.getParameters()) {
 							walker.enqueueWalker(new MyWalker(t));
@@ -351,7 +363,12 @@ public class ArrayOccurrenceAnalysis {
 		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
 	}
 
-	public static Set<ArrayIndex> extractStoreIndices(final List<MultiDimensionalStore> arraySelects) {
-		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
+	public static Set<ArrayIndex> extractStoreIndices(final List<MultiDimensionalStore> mds) {
+		return mds.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
 	}
+
+	public static Set<ArrayIndex> extractNestedStoreIndices(final List<MultiDimensionalNestedStore> arraySelects) {
+		return arraySelects.stream().map(x -> x.getIndices()).flatMap(List::stream).collect(Collectors.toSet());
+	}
+
 }

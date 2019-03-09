@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -199,7 +200,7 @@ public class Elim1Store {
 		assert aoa.computeSelectAndStoreDimensions().size() <= 1 : "incompatible";
 
 		final List<MultiDimensionalSelect> selectTerms = aoa.getArraySelects();
-		final List<MultiDimensionalStore> stores = aoa.getNestedArrayStores();
+		final List<MultiDimensionalNestedStore> stores = aoa.getNestedArrayStores();
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = ArrayIndexEqualityUtils
 				.collectComplimentaryEqualityInformation(mMgdScript.getScript(), quantifier,
@@ -255,10 +256,10 @@ public class Elim1Store {
 		newAuxVars.addAll(imp.getConstructedAuxVars());
 		final Term indexAuxVarDefinitionsTerm = imp.constructAuxVarDefinitions(mScript, quantifier);
 
-		final Map<MultiDimensionalStore, Term> newArrayMapping = new HashMap<>();
+		final Map<MultiDimensionalNestedStore, Term> newArrayMapping = new HashMap<>();
 		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				preprocessedInput, polarizedContext);
-		for (final MultiDimensionalStore store : stores) {
+		for (final MultiDimensionalNestedStore store : stores) {
 			final Term newArray;
 			final EqProvider eqProvider = new EqProvider(preprocessedInputWithContext, eliminatee, quantifier);
 			final Term eqArray = eqProvider.getEqTerm(store.toTerm(mScript));
@@ -276,7 +277,7 @@ public class Elim1Store {
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
+		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
 			assert entry.getKey().toTerm(mScript).getSort() == entry.getValue().getSort() : "incompatible sorts";
 			substitutionMapping.put(entry.getKey().toTerm(mScript), entry.getValue());
 		}
@@ -320,8 +321,8 @@ public class Elim1Store {
 
 		final Term transformedTerm = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
 				.transform(intermediateTerm);
-		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
-				indexMapping, substitutionMapping, indexEqualityInformation);
+//		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
+//				indexMapping, substitutionMapping, indexEqualityInformation);
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
 				singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
@@ -460,7 +461,7 @@ public class Elim1Store {
 	 * @param script
 	 */
 	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final List<ArrayIndex> selectIndexRepresentatives,
-			final Map<MultiDimensionalStore, Term> newArrayMapping,
+			final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final AuxVarConstructor auxVarConstructor,
 			final TermVariable eliminatee, final int quantifier,
@@ -491,22 +492,23 @@ public class Elim1Store {
 		return oldCellMapping;
 	}
 
-	private static Term getOldValueInNewArray(final Map<MultiDimensionalStore, Term> newArrayMapping,
+	private static Term getOldValueInNewArray(final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final ArrayIndex selectIndexRepresentative,
 			final Script script) {
-		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
-			final ArrayIndex storeIndex = entry.getKey().getIndex();
-			if (indexEqualityInformation.getEqualityStatus(selectIndexRepresentative,
-					storeIndex) == EqualityStatus.NOT_EQUAL) {
-				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
-				final Term newAuxArray = entry.getValue();
-				final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex, script)
-						.toTerm(script);
-				return newSelect;
-			}
-		}
 		return null;
+//		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
+//			final ArrayIndex storeIndex = entry.getKey().getIndex();
+//			if (indexEqualityInformation.getEqualityStatus(selectIndexRepresentative,
+//					storeIndex) == EqualityStatus.NOT_EQUAL) {
+//				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
+//				final Term newAuxArray = entry.getValue();
+//				final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex, script)
+//						.toTerm(script);
+//				return newSelect;
+//			}
+//		}
+//		return null;
 	}
 
 	private static Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
@@ -531,7 +533,7 @@ public class Elim1Store {
 
 
 	private static ThreeValuedEquivalenceRelation<ArrayIndex> analyzeIndexEqualities(final int mQuantifier,
-			final Set<ArrayIndex> selectIndices, final List<MultiDimensionalStore> stores, final Term preprocessedInput,
+			final Set<ArrayIndex> selectIndices, final List<MultiDimensionalNestedStore> stores, final Term preprocessedInput,
 			final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee,
 			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
 
@@ -543,8 +545,8 @@ public class Elim1Store {
 		}
 
 		final ArrayList<ArrayIndex> allIndicesList = new ArrayList<>(selectIndices);
-		for (final MultiDimensionalStore store : stores) {
-			allIndicesList.add(store.getIndex());
+		for (final MultiDimensionalNestedStore store : stores) {
+			allIndicesList.addAll(store.getIndices());
 		}
 
 		final List<Term> allValues = new ArrayList<>();
@@ -556,8 +558,8 @@ public class Elim1Store {
 			value2selectIndex.put(oldSelect, selectIndex);
 			selectIndex2value.put(selectIndex, oldSelect);
 		}
-		for (final MultiDimensionalStore arrayStore : stores) {
-			allValues.add(arrayStore.getValue());
+		for (final MultiDimensionalNestedStore arrayStore : stores) {
+			allValues.addAll(arrayStore.getValues());
 		}
 
 		final ThreeValuedEquivalenceRelation<ArrayIndex> result = new ThreeValuedEquivalenceRelation<>();
@@ -847,28 +849,29 @@ public class Elim1Store {
 			final List<ArrayIndex> selectIndexRepresentatives,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
-			final TermVariable eliminatee, final int quantifier, final Map<MultiDimensionalStore, Term> newArrayMapping,
+			final TermVariable eliminatee, final int quantifier, final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final Map<Term, Term> substitutionMapping, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final ArrayIndexEqualityManager aiem) {
 		final List<Term> resultConjuncts1case = new ArrayList<Term>();
 		final List<Term> resultConjuncts2cases = new ArrayList<Term>();
-		for (final Entry<MultiDimensionalStore, Term> entry : newArrayMapping.entrySet()) {
-			final List<ArrayIndex> storeIndexReplacements;
-			final List<Term> storeValueReplacements;
+		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
+			final List<ArrayIndex> storeIndexReplacements = new ArrayList<>();
+			final List<Term> storeValueReplacements = new ArrayList<>();
 			final Term resArray = entry.getValue();
-			{
+			for (int i=0; i<entry.getKey().getIndices().size(); i++) {
 				ArrayIndex storeIndexRepresentative;
 				{
-					final ArrayIndex storeIndex = entry.getKey().getIndex();
+					final ArrayIndex storeIndex = entry.getKey().getIndices().get(i);
 					storeIndexRepresentative = indexEqualityInformation.getRepresentative(storeIndex);
 				}
 				final ArrayIndex replacementStoreIndex = indexMapping.get(storeIndexRepresentative);
 				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
-				final Term storeValue = entry.getKey().getValue();
+
+				final Term storeValue = entry.getKey().getValues().get(i);
 				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
 						substitutionMapping).transform(storeValue);
-				storeIndexReplacements = Collections.singletonList(replacementStoreIndex);
-				storeValueReplacements = Collections.singletonList(storeValueReplacement);
+				storeIndexReplacements.add(replacementStoreIndex);
+				storeValueReplacements.add(storeValueReplacement);
 			}
 			for (final ArrayIndex selectIndexRepresentative : selectIndexRepresentatives) {
 				assert indexEqualityInformation.isRepresentative(selectIndexRepresentative) : "no representative: "
@@ -887,7 +890,7 @@ public class Elim1Store {
 				}
 			}
 			final Set<ArrayIndex> storeIndexRepresentatives = new HashSet<>();
-			for (final ArrayIndex storeIndex : Collections.singleton(entry.getKey().getIndex())) {
+			for (final ArrayIndex storeIndex : entry.getKey().getIndices()) {
 				storeIndexRepresentatives.add(indexEqualityInformation.getRepresentative(storeIndex));
 			}
 			for (final ArrayIndex storeIndexRepresentative : storeIndexRepresentatives) {

@@ -67,7 +67,7 @@ public class ArrayIndexBasedCostEstimation {
 				totalCost = costForPair + totalCost;
 			}
 		}
-		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis.extractStoreIndices(aoa.getNestedArrayStores());
+		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis.extractNestedStoreIndices(aoa.getNestedArrayStores());
 		final List<ArrayIndex> storeIndicesAsList = new ArrayList<>(storeIndices);
 		for (int i = 0; i < storeIndicesAsList.size(); i++) {
 			for (int j = 0; j < selectIndicesAsList.size(); j++) {

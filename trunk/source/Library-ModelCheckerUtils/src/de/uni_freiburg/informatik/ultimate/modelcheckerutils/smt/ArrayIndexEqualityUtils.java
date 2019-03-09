@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -88,7 +88,7 @@ public class ArrayIndexEqualityUtils {
 
 	static ThreeValuedEquivalenceRelation<Term> collectComplimentaryEqualityInformation(final Script script,
 			final int quantifier, final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
-			final List<MultiDimensionalStore> stores) {
+			final List<MultiDimensionalNestedStore> stores) {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
 		final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
 		boolean inconsistencyDetected = false;
@@ -107,19 +107,22 @@ public class ArrayIndexEqualityUtils {
 			}
 
 		}
-		for (final MultiDimensionalStore arrayStore : stores) {
-			for (final Term entry : arrayStore.getIndex()) {
+		for (final MultiDimensionalNestedStore arrayStore : stores) {
+			for (final ArrayIndex ai : arrayStore.getIndices()) {
+				for (final Term entry : ai) {
+					inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
+							entry, equalityInformation);
+					if (inconsistencyDetected) {
+						return null;
+					}
+				}
+			}
+			for (final Term value : arrayStore.getValues()) {
 				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-						entry, equalityInformation);
+						value, equalityInformation);
 				if (inconsistencyDetected) {
 					return null;
 				}
-			}
-
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-					arrayStore.getValue(), equalityInformation);
-			if (inconsistencyDetected) {
-				return null;
 			}
 		}
 		return equalityInformation;

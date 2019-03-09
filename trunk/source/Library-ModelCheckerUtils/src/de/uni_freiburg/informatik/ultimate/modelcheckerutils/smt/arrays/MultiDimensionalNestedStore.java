@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -53,10 +54,19 @@ public class MultiDimensionalNestedStore {
 		mValues = values;
 	}
 
+	public MultiDimensionalNestedStore(final MultiDimensionalStore mds) {
+		mArray = mds.getArray();
+		mIndices = Collections.singletonList(mds.getIndex());
+		mValues = Collections.singletonList(mds.getValue());
+	}
+
 	public Term getArray() {
 		return mArray;
 	}
 
+	/**
+	 * Innermost indices first.
+	 */
 	public List<ArrayIndex> getIndices() {
 		return mIndices;
 	}
@@ -64,6 +74,11 @@ public class MultiDimensionalNestedStore {
 	public List<Term> getValues() {
 		return mValues;
 	}
+
+	public int getDimension() {
+		return mIndices.get(0).size();
+	}
+
 
 	public Term toTerm(final Script script) {
 		Term array = mArray;
@@ -82,10 +97,15 @@ public class MultiDimensionalNestedStore {
 //		return s;
 //	}
 
+	public MultiDimensionalStore getInnermost(final Script script) {
+		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0), script);
+	}
+
 	public static MultiDimensionalNestedStore convert(final Term term) {
 		if (!term.getSort().isArraySort()) {
 			throw new IllegalArgumentException("no array");
 		}
+//		final int dimension = new MultiDimensionalSort(term.getSort()).getDimension();
 		final LinkedList<ArrayIndex> indices = new LinkedList<>();
 		final LinkedList<Term> values = new LinkedList<>();
 		Term currentArray = term;
@@ -93,7 +113,12 @@ public class MultiDimensionalNestedStore {
 		if (currentStore == null) {
 			return null;
 		}
-		while (currentStore != null) {
+//		if (currentStore.getDimension() != dimension) {
+//			return null;
+////			throw new AssertionError("illegal dimension");
+//		}
+		final int firstSeenDimension = currentStore.getDimension();
+		while (currentStore != null && (currentStore.getDimension() == firstSeenDimension)) {
 			indices.addFirst(currentStore.getIndex());
 			values.addFirst(currentStore.getValue());
 			currentArray = currentStore.getArray();
@@ -101,4 +126,5 @@ public class MultiDimensionalNestedStore {
 		}
 		return new MultiDimensionalNestedStore(currentArray, indices, values);
 	}
+
 }
