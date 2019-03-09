@@ -303,7 +303,6 @@ public class ElimStorePlain {
 			} else {
 				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterDerPreprocessing, eliminatee);
 				newAuxVars.add(eliminatee);
-				throw new AssertionError("self-update");
 			}
 		}
 
