@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -393,6 +394,9 @@ public class ArrayIndexEqualityManager {
 	 * uval) for universal quantifier
 	 * </ul>
 	 *
+	 * @param laterUpdateIndices
+	 *            indices that occur later in the nested stores, outermost at the
+	 *            last position
 	 */
 	private Term constructNestedStoreUpdateConstraintForOnePosition(final Script script, final int quantifier,
 			final Term arrayRes, final ArrayIndex idx, final List<ArrayIndex> laterUpdateIndices,
@@ -415,6 +419,13 @@ public class ArrayIndexEqualityManager {
 		return result;
 	}
 
+	/**
+	 *
+	 * @param storeIndices
+	 *            in order of the stores, innermost first, outermost last
+	 * @param storeValues
+	 *            in order of the stores, innermost first, outermost last
+	 */
 	public Term constructNestedStoreUpdateConstraint(final Script script, final int quantifier, final Term resArray,
 			final ArrayIndex idx, final List<ArrayIndex> storeIndices, final List<Term> storeValues,
 			final Term defaultValue) {
@@ -429,11 +440,11 @@ public class ArrayIndexEqualityManager {
 		// resArray[idx] is equivalent to the innermost value
 		// if different from all outer store indices but the second innermost
 		// resArray[idx] is equivalent to the second innermost value
-		// ....
-		final List<ArrayIndex> tmp = new ArrayList<>(storeIndices);
+		// ...
+		final LinkedList<ArrayIndex> tmp = new LinkedList<>(storeIndices);
 		for (int i = 0; i < storeIndices.size(); i++) {
-			final ArrayIndex innermost = tmp.remove(tmp.size() - 1);
-			final Term correspondingValue = storeValues.get(storeValues.size() - 1 - i);
+			final ArrayIndex innermost = tmp.removeFirst();
+			final Term correspondingValue = storeValues.get(i);
 			final Term term = constructNestedStoreUpdateConstraintForOnePosition(script, quantifier, resArray, idx, tmp,
 					innermost, correspondingValue);
 			resultDualJuncts.add(term);
