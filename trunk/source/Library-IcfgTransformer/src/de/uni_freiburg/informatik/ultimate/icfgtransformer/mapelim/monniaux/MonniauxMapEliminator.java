@@ -24,6 +24,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilde
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
@@ -50,9 +52,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -105,65 +109,127 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Script script = mMgdScript.getScript();
 
 		// Create mappings from original ProgramVars to a set of mCells new ProgramVars
-		final Map<IProgramVar, Set<IProgramVar>> idxD = null;
-		final Map<IProgramVar, Set<IProgramVar>> valD = null;
+		final Map<IProgramVar, Set<IProgramVar>> idxD = Collections.emptyMap();
+		final Map<IProgramVar, Set<IProgramVar>> valD = Collections.emptyMap();
 		final IIcfgSymbolTable symboltable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		final Set<IProgramNonOldVar> globals = symboltable.getGlobals();
-		// mIcfg.getProcedureEntryNodes().keySet(); // set of procedures of this icfg
-		// symboltable.getLocals(procedurename) //for each procedure, get the local variables
+		final Set<ILocalProgramVar> locals = Collections.emptySet();
+		for (final String proc : mIcfg.getProcedureEntryNodes().keySet()) {
+			final Set<ILocalProgramVar> someLocals = symboltable.getLocals(proc);
+			for (final ILocalProgramVar lpv : someLocals) {
+				locals.add(lpv);
+			}
+		}
 
-		// Fill the sets idxD and valD with a certain number (mCells) of new program variables for each old program
+		// Fill the sets idxD and valD with a certain number (mCells) of new global program variables for each old global program
 		// variable of the sort array
 		for (final IProgramVar var : globals) {
 			if (var.getSort().isArraySort()) {
-				final Set<IProgramVar> idx = null;
-				final Set<IProgramVar> val = null;
+				final Set<IProgramVar> idx = Collections.emptySet();
+				final Set<IProgramVar> val = Collections.emptySet();
 				for (int i = 0; i < mCells; i++) {
 					final String name1 = (var.toString() + "_idx_" + Integer.toString(i));
 					final String name2 = (var.toString() + "_val_" + Integer.toString(i));
-					/*
-					 * final IProgramVar newVar1 = ProgramVarUtils.constructLocalProgramVar(name1, procedure,
-					 * var.getSort(), mMgdScript, lockOwner); final IProgramVar newVar2 =
-					 * ProgramVarUtils.constructLocalProgramVar(name2, procedure, var.getSort(), mMgdScript, lockOwner);
-					 * idx.add(newVar1); val.add(newVar2);
-					 */
+					
+					final IProgramVar newVar1 = ProgramVarUtils.constructGlobalProgramVarPair(name1, var.getSort(), mMgdScript, this);
+					final IProgramVar newVar2 = ProgramVarUtils.constructGlobalProgramVarPair(name2, var.getSort(), mMgdScript, this);
+					idx.add(newVar1);
+					val.add(newVar2);
 				}
 				idxD.put(var, idx);
 				valD.put(var, val);
 			}
 		}
+		
+		// Do the same for local program vars
+		for (final ILocalProgramVar var : locals) {
+			if (var.getSort().isArraySort()) {
+				final Set<ILocalProgramVar> idx = Collections.emptySet();
+				final Set<ILocalProgramVar> val = Collections.emptySet();
+				for (int i = 0; i < mCells; i++) {
+					final String name1 = (var.toString() + "_idx_" + Integer.toString(i));
+					final String name2 = (var.toString() + "_val_" + Integer.toString(i));
+					
+					final ILocalProgramVar newVar1 = ProgramVarUtils.constructLocalProgramVar(name1, var.getProcedure(), var.getSort(), mMgdScript, this);
+					final ILocalProgramVar newVar2 = ProgramVarUtils.constructLocalProgramVar(name2, var.getProcedure(), var.getSort(), mMgdScript, this);
+					idx.add(newVar1);
+					val.add(newVar2);
+				}
+				//idxD.put(var, idx);
+				//valD.put(var, val);
+			}
+		}
+		
+		
 
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
 
-			final Map<Term, Integer> lowD = null;
-			final Map<Term, Integer> highD = null;
+			final Map<Term, Integer> lowD = Collections.emptyMap();
+			final Map<Term, Integer> highD = Collections.emptyMap();
 
 			// Iterate over relevant edges
 			if (transition instanceof IIcfgInternalTransition) {
 
 				final IIcfgInternalTransition<?> internalTransition = (IIcfgInternalTransition<?>) transition;
 				final UnmodifiableTransFormula tf = internalTransition.getTransformula();
-				final UnmodifiableTransFormula newtf = tf;
+				final Term newtf = tf.getFormula();
 				final Term tfTerm = tf.getFormula();
 				final StoreSelectEqualityCollector ssec = new StoreSelectEqualityCollector();
 				ssec.transform(tfTerm);
 				final Map<Term, Term> subst = new HashMap<>();
+				
+				// Create new in- and outVars, if necessary
+				final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+				final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
+				final Set<TermVariable> auxVars = tf.getAuxVars();
+				
+				final Map<Term, Set<Term>> hierarchy = Collections.emptyMap();
+				for (final IProgramVar var : globals) {
+					for (final TermVariable aux : auxVars) {
+						if (aux.getSort().isArraySort()) {
+							throw new UnsupportedOperationException("Arrays in auxVariables");
+						}
+					}
+					if (inVars.containsKey(var)) {
+						final Set<Term> valTerms = Collections.emptySet();
+						for (final IProgramVar val : valD.get(var)) {
+							final TermVariable valTerm = mMgdScript.constructFreshTermVariable((val + "_0"), var.getSort());
+							inVars.put(val, valTerm);
+							valTerms.add(inVars.get(var));
+						}
+						hierarchy.put(inVars.get(var), valTerms);
+						inVars.remove(var);
+					}
+					else if (outVars.containsKey(var)) {
+						final Set<Term> valTerms = Collections.emptySet();
+						for (final IProgramVar val : valD.get(var)) {
+							final TermVariable valTerm = mMgdScript.constructFreshTermVariable((val + "_1"), var.getSort());
+							outVars.put(val, valTerm);
+							valTerms.add(outVars.get(var));
+						}
+						outVars.remove(var);
+					}
+				}
 
+				// Eliminate the Select-, Store-, and Equality-Terms
 				for (final Term selectTerm : ssec.mSelectTerms) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
-					EliminateSelects(tf, newtf, idxD, valD, aSelectTerm, lowD, highD);
+					EliminateSelects(tfTerm, newtf, idxD, valD, aSelectTerm, hierarchy);
 				}
 				for (final Term storeTerm : ssec.mStoreTerms) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
-					EliminateStores(tf, newtf, idxD, valD, aStoreTerm, lowD, highD);
+					EliminateStores(tfTerm, newtf, idxD, valD, aStoreTerm, hierarchy);
 				}
 				for (final Term equalityTerm : ssec.mEqualityTerms) {
 					final ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
-					EliminateEqualities(tf, newtf, idxD, valD, aEqualityTerm, lowD, highD);
+					EliminateEqualities(tfTerm, newtf, idxD, valD, aEqualityTerm, hierarchy);
 				}
+				
+				buildTransitionFormula(tf, newtf, inVars, outVars, auxVars);
+				
 			} else {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException("Not yet implemented");
 			}
 		}
 	}
@@ -185,57 +251,33 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		return tfb.finishConstruction(mMgdScript);
 	}
 
-	private void EliminateSelects(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
+	private void EliminateSelects(final Term tf, final Term new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
-			final ApplicationTerm selectTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
+			final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy) {
 		final Term[] params = selectTerm.getParameters();
 		final Term x = params[0];
 		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {
-			lowD.put(x, j);
-		}
-		if (highD.get(x) < j) {
-			highD.put(x, j);
-		}
 		// TBD: Actually eliminate the array
 	}
 
-	private void EliminateStores(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
+	private void EliminateStores(final Term tf, final Term new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
-			final ApplicationTerm storeTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
+			final ApplicationTerm storeTerm, final Map<Term, Set<Term>> hierarchy) {
 		final Term[] params = storeTerm.getParameters();
 		final Term x = params[0];
 		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {
-			lowD.put(x, j);
-		}
-		if (highD.get(x) < j) {
-			highD.put(x, j);
-		}
 		// TBD: Actually eliminate the array
 	}
 
-	private void EliminateEqualities(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula new_tf,
+	private void EliminateEqualities(final Term tf, final Term new_tf,
 			final Map<IProgramVar, Set<IProgramVar>> idxD, final Map<IProgramVar, Set<IProgramVar>> valD,
-			final ApplicationTerm equalityTerm, final Map<Term, Integer> lowD, final Map<Term, Integer> highD) {
+			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy) {
 		final Term[] paramsX = equalityTerm.getParameters();
 		final Term x = paramsX[0];
 		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
 		final Term[] paramsY = equalityTerm.getParameters();
 		final Term y = paramsY[1];
 		final int k = Integer.parseInt(y.toString().replaceAll("\\D", ""));
-		if (lowD.get(x) > j) {
-			lowD.put(x, j);
-		}
-		if (highD.get(x) < j) {
-			highD.put(x, j);
-		}
-		if (lowD.get(y) > k) {
-			lowD.put(y, k);
-		}
-		if (highD.get(y) < k) {
-			highD.put(y, k);
-		}
 		// TBD: Actually eliminate the array
 	}
 
