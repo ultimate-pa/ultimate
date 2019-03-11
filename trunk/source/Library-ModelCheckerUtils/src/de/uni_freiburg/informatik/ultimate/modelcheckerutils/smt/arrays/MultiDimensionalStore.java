@@ -73,6 +73,14 @@ public class MultiDimensionalStore {
 		mStoreTerm = (ApplicationTerm) SmtUtils.multiDimensionalStore(script, array, index, value);
 	}
 
+	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value, final Term asTerm) {
+		super();
+		mArray = array;
+		mIndex = index;
+		mValue = value;
+		mStoreTerm = (ApplicationTerm) asTerm;
+	}
+
 	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		final ArrayList<Term> index = new ArrayList<Term>();
@@ -112,7 +120,7 @@ public class MultiDimensionalStore {
 		}
 	}
 
-	private boolean isCompatibleSelect(final Term term, final Term array, final ArrayList<Term> index) {
+	static boolean isCompatibleSelect(final Term term, final Term array, final List<Term> index) {
 		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
