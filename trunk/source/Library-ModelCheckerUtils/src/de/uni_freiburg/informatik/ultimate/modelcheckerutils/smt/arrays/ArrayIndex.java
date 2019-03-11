@@ -218,8 +218,8 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns an new ArrayIndex that consists of the first k entries of this
-	 * index.
+	 * Returns an new {@link ArrayIndex} that consists of the first k entries of
+	 * this index.
 	 */
 	public ArrayIndex getFirst(final int k) {
 		final List<Term> indexEntries = new ArrayList<>();
@@ -230,7 +230,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns an new ArrayIndex that consists of the last k entries of this
+	 * Returns an new {@link ArrayIndex} that consists of the last k entries of this
 	 * index.
 	 */
 	public ArrayIndex getLast(final int k) {
@@ -250,8 +250,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns true iff the free variables of all index terms are a subset of
-	 * tvSet.
+	 * Returns true iff the free variables of all index terms are a subset of tvSet.
 	 */
 	public boolean freeVarsAreSubset(final Set<TermVariable> tvSet) {
 		for (final Term term : mIndexEntries) {
@@ -262,6 +261,29 @@ public class ArrayIndex implements List<Term> {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Return a new {@link ArrayIndex} whose entries are the elements of
+	 * newIndexEntries followed by the entries of this.
+	 */
+	public ArrayIndex appendEntriesAtBeginning(final List<Term> newIndexEntries) {
+		final List<Term> resultEntries = new ArrayList<>(newIndexEntries);
+		resultEntries.addAll(this);
+		return new ArrayIndex(resultEntries);
+	}
+
+	/**
+	 * Appends to each {@link ArrayIndex} in list indices the newIndexEntries. Does
+	 * not modify existing objects but return new objects.
+	 */
+	public static List<ArrayIndex> appendEntriesAtBeginning(final List<ArrayIndex> indices,
+			final List<Term> newIndexEntries) {
+		final List<ArrayIndex> result = new ArrayList<>(indices.size());
+		for (final ArrayIndex index : indices) {
+			result.add(index.appendEntriesAtBeginning(newIndexEntries));
+		}
+		return result;
 	}
 
 }
