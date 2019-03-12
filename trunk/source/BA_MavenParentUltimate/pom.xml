@@ -545,6 +545,7 @@
 		<module>../Library-InteractiveTA</module>
 		<module>../Library-Server</module>
 		<module>../Library-CHC</module>
+		<module>../LogicalInterpretation</module>
 		<module>../UltimateServer</module>
 		<module>../IcfgTransformation</module>
 		<module>../BuchiProgramProduct</module>
