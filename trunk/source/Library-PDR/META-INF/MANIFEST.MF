@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-IcfgTransformer
+Bundle-Name: Library-PDR
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pdr
 Bundle-Version: 0.1.24
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
