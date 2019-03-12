@@ -57,12 +57,12 @@ public class CommuhashUtils {
 
 	/**
 	 * Dangerous! A function may be commutative in some theory but it is not in e.g., QF_UF
-	 * 
-	 * @param applicationString
+	 *
+	 * @param name The String that is usually returned by FunctionSymbol#getName
 	 * @return
 	 */
-	public static boolean isKnownToBeCommutative(final String applicationString) {
-		switch (applicationString) {
+	public static boolean isKnownToBeCommutative(final String name) {
+		switch (name) {
 		case "and":
 		case "or":
 		case "=":

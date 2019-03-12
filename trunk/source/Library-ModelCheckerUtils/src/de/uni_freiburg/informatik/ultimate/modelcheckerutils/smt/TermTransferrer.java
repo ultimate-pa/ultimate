@@ -162,9 +162,9 @@ public class TermTransferrer extends TermTransformer {
 			final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 			if (mApplyLocalSimplifications) {
 				result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
-						appTerm.getFunction().getIndices(), newArgs);
+						appTerm.getFunction().getIndices(), resultSort, newArgs);
 			} else {
-				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
+				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 			}
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
@@ -174,9 +174,9 @@ public class TermTransferrer extends TermTransformer {
 				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
 				if (mApplyLocalSimplifications) {
 					result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
-							appTerm.getFunction().getIndices(), newArgs);
+							appTerm.getFunction().getIndices(), resultSort, newArgs);
 				} else {
-					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), null, newArgs);
+					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 				}
 			} else {
 				throw e;

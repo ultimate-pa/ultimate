@@ -1171,10 +1171,26 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if applicable.
+	 * Construct term but simplify it using lightweight simplification techniques if
+	 * applicable.
+	 */
+	public static Term termWithLocalSimplification(final Script script, final FunctionSymbol fun,
+			final BigInteger[] indices, final Term... params) {
+		final Sort resultSort = fun.isReturnOverload() ? fun.getReturnSort() : null;
+		return termWithLocalSimplification(script, fun.getName(), indices, resultSort, params);
+	}
+
+	/**
+	 * Construct term but simplify it using lightweight simplification techniques if
+	 * applicable.
+	 *
+	 * @param resultSort
+	 *            must be non-null if and only if we have an explicitly instantiated
+	 *            polymorphic FunctionSymbol, i.e., a function of the form (as
+	 *            <name> <sort>)
 	 */
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
-			final BigInteger[] indices, final Term... params) {
+			final BigInteger[] indices, final Sort resultSort, final Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":

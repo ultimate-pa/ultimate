@@ -501,7 +501,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			result = super.term(funcname, indices, returnSort, params);
 		} else {
 			mSimplificationStack.push(new Triple<>(funcname, indicesList, paramsList));
-			result = SmtUtils.termWithLocalSimplification(this, funcname, indices, params);
+			result = SmtUtils.termWithLocalSimplification(this, funcname, indices, returnSort, params);
 			mSimplificationStack.pop();
 		}
 		return result;

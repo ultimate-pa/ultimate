@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -93,10 +94,12 @@ public class CommuhashNormalForm {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final String funcname = appTerm.getFunction().getApplicationString();
+			final String funcname = appTerm.getFunction().getName();
 			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
+				final Sort resultSort = appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort()
+						: null;
 				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						appTerm.getSort().getIndices(), newArgs);
+						appTerm.getSort().getIndices(), resultSort, newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
@@ -120,10 +123,17 @@ public class CommuhashNormalForm {
 			return pnf;
 		}
 
+		/**
+		 * @param resultSort
+		 *            must be non-null if and only if we have an explicitly instantiated
+		 *            polymorphic FunctionSymbol, i.e., a function of the form (as
+		 *            <name> <sort>)
+		 */
 		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, final BigInteger[] indices,
-				final Term[] params) {
+				final Sort resultSort, final Term[] params) {
 			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname, indices, sortedParams);
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname, indices, resultSort,
+					sortedParams);
 			return simplified;
 		}
 

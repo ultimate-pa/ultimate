@@ -212,14 +212,14 @@ public class Expression2Term {
 				final String negationFuncname =
 						mOperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, BoogieType.TYPE_BOOL);
 				final BigInteger[] indices = new BigInteger[0];
-				return SmtUtils.termWithLocalSimplification(mScript, negationFuncname, indices,
-						SmtUtils.termWithLocalSimplification(mScript, equalityFuncname, indices,
+				return SmtUtils.termWithLocalSimplification(mScript, negationFuncname, indices, null,
+						SmtUtils.termWithLocalSimplification(mScript, equalityFuncname, indices, null,
 								translate(binexp.getLeft()), translate(binexp.getRight())));
 			}
 			final String funcname =
 					mOperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType());
 			final BigInteger[] indices = null;
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, translate(binexp.getLeft()),
+			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, null, translate(binexp.getLeft()),
 					translate(binexp.getRight()));
 		} else if (exp instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) exp;
@@ -232,7 +232,7 @@ public class Expression2Term {
 			}
 			final String funcname = mOperationTranslator.opTranslation(op, unexp.getExpr().getType());
 			final BigInteger[] indices = null;
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, translate(unexp.getExpr()));
+			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, null, translate(unexp.getExpr()));
 		} else if (exp instanceof RealLiteral) {
 			final Term result = mOperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
@@ -406,7 +406,7 @@ public class Expression2Term {
 				result = mScript.term(funcSymb, indices, null, parameters);
 			} else {
 				// simplification is overkill for non-bv operations
-				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, parameters);
+				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, null, parameters);
 			}
 		}
 		return result;

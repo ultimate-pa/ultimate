@@ -58,7 +58,7 @@ public class UnfTransformer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final FunctionSymbol fun = appTerm.getFunction();
-		final Term result = SmtUtils.termWithLocalSimplification(mScript, fun.getName(), fun.getIndices(), newArgs);
+		final Term result = SmtUtils.termWithLocalSimplification(mScript, fun, fun.getIndices(), newArgs);
 		setResult(result);
 		return;
 	}
