@@ -59,4 +59,8 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 		}
 		super.convert(term);
 	}
+
+	protected boolean isEmpty() {
+		return mSelectTerms.isEmpty() && mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
+	}
 }
