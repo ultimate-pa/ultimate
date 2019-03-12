@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: IcfgTransformation
+Bundle-Name: Logical Interpretation
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.logicalinterpretation;singleton:=true
 Bundle-Version: 0.1.24
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.logicalinterpretation.Activator
