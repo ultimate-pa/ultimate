@@ -196,18 +196,47 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sb = new StringBuilder();
 		for(int step = 0; step < mDependenciesGraphNodes.size(); step++) {
 			SystemState state = mTestStates.get(step);
-			sb.append("----| Step: t ");
-			sb.append(Double.toString(mTestStates.get(step).getTimeStep()));
-			sb.append("|-------------------------------------------------------------------------------------------");
+			double timeStep = mTestStates.get(step).getTimeStep();
+			sb.append("------------------------------------------------------------------------------------------");
 			sb.append(System.getProperty("line.separator"));
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
-			sb.append(getStepTestPlan(stepDependencyGraphNodes, state, filter));
+			sb.append(getStepTestPlan(stepDependencyGraphNodes, state, filter, timeStep));
 		}
 		return sb.toString();
 	}
 
+	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter, double timeStep) {
+		StringBuilder sbin = new StringBuilder();
+		StringBuilder sbout = new StringBuilder();
+		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
+			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+			if (!filter.contains(dependencyNode)) continue;
+			//inputs
+			if(dependencyNode.getInputs().size() > 0) {
+				sbin.append(state.getVarSetToValueSet(dependencyNode.getInputs()));
+			}
+			//Outputs
+			if(dependencyNode.getOutputs().size() > 0) {
+				sbout.append(state.getVarSetToValueSet(dependencyNode.getOutputs()));
+				sbout.append("(" + dependencyNode.getReqAut().getName() + ") ");
+			}
+		}
+		sbin.append(System.getProperty("line.separator"));
+		sbout.append(System.getProperty("line.separator"));
+		if (sbout.toString().trim().length() > 0) {
+			sbin.append("Wait at max  " + Double.toString(timeStep) + " for ");
+			return sbin.append(sbout).toString();
+		} else {
+			sbin.append("Wait  " + Double.toString(timeStep));
+			sbin.append(System.getProperty("line.separator"));
+			return sbin.toString();
+		}
+		
+	}
 	
-	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter) {
+	
+	@SuppressWarnings("unused")
+	private String getStepTestPlanGraphed(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter, double timeStep) {
 		StringBuilder sbin = new StringBuilder();
 		StringBuilder sbtrans = new StringBuilder();
 		StringBuilder sbout = new StringBuilder();
