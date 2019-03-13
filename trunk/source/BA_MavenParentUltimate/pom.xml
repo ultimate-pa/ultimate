@@ -569,7 +569,7 @@
 		<module>../InvariantSynthesis</module>
 		<module>../ReqPrinter</module>
 		<module>../ReqParser</module>
-
+		<module>../ReqToTest</module>
 	</modules>
 
 	<profiles>
