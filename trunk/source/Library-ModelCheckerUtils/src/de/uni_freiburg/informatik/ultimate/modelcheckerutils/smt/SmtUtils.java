@@ -1175,9 +1175,9 @@ public final class SmtUtils {
 	 * applicable.
 	 */
 	public static Term termWithLocalSimplification(final Script script, final FunctionSymbol fun,
-			final BigInteger[] indices, final Term... params) {
+			final Term... params) {
 		final Sort resultSort = fun.isReturnOverload() ? fun.getReturnSort() : null;
-		return termWithLocalSimplification(script, fun.getName(), indices, resultSort, params);
+		return termWithLocalSimplification(script, fun.getName(), fun.getIndices(), resultSort, params);
 	}
 
 	/**

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 /**
  *
  * {@link TermTransformer} that applies
- * {@link SmtUtils#termWithLocalSimplification(Script, String, java.math.BigInteger[], Term...)} to all sub-terms in
+ * {@link SmtUtils#termWithLocalSimplification(Script, String, Term...)} to all sub-terms in
  * order to create a new term in Ultimate normal form.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -58,7 +58,7 @@ public class UnfTransformer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final FunctionSymbol fun = appTerm.getFunction();
-		final Term result = SmtUtils.termWithLocalSimplification(mScript, fun, fun.getIndices(), newArgs);
+		final Term result = SmtUtils.termWithLocalSimplification(mScript, fun, newArgs);
 		setResult(result);
 		return;
 	}

@@ -54,7 +54,7 @@ public class SubstitutionWithLocalSimplification extends Substitution {
 			result = appTerm;
 		} else {
 			result = SmtUtils.termWithLocalSimplification(mMgdScript.getScript(), appTerm.getFunction(),
-					appTerm.getFunction().getIndices(), newArgs);
+					newArgs);
 		}
 		setResult(result);
 	}
