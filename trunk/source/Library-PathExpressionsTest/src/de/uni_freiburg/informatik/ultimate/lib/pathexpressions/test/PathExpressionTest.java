@@ -167,19 +167,6 @@ public class PathExpressionTest {
 	public void branchWithEps2() {
 		IntGraph g = new IntGraph();
 		g.addEdge(1, "a", 2);
-		g.addEdge(2, "v", 4);
-		g.addEdge(1, "c", 3);
-		g.addEdge(1, "c", 4);
-		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 4);
-		IRegEx<String> expected = u("c", a("a", "v"));
-		assertEquals(expected, expressionBetween);
-	}
-
-	@Test
-	public void branchWithEps3() {
-		IntGraph g = new IntGraph();
-		g.addEdge(1, "a", 2);
 		g.addEdge(2, "v", 3);
 		g.addEdge(1, "c", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
