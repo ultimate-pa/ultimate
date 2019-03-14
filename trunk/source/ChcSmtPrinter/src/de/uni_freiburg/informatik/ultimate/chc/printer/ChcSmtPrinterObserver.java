@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
+	private static final boolean PRODUCE_UNSAT_CORES = true;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -114,6 +115,10 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 		// set logic
 		loggingScript.setLogic("HORN");
 
+		if (PRODUCE_UNSAT_CORES) {
+			loggingScript.setOption(":produce-unsat-cores", "true");
+		}
+
 		// declare functions
 		for (final HcPredicateSymbol hcPred : symbolTable.getHcPredicateSymbols()) {
 			final FunctionSymbol fsym = hcPred.getFunctionSymbol();
@@ -138,6 +143,14 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
 		// check-sat
 		loggingScript.checkSat();
+
+		if (PRODUCE_UNSAT_CORES) {
+			try {
+				loggingScript.getUnsatCore();
+			} catch (final UnsupportedOperationException e) {
+				// do nothing
+			}
+		}
 
 		return true;
 	}

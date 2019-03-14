@@ -9,7 +9,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -76,6 +78,10 @@ public class HornClause implements IRankedLetter {
 	 * This field allow one (e.g. the creator of this object) to attach comments to this object.
 	 */
 	private String mComment;
+
+
+	// TODO setting
+	private final boolean ANNOTATE_ASSERTED_TERMS = true;
 
 
 	/**
@@ -330,8 +336,24 @@ public class HornClause implements IRankedLetter {
 	 		result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
 	 	}
 
+		Term resultFinal;
+		if (ANNOTATE_ASSERTED_TERMS) {
+			try {
+//				final String qos = new QuotedObject(mFormula).toString();
+				final String qos = "t" + hashCode();
+//				final String qos = new QuotedObject(mFormula.hashCode()).toString();
+//				mgdScript.declareFun(this, qos, new Sort[0], SmtSortUtils.getBoolSort(mgdScript));
+				resultFinal = mgdScript.getScript().annotate(result,
+					new Annotation(":named", qos));
+			} catch (final SMTLIBException sle) {
+				resultFinal = result;
+			}
+		} else {
+			resultFinal = result;
+		}
+
 		mgdScript.unlock(this);
-		return result;
+		return resultFinal;
 	}
 
 	@Override

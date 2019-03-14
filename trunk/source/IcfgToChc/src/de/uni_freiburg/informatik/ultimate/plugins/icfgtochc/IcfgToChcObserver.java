@@ -95,8 +95,11 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	private final Map<String, List<IProgramVar>> mProcToVarList;
 
 	private TermVariable mAssertionViolatedVar;
-	private TermVariable mAssertionViolatedVarPrime;
 	private final Map<TermVariable, IProgramVar> mTermVarToProgVar;
+
+	// TODO setting
+//	private final boolean ANNOTATE_ASSERTED_TERMS = true;
+
 
 	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -142,6 +145,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		mMgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mHcSymbolTable = new HcSymbolTable(mMgdScript);
 		mIcfg = (IIcfg<IcfgLocation>) icfg;
+
+		mMgdScript.lock(this);
 
 		mAssertionViolatedVar = mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME,
 				SmtSortUtils.getBoolSort(mMgdScript));
@@ -196,26 +201,69 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		/* add chcs for entry and exit points*/
 
 		/*  every procedure entry point gets a chc of the form
-		 *   (not V') -> entryPoint */
+		 *   (not V') /\ old(g1) = g1 /\ ...   -> entryPoint */
 		for (final Entry<String, LOC> en : icfg.getProcedureEntryNodes().entrySet()) {
+
+			final String proc = en.getKey();
 
 			final HcPredicateSymbol headPred = getOrConstructPredicateSymbolForIcfgLocation(en.getValue());
 
-			final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(en.getKey());
-			final List<HcHeadVar> headVars = new ArrayList<>();
+			final Map<Term, Term> substitutionMapping = new LinkedHashMap<>();
+
+			// look for V
+			// look for globals
 			HcHeadVar assertionViolatedHeadVar = null;
-			for (int i = 0; i < varsForProc.size(); i++) {
+			final List<HcHeadVar> headVars = new ArrayList<>();
+			final List<Term> globalsWithTheirOldVarsEqualities = new ArrayList<>();
+			{
+				final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(proc);
+				for (int i = 0; i < varsForProc.size(); i++) {
 					final TermVariable tv = varsForProc.get(i);
+					final IProgramVar pv = mTermVarToProgVar.get(tv);
 					final HcHeadVar headVar =
-							getPrettyHeadVar(headPred, i, tv.getSort(), mTermVarToProgVar.get(tv));
+							getPrettyHeadVar(headPred, i, tv.getSort(), pv);
 					headVars.add(headVar);
 					if (tv.equals(mAssertionViolatedVar)) {
 						assertionViolatedHeadVar = headVar;
+					} else if (pv.isGlobal() && !pv.isOldvar()) {
+						globalsWithTheirOldVarsEqualities.add(
+								SmtUtils.binaryEquality(mMgdScript.getScript(),
+										pv.getTermVariable(),
+										((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
+						substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
+					} else if (pv.isGlobal() && pv.isOldvar()) {
+						substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
 					}
+				}
 			}
 
-			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable,
+//			// look for globals
+//			final List<Term> globalsWithTheirOldVarsEqualities = new ArrayList<>();
+//			{
+//				final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(proc);
+//				for (int i = 0; i < varsForProc.size(); i++) {
+//					final TermVariable tv = varsForProc.get(i);
+//					final IProgramVar pv = mTermVarToProgVar.get(tv);
+//
+//					if (pv != null && pv.isGlobal() && !pv.isOldvar()) {
+//						globalsWithTheirOldVarsEqualities.add(
+//								SmtUtils.binaryEquality(mMgdScript.getScript(),
+//										pv.getTermVariable(),
+//										((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
+//					}
+//				}
+//			}
+			final Term equateGlobalsWithTheirOldVars = SmtUtils.and(mMgdScript.getScript(),
+					globalsWithTheirOldVarsEqualities.toArray(new Term[globalsWithTheirOldVarsEqualities.size()]));
+
+
+			final Term constraintRaw = SmtUtils.and(mMgdScript.getScript(),
 					SmtUtils.not(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable()),
+					equateGlobalsWithTheirOldVars);
+			final Term constraintFinal = new Substitution(mMgdScript, substitutionMapping).transform(constraintRaw);
+
+			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable,
+					constraintFinal,
 					headPred,
 					headVars,
 					Collections.emptyList(),
@@ -273,6 +321,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final HornAnnot annot = new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable,
 				new ArrayList<>(resultChcs), true);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
+
+
+		mMgdScript.unlock(this);
 
 		mResult = new HornClauseAST(payload);
 	}
@@ -487,10 +538,17 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException("implement this");
 		}
 
+		final Term constraintFinal = constraint;
+//		if (ANNOTATE_ASSERTED_TERMS) {
+//			constraintFinal = mMgdScript.getScript()
+//					.annotate(constraint,
+//							new Annotation(":named", returnEdge.toString()));
+////							new Annotation(":named", "|" + returnEdge.toString() + "|"));
+//		}
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, bodyPreds,
+		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
 				bodyPredToArguments, bodyVars));
 		return chcs;
 	}
@@ -628,8 +686,16 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				assertionViolatedHeadVar.getTermVariable());
 //				mAssertionViolatedVarPrime);
 
+		final Term constraintFinal = constraintAndAssertionViolated;
+//		if (ANNOTATE_ASSERTED_TERMS) {
+//			constraintFinal = mMgdScript.getScript()
+//					.annotate(constraintAndAssertionViolated,
+//							new Annotation(":named", currentInternalEdge.toString()));
+////							new Annotation(":named", "|" + currentInternalEdge.toString() + "|"));
+//		}
+
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintAndAssertionViolated, headPred, headVars,
+		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
 					bodyPreds, bodyPredToArguments, bodyVars));
 
 		return chcs;
@@ -754,18 +820,29 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		assert assertNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
 
+		final Term constraintFinal = constraintOrAssertionViolated;
+//		if (ANNOTATE_ASSERTED_TERMS) {
+//			constraintFinal = mMgdScript.getScript()
+//					.annotate(constraintOrAssertionViolated,
+//							new Annotation(":named", currentInternalEdge.toString()));
+////							new Annotation(":named", "|" + currentInternalEdge.toString() + "|"));
+//		}
+
+
 		/* construct the horn clause and add it to the resulting chc set
 		 *  if the source is an initial location, add two versions of the clause, in one of them, leave out the body
 		 *  predicates, the other as normal */
 		final Collection<HornClause> chcs = new ArrayList<>(2);
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintOrAssertionViolated, headPred, headVars,
+		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
 				bodyPreds, bodyPredToArguments, bodyVars));
 		return chcs;
 	}
 
 	private HcHeadVar getPrettyHeadVar(final HcPredicateSymbol headPred, final int i, final Sort sort,
 			final IProgramVarOrConst pv) {
+		mMgdScript.unlock(this); // TODO not nice
 		final HcHeadVar res = mHcSymbolTable.getOrConstructHeadVar(headPred, i, sort);
+		mMgdScript.lock(this);
 		final String comment = pv != null ? pv.toString() + "'" : ASSERTIONVIOLATEDVARNAME + "'";
 		res.setComment(comment);
 		return res;
@@ -774,7 +851,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	private HcBodyVar getPrettyBodyVar(final HcPredicateSymbol bodyPred, final int i,
 			final Sort sort,
 			final IProgramVarOrConst pv) {
+		mMgdScript.unlock(this); // TODO not nice
 		final HcBodyVar res = mHcSymbolTable.getOrConstructBodyVar(bodyPred, i, sort);
+		mMgdScript.lock(this);
 		final String comment = pv != null ? pv.toString() : ASSERTIONVIOLATEDVARNAME;
 		res.setComment(comment);
 		return res;
