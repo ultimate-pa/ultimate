@@ -10,7 +10,7 @@
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
 
-package pathexpression;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 public class Epsilon<V> implements IRegEx<V> {
 

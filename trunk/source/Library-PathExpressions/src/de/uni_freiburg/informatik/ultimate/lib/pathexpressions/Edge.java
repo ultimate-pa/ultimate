@@ -9,7 +9,7 @@
  * Contributors:
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
-package pathexpression;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 public interface Edge<N, V> {
 	public N getStart();

@@ -9,7 +9,7 @@
  * Contributors:
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
-package pathexpression;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 import java.util.Objects;
 

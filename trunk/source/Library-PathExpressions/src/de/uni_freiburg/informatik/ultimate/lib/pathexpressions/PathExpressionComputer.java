@@ -10,26 +10,27 @@
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
 
-package pathexpression;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Table;
-import pathexpression.RegEx.EmptySet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.RegEx.EmptySet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class PathExpressionComputer<N, V> {
 
 	private LabeledGraph<N, V> graph;
-	private BiMap<N, Integer> nodeToIntMap = HashBiMap.create();
-	private Table<Integer, Integer, IRegEx<V>> table = HashBasedTable.create();
-	private IRegEx<V> emptyRegEx = new RegEx.EmptySet<V>();
+	private Map<N, Integer> nodeToIntMap = new HashMap<>();
+
+	/**
+	 * Entry with key [u,v] describes all paths from node with index u to node with index v.
+	 * @see #nodeToIntMap
+	 */
+	private Map<Pair<Integer, Integer>, IRegEx<V>> pathExpr = new HashMap<>();
+	private IRegEx<V> emptyRegEx = new RegEx.EmptySet<>();
 	private Map<N, List<IRegEx<V>>> allPathFromNode = new HashMap<>();
 	private boolean eliminated;
 
@@ -98,10 +99,10 @@ public class PathExpressionComputer<N, V> {
 
 	private List<PathExpression<V>> extractPathSequence() {
 		int n = graph.getNodes().size();
-		List<PathExpression<V>> list = new ArrayList<PathExpression<V>>();
+		List<PathExpression<V>> list = new ArrayList<>();
 		for (int u = 1; u <= n; u++) {
 			for (int w = u; w <= n; w++) {
-				IRegEx<V> reg = table.get(u, w);
+				IRegEx<V> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet) && !(reg instanceof Epsilon)) {
 					list.add(new PathExpression<V>(reg, u, w));
 				}
@@ -109,7 +110,7 @@ public class PathExpressionComputer<N, V> {
 		}
 		for (int u = n; u > 0; u--) {
 			for (int w = 1; w < u; w++) {
-				IRegEx<V> reg = table.get(u, w);
+				IRegEx<V> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet)) {
 					list.add(new PathExpression<V>(reg, u, w));
 				}
@@ -126,48 +127,52 @@ public class PathExpressionComputer<N, V> {
 		for (int v = 1; v <= numberOfNodes; v++) {
 			for (int w = 1; w <= numberOfNodes; w++) {
 				if (v == w) {
-					updateTable(v, w, new Epsilon());
+					updatePathExpr(v, w, new Epsilon<>());
 				} else {
-					updateTable(v, w, emptyRegEx);
+					updatePathExpr(v, w, emptyRegEx);
 				}
 			}
 		}
 		for (Edge<N, V> e : graph.getEdges()) {
 			Integer head = getIntegerFor(e.getStart());
 			Integer tail = getIntegerFor(e.getTarget());
-			IRegEx<V> pht = table.get(head, tail);
+			IRegEx<V> pht = pathExpr(head, tail);
 			pht = RegEx.<V>union(new RegEx.Plain<V>(e.getLabel()), pht);
-			updateTable(head, tail, pht);
+			updatePathExpr(head, tail, pht);
 		}
 		for (int v = 1; v <= numberOfNodes; v++) {
-			IRegEx<V> pvv = table.get(v, v);
+			IRegEx<V> pvv = pathExpr(v, v);
 			pvv = RegEx.<V>star(pvv);
-			updateTable(v, v, pvv);
+			updatePathExpr(v, v, pvv);
 			for (int u = v + 1; u <= numberOfNodes; u++) {
-				IRegEx<V> puv = table.get(u, v);
+				IRegEx<V> puv = pathExpr(u, v);
 				if (puv instanceof EmptySet) {
 					continue;
 				}
 				puv = RegEx.<V>concatenate(puv, pvv);
-				updateTable(u, v, puv);
+				updatePathExpr(u, v, puv);
 				for (int w = v + 1; w <= numberOfNodes; w++) {
-					IRegEx<V> pvw = table.get(v, w);
+					IRegEx<V> pvw = pathExpr(v, w);
 					if (pvw instanceof EmptySet) {
 						continue;
 					}
 
-					IRegEx<V> old_puw = table.get(u, w);
+					IRegEx<V> old_puw = pathExpr(u, w);
 					IRegEx<V> a = RegEx.<V>concatenate(puv, pvw);
 					IRegEx<V> puw = RegEx.<V>union(old_puw, a);
-					updateTable(u, w, puw);
+					updatePathExpr(u, w, puw);
 				}
 			}
 		}
 		eliminated = true;
 	}
 
-	private void updateTable(Integer i, Integer j, IRegEx<V> reg) {
-		table.put(i, j, reg);
+	private IRegEx<V> pathExpr(final int source, final int target) {
+		return pathExpr.get(new Pair<>(source, target));
+	}
+	
+	private void updatePathExpr(Integer i, Integer j, IRegEx<V> reg) {
+		pathExpr.put(new Pair<>(i, j), reg);
 	}
 
 }
