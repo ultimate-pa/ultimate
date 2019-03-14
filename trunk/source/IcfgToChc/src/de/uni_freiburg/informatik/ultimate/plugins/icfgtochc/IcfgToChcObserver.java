@@ -433,7 +433,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 						} else {
 							// find the right head var and use it..
 
-							final int headVarPosInOuterProcPred = varsForOuterProc.indexOf(pv);
+							final int headVarPosInOuterProcPred = varsForOuterProc.indexOf(pv.getTermVariable());
 							final HcHeadVar headVarCorrespondingToPv = headVars.get(headVarPosInOuterProcPred);
 
 							secondPredArgs.add(headVarCorrespondingToPv.getTermVariable());
@@ -833,14 +833,17 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	private List<IProgramVar> getProgramVariableListForProcedure(final String procedure) {
 		List<IProgramVar> result = mProcToVarList.get(procedure);
 		if (result == null) {
+			final Set<IProgramNonOldVar> allGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 			final Set<IProgramNonOldVar> modGlobalVars =
 					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure);
 			final Set<ILocalProgramVar> localVars =
 					mIcfg.getCfgSmtToolkit().getSymbolTable().getLocals(procedure);
 			result = new ArrayList<>();
-			for (final IProgramNonOldVar mgv : modGlobalVars) {
-				result.add(mgv);
-				result.add(mgv.getOldVar());
+			for (final IProgramNonOldVar gv : allGlobals) {
+				result.add(gv);
+				if (modGlobalVars.contains(gv)) {
+					result.add(gv.getOldVar());
+				}
 			}
 			result.addAll(localVars);
 			mProcToVarList.put(procedure, Collections.unmodifiableList(result));
