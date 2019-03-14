@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
+Bundle-Version: 0.1.24
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.pathexpressions;bundle-version="0.1.24"
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
