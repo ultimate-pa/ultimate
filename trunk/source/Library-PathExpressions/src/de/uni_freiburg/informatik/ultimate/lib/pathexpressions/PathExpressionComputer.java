@@ -24,12 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class PathExpressionComputer<N, V> {
-
-	final static Logger logger = LogManager.getLogger(PathExpressionComputer.class);
 
 	private LabeledGraph<N, V> graph;
 	private BiMap<N, Integer> nodeToIntMap = HashBiMap.create();
@@ -70,7 +65,6 @@ public class PathExpressionComputer<N, V> {
 		}
 
 		eliminate();
-		logger.debug("Compute all path from {}", a);
 		List<PathExpression<V>> extractPathSequence = extractPathSequence();
 		List<IRegEx<V>> regEx = new ArrayList<>();
 		for (int i = 0; i < graph.getNodes().size(); i++) {
@@ -99,7 +93,6 @@ public class PathExpressionComputer<N, V> {
 			}
 		}
 		allPathFromNode.put(a, regEx);
-		logger.debug("End extraction all path");
 		return regEx;
 	}
 
@@ -129,7 +122,6 @@ public class PathExpressionComputer<N, V> {
 		if (eliminated) {
 			return;
 		}
-		logger.debug("Start eliminating");
 		int numberOfNodes = graph.getNodes().size();
 		for (int v = 1; v <= numberOfNodes; v++) {
 			for (int w = 1; w <= numberOfNodes; w++) {
@@ -172,7 +164,6 @@ public class PathExpressionComputer<N, V> {
 			}
 		}
 		eliminated = true;
-		logger.debug("End eliminating");
 	}
 
 	private void updateTable(Integer i, Integer j, IRegEx<V> reg) {
