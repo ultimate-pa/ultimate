@@ -297,9 +297,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		if (mIcfg.getInitialNodes().contains(returnEdge.getSource())) {
 			throw new AssertionError("source of a return edge is an initial location -- that is unexpected");
 		}
-		if (mIcfg.getInitialNodes().contains(returnEdge.getCallerProgramPoint())) {
-			throw new UnsupportedOperationException("case not yet implemented");
-		}
+//		if (mIcfg.getInitialNodes().contains(returnEdge.getCallerProgramPoint())) {
+//			throw new UnsupportedOperationException("case not yet implemented");
+//		}
 
 		final Map<Term, Term> substitutionForAssignmentOfReturn = new LinkedHashMap<>();
 		final Map<Term, Term> substitutionForAssignmentOfCall = new LinkedHashMap<>();
@@ -311,6 +311,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		 *  - take over unassigned globals from before-return location  */
 		final HcPredicateSymbol headPred = getOrConstructPredicateSymbolForIcfgLocation(returnEdge.getTarget());
 		final List<HcHeadVar> headVars;
+		HcHeadVar headAssertionViolatedVar = null;
 		headVars = new ArrayList<>();
 		{
 			for (int i = 0; i < varsForOuterProc.size(); i++) {
@@ -319,10 +320,13 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				//TransFormulaUtils.getProgramVarForTerm(tf, tv);
 				//					final IProgramVar pv = varsForOuterProc.get(i);
 
-				final HcHeadVar headVar = getPrettyHeadVar(headPred, i, pv.getSort(), pv);
+				final HcHeadVar headVar = getPrettyHeadVar(headPred, i, tv.getSort(), pv);
 				headVars.add(headVar);
 
-				if (pv.isGlobal()) {
+				if (tv.equals(mAssertionViolatedVar)) {
+					// nothing
+					headAssertionViolatedVar = headVar;
+				} else if (pv.isGlobal()) {
 					// nothing
 				} else {
 					// pv is local
@@ -343,6 +347,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final List<HcPredicateSymbol> bodyPreds;
 		final List<List<Term>> bodyPredToArguments;
 		final Set<HcBodyVar> bodyVars;
+		HcBodyVar firstBodyPredAssertionViolatedVar = null;
+		HcBodyVar secondBodyPredAssertionViolatedVar = null;
 
 		{
 			/* convention:
@@ -361,11 +367,15 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
 
 					final HcBodyVar bodyVar =
-							getPrettyBodyVar(bodyPreds.get(0), i, pv.getSort(), pv);
+							getPrettyBodyVar(bodyPreds.get(0), i, tv.getSort(), pv);
 					bodyVars.add(bodyVar);
 
 
-					if (pv.isGlobal()) {
+					if (tv.equals(mAssertionViolatedVar)) {
+						// nothing
+						firstPredArgs.add(bodyVar.getTermVariable());
+						firstBodyPredAssertionViolatedVar = bodyVar;
+					} else if (pv.isGlobal()) {
 						if (mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
 								.getModifiedBoogieVars(returnEdge.getPrecedingProcedure()).contains(pv)) {
 							// pv is global and modified by the procedure
@@ -406,11 +416,14 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					final IProgramVar pv = mTermVarToProgVar.get(tv);
 
 					final HcBodyVar bodyVar =
-							getPrettyBodyVar(bodyPreds.get(1), i, pv.getSort(), pv);
+							getPrettyBodyVar(bodyPreds.get(1), i, tv.getSort(), pv);
 					bodyVars.add(bodyVar);
 
-
-					if (pv.isGlobal()) {
+					if (tv.equals(mAssertionViolatedVar)) {
+						// nothing
+						secondPredArgs.add(bodyVar.getTermVariable());
+						secondBodyPredAssertionViolatedVar = bodyVar;
+					} else if (pv.isGlobal()) {
 						if (pv.isOldvar()) {
 							secondPredArgs.add(bodyVar.getTermVariable());
 
@@ -454,13 +467,20 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			}
 		}
 
+		final Term updateAssertionViolatedVar = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(),
+				headAssertionViolatedVar.getTermVariable(),
+				SmtUtils.or(mMgdScript.getScript(),
+						firstBodyPredAssertionViolatedVar.getTermVariable(),
+						secondBodyPredAssertionViolatedVar.getTermVariable()));
+
 		final Term constraint = SmtUtils.and(mMgdScript.getScript(),
 				new Substitution(mMgdScript, substitutionForAssignmentOfCall)
 					.transform(localVarsAssignmentOfCall.getFormula()),
 				new Substitution(mMgdScript, substitutionForAssignmentOfReturn)
 					.transform(assignmentOfReturn.getFormula()),
 				new Substitution(mMgdScript, substitutionForOldVarsAssignment)
-					.transform(oldVarsAssignment.getFormula())
+					.transform(oldVarsAssignment.getFormula()),
+					updateAssertionViolatedVar
 							);
 
 		if (!assertNoFreeVars(headVars, bodyVars, constraint)) {
