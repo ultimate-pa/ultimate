@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-PathExpressions
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-Version: 0.1.24
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
