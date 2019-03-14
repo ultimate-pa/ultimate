@@ -13,62 +13,58 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.Edge;
 
-
 public class IntEdge implements Edge<Integer, String> {
-  private int start;
-  private String label;
-  private int target;
+	private int start;
+	private String label;
+	private int target;
 
-  public IntEdge(int start, String label, int target) {
-    this.label = label;
-    this.start = start;
-    this.target = target;
-  }
+	public IntEdge(int start, String label, int target) {
+		this.label = label;
+		this.start = start;
+		this.target = target;
+	}
 
-  @Override
-  public Integer getStart() {
-    return start;
-  }
+	@Override
+	public Integer getStart() {
+		return start;
+	}
 
-  @Override
-  public Integer getTarget() {
-    return target;
-  }
+	@Override
+	public Integer getTarget() {
+		return target;
+	}
 
-  @Override
-  public String getLabel() {
-    return label;
-  }
+	@Override
+	public String getLabel() {
+		return label;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((label == null) ? 0 : label.hashCode());
-    result = prime * result + start;
-    result = prime * result + target;
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
+		result = prime * result + start;
+		result = prime * result + target;
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    IntEdge other = (IntEdge) obj;
-    if (label == null) {
-      if (other.label != null)
-        return false;
-    } else if (!label.equals(other.label))
-      return false;
-    if (start != other.start)
-      return false;
-    if (target != other.target)
-      return false;
-    return true;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		IntEdge other = (IntEdge) obj;
+		if (label == null) {
+			if (other.label != null)
+				return false;
+		} else if (!label.equals(other.label)) {
+			return false;
+		}
+		return start == other.start && target == other.target;
+	}
 
 }
