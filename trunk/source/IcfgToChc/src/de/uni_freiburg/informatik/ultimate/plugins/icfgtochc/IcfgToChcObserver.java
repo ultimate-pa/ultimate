@@ -145,7 +145,6 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		mAssertionViolatedVar = mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME,
 				SmtSortUtils.getBoolSort(mMgdScript));
-//		mAssertionViolatedVarPrime = mMgdScript.constructFreshTermVariable("V'", SmtSortUtils.getBoolSort(mMgdScript));
 
 		/* compute resulting chc set */
 
@@ -247,7 +246,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			for (int i = 0; i < varsForProc.size(); i++) {
 					final TermVariable tv = varsForProc.get(i);
 					final HcBodyVar bodyVar =
-							getPrettyBodyVar(bodyPred, 0, tv.getSort(), mTermVarToProgVar.get(tv));
+							getPrettyBodyVar(bodyPred, i, tv.getSort(), mTermVarToProgVar.get(tv));
 					bodyVars.add(bodyVar);
 					firstPredArgs.add(bodyVar.getTerm());
 					if (tv.equals(mAssertionViolatedVar)) {
