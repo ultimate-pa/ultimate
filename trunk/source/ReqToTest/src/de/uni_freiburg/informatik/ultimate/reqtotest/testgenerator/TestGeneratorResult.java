@@ -28,7 +28,6 @@ public class TestGeneratorResult implements IResult  {
 	private final List<Map<ReqGuardGraph, DirectTriggerDependency>> mDependenciesGraphNodes = new ArrayList<>();
 	private final AuxVarGen mAuxVarGen;
 	private final ReqSymbolTable mReqSymbolTable;
-	private final ILogger mLogger;
 	private final ReqGraphOracleAnnotation mOracleAnnotation;
 	
 	public TestGeneratorResult (ILogger logger, List<SystemState> testStates, List<List<ReqGraphAnnotation>> stepsAnnotations, 
@@ -37,10 +36,8 @@ public class TestGeneratorResult implements IResult  {
 		mStepsAnnotations = stepsAnnotations;
 		mAuxVarGen = auxVarGen;
 		mReqSymbolTable = reqSymbolTable;
-		mLogger = logger;
 		mOracleAnnotation = oracleAnnotation;
 		calculateDependencyGraph();	
-		//trimTestPlan();
 	}
 	
 
@@ -222,8 +219,8 @@ public class TestGeneratorResult implements IResult  {
 			}
 		}
 		sbin.append(System.getProperty("line.separator"));
-		sbout.append(System.getProperty("line.separator"));
-		if (sbout.toString().trim().length() > 0) {
+		if (sbout.length() > 0) {
+			sbout.append(System.getProperty("line.separator"));
 			sbin.append("Wait at max  " + Double.toString(timeStep) + " for ");
 			return sbin.append(sbout).toString();
 		} else {
