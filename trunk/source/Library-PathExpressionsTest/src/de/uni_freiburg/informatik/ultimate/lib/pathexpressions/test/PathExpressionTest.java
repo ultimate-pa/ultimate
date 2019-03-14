@@ -9,15 +9,15 @@
  * Contributors:
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
-package test;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import pathexpression.IRegEx;
-import pathexpression.PathExpressionComputer;
-import pathexpression.RegEx;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegEx;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.RegEx;
 
 
 public class PathExpressionTest {

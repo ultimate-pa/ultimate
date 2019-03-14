@@ -9,19 +9,18 @@
  * Contributors:
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
-package test;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 
-import pathexpression.Edge;
-import pathexpression.LabeledGraph;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.Edge;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.LabeledGraph;
 
 
 public class IntGraph implements LabeledGraph<Integer, String> {
 
-  private Set<Edge<Integer, String>> edges = Sets.newHashSet();
-  private Set<Integer> nodes = Sets.newHashSet();
+  private Set<Edge<Integer, String>> edges = new HashSet<>();
+  private Set<Integer> nodes = new HashSet<>();
 
   public void addEdge(int start, String label, int target) {
     nodes.add(start);

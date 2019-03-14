@@ -9,9 +9,9 @@
  * Contributors:
  *     Johannes Spaeth - initial API and implementation
  *******************************************************************************/
-package test;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 
-import pathexpression.Edge;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.Edge;
 
 
 public class IntEdge implements Edge<Integer, String> {
