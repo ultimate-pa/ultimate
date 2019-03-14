@@ -14,11 +14,11 @@ package pathexpression;
 
 public class Epsilon<V> implements IRegEx<V> {
 
-  public Epsilon() {
-  }
+	public Epsilon() {
+	}
 
-  @Override
-  public String toString() {
-    return "EPS";
-  }
+	@Override
+	public String toString() {
+		return "EPS";
+	}
 }
