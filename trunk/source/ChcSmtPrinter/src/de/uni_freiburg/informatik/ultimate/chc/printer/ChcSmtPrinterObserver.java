@@ -126,10 +126,12 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 		// assert constraints
 		for (final HornClause hc : rules) {
 			final Term formula = hc.constructFormula(mgdScript);
+			loggingScript.comment(hc.toString());
 			loggingScript.assertTerm(formula);
 		}
 		// TODO: combine all queries into one
 		for (final HornClause hc : queries) {
+			loggingScript.comment(hc.toString());
 			final Term formula = hc.constructFormula(mgdScript);
 			loggingScript.assertTerm(formula);
 		}

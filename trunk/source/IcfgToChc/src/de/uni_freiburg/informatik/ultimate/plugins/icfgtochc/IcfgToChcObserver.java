@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -83,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
  */
 public class IcfgToChcObserver implements IUnmanagedObserver {
 
+	private static final String ASSERTIONVIOLATEDVARNAME = "V";
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -143,8 +143,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		mHcSymbolTable = new HcSymbolTable(mMgdScript);
 		mIcfg = (IIcfg<IcfgLocation>) icfg;
 
-		mAssertionViolatedVar = mMgdScript.constructFreshTermVariable("V", SmtSortUtils.getBoolSort(mMgdScript));
-		mAssertionViolatedVarPrime = mMgdScript.constructFreshTermVariable("V'", SmtSortUtils.getBoolSort(mMgdScript));
+		mAssertionViolatedVar = mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME,
+				SmtSortUtils.getBoolSort(mMgdScript));
+//		mAssertionViolatedVarPrime = mMgdScript.constructFreshTermVariable("V'", SmtSortUtils.getBoolSort(mMgdScript));
 
 		/* compute resulting chc set */
 
@@ -166,18 +167,28 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 						// no implementation; treat summary like internal edge
 						final Collection<HornClause> chcs =
 							computeChcForInternalEdge((IIcfgInternalTransition<IcfgLocation>) currentEdge);
+						chcs.forEach(chc -> chc.setComment("Type: internal"));
 						resultChcs.addAll(chcs);
 					}
 				} else {
 					// normal (non-summary) edge
-					final Collection<HornClause> chcs =
-							computeChcForInternalEdge((IIcfgInternalTransition<IcfgLocation>) currentEdge);
+					final Collection<HornClause> chcs;
+					if (isErrorLocation(currentEdge.getTarget())) {
+						chcs = computeChcForInternalErrorEdge((IIcfgInternalTransition<IcfgLocation>) currentEdge);
+						chcs.forEach(chc -> chc.setComment("Type: assert edge"));
+					} else {
+						chcs = computeChcForInternalEdge((IIcfgInternalTransition<IcfgLocation>) currentEdge);
+						chcs.forEach(chc -> chc.setComment("Type: internal"));
+					}
 					resultChcs.addAll(chcs);
 				}
 			} else if (currentEdge instanceof IIcfgCallTransition<?>) {
 				// nothing to do for a call edge
 			} else if (currentEdge instanceof IIcfgReturnTransition<?, ?>) {
-				resultChcs.addAll(computeChcForReturnEdge((IIcfgReturnTransition<IcfgLocation, Call>) currentEdge));
+				final Collection<HornClause> chcs =
+						computeChcForReturnEdge((IIcfgReturnTransition<IcfgLocation, Call>) currentEdge);
+				chcs.forEach(chc -> chc.setComment("Type: return edge"));
+				resultChcs.addAll(chcs);
 			} else {
 				throw new AssertionError("unforseen edge type (not internal, call, or return");
 			}
@@ -186,27 +197,33 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		/* add chcs for entry and exit points*/
 
 		/*  every procedure entry point gets a chc of the form
-		 *    V' -> entryPoint */
+		 *   (not V') -> entryPoint */
 		for (final Entry<String, LOC> en : icfg.getProcedureEntryNodes().entrySet()) {
 
 			final HcPredicateSymbol headPred = getOrConstructPredicateSymbolForIcfgLocation(en.getValue());
 
 			final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(en.getKey());
 			final List<HcHeadVar> headVars = new ArrayList<>();
+			HcHeadVar assertionViolatedHeadVar = null;
 			for (int i = 0; i < varsForProc.size(); i++) {
+					final TermVariable tv = varsForProc.get(i);
 					final HcHeadVar headVar =
-							mHcSymbolTable.getOrConstructHeadVar(headPred, i, varsForProc.get(i).getSort());
+							getPrettyHeadVar(headPred, i, tv.getSort(), mTermVarToProgVar.get(tv));
 					headVars.add(headVar);
+					if (tv.equals(mAssertionViolatedVar)) {
+						assertionViolatedHeadVar = headVar;
+					}
 			}
 
-			resultChcs.add(new HornClause(mMgdScript, mHcSymbolTable,
-//					mMgdScript.getScript().term("true"),
-					mAssertionViolatedVar,
+			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable,
+					SmtUtils.not(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable()),
 					headPred,
 					headVars,
 					Collections.emptyList(),
 					Collections.emptyList(),
-					Collections.emptySet()));
+					Collections.emptySet());
+			chc.setComment("Type: (not V) -> procEntry");
+			resultChcs.add(chc);
 		}
 
 
@@ -222,22 +239,30 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 			final HcPredicateSymbol bodyPred = getOrConstructPredicateSymbolForIcfgLocation(en.getValue());
 
-//			final List<IProgramVar> varsForProc = getProgramVariableListForProcedure(en.getKey());
 			final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(en.getKey());
+
 			final Set<HcBodyVar> bodyVars = new LinkedHashSet<>();
+			final List<Term> firstPredArgs = new ArrayList<>();
+			HcBodyVar assertionViolatedBodyVar = null;
 			for (int i = 0; i < varsForProc.size(); i++) {
+					final TermVariable tv = varsForProc.get(i);
 					final HcBodyVar bodyVar =
-							mHcSymbolTable.getOrConstructBodyVar(bodyPred, 0, varsForProc.get(i).getSort());
+							getPrettyBodyVar(bodyPred, 0, tv.getSort(), mTermVarToProgVar.get(tv));
 					bodyVars.add(bodyVar);
+					firstPredArgs.add(bodyVar.getTerm());
+					if (tv.equals(mAssertionViolatedVar)) {
+						assertionViolatedBodyVar = bodyVar;
+					}
 			}
 
-			resultChcs.add(new HornClause(mMgdScript, mHcSymbolTable,
-					mMgdScript.getScript().term("true"),
+			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable,
+					assertionViolatedBodyVar.getTermVariable(),
 					Collections.singletonList(bodyPred),
 					Collections.singletonList(
-							varsForProc.stream().map(tv -> (Term) tv).collect(Collectors.toList())),
-//							varsForProc.stream().map(pv -> pv.getTermVariable()).collect(Collectors.toList())),
-					bodyVars));
+							firstPredArgs),
+					bodyVars);
+			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
+			resultChcs.add(chc);
 
 		}
 
@@ -262,12 +287,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final UnmodifiableTransFormula oldVarsAssignment = mIcfg.getCfgSmtToolkit().getOldVarsAssignmentCache()
 				.getOldVarsAssignment(returnEdge.getPrecedingProcedure());
 
-//		final List<IProgramVar> varsForInnerProc =
-//					getProgramVariableListForProcedure(returnEdge.getPrecedingProcedure());
 		final List<TermVariable> varsForInnerProc =
 				getTermVariableListForPredForProcedure(returnEdge.getPrecedingProcedure());
-//		final List<IProgramVar> varsForOuterProc =
-//					getProgramVariableListForProcedure(returnEdge.getSucceedingProcedure());
 		final List<TermVariable> varsForOuterProc =
 					getTermVariableListForPredForProcedure(returnEdge.getSucceedingProcedure());
 
@@ -291,38 +312,33 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		 *  - take over unassigned globals from before-return location  */
 		final HcPredicateSymbol headPred = getOrConstructPredicateSymbolForIcfgLocation(returnEdge.getTarget());
 		final List<HcHeadVar> headVars;
-//		if (isTargetErrorLocation) {
-//			headVars = null;
-//		} else {
-			headVars = new ArrayList<>();
-			{
-				for (int i = 0; i < varsForOuterProc.size(); i++) {
-					final TermVariable tv = varsForOuterProc.get(i);
-					final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
-					//TransFormulaUtils.getProgramVarForTerm(tf, tv);
-//					final IProgramVar pv = varsForOuterProc.get(i);
+		headVars = new ArrayList<>();
+		{
+			for (int i = 0; i < varsForOuterProc.size(); i++) {
+				final TermVariable tv = varsForOuterProc.get(i);
+				final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
+				//TransFormulaUtils.getProgramVarForTerm(tf, tv);
+				//					final IProgramVar pv = varsForOuterProc.get(i);
 
-					final HcHeadVar headVar =
-							mHcSymbolTable.getOrConstructHeadVar(headPred, i, pv.getSort());
-					headVars.add(headVar);
+				final HcHeadVar headVar = getPrettyHeadVar(headPred, i, pv.getSort(), pv);
+				headVars.add(headVar);
 
-					if (pv.isGlobal()) {
+				if (pv.isGlobal()) {
+					// nothing
+				} else {
+					// pv is local
+					/* if the parameters don't change (only the one assigned by the call may change), they will be
+					 * reused in the before-call predicate and thus need to be updated in the parameter assignment
+					 */
+					final TermVariable outTv = assignmentOfReturn.getOutVars().get(pv);
+					if (outTv == null) {
 						// nothing
 					} else {
-						// pv is local
-						/* if the parameters don't change (only the one assigned by the call may change), they will be
-						 * reused in the before-call predicate and thus need to be updated in the parameter assignment
-						 */
-						final TermVariable outTv = assignmentOfReturn.getOutVars().get(pv);
-						if (outTv == null) {
-							// nothing
-						} else {
-							substitutionForAssignmentOfReturn.put(outTv, headVar.getTermVariable());
-						}
+						substitutionForAssignmentOfReturn.put(outTv, headVar.getTermVariable());
 					}
 				}
 			}
-//		}
+		}
 
 
 		final List<HcPredicateSymbol> bodyPreds;
@@ -344,11 +360,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				for (int i = 0; i < varsForOuterProc.size(); i++) {
 					final TermVariable tv = varsForOuterProc.get(i);
 					final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
-//					final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
-//					final IProgramVar pv = varsForOuterProc.get(i);
 
 					final HcBodyVar bodyVar =
-							mHcSymbolTable.getOrConstructBodyVar(bodyPreds.get(0), i, pv.getSort());
+							getPrettyBodyVar(bodyPreds.get(0), i, pv.getSort(), pv);
 					bodyVars.add(bodyVar);
 
 
@@ -391,11 +405,9 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				for (int i = 0; i < varsForInnerProc.size(); i++) {
 					final TermVariable tv = varsForInnerProc.get(i);
 					final IProgramVar pv = mTermVarToProgVar.get(tv);
-//					final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
-//					final IProgramVar pv = varsForInnerProc.get(i);
 
 					final HcBodyVar bodyVar =
-							mHcSymbolTable.getOrConstructBodyVar(bodyPreds.get(1), i, pv.getSort());
+							getPrettyBodyVar(bodyPreds.get(1), i, pv.getSort(), pv);
 					bodyVars.add(bodyVar);
 
 
@@ -459,27 +471,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();
-//		if (isTargetErrorLocation) {
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, bodyPreds,
-//					bodyPredToArguments, bodyVars));
-//			if (isCallerSourceInitialLocation) {
-//				final List<HcPredicateSymbol> bodyPredsOnlySecond = Collections.singletonList(bodyPreds.get(1));
-//				final List<List<Term>> bodyPredToArgumentsOnlySecond =
-//						Collections.singletonList(bodyPredToArguments.get(1));
-//				chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, bodyPredsOnlySecond,
-//					bodyPredToArgumentsOnlySecond, bodyVars));
-//			}
-//		} else {
-			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, bodyPreds,
-					bodyPredToArguments, bodyVars));
-//			if (isCallerSourceInitialLocation) {
-//				final List<HcPredicateSymbol> bodyPredsOnlySecond = Collections.singletonList(bodyPreds.get(1));
-//				final List<List<Term>> bodyPredToArgumentsOnlySecond =
-//						Collections.singletonList(bodyPredToArguments.get(1));
-//				chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, bodyPredsOnlySecond,
-//					bodyPredToArgumentsOnlySecond, bodyVars));
-//			}
-//		}
+		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, bodyPreds,
+				bodyPredToArguments, bodyVars));
 		return chcs;
 	}
 
@@ -488,10 +481,17 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		// compute all variables that only occur in the
 		final Set<TermVariable> auxVars = new LinkedHashSet<>();
 		auxVars.addAll(Arrays.asList(constraint.getFreeVars()));
+
 		if (headVars != null) {
 			auxVars.removeAll(headVars.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList()));
 		}
+
 		auxVars.removeAll(bodyVars.stream().map(bv -> bv.getTermVariable()).collect(Collectors.toList()));
+
+
+		auxVars.remove(mAssertionViolatedVar);
+//		auxVars.remove(mAssertionViolatedVarPrime);
+
 		if (!auxVars.isEmpty()) {
 			assert false;
 			return false;
@@ -520,14 +520,19 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final HcPredicateSymbol headPred =
 				getOrConstructPredicateSymbolForIcfgLocation(mIcfg.getProcedureExitNodes().get(proc));
 		final List<HcHeadVar> headVars = new ArrayList<>();
+		HcHeadVar assertionViolatedHeadVar = null;
 		for (int i = 0; i < varsForProc.size(); i++) {
 			final TermVariable tv = varsForProc.get(i);
-			final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
+			final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
 
 			final HcHeadVar headVar =
-					mHcSymbolTable.getOrConstructHeadVar(headPred, i, tv.getSort());
+					getPrettyHeadVar(headPred, i, tv.getSort(), pv);
 			headVars.add(headVar);
 
+			if (tv == mAssertionViolatedVar) {
+					assertionViolatedHeadVar = headVar;
+					continue;
+			}
 
 			final TermVariable outTv = tf.getOutVars().get(pv);
 			if (outTv == null) {
@@ -538,6 +543,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				substitutionMapping.put(outTv, headVar.getTermVariable());
 			}
 		}
+
+		HcBodyVar assertionViolatedBodyVar = null;
 
 		final List<HcPredicateSymbol> bodyPreds;
 		final List<List<Term>> bodyPredToArguments;
@@ -551,13 +558,19 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 			for (int i = 0; i < varsForProc.size(); i++) {
 				final TermVariable tv = varsForProc.get(i);
-				final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
-//				final IProgramVar pv = varsForProc.get(i);
 
 				final HcBodyVar bodyVar =
-						mHcSymbolTable.getOrConstructBodyVar(bodyPreds.get(0), i,
-								pv.getSort());
+						getPrettyBodyVar(bodyPreds.get(0), i, tv.getSort(), mTermVarToProgVar.get(tv));
 				bodyVars.add(bodyVar);
+
+				if (tv == mAssertionViolatedVar) {
+					firstPredArgs.add(bodyVar.getTermVariable());
+					assertionViolatedBodyVar = bodyVar;
+					continue;
+				}
+
+				final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
+				assert pv != null;
 
 				final TermVariable inTv = tf.getInVars().get(pv);
 				final TermVariable outTv = tf.getOutVars().get(pv);
@@ -591,8 +604,10 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			bodyPredToArguments = Collections.singletonList(firstPredArgs);
 		}
 
-		final Term constraintAndAssertionViolated = SmtUtils.and(mMgdScript.getScript(), tf.getFormula(),
-				mAssertionViolatedVarPrime);
+		final Term constraintAndAssertionViolated = SmtUtils.and(mMgdScript.getScript(),
+				new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula()),
+				assertionViolatedHeadVar.getTermVariable());
+//				mAssertionViolatedVarPrime);
 
 		final Collection<HornClause> chcs = new ArrayList<>();
 		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintAndAssertionViolated, headPred, headVars,
@@ -610,38 +625,39 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	 */
 	private Collection<HornClause> computeChcForInternalEdge(
 			final IIcfgInternalTransition<IcfgLocation> currentInternalEdge) {
+		assert !isErrorLocation(currentInternalEdge.getTarget()) : "use other method for that";
 
-		if (isErrorLocation(currentInternalEdge.getTarget())) {
-			return computeChcForInternalErrorEdge(currentInternalEdge);
-		}
 		// target is not an error location
 
 		/*  fields necessary for building the horn clause */
 
 		final UnmodifiableTransFormula tf = currentInternalEdge.getTransformula();
-//		final List<IProgramVar> varsForProc =
-//					getProgramVariableListForProcedure(currentInternalEdge.getPrecedingProcedure());
 		final String proc = currentInternalEdge.getPrecedingProcedure();
 
 		final List<TermVariable> varsForProc =
 				getTermVariableListForPredForProcedure(proc);
-
-//		final boolean isSourceInitialLocation = mIcfg.getInitialNodes().contains(currentInternalEdge.getSource());
 
 		final Map<Term, Term> substitutionMapping = new LinkedHashMap<>();
 
 		final HcPredicateSymbol headPred =
 				getOrConstructPredicateSymbolForIcfgLocation(currentInternalEdge.getTarget());
 		final List<HcHeadVar> headVars = new ArrayList<>();
+		HcHeadVar assertionViolatedHeadVar = null;
 		for (int i = 0; i < varsForProc.size(); i++) {
 			final TermVariable tv = varsForProc.get(i);
-			final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
+			final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
 
 			final HcHeadVar headVar =
-					mHcSymbolTable.getOrConstructHeadVar(headPred, i, tv.getSort());
+					getPrettyHeadVar(headPred, i, tv.getSort(), pv);
 			headVars.add(headVar);
 
-			final TermVariable outTv = tf.getOutVars().get(tv);
+			if (tv.equals(mAssertionViolatedVar)) {
+				assertionViolatedHeadVar = headVar;
+				continue;
+			}
+
+
+			final TermVariable outTv = tf.getOutVars().get(pv);
 			if (outTv == null) {
 				// pv is not an out var of tf
 			} else {
@@ -655,6 +671,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final List<List<Term>> bodyPredToArguments;
 		final Set<HcBodyVar> bodyVars;
 
+//		HcBodyVar assertionViolatedBodyVar = null;
+
 		bodyPreds = Collections.singletonList(
 				getOrConstructPredicateSymbolForIcfgLocation(currentInternalEdge.getSource()));
 		bodyVars = new LinkedHashSet<>();
@@ -663,13 +681,18 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 			for (int i = 0; i < varsForProc.size(); i++) {
 				final TermVariable tv = varsForProc.get(i);
-				final IProgramVarOrConst pv = TransFormulaUtils.getProgramVarForTerm(tf, tv);
-//				final IProgramVar pv = varsForProc.get(i);
+
+				final IProgramVarOrConst pv = mTermVarToProgVar.get(tv);
 
 				final HcBodyVar bodyVar =
-						mHcSymbolTable.getOrConstructBodyVar(bodyPreds.get(0), i,
-								pv.getSort());
+						getPrettyBodyVar(bodyPreds.get(0), i, tv.getSort(), pv);
 				bodyVars.add(bodyVar);
+
+				if (tv.equals(mAssertionViolatedVar)) {
+					firstPredArgs.add(assertionViolatedHeadVar.getTermVariable());
+//					assertionViolatedBodyVar = bodyVar;
+					continue;
+				}
 
 				final TermVariable inTv = tf.getInVars().get(pv);
 				final TermVariable outTv = tf.getOutVars().get(pv);
@@ -706,7 +729,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final Term constraintOrAssertionViolated;
 		{
 			final Term constraint = new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
-			constraintOrAssertionViolated = SmtUtils.and(mMgdScript.getScript(), constraint, mAssertionViolatedVar);
+			constraintOrAssertionViolated = SmtUtils.or(mMgdScript.getScript(),
+					assertionViolatedHeadVar.getTermVariable(), constraint);
 		}
 
 		assert assertNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
@@ -715,25 +739,26 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		 *  if the source is an initial location, add two versions of the clause, in one of them, leave out the body
 		 *  predicates, the other as normal */
 		final Collection<HornClause> chcs = new ArrayList<>(2);
-//		if (isSourceInitialLocation && isTargetErrorLocation) {
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, Collections.emptyList(),
-//					Collections.emptyList(), bodyVars));
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, bodyPreds,
-//					bodyPredToArguments, bodyVars));
-//		} else if (!isSourceInitialLocation && isTargetErrorLocation) {
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, bodyPreds,
-//					bodyPredToArguments, bodyVars));
-//		} else if (isSourceInitialLocation && !isTargetErrorLocation) {
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, Collections.emptyList(),
-//					Collections.emptyList(), bodyVars));
-//			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraint, headPred, headVars, bodyPreds,
-//					bodyPredToArguments, bodyVars));
-//		} else {
-			// !isSourceInitialLocation && !isTargetErrorLocation
-			chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintOrAssertionViolated, headPred, headVars,
-					bodyPreds, bodyPredToArguments, bodyVars));
-//		}
+		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintOrAssertionViolated, headPred, headVars,
+				bodyPreds, bodyPredToArguments, bodyVars));
 		return chcs;
+	}
+
+	private HcHeadVar getPrettyHeadVar(final HcPredicateSymbol headPred, final int i, final Sort sort,
+			final IProgramVarOrConst pv) {
+		final HcHeadVar res = mHcSymbolTable.getOrConstructHeadVar(headPred, i, sort);
+		final String comment = pv != null ? pv.toString() + "'" : ASSERTIONVIOLATEDVARNAME + "'";
+		res.setComment(comment);
+		return res;
+	}
+
+	private HcBodyVar getPrettyBodyVar(final HcPredicateSymbol bodyPred, final int i,
+			final Sort sort,
+			final IProgramVarOrConst pv) {
+		final HcBodyVar res = mHcSymbolTable.getOrConstructBodyVar(bodyPred, i, sort);
+		final String comment = pv != null ? pv.toString() : ASSERTIONVIOLATEDVARNAME;
+		res.setComment(comment);
+		return res;
 	}
 
 	private boolean isErrorLocation(final IcfgLocation loc) {
@@ -744,50 +769,11 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		return errorNodes.contains(loc);
 	}
 
-	private List<HcHeadVar> computeHeadVarsUpdateSubsitution(final UnmodifiableTransFormula tf,
-			final List<IProgramVar> varsForProc, final boolean isTargetErrorLocation, final HcPredicateSymbol headPred,
-			final Map<Term, Term> substitutionMapping) {
-		final List<HcHeadVar> headVars;
-		if (isTargetErrorLocation) {
-			headVars = null;
-		} else {
-			headVars = new ArrayList<>();
-			{
-				for (int i = 0; i < varsForProc.size(); i++) {
-
-					final HcHeadVar headVar =
-							mHcSymbolTable.getOrConstructHeadVar(headPred, i, varsForProc.get(i).getSort());
-					headVars.add(headVar);
-
-					final TermVariable outTv = tf.getOutVars().get(varsForProc.get(i));
-					if (outTv == null) {
-						// pv is not an out var of tf
-					} else {
-						/* pv is an out var of tf --> the headvar must connect to the corresponding variable in
-						 * the constraint */
-						substitutionMapping.put(outTv, headVar.getTermVariable());
-					}
-				}
-			}
-		}
-		return headVars;
-	}
-
-//	private HcPredicateSymbol computeHeadPred(final IIcfgTransition<?> currentEdge,
-//			final boolean isTargetErrorLocation) {
-//		final HcPredicateSymbol headPred;
-//		if (isTargetErrorLocation) {
-//			headPred = null;
-//		} else {
-//			headPred = getOrConstructPredicateSymbolForIcfgLocation(currentEdge.getTarget());
-//		}
-//		return headPred;
-//	}
-
 	private HcPredicateSymbol getOrConstructPredicateSymbolForIcfgLocation(final IcfgLocation loc) {
 		assert mHcSymbolTable != null : "hcSymboltable not yet set up; this method can only be used inside processIcfg";
-		return mHcSymbolTable.getOrConstructHornClausePredicateSymbol(computePredicateNameForIcfgLocation(loc),
-				computeSortsForIcfgLocationPredicate(loc));
+		final String name = computePredicateNameForIcfgLocation(loc);
+		final List<Sort> sorts = computeSortsForIcfgLocationPredicate(loc);
+		return mHcSymbolTable.getOrConstructHornClausePredicateSymbol(name, sorts);
 	}
 
 	/**
@@ -802,7 +788,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	 */
 	private List<Sort> computeSortsForIcfgLocationPredicate(final IcfgLocation loc) {
 		final List<TermVariable> variables = getTermVariableListForPredForProcedure(loc.getProcedure());
-		return variables.stream().map(pv -> pv.getSort()).collect(Collectors.toList());
+		return variables.stream().map(tv -> tv.getSort()).collect(Collectors.toList());
 	}
 
 
@@ -812,13 +798,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			mTermVarToProgVar.put(pv.getTermVariable(), pv);
 			result.add(pv.getTermVariable());
 		}
-//		result.addAll(
-//				getProgramVariableListForProcedure(procedure).stream()
-//				.map(pv -> pv.getTermVariable())
-//				.collect(Collectors.toList()));
 		result.add(mAssertionViolatedVar);
-//		result.add(mAssertionViolatedVarPrime);
-
 		return Collections.unmodifiableList(result);
 	}
 

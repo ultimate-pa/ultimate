@@ -108,6 +108,15 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mManagedScript.constructFreshTermVariable(var.getName() + ver, var.getSort());
 	}
 
+	/**
+	 * Create a TermVariable of a given name (introduced/used for pretty printing)
+	 * @param name
+	 * @return
+	 */
+	public TermVariable createPrettyTermVariable(final String varname, final Sort sort) {
+		return mManagedScript.variable(varname, sort);
+	}
+
 	public HcPredicateSymbol getOrConstructHornClausePredicateSymbol(
 			final ApplicationTerm at) {
 		final ApplicationTerm atTransferred = (ApplicationTerm) mTermTransferrer.transform(at);
@@ -377,5 +386,9 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	 */
 	public void setGotoProcMode(final boolean mode) {
 		mGotoProcMode = mode;
+	}
+
+	public ManagedScript getManagedScript() {
+		return mManagedScript;
 	}
 }

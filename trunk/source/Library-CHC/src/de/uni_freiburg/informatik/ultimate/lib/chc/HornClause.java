@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -68,6 +71,11 @@ public class HornClause implements IRankedLetter {
 	 * (this includes "auxVars", i.e., variables occurring in the constraint only.
 	 */
 	private final Set<HcBodyVar> mBodyVariables;
+
+	/**
+	 * This field allow one (e.g. the creator of this object) to attach comments to this object.
+	 */
+	private String mComment;
 
 
 	/**
@@ -167,28 +175,74 @@ public class HornClause implements IRankedLetter {
 		return mHeadPredVariables;
 	}
 
+	public void setComment(final String comment) {
+		mComment = comment;
+	}
+
+	public String getComment() {
+		return mComment;
+	}
+
+	public boolean hasComment() {
+		return mComment != null;
+	}
+
+
 	public String debugString() {
-
-		final StringBuilder cobodySb = new StringBuilder();
-
-		for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
-			cobodySb.append(" " + mBodyPreds.get(i) + "(");
-			cobodySb.append(mBodyPredToArgs.get(i));
-			cobodySb.append(")");
-		}
-		String cobody = cobodySb.toString();
-		if (cobody.length() > 0) {
-			cobody = "and" + cobody;
-		} else {
-			cobody = "true";
-		}
-
-		final String body = mHeadIsFalse ? "false" : mHeadPredicate.getName() ;
 		if (mFormula == null) {
 			return "unintialized HornClause";
 		}
 
-		return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mFormula.toString(), body);
+		final boolean allVarsHaveComment = mBodyVariables.stream().allMatch(HcVar::hasComment)
+				&& mHeadPredVariables.stream().allMatch(HcVar::hasComment);
+		final Map<Term, Term> prettyVariableSubstitution = new HashMap<>();
+		if (allVarsHaveComment) {
+			for (final HcBodyVar bv : mBodyVariables) {
+				prettyVariableSubstitution.put(bv.getTermVariable(),
+						mHornClauseSymbolTable.createPrettyTermVariable(bv.getComment(), bv.getSort()));
+			}
+			for (final HcHeadVar hv : mHeadPredVariables) {
+				prettyVariableSubstitution.put(hv.getTermVariable(),
+						mHornClauseSymbolTable.createPrettyTermVariable(hv.getComment(), hv.getSort()));
+			}
+		}
+
+
+		String body;
+		{
+			final StringBuilder bodySb = new StringBuilder();
+			for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
+				bodySb.append(" ");
+				bodySb.append(mBodyPreds.get(i));
+				bodySb.append(mBodyPredToArgs.get(i).stream()
+						.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
+								prettyVariableSubstitution).transform(t))
+						.collect(Collectors.toList()));
+//				bodySb.append(")");
+			}
+			body = bodySb.toString();
+			if (body.length() > 0) {
+				body = "/\\" + body;
+			} else {
+				body = "true";
+			}
+		}
+
+		final String head;
+		{
+			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName() ;
+			head = headPred + mHeadPredVariables.stream()
+						.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
+								prettyVariableSubstitution).transform(t.getTermVariable()))
+						.collect(Collectors.toList());
+		}
+		return String.format("%s(%s) /\\ (%s) --> %s",
+				hasComment() ? (getComment() + "| ") : "" ,
+						body,
+						new Substitution(mHornClauseSymbolTable.getManagedScript(),
+								prettyVariableSubstitution)
+						.transform(mFormula).toString(),
+						head);
 	}
 
 	@Override

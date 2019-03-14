@@ -18,6 +18,8 @@ public abstract class HcVar implements IProgramVar {
 
 	private final boolean mIsGlobal;
 
+	private String mComment;
+
 
 	HcVar(final String globallyUniqueId, final TermVariable termVariable, final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedConstant, final boolean isGlobal, final String procName) {
@@ -72,5 +74,17 @@ public abstract class HcVar implements IProgramVar {
 	@Override
 	public String toString() {
 		return "HcVar:" + mGloballyUniqueId;
+	}
+
+	public void setComment(final String comment) {
+		mComment = comment;
+	}
+
+	public String getComment() {
+		return mComment;
+	}
+
+	public boolean hasComment() {
+		return mComment != null;
 	}
 }
