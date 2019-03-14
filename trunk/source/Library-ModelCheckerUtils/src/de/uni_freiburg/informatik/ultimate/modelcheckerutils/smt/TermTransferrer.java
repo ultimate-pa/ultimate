@@ -170,13 +170,23 @@ public class TermTransferrer extends TermTransformer {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				final FunctionSymbol fsymb = appTerm.getFunction();
 				final Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
+
 				final Sort resultSort = transferSort(fsymb.getReturnSort());
+
 				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
 				if (mApplyLocalSimplifications) {
-					result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
-							appTerm.getFunction().getIndices(), resultSort, newArgs);
+					if (fsymb.isReturnOverload()) {
+						result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
+								appTerm.getFunction().getIndices(), resultSort, newArgs);
+					} else {
+						result = SmtUtils.termWithLocalSimplification(mScript, fsymb, newArgs);
+					}
 				} else {
-					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
+					if (fsymb.isReturnOverload()) {
+						result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
+					} else {
+						result = mScript.term(fsymb.getName(), newArgs);
+					}
 				}
 			} else {
 				throw e;
