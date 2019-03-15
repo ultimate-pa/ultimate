@@ -50,13 +50,6 @@ public class Star<V> implements IRegex<V> {
 		return a;
 	}
 
-	public IRegex<V> simplify() {
-		if (a instanceof EmptySet || a instanceof Epsilon) {
-			return a;
-		}
-		return this;
-	}
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

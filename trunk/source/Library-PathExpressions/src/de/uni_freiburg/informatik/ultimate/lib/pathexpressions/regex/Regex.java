@@ -33,17 +33,37 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public abstract class Regex<V> implements IRegex<V> {
-	public static <V> IRegex<V> union(IRegex<V> a, IRegex<V> b) {
-		return new Union<V>(a, b).simplify();
+	public static <V> IRegex<V> simplifiedUnion(IRegex<V> a, IRegex<V> b) {
+		if (a instanceof EmptySet)
+			return b;
+		if (b instanceof EmptySet)
+			return a;
+		// Not part of Tarjan's simplification operator [R], but ok
+		if (a.equals(b))
+			return a;
+		// Not part of Tarjan's simplification operator and NOT OK!
+		// no bug found so far, but could be lurking somewhere
+		if (a instanceof Epsilon)
+			return b;
+		if (b instanceof Epsilon)
+			return a;
+		return new Union<>(a, b);
 	}
 
-	public static <V> IRegex<V> concatenate(IRegex<V> a, IRegex<V> b) {
-		return new Concatenate<V>(a, b).simplify();
+	public static <V> IRegex<V> simplifiedConcatenation(IRegex<V> a, IRegex<V> b) {
+		if (a instanceof EmptySet || b instanceof EmptySet)
+			return a; // TODO return empty set
+		if (a instanceof Epsilon)
+			return b;
+		if (b instanceof Epsilon)
+			return a;
+		return new Concatenate<>(a, b);
 	}
 
-	public static <V> IRegex<V> star(IRegex<V> reg) {
-		return new Star<V>(reg).simplify();
+	public static <V> IRegex<V> simplifiedStar(IRegex<V> reg) {
+		if (reg instanceof EmptySet || reg instanceof Epsilon) {
+			return reg;
+		}
+		return new Star<>(reg);
 	}
-
-	public abstract IRegex<V> simplify();
 }

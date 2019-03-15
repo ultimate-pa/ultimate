@@ -277,7 +277,7 @@ public class PathExpressionTest {
 	}
 
 	private static IRegex<String> a(IRegex<String> a, IRegex<String> b) {
-		return Regex.<String>concatenate(a, b);
+		return Regex.<String>simplifiedConcatenation(a, b);
 	}
 
 	private static IRegex<String> a(String a, IRegex<String> b) {
@@ -293,7 +293,7 @@ public class PathExpressionTest {
 	}
 
 	private static IRegex<String> u(IRegex<String> a, IRegex<String> b) {
-		return Regex.<String>union(a, b);
+		return Regex.<String>simplifiedUnion(a, b);
 	}
 
 	private static IRegex<String> u(String a, String b) {
@@ -309,7 +309,7 @@ public class PathExpressionTest {
 	}
 
 	private static IRegex<String> star(IRegex<String> a) {
-		return Regex.<String>star(a);
+		return Regex.<String>simplifiedStar(a);
 	}
 
 	private static IRegex<String> star(String a) {

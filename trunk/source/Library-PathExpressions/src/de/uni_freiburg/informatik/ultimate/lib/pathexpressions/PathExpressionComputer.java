@@ -100,7 +100,7 @@ public class PathExpressionComputer<N, V> {
 
 				int vi = tri.getSource();
 				IRegex<V> regExVi = regEx.get(vi - 1);
-				regEx.set(vi - 1, Regex.<V>concatenate(regExVi, expression));
+				regEx.set(vi - 1, Regex.<V>simplifiedConcatenation(regExVi, expression));
 
 			} else {
 				IRegex<V> expression = tri.getExpression();
@@ -108,10 +108,10 @@ public class PathExpressionComputer<N, V> {
 				int wi = tri.getTarget();
 				IRegex<V> inter;
 				IRegex<V> regExVi = regEx.get(vi - 1);
-				inter = Regex.<V>concatenate(regExVi, expression);
+				inter = Regex.<V>simplifiedConcatenation(regExVi, expression);
 
 				IRegex<V> regExWi = regEx.get(wi - 1);
-				regEx.set(wi - 1, Regex.<V>union(regExWi, inter));
+				regEx.set(wi - 1, Regex.<V>simplifiedUnion(regExWi, inter));
 			}
 		}
 		allPathFromNode.put(a, regEx);
@@ -158,19 +158,19 @@ public class PathExpressionComputer<N, V> {
 			Integer head = getIntegerFor(e.getStart());
 			Integer tail = getIntegerFor(e.getTarget());
 			IRegex<V> pht = pathExpr(head, tail);
-			pht = Regex.<V>union(new Plain<V>(e.getLabel()), pht);
+			pht = Regex.<V>simplifiedUnion(new Plain<V>(e.getLabel()), pht);
 			updatePathExpr(head, tail, pht);
 		}
 		for (int v = 1; v <= numberOfNodes; v++) {
 			IRegex<V> pvv = pathExpr(v, v);
-			pvv = Regex.<V>star(pvv);
+			pvv = Regex.<V>simplifiedStar(pvv);
 			updatePathExpr(v, v, pvv);
 			for (int u = v + 1; u <= numberOfNodes; u++) {
 				IRegex<V> puv = pathExpr(u, v);
 				if (puv instanceof EmptySet) {
 					continue;
 				}
-				puv = Regex.<V>concatenate(puv, pvv);
+				puv = Regex.<V>simplifiedConcatenation(puv, pvv);
 				updatePathExpr(u, v, puv);
 				for (int w = v + 1; w <= numberOfNodes; w++) {
 					IRegex<V> pvw = pathExpr(v, w);
@@ -179,8 +179,8 @@ public class PathExpressionComputer<N, V> {
 					}
 
 					IRegex<V> old_puw = pathExpr(u, w);
-					IRegex<V> a = Regex.<V>concatenate(puv, pvw);
-					IRegex<V> puw = Regex.<V>union(old_puw, a);
+					IRegex<V> a = Regex.<V>simplifiedConcatenation(puv, pvw);
+					IRegex<V> puw = Regex.<V>simplifiedUnion(old_puw, a);
 					updatePathExpr(u, w, puw);
 				}
 			}
