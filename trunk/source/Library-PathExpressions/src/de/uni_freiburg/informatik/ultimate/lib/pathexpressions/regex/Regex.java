@@ -32,23 +32,16 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Regex<V> implements IRegex<V> {
+public abstract class Regex<V> implements IRegex<V> {
 	public static <V> IRegex<V> union(IRegex<V> a, IRegex<V> b) {
-		assert a != null;
-		assert b != null;
-
-		return simplify(new Union<V>(a, b));
+		return new Union<V>(a, b).simplify();
 	}
 
 	public static <V> IRegex<V> concatenate(IRegex<V> a, IRegex<V> b) {
-		assert a != null;
-		assert b != null;
-
-		return simplify(new Concatenate<V>(a, b));
+		return new Concatenate<V>(a, b).simplify();
 	}
 
 	public static <V> IRegex<V> reverse(IRegex<V> a) {
-		assert a != null;
 		if (a instanceof EmptySet || a instanceof Epsilon || a instanceof Plain)
 			return a;
 		if (a instanceof Concatenate) {
@@ -79,47 +72,8 @@ public class Regex<V> implements IRegex<V> {
 	}
 
 	public static <V> IRegex<V> star(IRegex<V> reg) {
-		return simplify(new Star<V>(reg));
+		return new Star<V>(reg).simplify();
 	}
 
-	private static <V> IRegex<V> simplify(IRegex<V> in) {
-		if (in instanceof Union) {
-			Union<V> u = ((Union<V>) in);
-			if (u.getFirst() instanceof EmptySet)
-				return u.getSecond();
-			if (u.getSecond() instanceof EmptySet)
-				return u.getFirst();
-			if (u.getFirst().equals(u.getSecond()))
-				return u.getFirst();
-			if (u.getFirst() instanceof Epsilon)
-				return u.getSecond();
-			if (u.getSecond() instanceof Epsilon)
-				return u.getFirst();
-		}
-		if (in instanceof Concatenate) {
-			Concatenate<V> c = (Concatenate<V>) in;
-			IRegex<V> first = c.getFirst();
-			IRegex<V> second = c.getSecond();
-			if (first instanceof EmptySet)
-				return first;
-			if (second instanceof EmptySet)
-				return second;
-			if (first instanceof Epsilon)
-				return c.getSecond();
-			if (second instanceof Epsilon)
-				return c.getFirst();
-		}
-
-		if (in instanceof Star) {
-			Star<V> star = (Star<V>) in;
-			if (star.getPlain() instanceof EmptySet) {
-				return star.getPlain();
-			}
-			if (star.getPlain() instanceof Epsilon)
-				return star.getPlain();
-		}
-
-		return in;
-	}
-
+	public abstract IRegex<V> simplify();
 }

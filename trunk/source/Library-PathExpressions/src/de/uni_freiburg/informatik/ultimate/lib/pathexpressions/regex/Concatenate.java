@@ -57,6 +57,20 @@ public class Concatenate<V> implements IRegex<V> {
 		return b;
 	}
 
+	public IRegex<V> simplify() {
+		// TODO if a or b then return emptyset
+		if (a instanceof EmptySet)
+			return a;
+		if (b instanceof EmptySet)
+			return b;
+		// TODO keep this way
+		if (a instanceof Epsilon)
+			return b;
+		if (b instanceof Epsilon)
+			return a;
+		return this;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

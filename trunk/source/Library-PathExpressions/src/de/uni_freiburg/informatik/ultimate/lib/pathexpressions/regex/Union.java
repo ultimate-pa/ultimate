@@ -39,12 +39,25 @@ public class Union<V> implements IRegex<V> {
 	private final IRegex<V> a;
 
 	public Union(IRegex<V> a, IRegex<V> b) {
-		assert a != null;
-		assert b != null;
 		this.a = a;
 		this.b = b;
 	}
 
+	public IRegex<V> simplify() {
+		// TODO write a or b EmptySet then return Emptyset, same for epsilon
+		if (a instanceof EmptySet)
+			return b;
+		if (b instanceof EmptySet)
+			return a;
+		if (a.equals(b))
+			return a;
+		if (a instanceof Epsilon)
+			return b;
+		if (b instanceof Epsilon)
+			return a;
+		return this;
+	}
+	
 	public String toString() {
 		return "{" + Objects.toString(a, "null") + " U " + Objects.toString(b, "null") + "}";
 	}
