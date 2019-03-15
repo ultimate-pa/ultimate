@@ -152,41 +152,27 @@ public class TermTransferrer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		Term result;
+		final FunctionSymbol fsymb = appTerm.getFunction();
+		/*
+		 * Note that resultSort must be non-null if and only if we have an explicitly
+		 * instantiated polymorphic FunctionSymbol, i.e., a function of the form (as
+		 * <name> <sort>). Otherwise mScript.term(..) will fail.
+		 */
+		final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 		try {
-			final FunctionSymbol fsymb = appTerm.getFunction();
-			/*
-			 * Note that resultSort must be non-null if and only if we have an explicitly
-			 * instantiated polymorphic FunctionSymbol, i.e., a function of the form (as
-			 * <name> <sort>). Otherwise mScript.term(..) will fail.
-			 */
-			final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 			if (mApplyLocalSimplifications) {
-				result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
-						appTerm.getFunction().getIndices(), resultSort, newArgs);
+				result = SmtUtils.termWithLocalSimplification(mScript, fsymb, newArgs);
 			} else {
 				result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 			}
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
-				final FunctionSymbol fsymb = appTerm.getFunction();
 				final Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
-
-				final Sort resultSort = transferSort(fsymb.getReturnSort());
-
 				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
 				if (mApplyLocalSimplifications) {
-					if (fsymb.isReturnOverload()) {
-						result = SmtUtils.termWithLocalSimplification(mScript, fsymb.getName(),
-								appTerm.getFunction().getIndices(), resultSort, newArgs);
-					} else {
-						result = SmtUtils.termWithLocalSimplification(mScript, fsymb, newArgs);
-					}
+					result = SmtUtils.termWithLocalSimplification(mScript, fsymb, newArgs);
 				} else {
-					if (fsymb.isReturnOverload()) {
-						result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
-					} else {
-						result = mScript.term(fsymb.getName(), newArgs);
-					}
+					result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 				}
 			} else {
 				throw e;
