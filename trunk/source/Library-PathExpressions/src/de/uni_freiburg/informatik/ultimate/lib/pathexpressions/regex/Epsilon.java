@@ -28,64 +28,17 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-class PathExpression<V> {
-	private IRegex<V> ex;
-	private int w;
-	private int u;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-	public IRegex<V> getExpression() {
-		return ex;
+public class Epsilon<V> implements IRegex<V> {
+
+	public Epsilon() {
 	}
 
-	public int getTarget() {
-		return w;
-	}
-
-	public int getSource() {
-		return u;
-	}
-
-	public PathExpression(IRegex<V> reg, int u, int w) {
-		this.ex = reg;
-		this.u = u;
-		this.w = w;
-	}
-
+	@Override
 	public String toString() {
-		return "{" + u + "," + ex.toString() + "," + w + "}";
+		return "EPS";
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((ex == null) ? 0 : ex.hashCode());
-		result = prime * result + u;
-		result = prime * result + w;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		PathExpression other = (PathExpression) obj;
-		if (ex == null) {
-			if (other.ex != null)
-				return false;
-		} else if (!ex.equals(other.ex))
-			return false;
-		if (u != other.u)
-			return false;
-		if (w != other.w)
-			return false;
-		return true;
-	}
-
 }

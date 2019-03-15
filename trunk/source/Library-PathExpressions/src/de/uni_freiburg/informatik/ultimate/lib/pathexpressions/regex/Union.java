@@ -28,43 +28,51 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-class PathExpression<V> {
-	private IRegex<V> ex;
-	private int w;
-	private int u;
+import java.util.Objects;
 
-	public IRegex<V> getExpression() {
-		return ex;
-	}
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-	public int getTarget() {
-		return w;
-	}
+public class Union<V> implements IRegex<V> {
+	private final IRegex<V> b;
+	private final IRegex<V> a;
 
-	public int getSource() {
-		return u;
-	}
-
-	public PathExpression(IRegex<V> reg, int u, int w) {
-		this.ex = reg;
-		this.u = u;
-		this.w = w;
+	public Union(IRegex<V> a, IRegex<V> b) {
+		assert a != null;
+		assert b != null;
+		this.a = a;
+		this.b = b;
 	}
 
 	public String toString() {
-		return "{" + u + "," + ex.toString() + "," + w + "}";
+		return "{" + Objects.toString(a, "null") + " U " + Objects.toString(b, "null") + "}";
+	}
+
+	public IRegex<V> getFirst() {
+		return a;
+	}
+
+	public IRegex<V> getSecond() {
+		return b;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((ex == null) ? 0 : ex.hashCode());
-		result = prime * result + u;
-		result = prime * result + w;
+		result = prime * result + (hashCode(a, b));
 		return result;
+	}
+
+	private int hashCode(IRegex<V> a, IRegex<V> b) {
+		if (a == null && b == null)
+			return 1;
+		if (a == null)
+			return b.hashCode();
+		if (b == null)
+			return a.hashCode();
+		return a.hashCode() + b.hashCode();
 	}
 
 	@Override
@@ -75,17 +83,23 @@ class PathExpression<V> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PathExpression other = (PathExpression) obj;
-		if (ex == null) {
-			if (other.ex != null)
+		Union other = (Union) obj;
+		if (matches(a, other.a)) {
+			return matches(b, other.b);
+		}
+		if (matches(a, other.b)) {
+			return matches(b, other.a);
+		}
+		return false;
+	}
+
+	private boolean matches(IRegex<V> a, IRegex<V> b) {
+		if (a == null) {
+			if (b != null)
 				return false;
-		} else if (!ex.equals(other.ex))
-			return false;
-		if (u != other.u)
-			return false;
-		if (w != other.w)
-			return false;
-		return true;
+			return true;
+		}
+		return a.equals(b);
 	}
 
 }

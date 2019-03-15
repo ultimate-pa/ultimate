@@ -34,9 +34,14 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegEx;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.RegEx;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenate;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Plain;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
 public class PathExpressionTest {
 	@Test
@@ -44,8 +49,8 @@ public class PathExpressionTest {
 		IntGraph g = new IntGraph();
 		g.addEdge(1, "w", 2);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 2);
-		IRegEx<String> expected = new RegEx.Plain<>("w");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 2);
+		IRegex<String> expected = new Plain<>("w");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -55,8 +60,8 @@ public class PathExpressionTest {
 		g.addEdge(1, "w", 2);
 		g.addEdge(2, "w", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = a("w", "w");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = a("w", "w");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -67,8 +72,8 @@ public class PathExpressionTest {
 		g.addEdge(2, "b", 3);
 		g.addEdge(3, "c", 4);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 4);
-		IRegEx<String> expected = a(a("a", "b"), "c");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 4);
+		IRegex<String> expected = a(a("a", "b"), "c");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -78,8 +83,8 @@ public class PathExpressionTest {
 		g.addEdge(1, "a", 2);
 		g.addEdge(2, "b", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 2);
-		IRegEx<String> expected = a("a", star(a("b", "a")));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 2);
+		IRegex<String> expected = a("a", star(a("b", "a")));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -90,8 +95,8 @@ public class PathExpressionTest {
 		g.addEdge(2, "b", 1);
 		g.addEdge(1, "c", 2);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 2);
-		IRegEx<String> expected = a(u("a", "c"), star(a("b", u("a", "c"))));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 2);
+		IRegex<String> expected = a(u("a", "c"), star(a("b", u("a", "c"))));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -103,8 +108,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "c", 4);
 		g.addEdge(1, "c", 4);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 4);
-		IRegEx<String> expected = u("c", a(a("a", "b"), "c"));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 4);
+		IRegex<String> expected = u("c", a(a("a", "b"), "c"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -115,8 +120,8 @@ public class PathExpressionTest {
 		g.addEdge(2, "b", 2);
 		g.addEdge(2, "c", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = a(a("a", star("b")), "c");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = a(a("a", star("b")), "c");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -128,8 +133,8 @@ public class PathExpressionTest {
 		g.addEdge(1, "c", 4);
 		g.addEdge(4, "d", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = u(a("a", "b"), a("c", "d"));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = u(a("a", "b"), a("c", "d"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -140,8 +145,8 @@ public class PathExpressionTest {
 		g.addEdge(2, "b", 3);
 		g.addEdge(3, "c", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = new RegEx.EmptySet<>();
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = new EmptySet<>();
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -154,8 +159,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "b", 4);
 		g.addEdge(4, "c", 5);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 5);
-		IRegEx<String> expected = a(a("a", "b"), "c");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 5);
+		IRegex<String> expected = a(a("a", "b"), "c");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -164,8 +169,8 @@ public class PathExpressionTest {
 		IntGraph g = new IntGraph();
 		g.addEdge(3, "c", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = new RegEx.EmptySet<>();
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = new EmptySet<>();
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -177,8 +182,8 @@ public class PathExpressionTest {
 		g.addEdge(1, "c", 3);
 		g.addEdge(1, "c", 4);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 4);
-		IRegEx<String> expected = u("c", a("a", "v"));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 4);
+		IRegex<String> expected = u("c", a("a", "v"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -189,8 +194,8 @@ public class PathExpressionTest {
 		g.addEdge(2, "v", 3);
 		g.addEdge(1, "c", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = u("c", a("a", "v"));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = u("c", a("a", "v"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -200,8 +205,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "a", 2);
 		g.addEdge(2, "v", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(3, 1);
-		IRegEx<String> expected = a("a", "v");
+		IRegex<String> expressionBetween = expr.getExpressionBetween(3, 1);
+		IRegex<String> expected = a("a", "v");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -213,8 +218,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "34", 4);
 		g.addEdge(4, "43", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = u(a("12", "23"), a(a(a(a("12", "23"), "34"), star(a("43", "34"))), "43"));
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = u(a("12", "23"), a(a(a(a("12", "23"), "34"), star(a("43", "34"))), "43"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -227,8 +232,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "34", 4);
 		g.addEdge(4, "43", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegEx<String> expected = u(a(a("12", star(a("21", "12"))), "23"),
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
+		IRegex<String> expected = u(a(a("12", star(a("21", "12"))), "23"),
 				a(a(a(a(a("12", star(a("21", "12"))), "23"), "34"), star(a("43", "34"))), "43"));
 		assertEquals(expected, expressionBetween);
 	}
@@ -242,8 +247,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "34", 4);
 		g.addEdge(4, "41", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 1);
-		IRegEx<String> expected = a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
+		IRegex<String> expected = a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
 				star(a(a(a(a("41", "12"), "23"), star(a("32", "23"))), "34"))), "41");
 		assertEquals(expected, expressionBetween);
 	}
@@ -256,8 +261,8 @@ public class PathExpressionTest {
 		g.addEdge(3, "34", 4);
 		g.addEdge(4, "41", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
-		IRegEx<String> expressionBetween = expr.getExpressionBetween(1, 1);
-		IRegEx<String> expected = u(
+		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
+		IRegex<String> expected = u(
 				a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41"),
 				a(u(a("13", star(a("31", "13"))),
 						a(a(a(a("13", star(a("31", "13"))), "34"),
@@ -267,63 +272,63 @@ public class PathExpressionTest {
 		assertEquals(expected, expressionBetween);
 	}
 
-	private static IRegEx<String> e(String e) {
-		return new RegEx.Plain<>(e);
+	private static IRegex<String> e(String e) {
+		return new Plain<>(e);
 	}
 
-	private static IRegEx<String> a(IRegEx<String> a, IRegEx<String> b) {
-		return RegEx.<String>concatenate(a, b);
+	private static IRegex<String> a(IRegex<String> a, IRegex<String> b) {
+		return Regex.<String>concatenate(a, b);
 	}
 
-	private static IRegEx<String> a(String a, IRegEx<String> b) {
+	private static IRegex<String> a(String a, IRegex<String> b) {
 		return a(e(a), b);
 	}
 
-	private static IRegEx<String> a(IRegEx<String> a, String b) {
+	private static IRegex<String> a(IRegex<String> a, String b) {
 		return a(a, e(b));
 	}
 
-	private static IRegEx<String> a(String a, String b) {
+	private static IRegex<String> a(String a, String b) {
 		return a(e(a), e(b));
 	}
 
-	private static IRegEx<String> u(IRegEx<String> a, IRegEx<String> b) {
-		return RegEx.<String>union(a, b);
+	private static IRegex<String> u(IRegex<String> a, IRegex<String> b) {
+		return Regex.<String>union(a, b);
 	}
 
-	private static IRegEx<String> u(String a, String b) {
+	private static IRegex<String> u(String a, String b) {
 		return u(e(a), e(b));
 	}
 
-	private static IRegEx<String> u(IRegEx<String> a, String b) {
+	private static IRegex<String> u(IRegex<String> a, String b) {
 		return u(a, e(b));
 	}
 
-	private static IRegEx<String> u(String a, IRegEx<String> b) {
+	private static IRegex<String> u(String a, IRegex<String> b) {
 		return u(e(a), b);
 	}
 
-	private static IRegEx<String> star(IRegEx<String> a) {
-		return RegEx.<String>star(a);
+	private static IRegex<String> star(IRegex<String> a) {
+		return Regex.<String>star(a);
 	}
 
-	private static IRegEx<String> star(String a) {
+	private static IRegex<String> star(String a) {
 		return star(e(a));
 	}
 
-	private static String toTestString(IRegEx<String> regEx) {
-		if (regEx instanceof RegEx.EmptySet) {
+	private static String toTestString(IRegex<String> regEx) {
+		if (regEx instanceof EmptySet) {
 			return "";
-		} else if (regEx instanceof RegEx.Plain) {
-			return String.format("\"%s\"", ((RegEx.Plain) regEx).v);
-		} else if (regEx instanceof RegEx.Concatenate) {
-			RegEx.Concatenate concat = (RegEx.Concatenate) regEx;
-			return String.format("a(%s, %s)", toTestString(concat.a), toTestString(concat.b));
-		} else if (regEx instanceof RegEx.Union) {
-			RegEx.Union union = (RegEx.Union) regEx;
-			return String.format("u(%s, %s)", toTestString(union.a), toTestString(union.b));
-		} else if (regEx instanceof RegEx.Star) {
-			return String.format("star(%s)", toTestString(((RegEx.Star) regEx).a));
+		} else if (regEx instanceof Plain) {
+			return String.format("\"%s\"", ((Plain) regEx).getV());
+		} else if (regEx instanceof Concatenate) {
+			Concatenate concat = (Concatenate) regEx;
+			return String.format("a(%s, %s)", toTestString(concat.getFirst()), toTestString(concat.getSecond()));
+		} else if (regEx instanceof Union) {
+			Union union = (Union) regEx;
+			return String.format("u(%s, %s)", toTestString(union.getFirst()), toTestString(union.getSecond()));
+		} else if (regEx instanceof Star) {
+			return String.format("star(%s)", toTestString(((Star) regEx).getPlain()));
 		} else {
 			throw new IllegalArgumentException("Unhandled regex: " + regEx);
 		}

@@ -5,5 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-Version: 0.1.24
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
-Export-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
+ de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex
 Import-Package: de.uni_freiburg.informatik.ultimate.util.datastructures.relation

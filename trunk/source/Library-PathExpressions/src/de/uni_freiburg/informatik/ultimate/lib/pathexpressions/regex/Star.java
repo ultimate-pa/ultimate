@@ -28,8 +28,50 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-public interface IRegEx<V> {
+import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
+
+public class Star<V> implements IRegex<V> {
+	private final IRegex<V> a;
+
+	public Star(IRegex<V> a) {
+		assert a != null;
+		this.a = a;
+	}
+
+	public String toString() {
+		return "[" + Objects.toString(a, "null") + "]* ";
+	}
+
+	public IRegex<V> getPlain() {
+		return a;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Star other = (Star) obj;
+		if (a == null) {
+			if (other.a != null)
+				return false;
+		} else if (!a.equals(other.a))
+			return false;
+		return true;
+	}
 }

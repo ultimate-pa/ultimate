@@ -28,42 +28,33 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-class PathExpression<V> {
-	private IRegex<V> ex;
-	private int w;
-	private int u;
+import java.util.Objects;
 
-	public IRegex<V> getExpression() {
-		return ex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
+
+public class Plain<V> implements IRegex<V> {
+	private final V v;
+
+	public Plain(V v) {
+		assert v != null;
+		this.v = v;
 	}
 
-	public int getTarget() {
-		return w;
+	public V getV() {
+		return v;
 	}
-
-	public int getSource() {
-		return u;
-	}
-
-	public PathExpression(IRegex<V> reg, int u, int w) {
-		this.ex = reg;
-		this.u = u;
-		this.w = w;
-	}
-
+	
 	public String toString() {
-		return "{" + u + "," + ex.toString() + "," + w + "}";
+		return Objects.toString(v, "null");
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((ex == null) ? 0 : ex.hashCode());
-		result = prime * result + u;
-		result = prime * result + w;
+		result = prime * result + ((v == null) ? 0 : v.hashCode());
 		return result;
 	}
 
@@ -75,17 +66,12 @@ class PathExpression<V> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PathExpression other = (PathExpression) obj;
-		if (ex == null) {
-			if (other.ex != null)
+		Plain other = (Plain) obj;
+		if (v == null) {
+			if (other.v != null)
 				return false;
-		} else if (!ex.equals(other.ex))
-			return false;
-		if (u != other.u)
-			return false;
-		if (w != other.w)
+		} else if (!v.equals(other.v))
 			return false;
 		return true;
 	}
-
 }

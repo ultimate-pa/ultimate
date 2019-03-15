@@ -28,15 +28,63 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-public class Epsilon<V> implements IRegEx<V> {
+import java.util.Objects;
 
-	public Epsilon() {
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
+
+public class Concatenate<V> implements IRegex<V> {
+	private final IRegex<V> b;
+	private final IRegex<V> a;
+
+	public Concatenate(IRegex<V> a, IRegex<V> b) {
+		assert a != null;
+		assert b != null;
+		this.a = a;
+		this.b = b;
+	}
+
+	public String toString() {
+		return "(" + Objects.toString(a, "null") + " \u00B7 " + Objects.toString(b, "null") + ")";
+	}
+
+	public IRegex<V> getFirst() {
+		return a;
+	}
+
+	public IRegex<V> getSecond() {
+		return b;
 	}
 
 	@Override
-	public String toString() {
-		return "EPS";
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Concatenate other = (Concatenate) obj;
+		if (a == null) {
+			if (other.a != null)
+				return false;
+		} else if (!a.equals(other.a))
+			return false;
+		if (b == null) {
+			if (other.b != null)
+				return false;
+		} else if (!b.equals(other.b))
+			return false;
+		return true;
 	}
 }
