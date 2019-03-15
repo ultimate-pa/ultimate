@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest.req;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
 
 public class ReqGuardGraph extends ModifiableLabeledEdgesMultigraph<ReqGuardGraph, TimedLabel> {
@@ -20,4 +23,5 @@ public class ReqGuardGraph extends ModifiableLabeledEdgesMultigraph<ReqGuardGrap
 	public String getName() {
 		return mName;
 	}
+	
 }

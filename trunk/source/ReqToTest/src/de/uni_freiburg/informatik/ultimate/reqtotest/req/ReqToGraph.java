@@ -285,24 +285,15 @@ public class ReqToGraph {
 			final Term nR = SmtUtils.not(mScript, R);
 			
 			//regular automaton
-			q0.connectOutgoing(q0, new TimedLabel(
-					SmtUtils.and(mScript, ndS,
-							SmtUtils.or(mScript,
-								SmtUtils.and(mScript, uR, nR),
-								SmtUtils.and(mScript, uS, S))
-									), true));
+			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uR, nR)));
+			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uS, S)));
 			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
-			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript,
-													SmtUtils.or(mScript,
-															SmtUtils.and(mScript, R, uR, ndS, clockGuardLess),
-															SmtUtils.and(mScript, R, uR, S, dS, clockGuardGeq))
-																), true));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, uR, ndS, clockGuardLess)));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, uR, S, dS, clockGuardGeq), true));
+
 			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS, clockGuardEq)));
-			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, 
-													SmtUtils.or(mScript, 
-															SmtUtils.and(mScript, uR, nR),
-															SmtUtils.and(mScript, nuR))
-																)));
+			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, uR, nR)));
+			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, nuR)));
 			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS)));
 			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, clockGuardEq, S, dS), true));
 			// uncertainty
@@ -350,24 +341,14 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nuQ, nQ, ndS)));
 			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, Q, uQ, ndS)));
 			q0.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, Q, uQ), clockIdent));
-			q1.connectOutgoing(q1, new TimedLabel(
-					SmtUtils.and(mScript, ndS,
-							SmtUtils.or(mScript,
-								SmtUtils.and(mScript, uR, nR),
-								SmtUtils.and(mScript, uS, S))
-									), true));
+			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uR, nR)));
+			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uS, S)));
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
-			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript,
-													SmtUtils.or(mScript,
-															SmtUtils.and(mScript, R, uR, ndS, clockGuardLess),
-															SmtUtils.and(mScript, R, uR, S, dS, clockGuardGeq))
-																), true));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, R, uR, ndS, clockGuardLess)));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, R, uR, S, dS, clockGuardGeq), true));
 			q2.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS, clockGuardGeq)));
-			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, 
-													SmtUtils.or(mScript, 
-															SmtUtils.and(mScript, uR, nR),
-															SmtUtils.and(mScript, nuR))
-																)));
+			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS, uR, nR)));
+			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, nuR)));
 			q3.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, clockGuardLess, ndS)));
 			q3.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, clockGuardEq, S, dS), true));
 			// uncertainty
@@ -395,7 +376,6 @@ public class ReqToGraph {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			String id = pattern.getId();
 			final ReqGuardGraph q0 = new ReqGuardGraph(0, id);
-			final ReqGuardGraph q1 = new ReqGuardGraph(1, id); 
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
 			//define labels 
 			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
@@ -405,18 +385,10 @@ public class ReqToGraph {
 			final Term nuR = SmtUtils.not(mScript, uR); 
 			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
 			final Term nR = SmtUtils.not(mScript, R);
-			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript,
-					SmtUtils.and(mScript, nuR, ndS), 
-					SmtUtils.and(mScript, uR, nR, ndS),
-					SmtUtils.and(mScript, S, uS, ndS)
-					)));
-			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), true));
-			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), true));
-			q1.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript,
-					SmtUtils.and(mScript, nuR, ndS), 
-					SmtUtils.and(mScript, uR, nR, ndS),
-					SmtUtils.and(mScript, S, uS, ndS)
-					)));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nuR, ndS)));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, nR, ndS)));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, ndS)));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S),true));
 			return q0;
 		} else {
 			scopeNotImplementedWarning(pattern);

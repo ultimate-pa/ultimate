@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -149,7 +150,7 @@ public class GraphToBoogie {
 	}
 	
 	private Statement generateWhileStatement() {
-		return new WhileStatement(mDummyLocation, new BooleanLiteral(mDummyLocation, true), 
+		return new WhileStatement(mDummyLocation,  new WildcardExpression(mDummyLocation), 
 				new LoopInvariantSpecification[0], generateWhileBody());
 	}
 	
@@ -176,11 +177,13 @@ public class GraphToBoogie {
 			ReqGuardGraph sourceLocation = queue.poll();
 			visited.add(sourceLocation);
 			Statement[] innerIf = new Statement[] {new AssumeStatement(mDummyLocation, new BooleanLiteral(mDummyLocation, false))};
-			for(ReqGuardGraph successorLocation: sourceLocation.getOutgoingNodes()) {
+			for(int i = 0; i < sourceLocation.getOutgoingNodes().size();  i++) {
+				ReqGuardGraph successorLocation = sourceLocation.getOutgoingNodes().get(i);
+				TimedLabel label = sourceLocation.getOutgoingEdgeLabels().get(i);
+			
 				if(!visited.contains(successorLocation) && !queue.contains(successorLocation)) {
 					queue.add(successorLocation);
 				}
-				TimedLabel label = sourceLocation.getOutgoingEdgeLabel(successorLocation);
 				//generate the inner if (... "then transition to __successorLocation__ if __label__ holds ")
 				innerIf = generateInnerIf(innerIf, reqId, sourceLocation, successorLocation, label);
 			}
