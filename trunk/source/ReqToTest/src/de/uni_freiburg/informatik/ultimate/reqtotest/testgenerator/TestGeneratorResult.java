@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.testgenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -121,10 +122,11 @@ public class TestGeneratorResult implements IResult  {
 			return;
 		}
 		Set<TermVariable> varsToJustify = SmtUtils.getFreeVars( Arrays.asList(toJustifyAnnotation.getGuard()) );
+		Collection<TermVariable> effectsOfReq = mAuxVarGen.getEffectVariables(toJustifyAnnotation.getRequirementAut());
 		Set<String> outputVariables = mReqSymbolTable.getOutputVars();
-		Set<TermVariable> outputs = new HashSet<TermVariable>();
+		Set<TermVariable> outputs = new HashSet<TermVariable>(); 
 		for(TermVariable var: varsToJustify) {
-			if(outputVariables.contains(var.getName())) {
+			if(outputVariables.contains(var.getName()) && effectsOfReq.contains(var)) {
 				outputs.add(var);
 			}
 		}
