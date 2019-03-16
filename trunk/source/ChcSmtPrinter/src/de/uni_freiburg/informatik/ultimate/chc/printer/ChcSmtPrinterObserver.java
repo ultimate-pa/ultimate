@@ -61,7 +61,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
 	// TODO: make settings
+
+	/**
+	 * Add a (get-unsat-core) command after the (check-sat) command. In order to make this command work, also set the
+	 * :produce-unsat-cores option and give a name to each term.
+	 */
 	private static final boolean PRODUCE_UNSAT_CORES = false;
+
+	/**
+	 * {@ HornClause}s can have comments attached to them. They might help understanding the meaning of each clause.
+	 * This flag decides if they are printed as comments inside the smt2 file.
+	 */
 	private static final boolean ADD_COMMENTS = false;
 
 	private final ILogger mLogger;
