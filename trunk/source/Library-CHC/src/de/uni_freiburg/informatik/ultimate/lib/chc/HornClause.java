@@ -334,13 +334,10 @@ public class HornClause implements IRankedLetter {
 
 		Term resultFinal;
 		if (nameAssertedTerms) {
+			// TODO: naming is rather hacky, e.g., on a hash collision, only the first term will get a name.
 			try {
-//				final String qos = new QuotedObject(mFormula).toString();
 				final String qos = "t" + hashCode();
-//				final String qos = new QuotedObject(mFormula.hashCode()).toString();
-//				mgdScript.declareFun(this, qos, new Sort[0], SmtSortUtils.getBoolSort(mgdScript));
-				resultFinal = mgdScript.getScript().annotate(result,
-					new Annotation(":named", qos));
+				resultFinal = mgdScript.getScript().annotate(result, new Annotation(":named", qos));
 			} catch (final SMTLIBException sle) {
 				resultFinal = result;
 			}
