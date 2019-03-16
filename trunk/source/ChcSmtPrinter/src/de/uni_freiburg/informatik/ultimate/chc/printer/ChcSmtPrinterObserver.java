@@ -149,7 +149,7 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 			}
 			loggingScript.assertTerm(formula);
 		}
-		// TODO: combine all queries into one
+
 		for (final HornClause hc : queries) {
 			if (ADD_COMMENTS) {
 				loggingScript.comment(hc.toString());

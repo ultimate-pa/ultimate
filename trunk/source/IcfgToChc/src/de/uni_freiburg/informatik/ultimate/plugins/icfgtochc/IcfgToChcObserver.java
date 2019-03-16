@@ -436,11 +436,26 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 							final TermVariable inTv = oldVarsAssignment.getInVars().get(pv);
 							assert inTv != null;
 							substitutionForOldVarsAssignment.put(inTv, bodyVar.getTermVariable());
+
+							final TermVariable inTvCallAssignment = localVarsAssignmentOfCall.getInVars().get(pv);
+							if (inTvCallAssignment == null) {
+								// nothing
+							} else {
+								substitutionForAssignmentOfCall.put(inTvCallAssignment, bodyVar.getTermVariable());
+							}
+
 						} else {
 							// pv is global and not modified by procedure --> use variable from headvars as arg
 							// maybe not obvious: this should work because the predicates after the return and before
 							// the call have the same signature (both belong to the outer procedure)
 							firstPredArgs.add(headVars.get(i).getTermVariable());
+
+							final TermVariable inTv = localVarsAssignmentOfCall.getInVars().get(pv);
+							if (inTv == null) {
+								// nothing
+							} else {
+								substitutionForAssignmentOfCall.put(inTv, headVars.get(i).getTermVariable());
+							}
 						}
 					} else {
 						/* pv is local --> if it is assigned by the return, it is new, otherwise we take the one from the
@@ -566,9 +581,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		auxVars.removeAll(bodyVars.stream().map(bv -> bv.getTermVariable()).collect(Collectors.toList()));
 
-
 		auxVars.remove(mAssertionViolatedVar);
-//		auxVars.remove(mAssertionViolatedVarPrime);
 
 		if (!auxVars.isEmpty()) {
 			assert false;
