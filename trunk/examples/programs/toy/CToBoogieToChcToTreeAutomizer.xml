@@ -1,0 +1,23 @@
+//#Safe
+/*
+ *
+ */
+
+procedure SAS09paper()
+{
+  var x: int;
+
+  x := 0;
+
+//  while (*) {
+    //x := x + 1;
+//  }
+
+  x := x + 1;
+  x := x + 1;
+  x := x + 1;
+  x := x + 1;
+
+  assert(x > -1);
+}
+

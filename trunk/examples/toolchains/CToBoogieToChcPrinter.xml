@@ -6,6 +6,5 @@
 		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.icfgtochc"/>
 		<plugin id="de.uni_freiburg.informatik.ultimate.chc.printer"/>
-		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer"/>
 	</toolchain>
 </rundefinition>
