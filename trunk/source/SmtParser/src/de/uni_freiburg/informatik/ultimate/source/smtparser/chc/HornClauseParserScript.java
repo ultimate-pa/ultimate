@@ -336,7 +336,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			checkEquivalence(normalizedFormula,
 				SmtUtils.and(mManagedScript.getScript(),
 						parsedHornClauses.stream()
-						.map(hc -> hc.constructFormula(mManagedScript))
+						.map(hc -> hc.constructFormula(mManagedScript, false))
 						.collect(Collectors.toList())));
 
 		if (mLogger.isDebugEnabled()) {

@@ -321,6 +321,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		final HornAnnot annot = new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable,
 				new ArrayList<>(resultChcs), true);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
+		mIcfg.getPayload().getAnnotations().forEach((k, v) -> payload.getAnnotations().put(k, v));
 
 
 		mMgdScript.unlock(this);

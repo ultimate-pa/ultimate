@@ -79,11 +79,6 @@ public class HornClause implements IRankedLetter {
 	 */
 	private String mComment;
 
-
-	// TODO setting
-	private final boolean ANNOTATE_ASSERTED_TERMS = true;
-
-
 	/**
 	 * Constructor for a query/goal clause, i.e., a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> false.
 	 * Where b1 .. bn are uninterpreted predicates and constraint is a Term.
@@ -283,9 +278,10 @@ public class HornClause implements IRankedLetter {
 	/**
 	 *
 	 * @param mgdScript
+	 * @param nameAssertedTerms
 	 * @return a complete Horn constraint as it can be asserted in an (assert ..) term in smtlib.
 	 */
-	public Term constructFormula(final ManagedScript mgdScript) {
+	public Term constructFormula(final ManagedScript mgdScript, final boolean nameAssertedTerms) {
 		final TermTransferrer termTransferrer = new TermTransferrer(mgdScript.getScript());
 
 		final TermVariable[] qVars;
@@ -337,7 +333,7 @@ public class HornClause implements IRankedLetter {
 	 	}
 
 		Term resultFinal;
-		if (ANNOTATE_ASSERTED_TERMS) {
+		if (nameAssertedTerms) {
 			try {
 //				final String qos = new QuotedObject(mFormula).toString();
 				final String qos = "t" + hashCode();

@@ -60,7 +60,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
+	// TODO: make settings
 	private static final boolean PRODUCE_UNSAT_CORES = false;
+	private static final boolean ADD_COMMENTS = false;
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -130,14 +133,18 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
 		// assert constraints
 		for (final HornClause hc : rules) {
-			final Term formula = hc.constructFormula(mgdScript);
-			loggingScript.comment(hc.toString());
+			final Term formula = hc.constructFormula(mgdScript, PRODUCE_UNSAT_CORES);
+			if (ADD_COMMENTS) {
+				loggingScript.comment(hc.toString());
+			}
 			loggingScript.assertTerm(formula);
 		}
 		// TODO: combine all queries into one
 		for (final HornClause hc : queries) {
-			loggingScript.comment(hc.toString());
-			final Term formula = hc.constructFormula(mgdScript);
+			if (ADD_COMMENTS) {
+				loggingScript.comment(hc.toString());
+			}
+			final Term formula = hc.constructFormula(mgdScript, PRODUCE_UNSAT_CORES);
 			loggingScript.assertTerm(formula);
 		}
 
@@ -191,7 +198,7 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 					.getBoolean(ChcSmtPrinterPreferenceInitializer.UNIQUE_NAME_LABEL)) {
 				file = File.createTempFile(
 						"ChcSmtPrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
-						".bpl", new File(path));
+						".smt2", new File(path));
 			} else {
 				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 						.getString(ChcSmtPrinterPreferenceInitializer.FILE_NAME_LABEL);
