@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
@@ -223,12 +224,27 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					headVars.add(headVar);
 					if (tv.equals(mAssertionViolatedVar)) {
 						assertionViolatedHeadVar = headVar;
-					} else if (pv.isGlobal() && !pv.isOldvar()) {
-						globalsWithTheirOldVarsEqualities.add(SmtUtils.binaryEquality(mMgdScript.getScript(),
-								pv.getTermVariable(), ((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
-						substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
-					} else if (pv.isGlobal() && pv.isOldvar()) {
-						substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
+					} else if (pv.isGlobal()) {
+
+						// add equality var = old(var)
+						if (!pv.isOldvar()) {
+							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
+									.getModifiedBoogieVars(proc).contains(pv)) {
+								// not modified --> skip
+								continue;
+							}
+							globalsWithTheirOldVarsEqualities.add(SmtUtils.binaryEquality(mMgdScript.getScript(),
+									pv.getTermVariable(), ((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
+							substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
+						} else if (pv.isOldvar()) {
+							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
+									.getModifiedBoogieVars(proc).contains(((IProgramOldVar) pv).getNonOldVar())) {
+								// not modified --> skip
+								continue;
+							}
+
+							substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
+						}
 					}
 				}
 			}
