@@ -946,7 +946,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 	}
 
 	private String computePredicateNameForIcfgLocation(final IcfgLocation loc) {
-		return loc.toString();
+		return loc.getProcedure() + "_" + loc.toString();
 	}
 
 }
