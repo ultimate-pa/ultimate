@@ -31,22 +31,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.chcprinter.preferences.ChcSmtPrinterPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -58,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class ChcSmtPrinterObserver implements IUnmanagedObserver {
+public class ChcSmtPrinterObserver extends BaseObserver {
 
 	// TODO: make settings
 
@@ -84,11 +80,13 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws FileNotFoundException {
-		final HornAnnot annot;
-		{
-			final BasePayloadContainer rootNode = (BasePayloadContainer) root;
-			final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
-			annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
+
+		if (!(root instanceof HornClauseAST)) {
+			return true;
+		}
+
+		final HornAnnot annot = HornAnnot.getAnnotation(root);
+		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Printing the following HornClause set:");
 			mLogger.debug(annot);
 		}
@@ -108,18 +106,11 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 			}
 		}
 
-
 		final LoggingScript loggingScript;
-		try {
-			final File file = openTempFile(root);
-			// TODO make an option for cse
-			final boolean useCse = true;
-			loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, useCse);
-		} catch (final FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw e;
-		}
+		final File file = openTempFile(root);
+		// TODO make an option for cse
+		final boolean useCse = true;
+		loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, useCse);
 
 		/*
 		 * Write file using loggingScript
@@ -171,7 +162,6 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 
 		return true;
 	}
-
 
 	/**
 	 * modified from BoogiePrinter
@@ -230,20 +220,5 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 			mLogger.fatal("Cannot open file", e);
 			return null;
 		}
-	}
-
-	@Override
-	public void finish() {
-		// not required
-	}
-
-	@Override
-	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// not required
-	}
-
-	@Override
-	public boolean performedChanges() {
-		return false;
 	}
 }

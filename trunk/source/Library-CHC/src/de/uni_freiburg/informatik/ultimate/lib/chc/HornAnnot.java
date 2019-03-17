@@ -28,19 +28,24 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.List;
-import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HornAnnot implements IAnnotations {
+public class HornAnnot extends ModernAnnotations {
 
 	private static final long serialVersionUID = -3542578811318106167L;
+	private static final String KEY = HornAnnot.class.getName();
+
 	private final ManagedScript mBackendSolverScript;
 	private final HcSymbolTable mSymbolTable;
 	private final String mFileName;
@@ -49,23 +54,19 @@ public class HornAnnot implements IAnnotations {
 
 	/***
 	 * An annotation of horn clauses.
+	 * 
 	 * @param filename
 	 * @param clauses
 	 * @param backendSolver
 	 * @param symbolTable
 	 */
-	public HornAnnot(final String filename, final ManagedScript backendSolver,
-			final HcSymbolTable symbolTable, final List<HornClause> clauses, final boolean hasCheckSat) {
+	public HornAnnot(final String filename, final ManagedScript backendSolver, final HcSymbolTable symbolTable,
+			final List<HornClause> clauses, final boolean hasCheckSat) {
 		mFileName = filename;
 		mHornClauses = clauses;
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
 		mHasCheckSat = hasCheckSat;
-	}
-
-	@Override
-	public Map<String, Object> getAnnotationsAsMap() {
-		throw new UnsupportedOperationException();
 	}
 
 	public ManagedScript getScript() {
@@ -95,11 +96,27 @@ public class HornAnnot implements IAnnotations {
 	@Override
 	public String toString() {
 		final StringBuilder res = new StringBuilder();
-		res.append("(HornAnnot) List of HornClauses:\n");
+		res.append("(HornAnnot) List of HornClauses:").append(CoreUtil.getPlatformLineSeparator());
 		for (final HornClause hc : mHornClauses) {
 			res.append(hc.toString());
-			res.append('\n');
+			res.append(CoreUtil.getPlatformLineSeparator());
 		}
 		return res.toString();
+	}
+
+	public void annotate(final IElement node) {
+		node.getPayload().getAnnotations().put(KEY, this);
+	}
+
+	public static HornAnnot getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (HornAnnot) a);
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof HornAnnot) {
+			throw new UnmergeableAnnotationsException("Not implemented for " + getClass().getName());
+		}
+		return super.merge(other);
 	}
 }

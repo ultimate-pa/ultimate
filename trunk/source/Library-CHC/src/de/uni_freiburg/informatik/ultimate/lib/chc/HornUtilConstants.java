@@ -36,15 +36,12 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 public final class HornUtilConstants {
 
 	/**
-	 * A set of HornClauses does not have procedures. However, for fulfilling some interfaces we need
-	 * to give a procedure name.
+	 * A set of HornClauses does not have procedures. However, for fulfilling some interfaces we need to give a
+	 * procedure name.
 	 */
 	public static final String HORNCLAUSEMETHODNAME = "dummy-HornClauseMethod";
 
-	public static final String HORN_ANNOT_NAME = "HoRNClauses";
-
 	public static final String DONTCARE = "DontCare";
-
 
 	public static final String BODYVARPREFIX = "hbv";
 	public static final String HEADVARPREFIX = "hhv";
@@ -59,14 +56,12 @@ public final class HornUtilConstants {
 		// hides public constructor
 	}
 
-	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym,
-			final int index, final String sortStringRaw) {
+	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym, final int index,
+			final String sortStringRaw) {
 
 		final String name = HornUtilConstants.sanitzePredName(predSym.getName());
-		final String sortString = sortStringRaw
-				.replaceAll(" ", "_")
-				.replaceAll("[()]", "");
-			return String.format("%s_%s_%d_%s", prefix, name, index, sortString);
+		final String sortString = sortStringRaw.replaceAll(" ", "_").replaceAll("[()]", "");
+		return String.format("%s_%s_%d_%s", prefix, name, index, sortString);
 	}
 
 	/**
@@ -79,12 +74,9 @@ public final class HornUtilConstants {
 		assert !headPredSymProcNameRaw.contains(".CLN") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".DLR") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".AT") : "naming might clash";
-		final String headPredSymProcName = headPredSymProcNameRaw
-				.replaceAll("@", ".AT")
-				.replaceAll("\\$", ".DLR")
-				.replaceAll(":", ".CLN");
+		final String headPredSymProcName =
+				headPredSymProcNameRaw.replaceAll("@", ".AT").replaceAll("\\$", ".DLR").replaceAll(":", ".CLN");
 		return headPredSymProcName;
 	}
-
 
 }

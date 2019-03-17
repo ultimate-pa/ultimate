@@ -27,13 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
- * Used for passing a payload that contains HornAnnot annotations.
- * Does not add any behaviour compared to the abstract super class BasePayloadContainer.
+ * Used for passing a payload that contains HornAnnot annotations. Does not add any behaviour compared to the abstract
+ * super class BasePayloadContainer.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -43,11 +41,9 @@ public class HornClauseAST extends BasePayloadContainer {
 
 	private static final long serialVersionUID = -2511301336938947093L;
 
-	/***
-	 * Constructor of a HornClause payload.
-	 * @param payload
-	 */
-	public HornClauseAST(IPayload payload) {
-		super(payload);
+	public static HornClauseAST create(final HornAnnot annot) {
+		final HornClauseAST ast = new HornClauseAST();
+		annot.annotate(ast);
+		return ast;
 	}
 }

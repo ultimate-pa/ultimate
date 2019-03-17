@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -40,12 +39,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -54,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.ChcPreMetaInfoProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
@@ -63,9 +60,8 @@ import de.uni_freiburg.informatik.ultimate.plugin.chctoboogie.preferences.ChcToB
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Does the main work of this plugin.
- * Takes a set of HornClause objects from the previous plugin and converts it into a Boogie Unit that is safe if and
- * only if the input set of Horn clauses is satisfiable.
+ * Does the main work of this plugin. Takes a set of HornClause objects from the previous plugin and converts it into a
+ * Boogie Unit that is safe if and only if the input set of Horn clauses is satisfiable.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -119,12 +115,13 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Exception {
 
-		final HornAnnot annot;
-		{
-			final BasePayloadContainer rootNode = (BasePayloadContainer) root;
-			final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
-			annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-			mLogger.debug("Converting the following HornClause set to a Boogie Program:");
+		if (!(root instanceof HornClauseAST)) {
+			return true;
+		}
+
+		final HornAnnot annot = HornAnnot.getAnnotation(root);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Printing the following HornClause set:");
 			mLogger.debug(annot);
 		}
 
@@ -132,7 +129,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			generateDummyBoogieAst();
 			return true;
 		}
-
 
 		final List<HornClause> hornClausesRaw = annot.getHornClauses();
 		mManagedScript = annot.getScript();
@@ -148,8 +144,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mHcSymbolTable, mManagedScript);
 
-//		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
-//				sortHornClausesByHeads(hornClausesRaw);
+		// final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
+		// sortHornClausesByHeads(hornClausesRaw);
 		final ChcPreMetaInfoProvider preAnalysis = new ChcPreMetaInfoProvider(hornClausesRaw, mHcSymbolTable);
 
 		mGotoVarName = "gotoSwitch";
@@ -166,11 +162,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-
-
 	/**
 	 * Generate a Boogie AST that has no specifications. (used in case there is no check-sat in the original file so we
-	 *  do not get a PositiveResult).
+	 * do not get a PositiveResult).
 	 */
 	private void generateDummyBoogieAst() {
 		final Body body = new Body(mLocation, new VariableDeclaration[0], new Statement[0]);
@@ -178,8 +172,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		final Procedure proc = new Procedure(mLocation, new Attribute[0], mNameOfMainEntryPointProc, new String[0],
 				new VarList[0], new VarList[0], new Specification[0], body);
 
-		mBoogieUnit = new Unit(mLocation,
-				new Declaration[] { proc });
+		mBoogieUnit = new Unit(mLocation, new Declaration[] { proc });
 	}
 
 }

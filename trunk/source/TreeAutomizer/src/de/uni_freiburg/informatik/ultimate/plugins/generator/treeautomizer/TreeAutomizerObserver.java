@@ -27,19 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 
@@ -50,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  */
-public class TreeAutomizerObserver implements IUnmanagedObserver {
+public class TreeAutomizerObserver extends BaseObserver {
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
@@ -65,39 +59,17 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) throws Throwable {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void finish() throws Throwable {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean performedChanges() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public boolean process(final IElement root) throws Throwable {
 
-		final BasePayloadContainer rootNode = (BasePayloadContainer) root;
-
-		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-		mLogger.debug("HornAnnot as passed to TreeAutomizer:");
-		mLogger.debug(annot);
+		final HornAnnot annot = HornAnnot.getAnnotation(root);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("HornAnnot as passed to TreeAutomizer:");
+			mLogger.debug(annot);
+		}
 
 		final TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, annot, taPrefs, mLogger);
-
 		final IResult result = cegar.iterate();
-
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-
 		return false;
 	}
 

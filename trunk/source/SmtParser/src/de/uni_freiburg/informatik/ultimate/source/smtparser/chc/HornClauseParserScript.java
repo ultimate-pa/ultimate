@@ -41,7 +41,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -128,8 +126,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private final IPreferenceProvider mPreferences;
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
-			final ManagedScript smtSolverScript, final String logic,
-			final SolverSettings settings) {
+			final ManagedScript smtSolverScript, final String logic, final SolverSettings settings) {
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
@@ -157,13 +154,9 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	public IElement getHornClauses() {
 		mFinished = true;
 		mSymbolTable.finishConstruction();
-
-		final Payload payload = new Payload();
-		final HornAnnot annot = new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses,
-				mSawCheckSat);
-		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
-
-		return new HornClauseAST(payload);
+		final HornAnnot annot =
+				new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses, mSawCheckSat);
+		return HornClauseAST.create(annot);
 	}
 
 	/**
@@ -223,7 +216,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private List<HornClauseHead> parseCnf(final Term term) throws SMTLIBException {
 		final List<HornClauseHead> result = new ArrayList<>();
 
-
 		final Term quantifiersStripped;
 		if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) term;
@@ -238,7 +230,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		if (quantifiersStripped instanceof QuantifiedFormula) {
 			throw new AssertionError("Input not skolemized??");
 		}
-
 
 		final Term[] clauses = SmtUtils.getConjuncts(quantifiersStripped);
 
@@ -323,7 +314,8 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		final List<HornClauseHead> parsedBodies = parseCnf(normalizedFormula);
 		final List<HornClause> parsedHornClauses = new ArrayList<>();
 		for (final HornClauseHead parsedBody : parsedBodies) {
-			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
+			final HornClause parsedQuantification =
+					parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 			if (parsedQuantification != null) {
 				parsedHornClauses.add(parsedQuantification);
 				if (mLogger.isDebugEnabled()) {
@@ -332,12 +324,9 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			}
 		}
 		mParsedHornClauses.addAll(parsedHornClauses);
-		assert !mDoSolverBasedSanityChecks ||
-			checkEquivalence(normalizedFormula,
-				SmtUtils.and(mManagedScript.getScript(),
-						parsedHornClauses.stream()
-						.map(hc -> hc.constructFormula(mManagedScript, false))
-						.collect(Collectors.toList())));
+		assert !mDoSolverBasedSanityChecks
+				|| checkEquivalence(normalizedFormula, SmtUtils.and(mManagedScript.getScript(), parsedHornClauses
+						.stream().map(hc -> hc.constructFormula(mManagedScript, false)).collect(Collectors.toList())));
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Parsed so far: " + mParsedHornClauses);
@@ -349,15 +338,13 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 
 	/**
 	 * plan:
-	 * <li> prenex, nnf
-	 * <li> let every subformula that has no uninterpreted predicates
-	 * <li> cnf the body of the let
-	 * <li> unlet
-	 * result: a formula in prenex NF, with a CNF inside
-	 * TODO: a TermCompiler and Clausifier a la SMTInterpol might be more efficient
+	 * <li>prenex, nnf
+	 * <li>let every subformula that has no uninterpreted predicates
+	 * <li>cnf the body of the let
+	 * <li>unlet result: a formula in prenex NF, with a CNF inside TODO: a TermCompiler and Clausifier a la SMTInterpol
+	 * might be more efficient
 	 */
 	public Term normalizeInputFormula(final Term rawTerm) {
-
 
 		final Term nrmlized = new NormalizingTermTransformer().transform(rawTerm);
 
@@ -373,7 +360,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		Term snfBody;
 		TermVariable[] snfVars;
 		if (snfTerm instanceof QuantifiedFormula) {
-			final QuantifiedFormula qf = ((QuantifiedFormula) snfTerm);
+			final QuantifiedFormula qf = (QuantifiedFormula) snfTerm;
 			snfBody = qf.getSubformula();
 			snfVars = qf.getVariables();
 			assert qf.getQuantifier() == FORALL;
@@ -382,9 +369,8 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			snfVars = null;
 		}
 		final Set<Term> constraints =
-				new SubTermFinder(term -> term.getSort().getName().equals("Bool")
-						&& hasNoUninterpretedPredicates(term), true)
-				.findMatchingSubterms(snfBody);
+				new SubTermFinder(term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term),
+						true).findMatchingSubterms(snfBody);
 		final Map<Term, Term> subs = new HashMap<>();
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant
@@ -397,7 +383,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
 
 		final Term cnfWConstraintsReplaced =
-			 new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
+				new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 
@@ -427,10 +413,8 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	}
 
 	private boolean hasNoUninterpretedPredicates(final Term term) {
-		final NoSubtermFulfillsPredicate nfsp = new NoSubtermFulfillsPredicate(
-						t ->
-							((t instanceof ApplicationTerm)
-									&& isUninterpretedPredicateSymbol(((ApplicationTerm) t).getFunction())));
+		final NoSubtermFulfillsPredicate nfsp = new NoSubtermFulfillsPredicate(t -> (t instanceof ApplicationTerm
+				&& isUninterpretedPredicateSymbol(((ApplicationTerm) t).getFunction())));
 		nfsp.transform(term);
 		final boolean result = nfsp.getResult();
 		return result;
@@ -497,7 +481,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 
 		final Term result;
 		if (!mSimplificationStack.isEmpty()
-					&& mSimplificationStack.peek().equals(new Triple<>(funcname, indicesList, paramsList))) {
+				&& mSimplificationStack.peek().equals(new Triple<>(funcname, indicesList, paramsList))) {
 			result = super.term(funcname, indices, returnSort, params);
 		} else {
 			mSimplificationStack.push(new Triple<>(funcname, indicesList, paramsList));
@@ -760,17 +744,14 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			final FunctionSymbol fsym = appTerm.getFunction();
 			final Sort[] paramSorts = fsym.getParameterSorts();
 
-
 			Term convertedAppTerm = appTerm;
 			Term[] args = newArgs;
 
 			/*
-			 *  modified copy from TermCompiler, "IRA-hack", i.e., if an literal is given at a place that needs a real
-			 *  wrap it in a to_real to make it explicit..
+			 * modified copy from TermCompiler, "IRA-hack", i.e., if an literal is given at a place that needs a real
+			 * wrap it in a to_real to make it explicit..
 			 */
-			if (paramSorts.length == 2
-					&& paramSorts[0].getName().equals("Real")
-					&& paramSorts[1] == paramSorts[0]) {
+			if (paramSorts.length == 2 && paramSorts[0].getName().equals("Real") && paramSorts[1] == paramSorts[0]) {
 				// IRA-Hack
 				if (args == appTerm.getParameters()) {
 					args = args.clone();
@@ -779,7 +760,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 				final Term[] desugarParams = new Term[args.length];
 				final Term[] nargs = new Term[args.length];
 				for (int i = 0; i < args.length; i++) {
-					final Term arg = args[i];//mTracker.getProvedTerm(args[i]);
+					final Term arg = args[i];// mTracker.getProvedTerm(args[i]);
 					if (arg.getSort().getName().equals("Int")) {
 						desugarParams[i] = term("to_real", arg);
 						nargs[i] = desugarParams[i];
@@ -808,7 +789,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 				final Term expanded = unletter.unlet(fsym.getDefinition());
 				convertedAppTerm = expanded;
 			}
-
 
 			if (convertedAppTerm != appTerm) {
 				setResult(convertedAppTerm);
