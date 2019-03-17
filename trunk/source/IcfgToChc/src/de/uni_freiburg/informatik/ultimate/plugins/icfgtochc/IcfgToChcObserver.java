@@ -214,6 +214,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		final ChcCategoryInfo chcCategoryInfo = computeChcCategoryInfo(resultChcs);
 
+		assert resultChcs.stream().allMatch(chc -> chc.constructFormula(mMgdScript, false).getFreeVars().length == 0);
+
 		final HornAnnot annot =
 				new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable, new ArrayList<>(resultChcs), true,
 						chcCategoryInfo);
