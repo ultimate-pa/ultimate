@@ -51,22 +51,24 @@ public class HornAnnot extends ModernAnnotations {
 	private final String mFileName;
 	private final List<HornClause> mHornClauses;
 	private final boolean mHasCheckSat;
+	private final ChcCategoryInfo mChcCategoryInfo;
 
 	/***
 	 * An annotation of horn clauses.
-	 * 
+	 *
 	 * @param filename
 	 * @param clauses
 	 * @param backendSolver
 	 * @param symbolTable
 	 */
 	public HornAnnot(final String filename, final ManagedScript backendSolver, final HcSymbolTable symbolTable,
-			final List<HornClause> clauses, final boolean hasCheckSat) {
+			final List<HornClause> clauses, final boolean hasCheckSat, final ChcCategoryInfo chcCategoryInfo) {
 		mFileName = filename;
 		mHornClauses = clauses;
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
 		mHasCheckSat = hasCheckSat;
+		mChcCategoryInfo = chcCategoryInfo;
 	}
 
 	public ManagedScript getScript() {
@@ -118,5 +120,9 @@ public class HornAnnot extends ModernAnnotations {
 			throw new UnmergeableAnnotationsException("Not implemented for " + getClass().getName());
 		}
 		return super.merge(other);
+	}
+
+	public ChcCategoryInfo getChcCategoryInfo() {
+		return mChcCategoryInfo;
 	}
 }

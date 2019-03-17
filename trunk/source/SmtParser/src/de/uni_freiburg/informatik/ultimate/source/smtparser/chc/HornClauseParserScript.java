@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategoryInfo;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -155,7 +156,8 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		mFinished = true;
 		mSymbolTable.finishConstruction();
 		final HornAnnot annot =
-				new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses, mSawCheckSat);
+				new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses, mSawCheckSat,
+						new ChcCategoryInfo(Logics.ALL, true));
 		return HornClauseAST.create(annot);
 	}
 

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategoryInfo;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -71,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 
@@ -96,6 +99,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 	private TermVariable mAssertionViolatedVar;
 	private final Map<TermVariable, IProgramVar> mTermVarToProgVar;
+	private boolean mHasNonLinearClauses;
 
 	// TODO setting
 	// private final boolean ANNOTATE_ASSERTED_TERMS = true;
@@ -198,7 +202,82 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		}
 
 		/* add chcs for entry and exit points */
+		computeClausesForEntryPoints(icfg, resultChcs);
 
+		computeClausesForExitPoints(icfg, resultChcs);
+
+		/* finish construction */
+
+		mHcSymbolTable.finishConstruction();
+
+		mMgdScript.unlock(this);
+
+		final ChcCategoryInfo chcCategoryInfo = computeChcCategoryInfo(resultChcs);
+
+		final HornAnnot annot =
+				new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable, new ArrayList<>(resultChcs), true,
+						chcCategoryInfo);
+
+
+		mResult = HornClauseAST.create(annot);
+		ModelUtils.copyAnnotations(mIcfg, mResult);
+
+	}
+
+	private ChcCategoryInfo computeChcCategoryInfo(final Collection<HornClause> resultChcs) {
+		final ChcCategoryInfo chcCategoryInfo;
+		{
+			final TermClassifier termClassifierChcs = new TermClassifier();
+			resultChcs.forEach(chc -> termClassifierChcs.checkTerm(chc.constructFormula(mMgdScript, false)));
+			final TermClassifier termClassifierConstraints = new TermClassifier();
+			resultChcs.forEach(chc -> termClassifierConstraints.checkTerm(chc.getConstraintFormula()));
+
+			boolean hasArrays = false;
+			boolean hasReals = false;
+			boolean hasInts = false;
+			for (final String osn : termClassifierChcs.getOccuringSortNames()) {
+				hasArrays |= osn.contains(SmtSortUtils.ARRAY_SORT);
+				hasReals |= osn.contains(SmtSortUtils.REAL_SORT);
+				hasInts |= osn.contains(SmtSortUtils.INT_SORT);
+			}
+
+			boolean hasArraysInConstraints = false;
+			boolean hasRealsInConstraints = false;
+			boolean hasIntsInConstraints = false;
+			for (final String osn : termClassifierConstraints.getOccuringSortNames()) {
+				hasArraysInConstraints |= osn.contains(SmtSortUtils.ARRAY_SORT);
+				hasRealsInConstraints |= osn.contains(SmtSortUtils.REAL_SORT);
+				hasIntsInConstraints |= osn.contains(SmtSortUtils.INT_SORT);
+			}
+			assert hasArrays == hasArraysInConstraints;
+			assert hasReals == hasRealsInConstraints;
+			assert hasInts == hasIntsInConstraints;
+
+			boolean hasQuantifiersInConstraints = false;
+			if (termClassifierConstraints.getOccuringQuantifiers().size() > 0) {
+				hasQuantifiersInConstraints = true;
+			}
+
+			Logics logics;
+
+			if (!hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
+				logics = Logics.QF_LIA;
+			} else if (!hasArrays && !hasInts && hasReals && !hasQuantifiersInConstraints) {
+				logics = Logics.QF_LRA;
+			} else if (hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
+				logics = Logics.QF_ALIA;
+			} else {
+				// not a CHC-comp 2019 logic -- we don't care for more details right now
+				logics = Logics.ALL;
+			}
+
+			chcCategoryInfo = new ChcCategoryInfo(logics, mHasNonLinearClauses);
+		}
+		return chcCategoryInfo;
+	}
+
+	private <LOC extends IcfgLocation> void computeClausesForEntryPoints(final IIcfg<LOC> icfg,
+			final Collection<HornClause> resultChcs) {
 		/*
 		 * every procedure entry point gets a chc of the form (not V') /\ old(g1) = g1 /\ ... -> entryPoint
 		 */
@@ -249,22 +328,6 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				}
 			}
 
-			// // look for globals
-			// final List<Term> globalsWithTheirOldVarsEqualities = new ArrayList<>();
-			// {
-			// final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(proc);
-			// for (int i = 0; i < varsForProc.size(); i++) {
-			// final TermVariable tv = varsForProc.get(i);
-			// final IProgramVar pv = mTermVarToProgVar.get(tv);
-			//
-			// if (pv != null && pv.isGlobal() && !pv.isOldvar()) {
-			// globalsWithTheirOldVarsEqualities.add(
-			// SmtUtils.binaryEquality(mMgdScript.getScript(),
-			// pv.getTermVariable(),
-			// ((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
-			// }
-			// }
-			// }
 			final Term equateGlobalsWithTheirOldVars = SmtUtils.and(mMgdScript.getScript(),
 					globalsWithTheirOldVarsEqualities.toArray(new Term[globalsWithTheirOldVarsEqualities.size()]));
 
@@ -273,12 +336,17 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					equateGlobalsWithTheirOldVars);
 			final Term constraintFinal = new Substitution(mMgdScript, substitutionMapping).transform(constraintRaw);
 
+			updateLogicWrtConstraint(constraintFinal);
+
 			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
 					Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
 			chc.setComment("Type: (not V) -> procEntry");
 			resultChcs.add(chc);
 		}
+	}
 
+	private <LOC extends IcfgLocation> void computeClausesForExitPoints(final IIcfg<LOC> icfg,
+			final Collection<HornClause> resultChcs) {
 		/*
 		 * every exit point of a procedure that is an entry point of the program gets a chc exit /\ V -> false
 		 */
@@ -307,26 +375,16 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				}
 			}
 
+			updateLogicWrtConstraint(assertionViolatedBodyVar.getTermVariable());
+
 			final HornClause chc =
 					new HornClause(mMgdScript, mHcSymbolTable, assertionViolatedBodyVar.getTermVariable(),
 							Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
+
 			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
 			resultChcs.add(chc);
 
 		}
-
-		/* finish construction */
-
-		mHcSymbolTable.finishConstruction();
-
-		final HornAnnot annot =
-				new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable, new ArrayList<>(resultChcs), true);
-
-		mMgdScript.unlock(this);
-
-		mResult = HornClauseAST.create(annot);
-		ModelUtils.copyAnnotations(mIcfg, mResult);
-
 	}
 
 	private Collection<HornClause> computeChcForReturnEdge(final IIcfgReturnTransition<IcfgLocation, Call> returnEdge) {
@@ -553,18 +611,21 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		}
 
 		final Term constraintFinal = constraint;
-		// if (ANNOTATE_ASSERTED_TERMS) {
-		// constraintFinal = mMgdScript.getScript()
-		// .annotate(constraint,
-		// new Annotation(":named", returnEdge.toString()));
-		//// new Annotation(":named", "|" + returnEdge.toString() + "|"));
-		// }
+
+		updateLogicWrtConstraint(constraintFinal);
+
+		mHasNonLinearClauses = true;
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();
 		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
 				bodyPredToArguments, bodyVars));
 		return chcs;
+	}
+
+	@Deprecated
+	private void updateLogicWrtConstraint(final Term term) {
+//		mTermClassifier.checkTerm(term);
 	}
 
 	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcBodyVar> bodyVars,
@@ -707,6 +768,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		//// new Annotation(":named", "|" + currentInternalEdge.toString() + "|"));
 		// }
 
+		updateLogicWrtConstraint(constraintFinal);
+
 		final Collection<HornClause> chcs = new ArrayList<>();
 		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
 				bodyPredToArguments, bodyVars));
@@ -844,6 +907,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		 * construct the horn clause and add it to the resulting chc set if the source is an initial location, add two
 		 * versions of the clause, in one of them, leave out the body predicates, the other as normal
 		 */
+		updateLogicWrtConstraint(constraintFinal);
 		final Collection<HornClause> chcs = new ArrayList<>(2);
 		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
 				bodyPredToArguments, bodyVars));

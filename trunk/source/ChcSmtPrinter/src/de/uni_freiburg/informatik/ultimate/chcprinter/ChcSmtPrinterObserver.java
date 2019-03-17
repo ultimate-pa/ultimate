@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -118,6 +119,16 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 
 		// set logic
 		loggingScript.setLogic("HORN");
+
+		// add info
+		{
+			loggingScript.setInfo(":source",
+					new QuotedObject(
+							"CHC Constraint Logic: " + annot.getChcCategoryInfo().getConstraintLogic() + "\n"
+							+ "                   "
+							+ "Contains non-linear Horn clauses: "
+									+ annot.getChcCategoryInfo().containsNonLinearHornClauses()));
+		}
 
 		if (PRODUCE_UNSAT_CORES) {
 			loggingScript.setOption(":produce-unsat-cores", "true");
