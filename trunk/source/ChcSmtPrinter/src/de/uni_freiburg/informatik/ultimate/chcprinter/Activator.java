@@ -28,7 +28,7 @@
  * The activator class controls the plug-in life cycle
  */
 
-package de.uni_freiburg.informatik.ultimate.chc.printer;
+package de.uni_freiburg.informatik.ultimate.chcprinter;
 
 /**
  * @author hoenicke

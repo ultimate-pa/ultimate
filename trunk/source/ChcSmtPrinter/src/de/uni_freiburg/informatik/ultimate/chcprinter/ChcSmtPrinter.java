@@ -24,12 +24,12 @@
  * licensors of the ULTIMATE ChcSmtPrinter plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.chc.printer;
+package de.uni_freiburg.informatik.ultimate.chcprinter;
 
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.chc.printer.preferences.ChcSmtPrinterPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.chcprinter.preferences.ChcSmtPrinterPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;

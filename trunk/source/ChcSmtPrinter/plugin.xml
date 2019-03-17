@@ -3,6 +3,6 @@
 <plugin>
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.output">
-      <impl class="de.uni_freiburg.informatik.ultimate.chc.printer.ChcSmtPrinter"/>
+      <impl class="de.uni_freiburg.informatik.ultimate.chcprinter.ChcSmtPrinter"/>
    </extension>
 </plugin>
