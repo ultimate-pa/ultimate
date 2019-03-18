@@ -34,11 +34,16 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class EmptySet<V> implements IRegex<V> {
 	public String toString() {
-		return "EMPTY";
+		return "∅";
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof EmptySet;
+	}
+	
+	@Override
+	public int hashCode() {
+		return 611057;
 	}
 }

@@ -35,6 +35,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class Union<V> implements IRegex<V> {
+
 	private final IRegex<V> b;
 	private final IRegex<V> a;
 
@@ -44,7 +45,7 @@ public class Union<V> implements IRegex<V> {
 	}
 
 	public String toString() {
-		return "{" + Objects.toString(a, "null") + " U " + Objects.toString(b, "null") + "}";
+		return "{" + a + " ∪ " + b + "}";
 	}
 
 	public IRegex<V> getFirst() {
@@ -59,45 +60,21 @@ public class Union<V> implements IRegex<V> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (hashCode(a, b));
+		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
 		return result;
-	}
-
-	private int hashCode(IRegex<V> a, IRegex<V> b) {
-		if (a == null && b == null)
-			return 1;
-		if (a == null)
-			return b.hashCode();
-		if (b == null)
-			return a.hashCode();
-		return a.hashCode() + b.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		} else if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		} else if (getClass() != obj.getClass()) {
 			return false;
-		Union other = (Union) obj;
-		if (matches(a, other.a)) {
-			return matches(b, other.b);
 		}
-		if (matches(a, other.b)) {
-			return matches(b, other.a);
-		}
-		return false;
+		Union<?> other = (Union<?>) obj;
+		return Objects.equals(a, other.a) && Objects.equals(b, other.b);
 	}
-
-	private boolean matches(IRegex<V> a, IRegex<V> b) {
-		if (a == null) {
-			if (b != null)
-				return false;
-			return true;
-		}
-		return a.equals(b);
-	}
-
 }

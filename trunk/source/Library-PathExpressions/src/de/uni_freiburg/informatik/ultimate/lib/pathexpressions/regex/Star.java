@@ -35,15 +35,15 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class Star<V> implements IRegex<V> {
+
 	private final IRegex<V> a;
 
 	public Star(IRegex<V> a) {
-		assert a != null;
 		this.a = a;
 	}
 
 	public String toString() {
-		return "[" + Objects.toString(a, "null") + "]* ";
+		return "[" + a + "]* ";
 	}
 
 	public IRegex<V> getPlain() {
@@ -60,18 +60,14 @@ public class Star<V> implements IRegex<V> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		} else if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		} else if (getClass() != obj.getClass()) {
 			return false;
-		Star other = (Star) obj;
-		if (a == null) {
-			if (other.a != null)
-				return false;
-		} else if (!a.equals(other.a))
-			return false;
-		return true;
+		}
+		Star<?> other = (Star<?>) obj;
+		return Objects.equals(a, other.a);
 	}
 }

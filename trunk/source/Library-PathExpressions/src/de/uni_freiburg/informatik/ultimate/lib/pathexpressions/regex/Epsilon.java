@@ -39,6 +39,16 @@ public class Epsilon<V> implements IRegex<V> {
 
 	@Override
 	public String toString() {
-		return "EPS";
+		return "ε";
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Epsilon;
+	}
+	
+	@Override
+	public int hashCode() {
+		return 599477;
 	}
 }

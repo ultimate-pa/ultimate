@@ -38,21 +38,16 @@ public abstract class Regex<V> implements IRegex<V> {
 			return b;
 		if (b instanceof EmptySet)
 			return a;
-		// Not part of Tarjan's simplification operator [R], but ok
+		// The following case is not part of Tarjan's simplification operator "[R]".
+		// However, it does not seem to break anything and helps if a graph contains one label multiple times.
 		if (a.equals(b))
-			return a;
-		// Not part of Tarjan's simplification operator and NOT OK!
-		// no bug found so far, but could be lurking somewhere
-		if (a instanceof Epsilon)
-			return b;
-		if (b instanceof Epsilon)
 			return a;
 		return new Union<>(a, b);
 	}
 
 	public static <V> IRegex<V> simplifiedConcatenation(IRegex<V> a, IRegex<V> b) {
 		if (a instanceof EmptySet || b instanceof EmptySet)
-			return a; // TODO return empty set
+			return new EmptySet<>();
 		if (a instanceof Epsilon)
 			return b;
 		if (b instanceof Epsilon)
@@ -62,8 +57,9 @@ public abstract class Regex<V> implements IRegex<V> {
 
 	public static <V> IRegex<V> simplifiedStar(IRegex<V> reg) {
 		if (reg instanceof EmptySet || reg instanceof Epsilon) {
-			return reg;
+			return new Epsilon<>();
 		}
 		return new Star<>(reg);
 	}
+
 }

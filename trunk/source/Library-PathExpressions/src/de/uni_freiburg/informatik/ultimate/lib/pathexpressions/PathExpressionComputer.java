@@ -129,6 +129,9 @@ public class PathExpressionComputer<N, V> {
 				}
 			}
 		}
+		// TODO replace the following loop:
+		// use loop above to add these elements into another list and concat/reverse lists
+		// (think about order some more before doing this. Order is important)
 		for (int u = n; u > 0; u--) {
 			for (int w = 1; w < u; w++) {
 				IRegex<V> reg = pathExpr(u, w);
@@ -145,13 +148,10 @@ public class PathExpressionComputer<N, V> {
 			return;
 		}
 		int numberOfNodes = graph.getNodes().size();
+		// TODO eliminate this n^2 loop by using default value EMPTY
 		for (int v = 1; v <= numberOfNodes; v++) {
 			for (int w = 1; w <= numberOfNodes; w++) {
-				if (v == w) {
-					updatePathExpr(v, w, new Epsilon<>());
-				} else {
-					updatePathExpr(v, w, emptyRegEx);
-				}
+				updatePathExpr(v, w, emptyRegEx);
 			}
 		}
 		for (Edge<N, V> e : graph.getEdges()) {

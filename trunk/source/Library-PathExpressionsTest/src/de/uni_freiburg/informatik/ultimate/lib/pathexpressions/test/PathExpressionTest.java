@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenate;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Plain;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
@@ -96,7 +97,7 @@ public class PathExpressionTest {
 		g.addEdge(1, "c", 2);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 2);
-		IRegex<String> expected = a(u("a", "c"), star(a("b", u("a", "c"))));
+		IRegex<String> expected = a(u("c", "a"), star(a("b", u("c", "a"))));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -248,8 +249,8 @@ public class PathExpressionTest {
 		g.addEdge(4, "41", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
-		IRegex<String> expected = a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
-				star(a(a(a(a("41", "12"), "23"), star(a("32", "23"))), "34"))), "41");
+		IRegex<String> expected = u(new Epsilon<>(), a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
+				star(a(a(a(a("41", "12"), "23"), star(a("32", "23"))), "34"))), "41"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -263,7 +264,7 @@ public class PathExpressionTest {
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
 		IRegex<String> expected = u(
-				a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41"),
+				u(new Epsilon<>(), a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41")),
 				a(u(a("13", star(a("31", "13"))),
 						a(a(a(a("13", star(a("31", "13"))), "34"),
 								star(a(a(a("41", "13"), star(a("31", "13"))), "34"))),
