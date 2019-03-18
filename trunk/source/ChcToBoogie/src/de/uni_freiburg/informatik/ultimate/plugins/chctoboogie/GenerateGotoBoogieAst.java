@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcPreMetaInfoProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -151,7 +151,7 @@ public class GenerateGotoBoogieAst {
 		headPredQueue.push(mHelper.getBottomPredSym());
 		addedToQueueBefore.add(mHelper.getBottomPredSym());
 
-		final Set<HcBodyVar> allBodyPredVariables = new HashSet<>();
+		final Set<HcVar> allBodyPredVariables = new HashSet<>();
 
 		while (!headPredQueue.isEmpty()) {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
@@ -209,7 +209,7 @@ public class GenerateGotoBoogieAst {
 	 */
 	private Procedure constructGotoProc(final ILocation loc, final List<Statement> labeledBlocks,
 			final Map<HcPredicateSymbol, Label> predSymbolToLabel, final Map<Label, Integer> predLabelToNumber,
-			final Set<HcBodyVar> allBodyPredVariables) {
+			final Set<HcVar> allBodyPredVariables) {
 		final List<Statement> gotoProcBody = new ArrayList<>();
 		// method starts with a switch that jumps according to the argument
 		{
@@ -370,7 +370,7 @@ public class GenerateGotoBoogieAst {
 			final Map<HcPredicateSymbol, Label> predSymbolToLabel, final Map<Label, Integer> predLabelToNumber,
 			final Set<HornClause> hornClausesForHeadPred,
 			final Deque<HcPredicateSymbol> headPredQueue, final Set<HcPredicateSymbol> addedToQueueBefore,
-			final Set<HcBodyVar> allBodyPredVariables) {
+			final Set<HcVar> allBodyPredVariables) {
 		assert (predSymbolToLabel == null) == (predLabelToNumber == null);
 		/*
 		 * create the procedure body according to all Horn clauses with headPredSymbol as their head

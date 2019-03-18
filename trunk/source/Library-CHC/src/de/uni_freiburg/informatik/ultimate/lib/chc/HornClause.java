@@ -71,8 +71,10 @@ public class HornClause implements IRankedLetter {
 	/**
 	 * Variables occurring in the body. We will quantify over these and those occurring in the head.
 	 * (this includes "auxVars", i.e., variables occurring in the constraint only.
+	 *
+	 * EDIT: note that this may also contain HcBodyAuxVars, which at the moment do not inherit form HcBodyVars
 	 */
-	private final Set<HcBodyVar> mBodyVariables;
+	private final Set<HcVar> mBodyVariables;
 
 	/**
 	 * This field allow one (e.g. the creator of this object) to attach comments to this object.
@@ -91,7 +93,7 @@ public class HornClause implements IRankedLetter {
 	 */
 	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
-			final Set<HcBodyVar> bodyVars
+			final Set<HcVar> bodyVars
 			) {
 		this(mgdScript, hcSymbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
 				bodyVars, false);
@@ -100,7 +102,7 @@ public class HornClause implements IRankedLetter {
 	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
 			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
-			final Set<HcBodyVar> bodyVars
+			final Set<HcVar> bodyVars
 			) {
 		this(mgdScript, hcSymbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
@@ -126,7 +128,7 @@ public class HornClause implements IRankedLetter {
 	private HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
 			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
-			final Set<HcBodyVar> bodyVars,
+			final Set<HcVar> bodyVars,
 			final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;
@@ -198,7 +200,7 @@ public class HornClause implements IRankedLetter {
 				&& mHeadPredVariables.stream().allMatch(HcVar::hasComment);
 		final Map<Term, Term> prettyVariableSubstitution = new HashMap<>();
 		if (allVarsHaveComment) {
-			for (final HcBodyVar bv : mBodyVariables) {
+			for (final HcVar bv : mBodyVariables) {
 				prettyVariableSubstitution.put(bv.getTermVariable(),
 						mHornClauseSymbolTable.createPrettyTermVariable(bv.getComment(), bv.getSort()));
 			}
@@ -271,7 +273,7 @@ public class HornClause implements IRankedLetter {
 	 *
 	 * @return
 	 */
-	public Set<HcBodyVar> getBodyVariables() {
+	public Set<HcVar> getBodyVariables() {
 		return mBodyVariables;
 	}
 
@@ -288,7 +290,7 @@ public class HornClause implements IRankedLetter {
 		final List<TermVariable> headVars;
 		{
 			final List<HcHeadVar> headVarList = getTermVariablesForHeadPred();
-			final Set<HcBodyVar> bodyVars = getBodyVariables();
+			final Set<HcVar> bodyVars = getBodyVariables();
 			headVars = headVarList.stream()
 					.map(hv -> (TermVariable) termTransferrer.transform(hv.getTermVariable()))
 					.collect(Collectors.toList());

@@ -57,6 +57,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcHeadVar> mPredSymNameToIndexToSortToHcHeadVar;
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcBodyVar> mPredSymNameToIndexToSortToHcBodyVar;
+	private final Map<TermVariable, HcBodyAuxVar> mTermVariableToHcBodyAuxVar;
 
 	private final Map<TermVariable, IProgramVar> mTermVarToProgramVar;
 
@@ -93,6 +94,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		mVersionsMap = new HashMap<>();
 		mPredSymNameToIndexToSortToHcHeadVar = new NestedMap3<>();
 		mPredSymNameToIndexToSortToHcBodyVar = new NestedMap3<>();
+		mTermVariableToHcBodyAuxVar = new HashMap<>();
 		mTermVarToProgramVar = new HashMap<>();
 		mSmtFunction2BoogieFunction = new HashMap<>();
 		mSkolemFunctions = new HashRelation3<>();
@@ -275,6 +277,16 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			result = new HcBodyVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
 			mManagedScript.unlock(this);
 			mPredSymNameToIndexToSortToHcBodyVar.put(predSym, index, transferredSort, result);
+			mTermVarToProgramVar.put(result.getTermVariable(), result);
+		}
+		return result;
+	}
+
+	public HcBodyAuxVar getOrConstructBodyAuxVar(final TermVariable tv, final Object lockOwner) {
+		HcBodyAuxVar result = mTermVariableToHcBodyAuxVar.get(tv);
+		if (result == null) {
+			result = new HcBodyAuxVar(tv, mManagedScript, lockOwner);
+			mTermVariableToHcBodyAuxVar.put(tv, result);
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
 		}
 		return result;

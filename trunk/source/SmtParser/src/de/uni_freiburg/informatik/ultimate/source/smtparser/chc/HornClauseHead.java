@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -104,7 +105,7 @@ public class HornClauseHead {
 			mBody.transformTerms(termTransferrer::transform);
 		}
 
-		final Set<HcBodyVar> bodyVars = normalizeVariables(symbolTable, solverScript);
+		final Set<HcVar> bodyVars = normalizeVariables(symbolTable, solverScript);
 
 
 		final List<List<Term>> bodyArgs = mBody.getPredicateToVars(symbolTable);
@@ -136,9 +137,9 @@ public class HornClauseHead {
 	 * @param script
 	 * @return
 	 */
-	private Set<HcBodyVar> normalizeVariables(final HcSymbolTable symbolTable, final ManagedScript solverScript) {
+	private Set<HcVar> normalizeVariables(final HcSymbolTable symbolTable, final ManagedScript solverScript) {
 
-		final Set<HcBodyVar> bodyVars = new HashSet<>();
+		final Set<HcVar> bodyVars = new HashSet<>();
 		final HcPredicateSymbol headPredSymbolName = mHead == null ?
 							symbolTable.getFalseHornClausePredicateSymbol() :
 							symbolTable.getOrConstructHornClausePredicateSymbol(mHead);

@@ -28,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
@@ -66,7 +65,7 @@ public class GenerateBoogieAstHelper {
 		mTerm2Expression = term2Expression;
 
 		mBottomPredSym = mHcSymbolTable.getFalseHornClausePredicateSymbol();
-		
+
 		mArraySortToDummyVarName = new LinkedHashMap<>();
 //		mAuxDeclarations = new ArrayList<>();
 	}
@@ -169,22 +168,22 @@ public class GenerateBoogieAstHelper {
 	public String getNameOfMainEntryPointProc() {
 		return mNameOfEntryPointProc;
 	}
-	
-	
+
+
 	/**
 	 * Auxiliary declarations that should be added to the Boogie program.
-	 * (here, auxiliary means "not one of the procedures that provide the main behaviour of the program, the main proc 
+	 * (here, auxiliary means "not one of the procedures that provide the main behaviour of the program, the main proc
 	 *  and the goto proc..)
-	 * 
+	 *
 	 * This should be called at the end of the construction of the program.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<Declaration> getAuxDeclarations() {
 		final List<Declaration> declarations = new ArrayList<>();
 
 		declarations.addAll(getDeclarationsForSkolemFunctions());
-		
+
 		declarations.addAll(getDeclarationsForArrayDummyVars());
 
 		return declarations;
@@ -192,11 +191,11 @@ public class GenerateBoogieAstHelper {
 
 	private List<Declaration> getDeclarationsForArrayDummyVars() {
 		final List<Declaration> declarations = new ArrayList<>();
-		for (Entry<Sort, String> en : mArraySortToDummyVarName.entrySet()) {
-			declarations.add(new VariableDeclaration(mLocation, new Attribute[0], 
-					new VarList[] { 
-							new VarList(mLocation, 
-									new String[] { en.getValue() }, 
+		for (final Entry<Sort, String> en : mArraySortToDummyVarName.entrySet()) {
+			declarations.add(new VariableDeclaration(mLocation, new Attribute[0],
+					new VarList[] {
+							new VarList(mLocation,
+									new String[] { en.getValue() },
 									getType(en.getKey()).toASTType(mLocation)) }));
 		}
 		return declarations;
@@ -218,9 +217,9 @@ public class GenerateBoogieAstHelper {
 		return declarations;
 	}
 
-	void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final Set<HcBodyVar> bpvs,
+	void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final Set<HcVar> bpvs,
 			final ILocation loc) {
-		for (final HcBodyVar bodyPredVar : bpvs) {
+		for (final HcVar bodyPredVar : bpvs) {
 			final String boogieVarName = bodyPredVar.getGloballyUniqueId();
 			final Sort sort = bodyPredVar.getSort();
 			final VarList varList = new VarList(loc, new String[] { boogieVarName },
@@ -258,10 +257,10 @@ public class GenerateBoogieAstHelper {
 		return resultList.toArray(new VariableLHS[resultList.size()]);
 	}
 
-	public Expression getDummyArgForArraySort(Sort sort) {
+	public Expression getDummyArgForArraySort(final Sort sort) {
 		String varName = mArraySortToDummyVarName.get(sort);
 		if (varName == null) {
-			String dummyArrayPrefix = "#dummy~";
+			final String dummyArrayPrefix = "#dummy~";
 			varName = dummyArrayPrefix + sort;
 			mArraySortToDummyVarName.put(sort, varName);
 		}

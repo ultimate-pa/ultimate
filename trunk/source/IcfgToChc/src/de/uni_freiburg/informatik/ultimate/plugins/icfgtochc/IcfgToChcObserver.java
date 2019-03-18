@@ -45,10 +45,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategoryInfo;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyAuxVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
@@ -340,6 +342,10 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 			updateLogicWrtConstraint(constraintFinal);
 
+			if (!assertNoFreeVars(headVars, Collections.emptySet(), constraintFinal)) {
+				throw new UnsupportedOperationException("implement this");
+			}
+
 			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
 					Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
 			chc.setComment("Type: (not V) -> procEntry");
@@ -364,7 +370,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 			final List<TermVariable> varsForProc = getTermVariableListForPredForProcedure(en.getKey());
 
-			final Set<HcBodyVar> bodyVars = new LinkedHashSet<>();
+			final Set<HcVar> bodyVars = new LinkedHashSet<>();
 			final List<Term> firstPredArgs = new ArrayList<>();
 			HcBodyVar assertionViolatedBodyVar = null;
 			for (int i = 0; i < varsForProc.size(); i++) {
@@ -377,10 +383,16 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				}
 			}
 
-			updateLogicWrtConstraint(assertionViolatedBodyVar.getTermVariable());
+			final TermVariable constraint = assertionViolatedBodyVar.getTermVariable();
+
+			updateLogicWrtConstraint(constraint);
+
+			if (!assertNoFreeVars(Collections.emptyList(), bodyVars, constraint)) {
+				throw new UnsupportedOperationException("implement this");
+			}
 
 			final HornClause chc =
-					new HornClause(mMgdScript, mHcSymbolTable, assertionViolatedBodyVar.getTermVariable(),
+					new HornClause(mMgdScript, mHcSymbolTable, constraint,
 							Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
 
 			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
@@ -458,7 +470,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		final List<HcPredicateSymbol> bodyPreds;
 		final List<List<Term>> bodyPredToArguments;
-		final Set<HcBodyVar> bodyVars;
+		final Set<HcVar> bodyVars;
 		HcBodyVar firstBodyPredAssertionViolatedVar = null;
 		HcBodyVar secondBodyPredAssertionViolatedVar = null;
 
@@ -594,6 +606,19 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			}
 		}
 
+		for (final TermVariable auxVar : localVarsAssignmentOfCall.getAuxVars()) {
+			final HcBodyAuxVar hcbav = mHcSymbolTable.getOrConstructBodyAuxVar(auxVar, this);
+			bodyVars.add(hcbav);
+		}
+		for (final TermVariable auxVar : assignmentOfReturn.getAuxVars()) {
+			final HcBodyAuxVar hcbav = mHcSymbolTable.getOrConstructBodyAuxVar(auxVar, this);
+			bodyVars.add(hcbav);
+		}
+		for (final TermVariable auxVar : oldVarsAssignment.getAuxVars()) {
+			final HcBodyAuxVar hcbav = mHcSymbolTable.getOrConstructBodyAuxVar(auxVar, this);
+			bodyVars.add(hcbav);
+		}
+
 		final Term updateAssertionViolatedVar =
 				SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), headAssertionViolatedVar.getTermVariable(),
 						SmtUtils.or(mMgdScript.getScript(), firstBodyPredAssertionViolatedVar.getTermVariable(),
@@ -630,7 +655,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 //		mTermClassifier.checkTerm(term);
 	}
 
-	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcBodyVar> bodyVars,
+	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars,
 			final Term constraint) {
 		// compute all variables that only occur in the
 		final Set<TermVariable> auxVars = new LinkedHashSet<>();
@@ -699,7 +724,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		final List<HcPredicateSymbol> bodyPreds;
 		final List<List<Term>> bodyPredToArguments;
-		final Set<HcBodyVar> bodyVars;
+		final Set<HcVar> bodyVars;
 
 		bodyPreds = Collections
 				.singletonList(getOrConstructPredicateSymbolForIcfgLocation(currentInternalEdge.getSource()));
@@ -757,18 +782,18 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			bodyPredToArguments = Collections.singletonList(firstPredArgs);
 		}
 
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final HcBodyAuxVar hcbav = mHcSymbolTable.getOrConstructBodyAuxVar(auxVar, this);
+			bodyVars.add(hcbav);
+		}
+
 		final Term constraintAndAssertionViolated = SmtUtils.and(mMgdScript.getScript(),
 				new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula()),
 				assertionViolatedHeadVar.getTermVariable());
-		// mAssertionViolatedVarPrime);
 
 		final Term constraintFinal = constraintAndAssertionViolated;
-		// if (ANNOTATE_ASSERTED_TERMS) {
-		// constraintFinal = mMgdScript.getScript()
-		// .annotate(constraintAndAssertionViolated,
-		// new Annotation(":named", currentInternalEdge.toString()));
-		//// new Annotation(":named", "|" + currentInternalEdge.toString() + "|"));
-		// }
+
+		assert assertNoFreeVars(headVars, bodyVars, constraintFinal);
 
 		updateLogicWrtConstraint(constraintFinal);
 
@@ -830,7 +855,7 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		final List<HcPredicateSymbol> bodyPreds;
 		final List<List<Term>> bodyPredToArguments;
-		final Set<HcBodyVar> bodyVars;
+		final Set<HcVar> bodyVars;
 
 		// HcBodyVar assertionViolatedBodyVar = null;
 
@@ -888,6 +913,11 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			bodyPredToArguments = Collections.singletonList(firstPredArgs);
 		}
 
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final HcBodyAuxVar hcbav = mHcSymbolTable.getOrConstructBodyAuxVar(auxVar, this);
+			bodyVars.add(hcbav);
+		}
+
 		final Term constraintOrAssertionViolated;
 		{
 			final Term constraint = new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
@@ -895,15 +925,10 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 					SmtUtils.or(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable(), constraint);
 		}
 
+
 		assert assertNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
 
 		final Term constraintFinal = constraintOrAssertionViolated;
-		// if (ANNOTATE_ASSERTED_TERMS) {
-		// constraintFinal = mMgdScript.getScript()
-		// .annotate(constraintOrAssertionViolated,
-		// new Annotation(":named", currentInternalEdge.toString()));
-		//// new Annotation(":named", "|" + currentInternalEdge.toString() + "|"));
-		// }
 
 		/*
 		 * construct the horn clause and add it to the resulting chc set if the source is an initial location, add two

@@ -33,11 +33,11 @@ public class ChcPreMetaInfoProvider {
 
 	// auxiliary variables
 	private final Set<HcHeadVar> mAllHeadHcVars;
-	private final Set<HcBodyVar> mAllBodyHcVars;
+	private final Set<HcVar> mAllBodyHcVars;
 
 	// output variables
 	private final List<HcHeadVar> mAllHeadHcVarsAsList;
-	private final List<HcBodyVar> mAllBodyHcVarsAsList;
+	private final List<HcVar> mAllBodyHcVarsAsList;
 
 	public ChcPreMetaInfoProvider(final List<HornClause> hornClausesRaw, final HcSymbolTable symbolTable) {
 		mHornClausesRaw = hornClausesRaw;
@@ -111,7 +111,7 @@ public class ChcPreMetaInfoProvider {
 		return Collections.unmodifiableList(mAllHeadHcVarsAsList);
 	}
 
-	public List<HcBodyVar> getAllBodyHcVarsAsList() {
+	public List<HcVar> getAllBodyHcVarsAsList() {
 		return Collections.unmodifiableList(mAllBodyHcVarsAsList);
 	}
 

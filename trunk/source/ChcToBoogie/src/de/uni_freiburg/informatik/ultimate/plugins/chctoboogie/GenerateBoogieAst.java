@@ -25,8 +25,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -62,7 +62,7 @@ public class GenerateBoogieAst {
 
 			final Set<HornClause> hornClausesForHeadPred = hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol);
 
-			final Set<HcBodyVar> allBodyPredVariables = new HashSet<>();
+			final Set<HcVar> allBodyPredVariables = new HashSet<>();
 
 			final List<Statement> nondetSwitch =
 					generateNondetSwitchForPred(loc, hornClausesForHeadPred, headPredQueue,
@@ -124,7 +124,7 @@ public class GenerateBoogieAst {
 	private List<Statement> generateNondetSwitchForPred(final ILocation loc,
 			final Set<HornClause> hornClausesForHeadPred,
 			final Deque<HcPredicateSymbol> headPredQueue, final Set<HcPredicateSymbol> addedToQueueBefore,
-			final Set<HcBodyVar> allBodyPredVariables) {
+			final Set<HcVar> allBodyPredVariables) {
 		/*
 		 * create the procedure body according to all Horn clauses with headPredSymbol as their head
 		 */
