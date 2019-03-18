@@ -195,19 +195,19 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sb = new StringBuilder();
 		for(int step = 0; step < mDependenciesGraphNodes.size(); step++) {
 			SystemState state = mTestStates.get(step);
-			double timeStep = mTestStates.get(step).getTimeStep();
-			sb.append("------------------------------------------------------------------------------------------");
+			int timeStep = mTestStates.get(step).getTimeStep();
 			sb.append(System.getProperty("line.separator"));
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
 			sb.append(getStepTestPlan(stepDependencyGraphNodes, state, filter, timeStep));
 		}
+		sb.append("------------------------------------------------------------------------------------------");
 		return sb.toString();
 	}
 
-	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter, double timeStep) {
+	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter, int timeStep) {
 		StringBuilder sbin = new StringBuilder();
 		StringBuilder sbout = new StringBuilder();
-		sbin.append("Set:");
+		sbin.append("Set inputs:");
 		sbin.append(System.getProperty("line.separator"));
 		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
 			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
@@ -226,13 +226,12 @@ public class TestGeneratorResult implements IResult  {
 				sbout.append(System.getProperty("line.separator"));
 			}
 		}
-		sbin.append(System.getProperty("line.separator"));
 		if (sbout.length() > 0) {
 			sbout.append(System.getProperty("line.separator"));
-			sbin.append("Wait at max  " + Double.toString(timeStep) + " for:" + System.getProperty("line.separator"));
+			sbin.append("Wait for at most " + Integer.toString(timeStep) + " for:" + System.getProperty("line.separator"));
 			return sbin.append(sbout).toString();
 		} else {
-			sbin.append("Wait  " + Double.toString(timeStep));
+			sbin.append("Wait exactly  " + Integer.toString(timeStep));
 			sbin.append(System.getProperty("line.separator"));
 			return sbin.toString();
 		}

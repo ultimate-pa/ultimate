@@ -13,8 +13,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -47,7 +51,39 @@ public class CounterExampleToTest {
 	public IResult convertCounterExampleToTest(final IResult result) {
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			return transformCounterExampleToExecutionSteps((CounterExampleResult<?, ?, ?>)result);
-		} else {	
+		} else if (result instanceof TimeoutResultAtElement<?>){	
+			return transformTimeOutResult((TimeoutResultAtElement<?>) result);
+		} else if (result instanceof PositiveResult<?>) {
+			return transformPositiveResult((PositiveResult<?>) result);
+		} else {
+			return null;
+		}
+	}
+	
+	private IResult transformTimeOutResult(final TimeoutResultAtElement<?> result) {
+		IElement element = result.getElement();
+		if (ReqGraphOracleAnnotation.getAnnotation(element) != null) {
+			ReqGraphOracleAnnotation oracle = ReqGraphOracleAnnotation.getAnnotation(element);
+			String message = String.format("Found no Test for (TIMEOUT): %s (%s)", oracle.getOracleVars(), oracle.getRequirementAut().getName());
+			return new GenericResult("TestGen",
+					message,
+					message, 
+					IResultWithSeverity.Severity.WARNING );
+		} else {
+			return null;
+		}
+	}
+	
+	private IResult transformPositiveResult(final PositiveResult<?> result) {
+		IElement element = result.getElement();
+		if (ReqGraphOracleAnnotation.getAnnotation(element) != null) {
+			ReqGraphOracleAnnotation oracle = ReqGraphOracleAnnotation.getAnnotation(element);
+			String message = String.format("There is no test for (SAFE): %s (%s)", oracle.getOracleVars(), oracle.getRequirementAut().getName());
+			return new GenericResult("TestGen",
+					message,
+					message, 
+					IResultWithSeverity.Severity.WARNING );
+		} else {
 			return null;
 		}
 	}
@@ -101,7 +137,7 @@ public class CounterExampleToTest {
 	private SystemState generateSystemState(final ProgramState<Expression> programState) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
 		LinkedHashSet<Expression> inputs = new LinkedHashSet<>();
-		double i = 0.0;
+		int i = 0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
 				! mReqSymbolTable.isAuxVar(((IdentifierExpression) e).getIdentifier())) {	
@@ -111,7 +147,7 @@ public class CounterExampleToTest {
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
 				IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-					i =  Double.parseDouble(ilit.getValue());
+					i =  Integer.parseInt(ilit.getValue());
 			}
 		}
 		return new SystemState(observableState, i);
