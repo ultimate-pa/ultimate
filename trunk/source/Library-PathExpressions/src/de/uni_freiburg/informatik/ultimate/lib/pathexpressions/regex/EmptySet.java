@@ -33,17 +33,22 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class EmptySet<V> implements IRegex<V> {
-	public String toString() {
-		return "∅";
+
+	@SuppressWarnings("unchecked")
+	public static final <V> EmptySet<V> getInstance() {
+		return (EmptySet<V>) mInstance;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof EmptySet;
+	@SuppressWarnings("rawtypes")
+	private static final EmptySet mInstance = new EmptySet();
+
+	/**
+	 * Private constructor since this is a singleton.
+	 */
+	private EmptySet() {
 	}
-	
-	@Override
-	public int hashCode() {
-		return 611057;
+
+	public String toString() {
+		return "∅";
 	}
 }

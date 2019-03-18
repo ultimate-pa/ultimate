@@ -34,21 +34,22 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class Epsilon<V> implements IRegex<V> {
 
-	public Epsilon() {
+	@SuppressWarnings("unchecked")
+	public static final <V> Epsilon<V> getInstance() {
+		return (Epsilon<V>) mInstance;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static final Epsilon mInstance = new Epsilon();
+
+	/**
+	 * Private constructor since this is a singleton.
+	 */
+	private Epsilon() {
 	}
 
 	@Override
 	public String toString() {
 		return "ε";
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof Epsilon;
-	}
-	
-	@Override
-	public int hashCode() {
-		return 599477;
 	}
 }

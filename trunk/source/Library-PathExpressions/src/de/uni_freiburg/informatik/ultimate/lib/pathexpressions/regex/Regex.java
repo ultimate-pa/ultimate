@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public abstract class Regex<V> implements IRegex<V> {
+
 	public static <V> IRegex<V> simplifiedUnion(IRegex<V> a, IRegex<V> b) {
 		if (a instanceof EmptySet)
 			return b;
@@ -47,7 +48,7 @@ public abstract class Regex<V> implements IRegex<V> {
 
 	public static <V> IRegex<V> simplifiedConcatenation(IRegex<V> a, IRegex<V> b) {
 		if (a instanceof EmptySet || b instanceof EmptySet)
-			return new EmptySet<>();
+			return EmptySet.getInstance();
 		if (a instanceof Epsilon)
 			return b;
 		if (b instanceof Epsilon)
@@ -57,7 +58,7 @@ public abstract class Regex<V> implements IRegex<V> {
 
 	public static <V> IRegex<V> simplifiedStar(IRegex<V> reg) {
 		if (reg instanceof EmptySet || reg instanceof Epsilon) {
-			return new Epsilon<>();
+			return Epsilon.getInstance();
 		}
 		return new Star<>(reg);
 	}

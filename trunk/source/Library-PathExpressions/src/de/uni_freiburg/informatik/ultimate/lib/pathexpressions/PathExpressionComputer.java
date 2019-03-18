@@ -51,7 +51,7 @@ public class PathExpressionComputer<N, V> {
 	 * @see #nodeToIntMap
 	 */
 	private Map<Pair<Integer, Integer>, IRegex<V>> pathExpr = new HashMap<>();
-	private IRegex<V> emptyRegEx = new EmptySet<>();
+	private IRegex<V> emptyRegEx = EmptySet.getInstance();
 	private Map<N, List<IRegex<V>>> allPathFromNode = new HashMap<>();
 	private boolean eliminated;
 
@@ -92,7 +92,7 @@ public class PathExpressionComputer<N, V> {
 		for (int i = 0; i < graph.getNodes().size(); i++) {
 			regEx.add(emptyRegEx);
 		}
-		regEx.set(getIntegerFor(a) - 1, new Epsilon<V>());
+		regEx.set(getIntegerFor(a) - 1, Epsilon.getInstance());
 		for (int i = 0; i < extractPathSequence.size(); i++) {
 			PathExpression<V> tri = extractPathSequence.get(i);
 			if (tri.getSource() == tri.getTarget()) {
