@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -53,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -61,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -188,54 +192,82 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 
 				final Map<Term, Set<Term>> hierarchy = new LinkedHashMap<>();
+				final Map<Term, Set<Term>> idxTerms = new LinkedHashMap<>();
+				final Map<Term, IProgramVar> oldTermToProgramVar = new LinkedHashMap<>();
 				for (final IProgramVar arrayVar : programArrayVars) {
-					// TODO: What about index vars?
 
+					// InVars for values
 					final TermVariable arrayInTermVar = newInVars.remove(arrayVar);
 					if (arrayInTermVar != null) {
 						final Set<Term> valTermVars = new LinkedHashSet<>();
 						for (final IProgramVar valVar : valVars.get(arrayVar)) {
 							final TermVariable valTermVar =
-									mMgdScript.constructFreshTermVariable((valVar + "_in"), valVar.getSort());
+									mMgdScript.constructFreshTermVariable((valVar.toString() + "_in"), valVar.getSort());
 							newInVars.put(valVar, valTermVar);
-							valTermVars.add(arrayInTermVar);
+							valTermVars.add(valTermVar);
 						}
 						hierarchy.put(arrayInTermVar, valTermVars);
 					}
 
-					// TODO: As invars
-					if (newOutVars.containsKey(arrayVar)) {
-						final Set<Term> valTerms = Collections.emptySet();
-						for (final IProgramVar val : valVars.get(arrayVar)) {
-							final TermVariable valTerm =
-									mMgdScript.constructFreshTermVariable((val + "_out"), arrayVar.getSort());
-							newOutVars.put(val, valTerm);
-							valTerms.add(newOutVars.get(arrayVar));
+					// OutVars for values
+					final TermVariable arrayOutTermVar = newOutVars.remove(arrayVar);
+					if (arrayOutTermVar != null) {
+						final Set<Term> valTermVars = new LinkedHashSet<>();
+						for (final IProgramVar valVar : valVars.get(arrayVar)) {
+							final TermVariable valTermVar =
+									mMgdScript.constructFreshTermVariable((valVar.toString() + "_in"), valVar.getSort());
+							newOutVars.put(valVar, valTermVar);
+							valTermVars.add(valTermVar);
+							oldTermToProgramVar.put(valTermVar, valVar);
 						}
-						newOutVars.remove(arrayVar);
+						hierarchy.put(arrayOutTermVar, valTermVars);
+					}
+					
+					// In- and OutVars for indices
+					final Set<Term> idxTermVarSet = new LinkedHashSet<>();
+					for (final IProgramVar idxVar : idxVars.get(arrayVar)) {
+						final TermVariable idxTermVar =
+								mMgdScript.constructFreshTermVariable((idxVar.toString() + "_term"), idxVar.getSort());
+						newInVars.put(idxVar, idxTermVar);
+						newOutVars.put(idxVar, idxTermVar);
+						idxTermVarSet.add(idxTermVar);
+					}
+					if (arrayInTermVar != null) {
+						idxTerms.put(arrayInTermVar, idxTermVarSet);
+					}
+					else if (arrayOutTermVar != null) {
+						idxTerms.put(arrayOutTermVar, idxTermVarSet);
 					}
 				}
 
 				// Eliminate the Select-, Store-, and Equality-Terms
 				for (final Term selectTerm : ssec.mSelectTerms) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
-					final Term substTerm = eliminateSelects(tfTerm, idxVars, valVars, aSelectTerm, hierarchy);
+					final Term substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm, hierarchy);
 					subst.put(selectTerm, substTerm);
 				}
 				for (final Term storeTerm : ssec.mStoreTerms) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
-					eliminateStores(tfTerm, idxVars, valVars, aStoreTerm, hierarchy);
+					final Term substTerm = eliminateStores(mMgdScript, idxTerms, aStoreTerm, hierarchy,
+							newInVars, oldTermToProgramVar);
+					subst.put(storeTerm, substTerm);
 				}
 				for (final Term equalityTerm : ssec.mEqualityTerms) {
 					final ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
-					eliminateEqualities(tfTerm, idxVars, valVars, aEqualityTerm, hierarchy);
+					final Term substTerm = eliminateEqualities(mMgdScript, idxTerms, aEqualityTerm, hierarchy);
+					subst.put(equalityTerm, substTerm);
 				}
 
 				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst).transform(tfTerm);
 				final UnmodifiableTransFormula newTf =
 						buildTransitionFormula(tf, newTfTerm, newInVars, newOutVars, auxVars);
-				// TODO: Insert new tf via lst
-
+				
+				/*
+				final IcfgLocation newSource = lst.createNewLocation(internalTransition.getSource());
+				final IcfgLocation newTarget = lst.createNewLocation(internalTransition.getTarget());
+				lst.createNewInternalTransition(newSource, newTarget, newTf, true);
+				*/
+;				
 			} else {
 				throw new UnsupportedOperationException("Not yet implemented");
 			}
@@ -259,36 +291,78 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		return tfb.finishConstruction(mMgdScript);
 	}
 
-	private Term eliminateSelects(final Term tfTerm, final Map<IProgramVar, Set<IProgramVar>> idxD,
-			final Map<IProgramVar, Set<IProgramVar>> valD, final ApplicationTerm selectTerm,
-			final Map<Term, Set<Term>> hierarchy) {
+	private Term eliminateSelects(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms, 
+			final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy) {
 		final Term[] params = selectTerm.getParameters();
 		final Term x = params[0];
-		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		// TBD: Actually eliminate the array
+		final Term y = params[1];
+		final Script script = (Script) mMgdScript;
+		// final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
 
-		return tfTerm;
+		
+		final Sort sort = x.getSort().getArguments()[1];
+		final Term placeholder = mMgdScript.constructFreshTermVariable((x.toString() + "_aux"), sort);
+		Term substTerm = SmtUtils.and(script, placeholder);
+		for (final Term val : hierarchy.get(x)) {
+			for (final Term idx : idxTerms.get(x)) {
+				substTerm = SmtUtils.and(script, substTerm,
+				SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx),
+						SmtUtils.binaryEquality(script, val, placeholder)));
+			}
+		}
+
+		return substTerm;
 	}
 
-	private void eliminateStores(final Term tf, final Map<IProgramVar, Set<IProgramVar>> idxD,
-			final Map<IProgramVar, Set<IProgramVar>> valD, final ApplicationTerm storeTerm,
-			final Map<Term, Set<Term>> hierarchy) {
+	private Term eliminateStores(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms, 
+			final ApplicationTerm storeTerm, final Map<Term, Set<Term>> hierarchy,
+			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar) {
 		final Term[] params = storeTerm.getParameters();
 		final Term x = params[0];
-		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		// TBD: Actually eliminate the array
+		final Term y = params[1];
+		final Term z = params[2];
+		final Script script = (Script) mMgdScript;
+		
+		
+		Term substTerm = SmtUtils.and((Script) mMgdScript);
+		for (final Term val : hierarchy.get(x)) {
+			Term valLow = val;
+			if (!newInVars.containsValue(val)) {
+				valLow = newInVars.get(oldTermToProgramVar.get(x));
+			}
+			
+			for (final Term idx : idxTerms.get(x)) {
+				substTerm = SmtUtils.and(script, substTerm,
+				SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx), SmtUtils.binaryEquality(script, val, z)),
+				SmtUtils.implies(script, SmtUtils.distinct(script, idx, y), SmtUtils.binaryEquality(script, val, valLow)));
+			}
+		}
+
+		return substTerm;
 	}
 
-	private void eliminateEqualities(final Term tf, final Map<IProgramVar, Set<IProgramVar>> idxD,
-			final Map<IProgramVar, Set<IProgramVar>> valD, final ApplicationTerm equalityTerm,
-			final Map<Term, Set<Term>> hierarchy) {
-		final Term[] paramsX = equalityTerm.getParameters();
-		final Term x = paramsX[0];
-		final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
-		final Term[] paramsY = equalityTerm.getParameters();
-		final Term y = paramsY[1];
-		final int k = Integer.parseInt(y.toString().replaceAll("\\D", ""));
+	private Term eliminateEqualities(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms, 
+			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy) {
+		final Term[] params = equalityTerm.getParameters();
+		final Term x = params[0];
+		final Term y = params[1];
+		final Script script = (Script) mMgdScript;
 		// TBD: Actually eliminate the array
+		
+		Term substTerm = SmtUtils.and(script);
+		for (final Term xval : hierarchy.get(x)) {
+			for (final Term xidx : idxTerms.get(x)) {
+				for (final Term yval : hierarchy.get(y)) {
+					for (final Term yidx : idxTerms.get(y)) {
+						substTerm = SmtUtils.and(script, substTerm,
+						SmtUtils.implies(script, SmtUtils.binaryEquality(script, xidx, yidx),
+								SmtUtils.binaryEquality(script, xval, yval)));
+					}
+				}
+			}
+		}
+
+		return substTerm;
 	}
 
 }
