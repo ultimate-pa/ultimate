@@ -47,33 +47,28 @@ public class Literal<V> implements IRegex<V> {
 	public V getV() {
 		return v;
 	}
-	
+
 	public String toString() {
 		return Objects.toString(v);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((v == null) ? 0 : v.hashCode());
-		return result;
+		return (v == null) ? 0 : v.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		} else if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		} else if (getClass() != obj.getClass()) {
 			return false;
-		Literal other = (Literal) obj;
-		if (v == null) {
-			if (other.v != null)
-				return false;
-		} else if (!v.equals(other.v))
-			return false;
-		return true;
+		}
+		Literal<?> other = (Literal<?>) obj;
+		return Objects.equals(v, other.v);
 	}
+
+
 }
