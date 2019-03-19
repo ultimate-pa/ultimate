@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+
 /**
  *
  *
@@ -83,6 +85,16 @@ public final class HornUtilConstants {
 				.replaceAll("\\$", ".DLR")
 				.replaceAll(":", ".CLN");
 		return headPredSymProcName;
+	}
+
+	public static String sanitzeSortNameForBoogie(final Sort sort) {
+		assert !sort.toString().contains(".OP") : "naming might clash";
+		assert !sort.toString().contains(".CP") : "naming might clash";
+		final String res = sort.toString()
+				.replaceAll("\\(", ".OP")
+				.replaceAll("\\)", ".CP")
+				.replaceAll(" ", "_");
+		return res;
 	}
 
 }

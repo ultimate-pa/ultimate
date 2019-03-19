@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
@@ -261,7 +262,7 @@ public class GenerateBoogieAstHelper {
 		String varName = mArraySortToDummyVarName.get(sort);
 		if (varName == null) {
 			final String dummyArrayPrefix = "#dummy~";
-			varName = dummyArrayPrefix + sort;
+			varName = dummyArrayPrefix + HornUtilConstants.sanitzeSortNameForBoogie(sort);
 			mArraySortToDummyVarName.put(sort, varName);
 		}
 		return ExpressionFactory.constructIdentifierExpression(mLocation, getType(sort), varName, DeclarationInformation.DECLARATIONINFO_GLOBAL);
