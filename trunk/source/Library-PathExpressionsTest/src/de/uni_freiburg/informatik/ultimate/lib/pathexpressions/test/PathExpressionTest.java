@@ -32,16 +32,15 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
+
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenation;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
 public class PathExpressionTest {
 	@Test
@@ -73,7 +72,7 @@ public class PathExpressionTest {
 		g.addEdge(3, "c", 4);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 4);
-		IRegex<String> expected = a(a("a", "b"), "c");
+		IRegex<String> expected = a("a", "b", "c");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -109,7 +108,7 @@ public class PathExpressionTest {
 		g.addEdge(1, "c", 4);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 4);
-		IRegex<String> expected = u("c", a(a("a", "b"), "c"));
+		IRegex<String> expected = u("c", a("a", "b", "c"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -160,7 +159,7 @@ public class PathExpressionTest {
 		g.addEdge(4, "c", 5);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 5);
-		IRegex<String> expected = a(a("a", "b"), "c");
+		IRegex<String> expected = a("a", "b", "c");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -219,7 +218,7 @@ public class PathExpressionTest {
 		g.addEdge(4, "43", 3);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 3);
-		IRegex<String> expected = u(a("12", "23"), a(a(a(a("12", "23"), "34"), star(a("43", "34"))), "43"));
+		IRegex<String> expected = u(a("12", "23"), a(a(a("12", "23", "34"), star(a("43", "34"))), "43"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -249,7 +248,7 @@ public class PathExpressionTest {
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 1);
 		IRegex<String> expected = u(Regex.epsilon(), a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
-				star(a(a(a(a("41", "12"), "23"), star(a("32", "23"))), "34"))), "41"));
+				star(a(a(a("41", "12", "23"), star(a("32", "23"))), "34"))), "41"));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -290,16 +289,8 @@ public class PathExpressionTest {
 		return a(a, e(b));
 	}
 
-	private static IRegex<String> a(String a, String b) {
-		return a(e(a), e(b));
-	}
-
 	private static IRegex<String> u(IRegex<String> a, IRegex<String> b) {
 		return Regex.simplifiedUnion(a, b);
-	}
-
-	private static IRegex<String> u(String a, String b) {
-		return u(e(a), e(b));
 	}
 
 	private static IRegex<String> u(String a, IRegex<String> b) {
@@ -312,6 +303,19 @@ public class PathExpressionTest {
 
 	private static IRegex<String> star(String a) {
 		return star(e(a));
+	}
+	
+	private static IRegex<String> a(final String... letters) {
+		return pairFromLeft(Regex::epsilon, Regex::concat, letters);
+	}
+	
+	private static IRegex<String> u(final String... letters) {
+		return pairFromLeft(Regex::emptySet, Regex::union, letters);
+	}
+
+	private static IRegex<String> pairFromLeft(final Supplier<IRegex<String>> neutralElem,
+			final BinaryOperator<IRegex<String>> operator, final String... letters) {
+		return Arrays.stream(letters).map(Regex::literal).reduce(operator).orElseGet(neutralElem);
 	}
 
 }
