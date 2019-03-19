@@ -30,8 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
 public abstract class Regex {
 
 	public static <L> IRegex<L> union(IRegex<L> a, IRegex<L> b) {
@@ -39,7 +37,7 @@ public abstract class Regex {
 	}
 
 	public static <L> IRegex<L> concat(IRegex<L> a, IRegex<L> b) {
-		return new Concatenate<>(a, b);
+		return new Concatenation<>(a, b);
 	}
 
 	public static <L> IRegex<L> star(IRegex<L> a) {
@@ -61,24 +59,27 @@ public abstract class Regex {
 	}
 
 	public static <L> IRegex<L> simplifiedUnion(IRegex<L> a, IRegex<L> b) {
-		if (a instanceof EmptySet)
+		if (a instanceof EmptySet) {
 			return b;
-		if (b instanceof EmptySet)
+		} else if (b instanceof EmptySet) {
 			return a;
+		}
 		// The following case is not part of Tarjan's simplification operator "[R]".
 		// However, it does not seem to break anything and helps if a graph contains one label multiple times.
-		if (a.equals(b))
+		if (a.equals(b)) {
 			return a;
+		}
 		return union(a, b);
 	}
 
 	public static <L> IRegex<L> simplifiedConcatenation(IRegex<L> a, IRegex<L> b) {
-		if (a instanceof EmptySet || b instanceof EmptySet)
+		if (a instanceof EmptySet || b instanceof EmptySet) {
 			return emptySet();
-		if (a instanceof Epsilon)
+		} else if (a instanceof Epsilon) {
 			return b;
-		if (b instanceof Epsilon)
+		} else if (b instanceof Epsilon) {
 			return a;
+		}
 		return concat(a, b);
 	}
 

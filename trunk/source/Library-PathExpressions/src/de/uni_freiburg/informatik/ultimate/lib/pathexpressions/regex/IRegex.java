@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Code taken from https://github.com/johspaeth/PathExpression
+ * Copyright (C) 2018 Johannes Spaeth
+ * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
+ * 
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -25,12 +28,13 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 /**
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Used to represent regular expressions.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
  */
-public class DummyClassSoThatGitDoesNotDeleteTheFolder {
+public interface IRegex<L> {
 
 }

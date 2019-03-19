@@ -30,8 +30,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
+/**
+ * Represents the regular expressions which does not match any word.
+ * The empty set regex is often denoted as ∅.
+ * <p>
+ * Since there is only one empty set regex this class is a singleton.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class EmptySet<L> implements IRegex<L> {
 
 	@SuppressWarnings("rawtypes")

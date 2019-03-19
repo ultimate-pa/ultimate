@@ -32,39 +32,43 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
+/**
+ * Represents the union of two regular expressions.
+ * Union of R and S is often denoted as R + S or R ∪ S.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class Union<L> implements IRegex<L> {
 
-	private final IRegex<L> b;
-	private final IRegex<L> a;
+	private final IRegex<L> mSecond;
+	private final IRegex<L> mFirst;
 
 	/**
 	 * Use factory method {@link Regex#union(IRegex, IRegex)} to create objects of this class.
 	 */
 	protected Union(IRegex<L> a, IRegex<L> b) {
-		this.a = a;
-		this.b = b;
+		this.mFirst = a;
+		this.mSecond = b;
 	}
 
 	public String toString() {
-		return "{" + a + " ∪ " + b + "}";
+		return "{" + mFirst + " ∪ " + mSecond + "}";
 	}
 
 	public IRegex<L> getFirst() {
-		return a;
+		return mFirst;
 	}
 
 	public IRegex<L> getSecond() {
-		return b;
+		return mSecond;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((a == null) ? 0 : a.hashCode());
-		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
+		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
 		return result;
 	}
 
@@ -78,6 +82,6 @@ public class Union<L> implements IRegex<L> {
 			return false;
 		}
 		Union<?> other = (Union<?>) obj;
-		return Objects.equals(a, other.a) && Objects.equals(b, other.b);
+		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
 	}
 }

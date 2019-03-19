@@ -30,8 +30,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
+/**
+ * Represents the regular expressions which matches only the empty.
+ * The empty word is often denoted as the greek letter ε (epsilon) or
+ * λ (lambda). In Tarjan's 1981 paper it is written as Λ (captial lambda).
+ * <p>
+ * Since there is only one empty word regex this class is a singleton.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class Epsilon<L> implements IRegex<L> {
 
 	@SuppressWarnings("rawtypes")

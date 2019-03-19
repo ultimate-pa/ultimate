@@ -32,38 +32,42 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
-public class Concatenate<L> implements IRegex<L> {
-	private final IRegex<L> b;
-	private final IRegex<L> a;
+/**
+ * Represents the concatenation of two regular expressions.
+ * Concatenation of R and S is often denoted as R·S or just RS.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
+public class Concatenation<L> implements IRegex<L> {
+	private final IRegex<L> mFirst;
+	private final IRegex<L> mSecond;
 
 	/**
 	 * Use factory method {@link Regex#concat(IRegex, IRegex)} to create objects of this class.
 	 */
-	protected Concatenate(IRegex<L> a, IRegex<L> b) {
-		this.a = a;
-		this.b = b;
+	protected Concatenation(IRegex<L> a, IRegex<L> b) {
+		this.mFirst = a;
+		this.mSecond = b;
 	}
 
 	public String toString() {
-		return "(" + a + "·" + b + ")";
+		return "(" + mFirst + "·" + mSecond + ")";
 	}
 
 	public IRegex<L> getFirst() {
-		return a;
+		return mFirst;
 	}
 
 	public IRegex<L> getSecond() {
-		return b;
+		return mSecond;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((a == null) ? 0 : a.hashCode());
-		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
+		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
 		return result;
 	}
 
@@ -76,7 +80,7 @@ public class Concatenate<L> implements IRegex<L> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Concatenate<?> other = (Concatenate<?>) obj;
-		return Objects.equals(a, other.a) && Objects.equals(b, other.b);
+		Concatenation<?> other = (Concatenation<?>) obj;
+		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
 	}
 }

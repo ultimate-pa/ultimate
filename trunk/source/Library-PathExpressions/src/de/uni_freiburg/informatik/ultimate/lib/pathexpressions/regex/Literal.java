@@ -32,8 +32,11 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
+/**
+ * Represents the regular expressions which matches only a single letter.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class Literal<L> implements IRegex<L> {
 	private final L mLetter;
 

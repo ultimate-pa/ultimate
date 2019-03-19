@@ -30,62 +30,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+
 class PathExpression<L> {
-	private IRegex<L> ex;
-	private int w;
-	private int u;
+
+	private final IRegex<L> mExpr;
+	private final int mTarget;
+	private final int mSource;
 
 	public IRegex<L> getExpression() {
-		return ex;
+		return mExpr;
 	}
 
 	public int getTarget() {
-		return w;
+		return mTarget;
 	}
 
 	public int getSource() {
-		return u;
+		return mSource;
 	}
 
-	public PathExpression(IRegex<L> reg, int u, int w) {
-		this.ex = reg;
-		this.u = u;
-		this.w = w;
+	public PathExpression(final IRegex<L> expr, final int source, final int target) {
+		mExpr = expr;
+		mSource = source;
+		mTarget = target;
 	}
 
 	public String toString() {
-		return "{" + u + "," + ex.toString() + "," + w + "}";
+		return "(" + mSource + "," + mExpr + "," + mTarget + ")";
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((ex == null) ? 0 : ex.hashCode());
-		result = prime * result + u;
-		result = prime * result + w;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		PathExpression other = (PathExpression) obj;
-		if (ex == null) {
-			if (other.ex != null)
-				return false;
-		} else if (!ex.equals(other.ex))
-			return false;
-		if (u != other.u)
-			return false;
-		if (w != other.w)
-			return false;
-		return true;
-	}
-
 }

@@ -32,32 +32,36 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
-
+/**
+ * Represents the Kleene closure of another regular expressions.
+ * The Kleene closure of R often denoted as R*.
+ * 
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class Star<L> implements IRegex<L> {
 
-	private final IRegex<L> a;
+	private final IRegex<L> mInner;
 
 	/**
 	 * Use factory method {@link Regex#star(IRegex)} to create objects of this class.
 	 */
 	protected  Star(IRegex<L> a) {
-		this.a = a;
+		this.mInner = a;
 	}
 
 	public String toString() {
-		return "[" + a + "]* ";
+		return "[" + mInner + "]* ";
 	}
 
-	public IRegex<L> getPlain() {
-		return a;
+	public IRegex<L> getInner() {
+		return mInner;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		result = prime * result + ((mInner == null) ? 0 : mInner.hashCode());
 		return result;
 	}
 
@@ -71,6 +75,6 @@ public class Star<L> implements IRegex<L> {
 			return false;
 		}
 		Star<?> other = (Star<?>) obj;
-		return Objects.equals(a, other.a);
+		return Objects.equals(mInner, other.mInner);
 	}
 }
