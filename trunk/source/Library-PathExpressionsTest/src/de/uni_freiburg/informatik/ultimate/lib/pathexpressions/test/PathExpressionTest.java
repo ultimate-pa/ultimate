@@ -51,7 +51,7 @@ public class PathExpressionTest {
 		g.addEdge(1, "w", 2);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 2);
-		IRegex<String> expected = new Plain<>("w");
+		IRegex<String> expected = Regex.literal("w");
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -147,7 +147,7 @@ public class PathExpressionTest {
 		g.addEdge(3, "c", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegex<String> expected = EmptySet.getInstance();
+		IRegex<String> expected = Regex.emptySet();
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -171,7 +171,7 @@ public class PathExpressionTest {
 		g.addEdge(3, "c", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 3);
-		IRegex<String> expected = EmptySet.getInstance();
+		IRegex<String> expected = Regex.emptySet();
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -249,7 +249,7 @@ public class PathExpressionTest {
 		g.addEdge(4, "41", 1);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
-		IRegex<String> expected = u(Epsilon.getInstance(), a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
+		IRegex<String> expected = u(Regex.epsilon(), a(a(a(a(a("12", "23"), star(a("32", "23"))), "34"),
 				star(a(a(a(a("41", "12"), "23"), star(a("32", "23"))), "34"))), "41"));
 		assertEquals(expected, expressionBetween);
 	}
@@ -264,7 +264,7 @@ public class PathExpressionTest {
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.getExpressionBetween(1, 1);
 		IRegex<String> expected = u(
-				u(Epsilon.getInstance(), a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41")),
+				u(Regex.epsilon(), a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41")),
 				a(u(a("13", star(a("31", "13"))),
 						a(a(a(a("13", star(a("31", "13"))), "34"),
 								star(a(a(a("41", "13"), star(a("31", "13"))), "34"))),
@@ -274,7 +274,7 @@ public class PathExpressionTest {
 	}
 
 	private static IRegex<String> e(String e) {
-		return new Plain<>(e);
+		return Regex.literal(e);
 	}
 
 	private static IRegex<String> a(IRegex<String> a, IRegex<String> b) {

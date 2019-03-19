@@ -39,7 +39,10 @@ public class Union<V> implements IRegex<V> {
 	private final IRegex<V> b;
 	private final IRegex<V> a;
 
-	public Union(IRegex<V> a, IRegex<V> b) {
+	/**
+	 * Use factory method {@link Regex#union(IRegex, IRegex)} to create objects of this class.
+	 */
+	protected Union(IRegex<V> a, IRegex<V> b) {
 		this.a = a;
 		this.b = b;
 	}

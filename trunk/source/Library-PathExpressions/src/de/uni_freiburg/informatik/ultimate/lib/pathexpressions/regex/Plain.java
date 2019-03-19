@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 public class Plain<V> implements IRegex<V> {
 	private final V v;
 
-	public Plain(V v) {
-		assert v != null;
+	/**
+	 * Use factory method {@link Regex#literal(IRegex)} to create objects of this class.
+	 */
+	protected Plain(V v) {
 		this.v = v;
 	}
 
@@ -47,7 +49,7 @@ public class Plain<V> implements IRegex<V> {
 	}
 	
 	public String toString() {
-		return Objects.toString(v, "null");
+		return Objects.toString(v);
 	}
 
 	@Override

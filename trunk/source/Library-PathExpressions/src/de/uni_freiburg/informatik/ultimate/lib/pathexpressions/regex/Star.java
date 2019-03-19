@@ -38,7 +38,10 @@ public class Star<V> implements IRegex<V> {
 
 	private final IRegex<V> a;
 
-	public Star(IRegex<V> a) {
+	/**
+	 * Use factory method {@link Regex#star(IRegex)} to create objects of this class.
+	 */
+	protected  Star(IRegex<V> a) {
 		this.a = a;
 	}
 

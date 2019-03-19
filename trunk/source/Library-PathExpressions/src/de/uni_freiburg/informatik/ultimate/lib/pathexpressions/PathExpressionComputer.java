@@ -51,7 +51,6 @@ public class PathExpressionComputer<N, V> {
 	 * @see #nodeToIntMap
 	 */
 	private Map<Pair<Integer, Integer>, IRegex<V>> pathExpr = new HashMap<>();
-	private IRegex<V> emptyRegEx = EmptySet.getInstance();
 	private Map<N, List<IRegex<V>>> allPathFromNode = new HashMap<>();
 	private boolean eliminated;
 
@@ -74,7 +73,7 @@ public class PathExpressionComputer<N, V> {
 
 	public IRegex<V> getExpressionBetween(N a, N b) {
 		if (!graph.getNodes().contains(a)) {
-			return emptyRegEx;
+			return Regex.emptySet();
 		}
 		List<IRegex<V>> allExpr = computeAllPathFrom(a);
 		return allExpr.get(getIntegerFor(b) - 1);
@@ -90,9 +89,9 @@ public class PathExpressionComputer<N, V> {
 		List<PathExpression<V>> extractPathSequence = extractPathSequence();
 		List<IRegex<V>> regEx = new ArrayList<>();
 		for (int i = 0; i < graph.getNodes().size(); i++) {
-			regEx.add(emptyRegEx);
+			regEx.add(Regex.emptySet());
 		}
-		regEx.set(getIntegerFor(a) - 1, Epsilon.getInstance());
+		regEx.set(getIntegerFor(a) - 1, Regex.epsilon());
 		for (int i = 0; i < extractPathSequence.size(); i++) {
 			PathExpression<V> tri = extractPathSequence.get(i);
 			if (tri.getSource() == tri.getTarget()) {
@@ -151,14 +150,14 @@ public class PathExpressionComputer<N, V> {
 		// TODO eliminate this n^2 loop by using default value EMPTY
 		for (int v = 1; v <= numberOfNodes; v++) {
 			for (int w = 1; w <= numberOfNodes; w++) {
-				updatePathExpr(v, w, emptyRegEx);
+				updatePathExpr(v, w, Regex.emptySet());
 			}
 		}
 		for (Edge<N, V> e : graph.getEdges()) {
 			Integer head = getIntegerFor(e.getStart());
 			Integer tail = getIntegerFor(e.getTarget());
 			IRegex<V> pht = pathExpr(head, tail);
-			pht = Regex.<V>simplifiedUnion(new Plain<V>(e.getLabel()), pht);
+			pht = Regex.<V>simplifiedUnion(Regex.literal(e.getLabel()), pht);
 			updatePathExpr(head, tail, pht);
 		}
 		for (int v = 1; v <= numberOfNodes; v++) {

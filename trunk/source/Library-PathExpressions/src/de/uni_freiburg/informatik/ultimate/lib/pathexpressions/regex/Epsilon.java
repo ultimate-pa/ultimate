@@ -34,16 +34,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class Epsilon<V> implements IRegex<V> {
 
-	@SuppressWarnings("unchecked")
-	public static final <V> Epsilon<V> getInstance() {
-		return (Epsilon<V>) mInstance;
-	}
-
 	@SuppressWarnings("rawtypes")
-	private static final Epsilon mInstance = new Epsilon();
+	public static final Epsilon INSTANCE = new Epsilon();
 
 	/**
 	 * Private constructor since this is a singleton.
+	 * Use factory method {@link Regex#epsilon()} to access the singleton.
 	 */
 	private Epsilon() {
 	}

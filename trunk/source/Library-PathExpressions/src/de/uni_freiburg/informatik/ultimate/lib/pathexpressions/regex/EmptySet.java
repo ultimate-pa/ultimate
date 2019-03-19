@@ -34,16 +34,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public class EmptySet<V> implements IRegex<V> {
 
-	@SuppressWarnings("unchecked")
-	public static final <V> EmptySet<V> getInstance() {
-		return (EmptySet<V>) mInstance;
-	}
-
 	@SuppressWarnings("rawtypes")
-	private static final EmptySet mInstance = new EmptySet();
+	public static final EmptySet INSTANCE = new EmptySet();
 
 	/**
 	 * Private constructor since this is a singleton.
+	 * Use factory method {@link Regex#emptySet()} to access the singleton.
 	 */
 	private EmptySet() {
 	}
