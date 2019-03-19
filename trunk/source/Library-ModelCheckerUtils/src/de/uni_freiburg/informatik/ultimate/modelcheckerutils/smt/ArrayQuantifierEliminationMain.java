@@ -69,10 +69,11 @@ public class ArrayQuantifierEliminationMain {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final Script mScript;
 	private final Set<TermVariable> mEliminatees;
+	private final Set<TermVariable> mNewExistEliminatees;
 	private final Set<TermVariable> mNewValueEliminatees;
 	private final Set<TermVariable> mNewIndexEliminatees;
 	private int mRecursiveCallCounter = 0;
-	private ThreeValuedEquivalenceRelation mTVER;
+	private ThreeValuedEquivalenceRelation<Term> mTVER;
 
 	/*
 	 * Uses the rules defined in my bachelor thesis to eliminate quantified arrays.
@@ -86,9 +87,10 @@ public class ArrayQuantifierEliminationMain {
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mEliminatees = new HashSet<>();
+		mNewExistEliminatees = new HashSet<>();
 		mNewValueEliminatees = new HashSet<>();
 		mNewIndexEliminatees = new HashSet<>();
-		mTVER = new ThreeValuedEquivalenceRelation();
+		mTVER = new ThreeValuedEquivalenceRelation<>();
 	}
 
 	/*
@@ -106,11 +108,20 @@ public class ArrayQuantifierEliminationMain {
 		recTask = elimQuantifiedArray(recTask);
 
 		Term quantifiedTerm = recTask.getTerm();
+
 		// quantified value variables. Selectterm Substitution
 		quantifiedTerm = SmtUtils.quantifier(mScript, eTask.getQuantifier(), mNewValueEliminatees, quantifiedTerm);
+		// quantified array variables. Storeterm Substitution
+		quantifiedTerm = SmtUtils.quantifier(mScript, 0, mNewExistEliminatees, quantifiedTerm);
 		// forall quantified index variables. Partial array equalities.
 		quantifiedTerm = SmtUtils.quantifier(mScript, 1, mNewIndexEliminatees, quantifiedTerm);
 
+		mEliminatees.addAll(mNewValueEliminatees);
+		if (eTask.getQuantifier() == 0) {
+			mEliminatees.addAll(mNewExistEliminatees);
+		} else {
+			mEliminatees.addAll(mNewIndexEliminatees);
+		}
 		mLogger.debug("Result term: " + recTask.getTerm());
 
 		recTask = recursivCall(eTask, quantifiedTerm);
@@ -155,10 +166,8 @@ public class ArrayQuantifierEliminationMain {
 			mTVER = calcThreeValuedEquiRel(recTask);
 			for (final TermVariable array : recTask.getEliminatees()) {
 				Term taskTerm = recTask.getTerm();
-				if (taskTerm instanceof ApplicationTerm) {
-					taskTerm = selectOverStore(taskTerm, array);
-					taskTerm = storeOverStore(taskTerm, array);
-				}
+				taskTerm = selectOverStore(taskTerm, array);
+				taskTerm = storeOverStore(taskTerm, array);
 				recTask = new EliminationTask(recTask.getQuantifier(), mEliminatees, taskTerm);
 				recTask = elimStores(recTask, array);
 			}
@@ -203,7 +212,7 @@ public class ArrayQuantifierEliminationMain {
 						Collections.singletonMap(innerStore, newarrayvar));
 
 				final Term noSOSterm = sub.transform(term);
-				mEliminatees.add(newarrayvar);
+				mNewExistEliminatees.add(newarrayvar);
 				// Index comparison Equality
 				final Term factorOutStore = SmtUtils.binaryEquality(mScript, newarrayvar, innerStore);
 				final Term newTerm = SmtUtils.and(mScript, factorOutStore, noSOSterm);
@@ -291,7 +300,7 @@ public class ArrayQuantifierEliminationMain {
 	 * stores all equalities of an conjunction in a ThreeValuedEquivalenceRelation
 	 */
 
-	private ThreeValuedEquivalenceRelation calcThreeValuedEquiRel(final EliminationTask eTask) {
+	private ThreeValuedEquivalenceRelation<Term> calcThreeValuedEquiRel(final EliminationTask eTask) {
 		final ApplicationTerm appterm = (ApplicationTerm) eTask.getTerm();
 		final ThreeValuedEquivalenceRelation<Term> tVER = new ThreeValuedEquivalenceRelation<>();
 		if (SmtUtils.isFunctionApplication(eTask.getTerm(), "and")) {
@@ -369,53 +378,52 @@ public class ArrayQuantifierEliminationMain {
 	 */
 	public EliminationTask elimArrayBySelects(final Term eTerm, final TermVariable eliminate, final int quantifier) {
 
-		if (eTerm instanceof ApplicationTerm) {
-			// Get select terms
-			final Set<ApplicationTerm> selectterms = new ApplicationTermFinder("select", false)
-					.findMatchingSubterms(eTerm);
+		// Get select terms
+		final Set<ApplicationTerm> selectterms = new ApplicationTermFinder("select", false).findMatchingSubterms(eTerm);
 
-			final Set<Pair<ApplicationTerm, ApplicationTerm>> indexCombinations = calcIndexCombinations(selectterms,
-					eliminate);
+		final Set<Pair<ApplicationTerm, ApplicationTerm>> indexCombinations = calcIndexCombinations(selectterms,
+				eliminate);
 
-			// Build up term: implikation
-			final Set<TermVariable> neweliminatees = new HashSet<>();
-			Term newTerm = mScript.term("true");
-			final Map<Term, Term> submap = new HashMap<>();
-			if (!indexCombinations.isEmpty()) {
-				for (final Pair<ApplicationTerm, ApplicationTerm> comb : indexCombinations) {
-					// new Exists Quantified variables: si_counter / sj_counter
-					TermVariable si = mMgdScript.constructFreshTermVariable("si", comb.getFirst().getSort());
-					TermVariable sj = mMgdScript.constructFreshTermVariable("sj", comb.getSecond().getSort());
+		// Build up term: implikation
+		final Set<TermVariable> neweliminatees = new HashSet<>();
+		Term newTerm = mScript.term("true");
+		final Map<Term, Term> submap = new HashMap<>();
+		if (!indexCombinations.isEmpty()) {
+			for (final Pair<ApplicationTerm, ApplicationTerm> comb : indexCombinations) {
+				// new Exists Quantified variables: si_counter / sj_counter
+				TermVariable si = mMgdScript.constructFreshTermVariable("si", comb.getFirst().getSort());
+				TermVariable sj = mMgdScript.constructFreshTermVariable("sj", comb.getSecond().getSort());
 
-					if (!submap.containsKey(comb.getFirst())) {
-						neweliminatees.add(si);
-						submap.put(comb.getFirst(), si);
-					} else {
-						si = (TermVariable) submap.get(comb.getFirst());
-					}
-					if (!submap.containsKey(comb.getSecond())) {
-						neweliminatees.add(sj);
-						submap.put(comb.getSecond(), sj);
-					} else {
-						sj = (TermVariable) submap.get(comb.getSecond());
-					}
-
-					final Term iEvE = indexEQvalueEQ(comb, si, sj, quantifier);
-					newTerm = SmtUtils.and(mScript, iEvE, newTerm);
-
+				if (!submap.containsKey(comb.getFirst())) {
+					neweliminatees.add(si);
+					submap.put(comb.getFirst(), si);
+				} else {
+					si = (TermVariable) submap.get(comb.getFirst());
+				}
+				if (!submap.containsKey(comb.getSecond())) {
+					neweliminatees.add(sj);
+					submap.put(comb.getSecond(), sj);
+				} else {
+					sj = (TermVariable) submap.get(comb.getSecond());
 				}
 
-				final Substitution sub = new Substitution(mMgdScript, submap);
-				final Term newTerm2 = sub.transform(eTerm);
+				final Term iEvE = indexEQvalueEQ(comb, si, sj, quantifier);
+				newTerm = SmtUtils.and(mScript, iEvE, newTerm);
 
-				newTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, newTerm2, newTerm);
-				neweliminatees.add(eliminate); // add remaining eliminate
-				mNewValueEliminatees.addAll(neweliminatees);
-				return new EliminationTask(quantifier, neweliminatees, newTerm);
 			}
+
+			final Substitution sub = new Substitution(mMgdScript, submap);
+			final Term newTerm2 = sub.transform(eTerm);
+
+			newTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, newTerm2, newTerm);
+			neweliminatees.add(eliminate); // add remaining eliminate
+			mNewValueEliminatees.addAll(neweliminatees);
+			return new EliminationTask(quantifier, neweliminatees, newTerm);
 		}
+
 		final Set<TermVariable> oldeliminatees = new HashSet<>();
 		oldeliminatees.add(eliminate);
+		mEliminatees.addAll(oldeliminatees);
 		return new EliminationTask(quantifier, oldeliminatees, eTerm);
 	}
 
@@ -464,17 +472,10 @@ public class ArrayQuantifierEliminationMain {
 	}
 
 	/*
-	 * Eliminates one Store operation (Store a i v) with an quantified Array "a". -
-	 * It replaces the Store term (Store a i v) with a new Exists quantified Array
-	 * Variable a_new and adds the Conjunct "a_new = (Store a i v)".
-	 *
-	 * - We collect all Indices of the Input Term - We Build a new SubTerm - We
-	 * eliminate the new Index Forall Quantifier with the collected Indices. - We
-	 * Replace "a_new = (Store a i v)" with the new SubTerm.
-	 *
-	 * Returns an EliminationTask. Its Term has no more Store Operation and no new
-	 * Quantifiers.
-	 *
+	 * Eliminates all store functions with qarray as first argument. newarrayvar is
+	 * a new exist quantified variable with array sort. newindexvar is a new forall
+	 * quantified variable with index sort. newindexvar is used to represent partial
+	 * equalities.
 	 */
 
 	private EliminationTask elimStores(final EliminationTask eTask, final TermVariable qarray) {
@@ -504,7 +505,7 @@ public class ArrayQuantifierEliminationMain {
 				newterm = dER(newterm, newarrayvar);
 
 				if (Arrays.asList(newterm.getFreeVars()).contains(newarrayvar)) {
-					mEliminatees.add(newarrayvar);
+					mNewExistEliminatees.add(newarrayvar);
 				}
 			}
 		}
