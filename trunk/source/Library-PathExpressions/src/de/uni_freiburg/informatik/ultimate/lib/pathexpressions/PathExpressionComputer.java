@@ -110,10 +110,8 @@ public class PathExpressionComputer<N, L> {
 	public IRegex<L> exprBetween(final N source, final N target) {
 		assert mGraph.getNodes().contains(source);
 		assert mGraph.getNodes().contains(target);
-		List<IRegex<L>> allPathsFromSource;
-		if (mAllPathsFromNode.containsKey(source)) {
-			allPathsFromSource = mAllPathsFromNode.get(source);
-		} else {
+		List<IRegex<L>> allPathsFromSource = mAllPathsFromNode.get(source);
+		if (allPathsFromSource == null) {
 			eliminate();
 			allPathsFromSource = solve(source, extractPathSequence());
 			mAllPathsFromNode.put(source, allPathsFromSource);
