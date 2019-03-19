@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Plain;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 

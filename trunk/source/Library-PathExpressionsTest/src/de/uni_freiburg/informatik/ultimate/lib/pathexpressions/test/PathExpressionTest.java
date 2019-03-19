@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionCom
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenate;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Plain;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
@@ -320,8 +320,8 @@ public class PathExpressionTest {
 	private static String toTestString(IRegex<String> regEx) {
 		if (regEx instanceof EmptySet) {
 			return "";
-		} else if (regEx instanceof Plain) {
-			return String.format("\"%s\"", ((Plain) regEx).getV());
+		} else if (regEx instanceof Literal) {
+			return String.format("\"%s\"", ((Literal) regEx).getV());
 		} else if (regEx instanceof Concatenate) {
 			Concatenate concat = (Concatenate) regEx;
 			return String.format("a(%s, %s)", toTestString(concat.getFirst()), toTestString(concat.getSecond()));

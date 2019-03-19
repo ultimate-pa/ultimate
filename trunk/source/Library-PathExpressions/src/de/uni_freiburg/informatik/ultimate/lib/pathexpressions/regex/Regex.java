@@ -47,7 +47,7 @@ public abstract class Regex {
 	}
 
 	public static <V> IRegex<V> literal(V lit) {
-		return new Plain<>(lit);
+		return new Literal<>(lit);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -34,13 +34,13 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Plain<V> implements IRegex<V> {
+public class Literal<V> implements IRegex<V> {
 	private final V v;
 
 	/**
 	 * Use factory method {@link Regex#literal(IRegex)} to create objects of this class.
 	 */
-	protected Plain(V v) {
+	protected Literal(V v) {
 		this.v = v;
 	}
 
@@ -68,7 +68,7 @@ public class Plain<V> implements IRegex<V> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Plain other = (Plain) obj;
+		Literal other = (Literal) obj;
 		if (v == null) {
 			if (other.v != null)
 				return false;
