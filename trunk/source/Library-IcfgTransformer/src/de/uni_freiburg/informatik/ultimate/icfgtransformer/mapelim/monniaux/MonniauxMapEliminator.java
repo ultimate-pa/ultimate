@@ -80,11 +80,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	public MonniauxMapEliminator(final ILogger logger, final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationTracker backtranslationTracker, final int cells) {
 		mIcfg = Objects.requireNonNull(icfg);
-		mMgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
+		mMgdScript = Objects.requireNonNull(mIcfg.getCfgSmtToolkit().getManagedScript());
 		mLogger = logger;
 		mBacktranslationTracker = backtranslationTracker;
-		mResultIcfg = eliminateMaps();
 		mCells = cells;
+		mResultIcfg = eliminateMaps();
 	}
 
 	@Override
@@ -104,8 +104,10 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
 		final TransformedIcfgBuilder<?, IcfgLocation> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
 				mBacktranslationTracker, new IdentityTransformer(mIcfg.getCfgSmtToolkit()), mIcfg, resultIcfg);
+		mMgdScript.lock(this);
 		iterate(lst);
 		lst.finish();
+		mMgdScript.unlock(this);
 		return resultIcfg;
 	}
 
@@ -230,7 +232,8 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					}
 					if (arrayInTermVar != null) {
 						idxTerms.put(arrayInTermVar, idxTermVarSet);
-					} else if (arrayOutTermVar != null) {
+					}
+					if (arrayOutTermVar != null) {
 						idxTerms.put(arrayOutTermVar, idxTermVarSet);
 					}
 				}
@@ -291,7 +294,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term[] params = selectTerm.getParameters();
 		final Term x = params[0];
 		final Term y = params[1];
-		final Script script = (Script) mMgdScript;
+		final Script script = mMgdScript.getScript();
 		// final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
 
 		final Sort sort = x.getSort().getArguments()[1];
@@ -314,25 +317,25 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term x = params[0];
 		final Term y = params[1];
 		final Term z = params[2];
-		final Script script = (Script) mMgdScript;
+		final Script script = mMgdScript.getScript();
 
-		Term substTerm = SmtUtils.and((Script) mMgdScript);
+		final Set<Term> rtr = new LinkedHashSet<>();
 		for (final Term val : hierarchy.get(x)) {
-			Term valLow = val;
-			if (!newInVars.containsValue(val)) {
+			final Term valLow;
+			if (newInVars.containsValue(val)) {
+				valLow = val;
+			} else {
 				valLow = newInVars.get(oldTermToProgramVar.get(x));
 			}
 
 			for (final Term idx : idxTerms.get(x)) {
-				substTerm = SmtUtils.and(script, substTerm,
-						SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx),
-								SmtUtils.binaryEquality(script, val, z)),
-						SmtUtils.implies(script, SmtUtils.distinct(script, idx, y),
-								SmtUtils.binaryEquality(script, val, valLow)));
+				rtr.add(SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx),
+						SmtUtils.binaryEquality(script, val, z)));
+				rtr.add(SmtUtils.implies(script, SmtUtils.distinct(script, idx, y),
+						SmtUtils.binaryEquality(script, val, valLow)));
 			}
 		}
-
-		return substTerm;
+		return SmtUtils.and(script, rtr);
 	}
 
 	private Term eliminateEqualities(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
@@ -340,23 +343,23 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term[] params = equalityTerm.getParameters();
 		final Term x = params[0];
 		final Term y = params[1];
-		final Script script = (Script) mMgdScript;
+		final Script script = mMgdScript.getScript();
 		// TBD: Actually eliminate the array
 
-		Term substTerm = SmtUtils.and(script);
-		for (final Term xval : hierarchy.get(x)) {
-			for (final Term xidx : idxTerms.get(x)) {
+		final Set<Term> rtr = new LinkedHashSet<>();
+		final Set<Term> xvals = hierarchy.get(x);
+		for (final Term xval : xvals) {
+			final Set<Term> xidxs = idxTerms.get(x);
+			for (final Term xidx : xidxs) {
 				for (final Term yval : hierarchy.get(y)) {
 					for (final Term yidx : idxTerms.get(y)) {
-						substTerm = SmtUtils.and(script, substTerm,
-								SmtUtils.implies(script, SmtUtils.binaryEquality(script, xidx, yidx),
-										SmtUtils.binaryEquality(script, xval, yval)));
+						rtr.add(SmtUtils.implies(script, SmtUtils.binaryEquality(script, xidx, yidx),
+								SmtUtils.binaryEquality(script, xval, yval)));
 					}
 				}
 			}
 		}
-
-		return substTerm;
+		return SmtUtils.and(script, rtr);
 	}
 
 }
