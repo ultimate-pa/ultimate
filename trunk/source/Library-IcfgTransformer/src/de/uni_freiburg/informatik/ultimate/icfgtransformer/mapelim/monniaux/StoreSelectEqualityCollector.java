@@ -54,7 +54,11 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 				mSelectTerms.add(aterm);
 			} else if (funName.equals("=")) {
 				// It's an equality term
-				mEqualityTerms.add(term);
+				if (aterm.getParameters()[0].getSort().isArraySort()) {
+					// its an equality term over arrays
+					mEqualityTerms.add(term);
+				}
+
 			}
 		}
 		super.convert(term);
@@ -62,5 +66,10 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 
 	protected boolean isEmpty() {
 		return mSelectTerms.isEmpty() && mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
+	}
+
+	@Override
+	public String toString() {
+		return "Store " + mStoreTerms + " Select " + mSelectTerms + " Equals " + mEqualityTerms;
 	}
 }
