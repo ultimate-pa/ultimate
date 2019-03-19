@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Epsilon<V> implements IRegex<V> {
+public class Epsilon<L> implements IRegex<L> {
 
 	@SuppressWarnings("rawtypes")
 	public static final Epsilon INSTANCE = new Epsilon();

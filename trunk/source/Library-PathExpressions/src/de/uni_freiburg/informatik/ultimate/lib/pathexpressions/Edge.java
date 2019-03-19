@@ -30,10 +30,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-public interface Edge<N, V> {
+public interface Edge<N, L> {
 	public N getStart();
 
 	public N getTarget();
 
-	public V getLabel();
+	public L getLabel();
 }

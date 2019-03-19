@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 import java.util.Set;
 
-public interface LabeledGraph<N, V> {
-	Set<Edge<N, V>> getEdges();
+public interface LabeledGraph<N, L> {
+	Set<Edge<N, L>> getEdges();
 
 	Set<N> getNodes();
 

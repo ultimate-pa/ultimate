@@ -34,14 +34,14 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Star<V> implements IRegex<V> {
+public class Star<L> implements IRegex<L> {
 
-	private final IRegex<V> a;
+	private final IRegex<L> a;
 
 	/**
 	 * Use factory method {@link Regex#star(IRegex)} to create objects of this class.
 	 */
-	protected  Star(IRegex<V> a) {
+	protected  Star(IRegex<L> a) {
 		this.a = a;
 	}
 
@@ -49,7 +49,7 @@ public class Star<V> implements IRegex<V> {
 		return "[" + a + "]* ";
 	}
 
-	public IRegex<V> getPlain() {
+	public IRegex<L> getPlain() {
 		return a;
 	}
 

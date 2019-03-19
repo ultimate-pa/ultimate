@@ -34,27 +34,27 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Literal<V> implements IRegex<V> {
-	private final V v;
+public class Literal<L> implements IRegex<L> {
+	private final L mLetter;
 
 	/**
 	 * Use factory method {@link Regex#literal(IRegex)} to create objects of this class.
 	 */
-	protected Literal(V v) {
-		this.v = v;
+	protected Literal(L letter) {
+		this.mLetter = letter;
 	}
 
-	public V getV() {
-		return v;
+	public L getLetter() {
+		return mLetter;
 	}
 
 	public String toString() {
-		return Objects.toString(v);
+		return Objects.toString(mLetter);
 	}
 
 	@Override
 	public int hashCode() {
-		return (v == null) ? 0 : v.hashCode();
+		return (mLetter == null) ? 0 : mLetter.hashCode();
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class Literal<V> implements IRegex<V> {
 			return false;
 		}
 		Literal<?> other = (Literal<?>) obj;
-		return Objects.equals(v, other.v);
+		return Objects.equals(mLetter, other.mLetter);
 	}
 
 

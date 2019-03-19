@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class EmptySet<V> implements IRegex<V> {
+public class EmptySet<L> implements IRegex<L> {
 
 	@SuppressWarnings("rawtypes")
 	public static final EmptySet INSTANCE = new EmptySet();

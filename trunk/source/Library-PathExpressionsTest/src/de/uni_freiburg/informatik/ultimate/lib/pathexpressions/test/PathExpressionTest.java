@@ -321,7 +321,7 @@ public class PathExpressionTest {
 		if (regEx instanceof EmptySet) {
 			return "";
 		} else if (regEx instanceof Literal) {
-			return String.format("\"%s\"", ((Literal) regEx).getV());
+			return String.format("\"%s\"", ((Literal) regEx).getLetter());
 		} else if (regEx instanceof Concatenate) {
 			Concatenate concat = (Concatenate) regEx;
 			return String.format("a(%s, %s)", toTestString(concat.getFirst()), toTestString(concat.getSecond()));

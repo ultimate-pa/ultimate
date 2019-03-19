@@ -34,33 +34,33 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
 public abstract class Regex {
 
-	public static <V> IRegex<V> union(IRegex<V> a, IRegex<V> b) {
+	public static <L> IRegex<L> union(IRegex<L> a, IRegex<L> b) {
 		return new Union<>(a, b);
 	}
 
-	public static <V> IRegex<V> concat(IRegex<V> a, IRegex<V> b) {
+	public static <L> IRegex<L> concat(IRegex<L> a, IRegex<L> b) {
 		return new Concatenate<>(a, b);
 	}
 
-	public static <V> IRegex<V> star(IRegex<V> a) {
+	public static <L> IRegex<L> star(IRegex<L> a) {
 		return new Star<>(a);
 	}
 
-	public static <V> IRegex<V> literal(V lit) {
-		return new Literal<>(lit);
+	public static <L> IRegex<L> literal(L letter) {
+		return new Literal<>(letter);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static final <V> Epsilon<V> epsilon() {
-		return (Epsilon<V>) Epsilon.INSTANCE;
+	public static final <L> Epsilon<L> epsilon() {
+		return (Epsilon<L>) Epsilon.INSTANCE;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static final <V> EmptySet<V> emptySet() {
-		return (EmptySet<V>) EmptySet.INSTANCE;
+	public static final <L> EmptySet<L> emptySet() {
+		return (EmptySet<L>) EmptySet.INSTANCE;
 	}
 
-	public static <V> IRegex<V> simplifiedUnion(IRegex<V> a, IRegex<V> b) {
+	public static <L> IRegex<L> simplifiedUnion(IRegex<L> a, IRegex<L> b) {
 		if (a instanceof EmptySet)
 			return b;
 		if (b instanceof EmptySet)
@@ -72,7 +72,7 @@ public abstract class Regex {
 		return union(a, b);
 	}
 
-	public static <V> IRegex<V> simplifiedConcatenation(IRegex<V> a, IRegex<V> b) {
+	public static <L> IRegex<L> simplifiedConcatenation(IRegex<L> a, IRegex<L> b) {
 		if (a instanceof EmptySet || b instanceof EmptySet)
 			return emptySet();
 		if (a instanceof Epsilon)
@@ -82,7 +82,7 @@ public abstract class Regex {
 		return concat(a, b);
 	}
 
-	public static <V> IRegex<V> simplifiedStar(IRegex<V> reg) {
+	public static <L> IRegex<L> simplifiedStar(IRegex<L> reg) {
 		if (reg instanceof EmptySet || reg instanceof Epsilon) {
 			return epsilon();
 		}

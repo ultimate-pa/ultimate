@@ -30,12 +30,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-class PathExpression<V> {
-	private IRegex<V> ex;
+class PathExpression<L> {
+	private IRegex<L> ex;
 	private int w;
 	private int u;
 
-	public IRegex<V> getExpression() {
+	public IRegex<L> getExpression() {
 		return ex;
 	}
 
@@ -47,7 +47,7 @@ class PathExpression<V> {
 		return u;
 	}
 
-	public PathExpression(IRegex<V> reg, int u, int w) {
+	public PathExpression(IRegex<L> reg, int u, int w) {
 		this.ex = reg;
 		this.u = u;
 		this.w = w;

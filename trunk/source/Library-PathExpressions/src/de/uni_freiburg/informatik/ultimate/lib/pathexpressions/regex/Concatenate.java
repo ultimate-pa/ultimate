@@ -34,14 +34,14 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Concatenate<V> implements IRegex<V> {
-	private final IRegex<V> b;
-	private final IRegex<V> a;
+public class Concatenate<L> implements IRegex<L> {
+	private final IRegex<L> b;
+	private final IRegex<L> a;
 
 	/**
 	 * Use factory method {@link Regex#concat(IRegex, IRegex)} to create objects of this class.
 	 */
-	protected Concatenate(IRegex<V> a, IRegex<V> b) {
+	protected Concatenate(IRegex<L> a, IRegex<L> b) {
 		this.a = a;
 		this.b = b;
 	}
@@ -50,11 +50,11 @@ public class Concatenate<V> implements IRegex<V> {
 		return "(" + a + "·" + b + ")";
 	}
 
-	public IRegex<V> getFirst() {
+	public IRegex<L> getFirst() {
 		return a;
 	}
 
-	public IRegex<V> getSecond() {
+	public IRegex<L> getSecond() {
 		return b;
 	}
 

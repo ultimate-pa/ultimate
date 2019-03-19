@@ -34,15 +34,15 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.IRegex;
 
-public class Union<V> implements IRegex<V> {
+public class Union<L> implements IRegex<L> {
 
-	private final IRegex<V> b;
-	private final IRegex<V> a;
+	private final IRegex<L> b;
+	private final IRegex<L> a;
 
 	/**
 	 * Use factory method {@link Regex#union(IRegex, IRegex)} to create objects of this class.
 	 */
-	protected Union(IRegex<V> a, IRegex<V> b) {
+	protected Union(IRegex<L> a, IRegex<L> b) {
 		this.a = a;
 		this.b = b;
 	}
@@ -51,11 +51,11 @@ public class Union<V> implements IRegex<V> {
 		return "{" + a + " ∪ " + b + "}";
 	}
 
-	public IRegex<V> getFirst() {
+	public IRegex<L> getFirst() {
 		return a;
 	}
 
-	public IRegex<V> getSecond() {
+	public IRegex<L> getSecond() {
 		return b;
 	}
 
