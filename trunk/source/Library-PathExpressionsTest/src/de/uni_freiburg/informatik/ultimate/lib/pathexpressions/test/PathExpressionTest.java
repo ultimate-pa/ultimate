@@ -37,7 +37,6 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenation;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
@@ -264,7 +263,9 @@ public class PathExpressionTest {
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 1);
 		IRegex<String> expected = u(
-				u(Regex.epsilon(), a(a(a(a("13", star(a("31", "13"))), "34"), star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41")),
+				u(Regex.epsilon(),
+						a(a(a(a("13", star(a("31", "13"))), "34"),
+								star(a(a(a("41", "13"), star(a("31", "13"))), "34"))), "41")),
 				a(u(a("13", star(a("31", "13"))),
 						a(a(a(a("13", star(a("31", "13"))), "34"),
 								star(a(a(a("41", "13"), star(a("31", "13"))), "34"))),
@@ -301,10 +302,6 @@ public class PathExpressionTest {
 		return u(e(a), e(b));
 	}
 
-	private static IRegex<String> u(IRegex<String> a, String b) {
-		return u(a, e(b));
-	}
-
 	private static IRegex<String> u(String a, IRegex<String> b) {
 		return u(e(a), b);
 	}
@@ -315,24 +312,6 @@ public class PathExpressionTest {
 
 	private static IRegex<String> star(String a) {
 		return star(e(a));
-	}
-
-	private static String toTestString(IRegex<String> regEx) {
-		if (regEx instanceof EmptySet) {
-			return "";
-		} else if (regEx instanceof Literal) {
-			return String.format("\"%s\"", ((Literal) regEx).getLetter());
-		} else if (regEx instanceof Concatenation) {
-			Concatenation concat = (Concatenation) regEx;
-			return String.format("a(%s, %s)", toTestString(concat.getFirst()), toTestString(concat.getSecond()));
-		} else if (regEx instanceof Union) {
-			Union union = (Union) regEx;
-			return String.format("u(%s, %s)", toTestString(union.getFirst()), toTestString(union.getSecond()));
-		} else if (regEx instanceof Star) {
-			return String.format("star(%s)", toTestString(((Star) regEx).getInner()));
-		} else {
-			throw new IllegalArgumentException("Unhandled regex: " + regEx);
-		}
 	}
 
 }
