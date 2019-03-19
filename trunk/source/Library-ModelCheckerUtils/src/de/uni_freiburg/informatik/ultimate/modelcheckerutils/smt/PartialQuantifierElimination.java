@@ -74,7 +74,7 @@ public class PartialQuantifierElimination {
 	private static final boolean USE_IRD = true;
 	private static final boolean USE_TIR = true;
 	private static final boolean USE_SSD = true;
-	private static final boolean USE_MAX = false;
+	private static final boolean USE_AQE = false;
 	private static final boolean USE_SOS = false;
 	private static final boolean USE_USR = false;
 	private static final boolean USE_PUSH_PULL = true;
@@ -287,7 +287,7 @@ public class PartialQuantifierElimination {
 			result = applyUnconnectedParameterDeletion(mgdScript, quantifier, eliminatees, services,
 					xnfConversionTechnique, script, result);
 		}
-		if (USE_MAX) {
+		if (USE_AQE) {
 
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ArrayQuantifierEliminationMain(mgdScript, services, simplificationTechnique)
