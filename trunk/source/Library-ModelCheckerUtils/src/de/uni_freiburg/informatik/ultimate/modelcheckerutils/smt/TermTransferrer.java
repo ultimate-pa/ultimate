@@ -157,6 +157,7 @@ public class TermTransferrer extends TermTransformer {
 		 * Note that resultSort must be non-null if and only if we have an explicitly
 		 * instantiated polymorphic FunctionSymbol, i.e., a function of the form (as
 		 * <name> <sort>). Otherwise mScript.term(..) will fail.
+		 * Note that for mScript.declareFun(..) we still need the transferred result sort (see below).
 		 */
 		final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 		try {
@@ -168,7 +169,7 @@ public class TermTransferrer extends TermTransformer {
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				final Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
-				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
+				mScript.declareFun(fsymb.getName(), paramSorts, transferSort(fsymb.getReturnSort()));
 				if (mApplyLocalSimplifications) {
 					result = SmtUtils.termWithLocalSimplification(mScript, fsymb, newArgs);
 				} else {
