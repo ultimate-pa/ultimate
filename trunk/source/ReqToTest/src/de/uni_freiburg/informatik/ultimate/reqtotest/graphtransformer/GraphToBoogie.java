@@ -205,17 +205,17 @@ public class GraphToBoogie {
 	
 	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph reqId, ReqGuardGraph source, ReqGuardGraph successor, TimedLabel label) {
 		Statement[] body;
-		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());	
+		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());
+		Statement guardAssume = new AssumeStatement(mDummyLocation, mTerm2Expression.translate(label.getGuard()));
+		ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
+		annotation.annotate(guardAssume);
 		if (label.getReset() != null) {
 			Statement resetClock = generateVarIntAssignment(label.getReset().getName(), 0);
-			body = new Statement[] {resetClock, setPcNextState};
+			body = new Statement[] {guardAssume, resetClock, setPcNextState};
 		} else {
-			body = new Statement[] {setPcNextState};
+			body = new Statement[] {guardAssume, setPcNextState};
 		}
-		final Expression guard = mTerm2Expression.translate(label.getGuard());
-		IfStatement ifStatement = new IfStatement(mDummyLocation, guard, body, innerIf);
-		ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
-		annotation.annotate(ifStatement);
+		IfStatement ifStatement = new IfStatement(mDummyLocation, new WildcardExpression(mDummyLocation), body, innerIf);
 		return new Statement[] {ifStatement};
 	}
 	

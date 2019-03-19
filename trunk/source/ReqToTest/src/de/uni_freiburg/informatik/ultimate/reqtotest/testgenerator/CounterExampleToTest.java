@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -25,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
@@ -108,8 +106,7 @@ public class CounterExampleToTest {
 				stepGuard = new ArrayList<>();
 			} 
 			// retrieve guardAnnotations of encoded automata
-			if ( ate.getStepInfo().contains(StepInfo.CONDITION_EVAL_TRUE) &&
-					ReqGraphAnnotation.getAnnotation(element) != null) {
+			if (ReqGraphAnnotation.getAnnotation(element) != null) {
 					stepGuard.add( ReqGraphAnnotation.getAnnotation(element));
 			}
 			//retrieve oracle annotation (note: guard of the last assert statement)
