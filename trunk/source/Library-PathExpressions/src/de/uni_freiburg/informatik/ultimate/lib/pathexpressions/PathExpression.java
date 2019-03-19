@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -56,6 +56,7 @@ class PathExpression<L> {
 		mTarget = target;
 	}
 
+	@Override
 	public String toString() {
 		return "(" + mSource + "," + mExpr + "," + mTarget + ")";
 	}

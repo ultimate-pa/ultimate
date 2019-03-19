@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import java.util.Objects;
 
 /**
- * Represents the Kleene closure of another regular expressions.
- * The Kleene closure of R often denoted as R*.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ * Represents the Kleene closure of another regular expressions. The Kleene closure of R often denoted as R*.
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class Star<L> implements IRegex<L> {
 
@@ -45,10 +45,11 @@ public class Star<L> implements IRegex<L> {
 	/**
 	 * Use factory method {@link Regex#star(IRegex)} to create objects of this class.
 	 */
-	protected  Star(IRegex<L> a) {
-		this.mInner = a;
+	protected Star(final IRegex<L> a) {
+		mInner = a;
 	}
 
+	@Override
 	public String toString() {
 		return "[" + mInner + "]* ";
 	}
@@ -66,7 +67,7 @@ public class Star<L> implements IRegex<L> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -74,7 +75,7 @@ public class Star<L> implements IRegex<L> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Star<?> other = (Star<?>) obj;
+		final Star<?> other = (Star<?>) obj;
 		return Objects.equals(mInner, other.mInner);
 	}
 }

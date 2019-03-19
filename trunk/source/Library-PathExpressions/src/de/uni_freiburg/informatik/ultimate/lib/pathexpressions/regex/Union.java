@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import java.util.Objects;
 
 /**
- * Represents the union of two regular expressions.
- * Union of R and S is often denoted as R + S or R ∪ S.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ * Represents the union of two regular expressions. Union of R and S is often denoted as R + S or R ∪ S.
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class Union<L> implements IRegex<L> {
 
@@ -46,11 +46,12 @@ public class Union<L> implements IRegex<L> {
 	/**
 	 * Use factory method {@link Regex#union(IRegex, IRegex)} to create objects of this class.
 	 */
-	protected Union(IRegex<L> a, IRegex<L> b) {
-		this.mFirst = a;
-		this.mSecond = b;
+	protected Union(final IRegex<L> a, final IRegex<L> b) {
+		mFirst = a;
+		mSecond = b;
 	}
 
+	@Override
 	public String toString() {
 		return "{" + mFirst + " ∪ " + mSecond + "}";
 	}
@@ -73,7 +74,7 @@ public class Union<L> implements IRegex<L> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -81,7 +82,7 @@ public class Union<L> implements IRegex<L> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Union<?> other = (Union<?>) obj;
+		final Union<?> other = (Union<?>) obj;
 		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
 	}
 }

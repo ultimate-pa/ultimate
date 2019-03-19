@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -31,12 +31,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 /**
- * Represents the regular expressions which does not match any word.
- * The empty set regex is often denoted as ∅.
+ * Represents the regular expressions which does not match any word. The empty set regex is often denoted as ∅.
  * <p>
  * Since there is only one empty set regex this class is a singleton.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class EmptySet<L> implements IRegex<L> {
 
@@ -44,12 +44,13 @@ public class EmptySet<L> implements IRegex<L> {
 	public static final EmptySet INSTANCE = new EmptySet();
 
 	/**
-	 * Private constructor since this is a singleton.
-	 * Use factory method {@link Regex#emptySet()} to access the singleton.
+	 * Private constructor since this is a singleton. Use factory method {@link Regex#emptySet()} to access the
+	 * singleton.
 	 */
 	private EmptySet() {
 	}
 
+	@Override
 	public String toString() {
 		return "∅";
 	}

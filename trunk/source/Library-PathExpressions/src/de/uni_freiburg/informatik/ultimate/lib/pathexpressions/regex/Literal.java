@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -34,8 +34,9 @@ import java.util.Objects;
 
 /**
  * Represents the regular expressions which matches only a single letter.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class Literal<L> implements IRegex<L> {
 	private final L mLetter;
@@ -43,7 +44,7 @@ public class Literal<L> implements IRegex<L> {
 	/**
 	 * Use factory method {@link Regex#literal(IRegex)} to create objects of this class.
 	 */
-	protected Literal(L letter) {
+	protected Literal(final L letter) {
 		this.mLetter = letter;
 	}
 
@@ -51,6 +52,7 @@ public class Literal<L> implements IRegex<L> {
 		return mLetter;
 	}
 
+	@Override
 	public String toString() {
 		return Objects.toString(mLetter);
 	}
@@ -61,7 +63,7 @@ public class Literal<L> implements IRegex<L> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -69,9 +71,8 @@ public class Literal<L> implements IRegex<L> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Literal<?> other = (Literal<?>) obj;
+		final Literal<?> other = (Literal<?>) obj;
 		return Objects.equals(mLetter, other.mLetter);
 	}
-
 
 }

@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -30,59 +30,57 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 /**
  * Computes path expressions for a labeled graph.
  * <p>
- * A path expression is a regular expression describing all paths between two nodes
- * in the labeled graph.
- * The implementation is according to chapter 2 of Tarjan's 1981 paper
- * <a href="https://dl.acm.org/citation.cfm?id=322273">Fast Algorithms for Solving
- * Path Problems</a>. Please note that this is neither the algorithm with
- * runtime O(m α(m,n)) nor the algorithm with runtime O(m log n) mentioned in
- * the abstract of the paper.
+ * A path expression is a regular expression describing all paths between two nodes in the labeled graph. The
+ * implementation is according to chapter 2 of Tarjan's 1981 paper
+ * <a href="https://dl.acm.org/citation.cfm?id=322273">Fast Algorithms for Solving Path Problems</a>. Please note that
+ * this is neither the algorithm with runtime O(m α(m,n)) nor the algorithm with runtime O(m log n) mentioned in the
+ * abstract of the paper.
  * <p>
- * For a fixed node v this implementation computes n path expressions -- one
- * path expression from v to u for every node u in the graph. Computing all
- * these path expressions at once for a fixed v has time complexity of at most
- * O(n³+m). For sparse graphs the time complexity may be substantially lower.
+ * For a fixed node v this implementation computes n path expressions -- one path expression from v to u for every node
+ * u in the graph. Computing all these path expressions at once for a fixed v has time complexity of at most O(n³+m).
+ * For sparse graphs the time complexity may be substantially lower.
  * <p>
  * n = number of nodes in the graph<br>
  * m = number of edges in the graph
  *
- * @param <N> Type of the graph's nodes
- * @param <L> Type of the graph's edge labels, also used as letters in the resulting regexes
+ * @param <N>
+ *            Type of the graph's nodes
+ * @param <L>
+ *            Type of the graph's edge labels, also used as letters in the resulting regexes
  */
 public class PathExpressionComputer<N, L> {
 
 	private final LabeledGraph<N, L> mGraph;
 	/**
-	 * Maps nodes from the graph to a unique number.
-	 * Numbers are assigned sequentially starting from 1.
+	 * Maps nodes from the graph to a unique number. Numbers are assigned sequentially starting from 1.
 	 */
 	private final Map<N, Integer> mNodeToInt = new HashMap<>();
 	/**
-	 * As in Tarjan's paper, P(u,v) is a regex describing all paths from node with index u
-	 * to node with index v. If an entry is missing it has to be computed first.
+	 * As in Tarjan's paper, P(u,v) is a regex describing all paths from node with index u to node with index v. If an
+	 * entry is missing it has to be computed first.
+	 * 
 	 * @see #mNodeToInt
 	 */
 	private final Map<Pair<Integer, Integer>, IRegex<L>> mP = new HashMap<>();
 	/**
-	 * Caches the result of {@link #solve(N)}.
-	 * Value is list which can be seen as a map. Entry i (starting with 0) of the list
-	 * is the path expression from node <i>key</i> to node with number
-	 * {@link #mNodeToInt}(<i>key</i>) to the node with number i+1 (starting with 1).
+	 * Caches the result of {@link #solve(N)}. Value is list which can be seen as a map. Entry i (starting with 0) of
+	 * the list is the path expression from node <i>key</i> to node with number {@link #mNodeToInt}(<i>key</i>) to the
+	 * node with number i+1 (starting with 1).
 	 */
 	private final Map<N, List<IRegex<L>>> mAllPathsFromNode = new HashMap<>();
 	/**
@@ -90,7 +88,7 @@ public class PathExpressionComputer<N, L> {
 	 */
 	private boolean mEliminated;
 
-	public PathExpressionComputer(LabeledGraph<N, L> graph) {
+	public PathExpressionComputer(final LabeledGraph<N, L> graph) {
 		mGraph = graph;
 		mapNodesToInt();
 	}
@@ -103,7 +101,7 @@ public class PathExpressionComputer<N, L> {
 		}
 	}
 
-	private Integer intOf(N node) {
+	private Integer intOf(final N node) {
 		return mNodeToInt.get(node);
 	}
 
@@ -120,8 +118,8 @@ public class PathExpressionComputer<N, L> {
 	}
 
 	private List<IRegex<L>> solve(final N source, final List<PathExpression<L>> pathSequence) {
-		final List<IRegex<L>> allPathsFromSource = new ArrayList<>(
-				Collections.nCopies(mGraph.getNodes().size(), Regex.emptySet()));
+		final List<IRegex<L>> allPathsFromSource =
+				new ArrayList<>(Collections.nCopies(mGraph.getNodes().size(), Regex.emptySet()));
 		allPathsFromSource.set(intOf(source) - 1, Regex.epsilon());
 		for (final PathExpression<L> seqElement : pathSequence) {
 			if (seqElement.getSource() == seqElement.getTarget()) {
@@ -139,24 +137,24 @@ public class PathExpressionComputer<N, L> {
 		}
 		mAllPathsFromNode.put(source, allPathsFromSource);
 		return allPathsFromSource;
-	} 
+	}
 
 	private List<PathExpression<L>> extractPathSequence() {
 		final int numberOfNodes = mGraph.getNodes().size();
 		final List<PathExpression<L>> pathSequence = new ArrayList<>();
 		for (int u = 1; u <= numberOfNodes; u++) {
 			for (int w = u; w <= numberOfNodes; w++) {
-				IRegex<L> reg = pathExpr(u, w);
+				final IRegex<L> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet) && !(reg instanceof Epsilon)) {
-					pathSequence.add(new PathExpression<L>(reg, u, w));
+					pathSequence.add(new PathExpression<>(reg, u, w));
 				}
 			}
 		}
 		for (int u = numberOfNodes; u > 0; u--) {
 			for (int w = 1; w < u; w++) {
-				IRegex<L> reg = pathExpr(u, w);
+				final IRegex<L> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet)) {
-					pathSequence.add(new PathExpression<L>(reg, u, w));
+					pathSequence.add(new PathExpression<>(reg, u, w));
 				}
 			}
 		}
@@ -168,7 +166,7 @@ public class PathExpressionComputer<N, L> {
 			return;
 		}
 		final int numberOfNodes = mGraph.getNodes().size();
-		// initialization of table P(u,v) not necessary due to default values 
+		// initialization of table P(u,v) not necessary due to default values
 		for (final Edge<N, L> edge : mGraph.getEdges()) {
 			final Integer head = intOf(edge.getStart());
 			final Integer tail = intOf(edge.getTarget());
@@ -188,13 +186,13 @@ public class PathExpressionComputer<N, L> {
 				puv = Regex.simplifiedConcatenation(puv, pvv);
 				updatePathExpr(u, v, puv);
 				for (int w = v + 1; w <= numberOfNodes; w++) {
-					IRegex<L> pvw = pathExpr(v, w);
+					final IRegex<L> pvw = pathExpr(v, w);
 					if (pvw instanceof EmptySet) {
 						continue;
 					}
-					IRegex<L> oldPuw = pathExpr(u, w);
-					IRegex<L> a = Regex.simplifiedConcatenation(puv, pvw);
-					IRegex<L> puw = Regex.simplifiedUnion(oldPuw, a);
+					final IRegex<L> oldPuw = pathExpr(u, w);
+					final IRegex<L> a = Regex.simplifiedConcatenation(puv, pvw);
+					final IRegex<L> puw = Regex.simplifiedUnion(oldPuw, a);
 					updatePathExpr(u, w, puw);
 				}
 			}

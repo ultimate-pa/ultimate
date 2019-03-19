@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import java.util.Objects;
 
 /**
- * Represents the concatenation of two regular expressions.
- * Concatenation of R and S is often denoted as R·S or just RS.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ * Represents the concatenation of two regular expressions. Concatenation of R and S is often denoted as R·S or just RS.
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class Concatenation<L> implements IRegex<L> {
 	private final IRegex<L> mFirst;
@@ -45,11 +45,12 @@ public class Concatenation<L> implements IRegex<L> {
 	/**
 	 * Use factory method {@link Regex#concat(IRegex, IRegex)} to create objects of this class.
 	 */
-	protected Concatenation(IRegex<L> a, IRegex<L> b) {
+	protected Concatenation(final IRegex<L> a, final IRegex<L> b) {
 		this.mFirst = a;
 		this.mSecond = b;
 	}
 
+	@Override
 	public String toString() {
 		return "(" + mFirst + "·" + mSecond + ")";
 	}
@@ -72,7 +73,7 @@ public class Concatenation<L> implements IRegex<L> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -80,7 +81,7 @@ public class Concatenation<L> implements IRegex<L> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Concatenation<?> other = (Concatenation<?>) obj;
+		final Concatenation<?> other = (Concatenation<?>) obj;
 		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
 	}
 }

@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -32,8 +32,9 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 /**
  * Used to represent regular expressions.
- * 
- * @param <L> Type of letters that are used inside regex literals
+ *
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public interface IRegex<L> {
 

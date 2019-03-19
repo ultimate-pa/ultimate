@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -32,33 +32,33 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
 public abstract class Regex {
 
-	public static <L> IRegex<L> union(IRegex<L> a, IRegex<L> b) {
+	public static <L> IRegex<L> union(final IRegex<L> a, final IRegex<L> b) {
 		return new Union<>(a, b);
 	}
 
-	public static <L> IRegex<L> concat(IRegex<L> a, IRegex<L> b) {
+	public static <L> IRegex<L> concat(final IRegex<L> a, final IRegex<L> b) {
 		return new Concatenation<>(a, b);
 	}
 
-	public static <L> IRegex<L> star(IRegex<L> a) {
+	public static <L> IRegex<L> star(final IRegex<L> a) {
 		return new Star<>(a);
 	}
 
-	public static <L> IRegex<L> literal(L letter) {
+	public static <L> IRegex<L> literal(final L letter) {
 		return new Literal<>(letter);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static final <L> Epsilon<L> epsilon() {
-		return (Epsilon<L>) Epsilon.INSTANCE;
+		return Epsilon.INSTANCE;
 	}
 
 	@SuppressWarnings("unchecked")
 	public static final <L> EmptySet<L> emptySet() {
-		return (EmptySet<L>) EmptySet.INSTANCE;
+		return EmptySet.INSTANCE;
 	}
 
-	public static <L> IRegex<L> simplifiedUnion(IRegex<L> a, IRegex<L> b) {
+	public static <L> IRegex<L> simplifiedUnion(final IRegex<L> a, final IRegex<L> b) {
 		if (a instanceof EmptySet) {
 			return b;
 		} else if (b instanceof EmptySet) {
@@ -72,7 +72,7 @@ public abstract class Regex {
 		return union(a, b);
 	}
 
-	public static <L> IRegex<L> simplifiedConcatenation(IRegex<L> a, IRegex<L> b) {
+	public static <L> IRegex<L> simplifiedConcatenation(final IRegex<L> a, final IRegex<L> b) {
 		if (a instanceof EmptySet || b instanceof EmptySet) {
 			return emptySet();
 		} else if (a instanceof Epsilon) {
@@ -83,7 +83,7 @@ public abstract class Regex {
 		return concat(a, b);
 	}
 
-	public static <L> IRegex<L> simplifiedStar(IRegex<L> reg) {
+	public static <L> IRegex<L> simplifiedStar(final IRegex<L> reg) {
 		if (reg instanceof EmptySet || reg instanceof Epsilon) {
 			return epsilon();
 		}
