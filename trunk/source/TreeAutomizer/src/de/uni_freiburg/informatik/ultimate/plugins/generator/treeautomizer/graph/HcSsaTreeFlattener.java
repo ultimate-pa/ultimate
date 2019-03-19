@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -82,14 +83,35 @@ public class HcSsaTreeFlattener {
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
 		mStartsOfSubtrees = new int[depthOfSubtrees.size()];
 
-		final Map<Integer, Integer> startOfDepth = new HashMap<>();
-		for (int i = 0; i < depthOfSubtrees.size(); i++) {
-			if (!startOfDepth.containsKey(depthOfSubtrees.get(i))) {
-				startOfDepth.put(depthOfSubtrees.get(i), i);
-			}
-			mStartsOfSubtrees[i] = startOfDepth.get(depthOfSubtrees.get(i));
-		}
+		computeStartsOfSubtrees(depthOfSubtrees);
+
 		mCountersAreFinalized = true;
+	}
+
+	private void computeStartsOfSubtrees(final List<Integer> depthOfSubtrees) {
+		final Stack<Integer> starts = new Stack<>();
+		int previousDepth = -1;
+		for (int i = 0; i < depthOfSubtrees.size(); i++) {
+			final int currentDepth = depthOfSubtrees.get(i);
+			final int difference = currentDepth - previousDepth;
+			if (difference == 0) {
+				/* subtree depth unchanged
+				 * do nothing */
+			} else if (difference > 0) {
+				/* submerged into a deeper subtree */
+				for (int j = 0; j < difference; j++) {
+					starts.push(i);
+				}
+			} else {
+				/* difference < 0
+				 * emerged into a shallower subtree */
+				for (int j = difference; j < 0; j++) {
+					starts.pop();
+				}
+			}
+			mStartsOfSubtrees[i] = starts.peek();
+			previousDepth = currentDepth;
+		}
 	}
 
 	int getCounter(final Term t) {
@@ -138,7 +160,7 @@ public class HcSsaTreeFlattener {
 		if (tree.getRootSymbol() != null) {
 			res.add(tree.getRoot().getSsaFormula());
 			resDepthOfSubtrees.add(depth);
-			this.getCounter(tree.getRoot().getSsaFormula());
+			getCounter(tree.getRoot().getSsaFormula());
 		}
 		return new Pair<>(res, resDepthOfSubtrees);
 	}
