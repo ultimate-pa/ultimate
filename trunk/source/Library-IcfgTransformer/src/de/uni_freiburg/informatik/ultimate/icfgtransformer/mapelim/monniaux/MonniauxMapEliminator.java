@@ -102,7 +102,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 			return rtr;
 		};
 
-		final TransformedIcfgBuilder<?, IcfgLocation> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
+		final TransformedIcfgBuilder<IcfgLocation, IcfgLocation> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
 				mBacktranslationTracker, new IdentityTransformer(mIcfg.getCfgSmtToolkit()), mIcfg, resultIcfg);
 		mMgdScript.lock(this);
 		iterate(lst);
@@ -111,7 +111,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		return resultIcfg;
 	}
 
-	private void iterate(final TransformedIcfgBuilder<?, IcfgLocation> lst) {
+	private void iterate(final TransformedIcfgBuilder<IcfgLocation, IcfgLocation> lst) {
 
 		final Script script = mMgdScript.getScript();
 
@@ -260,12 +260,12 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final UnmodifiableTransFormula newTf =
 						buildTransitionFormula(tf, newTfTerm, newInVars, newOutVars, auxVars);
 
-				/*
-				 * final IcfgLocation newSource = lst.createNewLocation(internalTransition.getSource()); final
-				 * IcfgLocation newTarget = lst.createNewLocation(internalTransition.getTarget());
-				 * lst.createNewInternalTransition(newSource, newTarget, newTf, true);
-				 */
-				;
+				final IcfgLocation oldSource = internalTransition.getSource();
+				final IcfgLocation newSource = lst.createNewLocation(oldSource);
+				final IcfgLocation oldTarget = internalTransition.getTarget();
+				final IcfgLocation newTarget = lst.createNewLocation(oldTarget);
+				lst.createNewInternalTransition(newSource, newTarget, newTf, true);
+
 			} else {
 				throw new UnsupportedOperationException("Not yet implemented");
 			}
