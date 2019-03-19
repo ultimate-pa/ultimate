@@ -147,12 +147,7 @@ public class PathExpressionComputer<N, L> {
 			return;
 		}
 		int numberOfNodes = graph.getNodes().size();
-		// TODO eliminate this n^2 loop by using default value EMPTY
-		for (int v = 1; v <= numberOfNodes; v++) {
-			for (int w = 1; w <= numberOfNodes; w++) {
-				updatePathExpr(v, w, Regex.emptySet());
-			}
-		}
+		// initialization of table P(u,v) not necessary due to default values 
 		for (Edge<N, L> e : graph.getEdges()) {
 			Integer head = getIntegerFor(e.getStart());
 			Integer tail = getIntegerFor(e.getTarget());
@@ -188,9 +183,9 @@ public class PathExpressionComputer<N, L> {
 	}
 
 	private IRegex<L> pathExpr(final int source, final int target) {
-		return pathExpr.get(new Pair<>(source, target));
+		return pathExpr.getOrDefault(new Pair<>(source, target), Regex.emptySet());
 	}
-	
+
 	private void updatePathExpr(Integer i, Integer j, IRegex<L> reg) {
 		pathExpr.put(new Pair<>(i, j), reg);
 	}
