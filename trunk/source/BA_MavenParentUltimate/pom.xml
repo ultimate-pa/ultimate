@@ -652,6 +652,7 @@
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-PathExpressionsTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
@@ -749,6 +750,7 @@
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-PathExpressionsTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
@@ -824,6 +826,7 @@
 				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-PathExpressionsTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>

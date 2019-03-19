@@ -3,6 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
 Bundle-Version: 0.1.24
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.pathexpressions;bundle-version="0.1.24",
- org.junit;bundle-version="4.12.0"
+Require-Bundle: org.junit
