@@ -38,6 +38,12 @@ class PathExpression<L> {
 	private final int mTarget;
 	private final int mSource;
 
+	public PathExpression(final IRegex<L> expr, final int source, final int target) {
+		mExpr = expr;
+		mSource = source;
+		mTarget = target;
+	}
+
 	public IRegex<L> getExpression() {
 		return mExpr;
 	}
@@ -48,12 +54,6 @@ class PathExpression<L> {
 
 	public int getSource() {
 		return mSource;
-	}
-
-	public PathExpression(final IRegex<L> expr, final int source, final int target) {
-		mExpr = expr;
-		mSource = source;
-		mTarget = target;
 	}
 
 	@Override
