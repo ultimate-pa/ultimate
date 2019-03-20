@@ -44,7 +44,7 @@ public class IntEdge implements Edge<Integer, String> {
 	}
 
 	@Override
-	public Integer getStart() {
+	public Integer getSource() {
 		return start;
 	}
 

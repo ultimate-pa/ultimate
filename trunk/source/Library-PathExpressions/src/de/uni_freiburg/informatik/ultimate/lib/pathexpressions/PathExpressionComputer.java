@@ -168,7 +168,7 @@ public class PathExpressionComputer<N, L> {
 		final int numberOfNodes = mGraph.getNodes().size();
 		// initialization of table P(u,v) not necessary due to default values
 		for (final Edge<N, L> edge : mGraph.getEdges()) {
-			final Integer head = intOf(edge.getStart());
+			final Integer head = intOf(edge.getSource());
 			final Integer tail = intOf(edge.getTarget());
 			IRegex<L> pht = pathExpr(head, tail);
 			pht = Regex.simplifiedUnion(Regex.literal(edge.getLabel()), pht);

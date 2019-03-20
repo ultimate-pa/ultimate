@@ -30,10 +30,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
+/**
+ * Directed and labeled edge of a graph.
+ * Used to define a graph for which path expressions should be computed.
+ *
+ * @param <N> Type of the nodes inside the graph.
+ * @param <L> Type of the edge labels inside the graph.
+ */
 public interface Edge<N, L> {
-	public N getStart();
 
-	public N getTarget();
-
-	public L getLabel();
+	N getSource();
+	N getTarget();
+	L getLabel();
 }
