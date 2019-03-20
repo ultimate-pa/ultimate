@@ -67,7 +67,7 @@ public class PathExpressionComputer<N, L> {
 
 	private final LabeledGraph<N, L> mGraph;
 	/**
-	 * Maps nodes from the graph to a unique number. Numbers are assigned sequentially starting from 1.
+	 * Maps nodes from the graph to a unique number. Numbers are assigned sequentially starting from 0.
 	 */
 	private final Map<N, Integer> mNodeToInt = new HashMap<>();
 	/**
@@ -80,7 +80,7 @@ public class PathExpressionComputer<N, L> {
 	/**
 	 * Caches the result of {@link #solve(N)}. Value is list which can be seen as a map. Entry i (starting with 0) of
 	 * the list is the path expression from node <i>key</i> to node with number {@link #mNodeToInt}(<i>key</i>) to the
-	 * node with number i+1 (starting with 1).
+	 * node with number i (starting with 0).
 	 */
 	private final Map<N, List<IRegex<L>>> mAllPathsFromNode = new HashMap<>();
 	/**
@@ -94,7 +94,7 @@ public class PathExpressionComputer<N, L> {
 	}
 
 	private void mapNodesToInt() {
-		int nextInt = 1;
+		int nextInt = 0;
 		for (final N node : mGraph.getNodes()) {
 			mNodeToInt.put(node, nextInt);
 			nextInt++;
@@ -114,25 +114,25 @@ public class PathExpressionComputer<N, L> {
 			allPathsFromSource = solve(source, extractPathSequence());
 			mAllPathsFromNode.put(source, allPathsFromSource);
 		}
-		return allPathsFromSource.get(intOf(target) - 1);
+		return allPathsFromSource.get(intOf(target));
 	}
 
 	private List<IRegex<L>> solve(final N source, final List<PathExpression<L>> pathSequence) {
 		final List<IRegex<L>> allPathsFromSource =
 				new ArrayList<>(Collections.nCopies(mGraph.getNodes().size(), Regex.emptySet()));
-		allPathsFromSource.set(intOf(source) - 1, Regex.epsilon());
+		allPathsFromSource.set(intOf(source), Regex.epsilon());
 		for (final PathExpression<L> seqElement : pathSequence) {
 			if (seqElement.getSource() == seqElement.getTarget()) {
 				final int vi = seqElement.getSource();
-				final IRegex<L> regexVi = allPathsFromSource.get(vi - 1);
-				allPathsFromSource.set(vi - 1, Regex.simplifiedConcatenation(regexVi, seqElement.getExpression()));
+				final IRegex<L> regexVi = allPathsFromSource.get(vi);
+				allPathsFromSource.set(vi, Regex.simplifiedConcatenation(regexVi, seqElement.getExpression()));
 			} else {
 				final int vi = seqElement.getSource();
 				final int wi = seqElement.getTarget();
-				final IRegex<L> regexVi = allPathsFromSource.get(vi - 1);
+				final IRegex<L> regexVi = allPathsFromSource.get(vi);
 				final IRegex<L> inter = Regex.simplifiedConcatenation(regexVi, seqElement.getExpression());
-				final IRegex<L> regexWi = allPathsFromSource.get(wi - 1);
-				allPathsFromSource.set(wi - 1, Regex.simplifiedUnion(regexWi, inter));
+				final IRegex<L> regexWi = allPathsFromSource.get(wi);
+				allPathsFromSource.set(wi, Regex.simplifiedUnion(regexWi, inter));
 			}
 		}
 		mAllPathsFromNode.put(source, allPathsFromSource);
@@ -142,16 +142,16 @@ public class PathExpressionComputer<N, L> {
 	private List<PathExpression<L>> extractPathSequence() {
 		final int numberOfNodes = mGraph.getNodes().size();
 		final List<PathExpression<L>> pathSequence = new ArrayList<>();
-		for (int u = 1; u <= numberOfNodes; u++) {
-			for (int w = u; w <= numberOfNodes; w++) {
+		for (int u = 0; u < numberOfNodes; u++) {
+			for (int w = u; w < numberOfNodes; w++) {
 				final IRegex<L> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet) && !(reg instanceof Epsilon)) {
 					pathSequence.add(new PathExpression<>(reg, u, w));
 				}
 			}
 		}
-		for (int u = numberOfNodes; u > 0; u--) {
-			for (int w = 1; w < u; w++) {
+		for (int u = numberOfNodes - 1; u >= 0; u--) {
+			for (int w = 0; w < u; w++) {
 				final IRegex<L> reg = pathExpr(u, w);
 				if (!(reg instanceof EmptySet)) {
 					pathSequence.add(new PathExpression<>(reg, u, w));
@@ -174,18 +174,18 @@ public class PathExpressionComputer<N, L> {
 			pht = Regex.simplifiedUnion(Regex.literal(edge.getLabel()), pht);
 			updatePathExpr(head, tail, pht);
 		}
-		for (int v = 1; v <= numberOfNodes; v++) {
+		for (int v = 0; v < numberOfNodes; v++) {
 			IRegex<L> pvv = pathExpr(v, v);
 			pvv = Regex.simplifiedStar(pvv);
 			updatePathExpr(v, v, pvv);
-			for (int u = v + 1; u <= numberOfNodes; u++) {
+			for (int u = v + 1; u < numberOfNodes; u++) {
 				IRegex<L> puv = pathExpr(u, v);
 				if (puv instanceof EmptySet) {
 					continue;
 				}
 				puv = Regex.simplifiedConcatenation(puv, pvv);
 				updatePathExpr(u, v, puv);
-				for (int w = v + 1; w <= numberOfNodes; w++) {
+				for (int w = v + 1; w < numberOfNodes; w++) {
 					final IRegex<L> pvw = pathExpr(v, w);
 					if (pvw instanceof EmptySet) {
 						continue;
