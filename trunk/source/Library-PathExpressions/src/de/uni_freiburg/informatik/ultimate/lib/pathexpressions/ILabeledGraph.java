@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -28,33 +28,19 @@
  * licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
+package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.Edge;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.LabeledGraph;
+/**
+ * Directed and labeled graph with explicit edge objects.
+ * Used to define a graph for which path expressions should be computed.
+ *
+ * @param <N> Type of the nodes inside the graph.
+ * @param <L> Type of the edge labels inside the graph.
+ */
+public interface ILabeledGraph<N, L> {
 
-public class IntGraph implements LabeledGraph<Integer, String> {
-
-	private Set<Edge<Integer, String>> edges = new HashSet<>();
-	private Set<Integer> nodes = new HashSet<>();
-
-	public void addEdge(int start, String label, int target) {
-		nodes.add(start);
-		nodes.add(target);
-		edges.add(new IntEdge(start, label, target));
-	}
-
-	@Override
-	public Set<Edge<Integer, String>> getEdges() {
-		return edges;
-	}
-
-	@Override
-	public Set<Integer> getNodes() {
-		return nodes;
-	}
-
+	Set<ILabeledEdge<N, L>> getEdges();
+	Set<N> getNodes();
 }

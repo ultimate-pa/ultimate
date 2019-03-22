@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- *
+ * 
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -30,16 +30,54 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-/**
- * Directed and labeled edge of a graph.
- * Used to define a graph for which path expressions should be computed.
- *
- * @param <N> Type of the nodes inside the graph.
- * @param <L> Type of the edge labels inside the graph.
- */
-public interface Edge<N, L> {
+import java.util.Objects;
 
-	N getSource();
-	N getTarget();
-	L getLabel();
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledEdge;
+
+public class GenericLabeledEdge<N, L> implements ILabeledEdge<N, L> {
+
+	private final N mSource;
+	private final L mLabel;
+	private final N mTarget;
+
+	public GenericLabeledEdge(N source, L label, N target) {
+		this.mSource = source;
+		this.mLabel = label;
+		this.mTarget = target;
+	}
+
+	@Override
+	public N getSource() {
+		return mSource;
+	}
+
+	@Override
+	public L getLabel() {
+		return mLabel;
+	}
+
+	@Override
+	public N getTarget() {
+		return mTarget;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mSource, mLabel, mTarget);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj == null) {
+			return false;
+		} else if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final GenericLabeledEdge<?, ?> other = (GenericLabeledEdge<?, ?>) obj;
+		return Objects.equals(mSource, other.mSource)
+				&& Objects.equals(mLabel, other.mLabel)
+				&& Objects.equals(mTarget, other.mTarget);
+	}
 }

@@ -30,17 +30,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
-import java.util.Set;
-
 /**
- * Directed and labeled graph with explicit edge objects.
+ * Directed and labeled edge of a graph.
  * Used to define a graph for which path expressions should be computed.
  *
  * @param <N> Type of the nodes inside the graph.
  * @param <L> Type of the edge labels inside the graph.
  */
-public interface LabeledGraph<N, L> {
+public interface ILabeledEdge<N, L> {
 
-	Set<Edge<N, L>> getEdges();
-	Set<N> getNodes();
+	N getSource();
+	N getTarget();
+	L getLabel();
 }

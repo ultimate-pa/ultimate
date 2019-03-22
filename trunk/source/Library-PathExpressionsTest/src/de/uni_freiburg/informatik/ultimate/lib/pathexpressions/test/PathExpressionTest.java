@@ -38,11 +38,17 @@ import java.util.function.Supplier;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGraph;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 
 public class PathExpressionTest {
+
+	/** Abbreviation for long definition. */
+	private static class IntGraph extends GenericLabeledGraph<Integer, String>{
+	}
+
 	@Test
 	public void simple() {
 		IntGraph g = new IntGraph();

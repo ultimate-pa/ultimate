@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PathExpressionComputer<N, L> {
 
-	private final LabeledGraph<N, L> mGraph;
+	private final ILabeledGraph<N, L> mGraph;
 	/**
 	 * Maps nodes from the graph to a unique number. Numbers are assigned sequentially starting from 0.
 	 */
@@ -88,7 +88,7 @@ public class PathExpressionComputer<N, L> {
 	 */
 	private boolean mEliminated;
 
-	public PathExpressionComputer(final LabeledGraph<N, L> graph) {
+	public PathExpressionComputer(final ILabeledGraph<N, L> graph) {
 		mGraph = graph;
 		mapNodesToInt();
 	}
@@ -167,7 +167,7 @@ public class PathExpressionComputer<N, L> {
 		}
 		final int numberOfNodes = mGraph.getNodes().size();
 		// initialization of table P(u,v) not necessary due to default values
-		for (final Edge<N, L> edge : mGraph.getEdges()) {
+		for (final ILabeledEdge<N, L> edge : mGraph.getEdges()) {
 			final Integer head = intOf(edge.getSource());
 			final Integer tail = intOf(edge.getTarget());
 			IRegex<L> pht = pathExpr(head, tail);
