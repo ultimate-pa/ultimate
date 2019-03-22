@@ -66,11 +66,7 @@ public class Union<L> implements IRegex<L> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
-		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
-		return result;
+		return Objects.hash(mFirst, mSecond);
 	}
 
 	@Override

@@ -59,7 +59,7 @@ public class Literal<L> implements IRegex<L> {
 
 	@Override
 	public int hashCode() {
-		return (mLetter == null) ? 0 : mLetter.hashCode();
+		return mLetter == null ? 0 : mLetter.hashCode();
 	}
 
 	@Override
@@ -74,5 +74,4 @@ public class Literal<L> implements IRegex<L> {
 		final Literal<?> other = (Literal<?>) obj;
 		return Objects.equals(mLetter, other.mLetter);
 	}
-
 }

@@ -60,10 +60,7 @@ public class Star<L> implements IRegex<L> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mInner == null) ? 0 : mInner.hashCode());
-		return result;
+		return 257 * (mInner == null ? 0 : mInner.hashCode());
 	}
 
 	@Override

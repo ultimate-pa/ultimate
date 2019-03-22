@@ -45,7 +45,7 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	 * Adds a node to this graph. Already existing nodes are ignored.
 	 * <p>
 	 * Nodes can also be added implicitly using {@link #addEdge(ILabeledEdge)}
-	 * so calling this method might not be neccessary.
+	 * so calling this method might not be necessary.
 	 * 
 	 * @param node Node to be added
 	 * @return The node was new (did not already exist), the node was added
