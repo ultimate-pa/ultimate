@@ -128,6 +128,11 @@ public final class SmtUtils {
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		return simplify(mgScript, formula, null, services, simplificationTechnique);
+	}
+
+	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
@@ -135,6 +140,10 @@ public final class SmtUtils {
 		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
 			logger.info(String.format("Current caller to simplify is %s",
 					ReflectionUtil.getCallerClassName(3).getSimpleName()));
+		}
+		if (context != null && simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+			throw new UnsupportedOperationException(
+					simplificationTechnique + " does not support simplification with respect to context");
 		}
 		final long startTime = System.nanoTime();
 		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgScript.getScript());
@@ -193,7 +202,7 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+			Term context, final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);

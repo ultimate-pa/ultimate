@@ -330,11 +330,15 @@ public class Elim1Store {
 					doubleCaseJuncts);
 			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
-				final boolean contextIsDisjunctive = (quantifier == QuantifiedFormula.FORALL);
 				final Term resultWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result,
 						context);
-				doubleCaseTermMod = new SimplifyDDAWithTimeout(mScript, false, mServices, result, contextIsDisjunctive)
-						.getSimplifiedTerm(doubleCaseTerm);
+				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
+						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, resultWithContext), mServices,
+						SimplificationTechnique.SIMPLIFY_DDA);
+				final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
+						esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
+				mLogger.info(sizeMessage);
+				doubleCaseTermMod = esr.getSimplifiedTerm();
 			} else {
 				doubleCaseTermMod = doubleCaseTerm;
 			}
@@ -373,7 +377,7 @@ public class Elim1Store {
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result,
-						mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+						null, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
 				mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
 						esrQuick.getReductionOfTreeSize(), esrQuick.getReductionRatioInPercent()));
 				if (esrQuick.getReductionRatioInPercent() < 70) {
@@ -381,8 +385,8 @@ public class Elim1Store {
 							"Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " + preprocessedInput);
 				}
 			}
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices,
-					SimplificationTechnique.SIMPLIFY_DDA);
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, null,
+					mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			final Term simplified = esr.getSimplifiedTerm();
 			final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
 					esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());

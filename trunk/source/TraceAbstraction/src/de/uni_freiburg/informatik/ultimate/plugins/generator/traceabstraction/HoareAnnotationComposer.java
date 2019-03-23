@@ -147,7 +147,7 @@ public class HoareAnnotationComposer {
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
 					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
-					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					mCsToolkit.getManagedScript(), conjunction, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();
 			mHoareAnnotationStatisticsGenerator.reportReductionInter(simplificationResult.getReductionOfTreeSize());
 			mHoareAnnotationStatisticsGenerator
@@ -180,7 +180,7 @@ public class HoareAnnotationComposer {
 	private Term or(final Set<Term> terms) {
 		final Term disjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
 		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
-				mCsToolkit.getManagedScript(), disjunction, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+				mCsToolkit.getManagedScript(), disjunction, null, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
 		mHoareAnnotationStatisticsGenerator.reportSimplification();
 		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
 		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
