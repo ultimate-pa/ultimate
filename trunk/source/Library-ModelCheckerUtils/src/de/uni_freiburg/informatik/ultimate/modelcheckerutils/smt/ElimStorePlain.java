@@ -115,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
 public class ElimStorePlain {
 
 	private static final boolean RETURN_AFTER_SOS = false;
+	private static final boolean TRANSFORM_TO_XNF_ON_SPLIT = false;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -538,10 +539,18 @@ public class ElimStorePlain {
 				quantifier, dualJunctsWithEliminatee);
 		final Term dualJunctionWithoutElimantee = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 				quantifier, dualJunctsWithoutEliminatee);
-		final Term correspondingJunctiveNormalForm = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(),
-				quantifier, mMgdScript, dualJunctionWithElimantee,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Term[] correspodingJuncts = QuantifierUtils.getXjunctsOuter(quantifier, correspondingJunctiveNormalForm);
+		final Term correspondingJunction;
+		// 20190324 Matthias: We probably have to take care for equality terms
+		// that allow us to apply DER. These terms have to be moved to the lowest level.
+		if (TRANSFORM_TO_XNF_ON_SPLIT) {
+			final Term correspondingJunctiveNormalForm = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(),
+					quantifier, mMgdScript, dualJunctionWithElimantee,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			correspondingJunction = correspondingJunctiveNormalForm;
+		} else {
+			correspondingJunction = dualJunctionWithElimantee;
+		}
+		final Term[] correspodingJuncts = QuantifierUtils.getXjunctsOuter(quantifier, correspondingJunction);
 		return new Pair<Term[], Term>(correspodingJuncts, dualJunctionWithoutElimantee);
 	}
 
@@ -567,11 +576,8 @@ public class ElimStorePlain {
 
 	public static EliminationTaskWithContext applyNonSddEliminations(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final EliminationTaskWithContext eTask, final PqeTechniques techniques) {
-
-		final Term xnf = QuantifierUtils.transformToXnf(services, mgdScript.getScript(), eTask.getQuantifier(),
-				mgdScript, eTask.getTerm(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
-				eTask.getEliminatees(), xnf);
+				eTask.getEliminatees(), eTask.getTerm());
 		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
