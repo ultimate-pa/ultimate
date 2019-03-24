@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfDer;
@@ -232,8 +235,23 @@ public class QuantifierPusher extends TermTransformer {
 					for (int i = 0; i < dualFiniteParams.length; i++) {
 						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
 							final Term correspondingFinite =
-									applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
-							return correspondingFinite;
+									applyDistributivityAndPushOneStep(quantifier, eliminatees, dualFiniteParams, i);
+							final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity,
+									mPqeTechniques).transform(correspondingFinite);
+							if (allStillQuantified(eliminatees, pushed)) {
+								// we should not pay the high price for applying distributivity if we do not get
+								// a formula with less quantified variales in return
+								// TODO 20190323 Matthias: WARNING
+								// <pre>
+								// returns false negatives if the QuantifierPusher
+								// would rename the quantified variables (currently not the case)
+								// returns false positives if the coincidentally there is an inner quantified
+								// variables that has the same name.
+								// </pre>
+								return quantifiedFormula;
+							} else {
+								return correspondingFinite;
+							}
 						}
 					}
 				}
@@ -245,7 +263,15 @@ public class QuantifierPusher extends TermTransformer {
 
 	}
 
-	private Term applyDistributivityAndPush(final int quantifier, final Set<TermVariable> eliminatees,
+	private boolean allStillQuantified(final Set<TermVariable> eliminatees, final Term pushed) {
+		final Set<Term> quantifiedFormulas = new SubTermFinder(x -> (x instanceof QuantifiedFormula))
+				.findMatchingSubterms(pushed);
+		final Set<TermVariable> allQuantifiedVars = quantifiedFormulas.stream()
+				.map(x -> ((QuantifiedFormula) x).getVariables()).flatMap(Stream::of).collect(Collectors.toSet());
+		return allQuantifiedVars.containsAll(eliminatees);
+	}
+
+	private Term applyDistributivityAndPushOneStep(final int quantifier, final Set<TermVariable> eliminatees,
 			final Term[] dualFiniteParams, final int i) {
 		final Term[] correspondingFiniteParams = QuantifierUtils.getXjunctsOuter(quantifier, dualFiniteParams[i]);
 		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
