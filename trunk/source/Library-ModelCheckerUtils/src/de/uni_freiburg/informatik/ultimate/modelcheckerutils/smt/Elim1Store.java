@@ -335,7 +335,7 @@ public class Elim1Store {
 				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
 						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, resultWithContext), mServices,
 						SimplificationTechnique.SIMPLIFY_DDA);
-				final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
+				final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
 						esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
 				mLogger.info(sizeMessage);
 				doubleCaseTermMod = esr.getSimplifiedTerm();
