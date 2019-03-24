@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndexBasedCostEstimation;
@@ -487,8 +488,13 @@ public class ElimStorePlain {
 		}
 		Term currentTerm2 = compose(dualJunctWithoutEliminatee, eTaskForVar.getQuantifier(),
 				Arrays.asList(resultingCorrespondingJuncts));
-		currentTerm2 = new SimplifyDDAWithTimeout(mMgdScript.getScript(), false, mServices, eTaskForVar.getContext(), false)
-				.getSimplifiedTerm(currentTerm2);
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, currentTerm2,
+				eTaskForVar.getContext(), mServices,
+				SimplificationTechnique.SIMPLIFY_DDA);
+		final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
+				esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
+		mLogger.info(sizeMessage);
+		currentTerm2 = esr.getSimplifiedTerm();
 		final EliminationTask res = new EliminationTask(eTaskForVar.getQuantifier(), newElimnateesForVar, currentTerm2);
 		return res;
 	}
