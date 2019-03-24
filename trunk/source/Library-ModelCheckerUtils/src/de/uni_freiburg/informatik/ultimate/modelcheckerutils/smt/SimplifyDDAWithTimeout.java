@@ -82,7 +82,6 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	private final IUltimateServiceProvider mServices;
 	private Term mInputTerm;
 	private final Term mContext;
-	private final boolean mContextIsDisjunctive;
 	private long mStartTime;
 
 	public SimplifyDDAWithTimeout(final Script script, final IUltimateServiceProvider services) {
@@ -91,7 +90,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 
 	public SimplifyDDAWithTimeout(final Script script, final boolean simplifyRepeatedly,
 			final IUltimateServiceProvider services) {
-		this(script, simplifyRepeatedly, services, null, false);
+		this(script, simplifyRepeatedly, services, null);
 	}
 
 	/**
@@ -102,16 +101,12 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	 *
 	 * @param context
 	 *            Term that defines under which assumptions the simplification is done.
-	 * @param contextIsDisjunctive
-	 *            If true, we assume that the context or the simplification input hold. If false, we assume that the
-	 *            context and the simplification input hold.
 	 */
 	public SimplifyDDAWithTimeout(final Script script, final boolean simplifyRepeatedly,
-			final IUltimateServiceProvider services, final Term context, final boolean contextIsDisjunctive) {
+			final IUltimateServiceProvider services, final Term context) {
 		super(script, simplifyRepeatedly);
 		mServices = services;
 		mContext = context;
-		mContextIsDisjunctive = contextIsDisjunctive;
 	}
 
 	@Override
@@ -173,13 +168,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 
 		if (mContext != null) {
 			final Term contextClosed = new FormulaUnLet().unlet(mScript.let(vars, values, mContext));
-			Term toAssert;
-			if (mContextIsDisjunctive) {
-				toAssert = SmtUtils.not(mScript, contextClosed);
-			} else {
-				toAssert = contextClosed;
-			}
-			mScript.assertTerm(toAssert);
+			mScript.assertTerm(contextClosed);
 		}
 
 		term = mScript.let(vars, values, term);
