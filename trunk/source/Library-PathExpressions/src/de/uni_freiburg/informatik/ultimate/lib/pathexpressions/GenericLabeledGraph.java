@@ -95,4 +95,9 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	public Set<N> getNodes() {
 		return mNodes;
 	}
+	
+	@Override
+	public String toString() {
+		return "nodes = " + mNodes + " edges = " + mEdges;
+	}
 }

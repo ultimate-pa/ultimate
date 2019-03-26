@@ -80,4 +80,9 @@ public class GenericLabeledEdge<N, L> implements ILabeledEdge<N, L> {
 				&& Objects.equals(mLabel, other.mLabel)
 				&& Objects.equals(mTarget, other.mTarget);
 	}
+
+	@Override
+	public String toString() {
+		return mSource + "–(" + mLabel + ")→" + mTarget;
+	}
 }
