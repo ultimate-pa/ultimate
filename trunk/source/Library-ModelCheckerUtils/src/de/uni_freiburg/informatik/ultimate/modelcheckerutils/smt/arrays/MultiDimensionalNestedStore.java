@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -101,30 +101,98 @@ public class MultiDimensionalNestedStore {
 		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0), script);
 	}
 
+//	public static MultiDimensionalNestedStore convert(final Term term) {
+//		if (!term.getSort().isArraySort()) {
+//			throw new IllegalArgumentException("no array");
+//		}
+////		final int dimension = new MultiDimensionalSort(term.getSort()).getDimension();
+//		final LinkedList<ArrayIndex> indices = new LinkedList<>();
+//		final LinkedList<Term> values = new LinkedList<>();
+//		Term currentArray = term;
+//		MultiDimensionalStore currentStore = MultiDimensionalStore.convert(term);
+//		if (currentStore == null) {
+//			return null;
+//		}
+////		if (currentStore.getDimension() != dimension) {
+////			return null;
+//////			throw new AssertionError("illegal dimension");
+////		}
+//		final int firstSeenDimension = currentStore.getDimension();
+//		while (currentStore != null && (currentStore.getDimension() == firstSeenDimension)) {
+//			indices.addFirst(currentStore.getIndex());
+//			values.addFirst(currentStore.getValue());
+//			currentArray = currentStore.getArray();
+//			currentStore = MultiDimensionalStore.convert(currentArray);
+//		}
+//		return new MultiDimensionalNestedStore(currentArray, indices, values);
+//	}
+
+
 	public static MultiDimensionalNestedStore convert(final Term term) {
-		if (!term.getSort().isArraySort()) {
-			throw new IllegalArgumentException("no array");
+		MultiDimensionalNestedStore result = convert1mdseq(term);
+		if (result == null) {
+			return null;
+		} else {
+			Term innerArray = result.getArray();
+			MultiDimensionalNestedStore innerArrayMds = convert1mdseq(innerArray);
+			while (innerArrayMds != null) {
+				innerArray = innerArrayMds.getArray();
+				result = result.addInnerSequence(innerArrayMds);
+				innerArrayMds = convert1mdseq(innerArray);
+			}
 		}
-//		final int dimension = new MultiDimensionalSort(term.getSort()).getDimension();
-		final LinkedList<ArrayIndex> indices = new LinkedList<>();
-		final LinkedList<Term> values = new LinkedList<>();
-		Term currentArray = term;
-		MultiDimensionalStore currentStore = MultiDimensionalStore.convert(term);
-		if (currentStore == null) {
+		return result;
+	}
+
+
+	/**
+	 * Combine this {@link MultiDimensionalNestedStore} with innerArrayMdns such that
+	 * the store operations of innerArrayMdns are first and the store operations
+	 * this are applied afterwards.
+	 */
+	private MultiDimensionalNestedStore addInnerSequence(final MultiDimensionalNestedStore innerArrayMdns) {
+		final List<ArrayIndex> indices = new ArrayList<>(innerArrayMdns.getIndices());
+		indices.addAll(mIndices);
+		final List<Term> values = new ArrayList<>(innerArrayMdns.getValues());
+		values.addAll(mValues);
+		final MultiDimensionalNestedStore result = new MultiDimensionalNestedStore(innerArrayMdns.getArray(), indices,
+				values);
+		return result;
+	}
+
+	public static MultiDimensionalNestedStore convert1mdseq(final Term term) {
+		final ArrayStore as = ArrayStore.convert(term);
+		if (as == null) {
 			return null;
 		}
-//		if (currentStore.getDimension() != dimension) {
-//			return null;
-////			throw new AssertionError("illegal dimension");
-//		}
-		final int firstSeenDimension = currentStore.getDimension();
-		while (currentStore != null && (currentStore.getDimension() == firstSeenDimension)) {
-			indices.addFirst(currentStore.getIndex());
-			values.addFirst(currentStore.getValue());
-			currentArray = currentStore.getArray();
-			currentStore = MultiDimensionalStore.convert(currentArray);
+		final Term array = as.getArray();
+		final List<Term> indexEntries = new ArrayList<>();
+		indexEntries.add(as.getIndex());
+		Term remainingValue = as.getValue();
+		MultiDimensionalNestedStore remainingValueAsMdns = MultiDimensionalNestedStore.convert(remainingValue);
+		while (remainingValueAsMdns != null
+				&& MultiDimensionalStore.isCompatibleSelect(remainingValueAsMdns.getArray(), array, indexEntries)) {
+			if (remainingValueAsMdns.getDimension() == 1 && remainingValueAsMdns.getIndices().size() == 1) {
+				assert remainingValueAsMdns.getIndices().size() == 1;
+				assert remainingValueAsMdns.getIndices().get(0).size() == 1;
+				indexEntries.add(remainingValueAsMdns.getIndices().get(0).get(0));
+				remainingValue = remainingValueAsMdns.getValues().get(0);
+				remainingValueAsMdns = MultiDimensionalNestedStore.convert(remainingValue);
+			} else {
+				final MultiDimensionalNestedStore result = remainingValueAsMdns.addDimensionsAtBeginning(array,
+						indexEntries, term);
+				return result;
+			}
 		}
-		return new MultiDimensionalNestedStore(currentArray, indices, values);
+		final MultiDimensionalStore mds = new MultiDimensionalStore(array, new ArrayIndex(indexEntries), remainingValue,
+				term);
+		return new MultiDimensionalNestedStore(mds);
+	}
+
+	private MultiDimensionalNestedStore addDimensionsAtBeginning(final Term array, final List<Term> indexEntries,
+			final Term term) {
+		return new MultiDimensionalNestedStore(array, ArrayIndex.appendEntriesAtBeginning(mIndices, indexEntries),
+				mValues);
 	}
 
 }
