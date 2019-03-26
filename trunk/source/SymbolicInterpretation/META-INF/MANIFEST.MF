@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Symbolic Interpretation
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;singleton:=true
+Bundle-Version: 0.1.24
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
