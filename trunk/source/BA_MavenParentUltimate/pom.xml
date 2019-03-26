@@ -533,7 +533,7 @@
         <module>../Library-LassoRanker</module>
         <module>../Library-Log4j2</module>
         <module>../Library-log4j</module>
-        <module>../Library-LogicalInterpretation</module>
+        <module>../Library-SymbolicInterpretation</module>
         <module>../Library-ModelCheckerUtils</module>
         <module>../Library-MSO</module>
         <module>../Library-ojAlgo</module>
@@ -548,7 +548,7 @@
         <module>../Library-UltimateModel</module>
         <module>../Library-UltimateUtil</module>
         <module>../Library-xerces</module>
-        <module>../LogicalInterpretation</module>
+        <module>../SymbolicInterpretation</module>
         <module>../LTL2aut</module>
         <module>../PEAtoBoogie</module>
         <module>../RCFGBuilder</module>
