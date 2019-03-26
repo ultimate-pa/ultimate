@@ -179,7 +179,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Map<Term, Term> subst = new HashMap<>();
 
 				// Create new in- and outVars, if necessary
-				final Set<TermVariable> auxVars = tf.getAuxVars();
+				final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 				for (final TermVariable aux : auxVars) {
 					if (aux.getSort().isArraySort()) {
 						throw new UnsupportedOperationException("Arrays in auxVariables");
@@ -241,18 +241,18 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				// Eliminate the Select-, Store-, and Equality-Terms
 				for (final Term selectTerm : ssec.mSelectTerms) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
-					final Term substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm, hierarchy);
+					final Term substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm, hierarchy, auxVars, subst);
 					subst.put(selectTerm, substTerm);
 				}
 				for (final Term storeTerm : ssec.mStoreTerms) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
 					final Term substTerm = eliminateStores(mMgdScript, idxTerms, aStoreTerm, hierarchy, newInVars,
-							oldTermToProgramVar);
+							oldTermToProgramVar, subst);
 					subst.put(storeTerm, substTerm);
 				}
 				for (final Term equalityTerm : ssec.mEqualityTerms) {
 					final ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
-					final Term substTerm = eliminateEqualities(mMgdScript, idxTerms, aEqualityTerm, hierarchy);
+					final Term substTerm = eliminateEqualities(mMgdScript, idxTerms, aEqualityTerm, hierarchy, subst);
 					subst.put(equalityTerm, substTerm);
 				}
 
@@ -290,33 +290,62 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private Term eliminateSelects(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy) {
+			final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy,
+			Set<TermVariable> auxVars, Map<Term, Term> subst) {
+		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term[] params = selectTerm.getParameters();
-		final Term x = params[0];
-		final Term y = params[1];
+		final Term x;
+		final Term y;
+		if (subst.containsKey(params[0])) {
+			x = subst.get(params[0]);
+		}
+		else {x = params[0];}
+		if (subst.containsKey(params[1])) {
+			y = subst.get(params[1]);
+		}
+		else {y = params[1];}
+		
 		final Script script = mMgdScript.getScript();
-		// final int j = Integer.parseInt(x.toString().replaceAll("\\D", ""));
 
 		final Sort sort = x.getSort().getArguments()[1];
-		final Term placeholder = mMgdScript.constructFreshTermVariable((x.toString() + "_aux"), sort);
-		Term substTerm = SmtUtils.and(script, placeholder);
+		final TermVariable placeholder = mMgdScript.constructFreshTermVariable((x.toString() + "_aux"), sort);
+		auxVars.add(placeholder);
+		Term substTerm;
+		final Set<Term> implications = new HashSet<>();
 		for (final Term val : hierarchy.get(x)) {
 			for (final Term idx : idxTerms.get(x)) {
-				substTerm = SmtUtils.and(script, substTerm, SmtUtils.implies(script,
-						SmtUtils.binaryEquality(script, y, idx), SmtUtils.binaryEquality(script, val, placeholder)));
+				implications.add(SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx),
+						SmtUtils.binaryEquality(script, val, placeholder)));
 			}
 		}
+		
+		substTerm = SmtUtils.and(script, implications);
 
 		return substTerm;
 	}
 
 	private Term eliminateStores(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
 			final ApplicationTerm storeTerm, final Map<Term, Set<Term>> hierarchy,
-			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar) {
+			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar,
+			Map<Term, Term> subst) {
+		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term[] params = storeTerm.getParameters();
-		final Term x = params[0];
-		final Term y = params[1];
-		final Term z = params[2];
+		final Term x;
+		final Term y;
+		final Term z;
+		if (subst.containsKey(params[0])) {
+			x = subst.get(params[0]);
+		}
+		else {x = params[0];}
+		if (subst.containsKey(params[1])) {
+			y = subst.get(params[1]);
+		}
+		else {y = params[1];}
+		if (subst.containsKey(params[2])) {
+			z = subst.get(params[2]);
+		}
+		else {z = params[2];}
+		
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();
@@ -339,12 +368,22 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private Term eliminateEqualities(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy) {
+			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy,
+			Map<Term, Term> subst) {
 		final Term[] params = equalityTerm.getParameters();
-		final Term x = params[0];
-		final Term y = params[1];
+		// Find the parameters of the ApplicationTerm and check if they have already been substituted
+		final Term x;
+		final Term y;
+		if (subst.containsKey(params[0])) {
+			x = subst.get(params[0]);
+		}
+		else {x = params[0];}
+		if (subst.containsKey(params[1])) {
+			y = subst.get(params[1]);
+		}
+		else {y = params[1];}
+		
 		final Script script = mMgdScript.getScript();
-		// TBD: Actually eliminate the array
 
 		final Set<Term> rtr = new LinkedHashSet<>();
 		final Set<Term> xvals = hierarchy.get(x);
