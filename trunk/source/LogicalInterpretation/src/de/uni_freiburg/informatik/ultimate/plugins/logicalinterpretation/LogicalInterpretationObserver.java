@@ -31,7 +31,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.logicalinterpretation.cfgpreprocessing.CfgPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -50,9 +53,22 @@ public class LogicalInterpretationObserver extends BaseObserver {
 	@Override
 	public boolean process(final IElement root) throws Exception {
 		if (root instanceof IIcfg<?>) {
-			// TODO: Do something
+			// TODO: check of fix generic type
+			processIcfg((IIcfg<IcfgLocation>) root);
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Only for manual testing.
+	 */
+	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
+		final CfgPreprocessor preprocessor = new CfgPreprocessor(icfg);
+		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).warn(
+				"Graph is \n" +
+				preprocessor.graphOfProcedure(
+						icfg.getInitialNodes().iterator().next().getProcedure())
+		);
 	}
 }
