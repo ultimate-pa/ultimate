@@ -66,9 +66,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final CfgPreprocessor preprocessor = new CfgPreprocessor(icfg);
 		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).warn(
-				"Graph is \n" +
-				preprocessor.graphOfProcedure(
-						icfg.getInitialNodes().iterator().next().getProcedure())
+				preprocessor.graphOfProcedure(icfg.getInitialNodes().iterator().next().getProcedure())
 		);
 	}
 }

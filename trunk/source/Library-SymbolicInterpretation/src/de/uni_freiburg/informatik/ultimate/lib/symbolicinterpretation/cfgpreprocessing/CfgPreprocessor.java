@@ -54,23 +54,19 @@ public class CfgPreprocessor {
 		mCurrentProcedureGraph = new GenericLabeledGraph<>();
 		mWork.clear();
 
-		// TODO Difference ProcedureEntryNodes and InitialNodes? Where to start?
-		final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(procedureName);
 		final IcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procedureName);
 		final Set<IcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().getOrDefault(procedureName,
 				Collections.emptySet());
-
-		// TODO has entry/init incoming edges which should not be processed?
-		processBackwards(exitNode);
+		processBottomUp(exitNode);
 		for (final IcfgLocation errorNode : errorNodes) {
-			processBackwards(errorNode);
+			processBottomUp(errorNode);
 		}
 		// TODO mark exit and error nodes in procedure graph?
 
 		return mCurrentProcedureGraph;
 	}
 
-	private void processBackwards(IcfgLocation node) {
+	private void processBottomUp(IcfgLocation node) {
 		// for cases in which node has no edges or self loops
 		mCurrentProcedureGraph.addNode(node);
 
@@ -78,21 +74,24 @@ public class CfgPreprocessor {
 		while (!mWork.isEmpty()) {
 			node = mWork.remove();
 			for (IcfgEdge edge : node.getIncomingEdges()) {
-				processBackwards(edge);
+				processBottomUp(edge);
 			}
 		}
 	}
 
-	private void processBackwards(final IcfgEdge regularEdge) {
-		addToWorklistIfNew(regularEdge.getSource());
-		copyEdge(regularEdge);
+	private void processBottomUp(final IcfgEdge edge) {
+		// TODO fix generics
+		if (edge instanceof IIcfgReturnTransition<?,?>) {
+			processReturn((IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) edge);
+		} else if (edge instanceof IIcfgCallTransition<?>) {
+			processCall((IIcfgCallTransition<IcfgLocation>) edge);
+		} else {
+			addToWorklistIfNew(edge.getSource());
+			copyEdge(edge);
+		}
 	}
 
-	private void copyEdge(final IcfgEdge edge) {
-		mCurrentProcedureGraph.addEdge(edge.getSource(), edge, edge.getTarget());
-	}
-
-	private void processBackwards(
+	private void processReturn(
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
@@ -102,22 +101,27 @@ public class CfgPreprocessor {
 		// They are just there to point out, that we skipped the procedure.
 		mCurrentProcedureGraph.addEdge(correspondingCallEdge.getSource(),
 				new CallReturnSummary(correspondingCallEdge, returnEdge),
-				returnEdge.getTarget());
+				correspondingCallEdge.getTarget());
 		// Dead end edge representing the possibility to enter a procedure without returning due to an error
 		mCurrentProcedureGraph.addEdge(correspondingCallEdge.getSource(),
 				correspondingCallEdge,
 				returnEdge.getTarget());
 	}
 
-	private void processBackwards(final IIcfgCallTransition<IcfgLocation> callEdge) {
+	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
 		// nothing to do
-		// TODO assert callEdge.getSource() == initial node?
-		// TODO mark initial node in procedure graph?
+		// TODO assert callEdge.getSource() == entry node // mIcfg.getProcedureEntryNodes().get(procedureName);
+		// TODO mark entry node in procedure graph?
+		// TODO mark entry node even if it is disconnected from all error and return nodes? --> move out of this method
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {
 		if (!mCurrentProcedureGraph.getNodes().contains(node)) {
 			mWork.add(node);
 		}
+	}
+
+	private void copyEdge(final IcfgEdge edge) {
+		mCurrentProcedureGraph.addEdge(edge.getSource(), edge, edge.getTarget());
 	}
 }
