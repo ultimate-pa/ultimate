@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
@@ -93,7 +93,8 @@ public class AffineRelation {
 		mRelationSymbol = relationSymbol;
 		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
 		if (VMUtils.areAssertionsEnabled()) {
-			mOriginalTerm = script.term(mRelationSymbol.toString(), term.toTerm(script), script.numeral("0"));
+			mOriginalTerm = script.term(mRelationSymbol.toString(), term.toTerm(script),
+					SmtUtils.constructIntegerValue(script, term.getSort(), BigInteger.ZERO));
 		} else {
 			mOriginalTerm = null;
 		}
@@ -123,10 +124,8 @@ public class AffineRelation {
 	public AffineRelation(final Script script, final Term term, final TransformInequality transformInequality)
 			throws NotAffineException {
 		mOriginalTerm = term;
-		BinaryNumericRelation bnr = null;
-		try {
-			bnr = new BinaryNumericRelation(term);
-		} catch (final NoRelationOfThisKindException e) {
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		if (bnr == null) {
 			throw new NotAffineException("Relation is not affine");
 		}
 
@@ -358,6 +357,84 @@ public class AffineRelation {
 
 	public AffineTerm getAffineTerm() {
 		return mAffineTerm;
+	}
+
+	public static AffineRelation convert(final Script script, final Term term) {
+		return convert(script, term, TransformInequality.NO_TRANFORMATION);
+	}
+
+	public static AffineRelation convert(final Script script, final Term term, final TransformInequality transformInequality) {
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		if (bnr == null) {
+			return null;
+		}
+		final Term lhs = bnr.getLhs();
+		final Term rhs = bnr.getRhs();
+		final AffineTerm affineLhs = (AffineTerm) new AffineTermTransformer(script).transform(lhs);
+		final AffineTerm affineRhs = (AffineTerm) new AffineTermTransformer(script).transform(rhs);
+		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
+			return null;
+		}
+		final AffineTerm difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+		final AffineTerm affineTerm;
+		final RelationSymbol relationSymbol;
+		if (transformInequality != TransformInequality.NO_TRANFORMATION
+				&& SmtSortUtils.isIntSort(difference.getSort())) {
+			if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
+				switch (bnr.getRelationSymbol()) {
+				case DISTINCT:
+				case EQ:
+				case GEQ:
+				case LEQ:
+					// relation symbol is not strict anyway
+					affineTerm = difference;
+					relationSymbol = bnr.getRelationSymbol();
+					break;
+				case LESS:
+					// increment affine term by one
+					relationSymbol = RelationSymbol.LEQ;
+					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					break;
+				case GREATER:
+					// decrement affine term by one
+					relationSymbol = RelationSymbol.GEQ;
+					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
+
+					break;
+				default:
+					throw new AssertionError("unknown symbol");
+				}
+			} else if (transformInequality == TransformInequality.NONSTRICT2STRICT) {
+				switch (bnr.getRelationSymbol()) {
+				case DISTINCT:
+				case EQ:
+				case LESS:
+				case GREATER:
+					// relation symbol is strict anyway
+					affineTerm = difference;
+					relationSymbol = bnr.getRelationSymbol();
+					break;
+				case GEQ:
+					// increment affine term by one
+					relationSymbol = RelationSymbol.GREATER;
+					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					break;
+				case LEQ:
+					// decrement affine term by one
+					relationSymbol = RelationSymbol.LESS;
+					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
+					break;
+				default:
+					throw new AssertionError("unknown symbol");
+				}
+			} else {
+				throw new AssertionError("unknown case");
+			}
+		} else {
+			affineTerm = difference;
+			relationSymbol = bnr.getRelationSymbol();
+		}
+		return new AffineRelation(script, affineTerm, relationSymbol);
 	}
 
 }

@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -133,10 +132,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 							"implement support for sort " + tv.getSort() + " in " + XnfIrd.class.getSimpleName());
 				}
 
-				AffineRelation affineRelation;
-				try {
-					affineRelation = new AffineRelation(script, oldParam);
-				} catch (final NotAffineException e) {
+				final AffineRelation affineRelation = AffineRelation.convert(script, oldParam);
+				if (affineRelation == null) {
 					// unable to eliminate quantifier
 					return null;
 				}
@@ -238,10 +235,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 *         the variable tv and tv does not occur on the other side.
 	 */
 	private static boolean isAntiDer(final Term oldParam, final TermVariable tv, final int quantifier) {
-		BinaryEqualityRelation ber;
-		try {
-			ber = new BinaryEqualityRelation(oldParam);
-		} catch (final NoRelationOfThisKindException e) {
+		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(oldParam);
+		if (ber == null) {
 			return false;
 		}
 		if ((quantifier == QuantifiedFormula.EXISTS && ber.getRelationSymbol() == RelationSymbol.DISTINCT)

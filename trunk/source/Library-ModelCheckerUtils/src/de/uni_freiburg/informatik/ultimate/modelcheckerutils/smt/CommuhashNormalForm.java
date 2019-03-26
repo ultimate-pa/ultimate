@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -108,19 +107,23 @@ public class CommuhashNormalForm {
 
 		@Override
 		protected void convert(final Term term) {
-			try {
-				final Term result = tryToTransformToPositiveNormalForm(term);
-				setResult(result);
-			} catch (final NotAffineException e) {
+			final Term result = tryToTransformToPositiveNormalForm(term);
+			if (result == null) {
 				// descent, input is no AffineRelation
 				super.convert(term);
+			} else {
+				setResult(result);
 			}
 		}
 
-		private Term tryToTransformToPositiveNormalForm(final Term simplified) throws NotAffineException {
-			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.NO_TRANFORMATION);
-			final Term pnf = affRel.positiveNormalForm(mScript);
-			return pnf;
+		private Term tryToTransformToPositiveNormalForm(final Term simplified) {
+			final AffineRelation affRel = AffineRelation.convert(mScript, simplified, TransformInequality.NO_TRANFORMATION);
+			if (affRel == null) {
+				return null;
+			} else {
+				final Term pnf = affRel.positiveNormalForm(mScript);
+				return pnf;
+			}
 		}
 
 		/**

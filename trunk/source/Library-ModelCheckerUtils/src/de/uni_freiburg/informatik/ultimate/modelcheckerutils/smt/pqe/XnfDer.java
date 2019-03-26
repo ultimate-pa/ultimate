@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -154,11 +153,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	private Term substituteAndNormalize(final Substitution substitution, final Term term) {
 		Term result = substitution.transform(term);
 		if (term != result) {
-			try {
-				final AffineRelation afr = new AffineRelation(mScript, result);
+			final AffineRelation afr = AffineRelation.convert(mScript, result);
+			if (afr != null) {
 				result = afr.positiveNormalForm(mScript);
-			} catch (final NotAffineException e) {
-				// Do nothing - we return result.
 			}
 		}
 		return result;

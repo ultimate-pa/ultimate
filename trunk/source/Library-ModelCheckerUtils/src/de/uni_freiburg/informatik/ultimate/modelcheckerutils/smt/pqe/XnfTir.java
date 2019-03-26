@@ -46,10 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -149,18 +148,16 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				termsWithoutEliminatee.add(term);
 			} else {
 				ApplicationTerm eliminateeOnLhs;
-				AffineRelation rel;
-				try {
-					TransformInequality transform;
-					if (quantifier == QuantifiedFormula.EXISTS) {
-						transform = TransformInequality.STRICT2NONSTRICT;
-					} else if (quantifier == QuantifiedFormula.FORALL) {
-						transform = TransformInequality.NONSTRICT2STRICT;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
-					rel = new AffineRelation(mScript, term, transform);
-				} catch (final NotAffineException e) {
+				TransformInequality transform;
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					transform = TransformInequality.STRICT2NONSTRICT;
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					transform = TransformInequality.NONSTRICT2STRICT;
+				} else {
+					throw new AssertionError("unknown quantifier");
+				}
+				final AffineRelation rel = AffineRelation.convert(mScript, term, transform);
+				if (rel == null) {
 					// no chance to eliminate the variable
 					return null;
 				}
@@ -179,41 +176,37 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					// select or modulo term.
 					return null;
 				}
-				try {
-					final BinaryNumericRelation bnr = new BinaryNumericRelation(eliminateeOnLhs);
-					switch (bnr.getRelationSymbol()) {
-					case DISTINCT:
-						if (quantifier == QuantifiedFormula.EXISTS) {
-							antiDer.add(bnr.getRhs());
-						} else {
-							assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
-							// no chance to eliminate the variable
-						}
-						break;
-					case EQ:
-						if (quantifier == QuantifiedFormula.FORALL) {
-							antiDer.add(bnr.getRhs());
-						} else {
-							assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
-							// no chance to eliminate the variable
-						}
-						break;
-					case GEQ:
-						lowerBounds.add(new Bound(false, bnr.getRhs()));
-						break;
-					case GREATER:
-						lowerBounds.add(new Bound(true, bnr.getRhs()));
-						break;
-					case LEQ:
-						upperBounds.add(new Bound(false, bnr.getRhs()));
-						break;
-					case LESS:
-						upperBounds.add(new Bound(true, bnr.getRhs()));
-						break;
-					default:
-						throw new AssertionError();
+				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
+				switch (bnr.getRelationSymbol()) {
+				case DISTINCT:
+					if (quantifier == QuantifiedFormula.EXISTS) {
+						antiDer.add(bnr.getRhs());
+					} else {
+						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+						// no chance to eliminate the variable
 					}
-				} catch (final NoRelationOfThisKindException e) {
+					break;
+				case EQ:
+					if (quantifier == QuantifiedFormula.FORALL) {
+						antiDer.add(bnr.getRhs());
+					} else {
+						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+						// no chance to eliminate the variable
+					}
+					break;
+				case GEQ:
+					lowerBounds.add(new Bound(false, bnr.getRhs()));
+					break;
+				case GREATER:
+					lowerBounds.add(new Bound(true, bnr.getRhs()));
+					break;
+				case LEQ:
+					upperBounds.add(new Bound(false, bnr.getRhs()));
+					break;
+				case LESS:
+					upperBounds.add(new Bound(true, bnr.getRhs()));
+					break;
+				default:
 					throw new AssertionError();
 				}
 			}
@@ -273,10 +266,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 	private Term buildInequality(final String symbol, final Term lhs, final Term rhs) {
 		final Term term = mScript.term(symbol, lhs, rhs);
-		AffineRelation rel;
-		try {
-			rel = new AffineRelation(mScript, term);
-		} catch (final NotAffineException e) {
+		final AffineRelation rel = AffineRelation.convert(mScript, term);
+		if (rel == null) {
 			throw new AssertionError("should be affine");
 		}
 		return rel.positiveNormalForm(mScript);
@@ -298,10 +289,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final String symbol = (isStrict ? "<" : "<=");
 		final Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
-		AffineRelation rel;
-		try {
-			rel = new AffineRelation(mScript, term);
-		} catch (final NotAffineException e) {
+		final AffineRelation rel = AffineRelation.convert(mScript, term);
+		if (rel == null) {
 			throw new AssertionError("should be affine");
 		}
 		return rel.positiveNormalForm(mScript);

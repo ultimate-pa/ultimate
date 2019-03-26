@@ -11,10 +11,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -56,10 +56,8 @@ public class EquivalenceFinder {
 		final Set<AffineRelation> result = new HashSet<>();
 		final Set<AffineTerm> leqTerms = new HashSet<>();
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
-			final AffineRelation relation;
-			try {
-				relation = new AffineRelation(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
-			} catch (final NotAffineException e) {
+			final AffineRelation relation = AffineRelation.convert(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
+			if (relation == null) {
 				continue;
 			}
 			final RelationSymbol symbol = relation.getRelationSymbol();

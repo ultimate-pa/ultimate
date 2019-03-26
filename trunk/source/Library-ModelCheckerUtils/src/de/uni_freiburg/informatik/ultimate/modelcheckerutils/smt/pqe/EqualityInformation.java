@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -111,9 +110,8 @@ public class EqualityInformation {
 			if (!isSubterm(givenTerm, context[i])) {
 				continue;
 			}
-			try {
-				binaryRelations[i] = new BinaryEqualityRelation(context[i]);
-			} catch (final NoRelationOfThisKindException e2) {
+			binaryRelations[i] = BinaryEqualityRelation.convert(context[i]);
+			if (binaryRelations[i] == null) {
 				continue;
 			}
 
@@ -140,10 +138,8 @@ public class EqualityInformation {
 				// not even binary equality relation that contains givenTerm
 				continue;
 			}
-			AffineRelation affRel;
-			try {
-				affRel = new AffineRelation(script, context[i]);
-			} catch (final NotAffineException e1) {
+			final AffineRelation affRel = AffineRelation.convert(script, context[i]);
+			if (affRel == null) {
 				continue;
 			}
 			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
@@ -202,10 +198,8 @@ public class EqualityInformation {
 		final Set<Term> equivalentTerms = new HashSet<>();
 		final Set<Term> disjointTerms = new HashSet<>();
 		for (int i = 0; i < context.length; i++) {
-			AffineRelation affRel;
-			try {
-				affRel = new AffineRelation(script, context[i]);
-			} catch (final NotAffineException e1) {
+			final AffineRelation affRel = AffineRelation.convert(script, context[i]);
+			if (affRel == null) {
 				continue;
 			}
 			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);

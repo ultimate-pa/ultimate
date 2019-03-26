@@ -51,6 +51,29 @@ public abstract class BinaryRelation {
 		public String toString() {
 			return mStringRepresentation;
 		}
+
+		/**
+		 * @return {@link RelationSymbol} whose string representation is relAsString and
+		 *         null if no {@link RelationSymbol} has such a string representation.
+		 */
+		public static RelationSymbol convert(final String relAsString) {
+			switch (relAsString) {
+			case "=":
+				return RelationSymbol.EQ;
+			case "distinct":
+				return RelationSymbol.DISTINCT;
+			case "<=":
+				return RelationSymbol.LEQ;
+			case ">=":
+				return RelationSymbol.GEQ;
+			case "<":
+				return RelationSymbol.LESS;
+			case ">":
+				return RelationSymbol.GREATER;
+			default:
+				return null;
+			}
+		}
 	}
 
 	/**

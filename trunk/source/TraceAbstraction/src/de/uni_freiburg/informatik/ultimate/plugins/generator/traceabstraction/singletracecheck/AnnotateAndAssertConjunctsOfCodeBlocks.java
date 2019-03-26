@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -243,10 +242,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * Sort that is numeric.
 	 */
 	private static BinaryNumericRelation convertToBinaryNumericEquality(final Term term) {
-		BinaryNumericRelation result;
-		try {
-			result = new BinaryNumericRelation(term);
-		} catch (final NoRelationOfThisKindException e) {
+		final BinaryNumericRelation result = BinaryNumericRelation.convert(term);
+		if (result == null) {
 			return null;
 		}
 		// we do not use this transformation if params have bitvector sort

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 
 /**
  * Analyze for a given term and a given (wanted) array in which kinds of
@@ -334,10 +333,11 @@ public class ArrayOccurrenceAnalysis {
 			}
 
 			private BinaryEqualityRelation constructBinaryEqualityRelation(final ApplicationTerm term) {
-				try {
-					return new BinaryEqualityRelation(term);
-				} catch (final NoRelationOfThisKindException e) {
+				final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
+				if (ber == null) {
 					throw new AssertionError("Cannot convert relation");
+				} else {
+					return ber;
 				}
 			}
 

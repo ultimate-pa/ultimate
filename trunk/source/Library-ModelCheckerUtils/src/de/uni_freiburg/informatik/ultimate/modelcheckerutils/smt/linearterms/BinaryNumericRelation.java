@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
@@ -76,6 +77,48 @@ public class BinaryNumericRelation extends BinaryRelation {
 	 */
 	public BinaryNumericRelation changeRelationSymbol(final RelationSymbol relSymb) {
 		return new BinaryNumericRelation(relSymb, getLhs(), getRhs());
+	}
+
+
+	public static BinaryNumericRelation convert(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			return null;
+		}
+		ApplicationTerm appTerm = (ApplicationTerm) term;
+		String functionSymbolName = appTerm.getFunction().getName();
+		Term[] params = appTerm.getParameters();
+		boolean isNegated;
+		if (functionSymbolName.equals("not")) {
+			assert params.length == 1;
+			final Term notTerm = params[0];
+			if (!(notTerm instanceof ApplicationTerm)) {
+				return null;
+			}
+			isNegated = true;
+			appTerm = (ApplicationTerm) notTerm;
+			functionSymbolName = appTerm.getFunction().getName();
+			params = appTerm.getParameters();
+		} else {
+			isNegated = false;
+		}
+		if (appTerm.getParameters().length != 2) {
+			return null;
+		}
+		if (!appTerm.getFunction().isIntern()) {
+			return null;
+		}
+		if (!params[0].getSort().isNumericSort() && !SmtSortUtils.isBitvecSort(params[0].getSort())) {
+			return null;
+		}
+		assert params[1].getSort().isNumericSort() || SmtSortUtils.isBitvecSort(params[1].getSort());
+		RelationSymbol relSymb = RelationSymbol.convert(functionSymbolName);
+		if (relSymb == null) {
+			return null;
+		}
+		if (isNegated) {
+			relSymb = BinaryRelation.negateRelation(relSymb);
+		}
+		return new BinaryNumericRelation(relSymb, params[0], params[1]);
 	}
 
 }

@@ -69,9 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.DnfTransformer;
@@ -255,8 +253,10 @@ public final class SmtUtils {
 	private static Term[] splitNumericEqualities(final Script script, final Term[] conjuncts) {
 		final ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
 		for (final Term conjunct : conjuncts) {
-			try {
-				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
+			final BinaryNumericRelation bnr = BinaryNumericRelation.convert(conjunct);
+			if (bnr == null) {
+				result.add(conjunct);
+			} else {
 				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
 					final Term leq = script.term("<=", bnr.getLhs(), bnr.getRhs());
 					result.add(leq);
@@ -265,8 +265,6 @@ public final class SmtUtils {
 				} else {
 					result.add(conjunct);
 				}
-			} catch (final NoRelationOfThisKindException e) {
-				result.add(conjunct);
 			}
 		}
 		return result.toArray(new Term[result.size()]);
@@ -1148,11 +1146,11 @@ public final class SmtUtils {
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
 		final Term rawTerm = script.term(functionSymbol, lhs, rhs);
-		try {
-			final AffineRelation ar = new AffineRelation(script, rawTerm);
-			return ar.positiveNormalForm(script);
-		} catch (final NotAffineException e) {
+		final AffineRelation ar = AffineRelation.convert(script, rawTerm);
+		if (ar == null) {
 			return rawTerm;
+		} else {
+			return ar.positiveNormalForm(script);
 		}
 	}
 

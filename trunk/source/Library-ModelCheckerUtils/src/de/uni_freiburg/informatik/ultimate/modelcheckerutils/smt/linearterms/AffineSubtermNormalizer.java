@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 
 /**
  * Transform all subterms that are an affine relation to positive normal form.
@@ -47,13 +46,8 @@ public class AffineSubtermNormalizer extends TermTransformer {
 	}
 
 	private static boolean isBinaryNumericRelation(final Term term) {
-		boolean result = true;
-		try {
-			new BinaryNumericRelation(term);
-		} catch (final NoRelationOfThisKindException e) {
-			result = false;
-		}
-		return result;
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		return (bnr == null);
 	}
 
 	@Override
@@ -64,10 +58,8 @@ public class AffineSubtermNormalizer extends TermTransformer {
 			return;
 		}
 		if (isBinaryNumericRelation(term)) {
-			AffineRelation affRel = null;
-			try {
-				affRel = new AffineRelation(mScript, term);
-			} catch (final NotAffineException e) {
+			final AffineRelation affRel = AffineRelation.convert(mScript, term);
+			if (affRel == null) {
 				setResult(term);
 				return;
 			}
