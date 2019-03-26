@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.Set;
 
@@ -56,7 +57,8 @@ public class CfgPreprocessor {
 		// TODO Difference ProcedureEntryNodes and InitialNodes? Where to start?
 		final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(procedureName);
 		final IcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procedureName);
-		final Set<IcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procedureName);
+		final Set<IcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().getOrDefault(procedureName,
+				Collections.emptySet());
 
 		// TODO has entry/init incoming edges which should not be processed?
 		processBackwards(exitNode);
