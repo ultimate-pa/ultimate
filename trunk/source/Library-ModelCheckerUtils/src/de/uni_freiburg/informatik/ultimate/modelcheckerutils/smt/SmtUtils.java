@@ -202,7 +202,7 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
-			Term context, final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+			final Term context, final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
@@ -483,15 +483,8 @@ public final class SmtUtils {
 	public static Term mul(final Script script, final Sort sort, final Term... factors) {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (factors.length == 0) {
-			if (SmtSortUtils.isIntSort(sort)) {
-				return SmtUtils.constructIntValue(script, BigInteger.ONE);
-			} else if (SmtSortUtils.isRealSort(sort)) {
-				return script.decimal(BigDecimal.ONE);
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				return BitvectorUtils.constructTerm(script, BigInteger.ONE, sort);
-			} else {
-				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
-			}
+			final BigInteger one = BigInteger.ONE;
+			return constructIntegerValue(script, sort, one);
 		} else if (factors.length == 1) {
 			return factors[0];
 		} else {
@@ -1872,6 +1865,21 @@ public final class SmtUtils {
 	 */
 	public static Term constructIntValue(final Script script, final BigInteger number) {
 		return Rational.valueOf(number, BigInteger.ONE).toTerm(SmtSortUtils.getIntSort(script));
+	}
+
+	/**
+	 * Constructs integer values for different sorts.
+	 */
+	public static Term constructIntegerValue(final Script script, final Sort sort, final BigInteger integer) {
+		if (SmtSortUtils.isIntSort(sort)) {
+			return SmtUtils.constructIntValue(script, integer);
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			return script.decimal(new BigDecimal(integer));
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			return BitvectorUtils.constructTerm(script, integer, sort);
+		} else {
+			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
+		}
 	}
 
 	/**
