@@ -27,11 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Queue;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGraph;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -43,44 +40,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class CfgPreprocessor {
 
 	private final IIcfg<IcfgLocation> mIcfg;
-	private GenericLabeledGraph<IcfgLocation, IIcfgTransition<IcfgLocation>> mCurrentProcedureGraph;
+	private ProcedureGraph mCurrentProcedureGraph;
 	private final Queue<IcfgLocation> mWork = new ArrayDeque<>();
 	
 	public CfgPreprocessor(final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
 	}
 
-	public ILabeledGraph<IcfgLocation, IIcfgTransition<IcfgLocation>> graphOfProcedure(String procedureName) {
-		mCurrentProcedureGraph = new GenericLabeledGraph<>();
+	public ProcedureGraph graphOfProcedure(final String procedureName) {
+		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		mWork.clear();
-
-		final IcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(procedureName);
-		final Set<IcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().getOrDefault(procedureName,
-				Collections.emptySet());
-		processBottomUp(exitNode);
-		for (final IcfgLocation errorNode : errorNodes) {
-			processBottomUp(errorNode);
-		}
-		// TODO mark exit and error nodes in procedure graph?
-
-		return mCurrentProcedureGraph;
-	}
-
-	private void processBottomUp(IcfgLocation node) {
-		// for cases in which node has no edges or self loops
-		mCurrentProcedureGraph.addNode(node);
-
-		mWork.add(node);
+		mWork.add(mCurrentProcedureGraph.getExitNode());
+		mWork.addAll(mCurrentProcedureGraph.getErrorNodes());
 		while (!mWork.isEmpty()) {
-			node = mWork.remove();
-			for (IcfgEdge edge : node.getIncomingEdges()) {
+			for (IcfgEdge edge : mWork.remove().getIncomingEdges()) {
 				processBottomUp(edge);
 			}
 		}
+		return mCurrentProcedureGraph;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void processBottomUp(final IcfgEdge edge) {
-		// TODO fix generics
 		if (edge instanceof IIcfgReturnTransition<?,?>) {
 			processReturn((IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) edge);
 		} else if (edge instanceof IIcfgCallTransition<?>) {
@@ -109,10 +90,8 @@ public class CfgPreprocessor {
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
+		assert callEdge.getSource() == mCurrentProcedureGraph.getEntryNode();
 		// nothing to do
-		// TODO assert callEdge.getSource() == entry node // mIcfg.getProcedureEntryNodes().get(procedureName);
-		// TODO mark entry node in procedure graph?
-		// TODO mark entry node even if it is disconnected from all error and return nodes? --> move out of this method
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {

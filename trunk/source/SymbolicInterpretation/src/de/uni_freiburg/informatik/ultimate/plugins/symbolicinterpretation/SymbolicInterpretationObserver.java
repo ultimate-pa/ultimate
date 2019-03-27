@@ -31,9 +31,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CfgPreprocessor;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -50,10 +53,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		mServices = services;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean process(final IElement root) throws Exception {
+		mLogger.warn("Type is " + root.getClass());
 		if (root instanceof IIcfg<?>) {
-			// TODO: check of fix generic type
 			processIcfg((IIcfg<IcfgLocation>) root);
 			return false;
 		}
@@ -65,8 +69,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	 */
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final CfgPreprocessor preprocessor = new CfgPreprocessor(icfg);
-		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).warn(
-				preprocessor.graphOfProcedure(icfg.getInitialNodes().iterator().next().getProcedure())
-		);
+		ProcedureGraph procedureGraph = preprocessor.graphOfProcedure(
+				icfg.getInitialNodes().iterator().next().getProcedure());
+		PathExpressionComputer<IcfgLocation, IIcfgTransition<IcfgLocation>> peComputer =
+				new PathExpressionComputer<>(procedureGraph);
+		IRegex<IIcfgTransition<IcfgLocation>> pe =
+				peComputer.exprBetween(procedureGraph.getEntryNode(), procedureGraph.getExitNode());
 	}
 }
