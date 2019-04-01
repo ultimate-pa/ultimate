@@ -106,8 +106,8 @@ public class PathExpressionComputer<N, L> {
 	}
 
 	public IRegex<L> exprBetween(final N source, final N target) {
-		assert mGraph.getNodes().contains(source);
-		assert mGraph.getNodes().contains(target);
+		assert mGraph.getNodes().contains(source) : "Tried to compute path expression starting at non-existing node";
+		assert mGraph.getNodes().contains(target) : "Tried to compute path expression ending at non-existing node";
 		List<IRegex<L>> allPathsFromSource = mAllPathsFromNode.get(source);
 		if (allPathsFromSource == null) {
 			eliminate();
