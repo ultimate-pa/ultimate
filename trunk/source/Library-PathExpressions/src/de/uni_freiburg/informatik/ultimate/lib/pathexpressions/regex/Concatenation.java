@@ -80,4 +80,10 @@ public class Concatenation<L> implements IRegex<L> {
 		final Concatenation<?> other = (Concatenation<?>) obj;
 		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
 	}
+
+	@Override
+	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
+		visitor.visit(this);
+		return visitor;
+	}
 }

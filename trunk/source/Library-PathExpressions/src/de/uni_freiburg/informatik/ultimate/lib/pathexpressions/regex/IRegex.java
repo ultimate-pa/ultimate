@@ -38,4 +38,5 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
  */
 public interface IRegex<L> {
 
+	IRegexVisitor<L> accept(final IRegexVisitor<L> visitor);
 }

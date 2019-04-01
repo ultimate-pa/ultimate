@@ -54,6 +54,7 @@ public class Literal<L> implements IRegex<L> {
 
 	@Override
 	public String toString() {
+//		return "";
 		return Objects.toString(mLetter);
 	}
 
@@ -73,5 +74,11 @@ public class Literal<L> implements IRegex<L> {
 		}
 		final Literal<?> other = (Literal<?>) obj;
 		return Objects.equals(mLetter, other.mLetter);
+	}
+
+	@Override
+	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
+		visitor.visit(this);
+		return visitor;
 	}
 }

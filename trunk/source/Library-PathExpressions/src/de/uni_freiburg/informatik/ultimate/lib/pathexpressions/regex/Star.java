@@ -75,4 +75,10 @@ public class Star<L> implements IRegex<L> {
 		final Star<?> other = (Star<?>) obj;
 		return Objects.equals(mInner, other.mInner);
 	}
+
+	@Override
+	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
+		visitor.visit(this);
+		return visitor;
+	}
 }

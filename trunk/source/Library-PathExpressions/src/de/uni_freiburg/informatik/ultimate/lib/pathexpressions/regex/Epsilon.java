@@ -55,4 +55,10 @@ public class Epsilon<L> implements IRegex<L> {
 	public String toString() {
 		return "ε";
 	}
+
+	@Override
+	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
+		visitor.visit(this);
+		return visitor;
+	}
 }

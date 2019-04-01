@@ -40,8 +40,8 @@ import java.util.Objects;
  */
 public class Union<L> implements IRegex<L> {
 
-	private final IRegex<L> mSecond;
 	private final IRegex<L> mFirst;
+	private final IRegex<L> mSecond;
 
 	/**
 	 * Use factory method {@link Regex#union(IRegex, IRegex)} to create objects of this class.
@@ -80,5 +80,11 @@ public class Union<L> implements IRegex<L> {
 		}
 		final Union<?> other = (Union<?>) obj;
 		return Objects.equals(mFirst, other.mFirst) && Objects.equals(mSecond, other.mSecond);
+	}
+
+	@Override
+	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
+		visitor.visit(this);
+		return visitor;
 	}
 }
