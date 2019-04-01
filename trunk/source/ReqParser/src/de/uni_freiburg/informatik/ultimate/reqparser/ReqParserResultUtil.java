@@ -50,10 +50,12 @@ public class ReqParserResultUtil {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private boolean mIsAborted;
 
 	public ReqParserResultUtil(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
+		mIsAborted = false;
 	}
 
 	@SafeVarargs
@@ -71,23 +73,27 @@ public class ReqParserResultUtil {
 	}
 
 	public void unsupportedSyntaxError(final ILocation location, final String description) {
-		errorAndAbort(location, description, new UnsupportedSyntaxResult<>(Activator.PLUGIN_ID, location, description));
-	}
-
-	private void errorAndAbort(final IResult result) {
-		mLogger.error(result.getShortDescription());
-		report(result);
-		mServices.getProgressMonitorService().cancelToolchain();
+		errorAndAbort(location + ": " + description,
+				new UnsupportedSyntaxResult<>(Activator.PLUGIN_ID, location, description));
 	}
 
 	public void unexpectedParserFailure(final String filename) {
 		errorAndAbort(new UnexpectedRequirementsParserFailureResult(filename));
 	}
 
-	private void errorAndAbort(final ILocation location, final String description, final IResult result) {
-		mLogger.error(location + ": " + description);
+	public boolean isAlreadyAborted() {
+		return mIsAborted;
+	}
+
+	private void errorAndAbort(final IResult result) {
+		errorAndAbort(result.getShortDescription(), result);
+	}
+
+	private void errorAndAbort(final String message, final IResult result) {
+		mLogger.error(message);
 		report(result);
 		mServices.getProgressMonitorService().cancelToolchain();
+		mIsAborted = true;
 	}
 
 	private void report(final IResult result) {

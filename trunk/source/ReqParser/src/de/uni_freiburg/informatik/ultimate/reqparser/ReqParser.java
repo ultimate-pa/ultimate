@@ -106,6 +106,9 @@ public class ReqParser implements ISource {
 			}
 		}
 
+		if (mReporter.isAlreadyAborted()) {
+			return null;
+		}
 		logPatternSize(rawPatterns, "in total");
 		final List<PatternType> unifiedPatterns = unify(rawPatterns);
 		logPatternSize(unifiedPatterns, "after unification");
