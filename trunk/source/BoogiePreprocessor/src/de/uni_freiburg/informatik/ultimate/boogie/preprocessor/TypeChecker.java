@@ -337,8 +337,8 @@ public class TypeChecker extends BaseObserver {
 	private static void checkExistingDeclarationInformation(final String id,
 			final DeclarationInformation existingDeclInfo, final DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo
-					+ "   Found: " + existingDeclInfo);
+			TypeCheckHelper.internalError("Incorrect DeclarationInformation of \"" + id + "\". Expected: "
+					+ correctDeclInfo + "   Found: " + existingDeclInfo);
 		}
 	}
 
