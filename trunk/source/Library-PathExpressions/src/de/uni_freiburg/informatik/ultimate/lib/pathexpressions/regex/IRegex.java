@@ -33,10 +33,13 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 /**
  * Used to represent regular expressions.
  *
- * @param <L>
- *            Type of letters that are used inside regex literals
+ * @param <L> Type of letters that are used inside regex literals
  */
 public interface IRegex<L> {
 
-	IRegexVisitor<L> accept(final IRegexVisitor<L> visitor);
+	<RET, ARG> RET accept(final IRegexVisitor<L, RET, ARG> visitor, final ARG argument);
+
+	default <RET, ARG> RET accept(final IRegexVisitor<L, RET, ARG> visitor) {
+		return accept(visitor, null);
+	}
 }

@@ -82,8 +82,7 @@ public class Concatenation<L> implements IRegex<L> {
 	}
 
 	@Override
-	public IRegexVisitor<L> accept(final IRegexVisitor<L> visitor) {
-		visitor.visit(this);
-		return visitor;
+	public <RET, ARG> RET accept(final IRegexVisitor<L, RET, ARG> visitor, final ARG argument) {
+		return visitor.visit(this, argument);
 	}
 }
