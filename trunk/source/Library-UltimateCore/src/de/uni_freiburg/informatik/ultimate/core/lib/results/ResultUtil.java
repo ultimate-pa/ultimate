@@ -179,10 +179,16 @@ public final class ResultUtil {
 		if (logger == null || results == null) {
 			throw new IllegalArgumentException("logger or results is null");
 		}
-		logger.info(" --- Results ---");
-		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
-			logger.info(String.format(" * Results from %s:", entry.getKey()));
 
+		final List<Entry<String, List<IResult>>> nonEmptyResults =
+				results.entrySet().stream().filter(a -> !a.getValue().isEmpty()).collect(Collectors.toList());
+		if (nonEmptyResults.isEmpty()) {
+			return;
+		}
+
+		logger.info(" --- Results ---");
+		for (final Entry<String, List<IResult>> entry : nonEmptyResults) {
+			logger.info(String.format(" * Results from %s:", entry.getKey()));
 			for (final IResult result : entry.getValue()) {
 				logResult(logger, result, appendCompleteLongDescription);
 			}
