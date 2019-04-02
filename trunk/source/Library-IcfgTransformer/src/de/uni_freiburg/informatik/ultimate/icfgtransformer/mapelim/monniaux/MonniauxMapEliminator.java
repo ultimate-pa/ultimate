@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter.StoreChainSquisher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -160,7 +161,6 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(mIcfg);
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
-
 			// Iterate over relevant edges
 			if (transition instanceof IIcfgInternalTransition) {
 
@@ -168,6 +168,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final UnmodifiableTransFormula tf = internalTransition.getTransformula();
 
 				final Term tfTerm = tf.getFormula();
+
+				final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
+				final Term atMostOneStore = scs.transform(tfTerm);
+				final Collection<Term> arrayEqualities = scs.getReplacementEquations();
+				final Collection<Term> newAuxVars = scs.getReplacementTermVariables();
 
 				final StoreSelectEqualityCollector ssec = new StoreSelectEqualityCollector();
 				ssec.transform(tfTerm);
@@ -243,10 +248,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				// Eliminate the Select-, Store-, and Equality-Terms
 				for (final Term selectTerm : ssec.mSelectTerms) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
-					final Pair<TermVariable, Term> substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm, hierarchy, auxVars, subst);
+					final Pair<TermVariable, Term> substTerm =
+							eliminateSelects(mMgdScript, idxTerms, aSelectTerm, hierarchy, auxVars, subst);
 					subst.put(selectTerm, substTerm.getFirst());
 					addendum.add(substTerm.getSecond());
-					
+
 				}
 				for (final Term storeTerm : ssec.mStoreTerms) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
@@ -261,8 +267,8 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				}
 
 				addendum.add(tfTerm);
-				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript,
-						subst).transform(SmtUtils.and(script, addendum));
+				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst)
+						.transform(SmtUtils.and(script, addendum));
 				final UnmodifiableTransFormula newTf =
 						buildTransitionFormula(tf, newTfTerm, newInVars, newOutVars, auxVars);
 
@@ -292,27 +298,31 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		tfb.setFormula(newTfFormula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		auxVars.stream().forEach(tfb::addAuxVar);
-		
+
 		mMgdScript.unlock(this);
-		return tfb.finishConstruction(mMgdScript);
+		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		mMgdScript.lock(this);
+		return utf;
 	}
 
-	private Pair<TermVariable, Term> eliminateSelects(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy,
-			Set<TermVariable> auxVars, Map<Term, Term> subst) {
+	private Pair<TermVariable, Term> eliminateSelects(final ManagedScript mMgdScript,
+			final Map<Term, Set<Term>> idxTerms, final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy,
+			final Set<TermVariable> auxVars, final Map<Term, Term> subst) {
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term[] params = selectTerm.getParameters();
 		final Term x;
 		final Term y;
 		if (subst.containsKey(params[0])) {
 			x = subst.get(params[0]);
+		} else {
+			x = params[0];
 		}
-		else {x = params[0];}
 		if (subst.containsKey(params[1])) {
 			y = subst.get(params[1]);
+		} else {
+			y = params[1];
 		}
-		else {y = params[1];}
-		
+
 		final Script script = mMgdScript.getScript();
 
 		final Sort sort = x.getSort().getArguments()[1];
@@ -326,7 +336,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						SmtUtils.binaryEquality(script, val, placeholder)));
 			}
 		}
-		
+
 		substTerm = SmtUtils.and(script, implications);
 
 		final Pair<TermVariable, Term> auxTerm = new Pair(placeholder, substTerm);
@@ -336,7 +346,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private Term eliminateStores(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
 			final ApplicationTerm storeTerm, final Map<Term, Set<Term>> hierarchy,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar,
-			Map<Term, Term> subst) {
+			final Map<Term, Term> subst) {
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term[] params = storeTerm.getParameters();
 		final Term x;
@@ -344,17 +354,20 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term z;
 		if (subst.containsKey(params[0])) {
 			x = subst.get(params[0]);
+		} else {
+			x = params[0];
 		}
-		else {x = params[0];}
 		if (subst.containsKey(params[1])) {
 			y = subst.get(params[1]);
+		} else {
+			y = params[1];
 		}
-		else {y = params[1];}
 		if (subst.containsKey(params[2])) {
 			z = subst.get(params[2]);
+		} else {
+			z = params[2];
 		}
-		else {z = params[2];}
-		
+
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();
@@ -377,8 +390,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private Term eliminateEqualities(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy,
-			Map<Term, Term> subst) {
+			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy, final Map<Term, Term> subst) {
 		final Term[] params = equalityTerm.getParameters();
 
 		if (!(params[0] instanceof TermVariable)) {
@@ -387,19 +399,21 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		if (!(params[1] instanceof TermVariable)) {
 			return equalityTerm;
 		}
-		
+
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term x;
 		final Term y;
 		if (subst.containsKey(params[0])) {
 			x = subst.get(params[0]);
+		} else {
+			x = params[0];
 		}
-		else {x = params[0];}
 		if (subst.containsKey(params[1])) {
 			y = subst.get(params[1]);
+		} else {
+			y = params[1];
 		}
-		else {y = params[1];}
-		
+
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();

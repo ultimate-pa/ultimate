@@ -46,22 +46,43 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm aterm = (ApplicationTerm) term;
 			final String funName = aterm.getFunction().getName();
-			if (funName.equals("store")) {
-				// It's a store term
-				mStoreTerms.add(aterm);
-			} else if (funName.equals("select")) {
-				// It's a select term
-				mSelectTerms.add(aterm);
-			} else if (funName.equals("=")) {
+
+			if (funName.equals("=")) {
 				// It's an equality term
-				if (aterm.getParameters()[0].getSort().isArraySort()) {
+				if (checkAndAddIfParamIsStoreTerm(aterm)) {
+					// sideeffect in check
+				} else if (aterm.getParameters()[0].getSort().isArraySort()) {
 					// its an equality term over arrays
 					mEqualityTerms.add(term);
 				}
 
+			} else if (funName.equals("select")) {
+				// It's a select term
+				mSelectTerms.add(aterm);
+			} else {
+				checkAndAddIfParamIsStoreTerm(aterm);
 			}
 		}
 		super.convert(term);
+	}
+
+	private boolean checkAndAddIfParamIsStoreTerm(final ApplicationTerm aterm) {
+		final Term[] params = aterm.getParameters();
+		for (int i = 0; i < params.length; ++i) {
+			final Term param = params[i];
+			if (param instanceof ApplicationTerm) {
+				final ApplicationTerm appParam = (ApplicationTerm) param;
+				if (isStore(appParam)) {
+					mStoreTerms.add(aterm);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isStore(final ApplicationTerm param) {
+		return "store".equals(param.getFunction().getName());
 	}
 
 	protected boolean isEmpty() {
