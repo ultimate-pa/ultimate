@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
-public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Object> {
+public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Void> {
 
 	protected int mNextNodeId;
 	protected final StringBuilder mNodeList = new StringBuilder();
@@ -50,7 +50,7 @@ public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Object> {
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final Union<L> union, final Object unused) {
+	public RegexToTgf<L> visit(final Union<L> union, final Void unused) {
 		final int thisId = addNode("∪");
 		addLeftEdge(thisId, mNextNodeId);
 		union.getFirst().accept(this);
@@ -60,7 +60,7 @@ public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Object> {
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final Concatenation<L> concatenation, final Object unused) {
+	public RegexToTgf<L> visit(final Concatenation<L> concatenation, final Void unused) {
 		final int thisId = addNode("·");
 		addLeftEdge(thisId, mNextNodeId);
 		concatenation.getFirst().accept(this);
@@ -70,7 +70,7 @@ public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Object> {
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final Star<L> star, final Object unused) {
+	public RegexToTgf<L> visit(final Star<L> star, final Void unused) {
 		final int thisId = addNode("*");
 		addLeftEdge(thisId, mNextNodeId);
 		star.getInner().accept(this);
@@ -78,19 +78,19 @@ public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Object> {
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final Literal<L> literal, final Object unused) {
+	public RegexToTgf<L> visit(final Literal<L> literal, final Void unused) {
 		addNode(literal.getLetter().toString());
 		return this;
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final Epsilon<L> epsilon, final Object unused) {
+	public RegexToTgf<L> visit(final Epsilon<L> epsilon, final Void unused) {
 		addNode("ε");
 		return this;
 	}
 
 	@Override
-	public RegexToTgf<L> visit(final EmptySet<L> emptySet, final Object unused) {
+	public RegexToTgf<L> visit(final EmptySet<L> emptySet, final Void unused) {
 		addNode("∅");
 		return this;
 	}

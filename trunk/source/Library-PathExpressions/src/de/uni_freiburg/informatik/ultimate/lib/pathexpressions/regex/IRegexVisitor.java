@@ -38,8 +38,8 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <L> Type of letters that are used inside regex literals
- * @param <RET> Custom return type, use Object if not needed
- * @param <ARG> Custom additional argument, use Object if not needed
+ * @param <RET> Custom return type, use Void if not needed
+ * @param <ARG> Custom additional argument, use Void if not needed
  */
 public interface IRegexVisitor<L, RET, ARG> {
 
