@@ -38,10 +38,17 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
 
 public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 
-	// TODO need collections of entry points, errors, normal exits
+	protected final Set<N> mNodes;
+	protected final Set<ILabeledEdge<N, L>> mEdges;
 
-	protected final Set<N> mNodes = new HashSet<>();
-	protected final Set<ILabeledEdge<N, L>> mEdges = new HashSet<>();
+	public GenericLabeledGraph() {
+		this(new HashSet<>(), new HashSet<>());
+	}
+
+	protected GenericLabeledGraph(Set<N> nodes, Set<ILabeledEdge<N, L>> edges) {
+		mNodes = nodes;
+		mEdges = edges;
+	}
 
 	/**
 	 * Adds a node to this graph. Already existing nodes are ignored.

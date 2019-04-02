@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
@@ -42,11 +43,16 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGra
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.RegexToCompactTgf;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.RegexToTgf;
 
 public class PathExpressionTest {
 
 	/** Abbreviation for long definition. */
 	private static class IntGraph extends GenericLabeledGraph<Integer, String>{
+		public IntGraph() {
+			super(new LinkedHashSet<>(), new LinkedHashSet<>());
+		}
 	}
 
 	@Test
@@ -159,13 +165,26 @@ public class PathExpressionTest {
 	public void unionAndConcatenate() {
 		IntGraph g = new IntGraph();
 		g.addEdge(1, "a", 2);
+		g.addEdge(1, "a", 3);
+		g.addEdge(2, "b", 4);
+		g.addEdge(3, "b", 4);
+		g.addEdge(4, "c", 5);
+		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
+		IRegex<String> expressionBetween = expr.exprBetween(1, 5);
+		IRegex<String> expected = a("a", "b", "c");
+		assertEquals(expected, expressionBetween);
+	}
+	@Test
+	public void unionAndConcatenate2() {
+		IntGraph g = new IntGraph();
+		g.addEdge(1, "a", 2);
 		g.addEdge(2, "b", 4);
 		g.addEdge(1, "a", 3);
 		g.addEdge(3, "b", 4);
 		g.addEdge(4, "c", 5);
 		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
 		IRegex<String> expressionBetween = expr.exprBetween(1, 5);
-		IRegex<String> expected = a("a", "b", "c");
+		IRegex<String> expected = u(a(a("a", "b"), "c"), a("a", a("b", "c")));
 		assertEquals(expected, expressionBetween);
 	}
 
@@ -324,4 +343,61 @@ public class PathExpressionTest {
 		return Arrays.stream(letters).map(Regex::literal).reduce(operator).orElseGet(neutralElem);
 	}
 
+	// ----- "Tests" for experimenting with iteration order ---------------------------------------
+
+	//@Test
+	public void rersSmallBest() {
+		IntGraph g = new IntGraph();
+		for (int i = 4; i >= 0; --i) {
+			g.addNode(i);
+		}
+		g.addEdge(0, "a", 1);
+		g.addEdge(1, "b", 2);
+		g.addEdge(2, "c", 3);
+		g.addEdge(3, "d", 0);
+		g.addEdge(0, "e", 4);
+		g.addEdge(1, "f", 3);
+		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
+		IRegex<String> expressionBetween = expr.exprBetween(0, 4);
+		// not a real assert, just there to get output
+		assertEquals(RegexToCompactTgf.apply(expressionBetween), expressionBetween);
+	}
+
+	//@Test
+	public void rersSmallOk() {
+		IntGraph g = new IntGraph();
+		for (int i = 0; i <= 4; ++i) {
+			g.addNode(i);
+		}
+		g.addEdge(0, "a", 1);
+		g.addEdge(1, "b", 2);
+		g.addEdge(2, "c", 3);
+		g.addEdge(3, "d", 0);
+		g.addEdge(0, "e", 4);
+		g.addEdge(1, "f", 3);
+		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
+		IRegex<String> expressionBetween = expr.exprBetween(0, 4);
+		// not a real assert, just there to get output
+		assertEquals(RegexToCompactTgf.apply(expressionBetween), expressionBetween);
+	}
+
+	//@Test
+	public void rersSmallWorst() {
+		IntGraph g = new IntGraph();
+		g.addNode(0);
+		g.addNode(3);
+		g.addNode(4);
+		g.addNode(1);
+		g.addNode(2);
+		g.addEdge(3, "d", 0);
+		g.addEdge(1, "b", 2);
+		g.addEdge(1, "f", 3);
+		g.addEdge(0, "a", 1);
+		g.addEdge(2, "c", 3);
+		g.addEdge(0, "e", 4);
+		PathExpressionComputer<Integer, String> expr = new PathExpressionComputer<>(g);
+		IRegex<String> expressionBetween = expr.exprBetween(0, 4);
+		// not a real assert, just there to get output
+		assertEquals(RegexToCompactTgf.apply(expressionBetween), expressionBetween);
+	}
 }
