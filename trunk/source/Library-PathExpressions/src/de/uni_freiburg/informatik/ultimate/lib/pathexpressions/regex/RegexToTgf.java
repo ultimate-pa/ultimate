@@ -38,11 +38,11 @@ public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Void> {
 	}
 
 	protected void addLeftEdge(final int sourceId, final int targetId) {
-		addEdge(sourceId, targetId, "1");
+		addEdge(sourceId, targetId, "0");
 	}
 
 	protected void addRightEdge(final int sourceId, final int targetId) {
-		addEdge(sourceId, targetId, "2");
+		addEdge(sourceId, targetId, "1");
 	}
 
 	protected void addEdge(final int sourceId, final int targetId, final String label) {
