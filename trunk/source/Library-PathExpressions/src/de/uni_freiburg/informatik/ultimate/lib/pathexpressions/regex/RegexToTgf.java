@@ -26,6 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 
+/**
+ * Converts a regex to a string in Trivial Graph Format (TGF) representing  the syntax tree of the regex.
+ * <p>
+ * <ul>
+ * <li>Regex operations (star, union, ...) are nodes
+ * <li>their operands (subexpressions) are their children
+ * <li>Literals are leafs
+ * <ul>
+ * <p>
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class RegexToTgf<L> implements IRegexVisitor<L, RegexToTgf<L>, Void> {
 
 	protected int mNextNodeId;
