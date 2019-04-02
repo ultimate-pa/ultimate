@@ -30,6 +30,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.RegexToComp
 
 public class RegexToCompactTgf<L> implements IRegexVisitor<L, RegexToCompactTgf<L>, Arg> {
 
+	public static <L> String apply(final IRegex<L> regex) {
+		return regex.accept(new RegexToCompactTgf<>()).toString();
+	}
+	
 	protected static class Arg {
 		public Arg(final int parentId, final IRegex<?> parent) {
 			mParentId = parentId;
