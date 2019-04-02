@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 	/**
-	 * Does all conjunctive operations on EqConstraints in place, i.e., on the same object if possible.
-	 * The constraint remains unfrozen (and must be frozen in order to make all possible propagations at some point..).
+	 * Does all conjunctive operations on EqConstraints in place, i.e., on the same object if possible. The constraint
+	 * remains unfrozen (and must be frozen in order to make all possible propagations at some point..).
 	 */
 	public static final boolean INPLACE_CONJUNCTIONS = true;
 
@@ -85,12 +85,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 	 */
 	private final Deque<EqDisjunctiveConstraint<EqNode>> mResultStack = new ArrayDeque<>();
 
-	public FormulaToEqDisjunctiveConstraintConverter(
-			final IUltimateServiceProvider services,
-			final ManagedScript mgdScript,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final Term formula) {
+	public FormulaToEqDisjunctiveConstraintConverter(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final EqConstraintFactory<EqNode> eqConstraintFactory,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final Term formula) {
 		mFormula = formula;
 		mEqConstraintFactory = eqConstraintFactory;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
@@ -107,10 +104,10 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 	}
 
 	private void computeResult() {
-		final Term formulaInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH)
-				.transform(mFormula);
+		final Term formulaInNnf =
+				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(mFormula);
 
-		final StoreChainSquisher scs = new StoreChainSquisher();
+		final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
 		final List<Term> conjunction = new ArrayList<>();
 		conjunction.add(scs.transform(formulaInNnf));
 		conjunction.addAll(scs.getReplacementEquations());
@@ -123,7 +120,6 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 		processedTf.closeDisjunctsIfNecessary();
 		processedTf.freezeDisjunctsIfNecessary();
-
 
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
 	}
@@ -202,8 +198,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
-				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEquality(tvNode,
-						falseNode, mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
+				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEquality(tvNode, falseNode,
+						mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
 		}
@@ -245,20 +241,19 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 						newConstraint = mEqConstraintFactory.addEquality(simpleArray, otherSimpleArray,
 								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 					} else {
-						final EqNode storeIndex = mEqNodeAndFunctionFactory
-								.getOrConstructNode(storeTerm.getParameters()[1]);
-						final EqNode storeValue = mEqNodeAndFunctionFactory
-								.getOrConstructNode(storeTerm.getParameters()[2]);
+						final EqNode storeIndex =
+								mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[1]);
+						final EqNode storeValue =
+								mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[2]);
 
 						// we have a weak equivalence ..
-						final EqConstraint<EqNode> intermediateConstraint = mEqConstraintFactory
-								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex,
-										mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS),
-										INPLACE_CONJUNCTIONS);
+						final EqConstraint<EqNode> intermediateConstraint = mEqConstraintFactory.addWeakEquivalence(
+								simpleArray, otherSimpleArray, storeIndex,
+								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 						// .. and an equality on the stored position
 						mMgdScript.lock(this);
-						final Term selectTerm = mMgdScript.term(this, "select", simpleArray.getTerm(),
-								storeTerm.getParameters()[1]);
+						final Term selectTerm =
+								mMgdScript.term(this, "select", simpleArray.getTerm(), storeTerm.getParameters()[1]);
 						mMgdScript.unlock(this);
 						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
 						newConstraint = mEqConstraintFactory.addEquality(selectEqNode, storeValue,
@@ -271,12 +266,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 					} else {
 						/*
 						 * the best approximation for the negation of a weak equivalence that we can express is a
-						 * disequality on the arrays.
-						 * i.e.
-						 *  not ( a -- i -- b ) ~~> a != b
-						 * However, here we need to negate
-						 *  a -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints
-						 *  --> TODO postponing this, overapproximating to "true"..
+						 * disequality on the arrays. i.e. not ( a -- i -- b ) ~~> a != b However, here we need to
+						 * negate a -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints --> TODO
+						 * postponing this, overapproximating to "true"..
 						 */
 						newConstraint = mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS);
 					}
@@ -284,41 +276,38 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
-			} else {
-				// we have an "normal", element equality
-
-				if (!isElementTracked(arg1) || !isElementTracked(arg2)) {
-					// we don't track both sides of the equation --> return an empty constraint
-					mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
-					return;
-				}
-
-				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
-				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
-
-				final EqConstraint<EqNode> newConstraint;
-				if (polarity) {
-					newConstraint = mEqConstraintFactory.addEquality(node1, node2,
-							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
-				} else {
-					newConstraint = mEqConstraintFactory.addDisequality(node1, node2,
-							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
-				}
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
+			}
+			if (!isElementTracked(arg1) || !isElementTracked(arg2)) {
+				// we don't track both sides of the equation --> return an empty constraint
+				mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 				return;
 			}
+
+			final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
+			final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
+
+			final EqConstraint<EqNode> newConstraint;
+			if (polarity) {
+				newConstraint = mEqConstraintFactory.addEquality(node1, node2,
+						mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
+			} else {
+				newConstraint = mEqConstraintFactory.addDisequality(node1, node2,
+						mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
+			}
+			mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
+			return;
 		}
 
 		private boolean isElementTracked(final Term term) {
 			// TODO: implement something smart here, or get rid of this method
 			return true;
-//			return mPreAnalysis.isElementTracked(term, mTf);
+			// return mPreAnalysis.isElementTracked(term, mTf);
 		}
 
 		private boolean isFunctionTracked(final Term term) {
 			// TODO: implement something smart here, or get rid of this method
 			return true;
-//			return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
+			// return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
 		}
 
 		@Override
@@ -383,39 +372,43 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 	}
 
 	/**
-	 * Transforms a given Term into an equivalent term where every atom contains at
-	 * most one application of the store function. (Multidimensional store terms
-	 * count as one application.)
+	 * Transforms a given Term into an equivalent term where every atom contains at most one application of the store
+	 * function. (Multidimensional store terms count as one application.)
 	 *
-	 * Right now the result is not equivalent. However it is equivalent to the
-	 * original when conjoined with the equalities from getReplacementEquations, and
-	 * the replacement variables are existentially quantified.
+	 * Right now the result is not equivalent. However it is equivalent to the original when conjoined with the
+	 * equalities from getReplacementEquations, and the replacement variables are existentially quantified.
 	 *
 	 * removes the following from the formula
 	 * <ul>
-	 * <li>store chains, i.e., every (store s i x) where s is another store term is
+	 * <li>store chains, i.e., every (store s i x) where s is another store term is eliminated
+	 * <li>multidimensional stores, explicit or not, i.e., every (store s i x) where x is another store term is
 	 * eliminated
-	 * <li>multidimensional stores, explicit or not, i.e., every (store s i x) where
-	 * x is another store term is eliminated
-	 * <li>stores on both sides of an equality, for example the term (= (store a i
-	 * x) (store b j y)) would be transformed such that it contains at most one
-	 * store
-	 * <li>stores inside selects, for example (select (store a i x) j) would be
-	 * transformed
+	 * <li>stores on both sides of an equality, for example the term (= (store a i x) (store b j y)) would be
+	 * transformed such that it contains at most one store
+	 * <li>stores inside selects, for example (select (store a i x) j) would be transformed
 	 * </ul>
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
-	class StoreChainSquisher extends TermTransformer {
+	public static final class StoreChainSquisher extends TermTransformer {
 
 		private static final String SQUISHERREPARRAYNAME = "rep";
 
-		Script mScript = mMgdScript.getScript();
+		private final List<Term> mReplacementEquations;
 
-		private final List<Term> mReplacementEquations = new ArrayList<>();
+		private final Map<Term, TermVariable> mReplacedTermToReplacementTv;
 
-		private final Map<Term, TermVariable> mReplacedTermToReplacementTv = new BidirectionalMap<>();
+		private final Script mScript;
+
+		private final ManagedScript mMgdScript;
+
+		public StoreChainSquisher(final ManagedScript mgdScript) {
+			mScript = mgdScript.getScript();
+			mMgdScript = mgdScript;
+			mReplacementEquations = new ArrayList<>();
+			mReplacedTermToReplacementTv = new BidirectionalMap<>();
+		}
 
 		public Collection<Term> getReplacementEquations() {
 			final Collection<Term> result = new ArrayList<>();
@@ -454,9 +447,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		 *
 		 * If the same term has been replaced before, the same variable is returned.
 		 *
-		 * The map that is used to manage the replacement variables will also be used to
-		 * return the of equations between the replacement variables and their
-		 * corresponding terms.
+		 * The map that is used to manage the replacement variables will also be used to return the of equations between
+		 * the replacement variables and their corresponding terms.
 		 *
 		 * @param term
 		 * @return
@@ -464,7 +456,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		private TermVariable getReplacementTv(final Term term) {
 			TermVariable res = mReplacedTermToReplacementTv.get(term);
 			if (res == null) {
-				/* note: it is important for untracked array business (see EqNode) that the name of the term is part of
+				/*
+				 * note: it is important for untracked array business (see EqNode) that the name of the term is part of
 				 * the name of the replacement term
 				 */
 				final String name =
