@@ -174,7 +174,7 @@ public class PolynomialTerm extends Term {
 	/**
 	 * Calculate the map of a sum of given PolynomialTerms.
 	 */
-	private Map<Term, Rational> CalculateSumMap(final PolynomialTerm... polynomialTerms){
+	private Map<Term, Rational> calculateSumMap(final PolynomialTerm... polynomialTerms){
 		Map<Term, Rational> map = new HashMap<>();
 		for (final PolynomialTerm polynomialTerm : polynomialTerms) {
 			for (final Map.Entry<Term, Rational> summand : polynomialTerm.mMonomial2Coefficient.entrySet()) {
@@ -204,7 +204,7 @@ public class PolynomialTerm extends Term {
 	/**
 	 * Calculate the constant of a sum of given PolynomialTerms.
 	 */
-	private Rational CalculateSumConstant(final PolynomialTerm...polynomialTerms) {
+	private Rational calculateSumConstant(final PolynomialTerm...polynomialTerms) {
 		Rational constant = Rational.ZERO;
 		for (PolynomialTerm polynomialTerm : polynomialTerms) {
 			if (SmtSortUtils.isBitvecSort(mSort)) {
@@ -217,7 +217,27 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Polynomial perm that represents the product of exactly two PolynomialTerms.
+	 * Constructor for Addition of polynomial terms.
+	 */
+	private PolynomialTerm(PolynomialTerm... polynomialTerms) {
+		super(0);
+		mSort = polynomialTerms[0].getSort();
+		mMonomial2Coefficient = calculateSumMap(polynomialTerms);
+		mConstant = calculateSumConstant(polynomialTerms);
+	}
+	
+	//TODO: Getter verwenden statt direkt auf Feld zuzugreifen.
+	
+	/**
+	 * Turns a given array of polynomial terms into a new single polynomial term which represents
+	 * the addition of the given polynomial terms and returns it.
+	 */
+	public static PolynomialTerm constructAddition(PolynomialTerm... polynomialTerms) {
+	    return new PolynomialTerm(polynomialTerms);
+	}
+	
+	/**
+	 * Polynomial term that represents the product of exactly two PolynomialTerms.
 	 */
 	private PolynomialTerm(final PolynomialTerm poly1, final PolynomialTerm poly2) {
 		super(0);
@@ -276,11 +296,10 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Calculate the product of given PolynomialTerms (but without setting the members).
-	 * It has arisen out of the necessity of constructors being different and the "final" on member variables
-	 * (I did not want to abolish the "final").
+	 * Turns a given array of polynomial terms into a new single polynomial term which represents
+	 * the product of the given polynomial terms and returns it.
 	 */
-	private PolynomialTerm CalculateProduct(PolynomialTerm... polynomialTerms) {
+	public static PolynomialTerm constructProduct(PolynomialTerm... polynomialTerms) {
 		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], polynomialTerms[1]);
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = new PolynomialTerm(poly, polynomialTerms[i]);
@@ -313,11 +332,11 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
-	 * Calculate the division of given PolynomialTerms i.e. t1/t2/.../tn (but without setting the members).
-	 * It has arisen out of the necessity of constructors being different and the "final" on member variables
-	 * (I did not want to abolish the "final").
+	 * Turns a given array of polynomial terms into a new single polynomial term which represents
+	 * the division of the given polynomial terms and returns it. At the moment this only supports
+	 * division by single variables or constants (not by sums of these two).
 	 */
-	private PolynomialTerm CalculateDivision(PolynomialTerm...polynomialTerms) {
+	public static PolynomialTerm constructDivision(PolynomialTerm...polynomialTerms) {
 		if (polynomialTerms[1].getMonomial2Coefficient().size() > 1) {
 			//throw new IllegalArgumentException("For now division by a sum is not supported");
 			return new PolynomialTerm();
@@ -331,31 +350,6 @@ public class PolynomialTerm extends Term {
 			poly = new PolynomialTerm(poly, new PolynomialTerm(polynomialTerms[i]));
 		}
 		return poly;
-	}
-	
-	/**
-	 * PolynomialTerm that represents either the sum or the product of polynomialTerms. What function
-	 * is to be applied is specified by the "fun" argument. Do not pass arrays with empty entries!
-	 */
-	public PolynomialTerm(String functionSymbol, PolynomialTerm... polynomialTerms) {
-		super(0);
-		mSort = polynomialTerms[0].getSort();
-		if (functionSymbol.equals("+")) {
-			mMonomial2Coefficient = CalculateSumMap(polynomialTerms);
-			mConstant = CalculateSumConstant(polynomialTerms);
-		}else if (functionSymbol.equals("*")) {
-			//This may look weird but I think its the best option right now.
-			PolynomialTerm clone = CalculateProduct(polynomialTerms);
-			mMonomial2Coefficient = clone.mMonomial2Coefficient;
-			mConstant = clone.mConstant;
-		}else if (functionSymbol.equals("/")) {
-			//This may look weird but I think its the best option right now.
-			PolynomialTerm clone = CalculateDivision(polynomialTerms);
-			mMonomial2Coefficient = clone.mMonomial2Coefficient;
-			mConstant = clone.mConstant;
-		}else {
-			throw new IllegalArgumentException("FunctionSymbol must either be +, * or /");
-		}
 	}
 	
 	/**
@@ -451,7 +445,6 @@ public class PolynomialTerm extends Term {
 				summands[i] = entry.getKey();
 			} else {
 				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
-				//TODO: Ask Matthias why he never calls toTerm of the "TermVariables" in AffineTerm itself.
 				summands[i] = SmtUtils.mul(script, mSort, coeff, ((Monomial) entry.getKey()).toTerm(script));
 			}
 			++i;

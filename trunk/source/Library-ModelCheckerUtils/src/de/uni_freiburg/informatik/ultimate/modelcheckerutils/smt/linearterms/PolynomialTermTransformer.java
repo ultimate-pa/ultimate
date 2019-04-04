@@ -67,6 +67,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			final AffineTerm result = new AffineTerm(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
+			//TODO: Change AffineTerm to PolynomialTerm
 		}
 		// Otherwise, if the term represents an "polynomial function" we tell
 		// TermTransformer to descend to subformulas.
@@ -148,13 +149,15 @@ public class PolynomialTermTransformer extends TermTransformer {
 		return result;
 	}
 	
+	//TODO: Change PolynomialTermTransformer to use the more efficient class AffineTerm if possible.
+	//TODO: AffineTerm shall inherit from PolynomialTermTransformer.
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		// This method is called for every subformula for which we let the
 		// TermTransformer descend to subformulas.
 		// Here, the arguments are the result of the "recursive" calls for the
 		// subformulas.
-		assert (isPolynomialFunctionSymbol(appTerm.getFunction().getName())) : "We only descended for affine functions";
+		assert (isPolynomialFunctionSymbol(appTerm.getFunction().getName())) : "We only descended for polynomial functions";
 		// First, we check if some of this arguments is the auxiliary error term.
 		// If this is the case, we report that input is not polynomial.
 		final PolynomialTerm[] polynomialArgs = castAndCheckForNonPolynomialArguments(newArgs);
@@ -196,18 +199,17 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 	}
 	
-	//TODO: Talk to Matthias whether I've made a mistake or the stated equivalence below really holds.
 	/**
 	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
 	 * {@link PolynomialTerm} that represents the quotient <code>t1/t2/.../tn</code>,
 	 * i.e., the {@link PolynomialTerm} that is equivalent to
-	 * <code>t1*((1/t2)+...+(1/tn))</code>. Note that the function "/" is only
+	 * <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/" is only
 	 * defined the sort of reals. For integer division we have the function "div"
 	 * which is currently not supported by our polynomial terms.
 	 */
 	private static PolynomialTerm divide(final Sort sort, final PolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(sort);
-		return new PolynomialTerm("/", polynomialArgs);
+		return PolynomialTerm.constructDivision(polynomialArgs);
 	}
 	
 	/**
@@ -238,17 +240,20 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Multiply an array of PolynomialTerms.
 	 */
-	private static PolynomialTerm multiply(final PolynomialTerm[] polynomialTerms) {
+	private static PolynomialTerm multiply(final PolynomialTerm[] polynomialArgs) {
 		//TODO: Find out whether passing the sort explicitly in case every polynomialTerm is just a Constant
-		//is really necessary (like in the AffineTermTransformer)
-		return new PolynomialTerm("*", polynomialTerms);
+		//is really necessary (like in the AffineTermTransformer): YES it is in case that the array is empty
+		//TODO: catch empty arrays
+		return PolynomialTerm.constructProduct(polynomialArgs);
 	}
+	
+	//TODO: PolynomialRelation
 	
 	/**
 	 * Construct an {@link PolynomialTerm} that is the sum of all inputs.
 	 */
 	private static PolynomialTerm add(final PolynomialTerm[] polynomialArgs) {
-		return new PolynomialTerm("+", polynomialArgs);
+		return PolynomialTerm.constructAddition(polynomialArgs);
 	}
 	
 	/**

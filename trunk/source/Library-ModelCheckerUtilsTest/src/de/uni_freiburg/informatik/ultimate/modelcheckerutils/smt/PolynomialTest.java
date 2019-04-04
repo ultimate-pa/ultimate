@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
+ * @author Leonard Fichtner 
  */
 public class PolynomialTest {
 
@@ -82,20 +82,25 @@ public class PolynomialTest {
 	}
 
 	@Test
-	public void affineTermTest01() {
+	public void polynomialTermTest01() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String formulaAsString = "(+ (* 2 x) y)";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final AffineTerm result = (AffineTerm) new AffineTermTransformer(mScript).transform(formulaAsTerm);
+		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
 
+	@Test
+	public void polynomialTermTest02() {
+		
+	}
+	
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);
