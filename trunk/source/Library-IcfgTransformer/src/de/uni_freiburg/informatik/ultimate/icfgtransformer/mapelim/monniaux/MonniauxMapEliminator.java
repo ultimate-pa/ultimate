@@ -314,6 +314,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Term[] params = selectTerm.getParameters();
 		final Term x;
 		final Term y;
+		//TODO: Is this check relevant?
 		if (subst.containsKey(params[0])) {
 			x = subst.get(params[0]);
 		} else {
