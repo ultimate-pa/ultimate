@@ -85,7 +85,9 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		mMgdScript = Objects.requireNonNull(mIcfg.getCfgSmtToolkit().getManagedScript());
 		mLogger = logger;
 		mBacktranslationTracker = backtranslationTracker;
-		mCells = cells;
+		//mCells = cells;
+		//TODO: Change value of mCells back, when testing is finished
+		mCells = 1;
 		mResultIcfg = eliminateMaps();
 	}
 
@@ -348,38 +350,33 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar,
 			final Map<Term, Term> subst) {
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
-		final Term[] params = storeTerm.getParameters();
-		final Term x;
-		final Term y;
-		final Term z;
-		if (subst.containsKey(params[0])) {
-			x = subst.get(params[0]);
-		} else {
-			x = params[0];
-		}
-		if (subst.containsKey(params[1])) {
-			y = subst.get(params[1]);
-		} else {
-			y = params[1];
-		}
-		if (subst.containsKey(params[2])) {
-			z = subst.get(params[2]);
-		} else {
-			z = params[2];
+		
+		final Term[] paramsTerm = storeTerm.getParameters();
+		Term x = paramsTerm[0];
+		Term y = paramsTerm[0];
+		Term z = paramsTerm[0];
+		for (int i = 0; i < paramsTerm.length; ++i) {
+			final Term param = paramsTerm[i];
+			if (param instanceof ApplicationTerm) {
+				final Term[] paramsStore = ((ApplicationTerm) param).getParameters();
+				x = paramsStore[0];
+				y = paramsStore[1];
+				z = paramsStore[2];
+			}
 		}
 
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();
-		for (final Term val : hierarchy.get(params[0])) {
+		for (final Term val : hierarchy.get(x)) {
 			final Term valLow;
 			if (newInVars.containsValue(val)) {
 				valLow = val;
 			} else {
-				valLow = newInVars.get(oldTermToProgramVar.get(params[0]));
+				valLow = newInVars.get(oldTermToProgramVar.get(x));
 			}
 
-			for (final Term idx : idxTerms.get(params[0])) {
+			for (final Term idx : idxTerms.get(x)) {
 				rtr.add(SmtUtils.implies(script, SmtUtils.binaryEquality(script, y, idx),
 						SmtUtils.binaryEquality(script, val, z)));
 				rtr.add(SmtUtils.implies(script, SmtUtils.distinct(script, idx, y),
