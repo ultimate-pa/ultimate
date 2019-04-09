@@ -43,36 +43,15 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
  */
 public interface IRegexVisitor<L, RET, ARG> {
 
-	default RET visit(final Union<L> union, final ARG argument) {
-		union.getFirst().accept(this, argument);
-		union.getSecond().accept(this, argument);
-		return null;
-	}
+	RET visit(final Union<L> union, final ARG argument);
 
-	default RET visit(final Concatenation<L> concatenation, final ARG argument) {
-		concatenation.getFirst().accept(this, argument);
-		concatenation.getSecond().accept(this, argument);
-		return null;
-	}
+	RET visit(final Concatenation<L> concatenation, final ARG argument);
 
-	default RET visit(final Star<L> star, final ARG argument) {
-		star.getInner().accept(this, argument);
-		return null;
-	}
+	RET visit(final Star<L> star, final ARG argument);
 
-	default RET visit(final Literal<L> literal, final ARG argument) {
-		// base case, terminate
-		return null;
-	}
+	RET visit(final Literal<L> literal, final ARG argument);
 
-	default RET visit(final Epsilon<L> epsilon, final ARG argument) {
-		// base case, terminate
-		return null;
-	}
+	RET visit(final Epsilon<L> epsilon, final ARG argument);
 
-	default RET visit(final EmptySet<L> emptySet, final ARG argument) {
-		// base case, terminate
-		return null;
-	}
-
+	RET visit(final EmptySet<L> emptySet, final ARG argument);
 }
