@@ -29,14 +29,16 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgprepro
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
+/**
+ * @see #graphOfProcedure(String)
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class CfgPreprocessor {
 
 	private final IIcfg<IcfgLocation> mIcfg;
@@ -47,6 +49,20 @@ public class CfgPreprocessor {
 		mIcfg = icfg;
 	}
 
+	/**
+	 * Constructs a procedure graph for a given procedure.
+	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
+	 * Each call inside the procedure are represented by two edges:
+	 * <ul>
+	 * <li> One summary edge of type {@link CallReturnSummary} for the case in which we
+	 *      enter the function and return normally.<br>
+	 *      Note that summary edges do not actually summarize the call.
+	 *      They are just there to point out, that we skipped the procedure 
+	 * <li> One error edge of type {@link IIcfgCallTransition} for the case in which we 
+	 *      enter the function but do not return due to errors in the callee or functions called by the callee.
+	 * </ul>
+	 * Cases in which called functions do not terminate are ignored.
+	 */
 	public ProcedureGraph graphOfProcedure(final String procedureName) {
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		mWork.clear();
@@ -78,8 +94,6 @@ public class CfgPreprocessor {
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);
 		// Summary edge representing call/return to/from a procedure.
-		// Summary edges do not summarize the procedure.
-		// They are just there to point out, that we skipped the procedure.
 		mCurrentProcedureGraph.addEdge(correspondingCallEdge.getSource(),
 				new CallReturnSummary(correspondingCallEdge, returnEdge),
 				correspondingCallEdge.getTarget());
