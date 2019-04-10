@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
 
 /**
  * A DAG with exactly one source and exactly one sink representing a set of regexes.
@@ -86,8 +87,7 @@ public class RegexDag<L> {
 	public void setSink(final RegexDagNode<L> sink) {
 		mSink = sink;
 	}
-	
-	// Return graph in TGF format for debugging
+
 	public String toString() {
 		return new GraphToTgf<>(mSource, RegexDagNode::getContent).getTgf();
 	}

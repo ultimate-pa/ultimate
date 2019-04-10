@@ -10,3 +10,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag
+Import-Package: de.uni_freiburg.informatik.ultimate.util.datastructures
