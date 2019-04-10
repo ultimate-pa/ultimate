@@ -45,9 +45,8 @@
 									<fileset dir="${examplesDir}/lassos/" includes="*.bpl" />
 								</copy>
 
-								<copy todir="${websiteExamplesDir}/terminationBoogie"
-									verbose="true">
-									<fileset dir="${examplesDir}/programs/termination/showcase"
+								<copy todir="${websiteExamplesDir}/rankBoogie" verbose="true">
+									<fileset dir="${examplesDir}/lassos/website"
 										includes="*.bpl" />
 								</copy>
 
