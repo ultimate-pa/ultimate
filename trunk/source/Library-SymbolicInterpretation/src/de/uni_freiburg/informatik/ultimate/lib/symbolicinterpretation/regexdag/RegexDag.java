@@ -86,4 +86,12 @@ public class RegexDag<L> {
 	public void setSink(final RegexDagNode<L> sink) {
 		mSink = sink;
 	}
+	
+	// Return graph in TGF format for debugging
+	public String toString() {
+		return new GraphToTgf<>(mSource, RegexDagNode::getContent).getTgf();
+	}
 }
+
+
+

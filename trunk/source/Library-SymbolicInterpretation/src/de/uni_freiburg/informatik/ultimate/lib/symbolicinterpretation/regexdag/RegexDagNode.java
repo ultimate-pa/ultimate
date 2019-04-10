@@ -61,4 +61,5 @@ public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 	public IRegex<L> getContent() {
 		return mContent;
 	}
+
 }
