@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ *         TODO: Merge {@link SetOperations} in this class.
  */
 public class DataStructureUtils {
 
