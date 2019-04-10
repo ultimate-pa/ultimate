@@ -157,7 +157,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	public boolean addAllOutgoing(Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E outgoing : c) {
-			rtr = rtr || addOutgoing(outgoing);
+			rtr |= addOutgoing(outgoing);
 		}
 		return rtr;
 	}
@@ -186,7 +186,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	public boolean removeAllOutgoing(Collection<?> c) {
 		boolean rtr = false;
 		for (final Object o : c) {
-			rtr = rtr || removeOutgoing(o);
+			rtr |= removeOutgoing(o);
 		}
 		return rtr;
 	}
@@ -213,7 +213,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	public boolean addAllIncoming(Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E e : c) {
-			rtr = rtr || addIncoming(e);
+			rtr |= addIncoming(e);
 		}
 		return rtr;
 	}
@@ -242,7 +242,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	public boolean removeAllIncoming(Collection<?> c) {
 		boolean rtr = false;
 		for (final Object o : c) {
-			rtr = rtr || removeIncoming(o);
+			rtr |= removeIncoming(o);
 		}
 		return rtr;
 	}

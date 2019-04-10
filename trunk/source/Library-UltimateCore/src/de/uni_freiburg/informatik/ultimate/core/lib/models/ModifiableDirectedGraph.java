@@ -149,7 +149,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	public boolean addAllOutgoing(Collection<? extends T> c) {
 		boolean rtr = false;
 		for (final T outgoing : c) {
-			rtr = rtr || addOutgoing(outgoing);
+			rtr |= addOutgoing(outgoing);
 		}
 		return rtr;
 	}
@@ -178,7 +178,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	public boolean removeAllOutgoing(Collection<?> c) {
 		boolean rtr = false;
 		for (final Object o : c) {
-			rtr = rtr || removeOutgoing(o);
+			rtr |= removeOutgoing(o);
 		}
 		return rtr;
 	}
@@ -204,7 +204,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	public boolean addAllIncoming(Collection<? extends T> c) {
 		boolean rtr = false;
 		for (final T e : c) {
-			rtr = rtr || addIncoming(e);
+			rtr |= addIncoming(e);
 		}
 		return rtr;
 	}
@@ -233,7 +233,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	public boolean removeAllIncoming(Collection<?> c) {
 		boolean rtr = false;
 		for (final Object o : c) {
-			rtr = rtr || removeIncoming(o);
+			rtr |= removeIncoming(o);
 		}
 		return rtr;
 	}
