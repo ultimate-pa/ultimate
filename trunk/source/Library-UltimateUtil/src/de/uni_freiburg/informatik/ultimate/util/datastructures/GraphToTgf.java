@@ -94,8 +94,8 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 
 	private void addEdges(final N source) {
 		final int sourceId = idOf(source);
-		source.getIncomingNodes().forEach(target -> addEdge(sourceId, idOf(target), " backward"));
-		source.getOutgoingNodes().forEach(target -> addEdge(sourceId, idOf(target), " forward"));
+		source.getIncomingNodes().forEach(target -> addEdge(sourceId, idOf(target), "backward"));
+		source.getOutgoingNodes().forEach(target -> addEdge(sourceId, idOf(target), "forward"));
 	}
 
 	private void addEdge(final int source, final int target, final String label) {
