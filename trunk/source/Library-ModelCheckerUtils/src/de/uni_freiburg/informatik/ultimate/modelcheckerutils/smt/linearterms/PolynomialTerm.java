@@ -226,8 +226,6 @@ public class PolynomialTerm extends Term {
 		mConstant = calculateSumConstant(polynomialTerms);
 	}
 	
-	//TODO: Getter verwenden statt direkt auf Feld zuzugreifen.
-	
 	/**
 	 * Turns a given array of polynomial terms into a new single polynomial term which represents
 	 * the addition of the given polynomial terms and returns it.
@@ -245,8 +243,8 @@ public class PolynomialTerm extends Term {
 		mMonomial2Coefficient = new HashMap<>();
 		assert poly1.getSort() == poly2.getSort();
 		//Multiply Monomials of the two polynomialTerms
-		for (final Map.Entry<Term, Rational> summand1 : poly1.mMonomial2Coefficient.entrySet()) {
-			for (final Map.Entry<Term, Rational> summand2 : poly2.mMonomial2Coefficient.entrySet()) {
+		for (final Map.Entry<Term, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
+			for (final Map.Entry<Term, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
 				final Monomial mono = new Monomial((Monomial) summand1.getKey(),(Monomial) summand2.getKey());
 				final Rational newCoeff;
 				final Rational coeff = mMonomial2Coefficient.get(mono);
@@ -265,7 +263,7 @@ public class PolynomialTerm extends Term {
 			}
 		}
 		//Multiply Monomials of polynomialTerm 1 with the constant of polynomialTerm 2
-		for (final Map.Entry<Term, Rational> summand : poly1.mMonomial2Coefficient.entrySet()) {
+		for (final Map.Entry<Term, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
 			if (coeff == null) {
 				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly2.mConstant));
@@ -279,7 +277,7 @@ public class PolynomialTerm extends Term {
 			}
 		}
 		//Multiply Monomials of polynomialTerm 2 with the constant of polynomialTerm 1
-		for (final Map.Entry<Term, Rational> summand : poly2.mMonomial2Coefficient.entrySet()) {
+		for (final Map.Entry<Term, Rational> summand : poly2.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
 			if (coeff == null) {
 				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly1.mConstant));
@@ -300,6 +298,9 @@ public class PolynomialTerm extends Term {
 	 * the product of the given polynomial terms and returns it.
 	 */
 	public static PolynomialTerm constructProduct(PolynomialTerm... polynomialTerms) {
+		if (polynomialTerms.length == 1) {
+			return polynomialTerms[0];
+		}
 		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], polynomialTerms[1]);
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = new PolynomialTerm(poly, polynomialTerms[i]);
@@ -365,20 +366,29 @@ public class PolynomialTerm extends Term {
 			mMonomial2Coefficient = new HashMap<>();
 			mSort = polynomialTerm.getSort();
 			if (SmtSortUtils.isBitvecSort(mSort)) {
-				mConstant = bringValueInRange(polynomialTerm.mConstant.mul(multiplier), mSort);
+				mConstant = bringValueInRange(polynomialTerm.getConstant().mul(multiplier), mSort);
 			} else {
 				assert mSort.isNumericSort();
-				mConstant = polynomialTerm.mConstant.mul(multiplier);
+				mConstant = polynomialTerm.getConstant().mul(multiplier);
 			}
-			for (final Map.Entry<Term, Rational> summand : polynomialTerm.mMonomial2Coefficient.entrySet()) {
+			for (final Map.Entry<Term, Rational> summand : polynomialTerm.getMonomial2Coefficient().entrySet()) {
 				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 			}
 		}
 	}
 	
-	//TODO: IsLinear.
 	//TODO: Write Tests.
-	//TODO: Flatten ApplicationTerms.
+	/**
+	 * Return true, when this term is linear (thus could be represented by AffineTerm), false otherwise.
+	 */
+	public boolean isLinear() {
+		for (final Term monomial : mMonomial2Coefficient.keySet()) {
+			if (!((Monomial) monomial).isLinear()) {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	/**
 	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had wrong sorts.

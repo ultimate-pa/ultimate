@@ -167,8 +167,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		final String funName = appTerm.getFunction().getName();
 		if (funName.equals("*") || funName.equals("bvmul")) {
-			final Sort sort = appTerm.getSort();
-			final PolynomialTerm result = multiply(polynomialArgs);
+			Sort sort = appTerm.getSort();
+			final PolynomialTerm result = multiply(sort, polynomialArgs);
 			setResult(result);
 			return;
 		} else if (funName.equals("+") || funName.equals("bvadd")) {
@@ -209,6 +209,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 */
 	private static PolynomialTerm divide(final Sort sort, final PolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(sort);
+		if (polynomialArgs.length == 0) {
+			return new PolynomialTerm(sort, Rational.ONE);
+		}
 		return PolynomialTerm.constructDivision(polynomialArgs);
 	}
 	
@@ -240,10 +243,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Multiply an array of PolynomialTerms.
 	 */
-	private static PolynomialTerm multiply(final PolynomialTerm[] polynomialArgs) {
+	private static PolynomialTerm multiply(Sort sort, final PolynomialTerm[] polynomialArgs) {
 		//TODO: Find out whether passing the sort explicitly in case every polynomialTerm is just a Constant
 		//is really necessary (like in the AffineTermTransformer): YES it is in case that the array is empty
-		//TODO: catch empty arrays
+		//TODO: Ask Matthias why does AffineTermTransformer not catch this in add?
+		if (polynomialArgs.length == 0) {
+			return new PolynomialTerm(sort, Rational.ONE);
+		}
 		return PolynomialTerm.constructProduct(polynomialArgs);
 	}
 	
