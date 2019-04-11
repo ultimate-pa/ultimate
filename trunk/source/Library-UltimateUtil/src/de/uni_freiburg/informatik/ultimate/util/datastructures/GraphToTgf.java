@@ -61,21 +61,47 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 	}
 
 	public GraphToTgf(final N startingNode, final Function<N, Object> nodeToLabel) {
-		mNodeToLabel = nodeToLabel;
-		visit(startingNode);
-		traverse();
+		this(nodeToLabel);
+		includeComponentOf(startingNode);
 	}
 
+	public GraphToTgf() {
+		this(N::toString);
+	}
+
+	public GraphToTgf(final Function<N, Object> nodeToLabel) {
+		mNodeToLabel = nodeToLabel;
+	}
+
+	/**
+	 * Returns the trivial graph format (TGF) representation of all weakly connected components visited by
+	 * {@link #includeComponentOf(IDirectedGraph)}.
+	 * 
+	 * @return String in TGF format representing a graph
+	 */
 	public String getTgf() {
 		return mTgfNodes + "#\n" + mTgfEdges; 
 	}
 
-	private void traverse() {
+	/**
+	 * Includes the weakly connected component of a given node into the resulting TGF.
+	 * The TGF can be retrieved using {@link #getTgf()}.
+	 * <p>
+	 * This method is idempotent; calling it twice on the same component does not change anything.
+	 * 
+	 * @param startingNode Node whose connected component will be included
+	 * @return This converter to allow chaining multiple calls
+	 */
+	public GraphToTgf<N> includeComponentOf(final N startingNode) {
+		if (isUnvisited(startingNode)) {
+			visit(startingNode);
+		}
 		while (!mWorklist.isEmpty()) {
 			final N current = mWorklist.remove();
 			visitNeighbors(current);
 			addEdges(current);
 		}
+		return this;
 	}
 
 	private void visitNeighbors(final N node) {

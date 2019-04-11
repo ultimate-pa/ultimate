@@ -89,7 +89,7 @@ public class RegexDag<L> {
 	}
 
 	public String toString() {
-		return new GraphToTgf<>(mSource, RegexDagNode::getContent).getTgf();
+		return new GraphToTgf<>(mSource).includeComponentOf(mSink).getTgf();
 	}
 }
 
