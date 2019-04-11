@@ -261,12 +261,12 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public boolean removeIncoming(final Object o) {
+	public boolean removeIncoming(final IMinimizedEdge edge) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeAllIncoming(final Collection<?> c) {
+	public boolean removeAllIncoming(final Collection<? extends IMinimizedEdge> edges) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -301,12 +301,12 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public boolean removeOutgoing(final Object o) {
+	public boolean removeOutgoing(final IMinimizedEdge edge) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeAllOutgoing(final Collection<?> c) {
+	public boolean removeAllOutgoing(final Collection<? extends IMinimizedEdge> edges) {
 		throw new UnsupportedOperationException();
 	}
 
