@@ -41,15 +41,17 @@ public class RegexDagCompressor<L> {
 
 	private Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new HashMap<>();
 	private boolean mMergedFlag;
+	private RegexDag<L> mDag;
 
 	public RegexDag<L> compress(final RegexDag<L> dag) {
 		mMergedFlag = true;
+		mDag = dag;
 		while (mMergedFlag) {
 			mMergedFlag = false;
-			searchAndMerge(dag.getSource(), RegexDagNode::getOutgoingNodes, RegexDagNode::getIncomingNodes);
-			searchAndMerge(dag.getSink(), RegexDagNode::getIncomingNodes, RegexDagNode::getOutgoingNodes);
+			searchAndMerge(mDag.getSource(), RegexDagNode::getOutgoingNodes, RegexDagNode::getIncomingNodes);
+			searchAndMerge(mDag.getSink(), RegexDagNode::getIncomingNodes, RegexDagNode::getOutgoingNodes);
 		}
-		return dag;
+		return mDag;
 	}
 
 	private void searchAndMerge(RegexDagNode<L> startNode,
@@ -116,7 +118,7 @@ public class RegexDagCompressor<L> {
 
 		prey.getIncomingNodes().stream().forEach(in -> in.removeOutgoing(prey));
 		prey.getOutgoingNodes().stream().forEach(out -> out.removeIncoming(prey));
-		// no need to delete prey's references to incoming and outgoing nodes -- prey is delete anyway
+		// no need to delete prey's references to incoming and outgoing nodes -- prey is deleted anyway
 
 		Set<RegexDagNode<L>> ignore = new HashSet<>(predator.getIncomingNodes());
 		ignore.add(predator);
@@ -126,6 +128,13 @@ public class RegexDagCompressor<L> {
 		ignore.addAll(predator.getOutgoingNodes());
 		ignore.add(predator);
 		prey.getOutgoingNodes().stream().filter(n -> !ignore.contains(n)).forEach(predator::connectOutgoing);
+
+		if (prey == mDag.getSink()) {
+			mDag.setSink(predator);
+		}
+		if (prey == mDag.getSource()) {
+			mDag.setSource(predator);
+		}
 	}
 
 }
