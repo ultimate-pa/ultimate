@@ -55,7 +55,6 @@ public class Monomial extends Term {
 	 */
 	public Monomial(final Term t, Rational r) {
 		super(0);
-		//TODO: Find out whether I should remove the other calls of this in PolynomialTerm
 		checkIfTermIsLegalVariable(t);
 		mSort = t.getSort();
 		mVariable2Exponent = Collections.singletonMap(t, r);
@@ -63,7 +62,6 @@ public class Monomial extends Term {
 	
 	/**
 	 * Monomial that consists of the single variable which is an application term.
-	 * TODO: Ask Matthias about the background of this?
 	 */
 	public Monomial(final ApplicationTerm appTerm) {
 		super(0);
@@ -188,11 +186,8 @@ public class Monomial extends Term {
 		return mSort;
 	}
 	
-	//TODO: Find out how to realize bringValueInRange
-	//TODO: Find out whether the error constructor is necessary
-	//TODO: Find out how to realize toTerm.
-	//TODO: Find out whether applyModuloToAllExponents should be realized.
-	
+	//TODO: Find out whether the error constructor is necessary. So far it doesn't look like it, since
+	//an ErrorTerm for the PolynomialTerm is enough.
 	//TODO: Find out why toStringHelper is necessary and whether this is ok.
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
@@ -241,7 +236,6 @@ public class Monomial extends Term {
 		return result;
 	}
 	
-	//TODO: Find out whether the hashCode should stay like this.
 	@Override
 	public int hashCode() {
 		final int prime = 31;

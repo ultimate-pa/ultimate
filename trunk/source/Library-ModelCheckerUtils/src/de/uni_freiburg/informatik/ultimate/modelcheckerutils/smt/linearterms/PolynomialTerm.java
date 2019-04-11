@@ -87,6 +87,17 @@ public class PolynomialTerm extends Term {
 	}
 	
 	/**
+	 * {@link PolynomialTerm} that consists of the single variable that is represented by
+	 * the {@link Term} t.
+	 */
+	public PolynomialTerm(final Term t) {
+		super(0);
+		mSort = t.getSort();
+		mConstant = Rational.ZERO;
+		mMonomial2Coefficient = Collections.singletonMap(new Monomial(t, Rational.ONE), Rational.ONE);
+	}
+	
+	/**
 	 * PolynomialTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
 	 * array coefficients, and whose constant term is given by the Rational constant. All variables are raised to the power of one.
 	 */
@@ -118,42 +129,6 @@ public class PolynomialTerm extends Term {
 				checkIfTermIsLegalVariable(terms[i]);
 				if (!coefficients[i].equals(Rational.ZERO)) {
 					mMonomial2Coefficient.put(new Monomial(terms[i], Rational.ONE), coefficients[i]);
-				}
-			}
-			break;
-		}
-	}
-	
-	/**
-	 * PolynomialTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
-	 * array coefficients, and whose constant term is given by the Rational constant and whose exponents are given by the array exponents.
-	 */
-	public PolynomialTerm(final Sort s, final Term[] terms, final Rational[] coefficients, final Rational[] exponents, final Rational constant) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		if (terms.length != coefficients.length || coefficients.length != exponents.length) {
-			throw new IllegalArgumentException("number of variables and coefficients different");
-		}
-		switch (terms.length) {
-		case 0:
-			mMonomial2Coefficient = Collections.emptyMap();
-			break;
-		case 1:
-			final Term variable = terms[0];
-			checkIfTermIsLegalVariable(variable);
-			if (coefficients[0].equals(Rational.ZERO)) {
-				mMonomial2Coefficient = Collections.emptyMap();
-			} else {
-				mMonomial2Coefficient = Collections.singletonMap(new Monomial(s, terms, exponents), coefficients[0]);
-			}
-			break;
-		default:
-			mMonomial2Coefficient = new HashMap<>();
-			for (int i = 0; i < terms.length; i++) {
-				checkIfTermIsLegalVariable(terms[i]);
-				if (!coefficients[i].equals(Rational.ZERO)) {
-					mMonomial2Coefficient.put(new Monomial(terms[i], exponents[i]), coefficients[i]);
 				}
 			}
 			break;
@@ -266,11 +241,11 @@ public class PolynomialTerm extends Term {
 		for (final Map.Entry<Term, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
 			if (coeff == null) {
-				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly2.mConstant));
+				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
 			}else {
 				final Rational newCoeff;
 				//TODO: Probably something with bitvectors should be here, too
-				newCoeff = summand.getValue().mul(poly2.mConstant).add(coeff);
+				newCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
 				if (!newCoeff.equals(Rational.ZERO)) {
 					mMonomial2Coefficient.put(summand.getKey(), newCoeff);
 				}
@@ -280,11 +255,11 @@ public class PolynomialTerm extends Term {
 		for (final Map.Entry<Term, Rational> summand : poly2.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
 			if (coeff == null) {
-				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly1.mConstant));
+				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
 			}else {
 				final Rational newCoeff;
 				//TODO: Probably something with bitvectors should be here, too
-				newCoeff = summand.getValue().mul(poly1.mConstant).add(coeff);
+				newCoeff = summand.getValue().mul(poly1.getConstant()).add(coeff);
 				if (!newCoeff.equals(Rational.ZERO)) {
 					mMonomial2Coefficient.put(summand.getKey(), newCoeff);
 				}

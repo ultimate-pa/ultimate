@@ -64,7 +64,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// is the result (i.e., it should not descend to subformulas).
 		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
 		if (valueOfLiteral != null) {
-			final AffineTerm result = new AffineTerm(term.getSort(), valueOfLiteral);
+			final PolynomialTerm result = new PolynomialTerm(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
 			//TODO: Change AffineTerm to PolynomialTerm
@@ -80,7 +80,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
 		if (mIsPolynomialVariable.test(term)) {
-			final AffineTerm result = new AffineTerm(term);
+			final PolynomialTerm result = new PolynomialTerm(term);
 			setResult(result);
 			return;
 		}
