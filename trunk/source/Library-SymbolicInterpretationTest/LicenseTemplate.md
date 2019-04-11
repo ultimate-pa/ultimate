@@ -1,7 +1,4 @@
-<!--
-Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
-Copyright (C) 2019 University of Freiburg
+Copyright (C) @{daterange} @{author:r}
 
 This file is part of the ULTIMATE Library-SymbolicInterpretation plug-in.
 
@@ -24,19 +21,3 @@ or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
 containing parts covered by the terms of the Eclipse Public License, the
 licensors of the ULTIMATE Library-SymbolicInterpretation plug-in grant you additional permission
 to convey the resulting work.
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-
-	<parent>
-		<artifactId>mavenparent</artifactId>
-		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.24</version>
-		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
-	</parent>
-
-	<version>0.1.24</version>
-	<packaging>eclipse-plugin</packaging>
-	<artifactId>de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation</artifactId>
-</project>

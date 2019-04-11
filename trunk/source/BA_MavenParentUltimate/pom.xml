@@ -653,6 +653,7 @@
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-PathExpressionsTest</module>
+				<module>../Library-SymbolicInterpretationTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>

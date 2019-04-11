@@ -23,7 +23,6 @@ or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
 containing parts covered by the terms of the Eclipse Public License, the
 licensors of the ULTIMATE Library-PathExpressions plug-in grant you additional permission
 to convey the resulting work.
-
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">

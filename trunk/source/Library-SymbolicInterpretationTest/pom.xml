@@ -1,5 +1,4 @@
 <!--
-Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
 Copyright (C) 2019 University of Freiburg
 
@@ -37,6 +36,6 @@ to convey the resulting work.
 	</parent>
 
 	<version>0.1.24</version>
-	<packaging>eclipse-plugin</packaging>
-	<artifactId>de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation</artifactId>
+	<packaging>eclipse-test-plugin</packaging>
+	<artifactId>de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test</artifactId>
 </project>

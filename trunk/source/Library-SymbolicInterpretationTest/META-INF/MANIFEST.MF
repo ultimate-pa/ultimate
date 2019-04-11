@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test
+Bundle-Version: 0.1.24
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Import-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag
