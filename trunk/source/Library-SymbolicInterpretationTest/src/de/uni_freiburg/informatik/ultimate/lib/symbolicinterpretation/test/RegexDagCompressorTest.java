@@ -26,28 +26,79 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexToDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 
-public class RegexDagTest {
-
-	private final RegexToDag<String> mRe2dag = new RegexToDag<>();
+public class RegexDagCompressorTest {
 
 	@Test
-	public void literalBetweenEpsilons() {
-		RegexDagCompressor<String> compressor = new RegexDagCompressor<>();
-		compressor.compress(dag(Regex.literal("a")));
-		// TODO test
+	public void justOneEpsilon() {
+		compressAssertEq("0ε", "", linearDag(""));
 	}
 
-	private RegexDag<String> dag(IRegex<String> regex) {
-		mRe2dag.resetDagAndStars();
-		return mRe2dag.apply(regex);
+	@Test
+	public void justTwoEpsilon() {
+		compressAssertEq("0ε", "", linearDag("", ""));
+	}
+
+	@Test
+	public void epsilonSourceAndSink() {
+		compressAssertEq("0a", "", linearDag("", "a", ""));
+	}
+
+	@Test
+	public void chainOfEpsilons() {
+		compressAssertEq("0a 1b 2c", "01 12", linearDag("a", "", "", "b", "", "", "", "c"));
+		compressAssertEq("0a 1b 2c", "01 12", linearDag("", "", "a", "b", "c", "", "", ""));
+	}
+
+	@Test
+	public void unmergeableChain() {
+		compressAssertEq("0a 1b 2c", "01 12", linearDag("a", "b", "c"));
+		compressAssertEq("0a 1a 2a", "01 12", linearDag("a", "a", "a"));
+	}
+
+	// TODO more tests, especially for non-linear DAGs
+	// ==> generate DAG from simplified TGF string
+
+	private static RegexDag<String> linearDag(final String source, final String... successors) {
+		final RegexDag<String> dag = new RegexDag<>(stringToRegexLiteral(source));
+		for (final String next : successors) {
+			RegexDagNode<String> nextNode = new RegexDagNode<>(stringToRegexLiteral(next));
+			dag.getSink().connectOutgoing(nextNode);
+			dag.setSink(nextNode);
+		}
+		return dag;
+	}
+
+	private static IRegex<String> stringToRegexLiteral(final String letter) {
+		if (letter.isEmpty()) {
+			return Regex.epsilon();
+		}
+		return Regex.literal(letter);
+	}
+
+	private static String toLongTgf(final String tgfNodesExpected, final String tgfEdgesExpected) {
+		return tgfNodesExpected.replaceAll("(\\d+)([^\\d ]+) *", "$1 $2\n")
+				+ "#\n"
+				+ tgfEdgesExpected.replaceAll("(\\d+)\\.?(\\d+) *", "$1 $2 forward\n$2 $1 backward\n");
+	}
+
+	private static void compressAssertEq(final String tgfNodesExpected, final String tgfEdgesExpected,
+			final RegexDag<String> dag) {
+		assertEq(tgfNodesExpected, tgfEdgesExpected, new RegexDagCompressor<String>().compress(dag));
+	}
+
+	private static void assertEq(final String tgfNodesExpected, final String tgfEdgesExpected,
+			final RegexDag<String> actualDag) {
+		// leading \n makes jUnit output ("expected <...> but was <...>") more readable
+		Assert.assertEquals("\n" + toLongTgf(tgfNodesExpected, tgfEdgesExpected), "\n" + actualDag.toString());
 	}
 
 }
