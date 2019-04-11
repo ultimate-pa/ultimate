@@ -51,8 +51,8 @@ public interface IModifiableOutgoing<T> {
 	T removeOutgoing(int index);
 
 	// TODO Add comments (DD)
-	boolean removeOutgoing(Object o);
+	boolean removeOutgoing(T o);
 
 	// TODO Add comments (DD)
-	boolean removeAllOutgoing(Collection<?> c);
+	boolean removeAllOutgoing(Collection<? extends T> c);
 }

@@ -94,12 +94,12 @@ public abstract class ModifiableSimpleAST<T extends IModifiableSimpleAST<T, Visu
 	}
 
 	@Override
-	public boolean removeOutgoing(Object o) {
+	public boolean removeOutgoing(T o) {
 		return mOutgoingNodes.remove(o);
 	}
 
 	@Override
-	public boolean removeAllOutgoing(Collection<?> c) {
+	public boolean removeAllOutgoing(Collection<? extends T> c) {
 		return mOutgoingNodes.removeAll(c);
 	}
 

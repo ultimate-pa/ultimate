@@ -65,8 +65,8 @@ public interface IModifiableIncoming<T> {
 	T removeIncoming(int index);
 
 	// TODO Add comments (DD)
-	boolean removeIncoming(Object o);
+	boolean removeIncoming(T o);
 
 	// TODO Add comments (DD)
-	boolean removeAllIncoming(Collection<?> c);
+	boolean removeAllIncoming(Collection<? extends T> c);
 }

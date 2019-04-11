@@ -114,12 +114,12 @@ public class ModifiableAST<T extends IModifiableAST<T, VisualizationNode>> exten
 	}
 
 	@Override
-	public boolean removeOutgoing(Object o) {
+	public boolean removeOutgoing(T o) {
 		return mOutgoingNodes.remove(o);
 	}
 
 	@Override
-	public boolean removeAllOutgoing(Collection<?> c) {
+	public boolean removeAllOutgoing(Collection<? extends T> c) {
 		return mOutgoingNodes.removeAll(c);
 	}
 
@@ -131,7 +131,7 @@ public class ModifiableAST<T extends IModifiableAST<T, VisualizationNode>> exten
 	@SuppressWarnings("unchecked")
 	@Override
 	public void redirectParent(T parent) {
-		mParent.removeOutgoing(this);
+		mParent.removeOutgoing((T) this);
 		mParent = parent;
 		if (parent != null) {
 			if (!parent.getOutgoingNodes().contains(this)) {

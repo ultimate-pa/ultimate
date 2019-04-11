@@ -101,18 +101,20 @@ public abstract class ModifiableMultigraphEdge<V extends IModifiableExplicitEdge
 		mSource = source;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void disconnectTarget() {
 		if (mTarget != null) {
-			mTarget.removeIncoming(this);
+			mTarget.removeIncoming((E) this);
 			mTarget = null;
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void disconnectSource() {
 		if (mSource != null) {
-			mSource.removeOutgoing(this);
+			mSource.removeOutgoing((E) this);
 			mSource = null;
 		}
 	}

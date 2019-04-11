@@ -178,14 +178,14 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean removeOutgoing(Object o) {
+	public boolean removeOutgoing(E o) {
 		return mOutgoingEdges.remove(o);
 	}
 
 	@Override
-	public boolean removeAllOutgoing(Collection<?> c) {
+	public boolean removeAllOutgoing(Collection<? extends E> c) {
 		boolean rtr = false;
-		for (final Object o : c) {
+		for (final E o : c) {
 			rtr |= removeOutgoing(o);
 		}
 		return rtr;
@@ -234,14 +234,14 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean removeIncoming(Object o) {
+	public boolean removeIncoming(E o) {
 		return mIncomingEdges.remove(o);
 	}
 
 	@Override
-	public boolean removeAllIncoming(Collection<?> c) {
+	public boolean removeAllIncoming(Collection<? extends E> c) {
 		boolean rtr = false;
-		for (final Object o : c) {
+		for (final E o : c) {
 			rtr |= removeIncoming(o);
 		}
 		return rtr;
