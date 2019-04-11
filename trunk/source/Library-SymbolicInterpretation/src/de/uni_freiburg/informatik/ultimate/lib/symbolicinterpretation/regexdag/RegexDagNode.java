@@ -62,4 +62,8 @@ public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 		return mContent;
 	}
 
+	@Override
+	public String toString() {
+		return mContent.toString();
+	}
 }
