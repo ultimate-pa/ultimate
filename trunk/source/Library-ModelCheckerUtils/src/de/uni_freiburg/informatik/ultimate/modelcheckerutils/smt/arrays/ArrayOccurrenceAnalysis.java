@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
  */
 public class ArrayOccurrenceAnalysis {
 
-	private static final boolean THROW_ERROR_BEFORE_DOWNGRADE = false;
+	private static final boolean THROW_ERROR_BEFORE_DOWNGRADE = true;
 
 	private final Term mAnalyzedTerm;
 	private final Term mWantedArray;
@@ -266,6 +266,9 @@ public class ArrayOccurrenceAnalysis {
 							throw new AssertionError("downgrade");
 						}
 						if (nas.getDimension() > mDimensionUpperLimit) {
+							if (THROW_ERROR_BEFORE_DOWNGRADE) {
+								throw new AssertionError("downgrade");
+							}
 							nas = new MultiDimensionalNestedStore(nas.getInnermost(null).getInnermost(mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
