@@ -381,4 +381,46 @@ public class PathExpressionTest {
 		// not a real assert, just there to get output
 		assertEquals(RegexToCompactTgf.apply(actual), actual);
 	}
+
+	//@Test
+	public void dagWorst() {
+		IntGraph g = new IntGraph();
+		g.addNode(0);
+		g.addNode(3);
+		g.addNode(4);
+		g.addNode(1);
+		g.addNode(2);
+		g.addEdge(3, "d", 0);
+		g.addEdge(1, "b", 2);
+		g.addEdge(1, "f", 3);
+		g.addEdge(0, "a", 1);
+		g.addEdge(2, "c", 3);
+		g.addEdge(0, "e", 4);
+		g.addEdge(0, "g", 5);
+		// not a real assert, just there to get output
+		RegexToCompactTgf<String> re2tgf = new RegexToCompactTgf<>();
+		exprBetween(g, 0, 4).accept(re2tgf);
+		exprBetween(g, 0, 5).accept(re2tgf);
+		assertEquals(exprBetween(g, 0, 5), "");
+	}
+
+	//@Test
+	public void dagBest() {
+		IntGraph g = new IntGraph();
+		for (int i = 5; i >= 0; --i) {
+			g.addNode(i);
+		}
+		g.addEdge(0, "a", 1);
+		g.addEdge(1, "b", 2);
+		g.addEdge(2, "c", 3);
+		g.addEdge(3, "d", 0);
+		g.addEdge(0, "e", 4);
+		g.addEdge(1, "f", 3);
+		g.addEdge(0, "g", 5);
+		// not a real assert, just there to get output
+		RegexToCompactTgf<String> re2tgf = new RegexToCompactTgf<>();
+		exprBetween(g, 0, 4).accept(re2tgf);
+		exprBetween(g, 0, 5).accept(re2tgf);
+		assertEquals(exprBetween(g, 0, 5), "");
+	}
 }
