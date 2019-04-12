@@ -48,7 +48,7 @@ public class RegexDag<L> {
 		return new RegexDag<>(Regex.epsilon());
 	}
 
-	/** Creates a DAG representing the empty word ε. */
+	/** Creates a DAG representing the never matching regex ∅. */
 	public static <L> RegexDag<L> makeEmptySet() {
 		return new RegexDag<>(Regex.emptySet());
 	}
