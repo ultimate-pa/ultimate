@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -107,8 +106,7 @@ action code {:
 	    int endLine = sEnd.right;
 	    int startColumn = 0;
 	    int endColumn = 0;
-	    return new BoogieLocation("",
-	                   startLine, endLine, startColumn, endColumn);
+	    return new ReqLocation(parser.mFilename, startLine, endLine, startColumn, endColumn);
 	}
 :}
 

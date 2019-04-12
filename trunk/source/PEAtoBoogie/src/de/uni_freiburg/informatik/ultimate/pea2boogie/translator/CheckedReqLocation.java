@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
  * @author Jochen Hoenicke
  * @date 06.03.2012
  */
-public class ReqLocation extends DefaultLocation {
+public class CheckedReqLocation extends DefaultLocation {
 	/**
 	 * Serial version UID.
 	 */
@@ -58,7 +58,7 @@ public class ReqLocation extends DefaultLocation {
 	 * @param type
 	 *            the type of check/assertion
 	 */
-	public ReqLocation(final ReqCheck checkNode) {
+	public CheckedReqLocation(final ReqCheck checkNode) {
 		super(null, checkNode.getStartLine(), checkNode.getEndLine(), -1, -1);
 		mCheckedSpecification = checkNode;
 	}
@@ -78,10 +78,10 @@ public class ReqLocation extends DefaultLocation {
 		if (other == null) {
 			return this;
 		}
-		if (other instanceof ReqLocation) {
-			final ReqLocation otherRloc = (ReqLocation) other;
+		if (other instanceof CheckedReqLocation) {
+			final CheckedReqLocation otherRloc = (CheckedReqLocation) other;
 			final ReqCheck mergedCheck = mCheckedSpecification.merge(otherRloc.mCheckedSpecification);
-			return new ReqLocation(mergedCheck);
+			return new CheckedReqLocation(mergedCheck);
 		} else if (other instanceof ILocation) {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 		}

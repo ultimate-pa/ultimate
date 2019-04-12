@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -194,8 +195,8 @@ public class Req2BoogieTranslator {
 		try {
 			if (mCombinationNum > 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
-				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage, mSymboltable,
-						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
+				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage, mPeaResultUtil,
+						mSymboltable, mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}
@@ -691,7 +692,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {
-		final ReqLocation loc = new ReqLocation(check);
+		final CheckedReqLocation loc = new CheckedReqLocation(check);
 		final NamedAttribute[] attr =
 				new NamedAttribute[] { new NamedAttribute(loc, "check_" + label, new Expression[] {}) };
 		final AssertStatement rtr = new AssertStatement(loc, attr, expr);
@@ -774,6 +775,11 @@ public class Req2BoogieTranslator {
 			mLogger.info("No rt-inconsistencies possible");
 			return Collections.emptyList();
 		}
+
+		if (mPeaResultUtil.isAlreadyAborted()) {
+			throw new ToolchainCanceledException(new RunningTaskInfo(getClass(), "Already encountered errors"));
+		}
+
 		final List<Statement> stmtList = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(

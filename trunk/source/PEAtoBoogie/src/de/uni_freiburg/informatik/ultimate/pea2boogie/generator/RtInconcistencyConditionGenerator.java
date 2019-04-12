@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -121,8 +122,10 @@ public class RtInconcistencyConditionGenerator {
 	private int mQuantifiedQuery;
 	private int mQelimQuery;
 
+	private final PeaResultUtil mPeaResultUtil;
+
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final ReqSymboltable symboltable,
+			final IToolchainStorage storage, final PeaResultUtil peaResultUtil, final ReqSymboltable symboltable,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mBoogieSymboltable = symboltable;
@@ -132,12 +135,12 @@ public class RtInconcistencyConditionGenerator {
 		mManagedScript = new ManagedScript(services, mScript);
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
-		mBoogie2Smt =
-				new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
+		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mSeparateInvariantHandling = separateInvariantHandling;
 		mPhaseTermCache = new HashMap<>();
 		mProjectionCache = new HashMap<>();
+		mPeaResultUtil = peaResultUtil;
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
@@ -146,8 +149,8 @@ public class RtInconcistencyConditionGenerator {
 		mGeneratedChecks = 0;
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
-		mCddToSmt = new CddToSmt(services, storage, mScript, mBoogie2Smt,
-				boogieDeclarations, mBoogieSymboltable);
+		mCddToSmt = new CddToSmt(services, storage, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations,
+				mBoogieSymboltable);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -323,8 +326,8 @@ public class RtInconcistencyConditionGenerator {
 		for (final Transition trans : phase.getTransitions()) {
 			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
 			final Term primedStInv = mCddToSmt.toSmt(trans.getDest().getStateInvariant().prime());
-			final Term strictInv =
-					mCddToSmt.toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
+			final Term strictInv = mCddToSmt
+					.toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
 			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
 		}
 		return SmtUtils.or(mScript, inner);
@@ -396,10 +399,6 @@ public class RtInconcistencyConditionGenerator {
 		mScript.pop(1);
 		throw new InvariantInfeasibleException(responsibleRequirements);
 	}
-
-
-
-
 
 	private Term getTermVarTerm(final String name) {
 		final IProgramNonOldVar termVar = mVars.get(name);

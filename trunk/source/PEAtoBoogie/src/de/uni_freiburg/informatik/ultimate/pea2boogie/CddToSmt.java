@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -68,10 +71,11 @@ public class CddToSmt {
 	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final IReqSymbolExpressionTable mBoogieSymboltable;
 	private final Boogie2SMT mBoogieToSmt;
+	private final PeaResultUtil mResultUtil;
 
-	public CddToSmt(final IUltimateServiceProvider services, final IToolchainStorage storage, final Script script,
-			final Boogie2SMT boogieToSmt, final BoogieDeclarations boogieDeclarations,
-			final IReqSymbolExpressionTable symboltable) {
+	public CddToSmt(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final PeaResultUtil resultUtil, final Script script, final Boogie2SMT boogieToSmt,
+			final BoogieDeclarations boogieDeclarations, final IReqSymbolExpressionTable symboltable) {
 		mScript = script;
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
@@ -79,6 +83,7 @@ public class CddToSmt {
 		mVars = mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mBoogieSymboltable = symboltable;
+		mResultUtil = resultUtil;
 	}
 
 	public Term toSmt(final Expression expr) {
@@ -122,6 +127,11 @@ public class CddToSmt {
 					final TypeAdder typeVisitor = new TypeAdder();
 					final Expression exprWithDeclInfos = expr.accept(visitor);
 					final Expression exprWithTypes = exprWithDeclInfos.accept(typeVisitor);
+					if (typeVisitor.getTypeError() != null) {
+						final Pair<String, Expression> typeError = typeVisitor.getTypeError();
+						mResultUtil.typeError(typeError.getFirst(), typeError.getSecond());
+						return mFalse;
+					}
 					decisionTerm = toSmt(exprWithTypes);
 				} else if (decision instanceof BooleanDecision) {
 					// TODO: This also covers RelationDecisions, is this intended?
@@ -231,18 +241,50 @@ public class CddToSmt {
 
 	}
 
-	private final class TypeAdder extends GeneratedBoogieAstTransformer {
+	private static final class TypeAdder extends GeneratedBoogieAstTransformer {
+
+		private Pair<String, Expression> mTypeError;
+
+		public Pair<String, Expression> getTypeError() {
+			return mTypeError;
+		}
+
 		@Override
 		public Expression transform(final BinaryExpression node) {
 			final Expression leftT = node.getLeft().accept(this);
 			final Expression rightT = node.getRight().accept(this);
-			return ExpressionFactory.newBinaryExpression(node.getLocation(), node.getOperator(), leftT, rightT);
+			try {
+				return ExpressionFactory.newBinaryExpression(node.getLocation(), node.getOperator(), leftT, rightT);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
 		}
 
 		@Override
 		public Expression transform(final UnaryExpression node) {
 			final Expression leftT = node.getExpr().accept(this);
-			return ExpressionFactory.constructUnaryExpression(node.getLocation(), node.getOperator(), leftT);
+			try {
+				return ExpressionFactory.constructUnaryExpression(node.getLocation(), node.getOperator(), leftT);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		/**
+		 * Save first encountered type error.
+		 *
+		 * @param message
+		 * @param node
+		 */
+		private void setTypeError(final String message, final Expression node) {
+			if (mTypeError != null) {
+				return;
+			}
+			mTypeError = new Pair<>(message, node);
 		}
 	}
 

@@ -212,7 +212,8 @@ public class TypeCheckHelper {
 		case COMPNEQ:
 		case COMPEQ:
 			if (!left.isUnifiableTo(right)) {
-				typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
+				final String msg = left + " is not unifiable to " + right + ". ";
+				typeErrorReporter.report(loc -> msg + loc);
 			}
 			/* try to recover in any case */
 			resultType = BoogieType.TYPE_BOOL;

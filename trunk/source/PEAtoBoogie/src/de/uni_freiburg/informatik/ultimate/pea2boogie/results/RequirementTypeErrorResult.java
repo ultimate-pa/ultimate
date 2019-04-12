@@ -10,8 +10,14 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
  *
  */
 public final class RequirementTypeErrorResult extends GenericResult {
+
 	public RequirementTypeErrorResult(final String id, final String reason) {
 		super(Activator.PLUGIN_ID, "Type error in requirement: " + id,
 				"Type error in requirement: " + id + " Reason: " + reason, Severity.ERROR);
+	}
+
+	public RequirementTypeErrorResult(final int line, final String reason) {
+		super(Activator.PLUGIN_ID, "Type error in line: " + line, "Type error in line: " + line + " Reason: " + reason,
+				Severity.ERROR);
 	}
 }

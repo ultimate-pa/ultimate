@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -58,10 +63,18 @@ public class PeaResultUtil {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private boolean mIsAborted;
+	private final Set<String> mExprWithTypeErrors;
 
 	public PeaResultUtil(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
+		mIsAborted = false;
+		mExprWithTypeErrors = new HashSet<>();
+	}
+
+	public boolean isAlreadyAborted() {
+		return mIsAborted;
 	}
 
 	public void transformationError(final PatternType req, final String reason) {
@@ -77,6 +90,13 @@ public class PeaResultUtil {
 
 	public void typeError(final PatternType req, final String description) {
 		errorAndAbort(new RequirementTypeErrorResult(req.getId(), description));
+	}
+
+	public void typeError(final String description, final Expression expr) {
+		if (mExprWithTypeErrors.add(expr.toString())) {
+			errorAndAbort(new RequirementTypeErrorResult(expr.getLoc().getStartLine(),
+					BoogiePrettyPrinter.print(expr) + " :" + description));
+		}
 	}
 
 	public void intrinsicRtConsistencySuccess(final IElement element) {
@@ -139,12 +159,14 @@ public class PeaResultUtil {
 		mLogger.error(result.getLongDescription());
 		report(result);
 		mServices.getProgressMonitorService().cancelToolchain();
+		mIsAborted = true;
 	}
 
 	private void errorAndAbort(final ILocation location, final String description, final IResult result) {
 		mLogger.error(location + ": " + description);
 		report(result);
 		mServices.getProgressMonitorService().cancelToolchain();
+		mIsAborted = true;
 	}
 
 	private void report(final IResult result) {
