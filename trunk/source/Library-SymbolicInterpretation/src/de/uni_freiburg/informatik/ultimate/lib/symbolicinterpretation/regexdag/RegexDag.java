@@ -45,17 +45,21 @@ public class RegexDag<L> {
 
 	/** Creates a DAG representing the empty word ε. */
 	public static <L> RegexDag<L> makeEpsilon() {
-		return new RegexDag<>(Regex.epsilon());
+		return singleNodeDag(Regex.epsilon());
 	}
 
 	/** Creates a DAG representing the never matching regex ∅. */
 	public static <L> RegexDag<L> makeEmptySet() {
-		return new RegexDag<>(Regex.emptySet());
+		return singleNodeDag(Regex.emptySet());
 	}
 
-	/** Creates a DAG with a single node which acts as both, the source and the sink. */
-	public RegexDag(final IRegex<L> sourceAndSinkContent) {
-		this(new RegexDagNode<>(sourceAndSinkContent));
+	/**
+	 * Creates a DAG with a single node which acts as both, the source and the sink.
+	 * @param sourceSinkLabel Label of the only node
+	 * @return DAG with only one newly created node
+	 */
+	public static <L> RegexDag<L> singleNodeDag(final IRegex<L> sourceSinkLabel) {
+		return new RegexDag<>(new RegexDagNode<>(sourceSinkLabel));
 	}
 
 	/** Creates a DAG with a single node which acts as both, the source and the sink. */

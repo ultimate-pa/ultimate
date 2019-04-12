@@ -29,11 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
+import static de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.test.RegexDagTestUtils.*;
 
 public class RegexDagCompressorTest {
 
@@ -64,41 +62,63 @@ public class RegexDagCompressorTest {
 		compressAssertEq("0a 1a 2a", "01 12", linearDag("a", "a", "a"));
 	}
 
-	// TODO more tests, especially for non-linear DAGs
-	// ==> generate DAG from simplified TGF string
-
-	private static RegexDag<String> linearDag(final String source, final String... successors) {
-		final RegexDag<String> dag = new RegexDag<>(stringToRegexLiteral(source));
-		for (final String next : successors) {
-			RegexDagNode<String> nextNode = new RegexDagNode<>(stringToRegexLiteral(next));
-			dag.getSink().connectOutgoing(nextNode);
-			dag.setSink(nextNode);
-		}
-		return dag;
+	@Test
+	public void simpleDiamond() {
+		final String edges = "01 02 13 23";
+		compressAssertEq("0a 1b 2c", "01 12", dag("0a 1b 2b 3c", edges));
+		compressAssertEq("0b 1c", "01", dag("0ε 1b 2b 3c", edges));
 	}
 
-	private static IRegex<String> stringToRegexLiteral(final String letter) {
-		if (letter.isEmpty()) {
-			return Regex.epsilon();
-		}
-		return Regex.literal(letter);
+	@Test
+	public void multiMergeDiamond() {
+		compressAssertEq("0a 1d 2b 3c 4e", "01 02 03 14 24 34",
+				dag("0a 1b 2c 3c 4d 5b 6e", "01 02 03 04 05 16 26 36 46 56"));
 	}
 
-	private static String toLongTgf(final String tgfNodesExpected, final String tgfEdgesExpected) {
-		return tgfNodesExpected.replaceAll("(\\d+)([^\\d ]+) *", "$1 $2\n")
-				+ "#\n"
-				+ tgfEdgesExpected.replaceAll("(\\d+)\\.?(\\d+) *", "$1 $2 forward\n$2 $1 backward\n");
+	@Test
+	public void mergeForkOnly() {
+		compressAssertEq("0a 1b 3c 2d", "01 12 13 32",
+				dag("0a 1b 2b 3c 4d", "01 13 34 02 24"));
 	}
 
-	private static void compressAssertEq(final String tgfNodesExpected, final String tgfEdgesExpected,
+	@Test
+	public void mergeJoinOnly() {
+		compressAssertEq("0a 1b 2c 3d", "01 12 02 23",
+				dag("0a 1b 2c 3c 4d", "01 13 34 02 24"));
+	}
+
+	@Test
+	public void unmergeableEpsilon() {
+		final String nodes = "0ε 1a 2b 3c";
+		final String edges = "01 02 13 23";
+		compressAssertEq(nodes, edges, dag(nodes, edges));
+	}
+
+	@Test
+	public void example1() {
+		compressAssertEq("0ε 1a 2e 3b 4c 5f 6a", "01 02 13 34 35 42 46 52 65",
+				dag("14ε 1e 2a 3b 4c 5e 6a 7b 8c 9a 10f 11e 12b 13a 0ε",
+				"10 23 50 67 11.0 12.10 13.12 34 78 45 89 10.11 9.10 14.2 14.13 14.6 14.1"));
+	}
+
+	private static void compressAssertEq(final String nodesExpected, final String edgesExpected,
 			final RegexDag<String> dag) {
-		assertEq(tgfNodesExpected, tgfEdgesExpected, new RegexDagCompressor<String>().compress(dag));
+		assertEq(nodesExpected, edgesExpected, new RegexDagCompressor<String>().compress(dag));
 	}
 
-	private static void assertEq(final String tgfNodesExpected, final String tgfEdgesExpected,
+	private static void assertEq(final String nodesExpected, final String edgesExpected,
 			final RegexDag<String> actualDag) {
+		// Assert is very fragile:
+		// Usually we had to check graph isomorphism, which is complicated.
+		// We compare the trivial graph format (TGF) representation which is faster but unreliable.
+		// TGFs can differ for isomorph graph because of different node ids
+		// A benefit of comparing TGFs is human-readable output for failed asserts.
+
 		// leading \n makes jUnit output ("expected <...> but was <...>") more readable
-		Assert.assertEquals("\n" + toLongTgf(tgfNodesExpected, tgfEdgesExpected), "\n" + actualDag.toString());
+		Assert.assertEquals(
+				"\n" + sortTgf(toTgf(nodesExpected, edgesExpected)),
+				"\n" + sortTgf(actualDag.toString()));
+		// TODO assert source and sink nodes are set correctly
 	}
 
 }
