@@ -117,19 +117,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);
 			} else {
-				if (SmtSortUtils.isArraySort(tv.getSort()) || SmtSortUtils.isBoolSort(tv.getSort())
-						|| SmtSortUtils.isFloatingpointSort(tv.getSort())) {
-					final boolean antiDer = isAntiDer(oldParam, tv, quantifier);
-					if (antiDer) {
-						numberOfAntiDer++;
-						continue;
-					}
-					return null;
-				}
-
 				if (!SmtSortUtils.isNumericSort(tv.getSort()) && !SmtSortUtils.isBitvecSort(tv.getSort())) {
-					throw new UnsupportedOperationException(
-							"implement support for sort " + tv.getSort() + " in " + XnfIrd.class.getSimpleName());
+					return null;
 				}
 
 				final AffineRelation affineRelation = AffineRelation.convert(script, oldParam);
