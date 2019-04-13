@@ -191,7 +191,7 @@ public class Monomial extends Term {
 	//TODO: Find out why toStringHelper is necessary and whether this is ok.
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
-		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
+		throw new UnsupportedOperationException("This is a Monomial and should work.");
 	}
 	
 	/**
@@ -225,9 +225,9 @@ public class Monomial extends Term {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
-			sb.append(entry.getKey() + "^" + 
-					  (entry.getValue().isNegative() ? " - " : " + ") + 
-					  entry.getValue().abs());
+			sb.append(entry.getKey());
+			sb.append("^" + (entry.getValue().isNegative() ? "[-" : "[") + 
+			entry.getValue().abs() + "]");
 		}
 		String result = sb.toString();
 		if (result.charAt(0) == ' ') {

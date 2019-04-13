@@ -183,9 +183,9 @@ public class PolynomialTerm extends Term {
 		Rational constant = Rational.ZERO;
 		for (PolynomialTerm polynomialTerm : polynomialTerms) {
 			if (SmtSortUtils.isBitvecSort(mSort)) {
-				constant = bringValueInRange(constant.add(polynomialTerm.mConstant), mSort);
+				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), mSort);
 			} else {
-				constant = constant.add(polynomialTerm.mConstant);
+				constant = constant.add(polynomialTerm.getConstant());
 			}
 		}
 		return constant;
@@ -265,7 +265,7 @@ public class PolynomialTerm extends Term {
 				}
 			}
 		}
-		mConstant = poly1.mConstant.mul(poly2.mConstant);
+		mConstant = poly1.getConstant().mul(poly2.getConstant());
 	}
 	
 	/**
@@ -427,7 +427,7 @@ public class PolynomialTerm extends Term {
 		for (final Map.Entry<Term, Rational> entry : mMonomial2Coefficient.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal coefficient in PolynomialTerm";
 			if (entry.getValue().equals(Rational.ONE)) {
-				summands[i] = entry.getKey();
+				summands[i] = ((Monomial) entry.getKey()).toTerm(script);
 			} else {
 				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
 				summands[i] = SmtUtils.mul(script, mSort, coeff, ((Monomial) entry.getKey()).toTerm(script));
