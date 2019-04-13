@@ -203,7 +203,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 
 	@Override
 	public LETTER getSymbol(final int position) {
-		return mNestedWord.getSymbolAt(position);
+		return mNestedWord.getSymbol(position);
 	}
 
 	@Override
@@ -214,14 +214,14 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 			builder.append(getStateAtPosition(i))
 					.append(BLANK);
 			if (mNestedWord.isInternalPosition(i)) {
-				builder.append(mNestedWord.getSymbolAt(i))
+				builder.append(mNestedWord.getSymbol(i))
 						.append(BLANK);
 			} else if (mNestedWord.isCallPosition(i)) {
-				builder.append(mNestedWord.getSymbolAt(i))
+				builder.append(mNestedWord.getSymbol(i))
 						.append("< ");
 			} else if (mNestedWord.isReturnPosition(i)) {
 				builder.append('>')
-						.append(mNestedWord.getSymbolAt(i))
+						.append(mNestedWord.getSymbol(i))
 						.append(BLANK);
 			}
 		}

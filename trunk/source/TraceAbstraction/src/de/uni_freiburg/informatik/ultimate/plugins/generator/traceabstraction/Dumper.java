@@ -128,7 +128,7 @@ public final class Dumper {
 					indentation++;
 				}
 				line = AbstractCegarLoop.addIndentation(indentation,
-						"Statement" + i + ": " + counterexample.getSymbolAt(i).getPrettyPrintedStatements());
+						"Statement" + i + ": " + counterexample.getSymbol(i).getPrettyPrintedStatements());
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(line);
 				}

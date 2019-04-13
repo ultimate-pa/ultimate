@@ -165,7 +165,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final NestedWord<LETTER> counterexampleWord = counterexampleRun.getWord();
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
-					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false, false);
+					Collections.singletonList(counterexampleWord.getSymbol(i)), false, false, false, false, false);
 			result[i] = relevancyOfAction;
 		}
 		return result;
@@ -518,7 +518,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 		boolean lastErrorAdmittingFlag = false;
 		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
-			final IAction action = counterexampleWord.getSymbolAt(i);
+			final IAction action = counterexampleWord.getSymbol(i);
 			// Calculate WP and PRE
 			final IPredicate wp = weakestPreconditionSequence.getPredicate(i + 1);
 			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getPredicate(i));
@@ -585,8 +585,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final IPredicate sp = strongestPostconditionSequence.getPredicate(startPosition);
 		// Intersection of pre and sp.
 		final IPredicate intersection = mPredicateFactory.and(SimplificationTechnique.SIMPLIFY_QUICK, pre, sp);
-		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
-		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
+		final String preceeding = counterexampleWord.getSymbol(startPosition).getPrecedingProcedure();
+		final String succeeding = counterexampleWord.getSymbol(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, branchEncodedFormula);
 		// Use the pre SP intersection.
 		final ERelevanceStatus relevance =
@@ -676,7 +676,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			} else {
 				// The statement is NOT a BRANCH-IN Statement.
 
-				final UnmodifiableTransFormula tf = counterexampleWord.getSymbolAt(position).getTransformula();
+				final UnmodifiableTransFormula tf = counterexampleWord.getSymbol(position).getTransformula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, csToolkit.getManagedScript().getScript(),
 						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
@@ -693,7 +693,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 					mLogger.debug("intersection -- >" + intersection);
 					mLogger.debug(" ");
 				}
-				final IAction action = counterexampleWord.getSymbolAt(position);
+				final IAction action = counterexampleWord.getSymbol(position);
 				final ERelevanceStatus relevance = computeRelevance(position, action, intersection,
 						weakestPreconditionRight, weakestPreconditionLeft, null, counterexampleWord, rc, csToolkit);
 				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance, false);
@@ -735,13 +735,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit) {
 		ERelevanceStatus relevance;
 		if (action instanceof IInternalAction) {
-			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
+			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbol(position);
 			relevance = rc.relevanceInternal(pre, internal, mPredicateFactory.not(weakestPreconditionRight));
 		} else if (action instanceof ICallAction) {
-			final ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
+			final ICallAction call = (ICallAction) counterexampleWord.getSymbol(position);
 			relevance = rc.relevanceCall(pre, call, mPredicateFactory.not(weakestPreconditionRight));
 		} else if (action instanceof IReturnAction) {
-			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
+			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbol(position);
 			assert counterexampleWord.isReturnPosition(position);
 			assert !counterexampleWord.isPendingReturn(position) : "pending returns not supported";
 			final IPredicate callPredecessor;

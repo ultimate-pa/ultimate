@@ -353,8 +353,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		final IcfgProgramExecutionBuilder rpeb = new IcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
 				mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
-			if (mTrace.getSymbolAt(i) instanceof CodeBlock) {
-				final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
+			if (mTrace.getSymbol(i) instanceof CodeBlock) {
+				final CodeBlock cb = (CodeBlock) mTrace.getSymbol(i);
 				final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 				if (!tf.getBranchEncoders().isEmpty()) {
 					final Map<TermVariable, Boolean> beMapping = new HashMap<>();

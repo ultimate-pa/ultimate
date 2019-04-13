@@ -2,22 +2,22 @@
  * Copyright (C) 2010-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
  * <p>
  * This model of a nesting relation wastes some memory if the nested word has only few calls and returns, but is very
  * simple.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -107,7 +107,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * The empty word is constructed by passing two empty arrays.
 	 * <p>
 	 * Whether the given arguments satisfy the definition of a nested word is checked by {@code assert} statements.
-	 * 
+	 *
 	 * @param word
 	 *            The (linear) word of a nested word.
 	 * @param nestingRelation
@@ -130,7 +130,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	/**
 	 * Constructor for the nested word of length 1 (one).
-	 * 
+	 *
 	 * @param letter
 	 *            letter
 	 * @param internalOrCallOrReturn
@@ -153,7 +153,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Called from {@link #nestedWord(Word)}.
 	 * <p>
 	 * TODO: Preserve nesting relation if word is nested word
-	 * 
+	 *
 	 * @param word
 	 *            word
 	 */
@@ -170,7 +170,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	/**
 	 * Converts any {@link Word} to a nested word.
-	 * 
+	 *
 	 * @param word
 	 *            ordinary word
 	 * @param <LETTER>
@@ -187,7 +187,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Computes all call positions.<br>
 	 * The result is cached, so the result needs not be stored locally by a user.
-	 * 
+	 *
 	 * @return all call positions
 	 */
 	public Set<Integer> getCallPositions() {
@@ -213,7 +213,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * TODO Christian 2016-08-25: All callers directly invoke the {@link java.util.SortedMap#keySet()} method. We could
 	 * change the return value to a {@link java.util.SortedSet}.
-	 * 
+	 *
 	 * @return all pending return positions in a sorted order
 	 */
 	public SortedMap<Integer, LETTER> getPendingReturns() {
@@ -239,7 +239,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * This is a necessary check that an {@code int} array is a possible candidate for a nesting relation.
 	 * <p>
 	 * This method is only used in assertions.
-	 * 
+	 *
 	 * @param nestingRelation
 	 *            our array model of a nesting relation
 	 * @return true iff every entry of <tt>nestingRelation</tt> is in the range of the array or an INTERNAL_POSITION,
@@ -260,7 +260,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * This is a necessary check that an {@code int} array is a possible candidate for a nesting relation.
 	 * <p>
 	 * This method is only used in assertions.
-	 * 
+	 *
 	 * @param nestingRelation
 	 *            our array model of a nesting relation
 	 * @return true iff <tt>nestingRelation[i] = j</tt> implies <tt>nestingRelation[j] = i</tt> for all <tt>i</tt> such
@@ -288,7 +288,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * <p>
 	 * This method is only used in assertions.<br>
 	 * (Caution!) Its runtime is quadratic in the length of the word.
-	 * 
+	 *
 	 * @return false iff the modeled nesting relation contains (i,j) and (i',j') such that <tt>i < i' <= j < j'</tt>
 	 */
 	private static boolean nestingEdgesDoNotCross(final int[] nestingRelation) {
@@ -337,16 +337,6 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public boolean isReturnPosition(final int position) {
 		assert assertBounds(position);
 		return mNestingRelation[position] <= position && mNestingRelation[position] != INTERNAL_POSITION;
-	}
-
-	/**
-	 * @param position
-	 *            The position.
-	 * @return the symbol at the given position
-	 */
-	public LETTER getSymbolAt(final int position) {
-		assert position >= 0 && position < mWord.length;
-		return mWord[position];
 	}
 
 	/**
@@ -405,7 +395,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	/**
 	 * Creates a new nested word as a subword in the given range.
-	 * 
+	 *
 	 * @param firstIndex
 	 *            the index where the subword starts
 	 * @param lastIndex
@@ -460,7 +450,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * There are two pointers, one starting at the end of the first word and descending, and the other starting at the
 	 * beginning of the second word and increasing. Whenever a pending call is found in the first word, the next pending
 	 * return in the second word is found and they are matched.
-	 * 
+	 *
 	 * @param nestedWord2
 	 *            nested word that is 'appended' to this word
 	 * @return new nested word which is the concatenation
@@ -517,7 +507,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Helper method for concatenation.
 	 * <p>
 	 * Finds the next pending call in the second word and already copies the other parts to the new nesting relation.
-	 * 
+	 *
 	 * @param nestingRelation2
 	 *            nesting relation of the second word
 	 * @param concatNestingRelation
@@ -568,16 +558,16 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			// @formatter:off
 			if (isInternalPosition(i)) {
 				builder.append(QUOTE)
-						.append(getSymbolAt(i))
+						.append(getSymbol(i))
 						.append(QUOTE_SPACE);
 			} else if (isCallPosition(i)) {
 				builder.append(QUOTE)
-						.append(getSymbolAt(i))
+						.append(getSymbol(i))
 						.append("\"< ");
 			} else {
 				assert isReturnPosition(i);
 				builder.append(">\"")
-						.append(getSymbolAt(i))
+						.append(getSymbol(i))
 						.append(QUOTE_SPACE);
 			}
 			// @formatter:on
@@ -598,7 +588,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	/**
 	 * Asserts that the given index is within the word bounds.
-	 * 
+	 *
 	 * @param index
 	 *            index
 	 * @return true (assertions are checked inside the method)

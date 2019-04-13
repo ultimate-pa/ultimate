@@ -373,7 +373,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		final Set<Integer> result = new HashSet<>();
 
 		for (int i = 0; i < trace.length(); i++) {
-			final Term t = ((IAction) trace.getSymbolAt(i)).getTransformula().getFormula();
+			final Term t = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
 			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}

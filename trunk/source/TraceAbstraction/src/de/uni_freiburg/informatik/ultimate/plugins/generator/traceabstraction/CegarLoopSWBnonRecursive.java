@@ -570,7 +570,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			final IPredicate target = mActualPath.get(pos + 1);
 			final IPredicate source = mActualPath.get(pos);
 			for (final IncomingReturnTransition<LETTER, IPredicate> irt : mNestedAbstraction.returnPredecessors(target,
-					word.getSymbolAt(pos))) {
+					word.getSymbol(pos))) {
 				if (irt.getLinPred() == source) {
 					final IPredicate interp = mEpimorphism.getMapping(irt.getHierPred());
 					// assert (interp != null);
@@ -646,7 +646,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 
 		// Add all edges
 		for (int i = 0; i < edges.length(); i++) {
-			final LETTER e = edges.getSymbolAt(i);
+			final LETTER e = edges.getSymbol(i);
 			final IPredicate targetS = states.get(i + 1);
 
 			final IPredicate sourceI = i == 0 ? pre : interpolants[i - 1];

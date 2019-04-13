@@ -232,7 +232,7 @@ public class NestedSsaBuilder {
 		 */
 		if (mCurrentProcedure == null) {
 			assert numberPendingContexts == 0;
-			final IAction firstCodeBlock = mFormulas.getTrace().getSymbolAt(0);
+			final IAction firstCodeBlock = mFormulas.getTrace().getSymbol(0);
 			mCurrentProcedure = firstCodeBlock.getPrecedingProcedure();
 		}
 		reVersionModifiableGlobals();
@@ -251,7 +251,7 @@ public class NestedSsaBuilder {
 		 */
 		int numberOfPendingCalls = 0;
 		for (int i = 0; i < mFormulas.getTrace().length(); i++) {
-			final IAction symbol = mFormulas.getTrace().getSymbolAt(i);
+			final IAction symbol = mFormulas.getTrace().getSymbol(i);
 			// if (symbol instanceof GotoEdge) {
 			// throw new IllegalArgumentException(s_GotosUnsupportedMessage);
 			// }

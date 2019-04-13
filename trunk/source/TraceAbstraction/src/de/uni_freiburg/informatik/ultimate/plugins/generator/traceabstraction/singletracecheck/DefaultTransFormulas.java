@@ -64,10 +64,10 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	@Override
 	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(final int i) {
 		if (super.getTrace().isReturnPosition(i)) {
-			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbol(i);
 			return ret.getAssignmentOfReturn();
 		}
-		final IInternalAction act = (IInternalAction) super.getTrace().getSymbolAt(i);
+		final IInternalAction act = (IInternalAction) super.getTrace().getSymbol(i);
 		if (mWithBranchEncoders) {
 			if (act instanceof CodeBlock) {
 				return ((CodeBlock) act).getTransitionFormulaWithBranchEncoders();
@@ -79,7 +79,7 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 
 	@Override
 	protected UnmodifiableTransFormula getLocalVarAssignmentFromValidPos(final int i) {
-		final ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
+		final ICallAction cb = (ICallAction) super.getTrace().getSymbol(i);
 		return cb.getLocalVarsAssignment();
 	}
 
@@ -101,10 +101,10 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	 */
 	private String getCalledProcedure(final int i) {
 		if (super.getTrace().isCallPosition(i)) {
-			final ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
+			final ICallAction call = (ICallAction) super.getTrace().getSymbol(i);
 			return call.getSucceedingProcedure();
 		} else if (super.getTrace().isPendingReturn(i)) {
-			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbol(i);
 			return ret.getPrecedingProcedure();
 		} else {
 			throw new UnsupportedOperationException("only available for call and pending return");

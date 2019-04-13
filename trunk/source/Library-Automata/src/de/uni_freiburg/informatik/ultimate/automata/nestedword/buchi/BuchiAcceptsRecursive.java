@@ -181,7 +181,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		if (currentPosition >= mStem.length()) {
 			return Collections.singleton(currentState);
 		}
-		final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
+		final LETTER currentSymbol = mStem.getSymbol(currentPosition);
 
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
 				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mStem, "stem");
@@ -249,7 +249,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			}
 		}
 
-		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
+		final LETTER currentSymbol = mLoop.getSymbol(currentPosition);
 
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
 				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mLoop, "loop");
