@@ -1309,9 +1309,9 @@ public final class SmtUtils {
 		if (FLATTEN_ARRAY_TERMS) {
 			final Term nestedIdx = getArrayStoreIdx(array);
 			if (nestedIdx != null) {
-				// Check for store-over-store
+				// Check for select-over-store
 				if (nestedIdx.equals(index)) {
-					// Found store-over-store => ignore inner store
+					// Found select-over-store => ignore inner store
 					final ApplicationTerm appArray = (ApplicationTerm) array;
 					// => transform into value
 					result = appArray.getParameters()[2];
