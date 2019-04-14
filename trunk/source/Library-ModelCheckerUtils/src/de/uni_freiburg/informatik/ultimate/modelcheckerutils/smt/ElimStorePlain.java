@@ -268,7 +268,7 @@ public class ElimStorePlain {
 		}
 		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
 				eTask.getQuantifier(), eTask.getContext());
-		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(eTask.getTerm(), eliminatee);
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), eTask.getTerm(), eliminatee);
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 
@@ -303,7 +303,7 @@ public class ElimStorePlain {
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
 						eTask.getContext());
 			} else {
-				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterDerPreprocessing, eliminatee);
+				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), termAfterDerPreprocessing, eliminatee);
 				newAuxVars.add(eliminatee);
 			}
 		}
@@ -319,7 +319,7 @@ public class ElimStorePlain {
 					termAfterDerPreprocessing, aoa.getAntiDerRelations(eTask.getQuantifier()));
 			termAfterAntiDerPreprocessing = aadk.getResultTerm();
 			newAuxVars.addAll(aadk.getNewAuxVars());
-			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(termAfterAntiDerPreprocessing, eliminatee);
+			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), termAfterAntiDerPreprocessing, eliminatee);
 			if (!varOccurs(eliminatee, termAfterAntiDerPreprocessing)) {
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
 						eTask.getContext());
@@ -338,7 +338,7 @@ public class ElimStorePlain {
 					sosTerm, mdsos);
 			final Term replacedInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(replaced);
 			sosTerm = replacedInNnf;
-			sosAoa = new ArrayOccurrenceAnalysis(sosTerm, eliminatee);
+			sosAoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), sosTerm, eliminatee);
 			if(!varOccurs(eliminatee, replaced) || RETURN_AFTER_SOS) {
 				aiem.unlockSolver();
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars,
@@ -447,7 +447,7 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
 						mLogger, mMgdScript);
-		final TreeRelation<Integer, TermVariable> costs = ArrayIndexBasedCostEstimation.computeCostEstimation(aiem, eliminatees, eTask.getTerm());
+		final TreeRelation<Integer, TermVariable> costs = ArrayIndexBasedCostEstimation.computeCostEstimation(mMgdScript.getScript(), aiem, eliminatees, eTask.getTerm());
 		aiem.unlockSolver();
 		return costs;
 	}

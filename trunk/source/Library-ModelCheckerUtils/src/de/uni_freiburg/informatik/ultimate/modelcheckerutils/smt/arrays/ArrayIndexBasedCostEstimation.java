@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ArrayIndexEqualityManager;
@@ -42,20 +43,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  */
 public class ArrayIndexBasedCostEstimation {
 
-	public static TreeRelation<Integer, TermVariable> computeCostEstimation(final ArrayIndexEqualityManager aiem,
-			final Set<TermVariable> eliminatees, final Term term) {
+	public static TreeRelation<Integer, TermVariable> computeCostEstimation(final Script script,
+			final ArrayIndexEqualityManager aiem, final Set<TermVariable> eliminatees, final Term term) {
 		final TreeRelation<Integer, TermVariable> result = new TreeRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
-			final Integer costs = computeCostElimation(aiem, term, eliminatee);
+			final Integer costs = computeCostElimation(script, aiem, term, eliminatee);
 			result.addPair(costs, eliminatee);
 		}
 		return result;
 	}
 
-	private static int computeCostElimation(final ArrayIndexEqualityManager aiem, final Term term,
+	private static int computeCostElimation(final Script script, final ArrayIndexEqualityManager aiem, final Term term,
 			final TermVariable eliminatee) {
-		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(term, eliminatee)
-				.downgradeDimensionsIfNecessary();
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(script, term, eliminatee)
+				.downgradeDimensionsIfNecessary(script);
 		final Set<ArrayIndex> selectIndices = ArrayOccurrenceAnalysis.extractSelectIndices(aoa.getArraySelects());
 		final List<ArrayIndex> selectIndicesAsList = new ArrayList<>(selectIndices);
 		int totalCost = 0;

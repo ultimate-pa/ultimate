@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
  */
 public class ArrayOccurrenceAnalysis {
 
-	private static final boolean THROW_ERROR_BEFORE_DOWNGRADE = true;
+	private static final boolean THROW_ERROR_BEFORE_DOWNGRADE = false;
 
 	private final Term mAnalyzedTerm;
 	private final Term mWantedArray;
@@ -65,20 +66,21 @@ public class ArrayOccurrenceAnalysis {
 	private final List<BinaryEqualityRelation> mArrayDisequalities = new ArrayList<>();
 	private final List<Term> mOtherFunctionApplications = new ArrayList<>();
 
-	public ArrayOccurrenceAnalysis(final Term analyzedTerm, final Term wantedArray) {
+	public ArrayOccurrenceAnalysis(final Script script, final Term analyzedTerm, final Term wantedArray) {
 		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
 		mDimensionUpperLimit = Integer.MAX_VALUE;
-		new ArrOccFinder(mAnalyzedTerm);
+		new ArrOccFinder(script, mAnalyzedTerm);
 	}
 
-	public ArrayOccurrenceAnalysis(final Term analyzedTerm, final Term wantedArray, final int dimensionUpperLimit) {
+	public ArrayOccurrenceAnalysis(final Script script, final Term analyzedTerm, final Term wantedArray,
+			final int dimensionUpperLimit) {
 		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
 		mDimensionUpperLimit = dimensionUpperLimit;
-		new ArrOccFinder(mAnalyzedTerm);
+		new ArrOccFinder(script, mAnalyzedTerm);
 	}
 
 	/**
@@ -159,21 +161,23 @@ public class ArrayOccurrenceAnalysis {
 		return result;
 	}
 
-	public ArrayOccurrenceAnalysis downgradeDimensionsIfNecessary() {
+	public ArrayOccurrenceAnalysis downgradeDimensionsIfNecessary(final Script script) {
 		final TreeSet<Integer> dims = computeSelectAndStoreDimensions();
 		if (dims.size() <= 1) {
 			return this;
 		} else {
 			final int dimensionUpperLimit = dims.first();
 			assert dimensionUpperLimit >= 1;
-			return new ArrayOccurrenceAnalysis(mAnalyzedTerm, mWantedArray, dimensionUpperLimit);
+			return new ArrayOccurrenceAnalysis(script, mAnalyzedTerm, mWantedArray, dimensionUpperLimit);
 		}
 	}
 
 	private class ArrOccFinder extends NonRecursive {
+		private final Script mScript;
 		private final Set<Term> mTermsInWhichWeAlreadyDescended = new HashSet<>();
 
-		public ArrOccFinder(final Term term) {
+		public ArrOccFinder(final Script script, final Term term) {
+			mScript = script;
 			run(new MyWalker(term));
 		}
 
@@ -259,7 +263,7 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(term);
+					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mScript, term);
 					if(nas != null && nas.getArray().equals(mWantedArray)) {
 						if (THROW_ERROR_BEFORE_DOWNGRADE && nas
 								.getDimension() != new MultiDimensionalSort(mWantedArray.getSort()).getDimension()) {
@@ -269,9 +273,10 @@ public class ArrayOccurrenceAnalysis {
 							if (THROW_ERROR_BEFORE_DOWNGRADE) {
 								throw new AssertionError("downgrade");
 							}
-							nas = new MultiDimensionalNestedStore(nas.getInnermost(null).getInnermost(mDimensionUpperLimit));
+							nas = new MultiDimensionalNestedStore(nas.getInnermost(1).getInnermost(mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
+						assert nas.getArray() == mWantedArray;
 						mNestedArrayStores.add(nas);
 						for (final ArrayIndex ai : nas.getIndices()) {
 							for (final Term indexEntry : ai) {
@@ -287,7 +292,8 @@ public class ArrayOccurrenceAnalysis {
 						}
 					}
 				} else if (fun.equals("select")) {
-					final MultiDimensionalSelectOverNestedStore asos = MultiDimensionalSelectOverNestedStore.convert(term);
+					final MultiDimensionalSelectOverNestedStore asos = MultiDimensionalSelectOverNestedStore
+							.convert(mScript, term);
 					if (asos != null) {
 						if (asos.getNestedStore().getArray().equals(mWantedArray)) {
 							mArraySelectOverStores.add(asos);

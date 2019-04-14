@@ -45,12 +45,12 @@ public class MultiDimensionalSelectOverNestedStore {
 	private final MultiDimensionalNestedStore mNestedStore;
 	private final Term mTerm;
 
-	public MultiDimensionalSelectOverNestedStore(final Term term) {
+	public MultiDimensionalSelectOverNestedStore(final Script script, final Term term) {
 		final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
 		if (!select.getIndex().isEmpty()) {
 			final Term innerArray = select.getArray();
 			if (innerArray instanceof ApplicationTerm) {
-				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.convert(innerArray);
+				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.convert(script, innerArray);
 				if (store != null && store.getIndices().get(0).size() == select.getIndex().size()) {
 					mSelect = select;
 					mNestedStore = store;
@@ -76,8 +76,8 @@ public class MultiDimensionalSelectOverNestedStore {
 		return mTerm;
 	}
 
-	public static MultiDimensionalSelectOverNestedStore convert(final Term term) {
-		final MultiDimensionalSelectOverNestedStore mdsos = new MultiDimensionalSelectOverNestedStore(term);
+	public static MultiDimensionalSelectOverNestedStore convert(final Script script, final Term term) {
+		final MultiDimensionalSelectOverNestedStore mdsos = new MultiDimensionalSelectOverNestedStore(script, term);
 		if (mdsos.getSelect() == null) {
 			return null;
 		} else {
@@ -102,13 +102,14 @@ public class MultiDimensionalSelectOverNestedStore {
 	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
 	 *         in given term.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Term term) {
+	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Script script,
+			final Term term) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
 		final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false)
 				.findMatchingSubterms(term);
 		for (final ApplicationTerm selectTerm : allSelectTerms) {
-			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore
-					.convert(selectTerm);
+			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
+					selectTerm);
 			if (mdsos != null) {
 				result.add(mdsos);
 			}
@@ -121,14 +122,14 @@ public class MultiDimensionalSelectOverNestedStore {
 	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
 	 *         in given term and where arr is first operand of the (inner) store.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Term term,
-			final Term arr) {
+	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Script script,
+			final Term term, final Term arr) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
 		final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false)
 				.findMatchingSubterms(term);
 		for (final ApplicationTerm selectTerm : allSelectTerms) {
-			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore
-					.convert(selectTerm);
+			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
+					selectTerm);
 			if (mdsos != null && mdsos.getNestedStore().getArray() == arr) {
 				result.add(mdsos);
 			}

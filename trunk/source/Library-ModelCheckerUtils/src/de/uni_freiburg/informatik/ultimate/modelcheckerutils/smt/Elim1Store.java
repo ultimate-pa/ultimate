@@ -177,7 +177,7 @@ public class Elim1Store {
 //			throw new AssertionError("several disjuncts! " + inputTerm);
 //		}
 
-		ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(inputTerm, eliminatee);
+		ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), inputTerm, eliminatee);
 //		if (!aoa.getArrayDisequalities().isEmpty()) {
 //			throw new AssertionError("disequality");
 //		}
@@ -196,7 +196,8 @@ public class Elim1Store {
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		final Term preprocessedInput = input.getTerm();
 
-		aoa = new ArrayOccurrenceAnalysis(preprocessedInput, eliminatee).downgradeDimensionsIfNecessary();
+		aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), preprocessedInput, eliminatee)
+				.downgradeDimensionsIfNecessary(mMgdScript.getScript());
 		assert aoa.computeSelectAndStoreDimensions().size() <= 1 : "incompatible";
 
 		final List<MultiDimensionalSelect> selectTerms = aoa.getArraySelects();

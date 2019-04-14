@@ -90,8 +90,10 @@ public class DerPreprocessor extends TermTransformer {
 	private final boolean mIntroducedDerPossibility;
 
 	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final int quantifier,
-			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers, final ArrayIndexEqualityManager aiem) {
-		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(bers, eliminatee);
+			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers,
+			final ArrayIndexEqualityManager aiem) {
+		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(mgdScript.getScript(), bers,
+				eliminatee);
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
 		DerCase derCase = null;
@@ -150,7 +152,8 @@ public class DerPreprocessor extends TermTransformer {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
 			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
+					otherSide);
 			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
 					airc, aiem);
 			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
@@ -170,7 +173,8 @@ public class DerPreprocessor extends TermTransformer {
 					airc);
 			break;
 		case EQ_STORE:
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
+					otherSide);
 			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
 			break;
 		case SELF_UPDATE:
@@ -180,12 +184,12 @@ public class DerPreprocessor extends TermTransformer {
 		return result;
 	}
 
-	private static HashRelation<DerCase, BinaryEqualityRelation> classify(final List<BinaryEqualityRelation> bers,
-			final TermVariable eliminatee) {
+	private static HashRelation<DerCase, BinaryEqualityRelation> classify(final Script script,
+			final List<BinaryEqualityRelation> bers, final TermVariable eliminatee) {
 		final HashRelation<DerCase, BinaryEqualityRelation> result = new HashRelation<>();
 		for (final BinaryEqualityRelation ber : bers) {
 			final Term otherSide = getOtherSide(ber, eliminatee);
-			final DerCase derCase = classify(otherSide, eliminatee);
+			final DerCase derCase = classify(script, otherSide, eliminatee);
 			result.addPair(derCase, ber);
 		}
 		return result;
@@ -203,11 +207,11 @@ public class DerPreprocessor extends TermTransformer {
 		return otherSide;
 	}
 
-	private static DerCase classify(final Term otherSide, final TermVariable eliminatee) {
+	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee) {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
 			throw new AssertionError("This case should habe been handled by DER");
 		}
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(otherSide);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, otherSide);
 		if (mdns != null) {
 			if (mdns.getArray() == eliminatee) {
 				return DerCase.SELF_UPDATE;
@@ -278,7 +282,7 @@ public class DerPreprocessor extends TermTransformer {
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
 			result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
-					new MultiDimensionalNestedStore(nas.getArray(), newIndices, newValues)
+					new MultiDimensionalNestedStore(mgdScript.getScript(), nas.getArray(), newIndices, newValues)
 							.toTerm(mgdScript.getScript()),
 					eliminatee);
 		}
