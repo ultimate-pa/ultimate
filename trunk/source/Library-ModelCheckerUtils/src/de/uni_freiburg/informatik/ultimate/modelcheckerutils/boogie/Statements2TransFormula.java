@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
@@ -682,8 +683,13 @@ public class Statements2TransFormula {
 			if (qvs.size() > 1) {
 				throw new UnsupportedOperationException("support for alternating quantifiers not yet implemented");
 			}
-			auxVars.addAll(qvs.get(0).getVariables());
-			result = qs.getInnerTerm();
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for(final TermVariable tv : qvs.get(0).getVariables()) {
+				final TermVariable newTv = mMgdScript.constructFreshTermVariable("skolemized_" + tv.getName(), tv.getSort());
+				substitutionMapping.put(tv, newTv);
+				auxVars.add(newTv);
+			}
+			result = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
 		}
 		return result;
 	}
