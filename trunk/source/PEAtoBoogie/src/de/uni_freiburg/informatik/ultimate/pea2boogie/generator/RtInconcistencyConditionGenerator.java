@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -430,9 +431,15 @@ public class RtInconcistencyConditionGenerator {
 			return mTrue;
 		}
 		mQelimQuery++;
-		final Term afterQelimFormula =
-				PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
-						SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term afterQelimFormula;
+		try {
+			afterQelimFormula =
+					PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
+							SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		} catch (final SMTLIBException ex) {
+			mLogger.fatal("Exception occured during PQE of " + term);
+			throw ex;
+		}
 
 		if (afterQelimFormula instanceof QuantifiedFormula) {
 			// qelim failed to eliminate all quantifiers, perhaps the solver is better?
