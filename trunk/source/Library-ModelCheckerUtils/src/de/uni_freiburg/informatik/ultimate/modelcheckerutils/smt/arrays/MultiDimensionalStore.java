@@ -102,7 +102,7 @@ public class MultiDimensionalStore {
 		assert classInvariant();
 	}
 
-	private boolean isStore(final Term term) {
+	private static boolean isStore(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().equals("store");
 		} else {
@@ -176,17 +176,29 @@ public class MultiDimensionalStore {
 		return MultiDimensionalStore.convert(as.asTerm());
 	}
 
-
 	public static MultiDimensionalStore convert(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
-			return null;
-		}
-		final MultiDimensionalStore mds = new MultiDimensionalStore(term);
-		if (mds.getArray() == null) {
-			return null;
+		return convert(term, Integer.MAX_VALUE);
+	}
+
+	public static MultiDimensionalStore convert(final Term term, final int maxDimension) {
+		final ArrayList<Term> index = new ArrayList<Term>();
+		Term remainder = term;
+		final Term array;
+		if (isStore(term)) {
+			array = ((ApplicationTerm) term).getParameters()[0];
+			index.add(((ApplicationTerm) term).getParameters()[1]);
+			remainder = ((ApplicationTerm) term).getParameters()[2];
+			int dimension = 1;
+			while (dimension < maxDimension && isStore(remainder)
+					&& isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], array, index)) {
+				index.add(((ApplicationTerm) remainder).getParameters()[1]);
+				remainder = ((ApplicationTerm) remainder).getParameters()[2];
+				dimension ++;
+			}
 		} else {
-			return mds;
+			return null;
 		}
+		return new MultiDimensionalStore(array, new ArrayIndex(index), remainder, term);
 	}
 
 	@Override
