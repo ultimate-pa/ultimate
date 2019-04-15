@@ -594,7 +594,7 @@ public class ElimStorePlain {
 				throw new UnsupportedOperationException("alternation not yet supported");
 			}
 		} else if (qvs.size() > 1) {
-			throw new UnsupportedOperationException("alternation not yet supported");
+			throw new UnsupportedOperationException("alternation not yet supported: " + pnf);
 		} else {
 			throw new AssertionError();
 		}
