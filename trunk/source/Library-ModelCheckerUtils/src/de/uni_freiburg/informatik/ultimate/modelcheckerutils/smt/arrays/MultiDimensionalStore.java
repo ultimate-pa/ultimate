@@ -223,7 +223,7 @@ public class MultiDimensionalStore {
 		final Set<ApplicationTerm> storeTerms =
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
 		for (final Term storeTerm : storeTerms) {
-			final MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
+			final MultiDimensionalStore mdStore = MultiDimensionalStore.convert(storeTerm);
 			if (mdStore.getIndex().size() == 0) {
 				throw new AssertionError("store must not have dimension 0");
 			}

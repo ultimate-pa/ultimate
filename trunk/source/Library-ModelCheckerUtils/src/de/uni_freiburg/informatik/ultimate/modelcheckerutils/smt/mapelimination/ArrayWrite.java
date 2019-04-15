@@ -51,7 +51,7 @@ public class ArrayWrite {
 			arrayTerm = term;
 		}
 		while (SmtUtils.isFunctionApplication(arrayTerm, "store")) {
-			final MultiDimensionalStore store = new MultiDimensionalStore(arrayTerm);
+			final MultiDimensionalStore store = MultiDimensionalStore.convert(arrayTerm);
 			mIndexValuePairs.add(new Pair<ArrayIndex, Term>(store.getIndex(), store.getValue()));
 			arrayTerm = store.getArray();
 		}

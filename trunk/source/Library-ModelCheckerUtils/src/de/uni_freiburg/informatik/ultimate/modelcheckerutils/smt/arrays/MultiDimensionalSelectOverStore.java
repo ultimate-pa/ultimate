@@ -50,7 +50,7 @@ public class MultiDimensionalSelectOverStore {
 		if (!select.getIndex().isEmpty()) {
 			final Term innerArray = select.getArray();
 			if (innerArray instanceof ApplicationTerm) {
-				final MultiDimensionalStore store = new MultiDimensionalStore(innerArray);
+				final MultiDimensionalStore store = MultiDimensionalStore.convert(innerArray);
 				if (store.getIndex().size() == select.getIndex().size()) {
 					mSelect = select;
 					mStore = store;

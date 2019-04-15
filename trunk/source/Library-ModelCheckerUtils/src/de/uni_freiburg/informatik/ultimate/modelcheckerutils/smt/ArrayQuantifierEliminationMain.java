@@ -180,7 +180,7 @@ public class ArrayQuantifierEliminationMain {
 	 * will be eliminated recursive.
 	 */
 	private Term storeOverStore(final Term term, final TermVariable qarray) {
-		final MultiDimensionalStore mds = new MultiDimensionalStore(term);
+		final MultiDimensionalStore mds = MultiDimensionalStore.convert(term);
 		final List<MultiDimensionalStore> storeterms = mds.extractArrayStoresShallow(term);
 		for (final MultiDimensionalStore storeOuter : storeterms) {
 
@@ -251,7 +251,7 @@ public class ArrayQuantifierEliminationMain {
 		for (final MultiDimensionalSelect select : selectterms) {
 			// if Array is BasicArray, its no SelectOverStore
 			if (!SmtUtils.isBasicArrayTerm(select.getArray())) {
-				final MultiDimensionalStore innerStore = new MultiDimensionalStore(select.getArray());
+				final MultiDimensionalStore innerStore = MultiDimensionalStore.convert(select.getArray());
 
 				final NestedArrayStore nas = NestedArrayStore.convert(innerStore.getStoreTerm());
 
