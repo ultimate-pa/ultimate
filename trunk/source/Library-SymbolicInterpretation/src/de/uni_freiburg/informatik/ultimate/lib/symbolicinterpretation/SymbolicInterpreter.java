@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Annotates given program locations with predicates over-approximating the actually reachable concrete states
- * at that locations.
- * 
+ * Annotates given program locations with predicates over-approximating the actually reachable concrete states at that
+ * locations.
+ *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
 public class SymbolicInterpreter {
@@ -45,5 +48,11 @@ public class SymbolicInterpreter {
 	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
 		mLocationsOfInterest = locationsOfInterest;
+
+		// locationsOfInterest.stream().findFirst().get().getProcedure()
+		icfg.getInitialNodes();
+		final HashRelation<String, String> cg = new HashRelation<>();
+		new IcfgEdgeIterator(icfg).asStream().filter(a -> a instanceof IIcfgCallTransition<?>)
+				.forEach(a -> cg.addPair(a.getSource().getProcedure(), a.getTarget().getProcedure()));
 	}
 }
