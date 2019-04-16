@@ -31,6 +31,13 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 
+/**
+ * Node of a {@link RegexDag}.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 
 	private static final long serialVersionUID = 1L;

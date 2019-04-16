@@ -37,15 +37,52 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 
+/**
+ * Compresses RegexDags by merging nodes while conserving the DAG's language.
+ * Use {@link #compress(RegexDag)} to compress a single DAG in-place.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class RegexDagCompressor<L> {
 
-	private Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new HashMap<>();
+	/**
+	 * Temporary table for grouping predecessors/successors of a node before merging each group.
+	 * Could also be a local variable, but recycling an existing map is more efficient than
+	 * creating a new one each time.
+	 */
+	private final Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new HashMap<>();
+
+	/**
+	 * Some nodes where merged in the last iteration over the whole graph.
+	 */
 	private boolean mMergedFlag;
+
+	/**
+	 * The RegexDag currently being compressed in-place.
+	 */
 	private RegexDag<L> mDag;
 
+	/**
+	 * Compresses a single DAG in-place by merging nodes while conserving the DAG's language.
+	 * <p>
+	 * The compression is just "best effort":
+	 * <ul>
+	 * <li> The resulting DAG is not necessarily the minimum DAG.
+	 *      Sometimes an equivalent DAG with less nodes exists.
+	 * <li> The resulting DAG has no canonical form.
+	 *      Compressing two equivalent (but different) DAGs can yield different (but equivalent) results.
+	 * </ul>
+	 * However, the compression is idempotent. In other words, compressing an already compressed DAG again has no effect.
+	 * 
+	 * 
+	 * @param dag DAG to be compressed in-place
+	 * @return The same DAG (now compressed)
+	 */
 	public RegexDag<L> compress(final RegexDag<L> dag) {
-		mMergedFlag = true;
 		mDag = dag;
+		mMergedFlag = true;
 		while (mMergedFlag) {
 			mMergedFlag = false;
 			searchAndMerge(mDag.getSource(), RegexDagNode::getOutgoingNodes, RegexDagNode::getIncomingNodes);

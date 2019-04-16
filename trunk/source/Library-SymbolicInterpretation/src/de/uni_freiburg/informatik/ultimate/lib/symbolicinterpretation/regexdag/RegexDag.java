@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
  * @see RegexDagNode
  * 
  * @author schaetzc@tf.uni-freiburg.de
+ * 
+ * @param <L> Type of letters that are used inside regex literals
  */
 public class RegexDag<L> {
 
