@@ -362,7 +362,15 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 	@Override
 	public String toString() {
-		return "Formula: " + mFormula + "  InVars " + super.getInVars() + "  OutVars" + super.getOutVars() + "  AuxVars"
+		return toStringInternal(mFormula.toString());
+	}
+
+	public String toStringDirect() {
+		return toStringInternal(mFormula.toStringDirect());
+	}
+
+	private String toStringInternal(final String formula) {
+		return "Formula: " + formula + "  InVars " + super.getInVars() + "  OutVars" + super.getOutVars() + "  AuxVars"
 				+ super.getAuxVars() + "  AssignedVars" + mAssignedVars;
 	}
 
