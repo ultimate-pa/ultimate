@@ -326,11 +326,12 @@ public class AffineTermTransformer extends TermTransformer {
 		}
 		final AffineTerm result;
 		for (int i = 1; i < affineArgs.length; i++) {
-			if (affineArgs[i].isConstant()) {
+			if (affineArgs[i].isConstant() && !affineArgs[i].isZero()) {
 				multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
 			} else {
-				// Only the argument at position 0 may be a non-constant
-				// all other arguments must be literals
+				// Only the argument at position 0 may be a non-constant,
+				// all other arguments must be literals,
+				// divisors must not be zero.
 				return null;
 			}
 		}
