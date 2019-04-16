@@ -342,6 +342,23 @@ public class QuantifierEliminationTest {
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
+	
+	@Test
+	public void divByZero3() {
+		// Problem: by applying DER we get a division whose second argument is zero.
+		mScript.declareFun("c", new Sort[0], mRealSort);
+		final String formulaAsString = " (exists ((x Real)) (and (= x c) (< 2.0 (/ 1.0 (- c x)))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info("Result: " + result);
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		Assert.assertTrue(resultIsQuantifierFree);
+		final String expectedResultAsString = "(< 2.0 (/ 1.0 0.0))";
+		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result,
+				expectedResultAsString);
+		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+	}
 
 	/**
 	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
