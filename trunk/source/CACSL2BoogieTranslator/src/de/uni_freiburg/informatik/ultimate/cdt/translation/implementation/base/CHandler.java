@@ -3693,7 +3693,8 @@ public class CHandler {
 			if (witnessInvariant != null) {
 				specList.add(witnessInvariant);
 			}
-			if (node instanceof IASTForStatement) {
+			if ((node instanceof IASTForStatement) || (node instanceof IASTWhileStatement)
+					|| (node instanceof IASTDoStatement)) {
 				for (int i = 0; i < mContract.size(); i++) {
 					// retranslate ACSL specification needed e.g., in cases
 					// where ids of function parameters differ from is in ACSL
