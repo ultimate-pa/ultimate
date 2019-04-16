@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -27,10 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-/**
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
- */
-public class DummyClassSoThatGitDoesNotDeleteTheFolder {
+import java.util.HashMap;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+
+/**
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
+public class Table {
+
+	private final Map<Object, TableValue> mMap = new HashMap<>();
+
+	public TableValue valueForProcedure(final String procedureId) {
+		return mMap.computeIfAbsent(procedureId, this::newEntry);
+	}
+
+	public TableValue valueForStar(final IRegex<IIcfgTransition<IcfgLocation>> starRegex) {
+		return mMap.computeIfAbsent(starRegex, this::newEntry);
+	}
+
+	private TableValue newEntry(final Object key) {
+		return new TableValue();
+	}
 }

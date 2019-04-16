@@ -87,7 +87,7 @@ public class RegexDagManager {
 		mStars.put(star, dag);
 		return dag;
 	}
-	
+
 	private RegexDag<IIcfgTransition<IcfgLocation>> retrieveAndCompressDag() {
 		RegexDag<IIcfgTransition<IcfgLocation>> dag = mRegexToDag.getDag();
 		mRegexToDag.resetDag();
