@@ -8,12 +8,12 @@
  * as "flagship example to motivate a new technique for proving non-trivial 
  * safety assertions"
  * 
- * Date: 27.6.2013
+ * Date: 2013-06-27
  * Author: heizmann@informatik.uni-freiburg.de
  *
  */
 
-int main() {
+int main(void) {
     int x = 0, y = 50;
     while (x < 100) {
         if (x < 50) {
@@ -23,5 +23,5 @@ int main() {
             y++;
         }
     }
-    //@assert (y == 100 );
+    //@ assert (y == 100);
 }
