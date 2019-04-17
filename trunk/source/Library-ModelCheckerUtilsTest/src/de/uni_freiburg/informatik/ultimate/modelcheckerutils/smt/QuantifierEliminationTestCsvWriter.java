@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class QuantifierEliminationTestCsvWriter {
 
+	private String mFilePath;
 	private final SimpleCsvProvider<String> mCsv;
 	private final Triple<PrintWriter, BufferedWriter, FileWriter> mPrintWriter;
 	private boolean mPrinted;
@@ -96,26 +97,27 @@ public class QuantifierEliminationTestCsvWriter {
 		mPrintWriter.getFirst().flush();
 		mPrintWriter.getSecond().flush();
 		mPrintWriter.getThird().flush();
+		System.out.println("Written .csv to file " + mFilePath);
+
 		mPrintWriter.getFirst().close();
 		mPrintWriter.getSecond().close();
 		mPrintWriter.getThird().close();
 		mPrinted = true;
 	}
 
-	private static Triple<PrintWriter, BufferedWriter, FileWriter> prepareFile(final String directory,
+	private Triple<PrintWriter, BufferedWriter, FileWriter> prepareFile(final String directory,
 			final String testfileId) {
-		final String fullPath = directory + File.separator + getDateTime() + testfileId + ".csv";
-		final File file = new File(fullPath);
-		try (FileWriter fileWriter = new FileWriter(file)) {
+		mFilePath = directory + File.separator + getDateTime() + testfileId + ".csv";
+		final File file = new File(mFilePath);
+		try {
+			final FileWriter fileWriter = new FileWriter(file);
 			final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 			final PrintWriter printWriter = new PrintWriter(bufferedWriter);
 			printWriter.println("lol");
 			printWriter.flush();
-			// bufferedWriter.flush();
-			// fileWriter.flush();
-			return new Triple<PrintWriter, BufferedWriter, FileWriter>(printWriter, bufferedWriter, fileWriter);
+			return new Triple<>(printWriter, bufferedWriter, fileWriter);
 		} catch (final IOException e) {
-			throw new AssertionError(e);
+			throw new RuntimeException(e);
 		}
 	}
 
