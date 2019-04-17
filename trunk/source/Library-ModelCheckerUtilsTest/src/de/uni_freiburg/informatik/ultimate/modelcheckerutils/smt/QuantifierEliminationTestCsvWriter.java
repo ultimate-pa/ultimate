@@ -57,17 +57,18 @@ public class QuantifierEliminationTestCsvWriter {
 	private final TreeMap<String, List<String>> mMap = new TreeMap<>();
 	private long mCurrentEliminationStartTime;
 
-
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
-		final List<String> list = Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime" });
-		mCsv = new SimpleCsvProvider<String>(list);
+		final List<String> list =
+				Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime" });
+		mCsv = new SimpleCsvProvider<>(list);
 		final String workingDirectory = System.getProperty("user.dir");
 		mPrintWriter = prepareFile(workingDirectory, testfileId);
 	}
 
 	public void reportEliminationBegin(final String testId, final Term eliminationInput) {
 		mCurrentEliminationStartTime = System.nanoTime();
-		mMap.put(testId, Arrays.asList(new String[] { testId, String.valueOf(new DAGSize().treesize(eliminationInput)), null, null}));
+		mMap.put(testId, Arrays
+				.asList(new String[] { testId, String.valueOf(new DAGSize().treesize(eliminationInput)), null, null }));
 
 	}
 
@@ -77,7 +78,6 @@ public class QuantifierEliminationTestCsvWriter {
 		list.set(2, String.valueOf(new DAGSize().treesize(eliminationOutput)));
 		list.set(3, String.valueOf(duration));
 	}
-
 
 	private long computeDurationMiliseconds(final long startTimeInNanoseconds) {
 		final long durationNanoseconds = System.nanoTime() - startTimeInNanoseconds;
@@ -102,16 +102,17 @@ public class QuantifierEliminationTestCsvWriter {
 		mPrinted = true;
 	}
 
-	private static Triple<PrintWriter, BufferedWriter, FileWriter> prepareFile(final String directory, final String testfileId) {
+	private static Triple<PrintWriter, BufferedWriter, FileWriter> prepareFile(final String directory,
+			final String testfileId) {
 		final String fullPath = directory + File.separator + getDateTime() + testfileId + ".csv";
 		final File file = new File(fullPath);
 		try (FileWriter fileWriter = new FileWriter(file)) {
-			final BufferedWriter bufferedWriter= new BufferedWriter(fileWriter);
+			final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 			final PrintWriter printWriter = new PrintWriter(bufferedWriter);
 			printWriter.println("lol");
 			printWriter.flush();
-//			bufferedWriter.flush();
-//			fileWriter.flush();
+			// bufferedWriter.flush();
+			// fileWriter.flush();
 			return new Triple<PrintWriter, BufferedWriter, FileWriter>(printWriter, bufferedWriter, fileWriter);
 		} catch (final IOException e) {
 			throw new AssertionError(e);

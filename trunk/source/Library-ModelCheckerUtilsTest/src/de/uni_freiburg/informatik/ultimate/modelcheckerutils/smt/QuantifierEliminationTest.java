@@ -98,10 +98,6 @@ public class QuantifierEliminationTest {
 		}
 	}
 
-
-
-
-
 	@Before
 	public void setUp() throws FileNotFoundException {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
@@ -164,21 +160,22 @@ public class QuantifierEliminationTest {
 		// Functions
 
 		// term
-		final Term term = mScript.quantifier(1,
-				new TermVariable[] { var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88 },
+		final Term term = mScript.quantifier(1, new TermVariable[] { var_v_oldvalid_88, var_v_oldvalid_88,
+				var_v_oldvalid_88 },
 				mScript.term("or", mScript.term("not", mScript.term(
-						"and",
-						mScript.quantifier(1, new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
-								mScript.term("or",
-										mScript.term("=", var_v_oldvalid_88,
-												mScript.term(
-														"store", var_v_valid_207, var_v_probe3_6_p9base_40, con_0)),
-										mScript.term("=", var_v_probe3_6_p9base_40, con_0),
-										mScript.term("not",
-												mScript.term("=",
-														mScript.term("select", var_v_valid_207,
-																var_v_probe3_6_p9base_40),
-														con_0)))),
+						"and", mScript
+								.quantifier(1,
+										new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
+										mScript.term("or",
+												mScript.term("=", var_v_oldvalid_88,
+														mScript.term("store", var_v_valid_207, var_v_probe3_6_p9base_40,
+																con_0)),
+												mScript.term("=", var_v_probe3_6_p9base_40, con_0),
+												mScript.term("not",
+														mScript.term("=",
+																mScript.term("select", var_v_valid_207,
+																		var_v_probe3_6_p9base_40),
+																con_0)))),
 						mScript.term("=", var_oldvalid, var_v_valid_207))),
 						mScript.term("=", var_valid, var_v_oldvalid_88)));
 
@@ -379,8 +376,8 @@ public class QuantifierEliminationTest {
 		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
 		Assert.assertTrue(resultIsQuantifierFree);
 		final String expectedResultAsString = "(< 2.0 (/ 1.0 0.0))";
-		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result,
-				expectedResultAsString);
+		final boolean resultIsEquivalentToExpectedResult =
+				SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
 
@@ -728,7 +725,8 @@ public class QuantifierEliminationTest {
 	@Test
 	public void multidimensionalNestedStore() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		final Sort intintintArraySort =
+				SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
 		mScript.declareFun("v_#memory_int_BEFORE_CALL_2", new Sort[0], intintintArraySort);
 		mScript.declareFun("nonMain_~dst~0.base", new Sort[0], intSort);
 		mScript.declareFun("v_#Ultimate.C_memcpy_#t~loopctr6_8", new Sort[0], intSort);
@@ -739,16 +737,13 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("#memory_int", new Sort[0], intintintArraySort);
 		mScript.declareFun("nonMain_~src~0.base", new Sort[0], intSort);
 		mScript.declareFun("nonMain_~src~0.offset", new Sort[0], intSort);
-		final String formulaAsString = "(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
+		final String formulaAsString =
+				"(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
 
 	}
-
-
-
-
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
