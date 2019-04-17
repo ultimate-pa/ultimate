@@ -27,14 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,11 +56,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtFunctionDefi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.SmtSymbols;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  *
@@ -77,6 +82,25 @@ public class QuantifierEliminationTest {
 	private Sort mIntSort;
 	private Sort[] mEmptySort;
 	private Term mTrueTerm;
+	private static QuantifierEliminationTestCsvWriter mCsvWriter;
+
+	@BeforeClass
+	public static void init() {
+		mCsvWriter = new QuantifierEliminationTestCsvWriter(QuantifierEliminationTest.class.getSimpleName());
+	}
+
+	@AfterClass
+	public static void cleanup() {
+		try {
+			mCsvWriter.writeCsv();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+
+
+
 
 	@Before
 	public void setUp() throws FileNotFoundException {
@@ -342,7 +366,7 @@ public class QuantifierEliminationTest {
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
-	
+
 	@Test
 	public void divByZero3() {
 		// Problem: by applying DER we get a division whose second argument is zero.
@@ -505,6 +529,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (= i k)))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mCsvWriter.reportEliminationBegin(ReflectionUtil.getCallerMethodName(1), formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result);
@@ -514,6 +539,7 @@ public class QuantifierEliminationTest {
 		final boolean resultIsEquivalentToExpectedResult =
 				SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+		mCsvWriter.reportEliminationSuccess(ReflectionUtil.getCallerMethodName(1), result);
 	}
 
 	@Test
@@ -698,6 +724,31 @@ public class QuantifierEliminationTest {
 				SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
 	}
+
+	@Test
+	public void multidimensionalNestedStore() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		mScript.declareFun("v_#memory_int_BEFORE_CALL_2", new Sort[0], intintintArraySort);
+		mScript.declareFun("nonMain_~dst~0.base", new Sort[0], intSort);
+		mScript.declareFun("v_#Ultimate.C_memcpy_#t~loopctr6_8", new Sort[0], intSort);
+		mScript.declareFun("#Ultimate.C_memcpy_dest.offset", new Sort[0], intSort);
+		mScript.declareFun("v_prenex_1", new Sort[0], intSort);
+		mScript.declareFun("v_#Ultimate.C_memcpy_#t~loopctr6_9", new Sort[0], intSort);
+		mScript.declareFun("#Ultimate.C_memcpy_#t~mem7", new Sort[0], intSort);
+		mScript.declareFun("#memory_int", new Sort[0], intintintArraySort);
+		mScript.declareFun("nonMain_~src~0.base", new Sort[0], intSort);
+		mScript.declareFun("nonMain_~src~0.offset", new Sort[0], intSort);
+		final String formulaAsString = "(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
+		Assert.assertTrue(mdns.getDimension() == 2);
+
+	}
+
+
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
