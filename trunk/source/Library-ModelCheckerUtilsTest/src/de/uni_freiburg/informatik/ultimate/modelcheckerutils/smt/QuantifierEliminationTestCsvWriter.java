@@ -57,6 +57,7 @@ public class QuantifierEliminationTestCsvWriter {
 	private boolean mPrinted;
 	private final TreeMap<String, List<String>> mMap = new TreeMap<>();
 	private long mCurrentEliminationStartTime;
+	private String[] mCurrentEliminationData;
 
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
 		final List<String> list =

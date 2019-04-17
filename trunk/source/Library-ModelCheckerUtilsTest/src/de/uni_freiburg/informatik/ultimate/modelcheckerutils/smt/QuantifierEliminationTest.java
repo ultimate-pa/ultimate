@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 public class QuantifierEliminationTest {
 
 	private static final boolean ENABLE_LOG = false;
+	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -85,16 +86,18 @@ public class QuantifierEliminationTest {
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
 
 	@BeforeClass
-	public static void init() {
+	public static void beforeAllTests() {
 		mCsvWriter = new QuantifierEliminationTestCsvWriter(QuantifierEliminationTest.class.getSimpleName());
 	}
 
 	@AfterClass
-	public static void cleanup() {
-		try {
-			mCsvWriter.writeCsv();
-		} catch (final IOException e) {
-			throw new AssertionError(e);
+	public static void afterAllTests() {
+		if (WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY) {
+			try {
+				mCsvWriter.writeCsv();
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
@@ -526,7 +529,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (= i k)))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mCsvWriter.reportEliminationBegin(ReflectionUtil.getCallerMethodName(1), formulaAsTerm);
+		mCsvWriter.reportEliminationBegin(ReflectionUtil.getCallerMethodName(2), formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result);
@@ -536,7 +539,7 @@ public class QuantifierEliminationTest {
 		final boolean resultIsEquivalentToExpectedResult =
 				SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
 		Assert.assertTrue(resultIsEquivalentToExpectedResult);
-		mCsvWriter.reportEliminationSuccess(ReflectionUtil.getCallerMethodName(1), result);
+		mCsvWriter.reportEliminationSuccess(ReflectionUtil.getCallerMethodName(2), result);
 	}
 
 	@Test
