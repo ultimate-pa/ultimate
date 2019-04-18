@@ -41,6 +41,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -55,7 +56,6 @@ public class QuantifierEliminationTestCsvWriter {
 	private final SimpleCsvProvider<String> mCsv;
 	private final Triple<PrintWriter, BufferedWriter, FileWriter> mPrintWriter;
 	private boolean mPrinted;
-	private final TreeMap<String, List<String>> mMap = new TreeMap<>();
 	private long mCurrentEliminationStartTime;
 	private String[] mCurrentEliminationData;
 
@@ -67,18 +67,47 @@ public class QuantifierEliminationTestCsvWriter {
 		mPrintWriter = prepareFile(workingDirectory, testfileId);
 	}
 
-	public void reportEliminationBegin(final String testId, final Term eliminationInput) {
-		mCurrentEliminationStartTime = System.nanoTime();
-		mMap.put(testId, Arrays
-				.asList(new String[] { testId, String.valueOf(new DAGSize().treesize(eliminationInput)), null, null }));
-
+	public void reportEliminationBegin(final Term eliminationInput) {
+		final String testId = ReflectionUtil.getCallerMethodName(4);
+		if (mCurrentEliminationData == null) {
+			mCurrentEliminationData = new String[4];
+			mCurrentEliminationData[0] = testId;
+			long treesize = new DAGSize().treesize(eliminationInput);
+			assert mCurrentEliminationData[1] == null;
+			mCurrentEliminationData[1] = String.valueOf(treesize);
+			mCurrentEliminationStartTime = System.nanoTime();
+		} else {
+			throw new AssertionError("Writing PQE benchmarks failed: old data");
+		}
+	}
+	
+	public void reportTestFinished() {
+		if (mCurrentEliminationData == null) {
+			// do nothing
+		} else {
+			// elimination was not successful
+			final long duration = computeDurationMiliseconds(mCurrentEliminationStartTime);
+			assert mCurrentEliminationData[3] == null;
+			mCurrentEliminationData[3] = String.valueOf(duration);
+			mCsv.addRow(Arrays.asList(mCurrentEliminationData));
+			mCurrentEliminationData = null;
+		}
 	}
 
-	public void reportEliminationSuccess(final String testId, final Term eliminationOutput) {
-		final long duration = computeDurationMiliseconds(mCurrentEliminationStartTime);
-		final List<String> list = mMap.get(testId);
-		list.set(2, String.valueOf(new DAGSize().treesize(eliminationOutput)));
-		list.set(3, String.valueOf(duration));
+	public void reportEliminationSuccess(final Term eliminationOutput) {
+		final String testId = ReflectionUtil.getCallerMethodName(4);
+		if (testId.equals(mCurrentEliminationData[0])) {
+			long treesize = new DAGSize().treesize(eliminationOutput);
+			assert mCurrentEliminationData[2] == null;
+			mCurrentEliminationData[2] = String.valueOf(treesize);
+			final long duration = computeDurationMiliseconds(mCurrentEliminationStartTime);
+			assert mCurrentEliminationData[3] == null;
+			mCurrentEliminationData[3] = String.valueOf(duration);
+			mCsv.addRow(Arrays.asList(mCurrentEliminationData));
+			mCurrentEliminationData = null;
+		} else {
+			throw new AssertionError("Writing PQE benchmarks failed: wrong ID");
+		}
 	}
 
 	private long computeDurationMiliseconds(final long startTimeInNanoseconds) {
@@ -88,13 +117,9 @@ public class QuantifierEliminationTestCsvWriter {
 
 	public void writeCsv() throws IOException {
 		if (mPrinted) {
-			throw new IllegalStateException("must not print same csv twice");
-		}
-		for (final Entry<String, List<String>> entry : mMap.entrySet()) {
-			mCsv.addRow(entry.getValue());
+			throw new AssertionError("Writing PQE benchmarks failed: must not print same csv twice");
 		}
 		mPrintWriter.getFirst().print(mCsv.toCsv(null, "\t", true));
-		mPrintWriter.getFirst().println("test");
 		mPrintWriter.getFirst().flush();
 		mPrintWriter.getSecond().flush();
 		mPrintWriter.getThird().flush();
@@ -114,8 +139,6 @@ public class QuantifierEliminationTestCsvWriter {
 			final FileWriter fileWriter = new FileWriter(file);
 			final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 			final PrintWriter printWriter = new PrintWriter(bufferedWriter);
-			printWriter.println("lol");
-			printWriter.flush();
 			return new Triple<>(printWriter, bufferedWriter, fileWriter);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
