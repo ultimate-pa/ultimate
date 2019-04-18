@@ -240,10 +240,13 @@ public class PolynomialTerm extends Term {
 		//Multiply Monomials of polynomialTerm 1 with the constant of polynomialTerm 2
 		for (final Map.Entry<Term, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
+			final Rational newCoeff;
 			if (coeff == null) {
-				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
+				newCoeff = summand.getValue().mul(poly2.getConstant());
+				if (!newCoeff.equals(Rational.ZERO)) {
+					mMonomial2Coefficient.put(summand.getKey(), newCoeff);	
+				}
 			}else {
-				final Rational newCoeff;
 				//TODO: Probably something with bitvectors should be here, too
 				newCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
 				if (!newCoeff.equals(Rational.ZERO)) {
@@ -254,10 +257,13 @@ public class PolynomialTerm extends Term {
 		//Multiply Monomials of polynomialTerm 2 with the constant of polynomialTerm 1
 		for (final Map.Entry<Term, Rational> summand : poly2.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = mMonomial2Coefficient.get(summand.getKey());
+			final Rational newCoeff;
 			if (coeff == null) {
-				mMonomial2Coefficient.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
+				newCoeff = summand.getValue().mul(poly1.getConstant());
+				if (!newCoeff.equals(Rational.ZERO)) {
+					mMonomial2Coefficient.put(summand.getKey(), newCoeff);	
+				}
 			}else {
-				final Rational newCoeff;
 				//TODO: Probably something with bitvectors should be here, too
 				newCoeff = summand.getValue().mul(poly1.getConstant()).add(coeff);
 				if (!newCoeff.equals(Rational.ZERO)) {

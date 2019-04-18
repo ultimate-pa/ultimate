@@ -207,20 +207,32 @@ public class Monomial extends Term {
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
 			Term factor = entry.getKey();
-			BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
 			//Make sure that the exponent is an integer.
-			assert entry.getValue().numerator().gcd(entry.getValue().denominator()) != new BigInteger("1");
-			//Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
-			for (int j = 1; j < exponent.intValue() ; j++) {
-				factor = SmtUtils.mul(script, mSort, factor, factor);
+			assert entry.getValue().isIntegral();
+	        //TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
+			//Because then this could be made easier.
+			BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
+			if (exponent.signum() == 1) {
+				//Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
+				//Nonetheless: TODO: Better ask Matthias about this
+				for (int j = 1; j < exponent.intValue() ; j++) {
+					factor = SmtUtils.mul(script, mSort, factor, factor);
+				}
+				factors[i] = factor;
+				++i;
+			}else {
+				for (int j = 1; j < exponent.negate().intValue() ; j++) {
+					factor = SmtUtils.mul(script, mSort, factor, factor);
+				}
+				//TODO: Wrong use of div!!! Wait for Matthias to implement the right one.
+				factors[i] = SmtUtils.div(script, Rational.ONE.toTerm(mSort), factor);
+				++i;
 			}
-			factors[i] = factor;
-			++i;
 		}
 		final Term result = SmtUtils.mul(script, mSort, factors);
 		return result;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
