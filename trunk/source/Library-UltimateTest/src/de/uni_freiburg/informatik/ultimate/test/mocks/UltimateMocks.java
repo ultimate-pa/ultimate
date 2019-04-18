@@ -63,11 +63,14 @@ public class UltimateMocks {
 	}
 
 	public static Script createZ3Script(final LogLevel defaultLogLevel) {
+		return createSolver("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", defaultLogLevel);
+	}
+
+	public static Script createSolver(final String solverCommand, final LogLevel defaultLogLevel) {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
 		try {
-			return new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in",
-					services.getLoggingService().getLogger(UltimateMocks.class), services, createToolchainStorageMock(),
-					"z3");
+			return new Scriptor(solverCommand, services.getLoggingService().getLogger(UltimateMocks.class), services,
+					createToolchainStorageMock(), "SMT solver");
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
