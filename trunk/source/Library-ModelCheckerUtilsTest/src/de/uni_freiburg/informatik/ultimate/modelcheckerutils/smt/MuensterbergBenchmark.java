@@ -26,27 +26,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
 
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -55,32 +52,64 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  *
  */
 public class MuensterbergBenchmark {
+	/**
+	 * Warning: each test will overwrite the SMT script of the preceding test.
+	 */
+	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
+	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = !false;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
+	private static QuantifierEliminationTestCsvWriter mCsvWriter;
+
+	@BeforeClass
+	public static void beforeAllTests() {
+		mCsvWriter = new QuantifierEliminationTestCsvWriter(MuensterbergBenchmark.class.getSimpleName());
+	}
+
+	@AfterClass
+	public static void afterAllTests() {
+		if (WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY) {
+			try {
+				mCsvWriter.writeCsv();
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
+		}
+	}
 
 	@Before
-	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
+	public void setUp() throws FileNotFoundException {
+		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", mLogger, mServices,
-					new ToolchainStorage(), "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-		// script = new SMTInterpol();
-		mMgdScript = new ManagedScript(mServices, mScript);
 
+		final Script solverInstance = UltimateMocks.createSolver(SOLVER_COMMAND, LogLevel.INFO);
+		if (WRITE_SMT_SCRIPTS_TO_FILE) {
+			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
+		} else {
+			mScript = solverInstance;
+		}
+
+		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
+	}
+
+	@After
+	public void tearDown() {
+		mScript.exit();
+		mCsvWriter.reportTestFinished();
 	}
 
 	/**
 	 * Old quantifier elimination needs seconds, new quantifier elimination needs minutes and produces more than 500
 	 * conjuncts
 	 */
+	@Test
 	public void rajdeepIteration5wp() {
 
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
@@ -98,20 +127,16 @@ public class MuensterbergBenchmark {
 
 		final String formulaAsString =
 				"(forall ((|#memory_INTTYPE1| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 8)))) (v_bitvector_28 (_ BitVec 32)) (v_bitvector_27 (_ BitVec 32)) (~smain.free_addr (_ BitVec 8)) (v_bitvector_20 (_ BitVec 8)) (~smain.alloc (_ BitVec 8)) (v_bitvector_32 (_ BitVec 32)) (v_bitvector_31 (_ BitVec 32)) (v_bitvector_30 (_ BitVec 32)) (v_bitvector_29 (_ BitVec 32)) (v_bitvector_36 (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 8)))) (ULTIMATE.start_design_~alloc_addr.offset (_ BitVec 32)) (|ULTIMATE.start_design_#t~ite18| (_ BitVec 32)) (v_bitvector_24 (_ BitVec 8)) (v_bitvector_19 (_ BitVec 8)) (v_bitvector_35 (_ BitVec 8)) (v_bitvector_25 (_ BitVec 32)) (v_bitvector_26 (_ BitVec 32)) (v_bitvector_33 (_ BitVec 32)) (v_bitvector_34 (_ BitVec 32))) (and (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_28 ((_ extract 7 0) v_bitvector_27))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8)) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_28 ((_ extract 7 0) v_bitvector_27))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_32 ((_ extract 7 0) v_bitvector_31))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8)) (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (or (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_30 ((_ extract 7 0) v_bitvector_29))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) ULTIMATE.start_design_~alloc_addr.offset ((_ extract 7 0) |ULTIMATE.start_design_#t~ite18|))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (or (not (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))) (= (_ bv0 32) (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) ~smain.alloc) (_ bv0 32))) ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32))) (= (_ bv0 8) ~smain.alloc) (= (select (select (store (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base (store (select |#memory_INTTYPE1| ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_25 ((_ extract 7 0) v_bitvector_26))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (or (not (= (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv16 32))) (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv1 8))) ULTIMATE.start_design_~alloc_addr.base) v_bitvector_33 ((_ extract 7 0) v_bitvector_34))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32))) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32)) (_ bv0 32)) (= (_ bv0 8) v_bitvector_35)) (or (not (= (select (select (store (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base (store (select (store v_bitvector_36 ULTIMATE.start_design_~nack.base (store (select v_bitvector_36 ULTIMATE.start_design_~nack.base) ULTIMATE.start_design_~nack.offset (_ bv0 8))) ULTIMATE.start_design_~alloc_addr.base) ULTIMATE.start_design_~alloc_addr.offset ((_ extract 7 0) |ULTIMATE.start_design_#t~ite18|))) |ULTIMATE.start_main_~#nack~7.base|) |ULTIMATE.start_main_~#nack~7.offset|) (_ bv0 8))) (= (bvand (bvashr ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (_ bv0 32) (bvand ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvsub (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (_ bv0 32)) ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32)))))))) (_ bv31 32)))) (_ bv15 32))))))";
-
-		final Term formulaAsTerm = new UnfTransformer(mScript).transform(TermParseUtils.parseTerm(mScript, formulaAsString));
-		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
-		final String expectedResultAsString = "(let ((.cse14 (= ULTIMATE.start_design_~alloc_addr.base |ULTIMATE.start_main_~#nack~7.base|))) (let ((.cse4 (not .cse14)) (.cse1 (= ULTIMATE.start_design_~nack.offset |ULTIMATE.start_main_~#nack~7.offset|)) (.cse2 (= ULTIMATE.start_design_~nack.base |ULTIMATE.start_main_~#nack~7.base|))) (let ((.cse7 (= (_ bv16 32) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)))) (.cse8 (and .cse4 .cse1 .cse2))) (let ((.cse3 (or .cse14 .cse8)) (.cse10 (not .cse7))) (and (or (forall ((v_prenex_9 (_ BitVec 8)) (v_prenex_8 (_ BitVec 8))) (let ((.cse0 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_8 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_9) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse0 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse0 (_ bv15 32)) (_ bv0 32))))) (and (or (and .cse1 .cse2) (forall ((v_bitvector_28 (_ BitVec 32))) (= |ULTIMATE.start_main_~#nack~7.offset| v_bitvector_28))) .cse3 .cse4)) (forall ((v_prenex_17 (_ BitVec 8)) (v_prenex_18 (_ BitVec 8))) (let ((.cse5 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvneg ((_ zero_extend 24) (bvand v_prenex_18 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_17) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand .cse5 (_ bv15 32))) (= (bvand (bvashr .cse5 (_ bv4 32)) (_ bv1 32)) (_ bv0 32))))) (or (and .cse3 .cse4 .cse1 .cse2) (forall ((v_prenex_6 (_ BitVec 8)) (v_prenex_5 (_ BitVec 8))) (let ((.cse6 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_5 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_6) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse6 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse6 (_ bv15 32)) (_ bv0 32))))) .cse7) (or .cse8 (forall ((v_bitvector_20 (_ BitVec 8)) (~smain.free_addr (_ BitVec 8))) (let ((.cse9 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse9 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse9 (_ bv15 32)) (_ bv0 32)))))) (or .cse8 .cse10 (forall ((v_bitvector_19 (_ BitVec 8)) (v_bitvector_24 (_ BitVec 8)) (v_bitvector_35 (_ BitVec 8))) (let ((.cse11 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32)) (bvneg ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (bvand .cse11 (_ bv15 32)) (_ bv0 32)) (= (_ bv0 8) v_bitvector_35) (= (bvand (bvashr .cse11 (_ bv4 32)) (_ bv1 32)) (_ bv0 32)))))) (or (forall ((v_prenex_11 (_ BitVec 8)) (v_prenex_12 (_ BitVec 8))) (let ((.cse12 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_12 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_11) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse12 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse12 (_ bv15 32)) (_ bv0 32))))) .cse10) (or (forall ((v_prenex_4 (_ BitVec 8)) (v_prenex_3 (_ BitVec 8)) (v_prenex_1 (_ BitVec 8))) (let ((.cse13 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_prenex_4) (_ bv1 32)) (bvneg ((_ zero_extend 24) (bvand v_prenex_1 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_3) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (bvand (bvashr .cse13 (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand .cse13 (_ bv15 32)) (_ bv0 32))))) .cse7))))))";
-		final boolean resultIsEquivalentToExpectedResult = SmtTestUtils.areLogicallyEquivalent(mScript, result, expectedResultAsString);
-		Assert.assertTrue(resultIsEquivalentToExpectedResult);
+		final String expectedResultAsString =
+				"(let ((.cse14 (= ULTIMATE.start_design_~alloc_addr.base |ULTIMATE.start_main_~#nack~7.base|))) (let ((.cse4 (not .cse14)) (.cse1 (= ULTIMATE.start_design_~nack.offset |ULTIMATE.start_main_~#nack~7.offset|)) (.cse2 (= ULTIMATE.start_design_~nack.base |ULTIMATE.start_main_~#nack~7.base|))) (let ((.cse7 (= (_ bv16 32) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)))) (.cse8 (and .cse4 .cse1 .cse2))) (let ((.cse3 (or .cse14 .cse8)) (.cse10 (not .cse7))) (and (or (forall ((v_prenex_9 (_ BitVec 8)) (v_prenex_8 (_ BitVec 8))) (let ((.cse0 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_8 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_9) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse0 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse0 (_ bv15 32)) (_ bv0 32))))) (and (or (and .cse1 .cse2) (forall ((v_bitvector_28 (_ BitVec 32))) (= |ULTIMATE.start_main_~#nack~7.offset| v_bitvector_28))) .cse3 .cse4)) (forall ((v_prenex_17 (_ BitVec 8)) (v_prenex_18 (_ BitVec 8))) (let ((.cse5 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvneg ((_ zero_extend 24) (bvand v_prenex_18 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_17) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand .cse5 (_ bv15 32))) (= (bvand (bvashr .cse5 (_ bv4 32)) (_ bv1 32)) (_ bv0 32))))) (or (and .cse3 .cse4 .cse1 .cse2) (forall ((v_prenex_6 (_ BitVec 8)) (v_prenex_5 (_ BitVec 8))) (let ((.cse6 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_5 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_6) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse6 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse6 (_ bv15 32)) (_ bv0 32))))) .cse7) (or .cse8 (forall ((v_bitvector_20 (_ BitVec 8)) (~smain.free_addr (_ BitVec 8))) (let ((.cse9 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_bitvector_20 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) ~smain.free_addr) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse9 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse9 (_ bv15 32)) (_ bv0 32)))))) (or .cse8 .cse10 (forall ((v_bitvector_19 (_ BitVec 8)) (v_bitvector_24 (_ BitVec 8)) (v_bitvector_35 (_ BitVec 8))) (let ((.cse11 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_bitvector_35) (_ bv1 32)) (bvneg ((_ zero_extend 24) (bvand v_bitvector_19 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_bitvector_24) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (bvand .cse11 (_ bv15 32)) (_ bv0 32)) (= (_ bv0 8) v_bitvector_35) (= (bvand (bvashr .cse11 (_ bv4 32)) (_ bv1 32)) (_ bv0 32)))))) (or (forall ((v_prenex_11 (_ BitVec 8)) (v_prenex_12 (_ BitVec 8))) (let ((.cse12 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvneg ((_ zero_extend 24) (bvand v_prenex_12 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_11) (_ bv15 32)))))))) (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32))) (_ bv31 32)))))) (or (= (_ bv0 32) (bvand (bvashr .cse12 (_ bv4 32)) (_ bv1 32))) (= (bvand .cse12 (_ bv15 32)) (_ bv0 32))))) .cse10) (or (forall ((v_prenex_4 (_ BitVec 8)) (v_prenex_3 (_ BitVec 8)) (v_prenex_1 (_ BitVec 8))) (let ((.cse13 ((_ zero_extend 24) ((_ extract 7 0) (bvand (bvadd (bvand ((_ zero_extend 24) ~smain.count) (_ bv31 32)) (bvand ((_ zero_extend 24) v_prenex_4) (_ bv1 32)) (bvneg ((_ zero_extend 24) (bvand v_prenex_1 (select ~smain.busy ((_ zero_extend 24) ((_ extract 7 0) (bvand ((_ zero_extend 24) v_prenex_3) (_ bv15 32))))))))) (_ bv31 32)))))) (or (= (bvand (bvashr .cse13 (_ bv4 32)) (_ bv1 32)) (_ bv0 32)) (= (bvand .cse13 (_ bv15 32)) (_ bv0 32))))) .cse7))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 
 	/**
 	 * Old quantifier elimination produces smaller result (approx factor 2)
 	 */
+	@Test
 	public void Memsafety20020406_1_false_valid_memtrack() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
@@ -125,11 +150,8 @@ public class MuensterbergBenchmark {
 
 		final String formulaAsString =
 				"(forall ((|v_#memory_$Pointer$.base_279| (Array Int (Array Int Int)))) (or (= (select |#valid| (select (select |v_#memory_$Pointer$.base_279| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 8))) 1) (not (= (store |#memory_$Pointer$.base| DUPFFnew_~ans~6.base (store (select |#memory_$Pointer$.base| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 4) (select (select |v_#memory_$Pointer$.base_279| DUPFFnew_~ans~6.base) (+ DUPFFnew_~ans~6.offset 4)))) |v_#memory_$Pointer$.base_279|))))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
@@ -147,19 +169,17 @@ public class MuensterbergBenchmark {
 		mScript.declareFun("#memory_$Pointer$.offset", new Sort[0], intintintArraySort);
 		mScript.declareFun("ULTIMATE.start_main_~#list~5.offset", new Sort[0], intSort);
 		mScript.declareFun("ULTIMATE.start_append_~item~4.base", new Sort[0], intSort);
+
 		final String formulaAsString =
 				"(forall ((|#memory_$Pointer$.base| (Array Int (Array Int Int)))) (= (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) (select (select (store |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.base)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|)) (+ (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|) 4)) 0))";
 
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
 	 * Too many recursive steps in new PQE
 	 */
+	@Test
 	public void dll_queue_false_unreach_call_false_valid_memcleanup() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("main_#t~malloc5.offset", new Sort[0], intSort);
@@ -170,17 +190,14 @@ public class MuensterbergBenchmark {
 		mScript.declareFun("main_#t~malloc5.base", new Sort[0], intSort);
 		final String formulaAsString =
 				"(forall ((v_prenex_8 (Array Int (Array Int Int))) (v_prenex_6 Int) (v_prenex_7 (Array Int (Array Int Int))) (v_DerPreprocessor_4 Int) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (|main_#t~mem7.offset| Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (v_DerPreprocessor_6 Int)) (and (= (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (select (select (store (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (store (store (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) (select (select (store (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store v_prenex_7 main_~item~5.base (store (select v_prenex_7 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset)) (select (select (store (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 0) (+ (select (select (store (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store v_prenex_8 main_~item~5.base (store (select v_prenex_8 main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ v_prenex_6 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_4)) main_~head~5.base) main_~head~5.offset)) (= (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) (select (select (store (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset) (store (store (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.base| main_~item~5.base (store (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.base|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.base)) main_~item~5.base) main_~item~5.offset)) (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 0) (+ (select (select (store (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base| (store (select (store |#memory_$Pointer$.offset| main_~item~5.base (store (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset |main_#t~malloc5.offset|)) |main_#t~malloc5.base|) (+ |main_#t~mem7.offset| 4) main_~item~5.offset)) main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_6)) main_~head~5.base) main_~head~5.offset))))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
 	 * Too many recursive steps in new PQE
 	 */
-	// @Test
+	@Test
 	public void dll_queue_false_unreach_call_false_valid_memcleanup_2() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintintArraySort =
@@ -192,11 +209,8 @@ public class MuensterbergBenchmark {
 		mScript.declareFun("main_~head~5.base", new Sort[0], intSort);
 		final String formulaAsString =
 				"(forall ((|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (v_DerPreprocessor_28 Int) (v_DerPreprocessor_22 Int) (v_prenex_65 (Array Int (Array Int Int))) (v_DerPreprocessor_24 Int) (v_DerPreprocessor_26 Int)) (and (= 0 (select (select (store |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_22)) (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_28)) main_~head~5.base) main_~head~5.offset)) (select (select (store |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_22)) main_~head~5.base) main_~head~5.offset))) (= 0 (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_24)) (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_24)) main_~head~5.base) main_~head~5.offset)) (select (select (store v_prenex_65 (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select v_prenex_65 (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_26)) main_~head~5.base) main_~head~5.offset)))))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info(result);
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 }
