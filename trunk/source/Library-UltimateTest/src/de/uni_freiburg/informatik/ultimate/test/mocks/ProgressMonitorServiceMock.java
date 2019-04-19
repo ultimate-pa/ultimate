@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
  */
 final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
+	private long mDeadline = Long.MAX_VALUE;
+
 	@Override
 	public boolean continueProcessing() {
-		return true;
+		return System.currentTimeMillis() < mDeadline;
 	}
 
 	@Override
@@ -61,7 +63,7 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
 	@Override
 	public void setDeadline(final long date) {
-		// mock
+		mDeadline = date;
 	}
 
 	@Override

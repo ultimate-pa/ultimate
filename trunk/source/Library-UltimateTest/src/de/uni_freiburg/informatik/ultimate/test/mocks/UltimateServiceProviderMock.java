@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 
 	private final LogLevel mDefaultLevel;
+	private final IProgressMonitorService mProgressMonitorService = new ProgressMonitorServiceMock();
 
 	UltimateServiceProviderMock(final LogLevel defaultLevel) {
 		mDefaultLevel = defaultLevel;
@@ -67,7 +68,7 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 
 	@Override
 	public IProgressMonitorService getProgressMonitorService() {
-		return new ProgressMonitorServiceMock();
+		return mProgressMonitorService;
 	}
 
 	@Override
