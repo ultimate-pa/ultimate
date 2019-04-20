@@ -226,7 +226,7 @@ public class SingleUpdateNormalFormTransformer {
 				// no original Term known use term itself as original
 				original = term;
 			}
-			final Integer numberOfFreshCopy = mFreshCopyCounter.increase(original);
+			final Integer numberOfFreshCopy = mFreshCopyCounter.increment(original);
 			final String nameOfFreshCopy = SmtUtils.removeSmtQuoteCharacters(original.toString()) + s_AuxArray + numberOfFreshCopy;
 			final TermVariable freshCopy = mReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
 			mFreshCopyToOriginal.put(freshCopy, original);

@@ -576,7 +576,7 @@ public class NestedSsaBuilder {
 		}
 
 		private Term constructFreshConstant(final TermVariable tv) {
-			final Integer newIndex = mConstForTvCounter.increase(tv);
+			final Integer newIndex = mConstForTvCounter.increment(tv);
 			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
 			final Sort resultSort = tv.getSort();
 			mScript.declareFun(name, new Sort[0], resultSort);

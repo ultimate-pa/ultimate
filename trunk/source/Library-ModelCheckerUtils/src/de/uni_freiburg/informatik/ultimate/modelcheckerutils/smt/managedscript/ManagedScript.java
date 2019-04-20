@@ -300,7 +300,7 @@ public class ManagedScript {
 			if (name.contains("|")) {
 				throw new IllegalArgumentException("Name contains SMT quote characters " + name);
 			}
-			final Integer newIndex = mTvForBasenameCounter.increase(name);
+			final Integer newIndex = mTvForBasenameCounter.increment(name);
 			final TermVariable result = mScript.variable("v_" + name + "_" + newIndex, sort);
 			mTv2Basename.put(result, name);
 			return result;
