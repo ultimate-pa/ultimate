@@ -104,4 +104,12 @@ public class MultiElementCounter<E> {
 		}
 		return result;
 	}
+
+
+	@Override
+	public String toString() {
+		return String.valueOf(mCounter);
+	}
+
+
 }
