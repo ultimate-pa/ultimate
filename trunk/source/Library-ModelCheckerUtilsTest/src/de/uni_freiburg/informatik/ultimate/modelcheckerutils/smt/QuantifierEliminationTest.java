@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -75,7 +74,7 @@ public class QuantifierEliminationTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = !false;
+	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
@@ -497,8 +496,6 @@ public class QuantifierEliminationTest {
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		final Term res = new SubstitutionWithLocalSimplification(mgdScript, Collections.emptyMap()).transform(formulaAsTerm);
-		String s = res.toStringDirect();
 		csvWriter.reportEliminationBegin(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
