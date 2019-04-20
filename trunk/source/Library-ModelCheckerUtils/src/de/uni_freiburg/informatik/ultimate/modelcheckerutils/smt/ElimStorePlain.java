@@ -447,7 +447,8 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
 						mLogger, mMgdScript);
-		final TreeRelation<Integer, TermVariable> costs = ArrayIndexBasedCostEstimation.computeCostEstimation(mMgdScript.getScript(), aiem, eliminatees, eTask.getTerm());
+		final TreeRelation<Integer, TermVariable> costs = new ArrayIndexBasedCostEstimation(mMgdScript.getScript(),
+				aiem, eliminatees, eTask.getTerm()).getCost2Eliminatee();
 		aiem.unlockSolver();
 		return costs;
 	}

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,54 +35,127 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ArrayIndexEqualityManager;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
+ * Compute rough estimation of the expected costs of a quantifier elimination.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArrayIndexBasedCostEstimation {
+	private final MultiElementCounter<Doubleton<ArrayIndex>> mIndexDoubleton2Occurrence = new MultiElementCounter<Doubleton<ArrayIndex>>();
+	private final MultiElementCounter<TermVariable> mEliminatee2Cost = new MultiElementCounter<TermVariable>();
+	private final TreeRelation<Integer, TermVariable> mCost2Eliminatee;
 
-	public static TreeRelation<Integer, TermVariable> computeCostEstimation(final Script script,
-			final ArrayIndexEqualityManager aiem, final Set<TermVariable> eliminatees, final Term term) {
+	public ArrayIndexBasedCostEstimation(final Script script, final ArrayIndexEqualityManager aiem,
+			final Set<TermVariable> eliminatees, final Term term) {
+		for (final TermVariable eliminatee : eliminatees) {
+			computeCostEstimation(script, aiem, term, eliminatee);
+		}
+		mCost2Eliminatee = computeCost2Eliminatee(eliminatees, mEliminatee2Cost);
+	}
+
+	public MultiElementCounter<Doubleton<ArrayIndex>> getIndexDoubleton2Occurrence() {
+		return mIndexDoubleton2Occurrence;
+	}
+
+	public TreeRelation<Integer, TermVariable> getCost2Eliminatee() {
+		return mCost2Eliminatee;
+	}
+
+	private static TreeRelation<Integer, TermVariable> computeCost2Eliminatee(final Set<TermVariable> eliminatees,
+			final MultiElementCounter<TermVariable> eliminatee2Cost) {
 		final TreeRelation<Integer, TermVariable> result = new TreeRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
-			final Integer costs = computeCostElimation(script, aiem, term, eliminatee);
-			result.addPair(costs, eliminatee);
+			result.addPair(eliminatee2Cost.getNumber(eliminatee), eliminatee);
 		}
 		return result;
 	}
 
-	private static int computeCostElimation(final Script script, final ArrayIndexEqualityManager aiem, final Term term,
+	private void computeCostEstimation(final Script script, final ArrayIndexEqualityManager aiem, final Term term,
 			final TermVariable eliminatee) {
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(script, term, eliminatee)
 				.downgradeDimensionsIfNecessary(script);
+
+		final Set<ArrayIndex> selectIndicesIntroducedBySos = new HashSet<>();
+		final List<MultiDimensionalSelectOverNestedStore> arraySelectOverStores = aoa.getArraySelectOverStores();
+		for (final MultiDimensionalSelectOverNestedStore sos : arraySelectOverStores) {
+			final ArrayIndex selectIdx = sos.getSelect().getIndex();
+			final List<ArrayIndex> nsi = sos.getNestedStore().getIndices();
+			final boolean earlyResultDetection = sosOuterLoop(aiem, eliminatee, selectIdx, nsi);
+			if (!earlyResultDetection) {
+				selectIndicesIntroducedBySos.add(selectIdx);
+			}
+		}
+
 		final Set<ArrayIndex> selectIndices = ArrayOccurrenceAnalysis.extractSelectIndices(aoa.getArraySelects());
 		final List<ArrayIndex> selectIndicesAsList = new ArrayList<>(selectIndices);
-		int totalCost = 0;
+		selectIndicesAsList.addAll(selectIndicesIntroducedBySos);
 		for (int i = 0; i < selectIndicesAsList.size(); i++) {
 			for (int j = 0; j < i; j++) {
 				final ArrayIndex indexI = selectIndicesAsList.get(i);
 				final ArrayIndex indexJ = selectIndicesAsList.get(j);
 				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
-				totalCost = costForPair + totalCost;
+				if (costForPair != 0) {
+					mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(indexI, indexJ), costForPair);
+					mEliminatee2Cost.increment(eliminatee, costForPair);
+				}
+
 			}
 		}
-		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis.extractNestedStoreIndices(aoa.getNestedArrayStores());
+		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis
+				.extractNestedStoreIndices(aoa.getNestedArrayStores());
 		final List<ArrayIndex> storeIndicesAsList = new ArrayList<>(storeIndices);
 		for (int i = 0; i < storeIndicesAsList.size(); i++) {
 			for (int j = 0; j < selectIndicesAsList.size(); j++) {
 				final ArrayIndex indexI = storeIndicesAsList.get(i);
 				final ArrayIndex indexJ = selectIndicesAsList.get(j);
 				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
-				totalCost = costForPair + totalCost;
+				if (costForPair != 0) {
+					mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(indexI, indexJ), costForPair);
+					mEliminatee2Cost.increment(eliminatee, costForPair);
+				}
 			}
 		}
-		return totalCost;
 	}
 
-	private static int analyzeCosts(final ArrayIndexEqualityManager aiem, final ArrayIndex indexI, final ArrayIndex indexJ) {
+	private boolean sosOuterLoop(final ArrayIndexEqualityManager aiem, final TermVariable eliminatee,
+			final ArrayIndex selectIdx, final List<ArrayIndex> nsi) {
+		for (int indexOfEquality = nsi.size() - 1; indexOfEquality >= 0; indexOfEquality--) {
+			final boolean earlyResultDetection = sosInnerLoop(aiem, selectIdx, nsi, indexOfEquality);
+			// we need another disjunct/conjunct in result
+			mEliminatee2Cost.increment(eliminatee);
+			if (earlyResultDetection) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean sosInnerLoop(final ArrayIndexEqualityManager aiem, final ArrayIndex selectIdx,
+			final List<ArrayIndex> nsi, final int indexOfEquality) {
+		for (int i = nsi.size() - 1; i >= indexOfEquality; i--) {
+			final EqualityStatus eq = aiem.checkIndexEquality(selectIdx, nsi.get(i));
+			switch (eq) {
+			case EQUAL:
+				return true;
+			case NOT_EQUAL:
+				break;
+			case UNKNOWN:
+				mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(selectIdx, nsi.get(i)));
+				break;
+			default:
+				throw new AssertionError();
+			}
+		}
+		return false;
+	}
+
+	private static int analyzeCosts(final ArrayIndexEqualityManager aiem, final ArrayIndex indexI,
+			final ArrayIndex indexJ) {
 		if (indexI.size() != indexJ.size()) {
 			throw new AssertionError("incompatible size");
 		}
