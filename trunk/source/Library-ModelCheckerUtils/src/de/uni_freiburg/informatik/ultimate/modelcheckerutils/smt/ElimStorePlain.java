@@ -381,13 +381,13 @@ public class ElimStorePlain {
 		for (final int dim : tr.getDomain()) {
 			// iterate over all eliminatees, lower dimensions first, but skip dimension zero
 			if (dim != 0) {
-				final boolean useCostEstimation = !false;
+				final boolean useCostEstimation = true;
 				if (useCostEstimation) {
-					final TreeRelation<Integer, TermVariable> costs = computeCostEtimation(eTask, tr.getImage(dim));
-					if (costs.getDomain().size() > 1) {
-						mLogger.info("Different consts " + costs);
+					final ArrayIndexBasedCostEstimation costs = computeCostEstimation(eTask, tr.getImage(dim));
+					if (costs.getCost2Eliminatee().getDomain().size() > 1) {
+						mLogger.info("Different consts " + costs.getCost2Eliminatee());
 					}
-					for (final Entry<Integer, TermVariable> entry : costs) {
+					for (final Entry<Integer, TermVariable> entry : costs.getCost2Eliminatee()) {
 						// split term
 						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
 								Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
@@ -433,7 +433,7 @@ public class ElimStorePlain {
 		return finalResult;
 	}
 
-	private TreeRelation<Integer, TermVariable> computeCostEtimation(final EliminationTaskWithContext eTask,
+	private ArrayIndexBasedCostEstimation computeCostEstimation(final EliminationTaskWithContext eTask,
 			final Set<TermVariable> eliminatees) throws AssertionError {
 		final int quantifier = eTask.getQuantifier();
 		final Term polarizedContext;
@@ -447,8 +447,8 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
 						mLogger, mMgdScript);
-		final TreeRelation<Integer, TermVariable> costs = new ArrayIndexBasedCostEstimation(mMgdScript.getScript(),
-				aiem, eliminatees, eTask.getTerm()).getCost2Eliminatee();
+		final ArrayIndexBasedCostEstimation costs = new ArrayIndexBasedCostEstimation(mMgdScript.getScript(),
+				aiem, eliminatees, eTask.getTerm());
 		aiem.unlockSolver();
 		return costs;
 	}
