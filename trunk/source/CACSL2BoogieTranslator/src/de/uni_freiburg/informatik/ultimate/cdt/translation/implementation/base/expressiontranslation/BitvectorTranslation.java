@@ -188,7 +188,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 		if (settingsInitialRoundingMode == FloatingPointRoundingMode.FE_TOWARDZERO) {
 			mCurrentRoundingModeMacroValue =
-					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(0));
 		} else if (settingsInitialRoundingMode == FloatingPointRoundingMode.FE_TONEAREST) {
 			mCurrentRoundingModeMacroValue =
 					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(1));
