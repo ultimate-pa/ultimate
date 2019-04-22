@@ -117,7 +117,7 @@ public class CDTParser implements ISource {
 	private IToolchainStorage mStorage;
 
 	public CDTParser() {
-		mFileTypes = new String[] { ".c", ".i", ".h" };
+		mFileTypes = new String[] { ".c", ".i", ".h", ".inl" };
 		mCdtPProjectHierachyFlag = "FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 	}
 
