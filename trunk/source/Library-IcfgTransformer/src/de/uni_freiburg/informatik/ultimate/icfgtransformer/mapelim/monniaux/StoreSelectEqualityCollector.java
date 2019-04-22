@@ -88,6 +88,10 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 	protected boolean isEmpty() {
 		return mSelectTerms.isEmpty() && mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
 	}
+	
+	protected boolean hasNoStoEqu() {
+		return mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
+	}
 
 	@Override
 	public String toString() {

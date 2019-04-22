@@ -276,8 +276,13 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					if (arrayOutTermVar != null) {
 						final Set<Term> valTermVars = new LinkedHashSet<>();
 						for (final IProgramVar valVar : valVars.get(arrayVar)) {
-							final TermVariable valTermVar = mMgdScript
-									.constructFreshTermVariable((valVar.toString() + "_out"), valVar.getSort());
+							final TermVariable valTermVar;
+							if (ssec.hasNoStoEqu()) {
+								valTermVar = newInVars.get(valVar);
+							} else {
+								valTermVar = mMgdScript
+										.constructFreshTermVariable((valVar.toString() + "_out"), valVar.getSort());
+							}
 							newOutVars.put(valVar, valTermVar);
 							valTermVars.add(valTermVar);
 							oldTermToProgramVar.put(valTermVar, valVar);
