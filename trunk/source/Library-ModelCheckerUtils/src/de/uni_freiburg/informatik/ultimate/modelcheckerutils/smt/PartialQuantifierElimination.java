@@ -300,9 +300,14 @@ public class PartialQuantifierElimination {
 			eliminatees.addAll(esp.getEliminatees());
 		}
 		if (USE_SSD) {
+			final long startTime = System.currentTimeMillis();
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
 					.startRecursiveElimination(new EliminationTask(quantifier, eliminatees, result));
+			final long duration = System.currentTimeMillis() - startTime;
+			if (duration > 10_000) {
+//				throw new AssertionError("long elimination: " + duration + "ms");
+			}
 
 
 			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "

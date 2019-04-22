@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,21 +51,63 @@ public class ArrayIndexBasedCostEstimation {
 	private final MultiElementCounter<Doubleton<ArrayIndex>> mIndexDoubleton2Occurrence = new MultiElementCounter<Doubleton<ArrayIndex>>();
 	private final MultiElementCounter<TermVariable> mEliminatee2Cost = new MultiElementCounter<TermVariable>();
 	private final TreeRelation<Integer, TermVariable> mCost2Eliminatee;
+	private final TreeRelation<Integer, Doubleton<ArrayIndex>> mOccurrence2Doubletons;
+	private final int mOccurrenceMaximum;
+	private final Doubleton<Term> mProposedCaseSplitDoubleton;
 
+	/**
+	 * @param forbiddenVariables
+	 *            Variables that must not occur in the index entry pairs that are
+	 *            used to propose a case split
+	 */
 	public ArrayIndexBasedCostEstimation(final Script script, final ArrayIndexEqualityManager aiem,
-			final Set<TermVariable> eliminatees, final Term term) {
+			final Set<TermVariable> eliminatees, final Term term, final Set<TermVariable> forbiddenVariables) {
 		for (final TermVariable eliminatee : eliminatees) {
 			computeCostEstimation(script, aiem, term, eliminatee);
 		}
 		mCost2Eliminatee = computeCost2Eliminatee(eliminatees, mEliminatee2Cost);
+		mOccurrence2Doubletons = computeOccurrence2Doubletons(mIndexDoubleton2Occurrence);
+		if (mOccurrence2Doubletons.isEmpty()) {
+			mOccurrenceMaximum = 0;
+			mProposedCaseSplitDoubleton = null;
+		} else {
+			mOccurrenceMaximum = mOccurrence2Doubletons.descendingDomain().iterator().next();
+			mProposedCaseSplitDoubleton = computeProposedCaseSplitDoubleton(aiem, forbiddenVariables, mOccurrence2Doubletons,
+					mOccurrenceMaximum);
+		}
 	}
 
-	public MultiElementCounter<Doubleton<ArrayIndex>> getIndexDoubleton2Occurrence() {
-		return mIndexDoubleton2Occurrence;
+	private Doubleton<Term> computeProposedCaseSplitDoubleton(final ArrayIndexEqualityManager aiem,
+			final Set<TermVariable> forbiddenVariables,
+			final TreeRelation<Integer, Doubleton<ArrayIndex>> occurrence2Doubletons, final int occurrenceMaximum) {
+		for (final Doubleton<ArrayIndex> indexDoubleton : occurrence2Doubletons.getImage(occurrenceMaximum)) {
+			for (int i = 0; i < indexDoubleton.getOneElement().size(); i++) {
+				final Term entry1 = indexDoubleton.getOneElement().get(i);
+				final Term entry2 = indexDoubleton.getOtherElement().get(i);
+				if (Collections.disjoint(forbiddenVariables, Arrays.asList(entry1.getFreeVars())) &&
+						Collections.disjoint(forbiddenVariables, Arrays.asList(entry2.getFreeVars()))) {
+					final EqualityStatus es = aiem.checkEqualityStatus(entry1, entry2);
+					if (es == EqualityStatus.UNKNOWN) {
+						return new Doubleton<Term>(entry1, entry2);
+
+					}
+				}
+			}
+		}
+		return null;
+//		throw new AssertionError("all values known");
 	}
 
 	public TreeRelation<Integer, TermVariable> getCost2Eliminatee() {
 		return mCost2Eliminatee;
+	}
+
+	public int getOccurrenceMaximum() {
+		return mOccurrenceMaximum;
+	}
+
+	public Doubleton<Term> getProposedCaseSplitDoubleton() {
+		return mProposedCaseSplitDoubleton;
 	}
 
 	private static TreeRelation<Integer, TermVariable> computeCost2Eliminatee(final Set<TermVariable> eliminatees,
@@ -71,6 +115,15 @@ public class ArrayIndexBasedCostEstimation {
 		final TreeRelation<Integer, TermVariable> result = new TreeRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			result.addPair(eliminatee2Cost.getNumber(eliminatee), eliminatee);
+		}
+		return result;
+	}
+
+	private static TreeRelation<Integer, Doubleton<ArrayIndex>> computeOccurrence2Doubletons(
+			final MultiElementCounter<Doubleton<ArrayIndex>> indexDoubleton2Occurrence) {
+		final TreeRelation<Integer, Doubleton<ArrayIndex>> result = new TreeRelation<>();
+		for (final Doubleton<ArrayIndex> elem : indexDoubleton2Occurrence.getElements()) {
+			result.addPair(indexDoubleton2Occurrence.getNumber(elem), elem);
 		}
 		return result;
 	}

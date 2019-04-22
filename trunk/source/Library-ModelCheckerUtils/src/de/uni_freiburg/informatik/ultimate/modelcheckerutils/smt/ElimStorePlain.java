@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
@@ -387,6 +389,35 @@ public class ElimStorePlain {
 					if (costs.getCost2Eliminatee().getDomain().size() > 1) {
 						mLogger.info("Different consts " + costs.getCost2Eliminatee());
 					}
+					final boolean useIndexFrequency = true;
+					final int indexFrequenceyThreshold = 1;
+					if (useIndexFrequency) {
+						costs.getOccurrenceMaximum();
+						if (costs.getOccurrenceMaximum() >= indexFrequenceyThreshold && costs.getProposedCaseSplitDoubleton() != null) {
+							final Doubleton<Term> someHighestFreqPair = costs.getProposedCaseSplitDoubleton();
+							final Term equals = SmtUtils.binaryEquality(mMgdScript.getScript(), someHighestFreqPair.getOneElement(), someHighestFreqPair.getOtherElement());
+							final Term distinct = SmtUtils.not(mMgdScript.getScript(), equals);
+							final EliminationTaskWithContext posTask = eTask.addConjunct(mMgdScript.getScript(), equals);
+							final EliminationTaskWithContext posRes = doElimAllRec(posTask);
+							final Term posResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
+									mMgdScript.getScript(), eTask.getQuantifier(), posRes.getTerm(), QuantifierUtils
+											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), equals));
+
+							final EliminationTaskWithContext negTask = eTask.addConjunct(mMgdScript.getScript(), distinct);
+							final EliminationTaskWithContext negRes = doElimAllRec(negTask);
+							final Term negResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
+									mMgdScript.getScript(), eTask.getQuantifier(), negRes.getTerm(), QuantifierUtils
+											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), distinct));
+							final HashSet<TermVariable> resEliminatees = new HashSet<>(posRes.getEliminatees());
+							resEliminatees.addAll(negRes.getEliminatees());
+							final Term resTerm = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
+									eTask.getQuantifier(), posResTermPostprocessed, negResTermPostprocessed);
+							final EliminationTaskWithContext result = new EliminationTaskWithContext(
+									eTask.getQuantifier(), resEliminatees, resTerm, eTask.getContext());
+							return result;
+						}
+
+					}
 					for (final Entry<Integer, TermVariable> entry : costs.getCost2Eliminatee()) {
 						// split term
 						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
@@ -448,7 +479,7 @@ public class ElimStorePlain {
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, quantifier,
 						mLogger, mMgdScript);
 		final ArrayIndexBasedCostEstimation costs = new ArrayIndexBasedCostEstimation(mMgdScript.getScript(),
-				aiem, eliminatees, eTask.getTerm());
+				aiem, eliminatees, eTask.getTerm(), eTask.getEliminatees());
 		aiem.unlockSolver();
 		return costs;
 	}

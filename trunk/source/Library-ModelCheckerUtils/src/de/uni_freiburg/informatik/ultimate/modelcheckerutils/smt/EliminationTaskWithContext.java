@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -52,6 +53,9 @@ public class EliminationTaskWithContext extends EliminationTask {
 
 
 
-
+	public EliminationTaskWithContext addConjunct(final Script script, final Term conjunct) {
+		return new EliminationTaskWithContext(getQuantifier(), getEliminatees(), getTerm(),
+				SmtUtils.and(script, getContext(), conjunct));
+	}
 
 }
