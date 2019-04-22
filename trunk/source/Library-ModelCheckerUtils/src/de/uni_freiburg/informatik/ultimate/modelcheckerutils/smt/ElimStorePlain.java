@@ -30,10 +30,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
@@ -390,31 +392,67 @@ public class ElimStorePlain {
 						mLogger.info("Different consts " + costs.getCost2Eliminatee());
 					}
 					final boolean useIndexFrequency = true;
-					final int indexFrequenceyThreshold = 1;
+					final int indexFrequenceyThreshold = 3;
 					if (useIndexFrequency) {
 						costs.getOccurrenceMaximum();
 						if (costs.getOccurrenceMaximum() >= indexFrequenceyThreshold && costs.getProposedCaseSplitDoubleton() != null) {
 							final Doubleton<Term> someHighestFreqPair = costs.getProposedCaseSplitDoubleton();
-							final Term equals = SmtUtils.binaryEquality(mMgdScript.getScript(), someHighestFreqPair.getOneElement(), someHighestFreqPair.getOtherElement());
+							final Term effectiveIndex1;
+							final Term effectiveIndex2;
+							final Term effectiveTerm;
+							final List<TermVariable> caseSplitEliminatees = new ArrayList<>();
+							{
+								final Map<Term, Term> substitutionMapping = new HashMap<>();
+								final List<Term> definitions = new ArrayList<>();
+								final Term index1 = someHighestFreqPair.getOneElement();
+								if (!Collections.disjoint(eTask.getEliminatees(), Arrays.asList(index1.getFreeVars()))) {
+									final TermVariable rep1 = mMgdScript.constructFreshTermVariable("caseSplit", index1.getSort());
+									caseSplitEliminatees.add(rep1);
+									effectiveIndex1 = rep1;
+									substitutionMapping.put(index1, effectiveIndex1);
+									definitions.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), eTask.getQuantifier(), index1, effectiveIndex1));
+								} else {
+									effectiveIndex1 = index1;
+								}
+								final Term index2 = someHighestFreqPair.getOtherElement();
+								if (!Collections.disjoint(eTask.getEliminatees(), Arrays.asList(index2.getFreeVars()))) {
+									final TermVariable rep2 = mMgdScript.constructFreshTermVariable("caseSplit", index2.getSort());
+									caseSplitEliminatees.add(rep2);
+									effectiveIndex2 = rep2;
+									substitutionMapping.put(index2, effectiveIndex2);
+									definitions.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), eTask.getQuantifier(), index2, effectiveIndex2));
+								} else {
+									effectiveIndex2 = index2;
+								}
+								final Term replaced = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(eTask.getTerm());
+								effectiveTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
+										eTask.getQuantifier(), replaced, QuantifierUtils.applyDualFiniteConnective(
+												mMgdScript.getScript(), eTask.getQuantifier(), definitions));
+							}
+							final Term equals = SmtUtils.binaryEquality(mMgdScript.getScript(), effectiveIndex1, effectiveIndex2);
 							final Term distinct = SmtUtils.not(mMgdScript.getScript(), equals);
-							final EliminationTaskWithContext posTask = eTask.addConjunct(mMgdScript.getScript(), equals);
+							final Term posContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), equals);
+							final EliminationTaskWithContext posTask = new EliminationTaskWithContext(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, posContext);
 							final EliminationTaskWithContext posRes = doElimAllRec(posTask);
 							final Term posResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
 									mMgdScript.getScript(), eTask.getQuantifier(), posRes.getTerm(), QuantifierUtils
 											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), equals));
 
-							final EliminationTaskWithContext negTask = eTask.addConjunct(mMgdScript.getScript(), distinct);
+							final Term negContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), distinct);
+							final EliminationTaskWithContext negTask = new EliminationTaskWithContext(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, negContext);
 							final EliminationTaskWithContext negRes = doElimAllRec(negTask);
 							final Term negResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
 									mMgdScript.getScript(), eTask.getQuantifier(), negRes.getTerm(), QuantifierUtils
 											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), distinct));
 							final HashSet<TermVariable> resEliminatees = new HashSet<>(posRes.getEliminatees());
 							resEliminatees.addAll(negRes.getEliminatees());
+							resEliminatees.addAll(caseSplitEliminatees);
 							final Term resTerm = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
 									eTask.getQuantifier(), posResTermPostprocessed, negResTermPostprocessed);
 							final EliminationTaskWithContext result = new EliminationTaskWithContext(
 									eTask.getQuantifier(), resEliminatees, resTerm, eTask.getContext());
-							return result;
+							final EliminationTaskWithContext finalResult = applyNonSddEliminations(mServices, mMgdScript, result, PqeTechniques.ALL_LOCAL);
+							return finalResult;
 						}
 
 					}

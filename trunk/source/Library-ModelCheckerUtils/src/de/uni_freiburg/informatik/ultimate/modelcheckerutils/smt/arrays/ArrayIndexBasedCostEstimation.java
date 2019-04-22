@@ -27,8 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,18 +82,18 @@ public class ArrayIndexBasedCostEstimation {
 			for (int i = 0; i < indexDoubleton.getOneElement().size(); i++) {
 				final Term entry1 = indexDoubleton.getOneElement().get(i);
 				final Term entry2 = indexDoubleton.getOtherElement().get(i);
-				if (Collections.disjoint(forbiddenVariables, Arrays.asList(entry1.getFreeVars())) &&
-						Collections.disjoint(forbiddenVariables, Arrays.asList(entry2.getFreeVars()))) {
+//				if (Collections.disjoint(forbiddenVariables, Arrays.asList(entry1.getFreeVars())) &&
+//						Collections.disjoint(forbiddenVariables, Arrays.asList(entry2.getFreeVars()))) {
 					final EqualityStatus es = aiem.checkEqualityStatus(entry1, entry2);
 					if (es == EqualityStatus.UNKNOWN) {
 						return new Doubleton<Term>(entry1, entry2);
 
 					}
-				}
+//				}
 			}
 		}
-		return null;
-//		throw new AssertionError("all values known");
+//		return null;
+		throw new AssertionError("all values known");
 	}
 
 	public TreeRelation<Integer, TermVariable> getCost2Eliminatee() {
