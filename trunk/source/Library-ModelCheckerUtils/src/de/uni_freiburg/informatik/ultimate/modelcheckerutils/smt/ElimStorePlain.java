@@ -389,9 +389,9 @@ public class ElimStorePlain {
 				if (useCostEstimation) {
 					final ArrayIndexBasedCostEstimation costs = computeCostEstimation(eTask, tr.getImage(dim));
 					if (costs.getCost2Eliminatee().getDomain().size() > 1) {
-						mLogger.info("Different consts " + costs.getCost2Eliminatee());
+						mLogger.info("Different costs " + costs.getCost2Eliminatee());
 					}
-					final boolean useIndexFrequency = true;
+					final boolean useIndexFrequency = false;
 					final int indexFrequenceyThreshold = 3;
 					if (useIndexFrequency) {
 						costs.getOccurrenceMaximum();
