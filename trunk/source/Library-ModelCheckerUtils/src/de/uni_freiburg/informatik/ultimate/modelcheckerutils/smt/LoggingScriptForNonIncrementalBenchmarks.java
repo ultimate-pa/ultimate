@@ -640,6 +640,10 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			mTerm = term;
 		}
 		
+		public Term getmTerm() {
+			return mTerm;
+		}
+
 		@Override
 		public String toString() {
 			final StringWriter sw = new StringWriter();

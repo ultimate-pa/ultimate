@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -213,5 +215,26 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 //		return "QF_AUFNIRA";
 //		return "QF_ABV";
 		return "BV";
+	}
+	
+	private List<ISmtCommand> postprocessCommandStack(final LinkedList<ArrayList<ISmtCommand>> commandStack) {
+		ArrayDeque<ISmtCommand> tmp = new ArrayDeque<>();
+		TermClassifier tc = new TermClassifier();
+		Iterator<ArrayList<ISmtCommand>> it = commandStack.descendingIterator();
+		while (it.hasNext()) {
+			ArrayList<ISmtCommand> commands = it.next();
+			for (int i = commands.size()-1; i>=0; i--) {
+				ISmtCommand command = commands.get(i);
+				if (command instanceof AssertCommand) {
+					AssertCommand ac = (AssertCommand) command;
+					tc.checkTerm(ac.getmTerm());
+					tmp.addFirst(ac);
+				} else {
+					// TODO
+				}
+			}
+		}
+		
+		return null;
 	}
 }
