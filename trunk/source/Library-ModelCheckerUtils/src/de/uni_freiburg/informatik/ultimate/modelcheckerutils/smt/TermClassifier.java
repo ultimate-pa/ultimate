@@ -79,7 +79,7 @@ public class TermClassifier extends NonRecursive {
 	}
 
 	/**
-	 * Check a/another Term and and the result to the existing classification results.
+	 * Check a/another Term and add the result to the existing classification results.
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
