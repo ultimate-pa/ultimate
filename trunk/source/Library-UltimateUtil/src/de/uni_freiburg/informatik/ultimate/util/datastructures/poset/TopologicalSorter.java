@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2019 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2018 University of Freiburg
  *
@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <L>
  *            Type of the graph's edge labels.
  *
- * @author schaetzc@informatik.uni-freiburg.de
+ * @author schaetzc@tf.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class TopologicalSorter<V, L> {
@@ -113,8 +114,8 @@ public class TopologicalSorter<V, L> {
 	 */
 	public List<V> reversedTopologicalOrdering(final Collection<V> graph) {
 		mUnmarkedNodes = new LinkedHashSet<>(graph);
-		mTemporarilyMarkedNodes = new LinkedHashSet<>();
-		mPermanentlyMarkedNodes = new LinkedHashSet<>();
+		mTemporarilyMarkedNodes = new HashSet<>();
+		mPermanentlyMarkedNodes = new HashSet<>();
 		mTopolicalSorting = new ArrayList<>(graph.size());
 		while (!mUnmarkedNodes.isEmpty()) {
 			try {
@@ -191,6 +192,6 @@ public class TopologicalSorter<V, L> {
 		 *            Target node of the edge.
 		 * @return The edge should be used.
 		 */
-		public boolean accept(V source, L outgoingEdgeLabel, V target);
+		boolean accept(V source, L outgoingEdgeLabel, V target);
 	}
 }
