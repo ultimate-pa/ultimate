@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author schaetzc@tf.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
+// TODO label type is not needed, see notes on IRelationFilter
 public class TopologicalSorter<V, L> {
 
 	private Set<V> mUnmarkedNodes;
@@ -115,6 +116,7 @@ public class TopologicalSorter<V, L> {
 	public List<V> reversedTopologicalOrdering(final Collection<V> graph) {
 		mUnmarkedNodes = new LinkedHashSet<>(graph);
 		mTemporarilyMarkedNodes = new HashSet<>();
+		// TODO removed permanent marks? Values doesn't seem to be used
 		mPermanentlyMarkedNodes = new HashSet<>();
 		mTopolicalSorting = new ArrayList<>(graph.size());
 		while (!mUnmarkedNodes.isEmpty()) {
@@ -154,6 +156,7 @@ public class TopologicalSorter<V, L> {
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
 	}
 
+	// TODO remove, see comment on IRelationFilter
 	private static <V, L> Function<V, Collection<Entry<V, L>>>
 			createNoLabelFunction(final Function<V, Collection<V>> fun) {
 		final Object label = new Object();
@@ -179,6 +182,7 @@ public class TopologicalSorter<V, L> {
 	 *            Type of the graph edge labels.
 	 */
 	@FunctionalInterface
+	// TODO remove this class. Successor supplier is basically a filter
 	public interface IRelationFilter<V, L> {
 
 		/**
