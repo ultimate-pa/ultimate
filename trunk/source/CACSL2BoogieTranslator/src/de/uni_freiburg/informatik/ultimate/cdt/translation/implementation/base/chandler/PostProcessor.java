@@ -373,9 +373,7 @@ public class PostProcessor {
 
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
 		/*
-		 * hardcoded to values from https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS -1 the default rounding
-		 * direction is not known 0 toward zero, FE_TOWARDZERO RTZ 1 to nearest, FE_TONEAREST RNE 2 towards positive
-		 * infinity, FE_UPWARD RTP 3 towards negative infinity, FE_DOWNWARD RTN
+		 * Hardcoded to the following constants: FE_DOWNWARD 1024 FE_TONEAREST 0 FE_TOWARDZERO 3072 FE_UPWARD 2048
 		 */
 
 		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
@@ -397,16 +395,21 @@ public class PostProcessor {
 		outVarList[0] = new VarList(loc, new String[] { returnVariableName }, intAstType);
 
 		// create expressions for integer literals, identifiers, and variableLHS used in the function statements
-		final Expression minusOneLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
 		final Expression zeroLiteralExpression =
 				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
-		final Expression oneLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
-		final Expression twoLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2));
-		final Expression threeLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
+		final Expression minusOneLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
+
+		// rounding macros constants
+		final Expression rtzIntegerLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3072));
+		final Expression rneIntegerLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+		final Expression rtpIntegerLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2048));
+		final Expression rtnIntegerLiteralExpression =
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(1024));
+
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
 						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, functionName));
@@ -428,8 +431,7 @@ public class PostProcessor {
 		// create success/failure assignment statements
 		final Statement assignSuccessReturnValueStatement =
 				StatementFactory.constructSingleAssignmentStatement(loc, returnVariableLHS, zeroLiteralExpression);
-		// TODO Documentation states that it returns non-zero when fails. Returning one integer literal for now. Should
-		// check what is returned in the source code
+		// Documentation states that it returns non-zero when fails. Returning minus one integer literal for now.
 		final Statement assignFailureRetunrValueStatement =
 				StatementFactory.constructSingleAssignmentStatement(loc, returnVariableLHS, minusOneLiteralExpression);
 
@@ -450,19 +452,19 @@ public class PostProcessor {
 		failureStatements = new Statement[1];
 		failureStatements[0] = assignFailureRetunrValueStatement;
 
-		// create coditional expressions
-		final Expression condRTZ =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-						functionArgumentIdentifierExpression, intCPrimitive, zeroLiteralExpression, intCPrimitive);
-		final Expression condRNE =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-						functionArgumentIdentifierExpression, intCPrimitive, oneLiteralExpression, intCPrimitive);
-		final Expression condRTP =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-						functionArgumentIdentifierExpression, intCPrimitive, twoLiteralExpression, intCPrimitive);
-		final Expression condRTN =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-						functionArgumentIdentifierExpression, intCPrimitive, threeLiteralExpression, intCPrimitive);
+		// create conditional expressions
+		final Expression condRTZ = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, functionArgumentIdentifierExpression, intCPrimitive,
+				rtzIntegerLiteralExpression, intCPrimitive);
+		final Expression condRNE = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, functionArgumentIdentifierExpression, intCPrimitive,
+				rneIntegerLiteralExpression, intCPrimitive);
+		final Expression condRTP = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, functionArgumentIdentifierExpression, intCPrimitive,
+				rtpIntegerLiteralExpression, intCPrimitive);
+		final Expression condRTN = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, functionArgumentIdentifierExpression, intCPrimitive,
+				rtnIntegerLiteralExpression, intCPrimitive);
 
 		// construct if statements
 		final Statement ifRTNAssignElseFail =
