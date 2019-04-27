@@ -74,6 +74,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.AssertCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.CheckSatCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DeclareFunCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DeclareSortCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DefineFunCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DefineSortCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.EchoCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.GetUnsatCoreCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.GetValueCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ISmtCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.SetLogicCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.SetOptionCommand;
 
 /**
  * This is a wrapper around a {@link Script} that is used by Matthias in order to generate benchmarks for the SMT-COMP
@@ -83,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class LoggingScriptForNonIncrementalBenchmarks implements Script {
-	
+
 	/**
 	 * The actual script.
 	 */
@@ -93,11 +105,11 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	 * The auxiliary class to print terms and sorts.
 	 */
 	private final PrintTerm mTermPrinter = new PrintTerm();
-	
+
 	private final String mBaseFilename;
 	private final String mDirectory;
-	
-	protected final LinkedList<ArrayList<ISmtCommand>> mCommandStack;
+
+	protected final LinkedList<ArrayList<ISmtCommand<?>>> mCommandStack;
 
 	public LoggingScriptForNonIncrementalBenchmarks(final Script script, final String baseFilename,
 			final String directory) {
@@ -106,42 +118,38 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mBaseFilename = baseFilename;
 		mDirectory = directory;
 		mCommandStack = new LinkedList<>();
-		mCommandStack.push(new ArrayList<ISmtCommand>());
+		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
 	}
-	
-	protected LinkedList<ArrayList<ISmtCommand>> deepCopyOfCommandStack() {
-		final LinkedList<ArrayList<ISmtCommand>> result = new LinkedList<ArrayList<ISmtCommand>>();
-		for (final ArrayList<ISmtCommand> al : mCommandStack) {
-			result.add(new ArrayList<ISmtCommand>());
-			for (final ISmtCommand command : al) {
+
+	protected LinkedList<ArrayList<ISmtCommand<?>>> deepCopyOfCommandStack() {
+		final LinkedList<ArrayList<ISmtCommand<?>>> result = new LinkedList<ArrayList<ISmtCommand<?>>>();
+		for (final ArrayList<ISmtCommand<?>> al : mCommandStack) {
+			result.add(new ArrayList<ISmtCommand<?>>());
+			for (final ISmtCommand<?> command : al) {
 				result.getLast().add(command);
 			}
 		}
 		return result;
 	}
 
-	private void addToCurrentAssertionStack(final String string) {
-		mCommandStack.getLast().add(new SmtCommandInStringRepresentation(string));
-	}
-	
-	protected void addToCurrentAssertionStack(final ISmtCommand smtCommand) {
+	protected void addToCurrentAssertionStack(final ISmtCommand<?> smtCommand) {
 		mCommandStack.getLast().add(smtCommand);
 	}
-	
+
 	private void resetAssertionStack() {
 		mCommandStack.clear();
 		mCommandStack.add(new ArrayList<>());
 	}
-	
-	private void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand>> commandStack) {
-		for (final ArrayList<ISmtCommand> al : commandStack) {
-			for (final ISmtCommand command : al) {
+
+	private void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand<?>>> commandStack) {
+		for (final ArrayList<ISmtCommand<?>> al : commandStack) {
+			for (final ISmtCommand<?> command : al) {
 				pw.print(command.toString());
 			}
 		}
 	}
-	
-	protected void writeCommandStackToFile(final File file, final List<ArrayList<ISmtCommand>> commandStack) {
+
+	protected void writeCommandStackToFile(final File file, final List<ArrayList<ISmtCommand<?>>> commandStack) {
 		FileWriter fw = null;
 		try {
 			fw = new FileWriter(file);
@@ -152,7 +160,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		printCommandStack(pw, commandStack);
 		pw.close();
 	}
-	
+
 	protected File constructFile(final String suffix) {
 		final String filename = mDirectory + File.separator + mBaseFilename + suffix + ".smt2";
 		final File file = new File(filename);
@@ -169,16 +177,16 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(set-logic " + logic + ")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new SetLogicCommand(logic));
 		mScript.setLogic(logic);
 	}
-	
+
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(set-logic " + logic.name() + ")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new SetLogicCommand(logic.name()));
 		mScript.setLogic(logic);
 	}
 
@@ -191,7 +199,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(' ');
 		mPw.print(PrintTerm.quoteObjectIfString(value));
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new SetOptionCommand(opt, value));
 		mScript.setOption(opt, value);
 	}
 
@@ -204,7 +212,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(' ');
 		mPw.print(PrintTerm.quoteObjectIfString(value));
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new SetOptionCommand(info, value));
 		mScript.setInfo(info, value);
 	}
 
@@ -217,7 +225,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(' ');
 		mPw.print(arity);
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new DeclareSortCommand(sort, arity));
 		mScript.declareSort(sort, arity);
 	}
 
@@ -237,7 +245,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(") ");
 		mTermPrinter.append(mPw, definition);
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new DefineSortCommand(sort, sortParams, definition));
 		mScript.defineSort(sort, sortParams, definition);
 	}
 
@@ -257,7 +265,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(") ");
 		mTermPrinter.append(mPw, resultSort);
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new DeclareFunCommand(fun, paramSorts, resultSort));
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
@@ -283,7 +291,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print(' ');
 		mTermPrinter.append(mPw, formatTerm(definition));
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new DefineFunCommand(fun, params, resultSort, definition));
 		mScript.defineFun(fun, params, resultSort, definition);
 	}
 
@@ -294,7 +302,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		// mPw.println("(push " + levels + ")");
 		// addToCurrentAssertionStack(sw.toString());
 		for (int i = 0; i < levels; i++) {
-			mCommandStack.add(new ArrayList<ISmtCommand>());
+			mCommandStack.add(new ArrayList<ISmtCommand<?>>());
 		}
 		mScript.push(levels);
 	}
@@ -313,7 +321,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		
+
 		addToCurrentAssertionStack(new AssertCommand(term));
 		return mScript.assertTerm(term);
 	}
@@ -323,7 +331,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(check-sat)");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new CheckSatCommand());
 		return mScript.checkSat();
 	}
 
@@ -332,7 +340,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-assertions)");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-assertions";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getAssertions();
 	}
 
@@ -341,7 +350,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-proof)");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-proof";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getProof();
 	}
 
@@ -350,7 +360,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-unsat-core)");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new GetUnsatCoreCommand());
 		return mScript.getUnsatCore();
 	}
 
@@ -366,7 +376,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			sep = " ";
 		}
 		mPw.println("))");
-		addToCurrentAssertionStack(sw.toString());
+		addToCurrentAssertionStack(new GetValueCommand(terms));
 		return mScript.getValue(terms);
 	}
 
@@ -375,16 +385,15 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-assignment)");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-assignment";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getAssignment();
 	}
 
 	@Override
 	public Object getOption(final String opt) throws UnsupportedOperationException {
-		// StringWriter sw = new StringWriter();
-		// PrintWriter mPw = new PrintWriter(sw);
-		// mPw.println("(get-option " + opt + ")");
-		// addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-option";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getOption(opt);
 	}
 
@@ -393,7 +402,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-info " + info + ")");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-info";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getInfo(info);
 	}
 
@@ -404,7 +414,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print("(simplify ");
 		mTermPrinter.append(mPw, term);
 		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "simplify";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.simplify(term);
 	}
 
@@ -427,10 +438,11 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			mTermPrinter.append(mPw, t);
 		}
 		mPw.println(')');
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-interpolants";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getInterpolants(partition);
 	}
-	
+
 	// [a,b,c], [0,1,0] -> a (b) c
 	// c
 	// a b
@@ -454,7 +466,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			mTermPrinter.append(mPw, partition[i]);
 		}
 		mPw.println(')');
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-interpolants";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getInterpolants(partition, startOfSubtree);
 	}
 
@@ -465,7 +478,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.println("(exit)");
 		mPw.flush();
 		mPw.close();
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "exit";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		mScript.exit();
 	}
 
@@ -556,7 +570,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-model)");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "get-model";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.getModel();
 	}
 
@@ -573,7 +588,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			spacer = " ";
 		}
 		mPw.println("))");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "check-allsat";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.checkAllsat(predicates);
 	}
 
@@ -597,21 +613,22 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			spacer = " ";
 		}
 		mPw.println("))");
-		addToCurrentAssertionStack(sw.toString());
+		final String commandName = "find-implied-equality";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 		return mScript.findImpliedEquality(x, y);
 	}
-	
+
 	@Override
 	public QuotedObject echo(final QuotedObject msg) {
-		// StringWriter sw = new StringWriter();
-		// PrintWriter mPw = new PrintWriter(sw);
-		// mPw.print("(echo ");
-		// mPw.print(msg);
-		// mPw.println(')');
-		// addToCurrentAssertionStack(sw.toString());
+		 final StringWriter sw = new StringWriter();
+		 final PrintWriter mPw = new PrintWriter(sw);
+		 mPw.print("(echo ");
+		 mPw.print(msg);
+		 mPw.println(')');
+		 addToCurrentAssertionStack(new EchoCommand(msg));
 		return mScript.echo(msg);
 	}
-	
+
 	/**
 	 * Write a comment to the generated SMTLIB dump file. Note that this function is only available in the LoggingScript
 	 * and not in the interface {@link Script} since it only makes sense for logging and not for solving.
@@ -624,61 +641,20 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("; ");
 		mPw.println(comment);
-		addToCurrentAssertionStack(sw.toString());
-	}
-	
-	public interface ISmtCommand {
-		@Override
-		public abstract String toString();
-	}
-	
-	public class AssertCommand implements ISmtCommand {
-		private final Term mTerm;
-
-		public AssertCommand(final Term term) {
-			super();
-			mTerm = term;
-		}
-		
-		public Term getmTerm() {
-			return mTerm;
-		}
-
-		@Override
-		public String toString() {
-			final StringWriter sw = new StringWriter();
-			final PrintWriter mPw = new PrintWriter(sw);
-			mPw.print("(assert ");
-			mTermPrinter.append(mPw, formatTerm(mTerm));
-			mPw.println(")");
-			return sw.toString();
-		}
-	}
-	
-	public class SmtCommandInStringRepresentation implements ISmtCommand {
-		private final String mCommand;
-
-		public SmtCommandInStringRepresentation(final String command) {
-			super();
-			mCommand = command;
-		}
-		
-		@Override
-		public String toString() {
-			return mCommand;
-		}
+		final String commandName = "comment";
+		System.out.println("Logging script will ignore the " + commandName + " command.");
 	}
 
 	@Override
 	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
 		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
 	}
-	
+
 	@Override
 	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
 	}
-	
+
 	@Override
 	public void resetAssertions() {
 		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.AssertCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.CheckSatCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ExitCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ISmtCommand;
 
 public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncrementalBenchmarks {
 	public static final String SOURCE_INVSYNTH =
@@ -62,7 +66,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			"Generation Using Non-linear Constraint Solving. CAV 2003: 420-432" + System.lineSeparator() +
 			"" + System.lineSeparator() +
 			"|)" + System.lineSeparator();
-	
+
 	public static final String SOURCE_GNTA =
 			"(set-info :source |" + System.lineSeparator() +
 			"" + System.lineSeparator() +
@@ -95,7 +99,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			"[7] https://github.com/dbeyer/sv-benchmarks" + System.lineSeparator() +
 			"" + System.lineSeparator() +
 			"|)" + System.lineSeparator();
-	
+
 	public static final String SOURCE_AUTOMIZER =
 			"(set-info :source |" + System.lineSeparator() +
 			"" + System.lineSeparator() +
@@ -121,9 +125,9 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			"[6] https://github.com/dbeyer/sv-benchmarks" + System.lineSeparator() +
 			"" + System.lineSeparator() +
 			"|)" + System.lineSeparator();
-	
+
 	private int mWrittenScriptCounter = 0;
-	
+
 	private final int mBenchmarkTooSimpleThreshold = 10 * 1000;
 	private final boolean mWriteUnsolvedBenchmarks = true;
 
@@ -141,13 +145,14 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		if (solved && durationInMilliseconds >= mBenchmarkTooSimpleThreshold
 				|| !solved && mWriteUnsolvedBenchmarks) {
 			final File file = constructFile('_' + String.valueOf(mWrittenScriptCounter));
-			final List<ArrayList<ISmtCommand>> processedCommandStack = process(mCommandStack, sat);
+			final List<ArrayList<ISmtCommand<?>>> processedCommandStack = process(mCommandStack, sat);
+			final List<ArrayList<ISmtCommand<?>>> processedCommandStack1 = postprocessCommandStack(mCommandStack, sat);
 			writeCommandStackToFile(file, processedCommandStack);
 			mWrittenScriptCounter++;
 		}
 		return sat;
 	}
-	
+
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		final Term nonNamedTerm;
@@ -161,20 +166,20 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		}
 		return mScript.assertTerm(term);
 	}
-	
+
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		return mScript.getValue(terms);
 	}
 
-	private List<ArrayList<ISmtCommand>> process(final LinkedList<ArrayList<ISmtCommand>> commandStack,
+	private List<ArrayList<ISmtCommand<?>>> process(final LinkedList<ArrayList<ISmtCommand<?>>> commandStack,
 			final LBool status) {
-		final ArrayList<ISmtCommand> flattenedStack = new ArrayList<>();
+		final ArrayList<ISmtCommand<?>> flattenedStack = new ArrayList<>();
 		addInvarSynthCommands(flattenedStack, status);
 		boolean toKeepCommandsReached = false;
-		for (final ArrayList<ISmtCommand> list : commandStack) {
-			for (final ISmtCommand command : list) {
+		for (final ArrayList<ISmtCommand<?>> list : commandStack) {
+			for (final ISmtCommand<?> command : list) {
 				if (!toKeepCommandsReached) {
 					if (command.toString().contains("declare-fun")) {
 						toKeepCommandsReached = true;
@@ -185,30 +190,30 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 				}
 			}
 		}
-		flattenedStack.add(new SmtCommandInStringRepresentation("(check-sat)" + System.lineSeparator()));
-		flattenedStack.add(new SmtCommandInStringRepresentation("(exit)" + System.lineSeparator()));
+		flattenedStack.add(new CheckSatCommand());
+		flattenedStack.add(new ExitCommand());
 		return Collections.singletonList(flattenedStack);
 	}
 
-	private void addInvarSynthCommands(final ArrayList<ISmtCommand> flattenedStack, final LBool status) {
-		final String logic = "(set-logic " + getLogic() + ")" + System.lineSeparator();
-		flattenedStack.add(new SmtCommandInStringRepresentation(logic));
-		flattenedStack.add(new SmtCommandInStringRepresentation(getSourceInfo()));
-		final String version = "(set-info :smt-lib-version 2.5)" + System.lineSeparator();
-		flattenedStack.add(new SmtCommandInStringRepresentation(version));
-		final String category = "(set-info :category \"industrial\")" + System.lineSeparator();
-		flattenedStack.add(new SmtCommandInStringRepresentation(category));
-		final String statusInfo = "(set-info :status " + status + ")" + System.lineSeparator();
-		flattenedStack.add(new SmtCommandInStringRepresentation(statusInfo));
+	private void addInvarSynthCommands(final ArrayList<ISmtCommand<?>> flattenedStack, final LBool status) {
+//		final String logic = "(set-logic " + getLogic() + ")" + System.lineSeparator();
+//		flattenedStack.add(new SmtCommandInStringRepresentation(logic));
+//		flattenedStack.add(new SmtCommandInStringRepresentation(getSourceInfo()));
+//		final String version = "(set-info :smt-lib-version 2.5)" + System.lineSeparator();
+//		flattenedStack.add(new SmtCommandInStringRepresentation(version));
+//		final String category = "(set-info :category \"industrial\")" + System.lineSeparator();
+//		flattenedStack.add(new SmtCommandInStringRepresentation(category));
+//		final String statusInfo = "(set-info :status " + status + ")" + System.lineSeparator();
+//		flattenedStack.add(new SmtCommandInStringRepresentation(statusInfo));
 	}
-	
-	
+
+
 	public static String getSourceInfo() {
 //		return SOURCE_INVSYNTH;
 //		return SOURCE_GNTA;
 		return SOURCE_AUTOMIZER;
 	}
-	
+
 	public static String getLogic() {
 //		return "QF_NRA";
 //		return "QF_NIA";
@@ -216,25 +221,24 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 //		return "QF_ABV";
 		return "BV";
 	}
-	
-	private List<ISmtCommand> postprocessCommandStack(final LinkedList<ArrayList<ISmtCommand>> commandStack) {
-		ArrayDeque<ISmtCommand> tmp = new ArrayDeque<>();
-		TermClassifier tc = new TermClassifier();
-		Iterator<ArrayList<ISmtCommand>> it = commandStack.descendingIterator();
+
+	private List<ArrayList<ISmtCommand<?>>> postprocessCommandStack(final LinkedList<ArrayList<ISmtCommand<?>>> commandStack, final LBool sat) {
+		final ArrayDeque<ISmtCommand<?>> tmp = new ArrayDeque<>();
+		final TermClassifier tc = new TermClassifier();
+		final Iterator<ArrayList<ISmtCommand<?>>> it = commandStack.descendingIterator();
 		while (it.hasNext()) {
-			ArrayList<ISmtCommand> commands = it.next();
+			final ArrayList<ISmtCommand<?>> commands = it.next();
 			for (int i = commands.size()-1; i>=0; i--) {
-				ISmtCommand command = commands.get(i);
+				final ISmtCommand<?> command = commands.get(i);
 				if (command instanceof AssertCommand) {
-					AssertCommand ac = (AssertCommand) command;
-					tc.checkTerm(ac.getmTerm());
+					final AssertCommand ac = (AssertCommand) command;
+					tc.checkTerm(ac.getTerm());
 					tmp.addFirst(ac);
 				} else {
 					// TODO
 				}
 			}
 		}
-		
-		return null;
+		return Collections.singletonList(new ArrayList<>(tmp));
 	}
 }
