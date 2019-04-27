@@ -288,6 +288,18 @@ public class SmtCommandUtils {
 			mResultSort = resultSort;
 		}
 
+		public String getFun() {
+			return mFun;
+		}
+
+		public Sort[] getParamSorts() {
+			return mParamSorts;
+		}
+
+		public Sort getResultSort() {
+			return mResultSort;
+		}
+
 		public static String buildString(final String fun, final Sort[] paramSorts, final Sort resultSort) {
 			final PrintTerm pt = new PrintTerm();
 			final StringBuilder sb = new StringBuilder();
@@ -400,6 +412,10 @@ public class SmtCommandUtils {
 			mTerm = term;
 		}
 
+		public Term getTerm() {
+			return mTerm;
+		}
+
 		public static String buildString(final Term term) {
 			return "(assert " + term.toString() + ")";
 		}
@@ -502,6 +518,34 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mMsg);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
+		}
+	}
+
+	public static class ExitCommand implements ISmtCommand<Void> {
+		public static String buildString() {
+			return "(exit)";
+		}
+
+		@Override
+		public Void executeWithScript(final Script script) {
+			script.reset();
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return buildString();
 		}
 
 		@Override
