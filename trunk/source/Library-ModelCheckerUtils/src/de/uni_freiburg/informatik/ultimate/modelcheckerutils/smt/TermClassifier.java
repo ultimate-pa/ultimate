@@ -128,7 +128,12 @@ public class TermClassifier extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
-			throw new UnsupportedOperationException();
+			mTermsInWhichWeAlreadyDescended.add(term);
+			walker.enqueueWalker(new MyWalker(term.getSubTerm()));
+			for (final Term v : term.getValues()) {
+				walker.enqueueWalker(new MyWalker(v));
+			}
+
 		}
 
 		@Override
