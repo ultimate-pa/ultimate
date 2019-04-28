@@ -188,10 +188,9 @@ public class Monomial extends Term {
 	
 	//TODO: Find out whether the error constructor is necessary. So far it doesn't look like it, since
 	//an ErrorTerm for the PolynomialTerm is enough.
-	//TODO: Find out why toStringHelper is necessary and whether this is ok.
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
-		throw new UnsupportedOperationException("This is a Monomial and should work.");
+		throw new UnsupportedOperationException("This is a Monomial. Something went wrong.");
 	}
 	
 	/**

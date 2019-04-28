@@ -153,6 +153,21 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
+	@Test
+	public void polynomialTermTest06() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(+ (* x x) (* y y))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);

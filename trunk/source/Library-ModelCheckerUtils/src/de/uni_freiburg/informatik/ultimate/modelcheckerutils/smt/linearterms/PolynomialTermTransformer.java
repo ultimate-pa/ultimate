@@ -67,7 +67,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 			final PolynomialTerm result = new PolynomialTerm(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
-			//TODO: Change AffineTerm to PolynomialTerm
 		}
 		// Otherwise, if the term represents an "polynomial function" we tell
 		// TermTransformer to descend to subformulas.
@@ -106,7 +105,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	
 	/**
 	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
-	 * represents an "affine function". We call a function an "affine function" if
+	 * represents an "polynomial function". We call a function an "polynomial function" if
 	 * it implements an addition, subtraction, multiplication, or real number
 	 * division.
 	 */

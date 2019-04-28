@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Leike
  */
-public class AffineTerm extends Term {
+public class AffineTerm extends PolynomialTerm {
 	/**
 	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
@@ -321,6 +321,22 @@ public class AffineTerm extends Term {
 		}
 		final Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
+	}
+	
+	/**
+	 * Transforms this AffineTerm into an equivalent PolynomialTerm.
+	 */
+	public PolynomialTerm toPolynomialTerm() {
+		int arraylength = mVariable2Coefficient.entrySet().size();
+		Rational[] coefficients = new Rational[arraylength];
+		Term[] terms = new Term[arraylength];
+		int index = 0;
+		for (final Map.Entry<Term, Rational> entry : mVariable2Coefficient.entrySet()) {
+			terms[index] = entry.getKey();
+			coefficients[index] = entry.getValue();
+			index++;
+		}
+		return new PolynomialTerm(mSort, terms, coefficients, mConstant);
 	}
 
 	@Override

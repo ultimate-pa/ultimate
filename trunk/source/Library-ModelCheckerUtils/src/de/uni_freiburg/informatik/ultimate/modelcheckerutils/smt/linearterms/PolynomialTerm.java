@@ -47,6 +47,17 @@ public class PolynomialTerm extends Term {
 	private final Sort mSort;
 	
 	/**
+	 * This constructor is only thought for the subclasses. The members will not be initialized
+	 * because the reason to do this in the first place is to save space!
+	 */
+	protected PolynomialTerm(int Hash) {
+		super(Hash);
+		mMonomial2Coefficient = null;
+		mConstant = null;
+		mSort = null;
+	}
+	
+	/**
 	 * PolynomialTerm that represents the Rational r of sort s.
 	 */
 	public PolynomialTerm(final Sort s, final Rational r) {
@@ -358,7 +369,6 @@ public class PolynomialTerm extends Term {
 		}
 	}
 	
-	//TODO: Write Tests.
 	/**
 	 * Return true, when this term is linear (thus could be represented by AffineTerm), false otherwise.
 	 */
@@ -506,7 +516,6 @@ public class PolynomialTerm extends Term {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
 	}
 	
-	//TODO: Find out whether it should also applied to the exponents
 	public static PolynomialTerm applyModuloToAllCoefficients(final Script script, final PolynomialTerm polynomialTerm,
 			final BigInteger divident) {
 		assert SmtSortUtils.isIntSort(polynomialTerm.getSort());
