@@ -144,7 +144,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	private void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand<?>>> commandStack) {
 		for (final ArrayList<ISmtCommand<?>> al : commandStack) {
 			for (final ISmtCommand<?> command : al) {
-				pw.print(command.toString());
+				pw.print(command.toString() + System.lineSeparator());
 			}
 		}
 	}
