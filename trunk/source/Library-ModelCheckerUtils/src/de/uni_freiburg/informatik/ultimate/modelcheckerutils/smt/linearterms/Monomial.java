@@ -213,19 +213,21 @@ public class Monomial extends Term {
 			//Because then this could be made easier.
 			BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
 			if (exponent.signum() == 1) {
+				Term singlefactor = factor;
 				//Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
 				//Nonetheless: TODO: Better ask Matthias about this
 				for (int j = 1; j < exponent.intValue() ; j++) {
-					factor = SmtUtils.mul(script, mSort, factor, factor);
+					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
 				}
 				factors[i] = factor;
 				++i;
 			}else {
+				Term singlefactor = factor;
 				for (int j = 1; j < exponent.negate().intValue() ; j++) {
-					factor = SmtUtils.mul(script, mSort, factor, factor);
+					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
 				}
-				//TODO: Wrong use of div!!! Wait for Matthias to implement the right one.
-				factors[i] = SmtUtils.div(script, Rational.ONE.toTerm(mSort), factor);
+				//TODO: Ask Matthias whether it is ok, that I multiply with 1/factor instead of directly dividing.
+				factors[i] = script.term("/", Rational.ONE.toTerm(mSort), factor);
 				++i;
 			}
 		}
