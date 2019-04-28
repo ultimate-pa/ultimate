@@ -156,7 +156,6 @@ public class SmtCommandUtils {
 			sb.append(' ');
 			sb.append(PrintTerm.quoteObjectIfString(value));
 			sb.append(")");
-			sb.append(System.lineSeparator());
 			return sb.toString();
 		}
 

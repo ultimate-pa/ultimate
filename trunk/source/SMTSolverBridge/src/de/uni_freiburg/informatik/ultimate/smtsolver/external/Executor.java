@@ -116,7 +116,10 @@ class Executor {
 			mLogger.debug(getLogStringPrefix() + " " + in);
 		}
 		try {
-			mWriter.write(in + "\n");
+			// FIXME 2019-04-27 Matthias: Workaround for CVC4.
+			// It seems like CVC4 needs two line breaks after some set-info
+			// commands
+			mWriter.write(in + System.lineSeparator() + System.lineSeparator());
 			mWriter.flush();
 		} catch (final IOException e) {
 			if (mServices.getProgressMonitorService().continueProcessingRoot()) {
