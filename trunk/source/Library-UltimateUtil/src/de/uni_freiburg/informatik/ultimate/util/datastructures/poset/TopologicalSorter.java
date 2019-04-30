@@ -33,71 +33,40 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility class for topological sorting of DAGs.
  *
- * @param <V>
- *            Type of the graph's nodes.
- * @param <L>
- *            Type of the graph's edge labels.
+ * @param <V> Type of the graph's nodes.
+ * @param <L> Type of the graph's edge labels.
  *
  * @author schaetzc@tf.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-// TODO label type is not needed, see notes on IRelationFilter
-public class TopologicalSorter<V, L> {
+public class TopologicalSorter<V> {
 
 	private Set<V> mUnmarkedNodes;
 	private Set<V> mTemporarilyMarkedNodes;
 	private Set<V> mPermanentlyMarkedNodes;
 	private List<V> mTopolicalSorting;
 
-	private final Function<V, Collection<Entry<V, L>>> mFunSuccesor;
-	private final IRelationFilter<V, L> mOutgoingEdgesFilter;
+	private final Function<V, Collection<V>> mSuccesorsOf;
 
 	/**
-	 * see {@link #create(Function, IRelationFilter)}
+	 * Creates re-usable sorter.
+	 * Instead of the actual successor function one can pass an altered version that ignores some edges.
+	 * This can be used to sort graphs with cycles if the cycle building edges are ignored.
+	 * @param funSuccesor A deterministic function that provides all successors for a vertex.
 	 */
-	private TopologicalSorter(final Function<V, Collection<Entry<V, L>>> funSuccesor,
-			final IRelationFilter<V, L> outgoingEdgesFilter) {
-		mOutgoingEdgesFilter = outgoingEdgesFilter;
-		mFunSuccesor = funSuccesor;
-	}
-
-	/**
-	 * Create a sorter for a given DAG.
-	 *
-	 * @param funSuccesor
-	 *            A function that provides all successors and their respective edge labels for a vertex.
-	 */
-	public static <V> TopologicalSorter<V, ?> create(final Function<V, Collection<V>> funSuccesor) {
-		return new TopologicalSorter<>(createNoLabelFunction(funSuccesor), (source, outgoingEdgeLabel, target) -> true);
-	}
-
-	/**
-	 * Create a sorter that ignores some of the graphs edges. This can be used to sort an graph with cycles, if the
-	 * cycle building edges are rejected by the filter.
-	 *
-	 * @param funSuccesor
-	 *            A function that provides all successors and their respective edge labels for a vertex.
-	 * @param outgoingEdgesFilter
-	 *            Filter to be applied on successor edges -- only accepted edges will be used.
-	 */
-	public static <V, L> TopologicalSorter<V, L> create(final Function<V, Collection<Entry<V, L>>> funSuccesor,
-			final IRelationFilter<V, L> outgoingEdgesFilter) {
-		return new TopologicalSorter<>(funSuccesor, outgoingEdgesFilter);
+	public TopologicalSorter(final Function<V, Collection<V>> funSuccesor) {
+		mSuccesorsOf = funSuccesor;
 	}
 
 	/** @see #reversedTopologicalOrdering(Collection) */
-	public List<V> topologicalOrdering(final Collection<V> graph) {
-		final List<V> ordering = reversedTopologicalOrdering(graph);
+	public List<V> topologicalOrdering(final Collection<V> graphNodes) {
+		final List<V> ordering = reversedTopologicalOrdering(graphNodes);
 		if (ordering != null) {
 			Collections.reverse(ordering);
 		}
@@ -105,20 +74,17 @@ public class TopologicalSorter<V, L> {
 	}
 
 	/**
-	 * Creates a reversed topological ordering of an acyclic directed graph (DAG). There are no guarantees, if a node
-	 * inside <code>graph</code> has a child that isn't part of <code>graph</code> (except if the edge from the node to
-	 * it's child isn't accept by the filter).
-	 *
-	 * @param graph
-	 *            All nodes of the graph to be sorted. Duplicates will be ignored.
-	 * @return Topological ordering of the nodes. null iff the graph contained a circle.
+	 * Creates a reversed topological ordering of an acyclic directed graph (DAG).
+	 * The given set of nodes must be closed under the successor function given in {@link #TopologicalSorter(Function)}.
+	 * @param graphNodes All nodes of the graph to be sorted. Duplicates will be ignored.
+	 * @return Topological ordering of the nodes. null iff the graph contained a cycle.
 	 */
-	public List<V> reversedTopologicalOrdering(final Collection<V> graph) {
-		mUnmarkedNodes = new LinkedHashSet<>(graph);
+	public List<V> reversedTopologicalOrdering(final Collection<V> graphNodes) {
+		mUnmarkedNodes = new LinkedHashSet<>(graphNodes);
 		mTemporarilyMarkedNodes = new HashSet<>();
-		// TODO removed permanent marks? Values doesn't seem to be used
+		// TODO remove permanent marks? Values don't seem to be used
 		mPermanentlyMarkedNodes = new HashSet<>();
-		mTopolicalSorting = new ArrayList<>(graph.size());
+		mTopolicalSorting = new ArrayList<>(graphNodes.size());
 		while (!mUnmarkedNodes.isEmpty()) {
 			try {
 				visit(mUnmarkedNodes.iterator().next());
@@ -135,11 +101,8 @@ public class TopologicalSorter<V, L> {
 			throw new GraphCycleException();
 		} else if (mUnmarkedNodes.contains(node)) {
 			markTemporarily(node);
-
-			for (final Entry<V, L> outgoingNode : mFunSuccesor.apply(node)) {
-				if (mOutgoingEdgesFilter.accept(node, outgoingNode.getValue(), outgoingNode.getKey())) {
-					visit(outgoingNode.getKey());
-				}
+			for (V successorNode : mSuccesorsOf.apply(node)) {
+				visit(successorNode);
 			}
 			markPermanently(node);
 			mTopolicalSorting.add(node);
@@ -156,46 +119,7 @@ public class TopologicalSorter<V, L> {
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
 	}
 
-	// TODO remove, see comment on IRelationFilter
-	private static <V, L> Function<V, Collection<Entry<V, L>>>
-			createNoLabelFunction(final Function<V, Collection<V>> fun) {
-		final Object label = new Object();
-		@SuppressWarnings("unchecked")
-		final Function<V, Collection<Entry<V, L>>> rtr =
-				a -> fun.apply(a).stream().map(l -> (Entry<V, L>) new Pair<>(l, label)).collect(Collectors.toList());
-		return rtr;
-	}
-
 	private static class GraphCycleException extends Exception {
 		private static final long serialVersionUID = -7189895863479876025L;
-	}
-
-	/**
-	 * Filter for, e.g., labeled edges. This can be used inside graph algorithms to ignore unwanted edges without having
-	 * to build a modified copy of the graph.
-	 *
-	 * @author schaetzc@informatik.uni-freiburg.de
-	 *
-	 * @param <V>
-	 *            Type of the graph nodes.
-	 * @param <L>
-	 *            Type of the graph edge labels.
-	 */
-	@FunctionalInterface
-	// TODO remove this class. Successor supplier is basically a filter
-	public interface IRelationFilter<V, L> {
-
-		/**
-		 * Determines whether to use an outgoing edge or not.
-		 *
-		 * @param source
-		 *            Source node of the edge.
-		 * @param outgoingEdgeLabel
-		 *            Label of the edge.
-		 * @param target
-		 *            Target node of the edge.
-		 * @return The edge should be used.
-		 */
-		boolean accept(V source, L outgoingEdgeLabel, V target);
 	}
 }

@@ -217,7 +217,7 @@ public class TopologicalSorterTest {
 	}
 
 	private static List<String> topSort(final Graph input) {
-		final TopologicalSorter<String, ?> sorter = TopologicalSorter.create(input::successors);
+		final TopologicalSorter<String> sorter = new TopologicalSorter<>(input::successors);
 		return sorter.topologicalOrdering(input.nodes());
 	}
 

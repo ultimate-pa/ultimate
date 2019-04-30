@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters
  */
 public class PartialOrderCache<E> {
 
-	private static enum PocBmNames {
+	private enum PocBmNames {
 
 		ORDER_REQUESTS_MADE, ORDER_REQUESTS_ANSWERED, ELEMENTS_ADDED;
 
@@ -241,14 +241,14 @@ public class PartialOrderCache<E> {
 	}
 
 	public List<E> getTopologicalOrdering() {
-		final TopologicalSorter<E, ?> sorter = TopologicalSorter.create(this::successor);
+		final TopologicalSorter<E> sorter = new TopologicalSorter<>(this::successor);
 		final List<E> result = sorter.topologicalOrdering(mMaximalElements);
 		assert result != null : "Cycle in partial order";
 		return result;
 	}
 
 	public List<E> getReverseTopologicalOrdering() {
-		final TopologicalSorter<E, ?> sorter = TopologicalSorter.create(this::successor);
+		final TopologicalSorter<E> sorter = new TopologicalSorter<>(this::successor);
 		final List<E> result = sorter.reversedTopologicalOrdering(mMaximalElements);
 		assert result != null : "Cycle in partial order";
 		return result;

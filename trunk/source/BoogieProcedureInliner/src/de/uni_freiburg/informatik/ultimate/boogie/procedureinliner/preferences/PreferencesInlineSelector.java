@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.IInlineSelect
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.IEdgeFilter;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter.IRelationFilter;
 
 /**
  * Selector using the preferences from the BoogieProcedureInliner.
@@ -65,10 +65,10 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	private boolean mProgramIsConcurrent;
 
 	/** Filter determining whether to set an inline flag or not, using the general settings. */
-	private final IRelationFilter<CallGraphNode, CallGraphEdgeLabel> mGeneralSettingsFilter;
+	private final IEdgeFilter<CallGraphNode, CallGraphEdgeLabel> mGeneralSettingsFilter;
 
 	/** Filter determining whether to set an inline flag or not, using the previously set flag and the user list. */
-	private final IRelationFilter<CallGraphNode, CallGraphEdgeLabel> mUserListFilter;
+	private final IEdgeFilter<CallGraphNode, CallGraphEdgeLabel> mUserListFilter;
 
 	/**
 	 * Mapping from procedure id, to the last processed edge, which's inlineFlag was set. This is used to undo the
@@ -101,14 +101,14 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, boolean programIsConcurrent) {
 		mProgramIsConcurrent = programIsConcurrent;
 		mLastInlinedCall = new HashMap<>();
-		final List<IRelationFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
+		final List<IEdgeFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
 		if (!mUserListType.isOnly()) {
 			updaterQueue.add(mGeneralSettingsFilter);
 		}
 		if (mUserListType != UserListType.DISABLED) {
 			updaterQueue.add(mUserListFilter);
 		}
-		for (final IRelationFilter<CallGraphNode, CallGraphEdgeLabel> filter : updaterQueue) {
+		for (final IEdgeFilter<CallGraphNode, CallGraphEdgeLabel> filter : updaterQueue) {
 			for (final CallGraphNode caller : callGraph.values()) {
 				final Iterator<CallGraphEdgeLabel> outgoingEdgeLabelsIterator =
 						caller.getOutgoingEdgeLabels().iterator();
@@ -123,7 +123,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		}
 	}
 
-	private final class UserListFilter implements IRelationFilter<CallGraphNode, CallGraphEdgeLabel> {
+	private final class UserListFilter implements IEdgeFilter<CallGraphNode, CallGraphEdgeLabel> {
 		@Override
 		public boolean accept(final CallGraphNode caller, final CallGraphEdgeLabel callLabel,
 				final CallGraphNode callee) {
@@ -148,7 +148,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		}
 	}
 
-	private final class GeneralSettingsFilter implements IRelationFilter<CallGraphNode, CallGraphEdgeLabel> {
+	private final class GeneralSettingsFilter implements IEdgeFilter<CallGraphNode, CallGraphEdgeLabel> {
 		@Override
 		public boolean accept(final CallGraphNode caller, final CallGraphEdgeLabel callLabel,
 				final CallGraphNode callee) {
