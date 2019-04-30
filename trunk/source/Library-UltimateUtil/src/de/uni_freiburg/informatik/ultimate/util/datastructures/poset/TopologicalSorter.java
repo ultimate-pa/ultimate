@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -65,32 +66,40 @@ public class TopologicalSorter<V> {
 	}
 
 	/** @see #reversedTopologicalOrdering(Collection) */
-	public List<V> topologicalOrdering(final Collection<V> graphNodes) {
-		final List<V> ordering = reversedTopologicalOrdering(graphNodes);
-		if (ordering != null) {
-			Collections.reverse(ordering);
-		}
+	public Optional<List<V>> topologicalOrdering(final Collection<V> graphNodes) {
+		final Optional<List<V>> ordering = reversedTopologicalOrdering(graphNodes);
+		ordering.ifPresent(Collections::reverse);
 		return ordering;
 	}
 
 	/**
-	 * Creates a reversed topological ordering of an acyclic directed graph (DAG).
-	 * The given set of nodes must be closed under the successor function given in {@link #TopologicalSorter(Function)}.
-	 * @param graphNodes All nodes of the graph to be sorted. Duplicates will be ignored.
-	 * @return Topological ordering of the nodes. null iff the graph contained a cycle.
+	 * Creates a reversed topological ordering of an acyclic directed graph (DAG) given as a set of nodes.
+	 * The given set of nodes must be closed under the successor function specified in {@link #TopologicalSorter(Function)}.
+	 * @param graphNodes Closed set of nodes to be sorted. Duplicates will be ignored.
+	 * @return Reversed topological ordering of the nodes iff such an ordering exists
 	 */
-	public List<V> reversedTopologicalOrdering(final Collection<V> graphNodes) {
+	public Optional<List<V>> reversedTopologicalOrdering(final Collection<V> graphNodes) {
+		try {
+			return Optional.of(tryRevTopSort(graphNodes));
+		} catch (final GraphCycleException gce) {
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Tries to sort a set of nodes topologically.
+	 * @param graphNodes Nodes to be sorted, must be closed under {@link #mSuccesorsOf}. Duplicates will be ignored.
+	 * @return Reversed topological ordering of the nodes
+	 * @throws GraphCycleException The set of nodes contained a cycle under {@link #mSuccesorsOf}
+	 */
+	private List<V> tryRevTopSort(final Collection<V> graphNodes) throws GraphCycleException {
 		mUnmarkedNodes = new LinkedHashSet<>(graphNodes);
 		mTemporarilyMarkedNodes = new HashSet<>();
 		// TODO remove permanent marks? Values don't seem to be used
 		mPermanentlyMarkedNodes = new HashSet<>();
 		mTopolicalSorting = new ArrayList<>(graphNodes.size());
 		while (!mUnmarkedNodes.isEmpty()) {
-			try {
-				visit(mUnmarkedNodes.iterator().next());
-			} catch (final GraphCycleException gce) {
-				return null;
-			}
+			visit(mUnmarkedNodes.iterator().next());
 		}
 		return mTopolicalSorting;
 	}

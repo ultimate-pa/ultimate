@@ -33,7 +33,10 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -241,17 +244,17 @@ public class PartialOrderCache<E> {
 	}
 
 	public List<E> getTopologicalOrdering() {
-		final TopologicalSorter<E> sorter = new TopologicalSorter<>(this::successor);
-		final List<E> result = sorter.topologicalOrdering(mMaximalElements);
-		assert result != null : "Cycle in partial order";
-		return result;
+		return topSortIntern(TopologicalSorter::topologicalOrdering);
 	}
 
 	public List<E> getReverseTopologicalOrdering() {
+		return topSortIntern(TopologicalSorter::reversedTopologicalOrdering);
+	}
+
+	private List<E> topSortIntern(BiFunction<TopologicalSorter<E>, Collection<E>, Optional<List<E>>> sortingFunction) {
 		final TopologicalSorter<E> sorter = new TopologicalSorter<>(this::successor);
-		final List<E> result = sorter.reversedTopologicalOrdering(mMaximalElements);
-		assert result != null : "Cycle in partial order";
-		return result;
+		return sortingFunction.apply(sorter, mMaximalElements)
+				.orElseThrow(() -> new AssertionError("Cycle in partial order"));
 	}
 
 	/**

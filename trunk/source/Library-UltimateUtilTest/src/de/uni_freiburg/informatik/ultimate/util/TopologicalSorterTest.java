@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -192,18 +193,18 @@ public class TopologicalSorterTest {
 
 	private static void assertTopSort(final String inputGraph) {
 		final Graph input = new Graph(inputGraph);
-		checkTopOrder(topSort(input), input);
+		checkTopOrder(assertExists(topSort(input)), input);
 	}
 
 	private static void assertUnsortable(final String inputGraph) {
-		final List<String> actual = topSort(inputGraph);
-		if (actual != null) {
-			Assert.fail("Expected graph to be cyclic but got result " + actual);
+		final Optional<List<String>> actual = topSort(inputGraph);
+		if (actual.isPresent()) {
+			Assert.fail("Expected graph to be cyclic but got result " + actual.get());
 		}
 	}
 
 	private static void assertTopSortEqualsAny(final String inputGraph, final String... expectedTopOrders) {
-		final List<String> actual = topSort(inputGraph);
+		final List<String> actual = assertExists(topSort(inputGraph));
 		for (final String expected : expectedTopOrders) {
 			if (Arrays.asList(entries(expected)).equals(actual)) {
 				return;
@@ -211,12 +212,20 @@ public class TopologicalSorterTest {
 		}
 		Assert.fail("Result did not match any expected order: " + actual);
 	}
+	
+	private static List<String> assertExists(final Optional<List<String>> topologicalOrdering) {
+		if (topologicalOrdering.isPresent()) {
+			return topologicalOrdering.get();
+		}
+		Assert.fail("Test expected topological ordering to exist but sorter returned nothing.");
+		throw new IllegalStateException("Assert.fail() did not fail.");
+	}
 
-	private static List<String> topSort(final String input) {
+	private static Optional<List<String>> topSort(final String input) {
 		return topSort(new Graph(input));
 	}
 
-	private static List<String> topSort(final Graph input) {
+	private static Optional<List<String>> topSort(final Graph input) {
 		final TopologicalSorter<String> sorter = new TopologicalSorter<>(input::successors);
 		return sorter.topologicalOrdering(input.nodes());
 	}
