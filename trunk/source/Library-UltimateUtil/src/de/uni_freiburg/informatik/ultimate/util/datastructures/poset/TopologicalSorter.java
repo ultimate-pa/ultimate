@@ -50,7 +50,6 @@ public class TopologicalSorter<V> {
 
 	private Set<V> mUnmarkedNodes;
 	private Set<V> mTemporarilyMarkedNodes;
-	private Set<V> mPermanentlyMarkedNodes;
 	private List<V> mTopolicalSorting;
 
 	private final Function<V, Collection<V>> mSuccesorsOf;
@@ -95,8 +94,6 @@ public class TopologicalSorter<V> {
 	private List<V> tryRevTopSort(final Collection<V> graphNodes) throws GraphCycleException {
 		mUnmarkedNodes = new LinkedHashSet<>(graphNodes);
 		mTemporarilyMarkedNodes = new HashSet<>();
-		// TODO remove permanent marks? Values don't seem to be used
-		mPermanentlyMarkedNodes = new HashSet<>();
 		mTopolicalSorting = new ArrayList<>(graphNodes.size());
 		while (!mUnmarkedNodes.isEmpty()) {
 			visit(mUnmarkedNodes.iterator().next());
@@ -119,13 +116,12 @@ public class TopologicalSorter<V> {
 	}
 
 	private void markTemporarily(final V unmarkedNode) {
-		mUnmarkedNodes.remove(unmarkedNode);
 		mTemporarilyMarkedNodes.add(unmarkedNode);
 	}
 
 	private void markPermanently(final V temporarilyMarkedNode) {
 		mTemporarilyMarkedNodes.remove(temporarilyMarkedNode);
-		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);
+		mUnmarkedNodes.remove(temporarilyMarkedNode);
 	}
 
 	private static class GraphCycleException extends Exception {
