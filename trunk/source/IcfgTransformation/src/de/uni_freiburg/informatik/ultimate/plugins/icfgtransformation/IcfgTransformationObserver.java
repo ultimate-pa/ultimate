@@ -354,7 +354,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 	private IIcfg<IcfgLocation> applyMapEliminationMonniaux(final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationTracker backtranslationTracker) {
-		return new MonniauxMapEliminator(mLogger, icfg, backtranslationTracker, 2).getResult();
+		return new MonniauxMapEliminator(mLogger, icfg, backtranslationTracker, 1).getResult();
 	}
 
 	private MapEliminationSettings getMapElimSettings() {

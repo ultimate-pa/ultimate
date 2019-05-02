@@ -86,9 +86,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		mMgdScript = Objects.requireNonNull(mIcfg.getCfgSmtToolkit().getManagedScript());
 		mLogger = logger;
 		mBacktranslationTracker = backtranslationTracker;
-		// mCells = cells;
-		// TODO: Change value of mCells back, when testing is finished
-		mCells = 1;
+		mCells = cells;
 		mResultIcfg = eliminateMaps();
 	}
 
@@ -280,8 +278,8 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 							if (ssec.hasNoStoEqu()) {
 								valTermVar = newInVars.get(valVar);
 							} else {
-								valTermVar = mMgdScript
-										.constructFreshTermVariable((valVar.toString() + "_out"), valVar.getSort());
+								valTermVar = mMgdScript.constructFreshTermVariable((valVar.toString() + "_out"),
+										valVar.getSort());
 							}
 							newOutVars.put(valVar, valTermVar);
 							valTermVars.add(valTermVar);
