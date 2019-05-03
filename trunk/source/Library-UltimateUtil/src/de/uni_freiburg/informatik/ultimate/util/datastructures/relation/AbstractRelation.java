@@ -243,6 +243,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	/**
 	 * @return the set of all elements r such that for a the given element domainElem, the pair (domainElem, r) is in
 	 *         the relation.
+	 * @see #numberOfPairsWithGivenDomainElement(Object)
 	 */
 	public Set<R> getImage(final D domainElem) {
 		final Set<R> set = mMap.get(domainElem);
@@ -265,12 +266,20 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 
 	/**
 	 * @return the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
+	 * @see #hasEmptyImage(Object)
 	 */
 	public int numberOfPairsWithGivenDomainElement(final D domainElem) {
 		if (getDomain().contains(domainElem)) {
 			return getImage(domainElem).size();
 		}
 		return 0;
+	}
+
+	/**
+	 * @return There are no pairs (d, r) in this relation for a given d and any r.
+	 */
+	public boolean hasEmptyImage(final D domainElem) {
+		return numberOfPairsWithGivenDomainElement(domainElem) == 0;
 	}
 
 	@Override
