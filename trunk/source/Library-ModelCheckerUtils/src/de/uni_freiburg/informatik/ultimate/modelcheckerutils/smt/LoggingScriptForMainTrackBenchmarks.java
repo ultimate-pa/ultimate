@@ -323,7 +323,11 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 				continue;
 			}
 			if (tc.getOccuringSortNames().contains(SmtSortUtils.REAL_SORT) != logic.hasReals()) {
-				continue;
+				if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
+					// if we have FloatingPoint then Reals are ok
+				} else {
+					continue;
+				}
 			}
 			if (tc.getOccuringSortNames().contains(SmtSortUtils.BITVECTOR_SORT) != logic.isBitVector()) {
 				continue;
