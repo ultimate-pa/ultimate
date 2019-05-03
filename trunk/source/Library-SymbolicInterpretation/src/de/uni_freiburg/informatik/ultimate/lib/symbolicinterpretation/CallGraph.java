@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -24,18 +25,46 @@ public class CallGraph {
 	 */
 	private static final String TMP_MARK_TO_DETECT_CYCLES = "";
 
-	private IIcfg<IcfgLocation> mIcfg;
-	private Collection<IcfgLocation> mLocationsOfInterest;
-	private HashRelation<String, String> mPredecessors = new HashRelation<>();
-	private HashRelation<String, String> mSuccessorsOfInterest = new HashRelation<>();
+	private final IIcfg<IcfgLocation> mIcfg;
+
+	/**
+	 * Locations for which we want to compute predicates.
+	 * Locations of interest are locations inside a function.
+	 */
+	private final Collection<IcfgLocation> mLocationsOfInterest;
+	
+	private final HashRelation<String, IcfgLocation> mLOIsInsideProcedure = new HashRelation<>();
+
+	/**
+	 * Lists callers. This relation represents the call graph's directed edges backwards.
+	 * <p>
+	 * For procedures f, g: g Rel f iff f calls g.
+	 */
+	private final HashRelation<String, String> mPredecessors = new HashRelation<>();
+
+	/**
+	 * Lists callees which can be entered to reach a location of interest.
+	 * <p>
+	 * For procedures f, g: f Rel g iff f calls g and
+	 * <ul>
+	 * <li>g contains a location of interest
+	 * <li><b>or</b> there is a procedure h such that g Rel h.
+	 * </ul>
+	 */
+	private final HashRelation<String, String> mSuccessorsOfInterest = new HashRelation<>();
 
 	public CallGraph(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
 		mLocationsOfInterest = locationsOfInterest;
+		assignLOIsToProcedures();
 		buildGraph();
 		markGraph();
 	}
 
+	private void assignLOIsToProcedures() {
+		mLocationsOfInterest.forEach(loi -> mLOIsInsideProcedure.addPair(loi.getProcedure(), loi));
+	}
+	
 	private void buildGraph() {
 		new IcfgEdgeIterator(mIcfg).asStream()
 				.filter(edge -> edge instanceof IIcfgCallTransition<?>)
@@ -63,11 +92,49 @@ public class CallGraph {
 		mSuccessorsOfInterest.removePair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES);
 	}
 
-	public Collection<String> initialProcedures() {
-		return mIcfg.getInitialNodes().stream().map(IcfgLocation::getProcedure).collect(Collectors.toList());
+	public Collection<String> initialProceduresOfInterest() {
+		return mIcfg.getInitialNodes().stream()
+				.map(IcfgLocation::getProcedure)
+				.filter(procedure -> !mLOIsInsideProcedure.hasEmptyImage(procedure)
+						|| !mSuccessorsOfInterest.hasEmptyImage(procedure))
+				.collect(Collectors.toList());
 	}
 
-	public Collection<String> successorsOfInterest(final String procedure) {
+	public Set<IcfgLocation> locationsOfInterest(final String procedure) {
+		return mLOIsInsideProcedure.getImage(procedure);
+	}
+
+	public Set<String> successorsOfInterest(final String procedure) {
 		return mSuccessorsOfInterest.getImage(procedure);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
