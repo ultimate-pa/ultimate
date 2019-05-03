@@ -631,6 +631,15 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void caseShouldHaveBeenHandledByDerPqeBug04simplified01Forward() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("main_#t~mem8", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((|~#b~1.offset| Int) (|~#p1~1.base| Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (|main_#t~ret4| Int) (|~#b~1.base| Int) (|~#a~1.base| Int) (|~#a~1.offset| Int) (|#memory_int| (Array Int (Array Int Int)))) (and (= (select (select |#memory_int| (select (select |#memory_$Pointer$.base| |~#p1~1.base|) 0)) (select (select |#memory_$Pointer$.offset| |~#p1~1.base|) 0)) |main_#t~mem8|) (exists ((|v_#memory_$Pointer$.base_34| (Array Int (Array Int Int))) (|v_#memory_$Pointer$.base_31| (Array Int (Array Int Int)))) (and (= |~#b~1.base| (select (select |v_#memory_$Pointer$.base_34| |~#p1~1.base|) 0)) (= |#memory_$Pointer$.base| (store |v_#memory_$Pointer$.base_31| |~#b~1.base| (store (select |v_#memory_$Pointer$.base_31| |~#b~1.base|) |~#b~1.offset| (select (select |#memory_$Pointer$.base| |~#b~1.base|) |~#b~1.offset|)))) (= (store |v_#memory_$Pointer$.base_34| |~#a~1.base| (store (select |v_#memory_$Pointer$.base_34| |~#a~1.base|) |~#a~1.offset| (select (select |v_#memory_$Pointer$.base_31| |~#a~1.base|) |~#a~1.offset|))) |v_#memory_$Pointer$.base_31|))) (not (= |~#b~1.base| |~#p1~1.base|)) (exists ((|v_#memory_int_30| (Array Int (Array Int Int)))) (= |#memory_int| (store (store |v_#memory_int_30| |~#a~1.base| (store (select |v_#memory_int_30| |~#a~1.base|) |~#a~1.offset| |main_#t~ret4|)) |~#b~1.base| (store (select (store |v_#memory_int_30| |~#a~1.base| (store (select |v_#memory_int_30| |~#a~1.base|) |~#a~1.offset| |main_#t~ret4|)) |~#b~1.base|) |~#b~1.offset| 8)))) (exists ((|v_#memory_$Pointer$.offset_34| (Array Int (Array Int Int))) (|v_#memory_$Pointer$.offset_31| (Array Int (Array Int Int)))) (and (= (store |v_#memory_$Pointer$.offset_34| |~#a~1.base| (store (select |v_#memory_$Pointer$.offset_34| |~#a~1.base|) |~#a~1.offset| (select (select |v_#memory_$Pointer$.offset_31| |~#a~1.base|) |~#a~1.offset|))) |v_#memory_$Pointer$.offset_31|) (= |~#b~1.offset| (select (select |v_#memory_$Pointer$.offset_34| |~#p1~1.base|) 0)) (= (store |v_#memory_$Pointer$.offset_31| |~#b~1.base| (store (select |v_#memory_$Pointer$.offset_31| |~#b~1.base|) |~#b~1.offset| (select (select |#memory_$Pointer$.offset| |~#b~1.base|) |~#b~1.offset|))) |#memory_$Pointer$.offset|))) (not (= |~#p1~1.base| |~#a~1.base|))))";
+		final String expectedResultAsString = null;
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void multidimensionalNestedStore() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintintArraySort =
