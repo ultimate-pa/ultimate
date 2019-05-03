@@ -29,10 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Annotates given program locations with predicates over-approximating the actually reachable concrete states at that
@@ -44,15 +41,31 @@ public class SymbolicInterpreter {
 
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final Collection<IcfgLocation> mLocationsOfInterest;
+	private final CallGraph mCallGraph;
 
 	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
 		mLocationsOfInterest = locationsOfInterest;
+		mCallGraph = new CallGraph(icfg, locationsOfInterest);
+	}
+	
+	public void interpret() {
+		for (final String procedure : mCallGraph.initialProceduresOfInterest()) {
+			// TODO compute procedure graph with enter calls for ...
+			// (could require method callGraph.callsToBeEntered() with return type Collection<IIcfgCallTransition>)
+			mCallGraph.successorsOfInterest(procedure);
 
-		// locationsOfInterest.stream().findFirst().get().getProcedure()
-		icfg.getInitialNodes();
-		final HashRelation<String, String> cg = new HashRelation<>();
-		new IcfgEdgeIterator(icfg).asStream().filter(a -> a instanceof IIcfgCallTransition<?>)
-				.forEach(a -> cg.addPair(a.getSource().getProcedure(), a.getTarget().getProcedure()));
+			// TODO Compute path expressions for
+			mCallGraph.locationsOfInterest(procedure);
+			mCallGraph.successorsOfInterest(procedure);
+
+			// TODO compress path expressions into RegexDag
+
+			// TODO Interpret RegexDag
+			// First search backward which nodes to interpret
+			// Then interpret found nodes
+			mCallGraph.locationsOfInterest(procedure);
+			mCallGraph.successorsOfInterest(procedure);
+		}
 	}
 }
