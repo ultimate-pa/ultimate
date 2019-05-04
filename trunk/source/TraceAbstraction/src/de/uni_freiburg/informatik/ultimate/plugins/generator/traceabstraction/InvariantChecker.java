@@ -41,8 +41,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegment;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegmentWithStatePair;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InsufficientAnnotationResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -72,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class InvariantChecker {
 
-	public class EdgeCheckResult {
+	private static class EdgeCheckResult {
 
 		private final Validity mValidity;
 		private final ProgramState<Term> mCtxPre;
@@ -100,7 +104,7 @@ public class InvariantChecker {
 
 	}
 
-	public static class LoopLocations {
+	private static class LoopLocations {
 		public final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge;
 		public final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge;
 		public final List<IcfgLocation> mLoopLocWithoutInvariant;
@@ -176,6 +180,9 @@ public class InvariantChecker {
 				loopLocsAndNonLoopErrorLocs);
 		final String message = message24(tpsds);
 		mLogger.info("Will check " + message);
+		final Set<TwoPointSubgraphDefinition> mValid = new HashSet<>();
+		final Set<TwoPointSubgraphDefinition> mUnknown = new HashSet<>();
+		final Map<TwoPointSubgraphDefinition, EdgeCheckResult> mInvalid = new HashMap<>();
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final IcfgLocation startLoc = tpsd.getStartLocation();
 			final IcfgLocation errorLoc = tpsd.getEndLocation();
@@ -188,15 +195,92 @@ public class InvariantChecker {
 			final UnmodifiableTransFormula tf = asm.getTransFormula(errorLoc);
 			Objects.requireNonNull(tf);
 			final EdgeCheckResult ecr = doCheck(startLoc, tf, errorLoc);
-			if (ecr.getValidity() == Validity.INVALID) {
+			switch (ecr.getValidity()) {
+			case INVALID:
 				final InsufficientAnnotationResult<IcfgEdge, Term> iar = new InsufficientAnnotationResult<>(
 						startLoc.getOutgoingEdges().get(0), Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 						errorLoc.getIncomingEdges().get(0), ecr.getCtxPre(), ecr.getCtxPost());
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, iar);
 				mLogger.info(iar.getShortDescription());
+				mInvalid.put(tpsd, ecr);
+				break;
+			case NOT_CHECKED:
+				throw new AssertionError("failed to perfrom check");
+			case UNKNOWN:
+				mUnknown.add(tpsd);
+				break;
+			case VALID:
+				mValid.add(tpsd);
+				break;
+			default:
+				throw new AssertionError("illegal result: " + ecr.getValidity());
 			}
 		}
+		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(mValid);
+		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(mUnknown);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(mInvalid);
+		final AnnotationCheckResult<IcfgEdge, Term> acr = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
+				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, acr);
+		mLogger.info(acr.getShortDescription());
+	}
 
+	private List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> twoPointSubgraphsToSegments(
+			final Map<TwoPointSubgraphDefinition, EdgeCheckResult> mInvalid) {
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> result = new ArrayList<>();
+		for (final Entry<TwoPointSubgraphDefinition, EdgeCheckResult> entry : mInvalid.entrySet()) {
+			result.add(twoPointSubgraphToSegment(entry.getKey(), entry.getValue()));
+		}
+		return result;
+	}
+
+	private LoopFreeSegmentWithStatePair<IcfgEdge, Term> twoPointSubgraphToSegment(
+			final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
+		final ILocation locationBefore = guessLocation(tpsd.getStartLocation());
+		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
+		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
+		final String locationTypeAfter = classify(tpsd.getEndLocation()).toString();
+		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result = new LoopFreeSegmentWithStatePair<>(locationBefore,
+				locationAfter, locationTypeBefore, locationTypeAfter, value.getCtxPre(), value.getCtxPost());
+		return result;
+	}
+
+	private List<LoopFreeSegment<IcfgEdge>> twoPointSubgraphsToSegments(final Set<TwoPointSubgraphDefinition> mValid) {
+		final List<LoopFreeSegment<IcfgEdge>> result = new ArrayList<>();
+		for (final TwoPointSubgraphDefinition tpsd : mValid) {
+			result.add(twoPointSubgraphToSegment(tpsd));
+		}
+		return result;
+	}
+
+	private LoopFreeSegment<IcfgEdge> twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd) {
+		final ILocation locationBefore = guessLocation(tpsd.getStartLocation());
+		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
+		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
+		final String locationTypeAfter = classify(tpsd.getEndLocation()).toString();
+		final LoopFreeSegment<IcfgEdge> result = new LoopFreeSegment<>(locationBefore, locationAfter,
+				locationTypeBefore, locationTypeAfter);
+		return result;
+	}
+
+	private ILocation guessLocation(final IcfgLocation startLocation) {
+		final LocationType programPointType = classify(startLocation);
+		final IcfgEdge someEdge;
+		switch (programPointType) {
+		case ENTRY:
+		case LOOP_HEAD:
+			someEdge = startLocation.getOutgoingEdges().get(0);
+			break;
+		case ERROR_LOC:
+		case LOOP_INVARIANT_ERROR_LOC:
+			someEdge = startLocation.getIncomingEdges().get(0);
+			break;
+		case UNKNOWN:
+		default:
+			throw new AssertionError("unable to determine type of program point");
+		}
+		final ILocation loc = ILocation.getAnnotation(someEdge);
+		return loc;
 	}
 
 	private String message24(final List<TwoPointSubgraphDefinition> tpsds) {
