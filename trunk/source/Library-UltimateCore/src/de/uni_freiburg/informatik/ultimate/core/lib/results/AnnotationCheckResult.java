@@ -110,6 +110,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	public String getLongDescription() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
+		sb.append(System.lineSeparator());
 		for (final LoopFreeSegmentWithStatePair<ELEM, EXPR> segment : mSegmentsInvalid) {
 			sb.append(validSegmentToString(segment, mTranslatorSequence));
 			sb.append(System.lineSeparator());
