@@ -46,16 +46,6 @@ public class PolynomialTerm extends Term {
 	 */
 	private final Sort mSort;
 	
-	/**
-	 * This constructor is only thought for the subclasses. The members will not be initialized
-	 * because the reason to do this in the first place is to save space!
-	 */
-	protected PolynomialTerm(int Hash) {
-		super(Hash);
-		mMonomial2Coefficient = null;
-		mConstant = null;
-		mSort = null;
-	}
 	
 	/**
 	 * PolynomialTerm that represents the Rational r of sort s.
@@ -392,7 +382,7 @@ public class PolynomialTerm extends Term {
 	}
 
 	/**
-	 * True if this represents not an polynomial term but an error during the translation process, e.g., if original term
+	 * True if this represents not an polynomial or affine term but an error during the translation process, e.g., if original term
 	 * had wrong sorts.
 	 */
 	public boolean isErrorTerm() {

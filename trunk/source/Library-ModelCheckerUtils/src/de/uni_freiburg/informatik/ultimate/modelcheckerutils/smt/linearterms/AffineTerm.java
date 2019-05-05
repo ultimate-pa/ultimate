@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Leike
  */
-public class AffineTerm extends PolynomialTerm {
+public class AffineTerm extends Term {
 	/**
 	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
