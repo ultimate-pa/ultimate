@@ -23,11 +23,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -69,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Luca Bruder (luca.bruder@gmx.de)
- * @author Lisa Kleinlein (lisa.kleinlein@web.de)
  */
 public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
@@ -135,7 +136,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		// Fill the sets idxD and valD with a certain number (mCells) of new program variables for each program
 		// variable of the sort array
 		final Map<IProgramVar, Set<IProgramVar>> idxVars = new LinkedHashMap<>();
-		final Map<IProgramVar, Set<IProgramVar>> valVars = new LinkedHashMap<>();
+		final Map<IProgramVar, List<IProgramVar>> valVars = new LinkedHashMap<>();
 		for (final IProgramVar var : programArrayVars) {
 			assert var.getSort().isArraySort();
 			assert var.getSort().getArguments().length == 2 : "Array sort with != 2 arguments";
@@ -143,7 +144,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 			final Sort valueSort = var.getSort().getArguments()[1];
 
 			final Set<IProgramVar> idx = new LinkedHashSet<>();
-			final Set<IProgramVar> val = new LinkedHashSet<>();
+			final List<IProgramVar> val = new ArrayList<>();
 			for (int i = 0; i < mCells; i++) {
 				final String idxName = (var.toString() + "_idx_" + Integer.toString(i));
 				final String valName = (var.toString() + "_val_" + Integer.toString(i));
@@ -205,10 +206,20 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
 				final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 
-				final Map<Term, Set<Term>> hierarchy = new LinkedHashMap<>();
+				final Map<Term, List<Term>> hierarchy = new LinkedHashMap<>();
 				final Map<Term, Set<Term>> idxTerms = new LinkedHashMap<>();
 				final Map<Term, IProgramVar> oldTermToProgramVar = new LinkedHashMap<>();
 				final Map<Term, IProgramVar> idxTermToIdxProgramVar = new LinkedHashMap<>();
+				final Set<IProgramVar> oldProgramVars = new LinkedHashSet<>();
+				for (final IProgramVar var : newInVars.keySet()) {
+					oldProgramVars.add(var);
+				}
+				for (final IProgramVar var : newOutVars.keySet()) {
+					oldProgramVars.add(var);
+				}
+				final Map<IProgramVar, List<TermVariable>> oldProgramVarsToOutVars = new LinkedHashMap<>();
+				final Map<IProgramVar, List<TermVariable>> oldProgramVarsToInVars = new LinkedHashMap<>();
+				
 				for (final IProgramVar arrayVar : programArrayVars) {
 
 					final TermVariable arrayInTermVar = newInVars.remove(arrayVar);
@@ -240,18 +251,22 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					if (arrayOutTermVar != null) {
 						idxTerms.put(arrayOutTermVar, idxTermVarSet);
 					}
+					
 
 					// InVars for values
 
 					if (arrayInTermVar != null) {
-						final Set<Term> valTermVars = new LinkedHashSet<>();
+						final List<Term> valTermVars = new ArrayList<>();
+						final List<TermVariable> valTermVars2 = new ArrayList<>();
 						for (final IProgramVar valVar : valVars.get(arrayVar)) {
 							final TermVariable valTermVar = mMgdScript
 									.constructFreshTermVariable((valVar.toString() + "_in"), valVar.getSort());
 							newInVars.put(valVar, valTermVar);
 							valTermVars.add(valTermVar);
+							valTermVars2.add(valTermVar);
 						}
 						hierarchy.put(arrayInTermVar, valTermVars);
+						oldProgramVarsToInVars.put(arrayVar, valTermVars2);
 
 						// Checking if the scs added new variables which need
 						// to be added to the hierarchy
@@ -272,7 +287,8 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					// OutVars for values
 
 					if (arrayOutTermVar != null) {
-						final Set<Term> valTermVars = new LinkedHashSet<>();
+						final List<Term> valTermVars = new ArrayList<>();
+						final List<TermVariable> valTermVars2 = new ArrayList<>();
 						for (final IProgramVar valVar : valVars.get(arrayVar)) {
 							final TermVariable valTermVar;
 							if (ssec.hasNoStoEqu()) {
@@ -280,12 +296,15 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 							} else {
 								valTermVar = mMgdScript.constructFreshTermVariable((valVar.toString() + "_out"),
 										valVar.getSort());
+								//valTermVar = newInVars.get(valVar);
 							}
 							newOutVars.put(valVar, valTermVar);
 							valTermVars.add(valTermVar);
+							valTermVars2.add(valTermVar);
 							oldTermToProgramVar.put(valTermVar, valVar);
 						}
 						hierarchy.put(arrayOutTermVar, valTermVars);
+						oldProgramVarsToOutVars.put(arrayVar, valTermVars2);
 
 						// Checking if the scs added new variables which need
 						// to be added to the hierarchy
@@ -305,11 +324,14 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				}
 
 				final Set<Term> addendum = new LinkedHashSet<>();
+				final Map<IProgramVar, Pair<List<Term>, Integer>> chain = new LinkedHashMap<>();
+				final Map<Term, Term> lowValues = new LinkedHashMap<>();
 				// Eliminate the Select-, Store-, and Equality-Terms
 				for (final Term selectTerm : ssec.mSelectTerms) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
 					final Pair<TermVariable, Term> substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm,
-							hierarchy, auxVars, subst, idxTermToIdxProgramVar, idxAssignments, newInVars);
+							hierarchy, auxVars, subst, idxTermToIdxProgramVar, idxAssignments, newInVars, chain,
+							oldProgramVars, mCells, valVars, lowValues);
 					subst.put(selectTerm, substTerm.getFirst());
 					addendum.add(substTerm.getSecond());
 
@@ -317,7 +339,8 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				for (final Term storeTerm : ssec.mStoreTerms) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
 					final Term substTerm = eliminateStores(mMgdScript, idxTerms, aStoreTerm, hierarchy, newInVars,
-							oldTermToProgramVar, subst, newAuxVars, idxTermToIdxProgramVar, idxAssignments);
+							oldTermToProgramVar, subst, newAuxVars, idxTermToIdxProgramVar, idxAssignments,
+							chain, mCells, valVars, lowValues, oldProgramVars);
 					subst.put(storeTerm, substTerm);
 				}
 				for (final Term equalityTerm : ssec.mEqualityTerms) {
@@ -339,7 +362,28 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						constraints.add(SmtUtils.or(script, equalities));
 					}
 				}
+				
+				final Set<IProgramVar> keysChain = chain.keySet();
+				final Set<Term> outImps = new HashSet<>();
+				for (final IProgramVar proVar : keysChain) {
+					for (int i = 0; i < mCells; i++) {
+						outImps.add(
+								SmtUtils.binaryEquality(script, chain.get(proVar).getFirst().get(i),
+										oldProgramVarsToOutVars.get(proVar).get(i)));
+					}
+				}
+				final Set<IProgramVar> keysOut = oldProgramVarsToOutVars.keySet();
+				for (final IProgramVar proVar : keysOut) {
+					if (!keysChain.contains(proVar)) {
+						for (int i = 0; i < mCells; i++) {
+							outImps.add(
+									SmtUtils.binaryEquality(script, oldProgramVarsToInVars.get(proVar).get(i),
+											oldProgramVarsToOutVars.get(proVar).get(i)));
+						}
+					}
+				}
 
+				addendum.add(SmtUtils.and(script, outImps));
 				addendum.add(SmtUtils.and(script, constraints));
 				addendum.add(atMostOneStore);
 
@@ -400,10 +444,12 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private static Pair<TermVariable, Term> eliminateSelects(final ManagedScript mMgdScript,
-			final Map<Term, Set<Term>> idxTerms, final ApplicationTerm selectTerm, final Map<Term, Set<Term>> hierarchy,
+			final Map<Term, Set<Term>> idxTerms, final ApplicationTerm selectTerm, final Map<Term, List<Term>> hierarchy,
 			final Set<TermVariable> auxVars, final Map<Term, Term> subst,
 			final Map<Term, IProgramVar> idxTermToIdxProgramVar, final Map<IProgramVar, Set<Term>> idxAssignments,
-			final Map<IProgramVar, TermVariable> newInVars) {
+			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, Pair<List<Term>, Integer>> chain,
+			final Set<IProgramVar> oldProgramVars, final int mCells,
+			final Map<IProgramVar, List<IProgramVar>> valVars, final Map<Term, Term> lowValues) {
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 		final Term[] params = selectTerm.getParameters();
 		final Term x;
@@ -419,6 +465,40 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		} else {
 			y = params[1];
 		}
+		
+		List<Term> vals = new ArrayList<>();
+		IProgramVar old = null;
+		for (final IProgramVar var : oldProgramVars) {
+			if (params[0].toString().contains(var.toString())) {
+				old = var;
+			}
+		}
+		if (hierarchy.containsKey(params[0])) {
+			for (final Term val : hierarchy.get(params[0])) {
+				vals.add(val);
+			}
+		}
+		if (!hierarchy.containsKey(params[0]) && !chain.containsKey(old)) {
+			for (int i = 0; i < mCells; i++) {
+				final String valName = (old.toString() + "_val_" + Integer.toString(i) + Integer.toString(0));
+				final Term varVal =
+						mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
+				vals.add(varVal);
+			}
+			chain.put(old, new Pair<>(vals, 0));
+		}
+		if (chain.containsKey(old)) {
+			int length = chain.get(old).getValue() + 1;
+			for (int i = 0; i < mCells; i++) {
+				final String valName = (old.toString() + "_val_" + Integer.toString(i) + Integer.toString(length));
+				final Term varVal =
+						mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
+				vals.add(varVal);
+				lowValues.put(varVal, chain.get(old).getFirst().get(length-1));
+			}
+			chain.remove(old);
+			chain.put(old, new Pair<>(vals, length));
+		}
 
 		final Script script = mMgdScript.getScript();
 
@@ -427,7 +507,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		auxVars.add(placeholder);
 		Term substTerm;
 		final Set<Term> implications = new HashSet<>();
-		for (final Term val : hierarchy.get(params[0])) {
+		for (final Term val : vals) {
 			for (final Term idx : idxTerms.get(params[0])) {
 				final Set<Term> tempAssignments = new HashSet<>();
 				if (idxAssignments.containsKey(idxTermToIdxProgramVar.get(idx))) {
@@ -449,10 +529,13 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private static Term eliminateStores(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm storeTerm, final Map<Term, Set<Term>> hierarchy,
+			final ApplicationTerm storeTerm, final Map<Term, List<Term>> hierarchy,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<Term, IProgramVar> oldTermToProgramVar,
 			final Map<Term, Term> subst, final Collection<Term> newAuxVars,
-			final Map<Term, IProgramVar> idxTermToIdxProgramVar, final Map<IProgramVar, Set<Term>> idxAssignments) {
+			final Map<Term, IProgramVar> idxTermToIdxProgramVar, final Map<IProgramVar, Set<Term>> idxAssignments,
+			final Map<IProgramVar, Pair<List<Term>, Integer>> chain, final int mCells,
+			final Map<IProgramVar, List<IProgramVar>> valVars, final Map<Term, Term> lowValues,
+			final Set<IProgramVar> oldProgramVars) {
 		// Find the parameters of the ApplicationTerm and check if they have already been substituted
 
 		final Term[] paramsTerm = storeTerm.getParameters();
@@ -468,16 +551,55 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				z = paramsStore[2];
 			}
 		}
+		
+		List<Term> vals = new ArrayList<>();
+		IProgramVar old = null;
+		for (final IProgramVar var : oldProgramVars) {
+			if (x.toString().contains(var.toString())) {
+				old = var;
+			}
+		}
+		if (hierarchy.containsKey(x)) {
+			for (final Term val : hierarchy.get(x)) {
+				vals.add(val);
+			}
+		}
+		if (!hierarchy.containsKey(x) && !chain.containsKey(old)) {
+			for (int i = 0; i < mCells; i++) {
+				final String valName = (old.toString() + "_val_" + Integer.toString(i) + Integer.toString(0));
+				final Term varVal =
+						mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
+				vals.add(varVal);
+			}
+			chain.put(old, new Pair<>(vals, 0));
+		}
+		if (chain.containsKey(old)) {
+			int length = chain.get(old).getValue() + 1;
+			for (int i = 0; i < mCells; i++) {
+				final String valName = (old.toString() + "_val_" + Integer.toString(i) + Integer.toString(length));
+				final Term varVal =
+						mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
+				vals.add(varVal);
+				lowValues.put(varVal, chain.get(old).getFirst().get(length-1));
+			}
+			chain.remove(old);
+			chain.put(old, new Pair<>(vals, length));
+		}
 
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();
-		for (final Term val : hierarchy.get(x)) {
+		for (final Term val : vals) {
 			final Term valLow;
 			if (newInVars.containsValue(val) || newAuxVars.contains(x)) {
 				valLow = val;
 			} else {
-				valLow = newInVars.get(oldTermToProgramVar.get(x));
+				if (chain.containsKey(old)) {
+					valLow = lowValues.get(val);
+				} else {
+					valLow = newInVars.get(oldTermToProgramVar.get(x));
+				}
+				
 			}
 
 			for (final Term idx : idxTerms.get(x)) {
@@ -500,7 +622,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	}
 
 	private static Term eliminateEqualities(final ManagedScript mMgdScript, final Map<Term, Set<Term>> idxTerms,
-			final ApplicationTerm equalityTerm, final Map<Term, Set<Term>> hierarchy, final Map<Term, Term> subst) {
+			final ApplicationTerm equalityTerm, final Map<Term, List<Term>> hierarchy, final Map<Term, Term> subst) {
 		final Term[] params = equalityTerm.getParameters();
 
 		if (!(params[0] instanceof TermVariable)) {
@@ -527,7 +649,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		final Script script = mMgdScript.getScript();
 
 		final Set<Term> rtr = new LinkedHashSet<>();
-		final Set<Term> xvals = hierarchy.get(params[0]);
+		final List<Term> xvals = hierarchy.get(params[0]);
 		for (final Term xval : xvals) {
 			final Set<Term> xidxs = idxTerms.get(params[0]);
 			for (final Term xidx : xidxs) {

@@ -16,7 +16,6 @@ modifies a;
   a[i] := 5;
   a[j] := 6;
   assert i==j ==> a[i] == 6;
-  assert i!=j ==> a[i] != 6;
 }
 
 
