@@ -51,7 +51,7 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 				// It's an equality term
 				if (checkAndAddIfParamIsStoreTerm(aterm)) {
 					// sideeffect in check
-				} else if (aterm.getParameters()[0].getSort().isArraySort()) {
+				} else if (aterm.getParameters()[0].getSort().isArraySort() && aterm.getParameters()[1].getSort().isArraySort()) {
 					// its an equality term over arrays
 					mEqualityTerms.add(term);
 				}
