@@ -168,7 +168,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 	/**
 	 * Create a fresh transition between a given source and target by transforming any transformula of an old transition
-	 * and copying all annotations.
+	 * and copying all annotations. This method will also update the backtranslation relation.
 	 *
 	 * @param newSource
 	 *            A location in the new result Icfg that will act as the new source of the transition.
@@ -429,7 +429,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final HashRelation<String, String> result = new HashRelation<>();
 		for (final Entry<String, OUTLOC> en : mResultIcfg.getProcedureEntryNodes().entrySet()) {
 			for (final IcfgEdge callEdge : en.getValue().getIncomingEdges()) {
-				assert callEdge instanceof IcfgCallTransition;
+				assert callEdge instanceof IcfgCallTransition : "procedure entry node has an incoming edge that is not a call edge: "
+						+ callEdge.getClass();
 				result.addPair(callEdge.getPrecedingProcedure(), callEdge.getSucceedingProcedure());
 			}
 		}

@@ -80,12 +80,19 @@ public class IcfgTransformationBacktranslator extends
 		for (int i = 0; i < programExecution.getLength(); ++i) {
 			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = programExecution.getTraceElement(i);
 			final IIcfgTransition<IcfgLocation> mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
-			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
+			if (mappedEdge == null) {
 				// skip this, its not worth it.
-				mLogger.info("Skipped ATE [" + currentATE.getTraceElement().hashCode() + "] "
-						+ currentATE.getTraceElement());
+				mLogger.warn("Skipped ATE because there is no mapping: [" + currentATE.getTraceElement().hashCode()
+						+ "] " + currentATE.getTraceElement());
 				continue;
 			}
+			if (!(mappedEdge instanceof CodeBlock)) {
+				mLogger.warn("Skipped ATE because its not mapped to a codeblock: ["
+						+ currentATE.getTraceElement().hashCode() + "] " + currentATE.getTraceElement());
+				mLogger.warn(mappedEdge);
+				continue;
+			}
+
 			newTrace.add(mappedEdge);
 			addProgramState(i, newValues, programExecution.getProgramState(i));
 			if (oldBranchEncoders != null && oldBranchEncoders.length > i) {

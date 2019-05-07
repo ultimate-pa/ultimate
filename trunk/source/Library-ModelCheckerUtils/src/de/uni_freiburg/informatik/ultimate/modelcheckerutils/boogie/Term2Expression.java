@@ -189,12 +189,12 @@ public final class Term2Expression implements Serializable {
 			// 2018-09-21 Matthias: This is a workaround for detecting if we have an
 			// SMT function that has to be translated to an Boogie function and not
 			// to a built-in Boogie operator.
-			final boolean someParamIsBitvec = Arrays.stream(symb.getParameterSorts())
-					.anyMatch(SmtSortUtils::isBitvecSort);
-			final boolean someParamIsFloatingPoint = Arrays.stream(symb.getParameterSorts())
-					.anyMatch(SmtSortUtils::isFloatingpointSort);
-			final boolean someParamIsRoundingMode = Arrays.stream(symb.getParameterSorts())
-					.anyMatch(SmtSortUtils::isRoundingmodeSort);
+			final boolean someParamIsBitvec =
+					Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isBitvecSort);
+			final boolean someParamIsFloatingPoint =
+					Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isFloatingpointSort);
+			final boolean someParamIsRoundingMode =
+					Arrays.stream(symb.getParameterSorts()).anyMatch(SmtSortUtils::isRoundingmodeSort);
 			final boolean resultIsBitvec = SmtSortUtils.isBitvecSort(symb.getReturnSort());
 			final boolean resultIsFloatingPoint = SmtSortUtils.isFloatingpointSort(symb.getReturnSort());
 			final boolean resultIsRoundingmodeSort = SmtSortUtils.isRoundingmodeSort(symb.getReturnSort());
@@ -464,6 +464,8 @@ public final class Term2Expression implements Serializable {
 			// introduced during model checking.
 			// TODO: Matthias: I think we want closed expressions, we should
 			// quantify auxilliary variables
+			// TODO: DD: This can also happen if we add new program variables during IcfgTransformation that have no
+			// counterpart in the boogie program (and do not add it to the symbol table)
 			result = new IdentifierExpression(null, type, getFreshIdentifier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			mFreeVariables.add((IdentifierExpression) result);
@@ -704,7 +706,6 @@ public final class Term2Expression implements Serializable {
 			}
 			return true;
 		}
-
 
 	}
 }

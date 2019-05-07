@@ -146,7 +146,8 @@ public class BoogiePreprocessorBacktranslator
 			// but we keep them anyways s.t. the indices between newTrace and
 			// programExecution match
 			newTrace.add(translateTraceElement(elem));
-			newProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+			final ProgramState<Expression> oldProgramState = programExecution.getProgramState(i);
+			newProgramStates.add(translateProgramState(oldProgramState));
 		}
 		return createProgramExecutionFromTrace(newTrace, newInitialState, newProgramStates, programExecution);
 	}
