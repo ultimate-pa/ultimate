@@ -15,6 +15,7 @@ var tmp : int;
 procedure main() returns ()
 modifies a, tmp, i;
 {
+  i:=0;
   while (i < 100) {
     if (i <50) {
       a[i] := 0;
