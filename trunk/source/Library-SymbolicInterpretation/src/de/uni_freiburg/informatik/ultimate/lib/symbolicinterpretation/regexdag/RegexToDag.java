@@ -62,21 +62,26 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 
 	/**
 	 * Incorporates a given regex into the current DAG.
+	 * Use {@link #getDag()} to query the resulting DAG.
 	 * 
 	 * @param regex Regex to be converted into a DAG
-	 * @return Reference to the resulting DAG. Referenced object may change in the future, see {@link #getDag()}.
+	 * @return Reference to the last RegexDagNode created for the given regex.<br>
+	 *         For (a·b) this is a node containing the regex literal b.<br>
+	 *         For (a∪b) this is a join node containing the regex ε.<br>
+	 *         For (a)* this is a node containing the regex star (a)*.
 	 */
-	public RegexDag<L> apply(IRegex<L> regex) {
+	public RegexDagNode<L> add(IRegex<L> regex) {
+		// TODO works only when source and sink are epsilon.
+		// If DAG was modified (for instance compressed) this approach will produce wrong DAGs or even cycles.
 		final RegexDagNode<L> regexSink = regex.accept(this, mDag.getSource());
-		// TODO mark regexSink or add it to a table? We need a way to distinguish errors and exits.
 		regexSink.connectOutgoing(mDag.getSink());
-		return mDag;
+		return regexSink;
 	}
 
 	/**
-	 * Retrieves the of star expressions treated like literals since the last {@link #resetDagAndStars()}.
+	 * Retrieves the star expressions treated like literals since the last {@link #resetDagAndStars()}.
 	 * The list is free of duplicates. This returns a direct reference to the internal worklist;
-	 * it is ok to modify the list from the outside, but running {@link #apply(IRegex)} may add something to the
+	 * it is ok to modify the list from the outside, but running {@link #add(IRegex)} may add something to the
 	 * worklist.
 	 * 
 	 * @return Reference to the worklist of visited star expressions.
@@ -87,10 +92,10 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 
 	/**
 	 * Retrieves the DAG built from possibly multiple regexes.
-	 * Caution: The retrieved DAG is only a reference and may change due to subsequent calls to {@link #apply(IRegex)}.
+	 * Caution: The retrieved DAG is only a reference and may change due to subsequent calls to {@link #add(IRegex)}.
 	 * Call {@link #resetDag()} to prevent this class from changing the retrieved DAG in the future.
 	 * 
-	 * @return The regex DAG built from all {@link #apply(IRegex)} since the last {@link #resetDag()}.
+	 * @return The regex DAG built from all {@link #add(IRegex)} since the last {@link #resetDag()}.
 	 */
 	public RegexDag<L> getDag() {
 		return mDag;

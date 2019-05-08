@@ -26,9 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -40,32 +50,44 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class SymbolicInterpreter {
 
 	private final IIcfg<IcfgLocation> mIcfg;
-	private final Collection<IcfgLocation> mLocationsOfInterest;
 	private final CallGraph mCallGraph;
+	private Map<String, ProcedureResources> mProcResources = new HashMap<>();
+
+	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg) {
+		mIcfg = icfg;
+		mCallGraph = new CallGraph(icfg,
+				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()));
+	}
 
 	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
-		mLocationsOfInterest = locationsOfInterest;
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 	}
-	
+
 	public void interpret() {
-		for (final String procedure : mCallGraph.initialProceduresOfInterest()) {
-			// TODO compute procedure graph with enter calls for ...
-			// (could require method callGraph.callsToBeEntered() with return type Collection<IIcfgCallTransition>)
-			mCallGraph.successorsOfInterest(procedure);
-
-			// TODO Compute path expressions for
-			mCallGraph.locationsOfInterest(procedure);
-			mCallGraph.successorsOfInterest(procedure);
-
-			// TODO compress path expressions into RegexDag
-
-			// TODO Interpret RegexDag
-			// First search backward which nodes to interpret
-			// Then interpret found nodes
-			mCallGraph.locationsOfInterest(procedure);
-			mCallGraph.successorsOfInterest(procedure);
+		final Queue<String> procedureWorklist = new ArrayDeque<>(mCallGraph.initialProceduresOfInterest());
+		while (!procedureWorklist.isEmpty()) {
+			final String procedure = procedureWorklist.remove();
+			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
+			interpretLOIs(resources);
+			// TODO add successors to procedureWorklist but ignore duplicates
 		}
+	}
+	
+	private void interpretLOIs(final ProcedureResources resources) {
+		final RegexDag<IIcfgTransition<IcfgLocation>> dag = resources.getRegexDag();
+		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLOIsAndEnterCalls();
+		final Queue<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new ArrayDeque<>();
+		worklist.add(dag.getSource());
+		while (!worklist.isEmpty()) {
+			// TODO retrieve inputs, interpret current node, put outputs somewhere
+			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.remove();
+			// TODO add successors to worklist but ignore duplicates
+		}
+	}
+
+	private ProcedureResources computeProcResources(final String procedure) {
+		return new ProcedureResources(mIcfg, procedure, mCallGraph.locationsOfInterest(procedure),
+				mCallGraph.successorsOfInterest(procedure));
 	}
 }

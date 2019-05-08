@@ -26,17 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * Graph representing a procedure with exactly one exit location and arbitrary many error locations.
+ * Graph representing a procedure with exactly one exit location and arbitrary many locations of interest.
  * <p>
  * The nodes of this graph are just labels which happen to be nodes from another graph structure (ICFG).
  * That other graph structure is unrelated to this graph.
@@ -50,21 +46,28 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 
 	private final IcfgLocation mEntryNode;
 	private final IcfgLocation mExitNode;
-	private final Set<IcfgLocation> mErrorNodes;
 
-	public ProcedureGraph(final IcfgLocation entryNode, final IcfgLocation returnNode,
-			final Set<IcfgLocation> errorNodes) {
+	/**
+	 * Constructs the base for a new procedure graph. This graph starts only with some disconnected nodes.
+	 * use {@link #addEdge(IcfgLocation, IIcfgTransition, IcfgLocation)} to add edges and more nodes.
+	 * @param entryNode Entry node of the procedure from inside the icfg
+	 * @param exitNode Exit node of the procedure from inside the icfg
+	 */
+	public ProcedureGraph(final IcfgLocation entryNode, final IcfgLocation exitNode) {
 		mEntryNode = entryNode;
-		mExitNode = returnNode;
-		mErrorNodes = errorNodes;
+		mExitNode = exitNode;
 		mNodes.add(mEntryNode);
 		mNodes.add(mExitNode);
-		mNodes.addAll(mErrorNodes);
 	}
 
+	/**
+	 * Constructs the base for a new procedure graph. This is <b>not</b> the final procedure graph
+	 * for the given function. Use {@link CfgPreprocessor} to construct a full graph.
+	 * @param icfg 
+	 * @param procedureName
+	 */
 	public ProcedureGraph(final IIcfg<IcfgLocation> icfg, final String procedureName) {
-		this(icfg.getProcedureEntryNodes().get(procedureName), icfg.getProcedureExitNodes().get(procedureName),
-				icfg.getProcedureErrorNodes().getOrDefault(procedureName, Collections.emptySet()));
+		this(icfg.getProcedureEntryNodes().get(procedureName), icfg.getProcedureExitNodes().get(procedureName));
 	}
 
 	public IcfgLocation getEntryNode() {
@@ -73,13 +76,5 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 
 	public IcfgLocation getExitNode() {
 		return mExitNode;
-	}
-
-	public Set<IcfgLocation> getErrorNodes() {
-		return mErrorNodes;
-	}
-	
-	public Stream<IcfgLocation> errorAndExitNodesStream() {
-		return Stream.concat(Stream.of(mExitNode), mErrorNodes.stream());
 	}
 }

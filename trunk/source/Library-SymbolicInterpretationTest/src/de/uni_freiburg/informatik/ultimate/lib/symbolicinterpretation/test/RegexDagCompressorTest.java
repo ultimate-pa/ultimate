@@ -101,6 +101,8 @@ public class RegexDagCompressorTest {
 				"10 23 50 67 11.0 12.10 13.12 34 78 45 89 10.11 9.10 14.2 14.13 14.6 14.1"));
 	}
 
+	// TODO create some test cases including ∅
+
 	private static void compressAssertEq(final String nodesExpected, final String edgesExpected,
 			final RegexDag<String> dag) {
 		assertEq(nodesExpected, edgesExpected, new RegexDagCompressor<String>().compress(dag));
@@ -114,7 +116,7 @@ public class RegexDagCompressorTest {
 		// TGFs can differ for isomorph graph because of different node ids
 		// A benefit of comparing TGFs is human-readable output for failed asserts.
 
-		// leading \n makes jUnit output ("expected <...> but was <...>") more readable
+		// leading \n makes jUnit's output ("expected <...> but was <...>") more readable
 		Assert.assertEquals(
 				"\n" + sortTgf(toTgf(nodesExpected, edgesExpected)),
 				"\n" + sortTgf(actualDag.toString()));

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -44,7 +45,7 @@ public class CfgPreprocessor {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private ProcedureGraph mCurrentProcedureGraph;
 	private final Queue<IcfgLocation> mWork = new ArrayDeque<>();
-	
+
 	public CfgPreprocessor(final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
 	}
@@ -52,7 +53,7 @@ public class CfgPreprocessor {
 	/**
 	 * Constructs a procedure graph for a given procedure.
 	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
-	 * Each call inside the procedure are represented by two edges:
+	 * Each call inside the procedure is represented by two edges:
 	 * <ul>
 	 * <li> One summary edge of type {@link CallReturnSummary} for the case in which we
 	 *      enter the function and return normally.<br>
@@ -67,7 +68,6 @@ public class CfgPreprocessor {
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		mWork.clear();
 		mWork.add(mCurrentProcedureGraph.getExitNode());
-		mWork.addAll(mCurrentProcedureGraph.getErrorNodes());
 		while (!mWork.isEmpty()) {
 			for (IcfgEdge edge : mWork.remove().getIncomingEdges()) {
 				processBottomUp(edge);

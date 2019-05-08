@@ -28,11 +28,8 @@ public class CallGraph {
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	/**
-	 * Locations for which we want to compute predicates.
-	 * Locations of interest are locations inside a function.
+	 * Locations of interest (LOI) are locations inside procedures for which want to compute predicates.
 	 */
-	private final Collection<IcfgLocation> mLocationsOfInterest;
-	
 	private final HashRelation<String, IcfgLocation> mLOIsInsideProcedure = new HashRelation<>();
 
 	/**
@@ -55,16 +52,15 @@ public class CallGraph {
 
 	public CallGraph(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
-		mLocationsOfInterest = locationsOfInterest;
-		assignLOIsToProcedures();
+		assignLOIsToProcedures(locationsOfInterest);
 		buildGraph();
 		markGraph();
 	}
 
-	private void assignLOIsToProcedures() {
-		mLocationsOfInterest.forEach(loi -> mLOIsInsideProcedure.addPair(loi.getProcedure(), loi));
+	private void assignLOIsToProcedures(final Collection<IcfgLocation> locationsOfInterest) {
+		locationsOfInterest.forEach(loi -> mLOIsInsideProcedure.addPair(loi.getProcedure(), loi));
 	}
-	
+
 	private void buildGraph() {
 		new IcfgEdgeIterator(mIcfg).asStream()
 				.filter(edge -> edge instanceof IIcfgCallTransition<?>)
@@ -76,20 +72,24 @@ public class CallGraph {
 	}
 
 	private void markGraph() {
-		mLocationsOfInterest.stream()
-				.map(IcfgLocation::getProcedure)
-				.forEach(loi -> mark(loi, TMP_MARK_TO_DETECT_CYCLES));
+		mLOIsInsideProcedure.getDomain().stream().forEach(this::mark);
 	}
 
-	private void mark(final String currentProcedure, final String mark) {
+	private void mark(final String currentProcedure) {
 		if (!mSuccessorsOfInterest.addPair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES)) {
 			throw new IllegalArgumentException("Recursive programs are not supported.");
-		} else if (mSuccessorsOfInterest.addPair(currentProcedure, mark)) {
-			// Was already marked accordingly, therefore predecessors have to be already marked too.
-			return;
 		}
 		mPredecessors.getImage(currentProcedure).forEach(predecessor -> mark(predecessor, currentProcedure));
 		mSuccessorsOfInterest.removePair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES);
+		
+	}
+	
+	private void mark(final String currentProcedure, final String mark) {
+		if (!mSuccessorsOfInterest.addPair(currentProcedure, mark)) {
+			// Was already marked accordingly, therefore predecessors have to be already marked too.
+			return;
+		}
+		mark(currentProcedure);
 	}
 
 	public Collection<String> initialProceduresOfInterest() {

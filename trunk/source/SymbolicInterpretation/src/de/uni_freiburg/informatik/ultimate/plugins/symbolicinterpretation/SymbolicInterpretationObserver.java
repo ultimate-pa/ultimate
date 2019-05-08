@@ -27,15 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagManager;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicInterpreter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -66,9 +66,10 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	 * Only for manual testing.
 	 */
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		RegexDagManager mgr = new RegexDagManager(icfg);
-		RegexDag<IIcfgTransition<IcfgLocation>> dag = mgr.dagOfProcedure("f");
-		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(dag);
-		mLogger.warn(dag);
+		Set<IcfgLocation> locationsOfInterest = icfg.getProcedureErrorNodes().values().stream()
+				.flatMap(Set::stream).collect(Collectors.toSet());
+		SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(icfg, locationsOfInterest);
+		symbolicInterpreter.interpret();
+		// TODO set ultimate results
 	}
 }
