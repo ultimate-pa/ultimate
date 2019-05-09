@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
 import de.uni_freiburg.informatik.ultimate.mso.MSODNatScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -206,7 +207,11 @@ public class SmtParser implements ISource {
 						"smtParserBackendSolver");
 
 		Script script;
-		if (inHornSolverMode) {
+		boolean inUltimateEliminatorMode = false;
+		if (inUltimateEliminatorMode) {
+			mLogger.info("Running UltimateEliminator on input file");
+			script = new UltimateEliminator(mServices, mLogger, caibss.getScript().getScript());
+		} else if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
 			script = new HornClauseParserScript(mServices, mLogger, file.getName(), caibss.getScript(),
 //					"ALL", caibss.getSolverSettings());
