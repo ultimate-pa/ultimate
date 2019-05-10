@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -216,7 +217,14 @@ public class SmtParser implements ISource {
 					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
 			solverLogger.setLevel(LogLevel.DEBUG);
 			mLogger.setLevel(LogLevel.DEBUG);
-			final Script backEnd = new Scriptor(command, solverLogger, mServices, mStorage, "External");
+			Script backEnd = new Scriptor(command, solverLogger, mServices, mStorage, "External");
+			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(
+					SmtParserPreferenceInitializer.LABEL_SmtDumpPath);
+			if (!folderOfDumpedFile.isEmpty()) {
+				final String fullPathOfDumpedFile = folderOfDumpedFile + "/"
+						+ "UltimateEliminatorBackEndSolverInput.smt2";
+				backEnd = SolverBuilder.wrapScriptWithLoggingScript(backEnd, solverLogger, fullPathOfDumpedFile);
+			}
 			script = new UltimateEliminator(mServices, mLogger, backEnd);
 		} else if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
