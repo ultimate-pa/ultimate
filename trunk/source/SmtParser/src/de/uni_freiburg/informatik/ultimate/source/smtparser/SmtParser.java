@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -54,10 +55,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
-import de.uni_freiburg.informatik.ultimate.mso.MSODNatScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.MsoLogic;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper;
@@ -210,7 +211,13 @@ public class SmtParser implements ISource {
 		boolean inUltimateEliminatorMode = false;
 		if (inUltimateEliminatorMode) {
 			mLogger.info("Running UltimateEliminator on input file");
-			script = new UltimateEliminator(mServices, mLogger, caibss.getScript().getScript());
+			final ILogger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("SolverLogger");
+			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
+			solverLogger.setLevel(LogLevel.DEBUG);
+			mLogger.setLevel(LogLevel.DEBUG);
+			final Script backEnd = new Scriptor(command, solverLogger, mServices, mStorage, "External");
+			script = new UltimateEliminator(mServices, mLogger, backEnd);
 		} else if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
 			script = new HornClauseParserScript(mServices, mLogger, file.getName(), caibss.getScript(),
