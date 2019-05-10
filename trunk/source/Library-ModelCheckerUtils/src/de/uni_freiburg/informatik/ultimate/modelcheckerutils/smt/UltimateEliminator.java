@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -45,221 +46,283 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 
 /**
  * SMT solver for logics with quantifiers. Passes all SMT command to a back end
  * SMT solver, but tries to transform asserted terms to quantifier-free terms
  * before passing them to the back end SMT solver.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Max Barth (Max.Barth95@gmx.de)
  *
  */
 public class UltimateEliminator implements Script {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final Script mSmtSolver;
 	private final ManagedScript mMgdScript;
-	
-	public UltimateEliminator(IUltimateServiceProvider services, ILogger logger, Script script) {
+	private LBool mExpectedResult;
+
+	public UltimateEliminator(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		mServices = services;
 		mLogger = logger;
 		mSmtSolver = script;
 		mMgdScript = new ManagedScript(services, script);
-		
+
 	}
 
-	public void setLogic(String logic) throws UnsupportedOperationException, SMTLIBException {
+	@Override
+	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
 		mSmtSolver.setLogic(logic);
 	}
 
-	public void setLogic(Logics logic) throws UnsupportedOperationException, SMTLIBException {
+	@Override
+	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mSmtSolver.setLogic(logic);
 	}
 
-	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
+	@Override
+	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
 		mSmtSolver.setOption(opt, value);
 	}
 
-	public void setInfo(String info, Object value) {
-		mSmtSolver.setInfo(info, value);
+	@Override
+	public void setInfo(final String info, final Object value) {
+		if (info.equals(":status")) {
+			final String valueAsString = (String) value;
+			mExpectedResult = LBool.valueOf(valueAsString.toUpperCase());
+		} else {
+			mSmtSolver.setInfo(info, value);
+		}
 	}
 
-	public void declareSort(String sort, int arity) throws SMTLIBException {
+	@Override
+	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		mSmtSolver.declareSort(sort, arity);
 	}
 
-	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
+	@Override
+	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		mSmtSolver.defineSort(sort, sortParams, definition);
 	}
 
-	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
+	@Override
+	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		mSmtSolver.declareFun(fun, paramSorts, resultSort);
 	}
 
-	public void defineFun(String fun, TermVariable[] params, Sort resultSort, Term definition) throws SMTLIBException {
+	@Override
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
 		mSmtSolver.defineFun(fun, params, resultSort, definition);
 	}
 
-	public void push(int levels) throws SMTLIBException {
+	@Override
+	public void push(final int levels) throws SMTLIBException {
 		mSmtSolver.push(levels);
 	}
 
-	public void pop(int levels) throws SMTLIBException {
+	@Override
+	public void pop(final int levels) throws SMTLIBException {
 		mSmtSolver.pop(levels);
 	}
 
-	public LBool assertTerm(Term term) throws SMTLIBException {
-		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, term,
+	@Override
+	public LBool assertTerm(final Term term) throws SMTLIBException {
+		final Term letFree = new FormulaUnLet().transform(term);
+		final Term unf = new UnfTransformer(this).transform(letFree);
+		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		return mSmtSolver.assertTerm(lessQuantifier);
 	}
 
+	@Override
 	public LBool checkSat() throws SMTLIBException {
-		return mSmtSolver.checkSat();
+		final LBool result = mSmtSolver.checkSat();
+		if (mExpectedResult != null) {
+			mLogger.info("Expected result: " + result);
+		}
+		mLogger.info("Computed result: " + result);
+		return result;
+
 	}
 
-	public LBool checkSatAssuming(Term... assumptions) throws SMTLIBException {
+	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
 		return mSmtSolver.checkSatAssuming(assumptions);
 	}
 
+	@Override
 	public Term[] getAssertions() throws SMTLIBException {
 		return mSmtSolver.getAssertions();
 	}
 
+	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getProof();
 	}
 
+	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getUnsatCore();
 	}
 
+	@Override
 	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getUnsatAssumptions();
 	}
 
-	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
+	@Override
+	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getValue(terms);
 	}
 
+	@Override
 	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getAssignment();
 	}
 
-	public Object getOption(String opt) throws UnsupportedOperationException {
+	@Override
+	public Object getOption(final String opt) throws UnsupportedOperationException {
 		return mSmtSolver.getOption(opt);
 	}
 
-	public Object getInfo(String info) throws UnsupportedOperationException, SMTLIBException {
+	@Override
+	public Object getInfo(final String info) throws UnsupportedOperationException, SMTLIBException {
 		return mSmtSolver.getInfo(info);
 	}
 
+	@Override
 	public void exit() {
-		mSmtSolver.exit();
+//		mSmtSolver.exit();
 	}
 
-	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
+	@Override
+	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
 		return mSmtSolver.sort(sortname, params);
 	}
 
-	public Sort sort(String sortname, BigInteger[] indices, Sort... params) throws SMTLIBException {
+	@Override
+	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
 		return mSmtSolver.sort(sortname, indices, params);
 	}
 
-	public Sort[] sortVariables(String... names) throws SMTLIBException {
+	@Override
+	public Sort[] sortVariables(final String... names) throws SMTLIBException {
 		return mSmtSolver.sortVariables(names);
 	}
 
-	public Term term(String funcname, Term... params) throws SMTLIBException {
+	@Override
+	public Term term(final String funcname, final Term... params) throws SMTLIBException {
 		return mSmtSolver.term(funcname, params);
 	}
 
-	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
+	@Override
+	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params) throws SMTLIBException {
 		return mSmtSolver.term(funcname, indices, returnSort, params);
 	}
 
-	public TermVariable variable(String varname, Sort sort) throws SMTLIBException {
+	@Override
+	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
 		return mSmtSolver.variable(varname, sort);
 	}
 
-	public Term quantifier(int quantor, TermVariable[] vars, Term body, Term[]... patterns) throws SMTLIBException {
+	@Override
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns) throws SMTLIBException {
 		return mSmtSolver.quantifier(quantor, vars, body, patterns);
 	}
 
-	public Term let(TermVariable[] vars, Term[] values, Term body) throws SMTLIBException {
+	@Override
+	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		return mSmtSolver.let(vars, values, body);
 	}
 
-	public Term annotate(Term t, Annotation... annotations) throws SMTLIBException {
+	@Override
+	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
 		return mSmtSolver.annotate(t, annotations);
 	}
 
-	public Term numeral(String num) throws SMTLIBException {
+	@Override
+	public Term numeral(final String num) throws SMTLIBException {
 		return mSmtSolver.numeral(num);
 	}
 
-	public Term numeral(BigInteger num) throws SMTLIBException {
+	@Override
+	public Term numeral(final BigInteger num) throws SMTLIBException {
 		return mSmtSolver.numeral(num);
 	}
 
-	public Term decimal(String decimal) throws SMTLIBException {
+	@Override
+	public Term decimal(final String decimal) throws SMTLIBException {
 		return mSmtSolver.decimal(decimal);
 	}
 
-	public Term decimal(BigDecimal decimal) throws SMTLIBException {
+	@Override
+	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
 		return mSmtSolver.decimal(decimal);
 	}
 
-	public Term hexadecimal(String hex) throws SMTLIBException {
+	@Override
+	public Term hexadecimal(final String hex) throws SMTLIBException {
 		return mSmtSolver.hexadecimal(hex);
 	}
 
-	public Term binary(String bin) throws SMTLIBException {
+	@Override
+	public Term binary(final String bin) throws SMTLIBException {
 		return mSmtSolver.binary(bin);
 	}
 
-	public Term string(String str) throws SMTLIBException {
+	@Override
+	public Term string(final String str) throws SMTLIBException {
 		return mSmtSolver.string(str);
 	}
 
-	public Term simplify(Term term) throws SMTLIBException {
+	@Override
+	public Term simplify(final Term term) throws SMTLIBException {
 		return mSmtSolver.simplify(term);
 	}
 
+	@Override
 	public void reset() {
 		mSmtSolver.reset();
 	}
 
+	@Override
 	public void resetAssertions() {
 		mSmtSolver.resetAssertions();
 	}
 
-	public Term[] getInterpolants(Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+	@Override
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getInterpolants(partition);
 	}
 
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getInterpolants(partition, startOfSubtree);
 	}
 
+	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.getModel();
 	}
 
-	public Iterable<Term[]> checkAllsat(Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
+	@Override
+	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
 		return mSmtSolver.checkAllsat(predicates);
 	}
 
-	public Term[] findImpliedEquality(Term[] x, Term[] y) {
+	@Override
+	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
 		return mSmtSolver.findImpliedEquality(x, y);
 	}
 
-	public QuotedObject echo(QuotedObject msg) {
+	@Override
+	public QuotedObject echo(final QuotedObject msg) {
 		return mSmtSolver.echo(msg);
 	}
-	
+
 
 }
