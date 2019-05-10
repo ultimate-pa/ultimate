@@ -168,13 +168,7 @@ public class SolverBuilder {
 			result = createSMTInterpol(services, storage);
 		}
 		if (settings.dumpSmtScriptToFile()) {
-			try {
-				result = new LoggingScript(result, settings.constructFullPathOfDumpedScript(), true);
-				solverLogger.info("Dumping SMT script to " + settings.constructFullPathOfDumpedScript());
-			} catch (final FileNotFoundException e) {
-				solverLogger.error("Unable dump SMT script to " + settings.constructFullPathOfDumpedScript());
-				throw new RuntimeException(e);
-			}
+			result = wrapScriptWithLoggingScript(result, solverLogger, settings.constructFullPathOfDumpedScript());
 		}
 		if (!settings.useExternalSolver()) {
 			result.setOption(":timeout", settings.getTimeoutSmtInterpol());
@@ -183,6 +177,19 @@ public class SolverBuilder {
 			result = new ScriptWithTermConstructionChecks(result);
 		}
 		return result;
+	}
+
+	public static Script wrapScriptWithLoggingScript(Script script, final ILogger solverLogger,
+			String fullPathOfDumpedFile) {
+		final Script wrappedScript;
+		try {
+			wrappedScript = new LoggingScript(script, fullPathOfDumpedFile, true);
+			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+		} catch (final FileNotFoundException e) {
+			solverLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
+			throw new RuntimeException(e);
+		}
+		return wrappedScript;
 	}
 
 	public static SolverSettings constructSolverSettings(final String filename, final SolverMode solverMode,
