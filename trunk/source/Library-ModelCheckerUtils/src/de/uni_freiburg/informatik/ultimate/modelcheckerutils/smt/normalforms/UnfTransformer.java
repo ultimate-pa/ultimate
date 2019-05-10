@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -52,7 +54,15 @@ public class UnfTransformer extends TermTransformer {
 
 	@Override
 	protected void convert(final Term term) {
-		super.convert(term);
+		if (term instanceof ConstantTerm) {
+			final ConstantTerm constTerm = (ConstantTerm) term;
+			final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
+			final Term normalized = rational.toTerm(term.getSort());
+			setResult(normalized);
+			return;
+		} else {
+			super.convert(term);
+		}
 	}
 
 	@Override
@@ -62,5 +72,8 @@ public class UnfTransformer extends TermTransformer {
 		setResult(result);
 		return;
 	}
+
+
+
 
 }
