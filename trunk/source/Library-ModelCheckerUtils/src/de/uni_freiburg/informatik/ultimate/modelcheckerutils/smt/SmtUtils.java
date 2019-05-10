@@ -1617,6 +1617,8 @@ public final class SmtUtils {
 				return toRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
 				return (Rational) value;
+			} else if (value instanceof BigInteger) {
+				return toRational((BigInteger) value);
 			}
 		}
 		throw new UnsupportedOperationException("Cannot convert " + constTerm.toStringDirect() + " to Rational");
