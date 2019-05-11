@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCount
  */
 public class ManagedScript {
 	private static final String MANAGED_SCRIPT_LOCKED_BY = "ManagedScript locked by ";
-	protected final IUltimateServiceProvider mServices;
+	public final IUltimateServiceProvider mServices;
 	protected final Script mScript;
 	protected final ILogger mLogger;
 	protected final VariableManager mVariableManager;
