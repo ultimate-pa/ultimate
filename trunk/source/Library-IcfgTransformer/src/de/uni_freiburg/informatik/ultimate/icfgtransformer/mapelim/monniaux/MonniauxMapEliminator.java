@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
+	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final IIcfg<IcfgLocation> mResultIcfg;
@@ -85,8 +86,9 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 	private final IBacktranslationTracker mBacktranslationTracker;
 	private final int mCells;
 
-	public MonniauxMapEliminator(final ILogger logger, final IIcfg<IcfgLocation> icfg,
-			final IBacktranslationTracker backtranslationTracker, final int cells) {
+	public MonniauxMapEliminator(final IUltimateServiceProvider services, final ILogger logger,
+			final IIcfg<IcfgLocation> icfg, final IBacktranslationTracker backtranslationTracker, final int cells) {
+		mServices = services;
 		mIcfg = Objects.requireNonNull(icfg);
 		mMgdScript = Objects.requireNonNull(mIcfg.getCfgSmtToolkit().getManagedScript());
 		mLogger = logger;
@@ -178,9 +180,9 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Term tfTerm = tf.getFormula();
 
 				final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
-				
+
 				final Term atMostOneStore = SmtUtils.toDnf(
-						mMgdScript.mServices, mMgdScript, scs.transform(tfTerm), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						mServices, mMgdScript, scs.transform(tfTerm), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				//final Term atMostOneStore = scs.transform(tfTerm);
 				final Collection<Term> arrayEqualities = scs.getReplacementEquations();
 				final Collection<Term> newAuxVars = scs.getReplacementTermVariables();
