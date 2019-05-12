@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -43,48 +42,53 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 
 /**
- * SMT solver for logics with quantifiers. Passes all SMT command to a back end
- * SMT solver, but tries to transform asserted terms to quantifier-free terms
- * before passing them to the back end SMT solver.
+ * Wrapper for an SMT solver that makes sure that the solver
+ * does not have to deal with quantifiers.
+ * The idea of this class is that we overapproximate asserted
+ * formulas if they contain quantifiers (e.g., we replace the
+ * formula by "true").
+ * If the SMT solver responds with 'sat' to a check-sat command
+ * we return unknown if we overapproximated an asserted formula.
+ * If we did not overapproximate or if the response was 'unsat'
+ * we may pass the response of the solver.
+ *
+ * TODO As an optimization we may also try very inexpensive
+ * quantifier elimination techniques or skolemization.
+ * TODO list these once these are implemented
+ *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Max Barth (Max.Barth95@gmx.de)
  *
  */
-public class UltimateEliminator implements Script {
+public class QuantifierOverapproximatingSolver implements Script {
 
-	private static final boolean WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION = true;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final Script mSmtSolver;
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
 
-	public UltimateEliminator(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
+	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		mServices = services;
 		mLogger = logger;
-		if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
-			mSmtSolver = new QuantifierOverapproximatingSolver(services, logger, script);
-		} else {
-			mSmtSolver = script;
-		}
-		mMgdScript = new ManagedScript(services, mSmtSolver);
+		mSmtSolver = script;
+		mMgdScript = new ManagedScript(services, script);
 
 	}
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
+		// TODO: do not pass the original logic but the corresponding quantifier-free logic
 		mSmtSolver.setLogic(logic);
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
+		// TODO: do not pass the original logic but the corresponding quantifier-free logic
 		mSmtSolver.setLogic(logic);
 	}
 
@@ -95,12 +99,7 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		if (info.equals(":status")) {
-			final String valueAsString = (String) value;
-			mExpectedResult = LBool.valueOf(valueAsString.toUpperCase());
-		} else {
-			mSmtSolver.setInfo(info, value);
-		}
+		mSmtSolver.setInfo(info, value);
 	}
 
 	@Override
@@ -130,38 +129,20 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
+		// TODO check if there is still an overapproximated term on the assertion stack
 		mSmtSolver.pop(levels);
 	}
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		final Term letFree = new FormulaUnLet().transform(term);
-		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(letFree);
-		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
-			throw new AssertionError("Could not remove all quantifiers.");
-		}
-		return mSmtSolver.assertTerm(lessQuantifier);
+		//TODO do overapproximation if necessary
+		return mSmtSolver.assertTerm(term);
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
+		// TODO check if we did an overapproximation
 		final LBool result = mSmtSolver.checkSat();
-		if (mExpectedResult != null) {
-			mLogger.info("Expected result: " + result);
-			if (mExpectedResult == LBool.UNKNOWN ) {
-				if (result != LBool.UNKNOWN) {
-					throw new AssertionError("Congratulations! We solved a difficult benchmark");
-				}
-			} else {
-				if (result != LBool.UNKNOWN && result != mExpectedResult) {
-					throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
-				}
-
-			}
-		}
-		mLogger.info("Computed result: " + result);
 		return result;
 
 	}
@@ -213,7 +194,7 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public void exit() {
-//		mSmtSolver.exit();
+		mSmtSolver.exit();
 	}
 
 	@Override
