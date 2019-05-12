@@ -134,6 +134,9 @@ public class UltimateEliminator implements Script {
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(letFree);
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
+			throw new AssertionError("Could not remove all quantifiers.");
+		}
 		return mSmtSolver.assertTerm(lessQuantifier);
 	}
 
@@ -142,6 +145,16 @@ public class UltimateEliminator implements Script {
 		final LBool result = mSmtSolver.checkSat();
 		if (mExpectedResult != null) {
 			mLogger.info("Expected result: " + result);
+			if (mExpectedResult == LBool.UNKNOWN ) {
+				if (result != LBool.UNKNOWN) {
+					throw new AssertionError("Congratulations! We solved a difficult benchmark");
+				}
+			} else {
+				if (result != LBool.UNKNOWN && result != mExpectedResult) {
+					throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
+				}
+
+			}
 		}
 		mLogger.info("Computed result: " + result);
 		return result;
