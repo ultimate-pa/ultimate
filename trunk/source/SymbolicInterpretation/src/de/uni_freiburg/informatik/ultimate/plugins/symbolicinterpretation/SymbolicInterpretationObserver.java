@@ -27,9 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -66,9 +63,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	 * Only for manual testing.
 	 */
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		Set<IcfgLocation> locationsOfInterest = icfg.getProcedureErrorNodes().values().stream()
-				.flatMap(Set::stream).collect(Collectors.toSet());
-		SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(icfg, locationsOfInterest);
+		SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(icfg);
 		symbolicInterpreter.interpret();
 		// TODO set ultimate results
 	}

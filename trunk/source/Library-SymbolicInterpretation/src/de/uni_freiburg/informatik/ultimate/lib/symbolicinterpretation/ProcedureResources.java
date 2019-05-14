@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionCom
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.UniqueMarkTransition;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CfgPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
@@ -59,7 +60,9 @@ public class ProcedureResources {
 	public ProcedureResources(final IIcfg<IcfgLocation> icfg, final String procedure,
 			final Collection<IcfgLocation> locationsOfInterest, final Collection<String> enterCallsOfInterest) {
 
-		final ProcedureGraph procedureGraph = new ProcedureGraph(icfg, procedure);
+		// TODO split this function into sub-functions
+
+		final ProcedureGraph procedureGraph = new CfgPreprocessor(icfg).graphOfProcedure(procedure, locationsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
 		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =
@@ -86,16 +89,16 @@ public class ProcedureResources {
 		mRegexDag = regexToDag.getDag();
 
 		mDagOverlayPathToLOIsAndEnterCalls = new OverlaySuccessors();
-		mDagOverlayPathToReturn = new OverlaySuccessors();
 		Stream.concat(loiDagNodes.stream(), enterCallDagNodes.stream())
 				.forEach(node -> addToOverlay(mDagOverlayPathToLOIsAndEnterCalls, node));
+		mDagOverlayPathToReturn = new OverlaySuccessors();
 		addToOverlay(mDagOverlayPathToReturn, returnDagNode);
 	}
 
 	private static void assertLoiFromSameProcedure(final String procedure, final IcfgLocation loi) {
 		assert procedure.equals(loi.getProcedure()) : "Location of interest from different procedure";
 	}
-	
+
 	private static IRegex<IIcfgTransition<IcfgLocation>> markedRegex(
 			final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer,
 			final IcfgLocation source, final IcfgLocation target) {

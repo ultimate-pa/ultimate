@@ -28,13 +28,15 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgprepro
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Pure marker, for instance for locations of interest (LOI) inside @link {@link RegexDag}
- * This class does not overwrite equals so that all objects of this class are unique.
+ * This class does not overwrite equals so that all objects of this class are unique
+ * and cannot be merged by {@link RegexDagCompressor}.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -42,10 +44,10 @@ public class UniqueMarkTransition implements IIcfgInternalTransition<IcfgLocatio
 
 	private static final long serialVersionUID = 3983599864540967953L;
 
-	private final IcfgLocation mLoi;
+	private final IcfgLocation mTransition;
 
 	public UniqueMarkTransition(final IcfgLocation loi) {
-		mLoi = loi;
+		mTransition = loi;
 	}
 
 	@Override
@@ -55,7 +57,7 @@ public class UniqueMarkTransition implements IIcfgInternalTransition<IcfgLocatio
 
 	@Override
 	public IcfgLocation getTarget() {
-		return mLoi;
+		return mTransition;
 	}
 
 	@Override
@@ -83,4 +85,8 @@ public class UniqueMarkTransition implements IIcfgInternalTransition<IcfgLocatio
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public String toString() {
+		return mTransition.toString();
+	}
 }

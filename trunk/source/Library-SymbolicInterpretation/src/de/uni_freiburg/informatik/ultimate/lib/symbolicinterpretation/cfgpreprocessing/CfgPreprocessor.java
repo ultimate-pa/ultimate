@@ -37,8 +37,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * @see #graphOfProcedure(String)
+ * @see #graphOfProcedure(String, Collection)
  * @author schaetzc@tf.uni-freiburg.de
+ * 
+ * TODO rename this class to ProcedureGraphBuilder
+ * TODO consider creating a lightweight subgraph overlay since RCFG builder already constructs super graph of the
+ *      required form.
  */
 public class CfgPreprocessor {
 
@@ -64,10 +68,13 @@ public class CfgPreprocessor {
 	 * </ul>
 	 * Cases in which called functions do not terminate are ignored.
 	 */
-	public ProcedureGraph graphOfProcedure(final String procedureName) {
+	public ProcedureGraph graphOfProcedure(final String procedureName,
+			final Collection<IcfgLocation> locationsOfInterest) {
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
+		locationsOfInterest.forEach(mCurrentProcedureGraph::addNode);
 		mWork.clear();
 		mWork.add(mCurrentProcedureGraph.getExitNode());
+		mWork.addAll(locationsOfInterest);
 		while (!mWork.isEmpty()) {
 			for (IcfgEdge edge : mWork.remove().getIncomingEdges()) {
 				processBottomUp(edge);
@@ -76,6 +83,11 @@ public class CfgPreprocessor {
 		return mCurrentProcedureGraph;
 	}
 
+	/**
+	 * Traverses the ICFG backwards and copies edges to the procedure graph.
+	 * Backwards processing allows to only include only required paths (for instance to the procedure's exit)
+	 * while ignoring dead ends in which we are not interested.
+	 */
 	@SuppressWarnings("unchecked")
 	private void processBottomUp(final IcfgEdge edge) {
 		if (edge instanceof IIcfgReturnTransition<?,?>) {
@@ -90,6 +102,10 @@ public class CfgPreprocessor {
 
 	private void processReturn(
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
+
+		// TODO delete this method. RCFG builder already creates enter call edge (Type "Call")
+		// and summary edge (Type "Summary")
+
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);

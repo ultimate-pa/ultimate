@@ -26,30 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import java.util.HashMap;
-import java.util.Map;
+public class SymbolicState {
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-
-/**
- * 
- * @author schaetzc@tf.uni-freiburg.de
- */
-public class Table {
-
-	private final Map<Object, TableValue> mMap = new HashMap<>();
-
-	public TableValue valueForProcedure(final String procedureId) {
-		return mMap.computeIfAbsent(procedureId, this::newEntry);
-	}
-
-	public TableValue valueForStar(final IRegex<IIcfgTransition<IcfgLocation>> starRegex) {
-		return mMap.computeIfAbsent(starRegex, this::newEntry);
-	}
-
-	private TableValue newEntry(final Object key) {
-		return new TableValue();
+	public SymbolicState merge(final SymbolicState other) {
+		// TODO implement
+		return other;
 	}
 }

@@ -26,19 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -52,37 +56,48 @@ public class SymbolicInterpreter {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private Map<String, ProcedureResources> mProcResources = new HashMap<>();
+	private final WorklistWithInputs<String> mEnterCallWorklist = new WorklistWithInputs<>();
+	private final Map<IcfgLocation, SymbolicState> mPredicatesForLOI = new HashMap<>();
 
 	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg) {
-		mIcfg = icfg;
-		mCallGraph = new CallGraph(icfg,
-				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()));
+		this(icfg, icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()));
 	}
 
 	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
+		initPredicates(locationsOfInterest);
+		enqueInitial();
+	}
+
+	private void enqueInitial() {
+		mCallGraph.initialProceduresOfInterest().forEach(proc -> mEnterCallWorklist.add(proc, new SymbolicState()));
+	}
+
+	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
+		// TODO create bottom symbol instead of this dummy
+		final SymbolicState bottom = new SymbolicState();
+		locationsOfInterest.forEach(loi -> mPredicatesForLOI.put(loi, bottom));
 	}
 
 	public void interpret() {
-		final Queue<String> procedureWorklist = new ArrayDeque<>(mCallGraph.initialProceduresOfInterest());
-		while (!procedureWorklist.isEmpty()) {
-			final String procedure = procedureWorklist.remove();
+		while (mEnterCallWorklist.advance()) {
+			final String procedure = mEnterCallWorklist.getWork();
+			final SymbolicState input = mEnterCallWorklist.getInput();
 			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
-			interpretLOIs(resources);
-			// TODO add successors to procedureWorklist but ignore duplicates
+			interpretLOIsInProcedure(resources, input);
 		}
 	}
-	
-	private void interpretLOIs(final ProcedureResources resources) {
-		final RegexDag<IIcfgTransition<IcfgLocation>> dag = resources.getRegexDag();
+
+	private void interpretLOIsInProcedure(final ProcedureResources resources, final SymbolicState initalInput) {
 		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLOIsAndEnterCalls();
-		final Queue<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new ArrayDeque<>();
-		worklist.add(dag.getSource());
-		while (!worklist.isEmpty()) {
-			// TODO retrieve inputs, interpret current node, put outputs somewhere
-			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.remove();
-			// TODO add successors to worklist but ignore duplicates
+		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new WorklistWithInputs<>();
+		worklist.add(resources.getRegexDag().getSource(), initalInput);
+		while (worklist.advance()) {
+			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
+			final SymbolicState currentInput = worklist.getInput();
+			final SymbolicState currentOutput = interpretNode(currentNode, currentInput);
+			overlaySuccessors.getImage(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
 		}
 	}
 
@@ -90,4 +105,50 @@ public class SymbolicInterpreter {
 		return new ProcedureResources(mIcfg, procedure, mCallGraph.locationsOfInterest(procedure),
 				mCallGraph.successorsOfInterest(procedure));
 	}
+
+	private SymbolicState interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,
+			final SymbolicState input) {
+		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
+		if (regex instanceof Literal) {
+			return interpretLiteral(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
+		} else if (regex instanceof Epsilon) {
+			// Nothing to do. Multiple inputs for the same node are merged inside the worklist.
+			// Merging is applied because we traverse DAG using BFS.
+			return input;
+		} else if (regex instanceof Star) {
+			throw new UnsupportedOperationException("Loop handling not implemented yet: " + regex);
+		} else {
+			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex);
+		}
+	}
+
+	// TODO compute using post
+	private SymbolicState interpretLiteral(final IIcfgTransition<IcfgLocation> letter, final SymbolicState input) {
+		if (letter instanceof CallReturnSummary) {
+			throw new UnsupportedOperationException("Call summaries not implemented yet: " + letter);
+		} else if (letter instanceof IcfgCallTransition) {
+			// TODO process transformula to compute input for function
+			throw new UnsupportedOperationException("Enter calls not implemented yet: " + letter);
+			// mEnterCallWorklist.add(letter.getSucceedingProcedure(), computedInput);
+		} else if (letter instanceof IIcfgInternalTransition) {
+			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) letter, input);
+		} else {
+			throw new UnsupportedOperationException("Unexpected transition type: " + letter);
+		}
+	}
+
+	private SymbolicState interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition,
+				final SymbolicState input) {
+		// TODO apply post to compute output
+		final SymbolicState output = new SymbolicState();
+		// TODO only target? what if source location is also a LOI? call storePred somewhere else too?
+		storePredicateIfLOI(transition.getTarget(), output);
+		return output;
+	}
+
+	private void storePredicateIfLOI(final IcfgLocation location, final SymbolicState addPredicate) {
+		mPredicatesForLOI.computeIfPresent(location, (unused, oldPredicate) -> oldPredicate.merge(addPredicate));
+	}
+
+
 }
