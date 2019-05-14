@@ -33,6 +33,7 @@ import java.util.Queue;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -95,33 +96,23 @@ public class CfgPreprocessor {
 		} else if (edge instanceof IIcfgCallTransition<?>) {
 			processCall((IIcfgCallTransition<IcfgLocation>) edge);
 		} else {
+			// this case also includes call summaries of type IIcfgSummaryTransition
 			addToWorklistIfNew(edge.getSource());
 			copyEdge(edge);
 		}
 	}
 
-	private void processReturn(
-			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
-
-		// TODO delete this method. RCFG builder already creates enter call edge (Type "Call")
-		// and summary edge (Type "Summary")
-
+	private void processReturn(final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);
-		// Summary edge representing call/return to/from a procedure.
-		mCurrentProcedureGraph.addEdge(correspondingCallEdge.getSource(),
-				new CallReturnSummary(correspondingCallEdge, returnEdge),
-				correspondingCallEdge.getTarget());
 		// Dead end edge representing the possibility to enter a procedure without returning due to an error
-		mCurrentProcedureGraph.addEdge(correspondingCallEdge.getSource(),
-				correspondingCallEdge,
-				returnEdge.getTarget());
+		copyEdge(correspondingCallEdge);
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
 		assert callEdge.getSource() == mCurrentProcedureGraph.getEntryNode();
-		// nothing to do
+		// or else we entered a return backwards
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {
@@ -130,7 +121,7 @@ public class CfgPreprocessor {
 		}
 	}
 
-	private void copyEdge(final IcfgEdge edge) {
+	private void copyEdge(final IIcfgTransition<IcfgLocation> edge) {
 		mCurrentProcedureGraph.addEdge(edge.getSource(), edge, edge.getTarget());
 	}
 }

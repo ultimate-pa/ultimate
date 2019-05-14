@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -124,9 +124,9 @@ public class SymbolicInterpreter {
 
 	// TODO compute using post
 	private SymbolicState interpretLiteral(final IIcfgTransition<IcfgLocation> letter, final SymbolicState input) {
-		if (letter instanceof CallReturnSummary) {
+		if (letter instanceof IIcfgSummaryTransition<?>) {
 			throw new UnsupportedOperationException("Call summaries not implemented yet: " + letter);
-		} else if (letter instanceof IcfgCallTransition) {
+		} else if (letter instanceof IIcfgCallTransition<?>) {
 			// TODO process transformula to compute input for function
 			throw new UnsupportedOperationException("Enter calls not implemented yet: " + letter);
 			// mEnterCallWorklist.add(letter.getSucceedingProcedure(), computedInput);
