@@ -283,7 +283,7 @@ public class CfgBuilder {
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
-		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assue(true) statements.");
+		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 		return icfg;
 	}
 
