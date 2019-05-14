@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -79,10 +78,9 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 	public CegarLoopConcurrentAutomata(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services, storage);
+				InterpolationTechnique.Craig_TreeInterpolation, false, services);
 	}
 
 	@Override

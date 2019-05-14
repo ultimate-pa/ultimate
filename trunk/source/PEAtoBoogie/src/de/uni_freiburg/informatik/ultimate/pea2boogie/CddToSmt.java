@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
@@ -73,9 +72,9 @@ public class CddToSmt {
 	private final Boogie2SMT mBoogieToSmt;
 	private final PeaResultUtil mResultUtil;
 
-	public CddToSmt(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final PeaResultUtil resultUtil, final Script script, final Boogie2SMT boogieToSmt,
-			final BoogieDeclarations boogieDeclarations, final IReqSymbolExpressionTable symboltable) {
+	public CddToSmt(final IUltimateServiceProvider services, final PeaResultUtil resultUtil,
+			final Script script, final Boogie2SMT boogieToSmt, final BoogieDeclarations boogieDeclarations,
+			final IReqSymbolExpressionTable symboltable) {
 		mScript = script;
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");

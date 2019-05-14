@@ -36,7 +36,6 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -92,8 +91,6 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	 *
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
-	 * @param storage
-	 *            IToolchainstorage of the current Ultimate toolchain.
 	 * @param run
 	 *            an infeasible run to project into a CFG. Must only contain {@link ISLPredicate}s as states.
 	 * @param precondition
@@ -103,16 +100,15 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
 	 * @param icfg
+	 * @param xnfConversionTechnique
 	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
-	 * @param xnfConversionTechnique
 	 */
-	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final NestedRun<LETTER, IPredicate> run, final IPredicate precondition, final IPredicate postcondition,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+	public PathInvariantsGenerator(final IUltimateServiceProvider services, final NestedRun<LETTER, IPredicate> run,
+			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg, final InvariantSynthesisSettings invSynthSettings,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mRun = run;
 
@@ -132,9 +128,9 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
 
 		// Generate invariants
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, storage,
-				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings,
-				icfg.getCfgSmtToolkit(), KindOfInvariant.SAFETY);
+		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, precondition,
+				postcondition, predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(),
+				KindOfInvariant.SAFETY);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		// Get invariant synthesis statistics
 		mPathInvariantsStats = cfgInvGenerator.getInvariantSynthesisStatistics();

@@ -323,7 +323,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		IIcfg<OUTLOC> result;
 		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
 		transitionPreprocessors.add(new RewriteIte());
-		transitionPreprocessors.add(new SimplifyPreprocessor(services, null, SimplificationTechnique.SIMPLIFY_QUICK));
+		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
 		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
 		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 

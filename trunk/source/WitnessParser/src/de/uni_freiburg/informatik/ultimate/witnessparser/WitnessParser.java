@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 import edu.uci.ics.jung.io.GraphIOException;
@@ -57,11 +56,6 @@ public class WitnessParser implements ISource {
 	private String mFilename;
 	private ModelType.Type mWitnessType;
 	private ILogger mLogger;
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// no toolchainstorage needed
-	}
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {

@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -40,16 +40,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 
 /**
- * Main class of Plug-In BuchiAutomizer
- * DD: Why is BuchiAutomizer an IGenerator? 
- * 
+ * Main class of Plug-In BuchiAutomizer DD: Why is BuchiAutomizer an IGenerator?
+ *
  * TODO: refine comments
- * 
+ *
  */
 public class BuchiAutomizer implements IGenerator {
 
@@ -59,7 +57,6 @@ public class BuchiAutomizer implements IGenerator {
 	private List<IObserver> mObservers;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	@Override
 	public String getPluginName() {
@@ -73,7 +70,7 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public void init() {
-		mObserver = new BuchiAutomizerObserver(mServices, mStorage);
+		mObserver = new BuchiAutomizerObserver(mServices);
 		mObservers = Collections.singletonList((IObserver) mObserver);
 	}
 
@@ -98,17 +95,16 @@ public class BuchiAutomizer implements IGenerator {
 		if (programContainsErrors(mServices.getResultService())) {
 			mLogger.info("Another Plugin discovered errors, I will " + "not analyze termination");
 			return Collections.emptyList();
-		} else {
-			mLogger.info("Safety of program was proven or not checked, " + "starting termination analysis");
-			return mObservers;
 		}
+		mLogger.info("Safety of program was proven or not checked, " + "starting termination analysis");
+		return mObservers;
 	}
 
 	@Override
 	public ModelType getOutputDefinition() {
 		/*
-		 * TODO This generated method body only assumes a standard case. Adapt
-		 * it if necessary. Otherwise remove this todo-tag.
+		 * TODO This generated method body only assumes a standard case. Adapt it if necessary. Otherwise remove this
+		 * todo-tag.
 		 */
 		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
@@ -143,11 +139,6 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
-	}
-
-	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -157,6 +148,6 @@ public class BuchiAutomizer implements IGenerator {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

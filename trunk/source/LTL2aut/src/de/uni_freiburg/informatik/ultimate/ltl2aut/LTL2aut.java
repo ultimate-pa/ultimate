@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 
@@ -61,7 +60,6 @@ public class LTL2aut implements IGenerator, ISource {
 
 	private LTL2autObserver mObserver;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 	private final String[] mFileTypes;
 	private ILogger mLogger;
 
@@ -129,7 +127,7 @@ public class LTL2aut implements IGenerator, ISource {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new LTL2autObserver(mServices, mStorage);
+		mObserver = new LTL2autObserver(mServices);
 		final ArrayList<IObserver> observers = new ArrayList<>();
 		if (mProcess && !mSkip) {
 			observers.add(mObserver);
@@ -145,11 +143,6 @@ public class LTL2aut implements IGenerator, ISource {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@SuppressWarnings("rawtypes")

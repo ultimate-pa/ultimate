@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
  */
 public interface IUltimateServiceProvider {
 
+	IToolchainStorage getStorage();
+
 	IBacktranslationService getBacktranslationService();
 
 	ILoggingService getLoggingService();

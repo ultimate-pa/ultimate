@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
@@ -51,7 +50,6 @@ public class RCFGBuilder implements IGenerator {
 	private RCFGBuilderObserver mObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	@Override
 	public String getPluginName() {
@@ -85,7 +83,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new RCFGBuilderObserver(mServices, mStorage);
+		mObserver = new RCFGBuilderObserver(mServices);
 		return Collections.singletonList((IObserver) mObserver);
 	}
 
@@ -108,11 +106,6 @@ public class RCFGBuilder implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new RcfgPreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override

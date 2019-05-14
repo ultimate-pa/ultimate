@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.referee;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -43,7 +42,6 @@ public class RefereeStarter {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -51,13 +49,10 @@ public class RefereeStarter {
 	 */
 	private IElement mRootOfNewModel;
 
-
-	public RefereeStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<IcfgLocation> rcfgRootNode) {
+	public RefereeStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> rcfgRootNode) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		new InvariantChecker(mServices, mToolchainStorage, rcfgRootNode);
+		new InvariantChecker(mServices, rcfgRootNode);
 	}
 
 	/**

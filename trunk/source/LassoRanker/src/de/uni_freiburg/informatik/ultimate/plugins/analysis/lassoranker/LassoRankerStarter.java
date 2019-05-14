@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -125,8 +124,7 @@ public class LassoRankerStarter {
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final RankVarConstructor mRankVarConstructor;
 
-	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) throws IOException {
+	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services) throws IOException {
 		mIcfg = Objects.requireNonNull(icfg);
 		mServices = Objects.requireNonNull(services);
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -181,7 +179,7 @@ public class LassoRankerStarter {
 		LassoAnalysis laNT = null;
 		try {
 			laNT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
-					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
+					preferences, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -218,7 +216,7 @@ public class LassoRankerStarter {
 		LassoAnalysis laT = null;
 		try {
 			laT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
-					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
+					preferences, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;

@@ -263,9 +263,9 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 
 		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<LETTER, IPredicate>) mCounterexample,
-				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(),
-				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings,
-				xnfConversionTechnique, simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
+				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.computeCounterexample(),
+				mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique,
+				simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
 	}
 
 	private ITraceCheck constructPdr() {

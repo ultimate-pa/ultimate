@@ -3,22 +3,22 @@
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Oday Jubran
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SMTSolverBridge.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SMTSolverBridge. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -46,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Create a script that connects to an external SMT solver. The solver must be SMTLIB-2 compliant and expect commands on
  * standard input. It must return its output on standard output.
- * 
+ *
  * Some commands are only partially supported. For example getProof does not return a useful proof object. Also
  * commands, for which the output format is not fully specified, e.g. (get-model), may not return useful return values.
- * 
+ *
  * @author Oday Jubran
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -60,18 +59,17 @@ public class Scriptor extends NoopScript {
 
 	/**
 	 * Create a script connecting to an external SMT solver.
-	 * 
+	 *
 	 * @param command
 	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
 	 *            stdin.
 	 * @param services
-	 * @param storage
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
 	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final String solverName) throws IOException {
-		mExecutor = new Executor(command, this, logger, services, storage, solverName);
+			final String solverName) throws IOException {
+		mExecutor = new Executor(command, this, logger, services, solverName);
 		super.setOption(":print-success", true);
 	}
 

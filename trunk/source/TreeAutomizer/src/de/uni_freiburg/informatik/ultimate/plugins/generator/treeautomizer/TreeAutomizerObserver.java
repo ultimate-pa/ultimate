@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -47,13 +46,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph
 public class TreeAutomizerObserver extends BaseObserver {
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 	private final ILogger mLogger;
 	private final TAPreferences taPrefs;
 
-	public TreeAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) {
+	public TreeAutomizerObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mToolchainStorage = toolchainStorage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		taPrefs = new TAPreferences(mServices);
 	}
@@ -67,7 +64,7 @@ public class TreeAutomizerObserver extends BaseObserver {
 			mLogger.debug(annot);
 		}
 
-		final TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, annot, taPrefs, mLogger);
+		final TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, annot, taPrefs, mLogger);
 		final IResult result = cegar.iterate();
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return false;

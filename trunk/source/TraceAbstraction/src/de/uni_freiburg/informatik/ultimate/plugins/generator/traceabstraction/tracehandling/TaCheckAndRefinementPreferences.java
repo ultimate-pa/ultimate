@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -58,7 +57,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IIcfg<?> mIcfgContainer;
-	private final IToolchainStorage mToolchainStorage;
 	private final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory;
 
 	// fields that can be read from the TAPreferences
@@ -95,8 +93,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 *            trace abstraction preferences
 	 * @param interpolationTechnique
 	 *            interpolation technique
-	 * @param icfgContainer
-	 *            ICFG container
 	 * @param simplificationTechnique
 	 *            simplification technique
 	 * @param xnfConversionTechnique
@@ -105,8 +101,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 *            CFG-SMT toolkit
 	 * @param predicateFactory
 	 *            predicate factory
-	 * @param toolchainStorage
-	 *            toolchain storage
+	 * @param icfgContainer
+	 *            ICFG container
 	 * @param interpolantAutomatonBuilderFactory
 	 *            factory for interpolant automaton builder
 	 */
@@ -114,7 +110,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer,
-			final IToolchainStorage toolchainStorage,
 			final InterpolantAutomatonBuilderFactory<LETTER> interpolantAutomatonBuilderFactory) {
 		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
@@ -123,7 +118,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
-		mToolchainStorage = toolchainStorage;
 		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
@@ -220,11 +214,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public IIcfg<?> getIcfgContainer() {
 		return mIcfgContainer;
-	}
-
-	@Override
-	public IToolchainStorage getToolchainStorage() {
-		return mToolchainStorage;
 	}
 
 	public InterpolantAutomatonBuilderFactory<LETTER> getInterpolantAutomatonBuilderFactory() {

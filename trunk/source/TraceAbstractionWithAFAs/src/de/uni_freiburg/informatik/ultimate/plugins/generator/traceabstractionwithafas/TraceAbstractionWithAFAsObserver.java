@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -77,13 +76,11 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	private final IElement mGraphroot = null;
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
 	private final ILogger mLogger;
 
-	public TraceAbstractionWithAFAsObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public TraceAbstractionWithAFAsObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -106,7 +103,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final TAwAFAsCegarLoop<IcfgEdge> cegarLoop =
 				new TAwAFAsCegarLoop<>(TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE, rootAnnot,
 						csToolkit, predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
+						taPrefs.computeHoareAnnotation(), mServices);
 
 		final Result result = cegarLoop.iterate();
 

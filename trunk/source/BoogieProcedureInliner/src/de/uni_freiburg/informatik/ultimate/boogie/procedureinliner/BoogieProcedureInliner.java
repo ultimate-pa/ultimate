@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -78,11 +77,6 @@ public class BoogieProcedureInliner implements IAnalysis {
 		observers.add(new TypeChecker(mServices));
 		observers.add(new Inliner(mServices));
 		return observers;
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// not necessary
 	}
 
 	@Override

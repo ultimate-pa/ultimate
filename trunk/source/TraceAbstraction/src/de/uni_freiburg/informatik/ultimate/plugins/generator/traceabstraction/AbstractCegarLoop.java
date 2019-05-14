@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptio
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -221,8 +220,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	protected final IUltimateServiceProvider mServices;
-	protected final IToolchainStorage mToolchainStorage;
-
 	private IRunningTaskStackProvider mRunningTaskStackProvider;
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -235,10 +232,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
-	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final ILogger logger) {
+	public AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -250,7 +246,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
-		mToolchainStorage = storage;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mInteractive = new InteractiveCegar(services, logger);
@@ -406,7 +401,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mArtifactAutomaton = mAbstraction;
 			}
 			if (mPref.dumpAutomata()) {
-				final String filename = mTaskIdentifier	+ "_InitialAbstraction";
+				final String filename = mTaskIdentifier + "_InitialAbstraction";
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -419,7 +414,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 				final String msg = "=== Iteration " + mIteration + " === " + errorLocs() + "===";
-				mToolchainStorage.pushMarker(msg);
+				mServices.getStorage().pushMarker(msg);
 				mLogger.info(msg);
 				try {
 
@@ -516,7 +511,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					}
 					mInteractive.send(mCegarLoopBenchmark);
 				} finally {
-					final Set<String> destroyedStorables = mToolchainStorage.destroyMarker(msg);
+					final Set<String> destroyedStorables = mServices.getStorage().destroyMarker(msg);
 					if (!destroyedStorables.isEmpty()) {
 						mLogger.warn("Destroyed unattended storables created during the last iteration: "
 								+ destroyedStorables.stream().collect(Collectors.joining(",")));

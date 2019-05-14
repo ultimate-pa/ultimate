@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -65,42 +64,33 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
- * Computes a "danger invariant candidate" by abstracting every transition by
- * its "guarded havoc" {@link TransFormulaUtils#computeGuardedHavoc} and
- * iterating backwards over the CFG starting from the error locations.
+ * Computes a "danger invariant candidate" by abstracting every transition by its "guarded havoc"
+ * {@link TransFormulaUtils#computeGuardedHavoc} and iterating backwards over the CFG starting from the error locations.
  * <p>
- * We call a mapping from locations to predicates a "danger invariant candidate"
- * if the following is satisfied.
+ * We call a mapping from locations to predicates a "danger invariant candidate" if the following is satisfied.
  * <ul>
  * <li>every error location is mapped to "true"
- * <li>every state that satisfies the invariant and whose location is not an
- * error location has at least one successor that satisfies the invariant
+ * <li>every state that satisfies the invariant and whose location is not an error location has at least one successor
+ * that satisfies the invariant
  * </ul>
- * (TODO Matthias 2018-12-22: Hence a "danger invariant candidate" is a
- * (partial) danger invariant where we do not require that the initial location
- * is mapped to a satisfiable predicate. I "invented" this term, I do not like
- * it, maybe we should contact the Danger Invariant authors and ask for a better
- * suggestion.)
+ * (TODO Matthias 2018-12-22: Hence a "danger invariant candidate" is a (partial) danger invariant where we do not
+ * require that the initial location is mapped to a satisfiable predicate. I "invented" this term, I do not like it,
+ * maybe we should contact the Danger Invariant authors and ask for a better suggestion.)
  * <p>
- * For the computation, we (conceptually) first annotate all non-error locations
- * with "false" and all error locations with true. The we iterate backwards over
- * the CFG by adding all error locations to the worklist. Let ϕ be the mapping
- * from locations to predicates. Let gh(act) be the guarded havoc of the action
- * act. For every edge (loc,act,loc') where loc' is in the worklist we compute
- * pre(ϕ(loc'), gh(act)) and set ϕ(loc) to the following disjunction.
+ * For the computation, we (conceptually) first annotate all non-error locations with "false" and all error locations
+ * with true. The we iterate backwards over the CFG by adding all error locations to the worklist. Let ϕ be the mapping
+ * from locations to predicates. Let gh(act) be the guarded havoc of the action act. For every edge (loc,act,loc') where
+ * loc' is in the worklist we compute pre(ϕ(loc'), gh(act)) and set ϕ(loc) to the following disjunction.
  * <p>
  * ϕ(loc) \/ re(ϕ(loc'), gh(act))
  * <p>
- * If the annotation of the location loc was changed by this update we add loc
- * to the worklist. Since the guarded havoc is a very coarse abstraction every
- * location is visited only a finite number of times and this process
- * terminates. If the initial location is annotated by a satisfiable predicate,
- * the danger invariant candidate is a danger invariant.
+ * If the annotation of the location loc was changed by this update we add loc to the worklist. Since the guarded havoc
+ * is a very coarse abstraction every location is visited only a finite number of times and this process terminates. If
+ * the initial location is annotated by a satisfiable predicate, the danger invariant candidate is a danger invariant.
  * <p>
- * Possible improvements: A. improve the computation of
- * {@link TransFormulaUtils#computeGuardedHavoc} as proposed in the
- * documentation there. B. Detect in advance which edges occur in a loop Use the
- * guarded havoc only in loops and the original transformula outside of loops.
+ * Possible improvements: A. improve the computation of {@link TransFormulaUtils#computeGuardedHavoc} as proposed in the
+ * documentation there. B. Detect in advance which edges occur in a loop Use the guarded havoc only in loops and the
+ * original transformula outside of loops.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -109,7 +99,6 @@ public final class DangerInvariantGuesser {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final IToolchainStorage mStorage;
 	private final Map<IcfgLocation, IPredicate> mCandidateInvariant;
 
 	private final IIcfg<IcfgLocation> mIcfg;
@@ -117,9 +106,8 @@ public final class DangerInvariantGuesser {
 	private final PredicateFactory mPredicateFactory;
 
 	public DangerInvariantGuesser(final IIcfg<IcfgLocation> inputIcfg, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicate precondition, final PredicateFactory predicateFactory,
+			final IPredicate precondition, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit) {
-		mStorage = storage;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
@@ -151,13 +139,9 @@ public final class DangerInvariantGuesser {
 	private IIcfg<IcfgLocation> applyLargeBlockEncoding(final IIcfg<IcfgLocation> pathProgram,
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier) {
 		IIcfg<IcfgLocation> icfg;
-		if (true) {
-			final LargeBlockEncodingIcfgTransformer lbeTransformer =
-					new LargeBlockEncodingIcfgTransformer(mServices, predicateFactory, predicateUnifier);
-			icfg = lbeTransformer.transform(pathProgram);
-		} else {
-			icfg = pathProgram;
-		}
+		final LargeBlockEncodingIcfgTransformer lbeTransformer =
+				new LargeBlockEncodingIcfgTransformer(mServices, predicateFactory, predicateUnifier);
+		icfg = lbeTransformer.transform(pathProgram);
 		return icfg;
 	}
 

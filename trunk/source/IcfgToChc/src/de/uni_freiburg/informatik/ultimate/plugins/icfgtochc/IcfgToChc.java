@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
@@ -106,11 +105,6 @@ public class IcfgToChc implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new IcfgToChcPreferences();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// not needed
 	}
 
 	@Override

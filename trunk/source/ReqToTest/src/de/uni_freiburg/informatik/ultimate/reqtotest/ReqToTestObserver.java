@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -35,7 +34,6 @@ public class ReqToTestObserver extends BaseObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private IElement mBoogieAst;
-	private final IToolchainStorage mStorage;
 	private CounterExampleToTest mResultTransformer;
 
 	private final ManagedScript mManagedScript;
@@ -44,16 +42,14 @@ public class ReqToTestObserver extends BaseObserver {
 	// set true for outputting the whole counter example instead of a test representation of the cs.
 	private final boolean RETURN_RESULT_AS_COUNTEREXAMPLE = false;
 
-	public ReqToTestObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+	public ReqToTestObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-		mStorage = storage;
 
 		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
 				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
-		mScript = SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_DefaultMode, settings,
-				false, false, Logics.ALL.toString(), "RtInconsistencySolver");
+		mScript = SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_DefaultMode, settings, false,
+				false, Logics.ALL.toString(), "RtInconsistencySolver");
 
 		mManagedScript = new ManagedScript(services, mScript);
 
@@ -72,7 +68,7 @@ public class ReqToTestObserver extends BaseObserver {
 		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
 		final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
 		final CddToSmt cddToSmt =
-				new CddToSmt(mServices, mStorage, resultUtil, mScript, boogie2Smt, boogieDeclarations, reqSymbolTable);
+				new CddToSmt(mServices, resultUtil, mScript, boogie2Smt, boogieDeclarations, reqSymbolTable);
 		if (reqSymbolTable.getOutputVars().size() <= 0) {
 			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, reqSymbolTable, cddToSmt);
 			reqToInOut.requirementToInOut(rawPatterns);
@@ -80,8 +76,8 @@ public class ReqToTestObserver extends BaseObserver {
 		final AuxVarGen auxVarGen = new AuxVarGen(mLogger, mScript, reqSymbolTable);
 		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, auxVarGen, mScript, cddToSmt, reqSymbolTable);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
-		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, reqSymbolTable, auxVarGen,
-				automata, mScript, mManagedScript);
+		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, reqSymbolTable, auxVarGen, automata,
+				mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 
 		if (!RETURN_RESULT_AS_COUNTEREXAMPLE) {

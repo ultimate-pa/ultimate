@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
@@ -82,7 +81,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private static final String ALPHABET = "ABCDEHIJKLMNOPQRSTVWYZ";
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 	private final ILogger mLogger;
 
 	private String mInputFile;
@@ -90,9 +88,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private LTLPropertyCheck mCheck;
 	private BoogieSymbolTable mSymbolTable;
 
-	public LTL2autObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public LTL2autObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -123,7 +120,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		final String ltl2baProperty = mCheck.getLTL2BALTLProperty();
 		final AstNode node = getNeverClaim(ltl2baProperty);
-		final CodeBlockFactory cbf = CodeBlockFactory.getFactory(mStorage);
+		final CodeBlockFactory cbf = CodeBlockFactory.getFactory(mServices.getStorage());
 		final INestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + mCheck.getUltimateLTLProperty());
 
@@ -240,7 +237,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private AstNode getNeverClaim(final String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
-			return new LTLXBAExecutor(mServices, mStorage).ltl2Ast(property);
+			return new LTLXBAExecutor(mServices).ltl2Ast(property);
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;

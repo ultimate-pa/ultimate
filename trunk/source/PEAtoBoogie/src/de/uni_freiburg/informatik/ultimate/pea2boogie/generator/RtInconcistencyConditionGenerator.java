@@ -46,7 +46,6 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -126,13 +125,13 @@ public class RtInconcistencyConditionGenerator {
 	private final PeaResultUtil mPeaResultUtil;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final PeaResultUtil peaResultUtil, final ReqSymboltable symboltable,
+			final PeaResultUtil peaResultUtil, final ReqSymboltable symboltable,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mBoogieSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
-		mScript = buildSolver(services, storage);
+		mScript = buildSolver(services);
 		mManagedScript = new ManagedScript(services, mScript);
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
@@ -150,8 +149,7 @@ public class RtInconcistencyConditionGenerator {
 		mGeneratedChecks = 0;
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
-		mCddToSmt = new CddToSmt(services, storage, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations,
-				mBoogieSymboltable);
+		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mBoogieSymboltable);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -197,13 +195,12 @@ public class RtInconcistencyConditionGenerator {
 		return false;
 	}
 
-	private Script buildSolver(final IUltimateServiceProvider services, final IToolchainStorage storage)
-			throws AssertionError {
+	private Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings("",
 				SolverMode.External_ModelsAndUnsatCoreMode, false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
 		final Script solver =
-				SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_ModelsAndUnsatCoreMode,
-						settings, false, false, Logics.ALL.toString(), "RtInconsistencySolver");
+				SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_ModelsAndUnsatCoreMode, settings,
+						false, false, Logics.ALL.toString(), "RtInconsistencySolver");
 		if (SOLVER_LOGFILE == null) {
 			return solver;
 		}

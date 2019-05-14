@@ -3,27 +3,27 @@
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Oday Jubran
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SMTSolverBridge.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SMTSolverBridge. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SMTSolverBridge grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SMTSolverBridge grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
@@ -40,7 +40,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -68,22 +67,20 @@ public class NonIncrementalScriptor extends NoopScript {
 
 	private static final String PRINT_SUCCESS = ":print-success";
 	/**
-	 * In case we write SMT files we write a new file after each reset command
-	 * if this flag is set (to true).
-	 * This is needed for the production of SMT files that can be used in the
-	 * Main Track of the SMT-COMP.
-	 * 
-	 * 2017-05-01 Matthias: If used more often this should become a parameter.  
+	 * In case we write SMT files we write a new file after each reset command if this flag is set (to true). This is
+	 * needed for the production of SMT files that can be used in the Main Track of the SMT-COMP.
+	 *
+	 * 2017-05-01 Matthias: If used more often this should become a parameter.
 	 */
 	private static final boolean mNewScriptAfterEachReset = false;
 	private int mNewScriptCounter = 0;
 	protected final LinkedList<ArrayList<ISmtCommand<?>>> mCommandStack;
-	
+
 	protected Executor mExecutor;
 	private LBool mStatus = LBool.UNKNOWN;
-	
+
 	/**
-	 * For wrinting logs 
+	 * For wrinting logs
 	 */
 	private PrintWriter mPw;
 	private final String mPathOfDumpedFakeNonIncrementalScript;
@@ -91,58 +88,52 @@ public class NonIncrementalScriptor extends NoopScript {
 
 	/**
 	 * Create a script connecting to an external SMT solver.
-	 * 
+	 *
 	 * @param command
 	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
 	 *            stdin.
 	 * @param services
-	 * @param storage
-	 * @param dumpFakeNonIncrementalScript 
-	 * @param basenameOfDumpedFakeNonIcrementalScript 
-	 * @param pathOfDumpedFakeNonIncrementalScript 
+	 * @param dumpFakeNonIncrementalScript
+	 * @param pathOfDumpedFakeNonIncrementalScript
+	 * @param basenameOfDumpedFakeNonIcrementalScript
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public NonIncrementalScriptor(final String command, final ILogger logger, 
-			final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String solverName, final boolean dumpFakeNonIncrementalScript, 
-			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript) throws IOException {
+	public NonIncrementalScriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
+			final String solverName, final boolean dumpFakeNonIncrementalScript, final String pathOfDumpedFakeNonIncrementalScript,
+			final String basenameOfDumpedFakeNonIcrementalScript)
+			throws IOException {
 		if (dumpFakeNonIncrementalScript) {
 			mPathOfDumpedFakeNonIncrementalScript = pathOfDumpedFakeNonIncrementalScript;
 			mBasenameOfDumpedFakeNonIcrementalScript = basenameOfDumpedFakeNonIcrementalScript;
-			final String fullFilename = pathOfDumpedFakeNonIncrementalScript + 
-					File.separator + basenameOfDumpedFakeNonIcrementalScript +
-					"_fakeNonIncremental.smt2";
+			final String fullFilename = pathOfDumpedFakeNonIncrementalScript + File.separator
+					+ basenameOfDumpedFakeNonIcrementalScript + "_fakeNonIncremental.smt2";
 			mPw = constructPrintWriter(fullFilename);
 		} else {
 			mPw = null;
 			mPathOfDumpedFakeNonIncrementalScript = null;
 			mBasenameOfDumpedFakeNonIcrementalScript = null;
 		}
-		mExecutor = new Executor(command, this, logger, services, storage, solverName);
+		mExecutor = new Executor(command, this, logger, services, solverName);
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
 	}
-	
+
 	private String constructFullFilenameForNewScript() {
-		final String result = mPathOfDumpedFakeNonIncrementalScript + 
-				File.separator + mBasenameOfDumpedFakeNonIcrementalScript +
-				"_fakeNonIncremental_" +
-				mNewScriptCounter +
-				".smt2";
+		final String result = mPathOfDumpedFakeNonIncrementalScript + File.separator
+				+ mBasenameOfDumpedFakeNonIcrementalScript + "_fakeNonIncremental_" + mNewScriptCounter + ".smt2";
 		mNewScriptCounter++;
 		return result;
 	}
-	
+
 	private PrintWriter constructPrintWriter(final String filename) throws FileNotFoundException {
-		return new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(filename))), true);
+		return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename))), true);
 	}
-	
+
 	protected void addToCurrentAssertionStack(final ISmtCommand<?> smtCommand) {
 		mCommandStack.getLast().add(smtCommand);
 	}
-	
+
 	private void resetAssertionStack() {
 		mCommandStack.clear();
 		mCommandStack.add(new ArrayList<>());
@@ -185,7 +176,8 @@ public class NonIncrementalScriptor extends NoopScript {
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+			throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
 		addToCurrentAssertionStack(new DefineFunCommand(fun, params, resultSort, definition));
 	}
@@ -232,8 +224,7 @@ public class NonIncrementalScriptor extends NoopScript {
 		}
 		mStatus = (new SmtCommandUtils.CheckSatCommand()).executeWithExecutor(mExecutor, mPw);
 		if (mPw != null) {
-			mPw.println("; response to preceding check-sat was " + mStatus + 
-					" when this script was constructed");
+			mPw.println("; response to preceding check-sat was " + mStatus + " when this script was constructed");
 		}
 		return mStatus;
 	}
@@ -326,7 +317,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	public LBool getStatus() {
 		return mStatus;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -30,12 +29,12 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 	private final InteractiveCegar mInteractive;
 
 	public InteractiveRefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final InteractiveCegar interactive,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final CegarAbsIntRunner<LETTER> absIntRunner, final IIcfg<?> initialIcfg,
-			final PredicateFactory predicateFactory, final PathProgramCache<LETTER> pathProgramCache) {
-		super(logger, services, storage, taPrefsForInterpolantConsolidation, prefs, absIntRunner, initialIcfg,
-				predicateFactory, pathProgramCache);
+			final InteractiveCegar interactive, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
+			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory,
+			final PathProgramCache<LETTER> pathProgramCache) {
+		super(logger, services, taPrefsForInterpolantConsolidation, prefs, absIntRunner, initialIcfg, predicateFactory,
+				pathProgramCache);
 		mInteractive = interactive;
 		assert mInteractive != null;
 		assert mInteractive.isInteractiveMode();

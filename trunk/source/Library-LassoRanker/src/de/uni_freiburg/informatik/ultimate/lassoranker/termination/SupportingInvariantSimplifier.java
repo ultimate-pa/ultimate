@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -74,12 +73,12 @@ class SupportingInvariantSimplifier {
 	 * @throws IOException
 	 */
 	public SupportingInvariantSimplifier(final ILassoRankerPreferences preferences,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+			final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 
 		// Create a new QF_LRA script
-		mScript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
+		mScript = SMTSolver.newScript(preferences, "SimplifySIs", services);
 		mScript.setLogic(Logics.QF_LRA);
 	}
 

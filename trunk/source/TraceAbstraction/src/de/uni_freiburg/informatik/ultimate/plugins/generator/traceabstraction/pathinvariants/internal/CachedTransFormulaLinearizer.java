@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.AddSymbols;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
@@ -68,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 public class CachedTransFormulaLinearizer {
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SmtSymbols mSmtSymbols;
@@ -81,25 +79,19 @@ public class CachedTransFormulaLinearizer {
 	 *
 	 * @param services
 	 *            Service provider to use
-	 * @param storage
-	 *            Toolchain storage, e.g., needed for construction of new solver.
 	 * @param csToolkit
 	 *            SMT manager
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final SmtSymbols smtSymbols, final IToolchainStorage storage,
-			final SimplificationTechnique simplificationTechnique,
+			final SmtSymbols smtSymbols, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		super();
 		mServices = services;
-		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCsToolkit = csToolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
 		mSmtSymbols = smtSymbols;
-
 		mCache = new HashMap<>();
 	}
 
@@ -176,9 +168,9 @@ public class CachedTransFormulaLinearizer {
 				new RewriteDivision(mReplacementVarFactory),
 				new RewriteBooleans(mReplacementVarFactory, mCsToolkit.getManagedScript()), new RewriteIte(),
 				new RewriteUserDefinedTypes(mReplacementVarFactory, mCsToolkit.getManagedScript()),
-				new RewriteEquality(), new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique),
+				new RewriteEquality(), new SimplifyPreprocessor(mServices, mSimplificationTechnique),
 				new DNF(mServices, mXnfConversionTechnique),
-				new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique), new RewriteTrueFalse(),
+				new SimplifyPreprocessor(mServices, mSimplificationTechnique), new RewriteTrueFalse(),
 				new RemoveNegation(), new RewriteStrictInequalities(), };
 	}
 

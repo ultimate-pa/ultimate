@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
@@ -119,13 +118,12 @@ public class TreeAutomizerCEGAR {
 	 * Constructor for TreeAutomizer CEGAR
 	 *
 	 * @param services
-	 * @param storage
 	 * @param annot
 	 * @param taPrefs
 	 * @param logger
 	 */
-	public TreeAutomizerCEGAR(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final HornAnnot annot, final TAPreferences taPrefs, final ILogger logger) {
+	public TreeAutomizerCEGAR(final IUltimateServiceProvider services, final HornAnnot annot,
+			final TAPreferences taPrefs, final ILogger logger) {
 		mBackendSmtSolverScript = annot.getScript();
 		mSymbolTable = annot.getSymbolTable();
 		mLogger = logger;

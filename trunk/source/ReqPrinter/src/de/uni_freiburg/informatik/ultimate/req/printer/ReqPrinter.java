@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.req.printer.preferences.PreferenceInitializer;
 
@@ -89,11 +88,6 @@ public class ReqPrinter implements IOutput {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage services) {
-		// no storage needed
 	}
 
 	@Override

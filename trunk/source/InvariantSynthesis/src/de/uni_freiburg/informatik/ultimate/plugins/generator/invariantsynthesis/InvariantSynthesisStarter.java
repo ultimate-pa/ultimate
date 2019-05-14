@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -98,7 +97,6 @@ public class InvariantSynthesisStarter {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -108,10 +106,8 @@ public class InvariantSynthesisStarter {
 	private Result mOverallResult;
 	private IElement mArtifact;
 
-	public InvariantSynthesisStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<IcfgLocation> icfg) {
+	public InvariantSynthesisStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
@@ -141,11 +137,11 @@ public class InvariantSynthesisStarter {
 			predicateOfErrorLocations = predicateUnifier.getFalsePredicate();
 		}
 
-		final boolean guessDangerInvariant = prefs
-				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
+		final boolean guessDangerInvariant =
+				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
 		if (kindOfInvariant == KindOfInvariant.DANGER && guessDangerInvariant) {
-			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage,
-					predicateOfInitialLocations, predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
+			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, predicateOfInitialLocations,
+					predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
 			mLogger.info("Constructed danger invariant candidate");
 			if (dig.isDangerInvariant()) {
 				mLogger.info("Candidate is a valid danger invariant");
@@ -162,9 +158,9 @@ public class InvariantSynthesisStarter {
 			return;
 		}
 
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				predicateOfInitialLocations, predicateOfErrorLocations, predicateFactory, predicateUnifier,
-				invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
+		final CFGInvariantsGenerator cfgInvGenerator =
+				new CFGInvariantsGenerator(icfg, services, predicateOfInitialLocations, predicateOfErrorLocations,
+						predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {

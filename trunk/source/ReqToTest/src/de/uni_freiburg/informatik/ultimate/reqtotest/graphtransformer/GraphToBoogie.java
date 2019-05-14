@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -77,8 +76,8 @@ public class GraphToBoogie {
 	private final AuxVarGen mThreeValuedAuxVarGen;
 	
 	public GraphToBoogie(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage,  ReqSymbolTable symbolTable, AuxVarGen threeValuedAuxVarGen,
-			List<ReqGuardGraph> requirements, Script scipt, ManagedScript managedScipt) {
+			ReqSymbolTable symbolTable,  AuxVarGen threeValuedAuxVarGen, List<ReqGuardGraph> requirements,
+			Script scipt, ManagedScript managedScipt) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mDummyLocation = generateDummyLocation();

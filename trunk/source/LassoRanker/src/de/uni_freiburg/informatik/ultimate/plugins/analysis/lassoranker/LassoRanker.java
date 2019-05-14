@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 
@@ -49,7 +48,6 @@ public class LassoRanker implements IAnalysis {
 
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	/**
 	 * @return a human readable Name for the plugin
@@ -92,7 +90,7 @@ public class LassoRanker implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList(new LassoRankerObserver(mServices, mStorage));
+		return Collections.singletonList(new LassoRankerObserver(mServices));
 	}
 
 	@Override
@@ -108,11 +106,6 @@ public class LassoRanker implements IAnalysis {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferencesInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override

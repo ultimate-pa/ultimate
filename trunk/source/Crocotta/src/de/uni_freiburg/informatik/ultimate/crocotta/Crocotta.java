@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.crocotta.ast.Concatenation;
 import de.uni_freiburg.informatik.ultimate.crocotta.ast.CrocottaAstVisitor;
@@ -127,11 +126,6 @@ public class Crocotta implements ISource {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// not necessary
 	}
 
 	@Override

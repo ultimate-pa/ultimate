@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -226,10 +225,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
-		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services) {
+		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfg);
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
@@ -287,15 +284,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
 				mServices, mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit,
-				mPredicateFactory, mIcfg, mToolchainStorage, mInterpolantAutomatonBuilderFactory);
+				mPredicateFactory, mIcfg, mInterpolantAutomatonBuilderFactory);
 
 		if (mInteractive.isInteractiveMode()) {
 			mRefinementStrategyFactory =
-					new InteractiveRefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mInteractive,
-							mPref, taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
+					new InteractiveRefinementStrategyFactory<>(mLogger, mServices, mInteractive, mPref,
+							taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		} else {
-			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
-					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
+			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
+					absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		}
 
 		if (mPref.dumpOnlyReuseAutomata()) {
@@ -428,8 +425,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
-		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, mServices, mToolchainStorage,
-				precondition, predicateFactory, predicateUnifier, mCsToolkit);
+		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, mServices, precondition,
+				predicateFactory, predicateUnifier, mCsToolkit);
 		final boolean hasDangerInvariant = dig.isDangerInvariant();
 		if (hasDangerInvariant) {
 			final Map<IcfgLocation, IPredicate> invar = dig.getCandidateInvariant();

@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
@@ -251,44 +250,42 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            the predicate unifier to unify final predicates with
 	 * @param csToolkit
 	 *            the smt manager to use with the predicateUnifier
+	 * @param smtSymbols
 	 * @param solver
 	 *            SMT solver to use
-	 * @param cfg
-	 *            the ControlFlowGraph to generate an invariant map on
 	 * @param precondition
 	 *            the invariant on the {@link ControlFlowGraph#getEntry()} of cfg
 	 * @param postcondition
 	 *            the invariant on the {@link ControlFlowGraph#getExit()} of cfg
+	 * @param startLocation
+	 * @param errorLocations
+	 *            a set of error locations
 	 * @param strategy
 	 *            The strategy to generate invariant patterns with
 	 * @param useNonlinearConstraints
 	 *            Kind of constraints that are used to specify invariant.
-	 * @param storage
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
-	 * @param smtSymbols
-	 * @param startLocation
-	 * @param errorLocations
-	 *            a set of error locations
-	 * @param overApprox
-	 * @param underApprox
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
 	 * @param kindOfInvariant
 	 *            the kind of invariant to be generated
+	 * @param cfg
+	 *            the ControlFlowGraph to generate an invariant map on
+	 * @param overApprox
+	 * @param underApprox
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SmtSymbols smtSymbols, final Script solver, final List<IcfgLocation> locations,
-			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
-			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final SmtSymbols smtSymbols,
+			final Script solver, final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
+			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
+			final Set<IcfgLocation> errorLocations,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Map<IcfgLocation, IPredicate> loc2underApprox,
-			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
-			final KindOfInvariant kindOfInvariant) {
+			final Map<IcfgLocation, IPredicate> loc2underApprox, final Map<IcfgLocation, IPredicate> loc2overApprox,
+			final boolean synthesizeEntryPattern, final KindOfInvariant kindOfInvariant) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -299,7 +296,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSynthesizeEntryPattern = synthesizeEntryPattern;
 		mKindOfInvariant = kindOfInvariant;
 
-		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, smtSymbols, storage, simplicationTechnique,
+		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, smtSymbols, simplicationTechnique,
 				xnfConversionTechnique);
 		mPrecondition = mLinearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, csToolkit.getManagedScript()));
@@ -336,7 +333,6 @@ public final class LinearInequalityInvariantPatternProcessor
 				mCsToolkit.getManagedScript());
 		mLoc2OverApproximation = CFGInvariantsGenerator.convertMapToPredsToMapToUnmodTrans(loc2overApprox,
 				mCsToolkit.getManagedScript());
-		;
 		// Reset statistics
 		resetStatistics();
 	}

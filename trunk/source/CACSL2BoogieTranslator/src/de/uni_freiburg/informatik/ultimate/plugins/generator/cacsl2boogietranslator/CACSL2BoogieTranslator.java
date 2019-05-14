@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
@@ -56,7 +55,6 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	@Override
 	public String getPluginName() {
@@ -72,7 +70,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	public void init() {
 		mAdditionalAnnotationObserver =
 				new ACSLObjectContainerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage, mAdditionalAnnotationObserver);
+		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mAdditionalAnnotationObserver);
 
 	}
 
@@ -120,11 +118,6 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new CACSLPreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override

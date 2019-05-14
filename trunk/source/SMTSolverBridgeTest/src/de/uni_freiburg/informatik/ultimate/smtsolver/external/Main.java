@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 
 public class Main {
-	
+
 	private static void usage() {
 		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
 	}
 
 	public static void main(final String[] param) throws IOException {
-		
+
 		/** Specify the solver command here. **/
 		final String command = "z3 -smt2 -in";
 		final ILogger logger = new ConsoleLogger();
@@ -53,7 +53,7 @@ public class Main {
 		int paramctr = 0;
 		Script benchmark;
 		if (!command.equals("SMTInterpol")) {
-			benchmark = new Scriptor(command, logger, null, null, "external in solverbridge");
+			benchmark = new Scriptor(command, logger, null, "external in solverbridge");
 		} else {
 			benchmark = new SMTInterpol(logProxy);
 		}

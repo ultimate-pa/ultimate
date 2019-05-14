@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
@@ -75,15 +74,13 @@ public class SpaceExModelBuilder {
 	private final SpaceExPreferenceContainer mPreferenceContainer;
 	private final SpaceExPreferenceManager mPreferenceManager;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 	private final HybridVariableManager mVariableManager;
 
 	public SpaceExModelBuilder(final Sspaceex spaceEx, final ILogger logger,
 			final SpaceExPreferenceContainer preferenceContainer, final SpaceExPreferenceManager preferenceManager,
-			final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) throws Exception {
+			final IUltimateServiceProvider services) throws Exception {
 		mLogger = logger;
 		mServices = services;
-		mToolchainStorage = toolchainStorage;
 		mPreferenceContainer = preferenceContainer;
 		mPreferenceManager = preferenceManager;
 		mVariableManager = new HybridVariableManager();
@@ -140,10 +137,10 @@ public class SpaceExModelBuilder {
 		final Set<String> procedures = new HashSet<>();
 		procedures.add(HybridTranslatorConstants.PROC_NAME);
 
-		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
-				mPreferenceManager.getSolverMode(), mPreferenceManager.getSolverSettings(),
-				mPreferenceManager.isDumpUsatCoreTrackBenchmark(), mPreferenceManager.isDumpMainTrackBenchmark(),
-				mPreferenceManager.getLogicForExternalSolver(), "SpaceExTA");
+		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mPreferenceManager.getSolverMode(),
+				mPreferenceManager.getSolverSettings(), mPreferenceManager.isDumpUsatCoreTrackBenchmark(),
+				mPreferenceManager.isDumpMainTrackBenchmark(), mPreferenceManager.getLogicForExternalSolver(),
+				"SpaceExTA");
 
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
 		mVariableManager.setScript(managedScript);

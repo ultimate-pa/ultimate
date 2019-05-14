@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -185,7 +184,6 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	private final SmtSymbols mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 	private final boolean mRemoveSuperfluousSupportingInvariants = true;
 
 	private final LassoCheckResult mLassoCheckResult;
@@ -212,13 +210,12 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final SmtSymbols smtSymbols,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
-			final String lassoCheckIdentifier, final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final RefinementStrategyFactory<LETTER> refinementStrategyFactory,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
-		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -580,7 +577,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
-						mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+						mServices, mSimplificationTechnique, mXnfConversionTechnique);
 				mPreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -612,7 +609,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
-					mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mSimplificationTechnique, mXnfConversionTechnique);
 			mPreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();

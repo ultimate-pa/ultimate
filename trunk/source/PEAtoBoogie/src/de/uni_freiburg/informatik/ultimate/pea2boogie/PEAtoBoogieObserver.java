@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
@@ -19,13 +18,10 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private IElement mBoogieAST;
 	private PeaResultUtil mReporter;
-	private final IToolchainStorage mStorage;
 
-	public PEAtoBoogieObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+	public PEAtoBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-		mStorage = storage;
 	}
 
 	@Override
@@ -54,6 +50,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	}
 
 	private IElement generateBoogie(final List<PatternType> patterns) {
-		return new Req2BoogieTranslator(mServices, mStorage, mLogger, patterns).getUnit();
+		return new Req2BoogieTranslator(mServices, mLogger, patterns).getUnit();
 	}
 }

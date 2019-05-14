@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -49,12 +48,10 @@ public class RefereeObserver implements IUnmanagedObserver {
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
 	private boolean mLastModel;
-	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
 
-	public RefereeObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public RefereeObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
 		mIcfgs = new ArrayList<>();
@@ -80,8 +77,7 @@ public class RefereeObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("Referee needs an RCFG");
 			}
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-			final RefereeStarter tas =
-					new RefereeStarter(mServices, mStorage, rcfgRootNode);
+			final RefereeStarter tas = new RefereeStarter(mServices, rcfgRootNode);
 			mRootOfNewModel = tas.getRootOfNewModel();
 		}
 	}

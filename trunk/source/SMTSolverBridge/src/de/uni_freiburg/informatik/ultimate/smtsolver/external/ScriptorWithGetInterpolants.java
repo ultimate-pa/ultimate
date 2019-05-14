@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -51,9 +50,9 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	private final ExternalInterpolator mExternalInterpolator;
 
 	public ScriptorWithGetInterpolants(final String command, final ILogger logger,
-			final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final ExternalInterpolator externalInterpolator, final String name) throws IOException {
-		super(command, logger, services, storage, name);
+			final IUltimateServiceProvider services, final ExternalInterpolator externalInterpolator, final String name)
+			throws IOException {
+		super(command, logger, services, name);
 		mExternalInterpolator = externalInterpolator;
 	}
 

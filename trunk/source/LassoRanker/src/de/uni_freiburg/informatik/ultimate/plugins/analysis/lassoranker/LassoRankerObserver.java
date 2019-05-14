@@ -33,7 +33,6 @@ import java.io.IOException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -55,11 +54,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class LassoRankerObserver implements IUnmanagedObserver {
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 
-	public LassoRankerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public LassoRankerObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -69,7 +66,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException(
 					"LassoRanker can only be applied to models constructed" + " by the RCFGBuilder");
 		}
-		new LassoRankerStarter((IIcfg<IcfgLocation>) root, mServices, mStorage);
+		new LassoRankerStarter((IIcfg<IcfgLocation>) root, mServices);
 		return false;
 	}
 

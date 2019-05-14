@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.referee.preferences.RefereePreferenceInitializer;
 
@@ -51,7 +50,6 @@ public class Referee implements IGenerator {
 	private RefereeObserver mObserver;
 	private List<IObserver> mObservers;
 	private ModelType mInputDefinition;
-	private IToolchainStorage mStorage;
 	private IUltimateServiceProvider mServices;
 
 	@Override
@@ -66,7 +64,7 @@ public class Referee implements IGenerator {
 
 	@Override
 	public void init() {
-		mObserver = new RefereeObserver(mServices, mStorage);
+		mObserver = new RefereeObserver(mServices);
 		mObservers = Collections.singletonList((IObserver) mObserver);
 	}
 
@@ -108,11 +106,6 @@ public class Referee implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new RefereePreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override

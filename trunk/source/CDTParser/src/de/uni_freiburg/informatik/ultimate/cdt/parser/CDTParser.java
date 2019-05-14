@@ -114,7 +114,6 @@ public class CDTParser implements ISource {
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private IProject mProject;
-	private IToolchainStorage mStorage;
 
 	public CDTParser() {
 		mFileTypes = new String[] { ".c", ".i", ".h", ".inl" };
@@ -275,7 +274,7 @@ public class CDTParser implements ISource {
 					}
 				}
 			}
-			new IndexReadlockReleaser(index).store(mStorage);
+			new IndexReadlockReleaser(index).store(mServices.getStorage());
 		} catch (final CModelException e) {
 			e.printStackTrace();
 		} catch (final InterruptedException e) {
@@ -326,11 +325,6 @@ public class CDTParser implements ISource {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override

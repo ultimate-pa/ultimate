@@ -413,8 +413,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			throw new IllegalArgumentException(
 					"Managed script construction not supported for interpolation technique: " + mode);
 		}
-		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
-				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
+				false, false, logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
 		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtSymbols().transferSymbols(solver);
 		return result;

@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentR
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
@@ -251,8 +250,6 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final IToolchainStorage mToolchainStorage;
-
 	private ToolchainCanceledException mToolchainCancelledException;
 	private final RankVarConstructor mRankVarConstructor;
 
@@ -271,7 +268,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	public BuchiCegarLoop(final IIcfg<?> icfg, final CfgSmtToolkit csToolkitWithoutRankVars,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final TAPreferences taPrefs, final IUltimateServiceProvider services,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		assert services != null;
 		mIcfg = icfg;
@@ -279,7 +276,6 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier());
 		mLTLMode = false;
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
@@ -355,9 +351,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs =
 					new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, mSimplificationTechnique,
 							mXnfConversionTechnique, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg,
-							mToolchainStorage, mInterpolantAutomatonBuilderFactory);
-			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
-					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
+							mInterpolantAutomatonBuilderFactory);
+			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
+					absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		}
 	}
 
@@ -476,9 +472,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getSmtSymbols(), mBinaryStatePredicateManager, mCounterexample,
-						generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-						mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
-						mBenchmarkGenerator);
+						generateLassoCheckIdentifier(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
+						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -493,9 +488,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 							mIcfg.getCfgSmtToolkit().getSymbolTable(),
 							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getSmtSymbols(), mBinaryStatePredicateManager, mCounterexample,
-							generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-							mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
-							mBenchmarkGenerator);
+							generateLassoCheckIdentifier(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
+							mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =

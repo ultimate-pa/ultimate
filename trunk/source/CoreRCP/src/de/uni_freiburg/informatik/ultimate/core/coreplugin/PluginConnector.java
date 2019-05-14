@@ -271,7 +271,6 @@ public class PluginConnector {
 		logger.info("Initializing " + plugin.getPluginName() + "...");
 		try {
 			plugin.setServices(services);
-			plugin.setToolchainStorage(storage);
 			plugin.init();
 			logger.info(plugin.getPluginName() + " initialized");
 		} catch (final Exception ex) {

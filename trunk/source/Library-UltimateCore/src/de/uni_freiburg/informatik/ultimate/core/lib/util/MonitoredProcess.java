@@ -85,7 +85,6 @@ public final class MonitoredProcess implements IStorable {
 	private static final AtomicInteger sInstanceCounter = new AtomicInteger();
 
 	private final ILogger mLogger;
-	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 	private final String mCommand;
 	private final String mExitCommand;
@@ -102,10 +101,8 @@ public final class MonitoredProcess implements IStorable {
 	private volatile int mReturnCode;
 
 	private MonitoredProcess(final Process process, final String command, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger) {
-		assert storage != null;
+			final IUltimateServiceProvider services, final ILogger logger) {
 		assert services != null;
-		mStorage = storage;
 		mServices = services;
 		mLogger = logger;
 		mProcess = process;
@@ -139,15 +136,12 @@ public final class MonitoredProcess implements IStorable {
 	 *            process before trying to shut it down.
 	 * @param services
 	 *            An instance of {@link IUltimateServiceProvider} that should be used to report errors.
-	 * @param storage
-	 *            An instance of {@link IToolchainStorage} that should be used to register this process for destruction
-	 *            after the current toolchain completes.
 	 * @return A monitored process instance that represents the started process.
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+			final IUltimateServiceProvider services) throws IOException {
 		final MonitoredProcess newMonitoredProcess;
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
 		final ILogger logger = services.getLoggingService().getControllerLogger();
@@ -173,14 +167,14 @@ public final class MonitoredProcess implements IStorable {
 				}
 			}
 			logger.info("No working directory specified, using " + command[0]);
-			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
-					services, storage, logger);
+			newMonitoredProcess =
+					new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand, services, logger);
 		} else {
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)),
-					oneLineCmd, exitCommand, services, storage, logger);
+					oneLineCmd, exitCommand, services, logger);
 		}
 
-		newMonitoredProcess.start(workingDir, storage, oneLineCmd);
+		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd);
 		return newMonitoredProcess;
 	}
 
@@ -197,17 +191,15 @@ public final class MonitoredProcess implements IStorable {
 	 *            A string describing an "exit" command that should be sent to the standard input stream of the running
 	 *            process before trying to shut it down.
 	 * @param services
-	 *            An instance of {@link IUltimateServiceProvider} that should be used to report errors.
-	 * @param storage
-	 *            An instance of {@link IToolchainStorage} that should be used to register this process for destruction
-	 *            after the current toolchain completes.
+	 *            An instance of {@link IUltimateServiceProvider} that should be used to report errors and to register
+	 *            this process for destruction after the current toolchain completes.
 	 * @return A monitored process instance that represents the started process.
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String command, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
-		return exec(command.split(" "), null, exitCommand, services, storage);
+			final IUltimateServiceProvider services) throws IOException {
+		return exec(command.split(" "), null, exitCommand, services);
 	}
 
 	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
@@ -532,7 +524,7 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	private void removeFromStorage() {
-		final IStorable storable = mStorage.removeStorable(getKey(mID, mCommand));
+		final IStorable storable = mServices.getStorage().removeStorable(getKey(mID, mCommand));
 		if (storable != null && mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogStringPrefix() + " was removed from storage");
 		}

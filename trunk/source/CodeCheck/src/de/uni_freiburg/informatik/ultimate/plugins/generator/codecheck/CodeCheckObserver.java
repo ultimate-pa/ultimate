@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -142,7 +141,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
 	private IPredicateUnifier mPredicateUnifier;
 
@@ -160,10 +158,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private int mIterationsLimit = -1;
 	private PredicateFactory mPredicateFactory;
 
-	CodeCheckObserver(final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) {
+	CodeCheckObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mToolchainStorage = toolchainStorage;
 	}
 
 	/**
@@ -444,7 +441,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					final boolean fakeNonIncrementalScript = false;
 					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 							fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
-					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
+					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 							mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings, false, false,
 							mGlobalSettings.getSeparateSolverForTracechecksTheory(),
 							"TraceCheck_Iteration" + iterationsCount);

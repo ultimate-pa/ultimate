@@ -28,11 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hamcrest.core.Is;
 import org.junit.After;
@@ -40,25 +37,20 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -84,8 +76,7 @@ public class PredicateUnifierTest {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
 		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices,
-					new ToolchainStorage(), "z3");
+			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, "z3");
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
@@ -107,13 +98,12 @@ public class PredicateUnifierTest {
 		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable, SimplificationTechnique.NONE,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
-	
+
 	@Test
 	public void testRestructurePredicateTrie() {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mZero);
 		final Term term2 = mScript.term("=", mA.getTermVariable(), mOne);
@@ -146,7 +136,7 @@ public class PredicateUnifierTest {
 		// mLogger.info(unifier.print(true, false));
 		mLogger.info("B: " + unifier.collectPredicateUnifierStatistics());
 		mLogger.info("O: " + oUnifier.collectPredicateUnifierStatistics());
-		
+
 		unifier.getOrConstructPredicate(mScript.term("or", term6, term5));
 	}
 
@@ -155,8 +145,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -214,8 +203,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -253,8 +241,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mTwo);
 		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mOne);
@@ -291,8 +278,7 @@ public class PredicateUnifierTest {
 
 	@Test
 	public void testCannibalize() {
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -323,8 +309,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
 		final Term term2 = mScript.term(">", mA.getTermVariable(), mZero);
@@ -366,8 +351,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
 
@@ -395,8 +379,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		final TestPredicate pred1 = pred("=", mA, 1);
 		final TestPredicate pred2 = pred("=", mA, 1);
@@ -430,8 +413,7 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final BPredicateUnifier unifier =
-				new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
+		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
 		Assert.assertThat("1", unifier.getTruePredicate().getFormula(),
 				Is.is(oUnifier.getTruePredicate().getFormula()));

@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassRunner;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
@@ -78,7 +77,6 @@ public class DeltaDebuggerController extends CommandLineController {
 	private Optional<ToolchainException> mException;
 	private Optional<Map<String, List<IResult>>> mResults;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -99,7 +97,6 @@ public class DeltaDebuggerController extends CommandLineController {
 		// executeToolchain returns?!?
 		mResults = Optional.of(new HashMap<>(results));
 		mServices = toolchain.getServices();
-		mStorage = toolchain.getStorage();
 	}
 
 	@Override
@@ -139,7 +136,7 @@ public class DeltaDebuggerController extends CommandLineController {
 		case NONE:
 			return true;
 		case CPACHECKER:
-			tool = new ExternalToolCPAChecker(mServices, mStorage);
+			tool = new ExternalToolCPAChecker(mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown external tool mode " + mode);

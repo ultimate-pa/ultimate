@@ -293,4 +293,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		}
 	}
 
+	@Override
+	public IToolchainStorage getStorage() {
+		return this;
+	}
+
 }

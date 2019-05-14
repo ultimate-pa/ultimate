@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.AddSymbols;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.CommuHashPreprocessor;
@@ -153,8 +152,6 @@ public class LassoAnalysis {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final IToolchainStorage mStorage;
-
 	/**
 	 * Benchmark data from last termination analysis. Includes e.g., the number of Motzkin's Theorem applications.
 	 */
@@ -183,7 +180,6 @@ public class LassoAnalysis {
 	 * @param preferences
 	 *            configuration options for this plugin; these are constant for the life time of this object
 	 * @param services
-	 * @param storage
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
 	 * @param script
@@ -203,11 +199,9 @@ public class LassoAnalysis {
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final SmtSymbols smtSymbols, final ILassoRankerPreferences preferences,
-			final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique)
-			throws TermException {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		mServices = services;
-		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -241,11 +235,6 @@ public class LassoAnalysis {
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
-	 *
-	 * @param script
-	 *            the SMT script used to construct the transition formulae
-	 * @param boogie2smt
-	 *            the boogie2smt object that created the TransFormulas
 	 * @param loop
 	 *            a transition formula corresponding to the lasso's loop
 	 * @param symbols
@@ -253,7 +242,11 @@ public class LassoAnalysis {
 	 * @param preferences
 	 *            configuration options for this plugin; these are constant for the life time of this object
 	 * @param services
-	 * @param storage
+	 * @param script
+	 *            the SMT script used to construct the transition formulae
+	 * @param boogie2smt
+	 *            the boogie2smt object that created the TransFormulas
+	 *
 	 * @throws TermException
 	 *             if preprocessing fails
 	 * @throws FileNotFoundException
@@ -262,10 +255,9 @@ public class LassoAnalysis {
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula loop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final SmtSymbols symbols, final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
-		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, storage,
-				simplificationTechnique, xnfConversionTechnique);
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
+		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, simplificationTechnique,
+				xnfConversionTechnique);
 	}
 
 	/**
@@ -337,10 +329,10 @@ public class LassoAnalysis {
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteEquality()),
 				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreprocessor(mMgdScript,
-						new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique)),
+						new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices, mXnfConversionTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript,
-						new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique)),
+						new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteTrueFalse()),
 				new StemAndLoopPreprocessor(mMgdScript, new RemoveNegation()),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteStrictInequalities()), };
@@ -420,11 +412,11 @@ public class LassoAnalysis {
 			final long startTime = System.nanoTime();
 			final NonTerminationAnalysisSettings gev0settings = constructGev0Copy(settings);
 			NonTerminationArgumentSynthesizer nas =
-					new NonTerminationArgumentSynthesizer(lasso, mPreferences, gev0settings, mServices, mStorage);
+					new NonTerminationArgumentSynthesizer(lasso, mPreferences, gev0settings, mServices);
 			LBool constraintSat = nas.synthesize();
 			if (constraintSat == LBool.UNSAT) {
 				nas.close();
-				nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices, mStorage);
+				nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices);
 				constraintSat = nas.synthesize();
 			}
 
@@ -502,7 +494,7 @@ public class LassoAnalysis {
 			final long startTime = System.nanoTime();
 
 			final TerminationArgumentSynthesizer tas = new TerminationArgumentSynthesizer(lasso, template, mPreferences,
-					settings, mArrayIndexSupportingInvariants, mServices, mStorage);
+					settings, mArrayIndexSupportingInvariants, mServices);
 			final LBool constraintSat = tas.synthesize();
 
 			final long endTime = System.nanoTime();

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -64,7 +63,6 @@ public class SyntaxChecker implements IAnalysis {
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 
 	private FilenameExtractionObserver mFilenameExtractionObserver;
 
@@ -96,11 +94,6 @@ public class SyntaxChecker implements IAnalysis {
 	@Override
 	public List<IObserver> getObservers() {
 		return Arrays.asList(new IObserver[] { mFilenameExtractionObserver });
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override
@@ -182,7 +175,7 @@ public class SyntaxChecker implements IAnalysis {
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage);
+		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices);
 
 		if (mProcess == null) {
 			final String errorMsg = " Could not create process, terminating... ";

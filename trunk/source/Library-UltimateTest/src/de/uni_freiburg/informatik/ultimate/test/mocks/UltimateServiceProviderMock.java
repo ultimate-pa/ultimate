@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.test.mocks;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -46,9 +48,11 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 
 	private final LogLevel mDefaultLevel;
 	private final IProgressMonitorService mProgressMonitorService = new ProgressMonitorServiceMock();
+	private final IToolchainStorage mStorage;
 
 	UltimateServiceProviderMock(final LogLevel defaultLevel) {
 		mDefaultLevel = defaultLevel;
+		mStorage = new ToolchainStorage();
 	}
 
 	@Override
@@ -90,5 +94,10 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 	@Override
 	public IUltimateServiceProvider registerDefaultPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		throw new UnsupportedOperationException("Not yet supported");
+	}
+
+	@Override
+	public IToolchainStorage getStorage() {
+		return mStorage;
 	}
 }

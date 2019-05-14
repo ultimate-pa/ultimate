@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -47,7 +46,6 @@ public class SimplifyQuick {
 
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
-	private IToolchainStorage mStorage;
 	private static final int TIMOUT_IN_SECONDS = 10;
 
 	public SimplifyQuick(final Script script, final IUltimateServiceProvider services) {
@@ -59,7 +57,7 @@ public class SimplifyQuick {
 
 		final SolverSettings settings =
 				new SolverBuilder.SolverSettings(false, false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
-		final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
+		final Script simplificationScript = SolverBuilder.buildScript(mServices, settings);
 		simplificationScript.setLogic(Logics.CORE);
 		final TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
 		final Term foreign = towards.transform(inputTerm);

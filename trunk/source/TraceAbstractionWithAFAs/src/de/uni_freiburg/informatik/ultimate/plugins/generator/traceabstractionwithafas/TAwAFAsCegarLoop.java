@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -101,9 +100,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks traceAbstractionBenchmarks,
 			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) {
-		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services,
-				storage);
+			final IUltimateServiceProvider services) {
+		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(),
 				predicateFactory, rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique,
 				mXnfConversionTechnique,

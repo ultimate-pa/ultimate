@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.InsufficientAnnotati
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -82,7 +81,8 @@ public class InvariantChecker {
 		private final ProgramState<Term> mCtxPre;
 		private final ProgramState<Term> mCtxPost;
 
-		public EdgeCheckResult(final Validity validity, final ProgramState<Term> ctxPre, final ProgramState<Term> ctxPost) {
+		public EdgeCheckResult(final Validity validity, final ProgramState<Term> ctxPre,
+				final ProgramState<Term> ctxPost) {
 			mValidity = validity;
 			mCtxPre = ctxPre;
 			mCtxPost = ctxPost;
@@ -100,8 +100,6 @@ public class InvariantChecker {
 			return mCtxPost;
 		}
 
-
-
 	}
 
 	private static class LoopLocations {
@@ -110,7 +108,8 @@ public class InvariantChecker {
 		public final List<IcfgLocation> mLoopLocWithoutInvariant;
 
 		public LoopLocations(final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge,
-				final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge, final List<IcfgLocation> loopLocWithoutInvariant) {
+				final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge,
+				final List<IcfgLocation> loopLocWithoutInvariant) {
 			mLoopLoc2errorEdge = loopLoc2errorEdge;
 			mLoopErrorLoc2errorEdge = loopErrorLoc2errorEdge;
 			mLoopLocWithoutInvariant = loopLocWithoutInvariant;
@@ -128,25 +127,20 @@ public class InvariantChecker {
 			return mLoopLocWithoutInvariant;
 		}
 
-
 	}
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	private final LoopLocations mLoopLocations;
-
 
 	public enum LocationType {
 		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC
 	}
 
-	public InvariantChecker(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<IcfgLocation> icfg) {
+	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
 		mLoopLocations = extractLoopLocations(mIcfg);
@@ -176,8 +170,8 @@ public class InvariantChecker {
 			}
 		}
 
-		final List<TwoPointSubgraphDefinition> tpsds = findTwoPointSubgraphDefinitions(icfg, mLoopLocations,
-				loopLocsAndNonLoopErrorLocs);
+		final List<TwoPointSubgraphDefinition> tpsds =
+				findTwoPointSubgraphDefinitions(icfg, mLoopLocations, loopLocsAndNonLoopErrorLocs);
 		final String message = message24(tpsds);
 		mLogger.info("Will check " + message);
 		final Set<TwoPointSubgraphDefinition> mValid = new HashSet<>();
@@ -218,15 +212,16 @@ public class InvariantChecker {
 		}
 		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(mValid);
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(mUnknown);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(mInvalid);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
+				twoPointSubgraphsToSegments(mInvalid);
 		final AnnotationCheckResult<IcfgEdge, Term> acr = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, acr);
 		mLogger.info(acr.getShortDescription());
 	}
 
-	private List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> twoPointSubgraphsToSegments(
-			final Map<TwoPointSubgraphDefinition, EdgeCheckResult> mInvalid) {
+	private List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>>
+			twoPointSubgraphsToSegments(final Map<TwoPointSubgraphDefinition, EdgeCheckResult> mInvalid) {
 		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> result = new ArrayList<>();
 		for (final Entry<TwoPointSubgraphDefinition, EdgeCheckResult> entry : mInvalid.entrySet()) {
 			result.add(twoPointSubgraphToSegment(entry.getKey(), entry.getValue()));
@@ -234,8 +229,8 @@ public class InvariantChecker {
 		return result;
 	}
 
-	private LoopFreeSegmentWithStatePair<IcfgEdge, Term> twoPointSubgraphToSegment(
-			final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
+	private LoopFreeSegmentWithStatePair<IcfgEdge, Term>
+			twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
 		final ILocation locationBefore = guessLocation(tpsd.getStartLocation());
 		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
 		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
@@ -258,8 +253,8 @@ public class InvariantChecker {
 		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
 		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
 		final String locationTypeAfter = classify(tpsd.getEndLocation()).toString();
-		final LoopFreeSegment<IcfgEdge> result = new LoopFreeSegment<>(locationBefore, locationAfter,
-				locationTypeBefore, locationTypeAfter);
+		final LoopFreeSegment<IcfgEdge> result =
+				new LoopFreeSegment<>(locationBefore, locationAfter, locationTypeBefore, locationTypeAfter);
 		return result;
 	}
 
@@ -330,13 +325,11 @@ public class InvariantChecker {
 	}
 
 	/**
-	 * Find all loop-free subgraphs that start in a loop location or a procedure
-	 * entry and end at the location endLoc
+	 * Find all loop-free subgraphs that start in a loop location or a procedure entry and end at the location endLoc
 	 *
 	 * @param backwardStartLoc
-	 *            Cutpoint where we start for predecessor cutpoints For a loop
-	 *            location, this is the loop head and not the corresponding error
-	 *            location.
+	 *            Cutpoint where we start for predecessor cutpoints For a loop location, this is the loop head and not
+	 *            the corresponding error location.
 	 */
 	private List<TwoPointSubgraphDefinition> findSubgraphGivenEndLocation(final IcfgLocation backwardStartLoc,
 			final LoopLocations loopLocations, final IIcfg<IcfgLocation> icfg) {
@@ -381,9 +374,8 @@ public class InvariantChecker {
 	}
 
 	/**
-	 * Collect all edges in the subgraph that starts in startLoc and ends in
-	 * backwardStartLoc In case backwardStartLoc is a loop head, the corresponding
-	 * error location becomes the end location of the resulting
+	 * Collect all edges in the subgraph that starts in startLoc and ends in backwardStartLoc In case backwardStartLoc
+	 * is a loop head, the corresponding error location becomes the end location of the resulting
 	 * TwoPointSubgraphDefinition.
 	 */
 	private static TwoPointSubgraphDefinition extractSubgraphGivenStartAndEnd(final IcfgLocation startLoc,
@@ -427,7 +419,6 @@ public class InvariantChecker {
 		return new TwoPointSubgraphDefinition(startLoc, seenForward, errorLoc);
 	}
 
-
 	private String message23(final TwoPointSubgraphDefinition tpsd) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Will check inductivity from ");
@@ -460,7 +451,8 @@ public class InvariantChecker {
 		}
 	}
 
-	private EdgeCheckResult doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf, final IcfgLocation errorLoc) {
+	private EdgeCheckResult doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf,
+			final IcfgLocation errorLoc) {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), SimplificationTechnique.NONE,

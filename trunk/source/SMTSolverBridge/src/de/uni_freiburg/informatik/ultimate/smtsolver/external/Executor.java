@@ -42,7 +42,6 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -69,16 +68,13 @@ class Executor {
 	private final String mSolverCmd;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 	private final String mName;
 
 	private static final String sEofErrorMessage = "Received EOF on stdin.";
 
 	Executor(final String solverCommand, final Script script, final ILogger logger,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
-			throws IOException {
+			final IUltimateServiceProvider services, final String solverName) throws IOException {
 		mServices = services;
-		mStorage = storage;
 		mSolverCmd = solverCommand;
 		mScript = script;
 		mLogger = logger;
@@ -87,7 +83,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
+		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices);
 		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		if (mProcess == null) {

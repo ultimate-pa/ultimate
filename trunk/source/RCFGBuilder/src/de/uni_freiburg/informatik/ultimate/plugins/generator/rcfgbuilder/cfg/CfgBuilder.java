@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -177,9 +176,7 @@ public class CfgBuilder {
 
 	private final Set<String> mAllGotoTargets;
 
-
-	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services, final IToolchainStorage storage)
-			throws IOException {
+	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -187,7 +184,7 @@ public class CfgBuilder {
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
-		final Script script = constructAndInitializeSolver(services, storage, filename);
+		final Script script = constructAndInitializeSolver(services, filename);
 		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
@@ -217,7 +214,7 @@ public class CfgBuilder {
 		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, mJoins);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
 		mCbf = mIcfg.getCodeBlockFactory();
-		mCbf.storeFactory(storage);
+		mCbf.storeFactory(mServices.getStorage());
 	}
 
 	/**
@@ -291,14 +288,11 @@ public class CfgBuilder {
 		return mBoogie2Smt;
 	}
 
-
 	/**
 	 * @param services
-	 * @param storage
 	 * @param filename
 	 */
-	private Script constructAndInitializeSolver(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final String filename) {
+	private Script constructAndInitializeSolver(final IUltimateServiceProvider services, final String filename) {
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -322,11 +316,9 @@ public class CfgBuilder {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
-		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings,
-				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
+		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, dumpUsatCoreTrackBenchmark,
+				dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
 	}
-
-
 
 	private static Expression getNegation(final Expression expr) {
 		if (expr == null) {
@@ -377,7 +369,6 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
-
 	/**
 	 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
 	 * mErrorNodes.
@@ -425,7 +416,8 @@ public class CfgBuilder {
 		return errorLocNode;
 	}
 
-	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> getBacktranslator() {
+	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String>
+			getBacktranslator() {
 		return mRcfgBacktranslator;
 	}
 
@@ -450,11 +442,11 @@ public class CfgBuilder {
 	/**
 	 * Provides two informations that can be obtained by traversing all statements.
 	 * <ul>
-	 * <li> information whether some {@link ForkStatement} occurs.
-	 * <li> the identifiers of all {@link Label}s that are target of some {@link GotoStatement}
+	 * <li>information whether some {@link ForkStatement} occurs.
+	 * <li>the identifiers of all {@link Label}s that are target of some {@link GotoStatement}
 	 * </ul>
-	 * Expects that the input has been "unstructured",
-	 * i.e., all {@link WhileStatement}s and {@link IfStatement}s have been removed.
+	 * Expects that the input has been "unstructured", i.e., all {@link WhileStatement}s and {@link IfStatement}s have
+	 * been removed.
 	 */
 	private static class ForkAndGotoInformation {
 
@@ -473,10 +465,9 @@ public class CfgBuilder {
 					} else if (st instanceof GotoStatement) {
 						allGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
 					} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
-							|| (st instanceof HavocStatement) || (st instanceof Label)
-							|| (st instanceof JoinStatement) || (st instanceof CallStatement)
-							|| (st instanceof ReturnStatement) || (st instanceof AssertStatement)
-							|| (st instanceof AtomicStatement)) {
+							|| (st instanceof HavocStatement) || (st instanceof Label) || (st instanceof JoinStatement)
+							|| (st instanceof CallStatement) || (st instanceof ReturnStatement)
+							|| (st instanceof AssertStatement) || (st instanceof AtomicStatement)) {
 						// do nothing
 					} else {
 						throw new UnsupportedOperationException(
@@ -557,9 +548,8 @@ public class CfgBuilder {
 		Map<Integer, Integer> mNameCache;
 
 		/**
-		 * If this is switched to true all statements have to be added to one
-		 * single {@link StatementSequence} until the value is again switched
-		 * to false.
+		 * If this is switched to true all statements have to be added to one single {@link StatementSequence} until the
+		 * value is again switched to false.
 		 */
 		public boolean mAtomicMode = false;
 
@@ -667,14 +657,12 @@ public class CfgBuilder {
 			final Map<DebugIdentifier, BoogieIcfgLocation> constructedPPs = mProcLocNodes;
 			removeUnreachableProgramPoints(reachablePPs, constructedPPs, exit);
 
-
 		}
 
-
 		/**
-		 * Given constructed and reachable {@link BoogieIcfgLocation}s. Remove the ones that are not reachable
-		 * (and the adjacent edges) from the CFG. Only exception is the exit node of the procedure.
-		 * (exit node is kept even if unreachable).
+		 * Given constructed and reachable {@link BoogieIcfgLocation}s. Remove the ones that are not reachable (and the
+		 * adjacent edges) from the CFG. Only exception is the exit node of the procedure. (exit node is kept even if
+		 * unreachable).
 		 */
 		private void removeUnreachableProgramPoints(final Set<BoogieIcfgLocation> reachablePPs,
 				final Map<DebugIdentifier, BoogieIcfgLocation> constructedPPs, final BoogieIcfgLocation exitPP) {
@@ -688,7 +676,8 @@ public class CfgBuilder {
 						// do nothing
 					} else {
 						it.remove();
-						final List<IcfgEdge> outgoingEdges = new ArrayList<IcfgEdge>(entry.getValue().getOutgoingEdges());
+						final List<IcfgEdge> outgoingEdges =
+								new ArrayList<>(entry.getValue().getOutgoingEdges());
 						for (final IcfgEdge outEdge : outgoingEdges) {
 							outEdge.disconnectSource();
 							outEdge.disconnectTarget();
@@ -699,10 +688,8 @@ public class CfgBuilder {
 			}
 		}
 
-
 		/**
-		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given
-		 * starting {@link BoogieIcfgLocation}
+		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given starting {@link BoogieIcfgLocation}
 		 */
 		private Set<BoogieIcfgLocation> computeReachableLocations(final BoogieIcfgLocation start) {
 			final Set<BoogieIcfgLocation> reachable;
@@ -724,7 +711,6 @@ public class CfgBuilder {
 			return reachable;
 		}
 
-
 		private void processStatement(final String procName, final Statement st, final Statement precedingSt) {
 			if (st instanceof Label) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
@@ -740,8 +726,8 @@ public class CfgBuilder {
 							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
 							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement
 							|| precedingSt == null : "If st is a Label and the last constructed node"
-									+ " was a TransEdge, then the last"
-									+ " Statement must not be a Label, Return or" + " Goto";
+									+ " was a TransEdge, then the last" + " Statement must not be a Label, Return or"
+									+ " Goto";
 					mLogger.warn("Label in the middle of a codeblock.");
 				}
 
@@ -787,9 +773,10 @@ public class CfgBuilder {
 				if (mCurrent instanceof CodeBlock) {
 					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
 							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
-							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If mcurrent is a TransEdge, then lastSt"
-									+ " must not be a Label, Return or Goto."
-									+ " (i.e. this is not the first Statemnt" + " of the block)";
+							|| precedingSt instanceof CallStatement
+							|| precedingSt instanceof AtomicStatement : "If mcurrent is a TransEdge, then lastSt"
+									+ " must not be a Label, Return or Goto." + " (i.e. this is not the first Statemnt"
+									+ " of the block)";
 				}
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					assert precedingSt instanceof Label || precedingSt instanceof CallStatement
@@ -814,11 +801,10 @@ public class CfgBuilder {
 			}
 		}
 
-
 		private boolean statementIsControlFlowDead(final boolean lastStatementWasControlFlowDead,
 				final Statement lastStmt, final Statement st, final Set<String> allGotoTargets) {
-			final boolean lastStatementWasGotoOrReturn = (lastStmt instanceof GotoStatement
-					|| lastStmt instanceof ReturnStatement);
+			final boolean lastStatementWasGotoOrReturn =
+					(lastStmt instanceof GotoStatement || lastStmt instanceof ReturnStatement);
 			if (lastStatementWasControlFlowDead || lastStatementWasGotoOrReturn) {
 				if (st instanceof Label) {
 					final Label label = (Label) st;
@@ -1134,10 +1120,10 @@ public class CfgBuilder {
 
 		}
 
-
 		private void startNewStatementSequenceAndAddStatement(final Statement st, final Origin origin) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
-			final StatementSequence codeBlock = mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
+			final StatementSequence codeBlock =
+					mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
 			ModelUtils.copyAnnotations(st, codeBlock);
 			mEdges.add(codeBlock);
 			mCurrent = codeBlock;
@@ -1176,7 +1162,6 @@ public class CfgBuilder {
 				return false;
 			}
 		}
-
 
 		private void processAssertStatement(final AssertStatement st) {
 			if (mCurrent instanceof CodeBlock) {
@@ -1467,15 +1452,18 @@ public class CfgBuilder {
 
 		private void processAtomicStatement(final AtomicStatement atomicStatement) {
 			mAtomicMode = true;
-			for (int i = 0; i<atomicStatement.getBody().length; i++) {
+			for (int i = 0; i < atomicStatement.getBody().length; i++) {
 				final Statement st = atomicStatement.getBody()[i];
-				if (st instanceof AssignmentStatement || (st instanceof AssumeStatement) || (st instanceof HavocStatement)) {
+				if (st instanceof AssignmentStatement || (st instanceof AssumeStatement)
+						|| (st instanceof HavocStatement)) {
 					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 				} else if (st instanceof CallStatement) {
 					final CallStatement callStatement = (CallStatement) st;
 					final String callee = ((CallStatement) st).getMethodName();
-					final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
-					final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
+					final List<RequiresSpecification> requiresNonFree =
+							mBoogieDeclarations.getRequiresNonFree().get(callee);
+					final boolean procedureHasImplementation =
+							mBoogieDeclarations.getProcImplementation().containsKey(callee);
 					if (mAtomicMode && procedureHasImplementation) {
 						throw new UnsupportedOperationException(
 								"In an atomic block, calls to procedures that have an implementation are not allowed.");
@@ -1488,7 +1476,7 @@ public class CfgBuilder {
 					processCallStatement(callStatement);
 				} else if (st instanceof GotoStatement) {
 					final GotoStatement gotoStatement = (GotoStatement) st;
-					final Statement nextStatement = atomicStatement.getBody()[i+1];
+					final Statement nextStatement = atomicStatement.getBody()[i + 1];
 					if (gotoStatement.getLabels().length == 1 && (nextStatement instanceof Label)
 							&& ((Label) nextStatement).getName().equals(gotoStatement.getLabels()[0])) {
 						// do nothing, we can skip goto and label
@@ -1500,7 +1488,8 @@ public class CfgBuilder {
 					// do nothing, drop label
 					mLogger.info("dropping label inside atomic statement: " + ((Label) st).getName());
 				} else {
-					throw new UnsupportedOperationException("Not supported in atomic block " + st.getClass().getSimpleName());
+					throw new UnsupportedOperationException(
+							"Not supported in atomic block " + st.getClass().getSimpleName());
 				}
 			}
 			mAtomicMode = false;

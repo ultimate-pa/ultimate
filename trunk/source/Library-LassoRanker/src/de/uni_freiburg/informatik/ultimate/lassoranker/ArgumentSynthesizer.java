@@ -31,7 +31,6 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
@@ -58,7 +57,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * Auxiliary String that we put into the smt script via an echo. This String should help to identify the difficult
 	 * constraints in a bunch of dumped smt2 files.
 	 */
-	public static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
+	public final static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
 
 	/**
 	 * The SMT script for argument synthesis
@@ -68,7 +67,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * The lasso program that we are analyzing
 	 */
-	protected final Lasso mlasso;
+	protected final Lasso mLasso;
 
 	/**
 	 * Preferences
@@ -78,15 +77,14 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * Whether synthesize() has been called
 	 */
-	private boolean msynthesis_successful = false;
+	private boolean mSynthesisSuccessful = false;
 
 	/**
 	 * Whether close() has been called
 	 */
-	private boolean mclosed = false;
+	private boolean mClosed = false;
 
 	protected IUltimateServiceProvider mServices;
-	protected IToolchainStorage mstorage;
 
 	/**
 	 * Constructor for the argument synthesizer
@@ -97,17 +95,14 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *            the preferences
 	 * @param constaintsName
 	 *            name of the constraints whose satisfiability is checked
-	 * @param storage
 	 * @throws IOException
 	 */
 	public ArgumentSynthesizer(final Lasso lasso, final ILassoRankerPreferences preferences,
-			final String constaintsName, final IUltimateServiceProvider services, final IToolchainStorage storage)
-			throws IOException {
+			final String constaintsName, final IUltimateServiceProvider services) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mPreferences = preferences;
-		mlasso = lasso;
+		mLasso = lasso;
 		mServices = services;
-		mstorage = storage;
 		mScript = constructScript(mPreferences, constaintsName);
 	}
 
@@ -129,7 +124,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @return whether the last call to synthesize() was successfull
 	 */
 	public boolean synthesisSuccessful() {
-		return msynthesis_successful;
+		return mSynthesisSuccessful;
 	}
 
 	/**
@@ -140,7 +135,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
 		final LBool lBool = do_synthesis();
-		msynthesis_successful = (lBool == LBool.SAT);
+		mSynthesisSuccessful = (lBool == LBool.SAT);
 		return lBool;
 	}
 
@@ -173,9 +168,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	@Override
 	public void close() {
-		if (!mclosed) {
+		if (!mClosed) {
 			mScript.exit();
-			mclosed = true;
+			mClosed = true;
 		}
 	}
 

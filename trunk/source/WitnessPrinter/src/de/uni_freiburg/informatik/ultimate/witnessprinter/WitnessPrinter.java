@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -65,7 +64,6 @@ public class WitnessPrinter implements IOutput {
 
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mStorage;
 	private RCFGCatcher mRCFGCatcher;
 	private boolean mMatchingModel;
 
@@ -105,11 +103,6 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
-	}
-
-	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -133,7 +126,7 @@ public class WitnessPrinter implements IOutput {
 			final List<IResult> results = mServices.getResultService().getResults().entrySet().stream()
 					.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
 
-			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
+			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices);
 			if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
 				mLogger.info("Generating witness for reachability counterexample");
 				generateReachabilityCounterexampleWitness(cexVerifier, results);

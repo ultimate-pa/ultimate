@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class ReqToTestPowerset implements IGenerator {
@@ -45,7 +44,6 @@ public class ReqToTestPowerset implements IGenerator {
 	private final List<String> mFileNames = new ArrayList<>();
 	private IUltimateServiceProvider mServices;
 
-	private IToolchainStorage mStorage;
 	private ReqToTestPowersetObserver mTestEncoderObserver;
 
 	@Override
@@ -71,11 +69,6 @@ public class ReqToTestPowerset implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override
@@ -111,7 +104,7 @@ public class ReqToTestPowerset implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mTestEncoderObserver = new ReqToTestPowersetObserver(mLogger, mServices, mStorage);
+		mTestEncoderObserver = new ReqToTestPowersetObserver(mLogger, mServices);
 		return Arrays.asList(mTestEncoderObserver);
 	}
 

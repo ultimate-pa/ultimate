@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetU
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -114,10 +113,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	public CegarLoopJulian(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services, storage);
+				InterpolationTechnique.Craig_TreeInterpolation, false, services);
 	}
 
 	@Override

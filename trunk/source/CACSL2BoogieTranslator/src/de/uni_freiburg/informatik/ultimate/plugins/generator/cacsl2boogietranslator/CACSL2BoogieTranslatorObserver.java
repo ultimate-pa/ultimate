@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
-	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
@@ -69,11 +67,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private boolean mLastModel;
 	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
-	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage,
+	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
-		assert storage != null;
 		assert services != null;
-		mStorage = storage;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mWitnessExtractor = new CorrectnessWitnessExtractor(mServices);
@@ -125,8 +121,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
 		}
 		if (mLastModel) {
-			mRootNode = new MainTranslator(mServices, mStorage, mLogger, mWitnessInvariants, mInputDecorator.getUnits(),
-					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
+			mRootNode = new MainTranslator(mServices, mLogger, mWitnessInvariants, mInputDecorator.getUnits(), mInputDecorator.getSymbolTable(),
+					mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
 	}
 

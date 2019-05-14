@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -52,14 +51,12 @@ public class HCGBuilderHelper {
 		private ManagedScript mScript;
 
 		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services,
-				final IToolchainStorage storage,
 				final String filename) {
-			constructAndInitializeBackendSmtSolver(services, storage, filename);
+			constructAndInitializeBackendSmtSolver(services, filename);
 		}
 
 		void constructAndInitializeBackendSmtSolver(
 				final IUltimateServiceProvider services,
-				final IToolchainStorage storage,
 				final String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final SolverMode solverMode = prefs
@@ -81,7 +78,6 @@ public class HCGBuilderHelper {
 					commandExternalSolver, dumpScript, dumpPath);//"C:\\Temp\\smt");
 
 			final Script script = SolverBuilder.buildAndInitializeSolver(services,
-					storage,
 					solverMode,
 					mSolverSettings,
 					// dumpUsatCoreTrackBenchmark,

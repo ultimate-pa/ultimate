@@ -35,7 +35,6 @@ import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Wrapper that constructs SMTInterpol or an external solver.
@@ -97,25 +95,25 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
-	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	private static Script createSMTInterpol(final IUltimateServiceProvider services) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
 		final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 		final TerminationRequest termRequest = new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 		return new SMTInterpol(loggerWrapper, termRequest);
 	}
 
-	private static Script createExternalSolver(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String command, final boolean fakeNonIncrementalScript, final boolean dumpFakeNonIncrementalScript,
+	private static Script createExternalSolver(final IUltimateServiceProvider services, final String command,
+			final boolean fakeNonIncrementalScript, final boolean dumpFakeNonIncrementalScript,
 			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript,
 			final boolean useDiffWrapper) throws IOException {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
 		Script script;
 		if (fakeNonIncrementalScript) {
-			script = new NonIncrementalScriptor(command, solverLogger, services, storage, "External_FakeNonIncremental",
+			script = new NonIncrementalScriptor(command, solverLogger, services, "External_FakeNonIncremental",
 					dumpFakeNonIncrementalScript, pathOfDumpedFakeNonIncrementalScript,
 					basenameOfDumpedFakeNonIcrementalScript);
 		} else {
-			script = new Scriptor(command, solverLogger, services, storage, "External");
+			script = new Scriptor(command, solverLogger, services, "External");
 		}
 		if (useDiffWrapper) {
 			script = new DiffWrapperScript(script);
@@ -124,10 +122,9 @@ public class SolverBuilder {
 	}
 
 	private static Script createExternalSolverWithInterpolation(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final String command, final ExternalInterpolator externalInterpolator,
-			final boolean useDiffWrapper) throws IOException {
+			final String command, final ExternalInterpolator externalInterpolator, final boolean useDiffWrapper) throws IOException {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
-		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
+		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
 				"ExternalInterpolator");
 		if (useDiffWrapper) {
 			script = new DiffWrapperScript(script);
@@ -140,24 +137,22 @@ public class SolverBuilder {
 	 *
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
-	public static Script buildScript(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final SolverSettings settings) {
+	public static Script buildScript(final IUltimateServiceProvider services, final SolverSettings settings) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
 		Script result;
 		if (settings.useExternalSolver()) {
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
 				if (settings.getExternalInterpolator() == null) {
-					result = createExternalSolver(services, storage, settings.getCommandExternalSolver(),
+					result = createExternalSolver(services, settings.getCommandExternalSolver(),
 							settings.fakeNonIncrementalScript(), settings.dumpSmtScriptToFile(),
 							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript(),
 							settings.getUseDiffWrapper());
 				} else {
 					solverLogger.info(
 							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
-					result = createExternalSolverWithInterpolation(services, storage,
-							settings.getCommandExternalSolver(), settings.getExternalInterpolator(),
-							settings.getUseDiffWrapper());
+					result = createExternalSolverWithInterpolation(services, settings.getCommandExternalSolver(),
+							settings.getExternalInterpolator(), settings.getUseDiffWrapper());
 				}
 			} catch (final IOException e) {
 				solverLogger.fatal("Unable to construct solver");
@@ -165,7 +160,7 @@ public class SolverBuilder {
 			}
 		} else {
 			solverLogger.info("constructing new instance of SMTInterpol");
-			result = createSMTInterpol(services, storage);
+			result = createSMTInterpol(services);
 		}
 		if (settings.dumpSmtScriptToFile()) {
 			result = wrapScriptWithLoggingScript(result, solverLogger, settings.constructFullPathOfDumpedScript());
@@ -179,8 +174,8 @@ public class SolverBuilder {
 		return result;
 	}
 
-	public static Script wrapScriptWithLoggingScript(Script script, final ILogger solverLogger,
-			String fullPathOfDumpedFile) {
+	public static Script wrapScriptWithLoggingScript(final Script script, final ILogger solverLogger,
+			final String fullPathOfDumpedFile) {
 		final Script wrappedScript;
 		try {
 			wrappedScript = new LoggingScript(script, fullPathOfDumpedFile, true);
@@ -190,6 +185,14 @@ public class SolverBuilder {
 			throw new RuntimeException(e);
 		}
 		return wrappedScript;
+	}
+
+	/**
+	 * Construct solver settings that do not dump to file.
+	 */
+	public static SolverSettings constructSolverSettings(final SolverMode solverMode,
+			final boolean fakeNonIncrementalScript, final String commandExternalSolver) throws AssertionError {
+		return constructSolverSettings("", solverMode, fakeNonIncrementalScript, commandExternalSolver, false, "");
 	}
 
 	public static SolverSettings constructSolverSettings(final String filename, final SolverMode solverMode,
@@ -235,18 +238,18 @@ public class SolverBuilder {
 		default:
 			throw new AssertionError("unknown solver mode");
 		}
-		final SolverSettings solverSettings =
-				new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
-						externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, filename, useDiffWrapper);
+		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalScript, useExternalSolver,
+				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, dumpSmtScriptToFile,
+				pathOfDumpedScript, filename, useDiffWrapper);
 		return solverSettings;
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SolverMode solverMode, final SolverSettings solverSettings,
-			final boolean dumpUsatCoreTrackBenchmark, final boolean dumpMainTrackBenchmark,
-			final String logicForExternalSolver, final String solverId) throws AssertionError {
+			final SolverMode solverMode, final SolverSettings solverSettings, final boolean dumpUsatCoreTrackBenchmark,
+			final boolean dumpMainTrackBenchmark, final String logicForExternalSolver,
+			final String solverId) throws AssertionError {
 
-		Script script = SolverBuilder.buildScript(services, storage, solverSettings);
+		Script script = SolverBuilder.buildScript(services, solverSettings);
 		if (dumpUsatCoreTrackBenchmark) {
 			script = new LoggingScriptForUnsatCoreBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(),
 					solverSettings.getPathOfDumpedScript());

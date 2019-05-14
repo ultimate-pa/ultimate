@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -141,7 +140,6 @@ public final class CFGInvariantsGenerator {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPredicateOfInitialLocations;
@@ -154,13 +152,11 @@ public final class CFGInvariantsGenerator {
 	private final CfgSmtToolkit mCsToolKit;
 	private final KindOfInvariant mKindOfInvariant;
 
-
 	public CFGInvariantsGenerator(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicate predicateOfInitialLocations,
-			final IPredicate predicateofErrorLocations, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
-			final CfgSmtToolkit csToolkit, final KindOfInvariant kindOfInvariant) {
-		mStorage = storage;
+			final IPredicate predicateOfInitialLocations, final IPredicate predicateofErrorLocations,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final InvariantSynthesisSettings invariantSynthesisSettings, final CfgSmtToolkit csToolkit,
+			final KindOfInvariant kindOfInvariant) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolKit = csToolkit;
@@ -187,34 +183,32 @@ public final class CFGInvariantsGenerator {
 	 *
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
-	 * @param storage
-	 *            IToolchainstorage of the current Ultimate toolchain.
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
 	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
-	 * @param axioms
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
 	 * @param kindOfInvariant
 	 *            the kind of invariant to be generated
+	 * @param axioms
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final boolean useNonlinerConstraints,
+			final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final Map<IcfgLocation, IPredicate> loc2underApprox,
 			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 
-		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
-				xnfConversionTechnique, csToolkit.getSmtSymbols(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
+		return new LinearInequalityInvariantPatternProcessorFactory(services, predicateUnifier, csToolkit, strategy,
+				useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
+				csToolkit.getSmtSymbols(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
 				kindOfInvariant);
 	}
 
@@ -313,7 +307,7 @@ public final class CFGInvariantsGenerator {
 		if (invSynthSettings.useAbstractInterpretation()) {
 			// TODO 2018-06-10 Matthias: WIP - continue AI integration here.
 			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(pathProgram);
-			 pathprogramLocs2Predicates.putAll(result);
+			pathprogramLocs2Predicates.putAll(result);
 		}
 		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat =
 				invSynthSettings.getTemplateDimensionsStrategy();
@@ -340,17 +334,17 @@ public final class CFGInvariantsGenerator {
 		}
 		final boolean synthesizeEntryPattern = mKindOfInvariant == KindOfInvariant.DANGER;
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
-				createDefaultFactory(mServices, mStorage, mPredicateUnifier, csToolkit,
-						invSynthSettings.useNonLinearConstraints(), invSynthSettings.useUnsatCores(),
-						invSynthSettings.getSolverSettings(), simplificationTechnique, xnfConversionTechnique, strategy,
-						loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
+				createDefaultFactory(mServices, mPredicateUnifier, csToolkit, invSynthSettings.useNonLinearConstraints(),
+						invSynthSettings.useUnsatCores(), invSynthSettings.getSolverSettings(),
+						simplificationTechnique, xnfConversionTechnique, strategy, loc2underApprox,
+						loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
-		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList,
-				transitionsAsList, mPredicateOfInitialLocations, mPredicateOfErrorLocations, startLocation,
-				errorLocations, invPatternProcFactory, invSynthSettings.useUnsatCores(), allProgramVars,
-				pathprogramLocs2LiveVars,
-				convertMapToPredsToMapToUnmodTrans(pathprogramLocs2Predicates, csToolkit.getManagedScript()),
-				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
+		final Map<IcfgLocation, IPredicate> invariants =
+				generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPredicateOfInitialLocations,
+						mPredicateOfErrorLocations, startLocation, errorLocations, invPatternProcFactory,
+						invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars,
+						convertMapToPredsToMapToUnmodTrans(pathprogramLocs2Predicates, csToolkit.getManagedScript()),
+						invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
 
 		return invariants;
 	}
@@ -722,8 +716,8 @@ public final class CFGInvariantsGenerator {
 		if (locs2Preds == null) {
 			return null;
 		} else {
-			final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2Preds.keySet().stream()
-					.collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
+			final Map<IcfgLocation, UnmodifiableTransFormula> result =
+					locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
 							.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
 			return result;
 		}

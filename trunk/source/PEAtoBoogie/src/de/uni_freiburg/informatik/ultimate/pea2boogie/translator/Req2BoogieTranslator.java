@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -134,8 +133,8 @@ public class Req2BoogieTranslator {
 	private final RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final boolean mSeparateInvariantHandling;
 
-	public Req2BoogieTranslator(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final ILogger logger, final List<PatternType> patterns) {
+	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
+			final List<PatternType> patterns) {
 		mLogger = logger;
 		mServices = services;
 
@@ -195,8 +194,8 @@ public class Req2BoogieTranslator {
 		try {
 			if (mCombinationNum > 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
-				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage, mPeaResultUtil,
-						mSymboltable, mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
+				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymboltable,
+						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}

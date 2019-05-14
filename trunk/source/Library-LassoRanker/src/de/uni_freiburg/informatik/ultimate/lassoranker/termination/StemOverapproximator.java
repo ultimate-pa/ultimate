@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ILassoRankerPreferences;
@@ -86,13 +85,12 @@ class StemOverapproximator {
 	 *            LassoRanker preferences regarding new SMT scripts
 	 * @throws IOException
 	 */
-	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) throws IOException {
+	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 
 		// Create a new QF_LRA script
-		mScript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
+		mScript = SMTSolver.newScript(preferences, "SimplifySIs", services);
 		mScript.setLogic(Logics.QF_LRA);
 	}
 

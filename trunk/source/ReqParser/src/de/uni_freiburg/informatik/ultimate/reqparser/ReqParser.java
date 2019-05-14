@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -231,11 +230,6 @@ public class ReqParser implements ISource {
 			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// storage not needed
 	}
 
 	@Override

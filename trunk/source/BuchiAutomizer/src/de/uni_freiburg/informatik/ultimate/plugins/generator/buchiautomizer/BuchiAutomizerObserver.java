@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
@@ -100,12 +99,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private WitnessNode mWitnessNode;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
-	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
 
-	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public BuchiAutomizerObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
 		mIcfgs = new ArrayList<>();
@@ -141,7 +138,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, icfg.getCfgSmtToolkit(), rankVarConstructor,
-				predicateFactory, taPrefs, mServices, mStorage, witnessAutomaton);
+				predicateFactory, taPrefs, mServices, witnessAutomaton);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());

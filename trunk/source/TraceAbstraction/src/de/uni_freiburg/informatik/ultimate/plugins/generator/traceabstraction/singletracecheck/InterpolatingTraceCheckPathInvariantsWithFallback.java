@@ -32,7 +32,6 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IAction>
 		extends InterpolatingTraceCheck<LETTER> {
 
-	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final IIcfg<?> mIcfg;
 	private InvariantSynthesisStatisticsGenerator mPathInvariantsStats;
@@ -71,16 +69,14 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedRun<LETTER, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final InvariantSynthesisSettings invariantSynthesisSettings,
+			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlocksIncrementally,
 				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique,
 				xnfConversionTechnique);
-		mStorage = storage;
 		mNestedRun = run;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
@@ -103,9 +99,9 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final InterpolationTechnique interpolation) {
 
 		final PathInvariantsGenerator<?> pathInvariantsGenerator =
-				new PathInvariantsGenerator<>(super.mServices, mStorage, mNestedRun, super.getPrecondition(),
-						super.getPostcondition(), mPredicateFactory, mPredicateUnifier, mIcfg,
-						mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				new PathInvariantsGenerator<>(super.mServices, mNestedRun, super.getPrecondition(), super.getPostcondition(),
+						mPredicateFactory, mPredicateUnifier, mIcfg, mInvariantSynthesisSettings,
+						mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {

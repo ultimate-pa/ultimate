@@ -33,7 +33,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -66,8 +65,8 @@ public class NestedStoreSequenceTest {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", mLogger, mServices,
-					new ToolchainStorage(), "z3");
+			mScript =
+					new Scriptor("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", mLogger, mServices, "z3");
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
@@ -86,7 +85,8 @@ public class NestedStoreSequenceTest {
 		mScript.declareFun("idx1", new Sort[0], bv32);
 		mScript.declareFun("val", new Sort[0], bv8);
 
-		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store a idx1 (_ bv5 8)) a) (= (select a idx1) val)))";
+		final String formulaAsString =
+				"(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store a idx1 (_ bv5 8)) a) (= (select a idx1) val)))";
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
@@ -110,14 +110,16 @@ public class NestedStoreSequenceTest {
 		mScript.declareFun("idx2", new Sort[0], bv32);
 		mScript.declareFun("val", new Sort[0], bv8);
 
-		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) a) (= (select a idx1) val)))";
+		final String formulaAsString =
+				"(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) a) (= (select a idx1) val)))";
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final String expectedResultAsString = "(and (=> (= idx1 idx2) (= (_ bv0 8) val)) (=> (distinct idx1 idx2) (= (_ bv5 8) val)))";
+		final String expectedResultAsString =
+				"(and (=> (= idx1 idx2) (= (_ bv0 8) val)) (=> (distinct idx1 idx2) (= (_ bv5 8) val)))";
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, expectedResultAsString);
 
 		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -138,14 +140,16 @@ public class NestedStoreSequenceTest {
 		mScript.declareFun("idx3", new Sort[0], bv32);
 		mScript.declareFun("val", new Sort[0], bv8);
 
-		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val)))";
+		final String formulaAsString =
+				"(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val)))";
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final String expectedResultAsString = "(and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val)))";
+		final String expectedResultAsString =
+				"(and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val)))";
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, expectedResultAsString);
 
 		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -166,14 +170,16 @@ public class NestedStoreSequenceTest {
 		mScript.declareFun("idx3", new Sort[0], bv32);
 		mScript.declareFun("val", new Sort[0], bv8);
 
-		final String formulaAsString = "(not (exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val))))";
+		final String formulaAsString =
+				"(not (exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val))))";
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final String expectedResultAsString = "(not (and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val))))";
+		final String expectedResultAsString =
+				"(not (and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val))))";
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, expectedResultAsString);
 
 		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);

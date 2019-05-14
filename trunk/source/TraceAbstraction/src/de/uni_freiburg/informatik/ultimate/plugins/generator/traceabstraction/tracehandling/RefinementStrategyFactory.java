@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -66,7 +65,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	protected final ILogger mLogger;
 	protected final IIcfg<?> mInitialIcfg;
-	private final IToolchainStorage mStorage;
 	protected final PredicateFactory mPredicateFactory;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final PathProgramCache<LETTER> mPathProgramCache;
@@ -77,8 +75,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            Logger.
 	 * @param services
 	 *            Ultimate services
-	 * @param storage
-	 *            toolchain storage
 	 * @param taPrefsForInterpolantConsolidation
 	 *            TODO Matthias wants to get rid of this
 	 * @param prefs
@@ -91,12 +87,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            predicate factory
 	 */
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
-			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory,
-			final PathProgramCache<LETTER> pathProgramCache) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaCheckAndRefinementPreferences<LETTER> prefs,
+			final CegarAbsIntRunner<LETTER> absIntRunner, final IIcfg<?> initialIcfg,
+			final PredicateFactory predicateFactory, final PathProgramCache<LETTER> pathProgramCache) {
 		mServices = services;
-		mStorage = storage;
 		mPrefsConsolidation = taPrefsForInterpolantConsolidation;
 		mPrefs = prefs;
 		mAbsIntRunner = absIntRunner;
@@ -168,7 +162,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		switch (mStrategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
-					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
+					setupManagedScriptFromPreferences(mServices, mInitialIcfg, taskIdentifier, mPrefs);
 			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices, mPredicateFactory,
 					predicateUnifier, counterexample, precondition, abstraction, mPrefsConsolidation, taskIdentifier,
 					emptyStackFactory);
@@ -226,8 +220,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private ManagedScript setupManagedScriptFromPreferences(final IUltimateServiceProvider services,
-			final IIcfg<?> icfgContainer, final IToolchainStorage toolchainStorage, final TaskIdentifier taskIdentifier,
-			final TaCheckAndRefinementPreferences<LETTER> prefs) throws AssertionError {
+			final IIcfg<?> icfgContainer, final TaskIdentifier taskIdentifier, final TaCheckAndRefinementPreferences<LETTER> prefs) throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (prefs.getUseSeparateSolverForTracechecks()) {
 			final String filename = taskIdentifier + "_TraceCheck";
@@ -238,8 +231,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 			final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
-			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
-					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
+			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, prefs.getSolverMode(),
+					solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
 			icfgContainer.getCfgSmtToolkit().getSmtSymbols().transferSymbols(tcSolver);
 		} else {

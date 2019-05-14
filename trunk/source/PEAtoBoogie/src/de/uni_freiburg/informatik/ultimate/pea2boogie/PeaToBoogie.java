@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 
@@ -47,7 +46,6 @@ public class PeaToBoogie implements IGenerator {
 	private final List<String> mFileNames = new ArrayList<>();
 	private IUltimateServiceProvider mServices;
 
-	private IToolchainStorage mStorage;
 	private PEAtoBoogieObserver mObserver;
 
 	@Override
@@ -73,11 +71,6 @@ public class PeaToBoogie implements IGenerator {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new Pea2BoogiePreferences();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
 	}
 
 	@Override
@@ -113,7 +106,7 @@ public class PeaToBoogie implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new PEAtoBoogieObserver(mLogger, mServices, mStorage);
+		mObserver = new PEAtoBoogieObserver(mLogger, mServices);
 		return Collections.singletonList(mObserver);
 	}
 

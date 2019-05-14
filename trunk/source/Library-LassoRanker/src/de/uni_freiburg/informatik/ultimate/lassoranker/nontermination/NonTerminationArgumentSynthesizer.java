@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
@@ -139,13 +138,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param settings
 	 *            (local) settings for termination analysis
 	 * @param services
-	 * @param storage
 	 * @throws IOException
 	 */
 	public NonTerminationArgumentSynthesizer(final Lasso lasso, final ILassoRankerPreferences preferences,
-			final NonTerminationAnalysisSettings settings, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) throws IOException {
-		super(lasso, preferences, "nonterminationTemplate", services, storage);
+			final NonTerminationAnalysisSettings settings, final IUltimateServiceProvider services) throws IOException {
+		super(lasso, preferences, "nonterminationTemplate", services);
 		mArgument = null;
 		mSettings = new NonTerminationAnalysisSettings(settings); // defensive copy
 		mLogger.info(settings.toString());
@@ -186,8 +183,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			solverMode = SolverMode.External_ModelsMode;
 		}
 		final String solverId = "NonTerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mServices, mstorage, solverMode, settings, false, false, null,
-				solverId);
+		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, false, false, null, solverId);
 	}
 
 	@Override
@@ -200,14 +196,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final Map<IProgramVar, Term> vars_honda = new LinkedHashMap<>();
 		final List<Map<IProgramVar, Term>> vars_gevs = new ArrayList<>(mSettings.getNumberOfGevs());
 		final List<Term> lambdas = new ArrayList<>(mSettings.getNumberOfGevs());
-		for (final IProgramVar var : mlasso.getAllRankVars()) {
+		for (final IProgramVar var : mLasso.getAllRankVars()) {
 			final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(PREFIX_INIT + name, sort));
 			vars_honda.put(var, newConstant(PREFIX_HONDA + name, sort));
 		}
 		for (int i = 0; i < mSettings.getNumberOfGevs(); ++i) {
 			final Map<IProgramVar, Term> vars_gev = new LinkedHashMap<>();
-			for (final IProgramVar var : mlasso.getAllRankVars()) {
+			for (final IProgramVar var : mLasso.getAllRankVars()) {
 				final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 				vars_gev.put(var, newConstant(PREFIX_GE_VECTOR + name + i, sort));
 			}
@@ -267,7 +263,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		assert numvars >= 0;
 
-		final Collection<IProgramVar> rankVars = mlasso.getAllRankVars();
+		final Collection<IProgramVar> rankVars = mLasso.getAllRankVars();
 
 		Term zero; // = 0
 		Term one; // = 1
@@ -296,7 +292,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				lambda_guesses = Collections.singletonList(one);
 			} else if (mAnalysisType == AnalysisType.LINEAR_WITH_GUESSES) {
 				// Use a list of guesses for lambda
-				final Rational[] eigenvalues = mlasso.guessEigenvalues(false);
+				final Rational[] eigenvalues = mLasso.guessEigenvalues(false);
 				lambda_guesses = new ArrayList<>(eigenvalues.length);
 				for (int i = 0; i < eigenvalues.length; ++i) {
 					assert !eigenvalues[i].isNegative();
@@ -315,8 +311,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// t1: A_stem * (z, x) <= b_stem
 		t1 = mScript.term("true");
-		if (!mlasso.getStem().isTrue()) {
-			final LinearTransition stem = mlasso.getStem();
+		if (!mLasso.getStem().isTrue()) {
+			final LinearTransition stem = mLasso.getStem();
 			final List<Term> disjunction = new ArrayList<>(stem.getNumPolyhedra());
 			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				disjunction.add(generateConstraint(stem, polyhedron, vars_init, vars_honda, false));
@@ -375,7 +371,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// t2: honda and rays
 		{
-			final LinearTransition loop = mlasso.getLoop();
+			final LinearTransition loop = mLasso.getLoop();
 			final List<Term> disjunction = new ArrayList<>(loop.getNumPolyhedra());
 			for (final List<LinearInequality> polyhedron : loop.getPolyhedra()) {
 				// A_loop * (x, x + y) <= b_loop
@@ -564,7 +560,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					nus.add(ModelExtractionUtils.const2Rational(nu_val.get(var_nus.get(i))));
 				}
 			}
-			final boolean has_stem = !mlasso.getStem().isTrue();
+			final boolean has_stem = !mLasso.getStem().isTrue();
 			return new GeometricNonTerminationArgument(has_stem ? state0 : state1, state1, gevs, lambdas, nus);
 		} catch (final UnsupportedOperationException e) {
 			// do nothing

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.IOException;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -51,15 +50,14 @@ public class SMTSolver {
 	 * @param constraintsName
 	 *            name of the constraints whose satisfiability is checked
 	 * @param services
-	 * @param storage
 	 * @return the new solver instance
 	 * @throws IOException
 	 */
 	public static Script newScript(final ILassoRankerPreferences preferences, final String constraintsName,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) {
+			final IUltimateServiceProvider services) {
 		final SolverSettings settings = preferences
 				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
-		final Script script = SolverBuilder.buildScript(services, storage, settings);
+		final Script script = SolverBuilder.buildScript(services, settings);
 
 		// Set options
 		script.setOption(":produce-models", true);

@@ -39,14 +39,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 
 /**
- * This plugin implements the product algorithm described in the Masterthesis
- * "Automatische Generierungvon Buchi-Programmen".
+ * This plugin implements the product algorithm described in the Masterthesis "Automatische Generierungvon
+ * Buchi-Programmen".
  *
  * @author Langenfeld
  */
@@ -145,11 +144,6 @@ public class BuchiProgramProduct implements IGenerator {
 	public IPreferenceInitializer getPreferences() {
 		// currently no preferences
 		return null;
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// not needed
 	}
 
 	@Override

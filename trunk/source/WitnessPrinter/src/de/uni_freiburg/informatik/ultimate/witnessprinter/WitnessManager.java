@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.Monito
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -65,13 +64,10 @@ public class WitnessManager {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 
-	public WitnessManager(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+	public WitnessManager(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-		mStorage = storage;
 	}
 
 	/**
@@ -224,8 +220,7 @@ public class WitnessManager {
 				timeoutInS);
 		timeoutInS++;
 		mLogger.info(StringUtils.join(cmdArray, " "));
-		final MonitoredProcess cpaCheckerProcess =
-				MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
+		final MonitoredProcess cpaCheckerProcess = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices);
 		final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
 		final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
 		final String error = convertStreamToString(errorStream);

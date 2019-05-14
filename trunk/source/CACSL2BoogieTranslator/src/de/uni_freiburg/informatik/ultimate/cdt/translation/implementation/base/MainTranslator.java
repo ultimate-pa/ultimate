@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxRes
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
@@ -83,15 +82,13 @@ public class MainTranslator {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final IToolchainStorage mStorage;
 	private final WrapperNode mResult;
 
-	public MainTranslator(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final ILogger logger, final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
-			final List<DecoratedUnit> units, final MultiparseSymbolTable symboltable, final ACSLNode acslAnnotation) {
+	public MainTranslator(final IUltimateServiceProvider services, final ILogger logger,
+			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final List<DecoratedUnit> units,
+			final MultiparseSymbolTable symboltable, final ACSLNode acslAnnotation) {
 		mServices = services;
 		mLogger = logger;
-		mStorage = storage;
 		mResult = run(witnessInvariants, units, acslAnnotation, symboltable);
 	}
 
@@ -229,7 +226,8 @@ public class MainTranslator {
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);
 
-		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<>(result.getIdentifierMapping()));
+		mServices.getStorage().putStorable(IdentifierMapping.getStorageKey(),
+				new IdentifierMapping<>(result.getIdentifierMapping()));
 		final CACSL2BoogieBacktranslator backtranslator =
 				new CACSL2BoogieBacktranslator(mServices, typeSizes, backtranslatorMapping, locationFactory);
 		mServices.getBacktranslationService().addTranslator(backtranslator);

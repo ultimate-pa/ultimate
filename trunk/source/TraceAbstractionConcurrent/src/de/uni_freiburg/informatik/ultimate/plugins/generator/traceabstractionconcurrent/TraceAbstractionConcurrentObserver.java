@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -84,20 +83,17 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	 */
 	private IElement mGraphroot = null;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
-	public TraceAbstractionConcurrentObserver(final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+	public TraceAbstractionConcurrentObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(final IElement root) {
 		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg) root;
-		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg,
-				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
+		final IcfgPetrifier icfgPetrifier =
+				new IcfgPetrifier(mServices, inputIcfg, IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
 		final IIcfg<? extends IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);
@@ -130,11 +126,11 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		BasicCegarLoop<?> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopJulian<>(name, petrifiedIcfg, csToolkit, predicateFactory, timingStatistics,
-					taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
+			abstractCegarLoop = new CegarLoopJulian<>(name, petrifiedIcfg, csToolkit, predicateFactory,
+					timingStatistics, taPrefs, errNodesOfAllProc, mServices);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
-					timingStatistics, taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
+					timingStatistics, taPrefs, errNodesOfAllProc, mServices);
 		} else {
 			throw new IllegalArgumentException();
 		}

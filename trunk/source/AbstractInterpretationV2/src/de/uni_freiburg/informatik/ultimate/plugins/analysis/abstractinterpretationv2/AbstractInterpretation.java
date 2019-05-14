@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class AbstractInterpretation implements IAnalysis {
-
 
 	protected ILogger mLogger;
 	private IUltimateServiceProvider mServices;
@@ -114,11 +112,6 @@ public class AbstractInterpretation implements IAnalysis {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new AbsIntPrefInitializer();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage services) {
-		// not used
 	}
 
 	@Override

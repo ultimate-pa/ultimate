@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
@@ -57,11 +56,9 @@ public class LTLXBAExecutor {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 
-	public LTLXBAExecutor(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public LTLXBAExecutor(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -98,7 +95,7 @@ public class LTLXBAExecutor {
 	 */
 	private String execLTLXBA(final String ltlFormula) throws IOException, InterruptedException {
 		final String[] command = getCommand(ltlFormula);
-		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
+		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 		final MonitoredProcessState state = process.waitfor();
 		final String in = convertStreamToString(process.getInputStream());
 		final String err = convertStreamToString(process.getErrorStream());

@@ -33,7 +33,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.Activator;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.preferences.DeltaDebuggerPreferences;
@@ -49,8 +48,8 @@ public class ExternalToolCPAChecker extends ExternalTool {
 	private String mCpaCheckerHome;
 	private final IPreferenceProvider mPrefProvider;
 
-	public ExternalToolCPAChecker(final IUltimateServiceProvider services, final IToolchainStorage storage) {
-		super(services, storage);
+	public ExternalToolCPAChecker(final IUltimateServiceProvider services) {
+		super(services);
 		mPrefProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 

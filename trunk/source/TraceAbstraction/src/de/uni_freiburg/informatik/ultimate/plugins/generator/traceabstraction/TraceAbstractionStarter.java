@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -102,7 +101,6 @@ public class TraceAbstractionStarter {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mToolchainStorage;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -115,12 +113,10 @@ public class TraceAbstractionStarter {
 	private final List<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
 			new ArrayList<>();
 
-	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<IcfgLocation> icfg,
+	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
-		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			runCegarLoops(icfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
@@ -172,7 +168,8 @@ public class TraceAbstractionStarter {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			iterate(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, csToolkit, predicateFactory,
-					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
+					computeHoareAnnotation);
 		} else {
 			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 			final int numberOfErrorLocs = errNodesOfAllProc.size();
@@ -185,8 +182,9 @@ public class TraceAbstractionStarter {
 					progmon.addChildTimer(progmon.getTimer(taPrefs.getLimitAnalysisTime() * 1000));
 				}
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				final Result result = iterate(name, icfg, taPrefs, csToolkit, predicateFactory,
-						traceAbstractionBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+				final Result result =
+						iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
+								witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name, result,
 						finishedErrorLocs, numberOfErrorLocs));
 				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
@@ -326,9 +324,9 @@ public class TraceAbstractionStarter {
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
-		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop = constructCegarLoop(name, root, taPrefs,
-				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile,
-				computeHoareAnnotation);
+		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
+				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs,
+						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		final Result result = basicCegarLoop.iterate();
@@ -373,28 +371,26 @@ public class TraceAbstractionStarter {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 
-
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
-						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices,
-						mToolchainStorage);
+						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
 			} else {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:
 					result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
+							taPrefs.interpolation(), computeHoareAnnotation, mServices,
 							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case LAZY_IN_ORDER:
 					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage,
+							taPrefs.interpolation(), computeHoareAnnotation, mServices,
 							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage);
+							taPrefs.interpolation(), computeHoareAnnotation, mServices);
 					break;
 				default:
 					throw new AssertionError();
@@ -402,7 +398,7 @@ public class TraceAbstractionStarter {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), computeHoareAnnotation, mServices, mToolchainStorage, languageOperation);
+					taPrefs.interpolation(), computeHoareAnnotation, mServices, languageOperation);
 		}
 		return result;
 	}

@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -66,7 +65,6 @@ public class SpaceExParser implements ISource {
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-	private IToolchainStorage mToolchainStorage;
 	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
 
 	/**
@@ -75,12 +73,6 @@ public class SpaceExParser implements ISource {
 	public SpaceExParser() {
 		mFileTypes = new String[] { "xml", };
 		mFileNames = new ArrayList<>();
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-		mToolchainStorage = storage;
 	}
 
 	@Override
@@ -182,7 +174,7 @@ public class SpaceExParser implements ISource {
 		final SpaceExPreferenceProcessor preferenceProcessor = new SpaceExPreferenceProcessor(mLogger,
 				preferenceManager.getSystem(), preferenceManager.getInitially(), preferenceManager.getForbidden());
 		return new SpaceExModelBuilder(spaceEx, mLogger, preferenceProcessor.getProcessedPreferences(),
-				preferenceManager, mServices, mToolchainStorage).getModel();
+				preferenceManager, mServices).getModel();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new

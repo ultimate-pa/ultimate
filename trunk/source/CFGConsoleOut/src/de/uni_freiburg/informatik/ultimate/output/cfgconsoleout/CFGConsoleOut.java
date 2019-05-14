@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -68,11 +67,6 @@ public class CFGConsoleOut implements IOutput {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		// not needed
-	}
-
-	@Override
-	public void setToolchainStorage(final IToolchainStorage storage) {
 		// not needed
 	}
 

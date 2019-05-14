@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -57,7 +56,7 @@ public class ChcSmtPrinter implements IOutput {
 
 	@Override
 	public void init() {
-		//no init needed
+		// no init needed
 	}
 
 	@Override
@@ -101,17 +100,12 @@ public class ChcSmtPrinter implements IOutput {
 	}
 
 	@Override
-	public void setToolchainStorage(final IToolchainStorage services) {
-		//no storage needed
-	}
-
-	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 
 	@Override
 	public void finish() {
-		//no finish needed
+		// no finish needed
 	}
 }

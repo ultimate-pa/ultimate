@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
@@ -54,11 +53,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	private IIcfg<BoogieIcfgLocation> mGraphroot;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 
-	public RCFGBuilderObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public RCFGBuilderObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -86,7 +83,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			return true;
 		}
 		final Unit unit = (Unit) root;
-		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, mServices, mStorage);
+		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, mServices);
 		try {
 			mGraphroot = recCFGBuilder.createIcfg(unit);
 			if (IcfgUtils.hasUnreachableProgramPoints(mGraphroot)) {

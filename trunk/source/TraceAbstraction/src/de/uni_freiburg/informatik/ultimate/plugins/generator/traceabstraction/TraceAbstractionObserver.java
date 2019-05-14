@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -63,12 +62,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private WitnessNode mWitnessNode;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
-	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
 
-	public TraceAbstractionObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public TraceAbstractionObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
 		mIcfgs = new ArrayList<>();
@@ -120,8 +117,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
-		final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode,
-				witnessAutomaton, rawFloydHoareAutomataFromFile);
+		final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, rcfgRootNode, witnessAutomaton,
+				rawFloydHoareAutomataFromFile);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 

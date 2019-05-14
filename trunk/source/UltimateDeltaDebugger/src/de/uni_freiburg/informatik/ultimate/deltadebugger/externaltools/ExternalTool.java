@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.Activator;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.preferences.DeltaDebuggerPreferences;
@@ -51,11 +50,9 @@ public abstract class ExternalTool implements IExternalTool {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 
-	public ExternalTool(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public ExternalTool(final IUltimateServiceProvider services) {
 		mServices = Objects.requireNonNull(services);
-		mStorage = Objects.requireNonNull(storage);
 		mLogger = services.getLoggingService().getControllerLogger();
 	}
 
@@ -73,7 +70,7 @@ public abstract class ExternalTool implements IExternalTool {
 				Arrays.toString(cmd), workingDir, exitCommand));
 		MonitoredProcess extProcess;
 		try {
-			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices, mStorage);
+			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices);
 		} catch (final IOException e) {
 			mLogger.fatal("External tool could not be run. Reason:", e);
 			return ExternalToolResult.INVALID;

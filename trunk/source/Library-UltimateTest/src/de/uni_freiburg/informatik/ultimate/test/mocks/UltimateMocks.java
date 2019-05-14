@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 
 import java.io.IOException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -44,10 +42,6 @@ public class UltimateMocks {
 
 	private UltimateMocks() {
 		// do not instantiate utility class
-	}
-
-	public static IToolchainStorage createToolchainStorageMock() {
-		return new ToolchainStorage();
 	}
 
 	public static IUltimateServiceProvider createUltimateServiceProviderMock() {
@@ -70,7 +64,7 @@ public class UltimateMocks {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
 		try {
 			return new Scriptor(solverCommand, services.getLoggingService().getLogger(UltimateMocks.class), services,
-					createToolchainStorageMock(), "SMT solver");
+					"SMT solver");
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
