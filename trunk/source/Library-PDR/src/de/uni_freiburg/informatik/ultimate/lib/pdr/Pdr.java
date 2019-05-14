@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -77,6 +78,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -122,7 +126,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		THROW_EXCEPTION, CONTINUE
 	}
 
-	private static final boolean USE_INTERPOLATION = false;
+	private static final boolean USE_INTERPOLATION = true;
 
 	/**
 	 * Currently we cannot handle procedures.
@@ -184,7 +188,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
-		mScript = mCsToolkit.getManagedScript();
+
+		final SolverSettings solverSettings =
+				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, "");
+		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, SolverMode.Internal_SMTInterpol,
+				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
+		// TODO: Termtransferer from cfgsmtutil
+		mScript = new ManagedScript(mServices, script);
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
 
