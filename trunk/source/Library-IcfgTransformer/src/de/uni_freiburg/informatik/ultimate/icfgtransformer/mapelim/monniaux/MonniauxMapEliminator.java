@@ -479,7 +479,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						addendum.add(SmtUtils.binaryEquality(script, newInVars.get(key), newOutVars.get(key)));
 					}
 				}
-				addendum.add(atMostOneStore);
+				//addendum.add(atMostOneStore);
 				
 				final Map<Integer, Set<Pair<Term, Set<Term>>>> disAssgn = new HashMap<>();
 				final Map<Term, Term> newSubst = new HashMap<>();
@@ -612,12 +612,13 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				}
 				
 				
-
 				final Term tempTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, newSubst)
-						.transform(SmtUtils.and(script, addendum));
+						.transform(atMostOneStore);
+				
+				addendum.add(tempTfTerm);
 				
 				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst)
-						.transform(tempTfTerm);
+						.transform(SmtUtils.and(script, addendum));
 				
 				final UnmodifiableTransFormula newTf =
 						buildTransitionFormula(tf, newTfTerm, newInVars, newOutVars, auxVars);
