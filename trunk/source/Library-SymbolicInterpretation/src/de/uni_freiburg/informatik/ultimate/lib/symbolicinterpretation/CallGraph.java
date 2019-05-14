@@ -28,7 +28,7 @@ public class CallGraph {
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	/**
-	 * Locations of interest (LOI) are locations inside procedures for which want to compute predicates.
+	 * Locations of interest (LOI) are locations inside procedures for which we want to compute predicates.
 	 */
 	private final HashRelation<String, IcfgLocation> mLOIsInsideProcedure = new HashRelation<>();
 
@@ -68,7 +68,7 @@ public class CallGraph {
 	}
 
 	private void addCall(final IcfgEdge call) {
-		mPredecessors.addPair(call.getSource().getProcedure(), call.getTarget().getProcedure());
+		mPredecessors.addPair(call.getTarget().getProcedure(), call.getSource().getProcedure());
 	}
 
 	private void markGraph() {
@@ -81,9 +81,8 @@ public class CallGraph {
 		}
 		mPredecessors.getImage(currentProcedure).forEach(predecessor -> mark(predecessor, currentProcedure));
 		mSuccessorsOfInterest.removePair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES);
-		
 	}
-	
+
 	private void mark(final String currentProcedure, final String mark) {
 		if (!mSuccessorsOfInterest.addPair(currentProcedure, mark)) {
 			// Was already marked accordingly, therefore predecessors have to be already marked too.
