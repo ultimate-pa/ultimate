@@ -126,7 +126,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		THROW_EXCEPTION, CONTINUE
 	}
 
-	private static final boolean USE_INTERPOLATION = true;
+	private static final boolean USE_INTERPOLATION = false;
+	private static final boolean USE_ICFGBUILDER_SOLVER = true;
 
 	/**
 	 * Currently we cannot handle procedures.
@@ -189,12 +190,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
 
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, "");
-		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, SolverMode.Internal_SMTInterpol,
-				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
-		// TODO: Termtransferer from cfgsmtutil
-		mScript = new ManagedScript(mServices, script);
+		mScript = createSolver(mServices, mCsToolkit);
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
 
@@ -222,6 +218,21 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		} finally {
 			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
 		}
+	}
+
+	private static ManagedScript createSolver(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit)
+			throws AssertionError {
+		if (USE_ICFGBUILDER_SOLVER) {
+			return csToolkit.getManagedScript();
+		}
+		// TODO: I guess we have to use two solvers to implement everything correctly: one to represent the predicates
+		// we extract and one to perform the actual checks
+		final SolverSettings solverSettings =
+				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
+		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
+				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
+		csToolkit.getSmtSymbols().transferSymbols(script);
+		return new ManagedScript(services, script);
 	}
 
 	private LBool computePdr() {
