@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,7 +46,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 
 /**
@@ -119,7 +124,8 @@ public class UltimateEliminator implements Script {
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+			throws SMTLIBException {
 		mSmtSolver.defineFun(fun, params, resultSort, definition);
 	}
 
@@ -139,8 +145,30 @@ public class UltimateEliminator implements Script {
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(letFree);
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
-			throw new AssertionError("Could not remove all quantifiers.");
+
+		if (lessQuantifier instanceof QuantifiedFormula) {
+			mLogger.info("Quantifier couldn't be eliminated");
+			final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true)
+					.transform(lessQuantifier);
+			// Optimization 2: True QuantifierPusher replaces quantified formula with true
+			final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL)
+					.transform(nnf);
+			if (pushed != lessQuantifier) {
+				mLogger.info("pushed: " + pushed);
+				Term qfree = mMgdScript.getScript().term("true");
+				for (Term cojunct : SmtUtils.cannibalize(mMgdScript, mServices, false, pushed)) {
+					if (cojunct instanceof QuantifiedFormula) {
+						cojunct = mMgdScript.getScript().term("true");
+					}
+					qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
+				}
+				mLogger.info("qfree: " + qfree);
+				return mSmtSolver.assertTerm(qfree);
+			} else {
+				// Optimization 1: True ignore assertion
+				mLogger.info("Quantifer couldn't be pushed");
+				return LBool.UNKNOWN;
+			}
 		}
 		return mSmtSolver.assertTerm(lessQuantifier);
 	}
@@ -150,7 +178,7 @@ public class UltimateEliminator implements Script {
 		final LBool result = mSmtSolver.checkSat();
 		if (mExpectedResult != null) {
 			mLogger.info("Expected result: " + result);
-			if (mExpectedResult == LBool.UNKNOWN ) {
+			if (mExpectedResult == LBool.UNKNOWN) {
 				if (result != LBool.UNKNOWN) {
 					throw new AssertionError("Congratulations! We solved a difficult benchmark");
 				}
@@ -213,7 +241,7 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public void exit() {
-//		mSmtSolver.exit();
+		// mSmtSolver.exit();
 	}
 
 	@Override
@@ -237,7 +265,8 @@ public class UltimateEliminator implements Script {
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params) throws SMTLIBException {
+	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+			throws SMTLIBException {
 		return mSmtSolver.term(funcname, indices, returnSort, params);
 	}
 
@@ -247,7 +276,8 @@ public class UltimateEliminator implements Script {
 	}
 
 	@Override
-	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns) throws SMTLIBException {
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
+			throws SMTLIBException {
 		return mSmtSolver.quantifier(quantor, vars, body, patterns);
 	}
 
@@ -341,6 +371,5 @@ public class UltimateEliminator implements Script {
 	public QuotedObject echo(final QuotedObject msg) {
 		return mSmtSolver.echo(msg);
 	}
-
 
 }
