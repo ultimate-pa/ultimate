@@ -62,7 +62,7 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 
 	/**
 	 * Constructs the base for a new procedure graph. This is <b>not</b> the final procedure graph
-	 * for the given function. Use {@link CfgPreprocessor} to construct a full graph.
+	 * for the given function. Use {@link ProcedureGraphBuilder} to construct a full graph.
 	 * @param icfg 
 	 * @param procedureName
 	 */

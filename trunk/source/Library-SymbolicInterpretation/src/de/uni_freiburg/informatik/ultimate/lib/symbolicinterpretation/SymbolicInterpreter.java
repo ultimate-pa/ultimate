@@ -128,6 +128,7 @@ public class SymbolicInterpreter {
 			throw new UnsupportedOperationException("Call summaries not implemented yet: " + letter);
 		} else if (letter instanceof IIcfgCallTransition<?>) {
 			// TODO process transformula to compute input for function
+			// see PredicateTransformer.strongestPostCall
 			throw new UnsupportedOperationException("Enter calls not implemented yet: " + letter);
 			// mEnterCallWorklist.add(letter.getSucceedingProcedure(), computedInput);
 		} else if (letter instanceof IIcfgInternalTransition) {
@@ -140,6 +141,7 @@ public class SymbolicInterpreter {
 	private SymbolicState interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition,
 				final SymbolicState input) {
 		// TODO apply post to compute output
+		// see PredicateTransformer.strongestPost
 		final SymbolicState output = new SymbolicState();
 		// TODO only target? what if source location is also a LOI? call storePred somewhere else too?
 		storePredicateIfLOI(transition.getTarget(), output);

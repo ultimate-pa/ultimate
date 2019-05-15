@@ -41,17 +41,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @see #graphOfProcedure(String, Collection)
  * @author schaetzc@tf.uni-freiburg.de
  * 
- * TODO rename this class to ProcedureGraphBuilder
  * TODO consider creating a lightweight subgraph overlay since RCFG builder already constructs super graph of the
  *      required form.
  */
-public class CfgPreprocessor {
+public class ProcedureGraphBuilder {
 
 	private final IIcfg<IcfgLocation> mIcfg;
 	private ProcedureGraph mCurrentProcedureGraph;
 	private final Queue<IcfgLocation> mWork = new ArrayDeque<>();
 
-	public CfgPreprocessor(final IIcfg<IcfgLocation> icfg) {
+	public ProcedureGraphBuilder(final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
 	}
 

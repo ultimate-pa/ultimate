@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionCom
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.UniqueMarkTransition;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CfgPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
@@ -62,7 +62,7 @@ public class ProcedureResources {
 
 		// TODO split this function into sub-functions
 
-		final ProcedureGraph procedureGraph = new CfgPreprocessor(icfg).graphOfProcedure(procedure, locationsOfInterest);
+		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(icfg).graphOfProcedure(procedure, locationsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
 		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =
