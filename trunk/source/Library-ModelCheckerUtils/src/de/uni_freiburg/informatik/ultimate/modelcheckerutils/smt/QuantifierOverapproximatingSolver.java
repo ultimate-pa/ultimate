@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,19 +46,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Wrapper for an SMT solver that makes sure that the solver
- * does not have to deal with quantifiers.
- * The idea of this class is that we overapproximate asserted
- * formulas if they contain quantifiers (e.g., we replace the
- * formula by "true").
- * If the SMT solver responds with 'sat' to a check-sat command
- * we return unknown if we overapproximated an asserted formula.
- * If we did not overapproximate or if the response was 'unsat'
- * we may pass the response of the solver.
+ * Wrapper for an SMT solver that makes sure that the solver does not have to
+ * deal with quantifiers. The idea of this class is that we overapproximate
+ * asserted formulas if they contain quantifiers (e.g., we replace the formula
+ * by "true"). If the SMT solver responds with 'sat' to a check-sat command we
+ * return unknown if we overapproximated an asserted formula. If we did not
+ * overapproximate or if the response was 'unsat' we may pass the response of
+ * the solver.
  *
- * TODO As an optimization we may also try very inexpensive
- * quantifier elimination techniques or skolemization.
- * TODO list these once these are implemented
+ * TODO As an optimization we may also try very inexpensive quantifier
+ * elimination techniques or skolemization. TODO list these once these are
+ * implemented
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -71,25 +70,42 @@ public class QuantifierOverapproximatingSolver implements Script {
 	private final Script mSmtSolver;
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
+	private Boolean mOverAprox;
 
-	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
+	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger,
+			final Script script) {
 		mServices = services;
 		mLogger = logger;
 		mSmtSolver = script;
 		mMgdScript = new ManagedScript(services, script);
+		mOverAprox = false;
 
 	}
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		// TODO: do not pass the original logic but the corresponding quantifier-free logic
-		mSmtSolver.setLogic(logic);
+		// do not pass the original logic but the corresponding quantifier-free logic
+		if (logic.startsWith("QF_")) {
+			mSmtSolver.setLogic(logic);
+		} else {
+			final String qFLogic = "QF_" + logic.toString();
+			if (Logics.valueOf(qFLogic) != null) {
+				mSmtSolver.setLogic(qFLogic);
+			} else {
+				throw new AssertionError("No Quantifier Free Logic found for Overapproximation");
+			}
+
+		}
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		// TODO: do not pass the original logic but the corresponding quantifier-free logic
-		mSmtSolver.setLogic(logic);
+		if (logic.isQuantified()) {
+			final Logics qFLogic = Logics.valueOf("QF_" + logic.toString());
+			mSmtSolver.setLogic(qFLogic);
+		} else {
+			mSmtSolver.setLogic(logic);
+		}
 	}
 
 	@Override
@@ -118,7 +134,8 @@ public class QuantifierOverapproximatingSolver implements Script {
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+			throws SMTLIBException {
 		mSmtSolver.defineFun(fun, params, resultSort, definition);
 	}
 
@@ -135,14 +152,19 @@ public class QuantifierOverapproximatingSolver implements Script {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		//TODO do overapproximation if necessary
+		// TODO do overapproximation if necessary
+		if (term instanceof QuantifiedFormula) {
+			mOverAprox = true;
+		}
 		return mSmtSolver.assertTerm(term);
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		// TODO check if we did an overapproximation
 		final LBool result = mSmtSolver.checkSat();
+		if (result.equals(LBool.SAT) && mOverAprox) {
+			return LBool.UNKNOWN;
+		}
 		return result;
 
 	}
@@ -218,7 +240,8 @@ public class QuantifierOverapproximatingSolver implements Script {
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params) throws SMTLIBException {
+	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+			throws SMTLIBException {
 		return mSmtSolver.term(funcname, indices, returnSort, params);
 	}
 
@@ -228,7 +251,8 @@ public class QuantifierOverapproximatingSolver implements Script {
 	}
 
 	@Override
-	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns) throws SMTLIBException {
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
+			throws SMTLIBException {
 		return mSmtSolver.quantifier(quantor, vars, body, patterns);
 	}
 
@@ -322,6 +346,5 @@ public class QuantifierOverapproximatingSolver implements Script {
 	public QuotedObject echo(final QuotedObject msg) {
 		return mSmtSolver.echo(msg);
 	}
-
 
 }
