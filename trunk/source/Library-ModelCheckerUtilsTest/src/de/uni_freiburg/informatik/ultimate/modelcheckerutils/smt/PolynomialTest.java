@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,10 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -181,6 +186,30 @@ public class PolynomialTest {
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void castTest() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		Map<Term, Rational> map = new HashMap<>();
+		map.put(new AffineTerm(intSort, Rational.ONE), Rational.ONE);
+		Object mapObject = (Object) map;
+		Map<AffineTerm, Rational> affineMap = (Map<AffineTerm, Rational>) mapObject;
+		AffineTerm term = affineMap.entrySet().iterator().next().getKey();
+		mLogger.info("Term: " + term.toString());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void castTest2() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		Map<AffineTerm, Rational> map = new HashMap<>();
+		map.put(new AffineTerm(intSort, Rational.ONE), Rational.ONE);
+		Object mapObject = (Object) map;
+		Map<Term, Rational> affineMap = (Map<Term, Rational>) mapObject;
+		Term term = affineMap.entrySet().iterator().next().getKey();
+		mLogger.info("Term: " + ((AffineTerm) term).toString());
 	}
 	
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
