@@ -23,16 +23,37 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * This represents an entry in our sparse matrix.  The entries
- * are doubly linked 2d-shaped list, i.e. each entry knows its
- * row and its column predecessor.  The row lists are sorted, 
- * the column lists are randomly ordered and not consistently 
- * ordered with respect to other column lists.
+ * This represents an entry in our sparse matrix. The entries are doubly linked 2d-shaped list, i.e. each entry knows
+ * its row and its column predecessor.
+ *
+ * The overall matrix consists of rows of the form:
+ *
+ * <pre>
+ * {@code
+ *   b_i * y_i + a_i1 * x_1 + ... + a_in * x_n
+ * }
+ * </pre>
  * 
- * TODO: Evaluate if a singly linked list is enough, at least 
- * for the column lists.
- * TODO: Maybe a mix between linked list and tree may be
- * faster if rows grow big, but pivoted rows are small.
+ * where {@code b_i}, and {@code a_ij} are big integers, {@code y_i} is the row variable for this row and
+ * {@code x_1,...,x_n} are column variables. To be valid, the row should sum up to 0, if the linear variables are
+ * replaced by their LinTerms. Also the gcd of the coefficients should be 1.
+ * 
+ * <p>
+ * For each summand a matrix entry is created, whose field {@code mRow} points to {@code y_i} and {@code mColumn} points
+ * to the respective y_i or x_i variable occuring in this summand. I.e. for the first entry both {@code mRow} and
+ * {@code mColumn} point to y_i. The {@code mCoeff} field is the big integer b_i or a_ij. The {@code mPrevInRow} and
+ * {@code mNextInRow} are iterating through the row. The variables {@code x_i, y_i} are sorted by their index so the y_i
+ * term may appear in between the x_i according to the variable order.
+ * 
+ * <p>
+ * The {@code mPrevInCol} and {@code mNextInCol} fields link the columns corresponding to the same column variable x_i.
+ * They can be in any order and the order is not consistent between different columns. There is a special head entry for
+ * each column variable with {@code mNextInRow == null}. The head entry for column variables points to this special
+ * entry. The head entry for row variables points to the entry representing {@code b_i*y_i}.
+ * 
+ * <p>
+ * TODO: Evaluate if a singly linked list is enough, at least for the column lists. Maybe a mix between linked list and
+ * tree may be faster if rows grow big, but pivoted rows are small.
  * 
  * @author Jochen Hoenicke
  */
@@ -196,23 +217,34 @@ public class MatrixEntry {
 		mColumn.mChainlength++;
 	}
 	
+	/**
+	 * Do the first half of the pivoting operation that swaps a column and row variable. The row and column variables
+	 * are given by this entry, which must not be a head entry for any variable. This will adjust the head entries
+	 * accordingly, but the other rows will still mention the old column variable. These rows will still be linked to
+	 * this entry, so they can be easily identified.
+	 * 
+	 */
 	public void pivot() {
+		// unlink column head entry
 		mColumn.mHeadEntry.removeFromColumn();
+		// Now mRow head entry becomes a normal entry and mColumn.mHeadEntry will be the new mRow.mHeadEntry.
+		// We initially have only
 		mColumn.mHeadEntry.mNextInCol = mColumn.mHeadEntry.mPrevInCol = mRow.mHeadEntry;
 		mRow.mHeadEntry.mNextInCol = mRow.mHeadEntry.mPrevInCol = mColumn.mHeadEntry;
 		mRow.mHeadEntry = mColumn.mHeadEntry;
 		mRow.mHeadEntry.mColumn = mRow;
+		// this entry becomes the new mColumn head entry, which is now a row variable.
 		mColumn.mHeadEntry = this;
 		
 		mColumn.mChainlength = mRow.mChainlength;
 		mRow.mChainlength = 1;
-		
+
+		// update the mRow variables for all variables in this row.
 		MatrixEntry entry = this;
 		do {
 			entry.mRow = mColumn;
 			entry = entry.mNextInRow;
 		} while (entry != this);
-				
 	}
 
 	public String rowToString() {

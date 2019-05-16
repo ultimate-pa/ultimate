@@ -23,8 +23,8 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory.ArrayNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -88,13 +88,10 @@ public class WeakCongruencePath extends CongruencePath {
 		final CCTerm i2 = select2.getArg();
 		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
 		final CCTerm b = ((CCAppTerm) select2.getFunc()).getArg();
-		final SubPath indexPath = computePath(i1, i2);
+		computePath(i1, i2);
 		final WeakSubPath weakPath =
 				computeWeakPath(a, b, i1, produceProofs);
 		mAllPaths.addFirst(weakPath);
-		if (indexPath != null) {
-			mAllPaths.addFirst(indexPath);
-		}
 
 		return generateClause(new SymmetricPair<CCTerm>(select1, select2), produceProofs, RuleKind.READ_OVER_WEAKEQ);
 	}
@@ -229,10 +226,7 @@ public class WeakCongruencePath extends CongruencePath {
 			// get select for left-hand-side
 			CCAppTerm select = rep1.mSelects.get(indexRep);
 			CCTerm selectArray = ArrayTheory.getArrayFromSelect(select);
-			SubPath indexPath = computePath(index, ArrayTheory.getIndexFromSelect(select));
-			if (indexPath != null) {
-				mAllPaths.addFirst(indexPath);
-			}
+			computePath(index, ArrayTheory.getIndexFromSelect(select));
 			path = computeWeakPath(array1, selectArray, index, produceProofs);
 			select1 = select;
 		}
@@ -246,10 +240,7 @@ public class WeakCongruencePath extends CongruencePath {
 			// get select for right-hand-side
 			CCAppTerm select = rep2.mSelects.get(indexRep);
 			CCTerm selectArray = ArrayTheory.getArrayFromSelect(select);
-			SubPath indexPath = computePath(index, ArrayTheory.getIndexFromSelect(select));
-			if (indexPath != null) {
-				mAllPaths.addFirst(indexPath);
-			}
+			computePath(index, ArrayTheory.getIndexFromSelect(select));
 			path.addEntry(selectArray, null);
 			path.addSubPath(computeWeakPath(selectArray, array2, index, produceProofs));
 			select2 = select;
@@ -258,7 +249,7 @@ public class WeakCongruencePath extends CongruencePath {
 		assert select1.getRepresentative() == select2.getRepresentative();
 		// check for trivial select edge (select-const).
 		if (select1 != select2) {
-			mAllPaths.addFirst(computePath(select1, select2));
+			computePath(select1, select2);
 		}
 		return path;
 	}
@@ -275,7 +266,11 @@ public class WeakCongruencePath extends CongruencePath {
 		}
 		assert t1.mRepStar == node.mTerm;
 		assert t2.mRepStar == node.mPrimaryEdge.mTerm;
-		path.addSubPath(computePath(cursor.mTerm, t1));
+		if (cursor.mTerm != t1) {
+			computePath(cursor.mTerm, t1);
+			SubPath subpath = mAllPaths.removeFirst();
+			path.addSubPath(subpath);
+		}
 		path.addEntry(t2, null);
 		cursor.update(t2, node.mPrimaryEdge);
 		storeIndices.add(ArrayTheory.getIndexFromStore(store));
@@ -308,7 +303,11 @@ public class WeakCongruencePath extends CongruencePath {
 			collectPathOnePrimary(start, path1, storeIndices);
 			collectPathOnePrimary(dest, path2, storeIndices);
 		}
-		path1.addSubPath(computePath(start.mTerm, dest.mTerm));
+		if (start.mTerm != dest.mTerm) {
+			computePath(start.mTerm, dest.mTerm);
+			SubPath subpath = mAllPaths.removeFirst();
+			path1.addSubPath(subpath);
+		}
 		path1.addSubPath(path2);
 		return path1;
 	}

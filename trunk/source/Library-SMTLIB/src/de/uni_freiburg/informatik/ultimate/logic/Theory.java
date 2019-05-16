@@ -434,6 +434,11 @@ public class Theory {
 	}
 
 	public Term numeral(final BigInteger num) {
+		if (mNumericSort != mRealSort) {
+			// For integer sort, always use Rational constants for numerals.
+			return constant(Rational.valueOf(num, BigInteger.ONE), mNumericSort);
+		}
+		// For real arithmetic using Rational would convert to decimal, which we want to avoid.
 		Term result = constant(num.abs(), mNumericSort);
 		if (num.signum() < 0) {
 			final FunctionSymbol neg = getFunction("-", mNumericSort);
@@ -446,11 +451,15 @@ public class Theory {
 		return numeral(new BigInteger(num));
 	}
 
-	public Term decimal(BigDecimal value) {
-		// Fix for 1 vs 1.0: Normalize to .0 for constants.
-		if (value.scale() == 0) {
-			value = value.setScale(1);
+	public Term decimal(final BigDecimal value) {
+		// Check if this is uses the default scale and no fractional part.
+		// In this case we create a rational constant instead.
+		// Also handle BigDecimal without scale to distinguish them from numerals.
+		if (value.scale() == 0 || (value.scale() == 1 && value.remainder(BigDecimal.ONE).signum() == 0)) {
+			return constant(Rational.valueOf(value.toBigIntegerExact(), BigInteger.ONE), mRealSort);
 		}
+		// If the input contains something like 0.1, don't automatically convert to (/ 1.0 10.0), to avoid
+		// changing the input.
 		Term result = constant(value.abs(), mRealSort);
 		if (value.signum() < 0) {
 			final FunctionSymbol neg = getFunction("-", mRealSort);
@@ -473,13 +482,7 @@ public class Theory {
 	 * @return an smt term representing constant c.
 	 */
 	public Term rational(final Rational c, final Sort sort) {
-		// This must not be an infinite or a NAN.
-		assert c.denominator().signum() == 1;
-		if (sort == mRealSort) {
-			return rational(c.numerator(), c.denominator());
-		}
-		assert c.isIntegral();
-		return numeral(c.numerator());
+		return constant(c, sort);
 	}
 
 	public Term binary(final String value) {
@@ -500,21 +503,6 @@ public class Theory {
 		final BigInteger bsize = BigInteger.valueOf(4 * (value.length() - 2));// NOCHECKSTYLE
 		final Sort sort = mBitVecSort.getSort(new BigInteger[] { bsize }, new Sort[0]);
 		return new ConstantTerm(value, sort, ConstantTerm.hashConstant(value, sort));
-	}
-
-	public Term rational(BigInteger num, BigInteger denom) {
-		BigInteger gcd = num.gcd(denom);
-		if (denom.signum() * gcd.signum() < 0) {
-			gcd = gcd.negate();
-		}
-		num = num.divide(gcd);
-		denom = denom.divide(gcd);
-
-		if (denom.equals(BigInteger.ONE)) {
-			return decimal(new BigDecimal(num));
-		}
-		final FunctionSymbol div = getFunction("/", mRealSort, mRealSort);
-		return term(div, decimal(new BigDecimal(num)), decimal(new BigDecimal(denom)));
 	}
 
 	public Term modelRational(final Rational rat, final Sort sort) {
@@ -620,11 +608,13 @@ public class Theory {
 		declareInternalFunction("+", sort2, sort, FunctionSymbol.LEFTASSOC);
 		defineFunction(new MinusFunctionFactory(sort, sort));
 		declareInternalFunction("*", sort2, sort, FunctionSymbol.LEFTASSOC);
+		/* the functions /, div and mod are partial (for division by 0) and thus partially uninterpreted */
 		if (isRational) {
-			declareInternalFunction("/", sort2, sort, FunctionSymbol.LEFTASSOC);
+			declareInternalFunction("/", sort2, sort, FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
 		} else {
-			declareInternalFunction("div", sort2, sort, FunctionSymbol.LEFTASSOC);
-			declareInternalFunction("mod", sort2, sort, 0);
+			declareInternalFunction("div", sort2, sort,
+					FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
+			declareInternalFunction("mod", sort2, sort, FunctionSymbol.UNINTERPRETEDINTERNAL);
 			defineFunction(new DivisibleFunctionFactory());
 		}
 		final Sort sBool = mBooleanSort;
@@ -1398,8 +1388,9 @@ public class Theory {
 		}
 		if (mIRAWrappers != null) {
 			final FunctionSymbol fsym = mIRAWrappers.createWrapper(this, name, indices, paramTypes, resultType);
-			if (fsym != null)
+			if (fsym != null) {
 				return fsym;
+			}
 		}
 		if (mBitVecSort != null && name.matches(BITVEC_CONST_PATTERN) && indices != null && indices.length == 1
 				&& resultType == null) {

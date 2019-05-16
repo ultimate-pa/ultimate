@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 
 public class EqualityProxy {
 
@@ -88,7 +88,7 @@ public class EqualityProxy {
 
 	public LAEquality createLAEquality() {
 		/* create la part */
-		final MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+		final MutableAffineTerm at = mClausifier.createMutableAffinTerm(mLhs);
 		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
 		return mClausifier.getLASolver().createEquality(at);
 	}
@@ -115,7 +115,7 @@ public class EqualityProxy {
 			final CCEquality eq = (CCEquality) mEqAtom;
 			laeq = eq.getLASharedData();
 			if (laeq == null) {
-				final MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+				final MutableAffineTerm at = mClausifier.createMutableAffinTerm(mLhs);
 				at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
 				final Rational normFactor = at.getGCD().inverse();
 				laeq = createLAEquality();
@@ -136,7 +136,7 @@ public class EqualityProxy {
 		}
 		final CCEquality eq = mClausifier.getCClosure().createCCEquality(
 		        mClausifier.getStackLevel(), lhs.mCCterm, rhs.mCCterm);
-		final MutableAffinTerm at = mClausifier.createMutableAffinTerm(lhs);
+		final MutableAffineTerm at = mClausifier.createMutableAffinTerm(lhs);
 		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(rhs));
 		final Rational normFactor = at.getGCD().inverse();
 		laeq.addDependentAtom(eq);

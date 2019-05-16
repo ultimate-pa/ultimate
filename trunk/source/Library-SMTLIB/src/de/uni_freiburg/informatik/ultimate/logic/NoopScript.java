@@ -34,25 +34,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
  * @author Jürgen Christ, Jochen Hoenicke
  */
 public class NoopScript implements Script {
-	
+
 	private Theory mTheory;
 	protected int mStackLevel = 0;
-	
+
 	protected SolverSetup mSolverSetup;
-	
+
 	public NoopScript() {
 		this(null, null);
 	}
-	
-	protected NoopScript(Theory theory) {
+
+	protected NoopScript(final Theory theory) {
 		this(theory, null);
 	}
-	
-	protected NoopScript(Theory theory, SolverSetup setup) {
+
+	protected NoopScript(final Theory theory, final SolverSetup setup) {
 		mTheory = theory;
 		mSolverSetup = setup;
 	}
-	
+
 	public Theory getTheory() {
 		return mTheory;
 	}
@@ -63,25 +63,25 @@ public class NoopScript implements Script {
 	 * @param symbol the symbol to check
 	 * @throws SMTLibException if symbol contains | or \.
 	 */
-	private void checkSymbol(String symbol) throws SMTLIBException {
+	private void checkSymbol(final String symbol) throws SMTLIBException {
 		if (symbol.indexOf('|') >= 0 || symbol.indexOf('\\') >= 0) {
 			throw new SMTLIBException("Symbol must not contain | or \\");
 		}
 	}
 
 	@Override
-	public void setLogic(String logic) throws UnsupportedOperationException {
+	public void setLogic(final String logic) throws UnsupportedOperationException {
 		try {
 			setLogic(Logics.valueOf(logic));
 		} catch (final IllegalArgumentException eLogicUnsupported) {
 			/* Logic is not in enumeration */
-			throw new UnsupportedOperationException("Logic " + logic 
+			throw new UnsupportedOperationException("Logic " + logic
 					+ " not supported");
 		}
 	}
-	
+
 	@Override
-	public void setLogic(Logics logic) throws UnsupportedOperationException {
+	public void setLogic(final Logics logic) throws UnsupportedOperationException {
 		if (mTheory != null) {
 			throw new SMTLIBException("Logic already set!");
 		}
@@ -89,18 +89,18 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void setOption(String opt, Object value)
+	public void setOption(final String opt, final Object value)
 		throws UnsupportedOperationException, SMTLIBException {
 		// Nothing to do
 	}
 
 	@Override
-	public void setInfo(String info, Object value) {
+	public void setInfo(final String info, final Object value) {
 		// Nothing to do
 	}
 
 	@Override
-	public void declareSort(String sort, int arity) throws SMTLIBException {
+	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -113,7 +113,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void defineSort(String sort, Sort[] sortParams, Sort definition)
+	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition)
 		throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
@@ -127,7 +127,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
+	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort)
 		throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
@@ -141,14 +141,14 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void defineFun(String fun, TermVariable[] params,
-			Sort resultSort, Term definition) throws SMTLIBException {
+	public void defineFun(final String fun, final TermVariable[] params,
+			final Sort resultSort, final Term definition) throws SMTLIBException {
 		checkSymbol(fun);
 		defineFunInternal(fun, params, resultSort, definition);
 	}
-	
-	private void defineFunInternal(String fun, TermVariable[] params,
-			Sort resultSort, Term definition) throws SMTLIBException {
+
+	private void defineFunInternal(final String fun, final TermVariable[] params,
+			final Sort resultSort, final Term definition) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -163,7 +163,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void push(int levels) {
+	public void push(final int levels) {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -174,7 +174,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void pop(int levels) throws SMTLIBException {
+	public void pop(final int levels) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -188,7 +188,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public LBool assertTerm(Term term) throws SMTLIBException {
+	public LBool assertTerm(final Term term) throws SMTLIBException {
 		return LBool.UNKNOWN;
 	}
 
@@ -196,9 +196,9 @@ public class NoopScript implements Script {
 	public LBool checkSat() {
 		return LBool.UNKNOWN;
 	}
-	
+
 	@Override
-	public LBool checkSatAssuming(Term... assumptions) {
+	public LBool checkSatAssuming(final Term... assumptions) {
 		return LBool.UNKNOWN;
 	}
 
@@ -210,7 +210,7 @@ public class NoopScript implements Script {
 	@Override
 	public Term getProof() throws SMTLIBException,
 			UnsupportedOperationException {
-		throw new UnsupportedOperationException();			
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -220,7 +220,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
@@ -232,19 +232,19 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Object getOption(String opt)
+	public Object getOption(final String opt)
 		throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Object getInfo(String info)
+	public Object getInfo(final String info)
 		throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Term simplify(Term term) throws SMTLIBException {
+	public Term simplify(final Term term) throws SMTLIBException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -255,7 +255,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException,
 			UnsupportedOperationException {
 		// The default startOfSubtrees is an array with 0's.
 		final int[] startOfSubtrees = new int[partition.length];
@@ -263,7 +263,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 		throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
@@ -274,12 +274,12 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
+	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
 		return sort(sortname, null, params);
 	}
 
 	@Override
-	public Sort sort(String sortname, BigInteger[] indices, Sort... params)
+	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params)
 		throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
@@ -292,23 +292,57 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term term(String funcname, Term... params) throws SMTLIBException {
+	public Term term(final String funcname, final Term... params) throws SMTLIBException {
 		return term(funcname, null, null, params);
 	}
 
 	@Override
-	public Term term(String funcname, BigInteger[] indices,
-			Sort returnSort, Term... params) throws SMTLIBException {
+	public Term term(final String funcname, final BigInteger[] indices,
+			final Sort returnSort, final Term... params) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
-		final Sort[] sorts =
-				params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
+
+		// Special case for normalizing rationals: we want to use ConstantValue with Rational, for things
+		// like (/ 1.0 2.0), to avoid the overhead of parsing them again. To avoid two terms that look identical but are
+		// not equal, we don't create an ApplicationTerm when parsing rational constants.
+		if (funcname.equals("/") && indices == null && returnSort == null && params.length == 2
+				&& params[0] instanceof ConstantTerm && params[1] instanceof ConstantTerm
+				&& params[0].getSort() == mTheory.getRealSort() && params[1].getSort() == mTheory.getRealSort()) {
+			final ConstantTerm numTerm = (ConstantTerm) params[0];
+			final ConstantTerm denomTerm = (ConstantTerm) params[1];
+			if (numTerm.getValue() instanceof Rational && denomTerm.getValue() instanceof Rational) {
+				final Rational num = (Rational) numTerm.getValue();
+				final Rational denom = (Rational) denomTerm.getValue();
+				// make sure that num and denom have the right form such that the created rational term would be
+				// completely identical
+				if (num.isIntegral() && denom.isIntegral() && denom.signum() > 0 && !denom.equals(Rational.ONE)
+						&& num.gcd(denom).equals(Rational.ONE)) {
+					final Rational value = Rational.valueOf(num.numerator(), denom.numerator());
+					return mTheory.constant(value, mTheory.getRealSort());
+				}
+			}
+		}
+		if (funcname.equals("-") && indices == null && returnSort == null && params.length == 1
+				&& params[0] instanceof ConstantTerm
+				&& (params[0].getSort() == mTheory.getNumericSort() || params[0].getSort() == mTheory.getRealSort())) {
+			final ConstantTerm numTerm = (ConstantTerm) params[0];
+			if (numTerm.getValue() instanceof Rational) {
+				final Rational num = (Rational) numTerm.getValue();
+				// make sure that num has the right form. In particular we only allow negating integrals, as the
+				// normal form of -.5 is (/ (- 1.0) 2.0).
+				if (num.isIntegral() && num.signum() > 0) {
+					return mTheory.constant(num.negate(), numTerm.getSort());
+				}
+			}
+		}
+
+		// Not a rational term to normalize
+		final Sort[] sorts = params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
 		for (int i = 0; i < sorts.length; i++) {
 			sorts[i] = params[i].getSort();
 		}
-		final FunctionSymbol fsym = mTheory
-				.getFunctionWithResult(funcname, indices, returnSort, sorts);
+		final FunctionSymbol fsym = mTheory.getFunctionWithResult(funcname, indices, returnSort, sorts);
 		if (fsym == null) {
 			final StringBuilder sb = new StringBuilder();
 			final PrintTerm pt = new PrintTerm();
@@ -322,9 +356,9 @@ public class NoopScript implements Script {
 		}
 		return mTheory.term(fsym, params);
 	}
-	
+
 	@Override
-	public TermVariable variable(String varname, Sort sort)
+	public TermVariable variable(final String varname, final Sort sort)
 		throws SMTLIBException {
 		if (sort == null || varname == null) {
 			throw new SMTLIBException(
@@ -335,8 +369,8 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term quantifier(int quantor, TermVariable[] vars, Term body,
-			Term[]... patterns) throws SMTLIBException {
+	public Term quantifier(final int quantor, final TermVariable[] vars, Term body,
+			final Term[]... patterns) throws SMTLIBException {
 		if (vars.length == 0) {
 			throw new SMTLIBException("No quantified variables given");
 		}
@@ -361,7 +395,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term let(TermVariable[] vars, Term[] values, Term body)
+	public Term let(final TermVariable[] vars, final Term[] values, final Term body)
 		throws SMTLIBException {
 		if (vars.length != values.length) {
 			throw new SMTLIBException(
@@ -371,7 +405,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term annotate(Term t, Annotation... annotations)
+	public Term annotate(final Term t, final Annotation... annotations)
 		throws SMTLIBException {
 		if (annotations.length > 0) {
 			for (final Annotation a : annotations) {
@@ -384,7 +418,7 @@ public class NoopScript implements Script {
 					if (t.getFreeVars().length != 0) {
 						throw new SMTLIBException("Cannot name open terms");
 					} else {
-						defineFunInternal((String) a.getValue(), 
+						defineFunInternal((String) a.getValue(),
 								Theory.EMPTY_TERM_VARIABLE_ARRAY, t.getSort(), t);
 					}
 				}
@@ -396,7 +430,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term numeral(String num) throws SMTLIBException {
+	public Term numeral(final String num) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -409,9 +443,9 @@ public class NoopScript implements Script {
 			throw new SMTLIBException("Not a numeral: " + num);
 		}
 	}
-	
+
 	@Override
-	public Term numeral(BigInteger num) throws SMTLIBException {
+	public Term numeral(final BigInteger num) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -422,7 +456,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term decimal(String decimal) throws SMTLIBException {
+	public Term decimal(final String decimal) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -437,7 +471,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term decimal(BigDecimal decimal) throws SMTLIBException {
+	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -448,7 +482,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term string(String str) throws SMTLIBException {
+	public Term string(final String str) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -459,7 +493,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term hexadecimal(String hex) throws SMTLIBException {
+	public Term hexadecimal(final String hex) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -471,7 +505,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term binary(String bin) throws SMTLIBException {
+	public Term binary(final String bin) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
@@ -481,15 +515,15 @@ public class NoopScript implements Script {
 		}
 		return res;
 	}
-		
+
 	@Override
-	public Sort[] sortVariables(String... names) throws SMTLIBException {
+	public Sort[] sortVariables(final String... names) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
 		return mTheory.createSortVariables(names);
 	}
-	
+
 	@Override
 	public Model getModel() throws SMTLIBException,
 			UnsupportedOperationException {
@@ -497,19 +531,19 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Iterable<Term[]> checkAllsat(Term[] predicates)
+	public Iterable<Term[]> checkAllsat(final Term[] predicates)
 		throws SMTLIBException,	UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Term[] findImpliedEquality(Term[] x, Term[] y)
+	public Term[] findImpliedEquality(final Term[] x, final Term[] y)
 		throws SMTLIBException,	UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public QuotedObject echo(QuotedObject msg) {
+	public QuotedObject echo(final QuotedObject msg) {
 		return msg;
 	}
 

@@ -35,12 +35,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
  * formulas in our internal not-or-tree format.
  * @author Juergen Christ
  */
-public class Utils {
+public class LogicSimplifier {
 
 	private final IProofTracker mTracker;
 
 
-	public Utils(final IProofTracker tracker) {
+	public LogicSimplifier(final IProofTracker tracker) {
 		mTracker = tracker;
 	}
 
@@ -211,27 +211,57 @@ public class Utils {
 	 * This function is used to detect store-idempotencies.
 	 * @return A binary equality.
 	 */
-	public Term convertBinaryEq(final Term input) {
-		final ApplicationTerm eqTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
+	public Term convertBinaryEq(Term input) {
+		ApplicationTerm eqTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
 		assert eqTerm.getFunction().getName() == "=";
-		final Term[] args = eqTerm.getParameters();
+		Term[] args = eqTerm.getParameters();
 		assert args.length == 2 : "Non-binary equality in makeBinaryEq";
-		if (args[0].getSort().isArraySort()) {
+		final Theory theory = input.getTheory();
+
+		while (args[0].getSort().isArraySort()) {
 			// Check store-rewrite
-			if (isStore(args[0])) {
-				final ApplicationTerm store = (ApplicationTerm) args[0];
-				if (args[1] == store.getParameters()[0]) {
-					return convertStoreRewrite(input, store, false);
-				}
+			final Term[] newArgs = checkStoreRewrite(args);
+			if (newArgs == null) {
+				// nothing to rewrite
+				break;
 			}
-			if (isStore(args[1])) {
-				final ApplicationTerm store = (ApplicationTerm) args[1];
-				if (args[0] == store.getParameters()[0]) {
-					return convertStoreRewrite(input, store, true);
+			// rewrite and repeat with new equality
+			// this terminates, because the sort gets simpler
+			final ApplicationTerm newEqTerm = theory.term("=", newArgs);
+			final Term result = mTracker.buildRewrite(eqTerm, newEqTerm, ProofConstants.RW_STORE_REWRITE);
+			input = mTracker.transitivity(input, result);
+			eqTerm = newEqTerm;
+			args = newArgs;
+		}
+
+		if (args[0].getSort().equals(theory.getBooleanSort())) {
+			// convert equality to not xor, simplify the xor term and possibly remove double negation.
+			final Term xorTerm = theory.term("xor", args);
+			Term rewrite = mTracker.buildRewrite(eqTerm, theory.term("not", xorTerm), ProofConstants.RW_EQ_TO_XOR);
+			rewrite = mTracker.congruence(rewrite, new Term[] { convertXor(mTracker.reflexivity(xorTerm)) });
+			return convertNot(mTracker.transitivity(input, rewrite));
+		}
+		return input;
+	}
+
+	private Term[] checkStoreRewrite(final Term[] eqArgs) {
+		assert eqArgs.length == 2;
+		// Check if one argument is a store of the other argument
+		// This is used to rewrite (= a (store a i v)) or (= (store a i v) a)
+		// to (select a i) = v
+		for (int i = 0; i < 2; i++) {
+			if (isStore(eqArgs[i])) {
+				final ApplicationTerm store = (ApplicationTerm) eqArgs[i];
+				final Term[] storeArgs = store.getParameters();
+				if (eqArgs[1 - i] == storeArgs[0]) {
+					// have (= a (store a i v)) or (= (store a i v) a)
+					// simplify to (select a i) = v
+					final Theory theory = storeArgs[0].getTheory();
+					return new Term[] { theory.term("select", storeArgs[0], storeArgs[1]), storeArgs[2] };
 				}
 			}
 		}
-		return input;
+		return null;
 	}
 
 	/**
@@ -264,10 +294,10 @@ public class Utils {
 			}
 		} else if (args[0].getSort() == theory.getBooleanSort()) {
 			// Idea: if we find false:
-			//       - If we additionally find true: return false
-			//       - Otherwise we have to negate all other occurrences
-			//       if we only find true:
-			//       - conjoin all elements
+			// - If we additionally find true: return false
+			// - Otherwise we have to negate all other occurrences
+			// if we only find true:
+			// - conjoin all elements
 			boolean foundTrue = false;
 			boolean foundFalse = false;
 			for (final Term t : args) {
@@ -313,8 +343,7 @@ public class Utils {
 						}
 					}
 					rhs = theory.term("not", theory.term("or", orArgs));
-					return convertNotOrNot(mTracker.transitivity(input,
-							mTracker.buildRewrite(eqTerm, rhs, rule)));
+					return convertNotOrNot(mTracker.transitivity(input, mTracker.buildRewrite(eqTerm, rhs, rule)));
 				}
 			}
 		} else {
@@ -341,25 +370,23 @@ public class Utils {
 			return convertBinaryEq(input);
 		}
 
-		final Term[] conj = new Term[args.length - 1];
-		for (int i = 0; i < conj.length; ++i) {
-			conj[i] = theory.term("not", theory.term("=", args[i], args[i + 1]));
+		// create binary equalities and rewrite them.
+		final Term[] binEqs = new Term[args.length - 1];
+		final Term[] binEqRewrites = new Term[args.length - 1];
+		for (int i = 0; i < binEqs.length; ++i) {
+			final Term binEq = theory.term("=", args[i], args[i + 1]);
+			binEqs[i] = theory.term("not", binEq);
+			binEqRewrites[i] = convertNot(mTracker.congruence(mTracker.reflexivity(binEqs[i]),
+					new Term[] { convertBinaryEq(mTracker.reflexivity(binEq)) }));
 		}
-		final Term res = theory.term("not", theory.term("or", conj));
-		return mTracker.transitivity(input, mTracker.buildRewrite(eqTerm, res, ProofConstants.RW_EQ_BINARY));
+		// create the not(or(binEqs)) term and track rewrite.
+		final Term orTerm = theory.term("or", binEqs);
+		final Term res = theory.term("not", orTerm);
+		return mTracker.congruence(
+				mTracker.transitivity(input, mTracker.buildRewrite(eqTerm, res, ProofConstants.RW_EQ_BINARY)),
+				new Term[] { mTracker.congruence(mTracker.reflexivity(orTerm), binEqRewrites) });
 	}
 
-	private Term convertStoreRewrite(final Term input, final ApplicationTerm store, final boolean arrayFirst) {
-		final Term eqTerm = mTracker.getProvedTerm(input);
-		assert isStore(store) : "Not a store in storeRewrite";
-		final Theory t = store.getTheory();
-		// have (= a (store a i v))
-		// produce (select a i) = v
-		final Term[] args = store.getParameters();
-		Term result = t.term("=", t.term("select", args[0], args[1]), args[2]);
-		result = mTracker.buildRewrite(eqTerm, result, ProofConstants.RW_STORE_REWRITE);
-		return result;
-	}
 	private boolean isStore(final Term t) {
 		if (t instanceof ApplicationTerm) {
 			final FunctionSymbol fs = ((ApplicationTerm) t).getFunction();
@@ -369,13 +396,16 @@ public class Utils {
 	}
 
 	/**
-	 * Simplify distincts.  At the moment, we remove distinct constructs and
-	 * replace them by negated equalities.  We optimize Boolean distincts, and
-	 * transform non-Boolean distincts to false, if we have multiple times the
-	 * same term.
-	 * @param args Terms that should be distinct.
-	 * @return A term equivalent to the arguments applied to the distinct
-	 * 			function.
+	 * Simplify distincts. Boolean distincts with two parameters are transformed to xor and simplified, Boolean
+	 * distincts with more than two parameters are trivially false.
+	 *
+	 * Non-Boolean distincts are simplified to false, if we have multiple times the same term, or otherwise we convert
+	 * them to not-equal, doing it pairwise in case there are more than two parameters.
+	 *
+	 *
+	 * @param args
+	 *            Terms that should be distinct.
+	 * @return A term equivalent to the arguments applied to the distinct function.
 	 */
 	public Term convertDistinct(final Term input) {
 		final ApplicationTerm distinctTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
@@ -386,45 +416,12 @@ public class Utils {
 			if (args.length > 2) {
 				return mTracker.transitivity(input,
 						mTracker.buildRewrite(distinctTerm, theory.mFalse, ProofConstants.RW_DISTINCT_BOOL));
-			}
-			Term t0 = args[0];
-			Term t1 = args[1];
-			if (t0 == t1) {
-				return mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, theory.mFalse, ProofConstants.RW_DISTINCT_SAME));
-			}
-			if (t0 == theory.not(t1)) {
-				return mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, theory.mTrue, ProofConstants.RW_DISTINCT_NEG));
-			}
-			if (t0 == theory.mTrue) {
-				final Term rhs = theory.term("not", t1);
-				return convertNot(mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, rhs, ProofConstants.RW_DISTINCT_TRUE)));
-			}
-			if (t0 == theory.mFalse) {
-				return mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, t1, ProofConstants.RW_DISTINCT_FALSE));
-			}
-			if (t1 == theory.mTrue) {
-				final Term rhs = theory.term("not", t0);
-				return convertNot(mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, rhs, ProofConstants.RW_DISTINCT_TRUE)));
-			}
-			if (t1 == theory.mFalse) {
-				return mTracker.transitivity(input,
-						mTracker.buildRewrite(distinctTerm, t0, ProofConstants.RW_DISTINCT_FALSE));
-			}
-			// Heuristics: Try to find an already negated term
-			if (isNegation(t0)) {
-				t0 = theory.term("not", t0);
 			} else {
-				t1 = theory.term("not", t1);
+				// Boolean distinct is converted to xor.
+				final Term xorTerm = mTracker.transitivity(input,
+						mTracker.buildRewrite(distinctTerm, theory.term("xor", args), ProofConstants.RW_DISTINCT_TO_XOR));
+				return convertXor(xorTerm);
 			}
-			final Term rhs = theory.term("=", t0, t1);
-			final Term rewrite = mTracker.transitivity(input,
-					mTracker.buildRewrite(distinctTerm, rhs, ProofConstants.RW_DISTINCT_BOOL_EQ));
-			return convertFuncNot(rewrite);
 		}
 		LinkedHashSet<Term> tmp = new LinkedHashSet<Term>();
 		for (final Term t : args) {
@@ -503,12 +500,57 @@ public class Utils {
 	}
 
 	public Term convertXor(final Term input) {
-		final ApplicationTerm xorTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
+		ApplicationTerm xorTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
+		final Term[] args = xorTerm.getParameters();
 		final Theory theory = input.getTheory();
 		assert xorTerm.getFunction().getName() == "xor";
-		final Term rhs = theory.term("distinct", xorTerm.getParameters());
-		final Term xorRewrite = mTracker.buildRewrite(xorTerm, rhs, ProofConstants.RW_XOR_TO_DISTINCT);
-		return convertDistinct(mTracker.transitivity(input, xorRewrite));
+		assert args.length == 2;
+		// First check if one of the arguments is true or false and do simplification
+		if (args[0] == theory.mFalse) {
+			return mTracker.transitivity(input, mTracker.buildRewrite(xorTerm, args[1], ProofConstants.RW_XOR_FALSE));
+		} else if (args[1] == theory.mFalse) {
+			return mTracker.transitivity(input, mTracker.buildRewrite(xorTerm, args[0], ProofConstants.RW_XOR_FALSE));
+		} else if (args[0] == theory.mTrue) {
+			final Term rewrite = mTracker.transitivity(input,
+					mTracker.buildRewrite(xorTerm, theory.term("not", args[1]), ProofConstants.RW_XOR_TRUE));
+			return convertNot(rewrite);
+		} else if (args[1] == theory.mTrue) {
+			final Term rewrite = mTracker.transitivity(input,
+					mTracker.buildRewrite(xorTerm, theory.term("not", args[0]), ProofConstants.RW_XOR_TRUE));
+			return convertNot(rewrite);
+		}
+		// Now remove not from every argument and count them; we move them out of the xor term
+		final Term[] newArgs = args.clone();
+		int countNot = 0;
+		for (int i = 0; i < args.length; i++) {
+			if (args[i] instanceof ApplicationTerm) {
+				final ApplicationTerm at = (ApplicationTerm) args[i];
+				if (at.getFunction() == theory.mNot) {
+					newArgs[i] = at.getParameters()[0];
+					countNot++;
+				}
+			}
+		}
+		Term rewrite = input;
+		if (countNot > 0) {
+			// The new xor term is the term where all not applications are removed and the whole xor term need
+			// to be negated if there were an odd number of nots removed.
+			final ApplicationTerm newXorTerm = theory.term(xorTerm.getFunction(), newArgs);
+			final Term newTerm = countNot % 2 == 1 ? theory.term("not", newXorTerm) : newXorTerm;
+			// no need to simplify not, since not(xor(..)) cannot be simplified.
+			rewrite = mTracker.transitivity(input, mTracker.buildRewrite(xorTerm, newTerm, ProofConstants.RW_XOR_NOT));
+			xorTerm = newXorTerm;
+		}
+		// check for xor a a and rewrite it to false
+		if (newArgs[0] == newArgs[1]) {
+			final Term rewriteFalse = mTracker.buildRewrite(xorTerm, theory.term("false"), ProofConstants.RW_XOR_SAME);
+			if (countNot % 2 == 1) {
+				rewrite = convertNot(mTracker.congruence(rewrite, new Term[] { rewriteFalse }));
+			} else {
+				rewrite = mTracker.transitivity(rewrite, rewriteFalse);
+			}
+		}
+		return rewrite;
 	}
 
 	public Term convertImplies(final Term input) {

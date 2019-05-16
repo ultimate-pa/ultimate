@@ -28,16 +28,18 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 public class LiteralReason extends LAReason {
 	private final Literal mLiteral;
 	ArrayDeque<LAReason> mDependents;
+	private LiteralReason mOldLiteralReason;
 	
-	public LiteralReason(LinVar var, InfinitNumber bound, boolean isUpper,
+	public LiteralReason(LinVar var, LiteralReason oldLiteralReason, InfinitesimalNumber bound, boolean isUpper,
 			Literal lit, LiteralReason lastLit) {
 		super(var, bound, isUpper, lastLit);
+		mOldLiteralReason = oldLiteralReason;
 		mLiteral = lit;
 	}
 
-	public LiteralReason(LinVar var, InfinitNumber bound, boolean isUpper,
+	public LiteralReason(LinVar var, LiteralReason oldLiteralReason, InfinitesimalNumber bound, boolean isUpper,
 			Literal lit) {
-		this(var, bound, isUpper, lit, null);
+		this(var, oldLiteralReason, bound, isUpper, lit, null);
 	}
 
 	public Literal getLiteral() {
@@ -60,17 +62,17 @@ public class LiteralReason extends LAReason {
 	}
 
 	@Override
-	InfinitNumber explain(Explainer explainer, 
-			InfinitNumber slack, Rational factor) {
+	InfinitesimalNumber explain(Explainer explainer, 
+			InfinitesimalNumber slack, Rational factor) {
 		if (!explainer.canExplainWith(mLiteral)) {
 			assert getBound().equals(getOldReason().getBound());
 			return getOldReason().explain(explainer, slack, factor);
 		}
 		assert(mLiteral.getAtom().getDecideStatus() == mLiteral);
 		if (mLiteral.negate() instanceof LAEquality) {
-			InfinitNumber newSlack;
+			InfinitesimalNumber newSlack;
 			newSlack = slack.sub(getVar().getEpsilon());
-			if (newSlack.compareTo(InfinitNumber.ZERO) > 0) {
+			if (newSlack.compareTo(InfinitesimalNumber.ZERO) > 0) {
 				return getOldReason().explain(explainer, newSlack, factor);
 			} else {
 				explainer.addEQAnnotation(this, factor);
@@ -100,5 +102,13 @@ public class LiteralReason extends LAReason {
 	 */
 	public int getStackPosition() {
 		return getLiteral().getAtom().getStackPosition();
+	}
+
+	public LiteralReason getOldLiteralReason() {
+		return mOldLiteralReason;
+	}
+
+	public void setOldLiteralReason(LiteralReason reason) {
+		mOldLiteralReason = reason;
 	}
 }

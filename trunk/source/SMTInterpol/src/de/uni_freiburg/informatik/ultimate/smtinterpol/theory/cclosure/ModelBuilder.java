@@ -39,7 +39,7 @@ public class ModelBuilder {
 			mArgs = new int[4];
 			mNextPos = 0;
 		}
-		public void add(int arg) {
+		public void add(final int arg) {
 			if (mNextPos == mArgs.length) {
 				final int[] old = mArgs;
 				mArgs = new int[old.length << 1];
@@ -59,9 +59,9 @@ public class ModelBuilder {
 
 	private final CClosure mCClosure;
 
-	public ModelBuilder(CClosure closure, List<CCTerm> terms, Model model,
-			Theory t, SharedTermEvaluator ste,
-			ArrayTheory array, CCTerm trueNode, CCTerm falseNode) {
+	public ModelBuilder(final CClosure closure, final List<CCTerm> terms, final Model model,
+			final Theory t, final SharedTermEvaluator ste,
+			final ArrayTheory array, final CCTerm trueNode, final CCTerm falseNode) {
 		mCClosure = closure;
 		fillInTermValues(terms, model, t, ste, trueNode, falseNode);
 		if (array != null) {
@@ -70,8 +70,8 @@ public class ModelBuilder {
 		fillInFunctions(terms, model, t);
 	}
 
-	public void fillInTermValues(List<CCTerm> terms, Model model, Theory t, SharedTermEvaluator ste, CCTerm trueNode,
-			CCTerm falseNode) {
+	public void fillInTermValues(final List<CCTerm> terms, final Model model, final Theory t, final SharedTermEvaluator ste, final CCTerm trueNode,
+			final CCTerm falseNode) {
 		Rational biggest = Rational.MONE;
 		final Set<CCTerm> delayed = new HashSet<CCTerm>();
 		for (final CCTerm term : terms) {
@@ -88,6 +88,9 @@ public class ModelBuilder {
 					} else {
 						delayed.add(term);
 						continue;
+					}
+					if (smtterm.getSort().getName().equals("Int") && !v.isIntegral()) {
+						throw new AssertionError("Int term has non-integral value");
 					}
 					biggest = v.compareTo(biggest) > 0 ? v : biggest;
 					value = model.putNumeric(v);
@@ -117,13 +120,13 @@ public class ModelBuilder {
 		}
 	}
 
-	public void fillInFunctions(List<CCTerm> terms, Model model, Theory t) {
+	public void fillInFunctions(final List<CCTerm> terms, final Model model, final Theory t) {
 		for (final CCTerm term : terms) {
 			add(model, term, term.getRepresentative().mModelVal, t);
 		}
 	}
 
-	private void add(Model model, CCTerm term, int value, Theory t) {
+	private void add(final Model model, final CCTerm term, final int value, final Theory t) {
 		if (term instanceof CCBaseTerm) {
 			final CCBaseTerm bt = (CCBaseTerm) term;
 			if (bt.isFunctionSymbol()) {
@@ -139,8 +142,8 @@ public class ModelBuilder {
 			addApp(model, app, value, t);
 		}
 	}
-	
-	private void addApp(Model model, CCAppTerm app, int value, Theory t) {
+
+	private void addApp(final Model model, final CCAppTerm app, final int value, final Theory t) {
 		final ArgHelper args = new ArgHelper();
 		CCTerm walk = app;
 		while (walk instanceof CCAppTerm) {

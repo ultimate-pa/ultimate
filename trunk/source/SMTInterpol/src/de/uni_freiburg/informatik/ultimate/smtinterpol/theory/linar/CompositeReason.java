@@ -27,9 +27,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 public class CompositeReason extends LAReason {
 	private final LAReason[] mReasons;
 	private final Rational[] mCoeffs;
-	private final InfinitNumber mExactBound;
+	private final InfinitesimalNumber mExactBound;
 
-	public CompositeReason(LinVar var, InfinitNumber bound, boolean isUpper,
+	public CompositeReason(LinVar var, InfinitesimalNumber bound, boolean isUpper,
 			LAReason[] reasons, Rational[] coeffs, LiteralReason lastLiteral) {
 		super(var, bound, isUpper, lastLiteral);
 		assert (lastLiteral != null);
@@ -49,13 +49,13 @@ public class CompositeReason extends LAReason {
 	}
 		
 	@Override
-	public InfinitNumber getExactBound() {
+	public InfinitesimalNumber getExactBound() {
 		return mExactBound;
 	}
 	
 	@Override
-	InfinitNumber explain(Explainer explainer,
-			InfinitNumber slack, Rational factor) {
+	InfinitesimalNumber explain(Explainer explainer,
+			InfinitesimalNumber slack, Rational factor) {
 		// First check, if there is already a literal with a weaker bound
 		// that is strong enough to explain the conflict/unit clause.  
 		// However, make sure that this literal was set before the literal
@@ -68,13 +68,13 @@ public class CompositeReason extends LAReason {
 		// composite literal.
 		boolean needToExplain = false;
 		if (isUpper()) {
-			final Entry<InfinitNumber, BoundConstraint> nextEntry = 
+			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry = 
 				getVar().mConstraints.ceilingEntry(getBound());
 			if (nextEntry != null) {
 				final BoundConstraint nextBound = nextEntry.getValue();
 				if (nextBound.getDecideStatus() == nextBound
 					&& explainer.canExplainWith(nextBound)) {
-					final InfinitNumber diff = nextBound.getBound().sub(getBound());
+					final InfinitesimalNumber diff = nextBound.getBound().sub(getBound());
 					if (slack.compareTo(diff) > 0) {
 						explainer.addLiteral(nextBound.negate(), factor);
 						return slack.sub(diff);
@@ -84,13 +84,13 @@ public class CompositeReason extends LAReason {
 				}
 			}
 		} else {
-			final Entry<InfinitNumber, BoundConstraint> nextEntry = 
+			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry = 
 				getVar().mConstraints.lowerEntry(getBound());
 			if (nextEntry != null) {
 				final BoundConstraint nextBound = nextEntry.getValue();
 				if (nextBound.getDecideStatus() == nextBound.negate()
 					&& explainer.canExplainWith(nextBound)) {
-					final InfinitNumber diff =
+					final InfinitesimalNumber diff =
 							getBound().sub(nextBound.getInverseBound());
 					if (slack.compareTo(diff) > 0) {
 						explainer.addLiteral(nextBound, factor);
@@ -102,7 +102,7 @@ public class CompositeReason extends LAReason {
 			}
 		}
 		
-		final InfinitNumber diff = !getVar().mIsInt ? InfinitNumber.ZERO // NOPMD
+		final InfinitesimalNumber diff = !getVar().mIsInt ? InfinitesimalNumber.ZERO // NOPMD
 				: isUpper()
 				? mExactBound.sub(getBound())
 				: getBound().sub(mExactBound);
@@ -125,14 +125,14 @@ public class CompositeReason extends LAReason {
 			}
 			// Just explain the exact bound using the reason array.
 			slack = slack.sub(diff);
-			assert (slack.compareTo(InfinitNumber.ZERO) > 0);
+			assert (slack.compareTo(InfinitesimalNumber.ZERO) > 0);
 			for (int i = 0; i < mReasons.length; i++) {
 				final Rational coeff = mCoeffs[i];
 				slack = slack.div(coeff.abs());
 				slack = mReasons[i].explain(explainer, 
 						slack, factor.mul(coeff));
 				slack = slack.mul(coeff.abs());
-				assert (slack.compareTo(InfinitNumber.ZERO) > 0);
+				assert (slack.compareTo(InfinitesimalNumber.ZERO) > 0);
 			}
 			return slack;
 		}

@@ -23,12 +23,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 
 /**
  * Annotations for Nelson-Oppen equality translating lemmas.
- * 
+ *
  * These annotations have no data, so we can share them.
- * 
+ *
  * @author Jochen Hoenicke
  *
  */
@@ -41,13 +42,13 @@ public final class EQAnnotation implements IAnnotation {
 	private final Annotation[] mAnnots = new Annotation[] {
 		new Annotation(":EQ", null)
 	};
-	
+
 	private EQAnnotation() {
 	}
 
 	@Override
-	public Term toTerm(Clause cls, Theory theory) {
+	public Term toTerm(final Clause cls, final Theory theory) {
 		final Term base = cls.toTerm(theory);
-		return theory.term("@lemma", theory.annotatedTerm(mAnnots, base));
+		return theory.term(ProofConstants.FN_LEMMA, theory.annotatedTerm(mAnnots, base));
 	}
 }

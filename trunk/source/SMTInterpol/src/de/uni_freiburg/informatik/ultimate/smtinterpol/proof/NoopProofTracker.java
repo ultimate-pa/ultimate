@@ -53,12 +53,6 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	/**
-	 * Apply disjunction flattening.
-	 * @param orig   The term to flatten.
-	 * @param flattenedOrs The sub terms (ApplicationTerms with function "or") that were flattened.
-	 * @return the rewrite proof to flatten the orig term.
-	 */
 	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
 		/* nobody cares about this */
 		return orig;
@@ -101,17 +95,11 @@ public class NoopProofTracker implements IProofTracker {
 		return t;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IRuleApplicator#auxAxiom(int, de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal, de.uni_freiburg.informatik.ultimate.logic.Term, de.uni_freiburg.informatik.ultimate.logic.Term, java.lang.Object)
-	 */
 	@Override
 	public Term auxAxiom(final Term axiom, final Annotation auxRule) {
 		return axiom;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IRuleApplicator#split(de.uni_freiburg.informatik.ultimate.logic.Term, de.uni_freiburg.informatik.ultimate.logic.Term, int)
-	 */
 	@Override
 	public Term split(final Term splitTerm, final Term input, final Annotation splitKind) {
 		return splitTerm;

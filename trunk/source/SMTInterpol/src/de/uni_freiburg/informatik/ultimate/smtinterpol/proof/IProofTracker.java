@@ -29,6 +29,14 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
  * The proof tracker interface. There are two implementations, one that builds the proof and one that only builds the
  * proved term.
  *
+ * Many function take terms annotated with proofs. The annotation is only present when proof generation is enabled; the
+ * NoopTracker will not produce this annotation, nor expect the annotation. Other classes should use
+ * {@link #getProvedTerm} to extract the term without the proof.
+ *
+ * Some proof rules expect a term {@code g} to be annotated with a proof for {@code (= f g)}, where {@code f} is the
+ * original term, while others just expect the term {@code g} to be annotated with a proof for {@code g} itself. This is
+ * documented for each function.
+ *
  * @author Jochen Hoenicke
  */
 public interface IProofTracker {
@@ -93,6 +101,12 @@ public interface IProofTracker {
 	 * Create a rewrite proof for {@code (= orig res)}. This function doesn't check if the rewrite proof is sound but
 	 * trusts the caller.
 	 *
+	 * @param orig
+	 *            the original term
+	 * @param res
+	 *            the rewritten term
+	 * @param rule
+	 *            the rewrite rule, one of {@link ProofConstants}.RW_*
 	 * @return res annotated with proof of {@code (= orig res)}.
 	 */
 	public Term buildRewrite(Term orig, Term res, Annotation rule);
@@ -101,10 +115,24 @@ public interface IProofTracker {
 	 * Create a intern rewrite proof for {@code (= orig res)}. This function doesn't check if the rewrite proof is sound
 	 * but trusts the caller.
 	 *
+	 * @param orig
+	 *            the original term
+	 * @param res
+	 *            the rewritten term
 	 * @return res annotated with proof of {@code (= orig res)}.
 	 */
 	public Term intern(Term orig, Term res);
 
+	/**
+	 * Rewrites a forall quantifier into is normal form, a negated exists quantifier. The normal form is given as
+	 * parameter and this function doesn't check it.
+	 *
+	 * @param old
+	 *            the forall quantifier.
+	 * @param negNewBody
+	 *            the rewritten quantifer.
+	 * @return negNewBody annotated with its proof.
+	 */
 	public Term forall(QuantifiedFormula old, Term negNewBody);
 
 	//// ==== Tracking of clausification ====
@@ -129,32 +157,34 @@ public interface IProofTracker {
 	 */
 	public Term orSimpClause(Term rewrite, Literal[] finalClause);
 
-	// TODO *******************************************************************
-
 	/**
-	 * Create aux axiom input (tautologies).
-	 * @param axiom The axiom.
-	 * @param auxRule The rule for the axiom.
+	 * Create aux axiom input (tautologies). The term axiom is introduced as Tautology. This doesn't check if the axiom
+	 * is correct.
+	 *
+	 * @param axiom
+	 *            The axiom.
+	 * @param auxRule
+	 *            The rule for the axiom, one of {@link ProofConstants}.AUX_*.
 	 * @return Proof node of the auxiliary tautology.
 	 */
 	public Term auxAxiom(Term axiom, Annotation auxRule);
 
 	/**
-	 * Track a structural splitting step.
+	 * Track a structural splitting step. Rewrites formula into subterm.
 	 *
 	 * @param formula
 	 *            The formula being split annotated with its proof.
 	 * @param subterm
-	 *            Data used to produce the result of the split.
+	 *            The subformula, which is the result of the split.
 	 * @param splitKind
-	 *            The kind of split (@see ProofConstants).
+	 *            The kind of split, see {@see ProofConstants}.SPLIT_*.
 	 *
 	 * @return The subterm annotated with its proof.
 	 */
 	public Term split(Term formula, Term subterm, Annotation splitKind);
 
 	/**
-	 * Annotated an asserted formula with its proof (@asserted formula).
+	 * Annotate an asserted formula with its proof {@code (@asserted formula)}.
 	 *
 	 * @param formula
 	 *            The formula to annotate.
@@ -166,9 +196,9 @@ public interface IProofTracker {
 	 * Create a proof of g from the proof of f and the rewrite proof of (= f g) for g.
 	 *
 	 * @param asserted
-	 *            the asserted formula with its proof.
+	 *            the asserted formula f annotated with its proof.
 	 * @param rewrite
-	 *            the simplified formula with a proof of {@code (= asserted simpFormula)}.
+	 *            the simplified formula g annotated with a proof of {@code (= f g)}.
 	 * @return the resulting simpFormula annotated with the complete proof
 	 */
 	public Term getRewriteProof(Term asserted, Term rewrite);

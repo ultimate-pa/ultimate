@@ -48,18 +48,18 @@ public final class SMTAffineTerm {
 	private final Map<Term, Rational> mSummands;
 	private Rational mConstant;
 
-	public SMTAffineTerm(final Sort sort) {
+	public SMTAffineTerm() {
 		mSummands = new LinkedHashMap<Term, Rational>();
 		mConstant = Rational.ZERO;
 	}
 
-	public SMTAffineTerm(final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
+	public SMTAffineTerm(final Map<Term, Rational> summands, final Rational constant) {
 		mSummands = summands;
 		mConstant = constant;
 	}
 
 	public SMTAffineTerm(final Term term) {
-		this(term.getSort());
+		this();
 		Term[] subterms;
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("+")) {
 			subterms = ((ApplicationTerm) term).getParameters();
@@ -241,9 +241,26 @@ public final class SMTAffineTerm {
 	/**
 	 * Convert this affine term to a plain SMTLib term.
 	 *
-	 * @pram sort the expected sort
+	 * @param unifier
+	 *            the term compiler object that contains the normalization map.
+	 * @param sort
+	 *            the expected sort
 	 */
 	public Term toTerm(final TermCompiler unifier, final Sort sort) {
+		final Term term = toTerm(sort);
+		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("+")) {
+			return unifier.unifySummation((ApplicationTerm) term);
+		}
+		return term;
+	}
+
+	/**
+	 * Convert this affine term to a plain SMTLib term. This function does not unify the terms.
+	 *
+	 * @param sort
+	 *            the expected sort
+	 */
+	public Term toTerm(final Sort sort) {
 		assert sort.isNumericSort();
 		final Theory t = sort.getTheory();
 		int size = mSummands.size();
@@ -268,7 +285,7 @@ public final class SMTAffineTerm {
 		if (i < size) {
 			sum[i++] = mConstant.toTerm(sort);
 		}
-		return size == 1 ? sum[0] : unifier.unifySummation(t.term("+", sum));
+		return size == 1 ? sum[0] : t.term("+", sum);
 	}
 
 	@Override

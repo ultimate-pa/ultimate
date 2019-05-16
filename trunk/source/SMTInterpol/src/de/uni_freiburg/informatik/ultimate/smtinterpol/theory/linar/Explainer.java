@@ -147,8 +147,8 @@ public class Explainer {
 			return true;
 		}
 		assert (mAnnotationStack.size() == 1);
-		MutableAffinTerm mat = mAnnotationStack.getFirst().addLiterals();
-		assert (mat.isConstant() && InfinitNumber.ZERO.less(mat.getConstant()));
+		MutableAffineTerm mat = mAnnotationStack.getFirst().addLiterals();
+		assert (mat.isConstant() && InfinitesimalNumber.ZERO.less(mat.getConstant()));
 		for (final Map.Entry<LAReason, LAAnnotation> reasonEntry
 			: mSubReasons.entrySet()) {
 			final LAReason reason = reasonEntry.getKey();
@@ -157,7 +157,7 @@ public class Explainer {
 			mat.add(coeff, reason.getVar());
 			mat.add(reason.getBound().mul(coeff.negate()));
 			mat.add(reason.getVar().getEpsilon());
-			assert (mat.isConstant() && InfinitNumber.ZERO.less(mat.getConstant()));
+			assert (mat.isConstant() && InfinitesimalNumber.ZERO.less(mat.getConstant()));
 		}
 		return true;
 	}

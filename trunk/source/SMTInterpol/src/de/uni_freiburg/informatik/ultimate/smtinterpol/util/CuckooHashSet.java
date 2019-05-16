@@ -20,35 +20,19 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class CuckooHashSet<E> extends AbstractSet<E> {
 	/**
 	 * Default hash size.  Hash size is the power of two of this number.
 	 */
 	private static final int DEFAULT_SIZE_LOG_2 = 5;
-	
-	protected static class StashList<E> {
-		E mEntry;
-		StashList<E> mNext;
-		
-		public StashList(E entry, StashList<E> next) {
-			this.mEntry = entry;
-			this.mNext = next;
-		}
-		
-		public E getEntry() {
-			return mEntry;
-		}
-		public StashList<E> getNext() {
-			return mNext;
-		}
-	}
-	
+
 	protected int mLog2buckets = 5;
 	protected Object[] mBuckets;
-	protected StashList<E> mStashList;
+	protected E mStash;
 	private int mSize;
-	
+
 	public CuckooHashSet(int size) {
 		this.mLog2buckets = log2(2 * size);
 		this.mBuckets = new Object[1 << mLog2buckets];
@@ -57,7 +41,7 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		this.mLog2buckets = DEFAULT_SIZE_LOG_2;
 		this.mBuckets = new Object[1 << DEFAULT_SIZE_LOG_2];
 	}
-	
+
 	/**
 	 * The hash function.  This must have good bit distributing properties.
 	 * We use Jenkins hash function on object hashcode.
@@ -69,44 +53,41 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	}
 	
 	protected static int hashJenkins(int hash) {
-        hash += (hash << 12);// NOCHECKSTYLE
-        hash ^= (hash >>> 22);// NOCHECKSTYLE
-        hash += (hash << 4);// NOCHECKSTYLE
-        hash ^= (hash >>> 9);// NOCHECKSTYLE
-        hash += (hash << 10);// NOCHECKSTYLE
-        hash ^= (hash >>> 2);// NOCHECKSTYLE
-        hash += (hash << 7);// NOCHECKSTYLE
-        hash ^= (hash >>> 12);// NOCHECKSTYLE
-        return hash;
+		hash += (hash << 12);// NOCHECKSTYLE
+		hash ^= (hash >>> 22);// NOCHECKSTYLE
+		hash += (hash << 4);// NOCHECKSTYLE
+		hash ^= (hash >>> 9);// NOCHECKSTYLE
+		hash += (hash << 10);// NOCHECKSTYLE
+		hash ^= (hash >>> 2);// NOCHECKSTYLE
+		hash += (hash << 7);// NOCHECKSTYLE
+		hash ^= (hash >>> 12);// NOCHECKSTYLE
+		return hash;
 	}
-	
+
 	protected final int hash1(int hash) {
 		return hash & (mBuckets.length - 1);
 	}
-	
+
 	protected final int hash2(int hash) {
-		/* This computes (hash % (n^2)) % n-1, with n = buckets.length,
-		 * where 0 is mapped to n-1.
-		 * This may return 0 only if hash % (n^2) is 0; this is so unlikely
-		 * that it won't degrade performance of cuckoo hashing.
+		/*
+		 * scramble hash to make hash2 independent of hash1.
 		 */
-		hash = ((hash >>> mLog2buckets) & (mBuckets.length - 1))
-			 + (hash & (mBuckets.length - 1));
+		hash = hashJenkins(hash);
+		/*
+		 * This computes (hash % (n^2)) % (n-1) + 1, with n = buckets.length, except when hash == n^2-1 mod n^2.
+		 *
+		 * This may return 0 only if hash == n^2-1 mod n^2; this is so unlikely that it won't degrade performance of
+		 * cuckoo hashing.
+		 */
+		hash = ((hash >>> mLog2buckets) & (mBuckets.length - 1)) + (hash & (mBuckets.length - 1)) + 1;
 		hash = (hash + (hash >>> mLog2buckets)) & (mBuckets.length - 1);
 		return hash;
 	}
-	
+
 	private boolean containsStash(Object object) {
-		StashList<E> stash = this.mStashList;
-		while (stash != null) {
-			if (object.equals(stash.mEntry)) {
-				return true;
-			}
-			stash = stash.mNext;
-		}
-		return false;
+		return object.equals(mStash);
 	}
-	
+
 	@Override
 	public boolean contains(Object object) {
 		final int hash = hash(object);
@@ -117,14 +98,14 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		if (object.equals(mBuckets[hash2(hash) ^ hash1])) {
 			return true;
 		}
-		return mStashList != null && containsStash(object);
+		return mStash != null && containsStash(object);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void resize() {
 		final Object[] oldbuckets = mBuckets;
-		StashList<E> oldstash = mStashList;
-		mStashList = null;
+		E oldstash = mStash;
+		mStash = null;
 		mLog2buckets++;
 		mBuckets = new Object[1 << mLog2buckets];
 		for (int i = 0; i < oldbuckets.length; i++) {
@@ -132,15 +113,13 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 				add_internal(hash1(hash(oldbuckets[i])), (E) oldbuckets[i]);
 			}
 		}
-		while (oldstash != null) {
-			add_internal(hash1(hash(oldstash.mEntry)), oldstash.mEntry);
-			oldstash = oldstash.mNext;
-		}
+		add_internal(hash1(hash(oldstash)), oldstash);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void add_internal(int hash, E toAdd) {
 		int maxIter = mBuckets.length >> 2;
+		boolean checkedStash = false;
 		while (true) {
 			assert checkpos(hash);
 			final Object spill = mBuckets[hash];
@@ -152,19 +131,26 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 			toAdd = (E) spill;
 			hash ^= hash2(hash(toAdd));
 			if (maxIter-- == 0) {
-				if (3 * mSize < mBuckets.length) {
+				if (mStash == null) {
 					/* Use stash instead of resizing */
-					mStashList = new StashList<E>(toAdd, mStashList);
+					mStash = toAdd;
 					return;
+				}
+
+				if (!checkedStash) {
+					E oldstash = mStash;
+					mStash = toAdd;
+					toAdd = oldstash;
+					checkedStash = true;
 				} else {
 					resize();
-					maxIter = mBuckets.length >> 2;
-					hash = hash1(hash(toAdd));
 				}
+				maxIter = mBuckets.length >> 2;
+				hash = hash1(hash(toAdd));
 			}
 		}
 	}
-	
+
 	private boolean checkpos(int i) {
 		if (mBuckets[i] != null) {
 			final int hash = hash(mBuckets[i]);
@@ -174,7 +160,7 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		}
 		return true;
 	}
-	
+
 	private boolean invariant() {
 		assert(mSize >= 0);
 		int cnt = 0;
@@ -184,15 +170,13 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 				cnt++;
 			}
 		}
-		StashList<E> stash = mStashList;
-		while (stash != null) {
+		if (mStash != null) {
 			cnt++;
-			stash = stash.mNext;
 		}
 		assert(mSize == cnt);
 		return true;
 	}
-	
+
 	@Override
 	public boolean add(E toAdd) {
 		final int hash = hash(toAdd);
@@ -203,7 +187,7 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		if (toAdd.equals(mBuckets[hash2(hash) ^ hash1])) {
 			return false;
 		}
-		if (mStashList != null && containsStash(toAdd)) {
+		if (mStash != null && containsStash(toAdd)) {
 			return false;
 		}
 		if (mBuckets[hash1] == null) {
@@ -214,7 +198,7 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		mSize++;
 		return true;
 	}
-	
+
 	@Override
 	public boolean remove(Object toRemove) {
 		final int hash = hash(toRemove);
@@ -232,29 +216,15 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 			mBuckets[hash1] = null;
 			return true;
 		}
-		if (mStashList == null) {
-			return false;
+		if (mStash != null && toRemove.equals(mStash)) {
+			mSize--;
+			assert mSize >= 0;
+			mStash = null;
+			return true;
 		}
-		StashList<E> pre = null;
-		StashList<E> stash = this.mStashList;
-		while (stash != null) {
-			if (toRemove.equals(stash.mEntry)) {
-				mSize--;
-				assert mSize >= 0;
-				if (pre == null) {
-					this.mStashList = stash.mNext;
-				} else {
-					pre.mNext = stash.mNext;
-				}
-				assert invariant();
-				return true;
-			}
-			pre = stash;
-			stash = stash.mNext;
-		}
-		return false;		
+		return false;
 	}
-	
+
 	private final static int log2(int size) {
 		int i,j;
 		for (i = 4, j = 2; i < size; i += i, j++) {
@@ -268,20 +238,15 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		return new Iterator<E>() {
 			int mLastPos = -1;
 			int mPos = 0;
-			StashList<E> mPre = null;
-			StashList<E> mCurrent = null;
 			@Override
 			public boolean hasNext() {
 				while (mPos < mBuckets.length && mBuckets[mPos] == null) {
 					mPos++;
 				}
-				if (mPos < mBuckets.length) {
-					return true;
+				if (mPos == mBuckets.length && mStash == null) {
+					mPos++;
 				}
-				if (mCurrent != null) {
-					return mCurrent.mNext != null;
-				}
-				return mStashList != null;
+				return mPos <= mBuckets.length;
 			}
 			@Override
 			@SuppressWarnings("unchecked")
@@ -292,25 +257,18 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 				mLastPos = mPos;
 				if (mPos < mBuckets.length) {
 					return (E) mBuckets[mPos++];
+				} else if (mPos == mBuckets.length && mStash != null) {
+					mPos++;
+					return mStash;
 				}
-				if (mCurrent == null) {
-					mCurrent = mStashList;
-				} else {
-					mPre = mCurrent;
-					mCurrent = mCurrent.mNext;
-				}
-				return mCurrent.mEntry;
+				throw new NoSuchElementException();
 			}
 			@Override
 			public void remove() {
 				if (mLastPos < mBuckets.length) {
 					mBuckets[mLastPos] = null;
-				} else if (mPre == null) {
-					mStashList = mCurrent.mNext;
-					mCurrent = null;
 				} else {
-					mPre.mNext = mCurrent.mNext;
-					mCurrent = mPre;
+					mStash = null;
 				}
 				mSize--;
 				assert(mSize >= 0);
@@ -322,16 +280,16 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	public int size() {
 		return mSize;
 	}
-	
+
 	@Override
 	public void clear() {
 		mSize = 0;
 		for (int i = 0; i < mBuckets.length; i++) {
 			mBuckets[i] = null;
 		}
-		mStashList = null;
+		mStash = null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public E removeSome() {
 		if (mSize == 0) {
@@ -339,9 +297,9 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		}
 		mSize--;
 		assert(mSize >= 0);
-		if (mStashList != null) {
-			final E entry = mStashList.mEntry;
-			mStashList = mStashList.mNext;
+		if (mStash != null) {
+			final E entry = mStash;
+			mStash = null;
 			return entry;
 		}
 		for (int i = 0; /* empty */; i++) {

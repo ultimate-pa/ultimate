@@ -59,7 +59,7 @@ public class ProofTermGenerator extends NonRecursive {
 									antes[i].mPivot.getSMTFormula(t, true))},
 									engine.getConverted());
 			}
-			final Term res = t.term("@res", args);
+			final Term res = t.term(ProofConstants.FN_RES, args);
 			engine.setResult(mCls, res);
 			engine.pushConverted(res);
 		}
@@ -86,7 +86,7 @@ public class ProofTermGenerator extends NonRecursive {
 				final IAnnotation annot = ln.getTheoryAnnotation();
 				if (annot == null) {
 					assert ln.getLeafKind() == LeafNode.ASSUMPTION;
-					res = t.term("@assumption", mCls.toTerm(t));
+					res = t.term(ProofConstants.FN_ASSUMPTION, mCls.toTerm(t));
 				} else {
 					res = annot.toTerm(mCls, t);
 				}
@@ -135,7 +135,7 @@ public class ProofTermGenerator extends NonRecursive {
 	}
 
 	void pushConverted(final Term res) {
-		assert res.getSort().getName().equals("@Proof");
+		assert res.getSort().getName().equals(ProofConstants.SORT_PROOF);
 		mConverted.push(res);
 	}
 

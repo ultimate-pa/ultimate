@@ -23,10 +23,10 @@ import java.util.ArrayDeque;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
 
 public class LATerm extends Term {
-	public LATerm(InterpolatorAffineTerm s, InfinitNumber k, Term F) {
+	public LATerm(InterpolatorAffineTerm s, InfinitesimalNumber k, Term F) {
 		super(F.hashCode());
 		if (!s.isConstant()) {
 			final Rational gcd = s.getGCD().abs();
@@ -37,9 +37,9 @@ public class LATerm extends Term {
 				// if s is an integer term, round the constants accordingly
 				if (s.isInt()) {
 					// s <= 0 iff ceil(s) <= 0.
-					final InfinitNumber c = s.getConstant();
+					final InfinitesimalNumber c = s.getConstant();
 					// ceil(s) = s - c + ceil(c) = s + cdiff
-					final InfinitNumber cdiff = c.ceil().add(c.negate());
+					final InfinitesimalNumber cdiff = c.ceil().add(c.negate());
 					s.add(cdiff);
 					// -k <= s iff -k+cdiff <= s + cdiff
 					//         iff ceil(-k+cdiff) <= s + cdiff
@@ -54,7 +54,7 @@ public class LATerm extends Term {
 	}
 	
 	InterpolatorAffineTerm mS;
-	InfinitNumber mK;
+	InfinitesimalNumber mK;
 	Term mF;
 	
 	@Override

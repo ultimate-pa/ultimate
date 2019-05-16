@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -36,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -73,7 +73,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public ProofWalker(final Term term) {
-			assert term.getSort().getName().equals("@Proof");
+			assert term.getSort().getName().equals(ProofConstants.SORT_PROOF);
 			mTerm = (ApplicationTerm) term;
 		}
 
@@ -91,7 +91,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public ResolutionWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@res");
+			assert term.getFunction().getName().equals(ProofConstants.FN_RES);
 			mTerm = term;
 		}
 
@@ -125,7 +125,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public EqualityWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@eq");
+			assert term.getFunction().getName().equals(ProofConstants.FN_EQ);
 			mTerm = term;
 		}
 
@@ -154,7 +154,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public ClauseWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@clause");
+			assert term.getFunction().getName().equals(ProofConstants.FN_CLAUSE);
 			mTerm = term;
 		}
 
@@ -179,7 +179,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public SplitWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@split");
+			assert term.getFunction().getName().equals(ProofConstants.FN_SPLIT);
 			mTerm = term;
 		}
 
@@ -188,6 +188,7 @@ public class ProofChecker extends NonRecursive {
 			/* split expects an annotated proof as first parameter */
 			if (!(subproof instanceof AnnotatedTerm)) {
 				// push dummy proof as result an return
+				engine.reportError("Split without annotation: " + mTerm);
 				engine.stackPush(null, mTerm);
 				return;
 			}
@@ -210,7 +211,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public CongruenceWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@cong");
+			assert term.getFunction().getName().equals(ProofConstants.FN_CONG);
 			mTerm = term;
 		}
 
@@ -243,7 +244,7 @@ public class ProofChecker extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public TransitivityWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@trans");
+			assert term.getFunction().getName().equals(ProofConstants.FN_TRANS);
 			mTerm = term;
 		}
 
@@ -371,7 +372,7 @@ public class ProofChecker extends NonRecursive {
 
 		/* Look at the rule name and treat each different */
 		switch (rulename) {
-		case "@res":
+		case ProofConstants.FN_RES:
 			/*
 			 * The resolution rule.
 			 *
@@ -381,47 +382,43 @@ public class ProofChecker extends NonRecursive {
 			new ResolutionWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@eq":
+		case ProofConstants.FN_EQ:
 			new EqualityWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@cong":
+		case ProofConstants.FN_CONG:
 			new CongruenceWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@trans":
+		case ProofConstants.FN_TRANS:
 			new TransitivityWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@refl":
+		case ProofConstants.FN_REFL:
 			stackPush(walkReflexivity(proofTerm), proofTerm);
 			break;
 
-		case "@lemma":
+		case ProofConstants.FN_LEMMA:
 			stackPush(walkLemma(proofTerm), proofTerm);
 			break;
 
-		case "@tautology":
+		case ProofConstants.FN_TAUTOLOGY:
 			stackPush(walkTautology(proofTerm), proofTerm);
 			break;
 
-		case "@asserted":
+		case ProofConstants.FN_ASSERTED:
 			stackPush(walkAsserted(proofTerm), proofTerm);
 			break;
 
-		case "@rewrite":
+		case ProofConstants.FN_REWRITE:
 			stackPush(walkRewrite(proofTerm), proofTerm);
 			break;
 
-		case "@intern":
-			stackPush(walkIntern(proofTerm), proofTerm);
-			break;
-
-		case "@split":
+		case ProofConstants.FN_SPLIT:
 			new SplitWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@clause":
+		case ProofConstants.FN_CLAUSE:
 			new ClauseWalker(proofTerm).enqueue(this);
 			break;
 
@@ -462,6 +459,8 @@ public class ProofChecker extends NonRecursive {
 
 		if (lemmaType == ":LA") {
 			checkLALemma(clause, (Term[]) lemmaAnnotation);
+		} else if (lemmaType == ":CC") {
+			checkCCLemma(clause, (Object[]) lemmaAnnotation);
 		} else if (lemmaType == ":CC" || lemmaType == ":read-over-weakeq" || lemmaType == ":weakeq-ext"
 				|| lemmaType == ":read-const-weakeq" || lemmaType == ":const-weakeq") {
 			checkArrayLemma(lemmaType, clause, (Object[]) lemmaAnnotation);
@@ -478,35 +477,27 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Check an array lemma for correctness. If a problem is found, an error is reported.
+	 * Check a CC lemma for correctness. If a problem is found, an error is reported.
 	 *
-	 * @param type
-	 *            the lemma type
 	 * @param clause
 	 *            the clause to check
 	 * @param ccAnnotation
 	 *            the argument of the :CC annotation.
 	 */
-	private void checkArrayLemma(final String type, final Term[] clause, final Object[] ccAnnotation) {
-		int startSubpathAnnot = 0;
-
-		Term goalEquality;
-		if (ccAnnotation[0] instanceof Term) {
-			startSubpathAnnot++;
-			goalEquality = unquote((Term) ccAnnotation[0]);
-		} else {
-			goalEquality = mSkript.term("false");
+	private void checkCCLemma(final Term[] clause, final Object[] ccAnnotation) {
+		if (ccAnnotation.length < 3 || !(ccAnnotation[0] instanceof Term) || ccAnnotation[1] != ":subpath"
+				|| !(ccAnnotation[2] instanceof Term[])) {
+			reportError("Malformed CC annotation");
+			return;
 		}
+		final int startSubpathAnnot = 1;
 
-		/*
-		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
-		 * pair. strongPaths contains the sets of all proven strong paths.
-		 */
-		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
-		/* indexDiseqs contains all index equalities in the clause */
-		final HashSet<SymmetricPair<Term>> indexDisequalities = new HashSet<SymmetricPair<Term>>();
+		// The goal equality
+		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+
 
 		/* collect literals and search for the disequality */
+		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
 		boolean foundDiseq = false;
 		for (final Term literal : clause) {
 			if (isApplication("not", literal)) {
@@ -523,222 +514,309 @@ public class ProofChecker extends NonRecursive {
 				}
 				allEqualities.add(new SymmetricPair<Term>(sides[0], sides[1]));
 			} else {
-				final Term atom = unquote(literal);
-				if (!isApplication("=", atom)) {
-					reportError("Unknown literal in CC lemma.");
-					return;
-				}
-				if (unquote(literal) != goalEquality) {
-					if (type == ":CC") {
-						reportError("Unexpected positive literal in CC lemma.");
-					}
-					final Term[] sides = ((ApplicationTerm) atom).getParameters();
-					indexDisequalities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+				if (unquote(literal) != goalEquality || foundDiseq) {
+					reportError("Unexpected positive literal in CC lemma.");
 				}
 				foundDiseq = true;
 			}
 		}
 
-		SymmetricPair<Term> lastPath = null;
-		SymmetricPair<Term> lastWeakPath = null;
-		Term lastWeakIdx = null;
-		/*
-		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
-		 */
-		final HashMap<SymmetricPair<Term>, HashSet<Term>> weakPaths = new HashMap<SymmetricPair<Term>, HashSet<Term>>();
-		for (int i = ccAnnotation.length - 2; i >= startSubpathAnnot; i -= 2) {
-			if (!(ccAnnotation[i] instanceof String) || !(ccAnnotation[i + 1] instanceof Object[])) {
-				reportError("Malformed Array subpath");
-				return;
-			}
-			final Object[] annot = (Object[]) ccAnnotation[i + 1];
-			if (ccAnnotation[i] == ":weakpath") {
-				if (annot.length != 2 || !(annot[0] instanceof Term) || !(annot[1] instanceof Term[])) {
-					reportError("Malformed Array weakpath");
-					return;
-				}
-				final Term idx = (Term) annot[0];
-				final Term[] path = (Term[]) annot[1];
-				/* check weak path */
-				checkArrayPath(idx, path, allEqualities, null, indexDisequalities);
-				/* add it to premises */
-				final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(path[0], path[path.length - 1]);
-				HashSet<Term> weakIdxs = weakPaths.get(endPoints);
-				if (weakIdxs == null) {
-					weakIdxs = new HashSet<Term>();
-					weakPaths.put(endPoints, weakIdxs);
-				}
-				weakIdxs.add(idx);
-				lastWeakIdx = idx;
-				lastWeakPath = endPoints;
-			} else if (ccAnnotation[i] == ":subpath" && (annot instanceof Term[])) {
-				final Term[] path = (Term[]) annot;
-				final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(path[0], path[path.length - 1]);
-				/* check path */
-				checkArrayPath(null, path, allEqualities, weakPaths.get(endPoints), indexDisequalities);
-				/* add it to premises */
-				allEqualities.add(endPoints);
-				lastPath = endPoints;
-			} else {
-				reportError("Unknown subpath annotation");
-			}
-		}
-
-		SymmetricPair<Term> provedEquality;
-		switch (type) {
-		case ":CC":
-		case ":weakeq-ext":
-			if (lastPath == null) {
-				reportError("Missing main path in lemma");
-				return;
-			}
-			provedEquality = lastPath;
-			break;
-		case ":read-over-weakeq": {
-			if (!isApplication("=", goalEquality)) {
-				reportError("Goal equality is not an equality in read-over-weakeq lemma");
-				return;
-			}
-			final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
-			if (isApplication("select", sides[0]) && isApplication("select", sides[1])) {
-				final Term[] p1 = ((ApplicationTerm) sides[0]).getParameters();
-				final Term[] p2 = ((ApplicationTerm) sides[1]).getParameters();
-				if (p1[1] != p2[1]  && !allEqualities.contains(new SymmetricPair<Term>(p1[1], p2[1]))) {
-					reportError("Missing index equality in read-over-weakeq lemma");
-				}
-				if (lastWeakIdx != p1[1] && lastWeakIdx != p2[1]) {
-					reportError("Wrong index in weak path");
-				}
-				if (lastWeakPath == null || !lastWeakPath.equals(new SymmetricPair<Term>(p1[0], p2[0]))) {
-					reportError("Wrong path ends in weak path");
-				}
-			}
-			provedEquality = new SymmetricPair<Term>(sides[0], sides[1]);
-			break;
-		}
-		case ":const-weakeq": {
-			if (lastPath == null || !isApplication("const", lastPath.getFirst())
-					|| !isApplication("const", lastPath.getSecond())) {
-				reportError("Main path in const-weakeq not between const arrays.");
-				return;
-			}
-			final Term c1 = ((ApplicationTerm) lastPath.getFirst()).getParameters()[0];
-			final Term c2 = ((ApplicationTerm) lastPath.getSecond()).getParameters()[0];
-			provedEquality = new SymmetricPair<Term>(c1, c2);
-			break;
-		}
-		case ":read-const-weakeq": {
-			if (lastWeakPath == null || lastWeakIdx == null || !isApplication("const", lastWeakPath.getSecond())) {
-				reportError("Main weak path in read-const-weakeq not to a const array.");
-				return;
-			}
-			final Term c1 = mSkript.term("select", lastWeakPath.getFirst(), lastWeakIdx);
-			final Term c2 = ((ApplicationTerm) lastWeakPath.getSecond()).getParameters()[0];
-			provedEquality = new SymmetricPair<Term>(c1, c2);
-			break;
-		}
-		default:
-			reportError("Unknown rule " + type);
+		final Term[] mainPath = (Term[]) ccAnnotation[startSubpathAnnot + 1];
+		if (mainPath.length < 2) {
+			reportError("Main path too short in CC lemma");
 			return;
 		}
+		if (!isApplication("=", goalEquality)) {
+			reportError("Goal equality is not an equality in CC lemma");
+			return;
+		}
+		final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
+		if (sides.length != 2) {
+			reportError("Expected binary equality in CC lemma");
+			return;
+		}
+		if (!foundDiseq && !checkTrivialDisequality(sides[0], sides[1])) {
+			reportError("Did not find goal equality in CC lemma");
+		}
+		if (!new SymmetricPair<Term>(mainPath[0], mainPath[mainPath.length - 1])
+				.equals(new SymmetricPair<Term>(sides[0], sides[1]))) {
+			reportError("Did not explain main equality " + goalEquality);
+		}
 
-		if (startSubpathAnnot == 0) {
-			/* check that the mainPath is really a contradiction */
-			if (!checkTrivialDisequality(provedEquality.getFirst(), provedEquality.getSecond())) {
-				reportError("No diseq, but main path is " + lastPath);
+		if (mainPath.length == 2) {
+			// This must be a congruence lemma
+			if (!(mainPath[0] instanceof ApplicationTerm)
+				|| !(mainPath[1] instanceof ApplicationTerm)) {
+				reportError("Malformed congruence lemma");
+				return;
+			}
+			final ApplicationTerm lhs = (ApplicationTerm) mainPath[0];
+			final ApplicationTerm rhs = (ApplicationTerm) mainPath[1];
+			// check if functions are the same and have the same number of parameters
+			if (lhs.getFunction() != rhs.getFunction()
+					|| lhs.getParameters().length != rhs.getParameters().length) {
+				reportError("Malformed congruence lemma");
+				return;
+			}
+			// check if each parameter is identical or equal
+			final Term[] lhsArgs = lhs.getParameters();
+			final Term[] rhsArgs = rhs.getParameters();
+			for (int i = 0; i < lhsArgs.length; i++) {
+				if (lhsArgs[i] != rhsArgs[i]
+						&& !allEqualities.contains(new SymmetricPair<Term>(lhsArgs[i], rhsArgs[i]))) {
+					reportError("Malformed congruence lemma");
+				}
 			}
 		} else {
-			if (!isApplication("=", goalEquality)) {
-				reportError("Goal equality is not an equality in CC lemma");
-				return;
-			}
-			final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
-			if (!foundDiseq && !checkTrivialDisequality(sides[0], sides[1])) {
-				reportError("Did not find goal equality in CC lemma");
-			}
-			if (sides.length != 2) {
-				reportError("Expected binary equality in CC lemma");
-				return;
-			}
-			if (!provedEquality.equals(new SymmetricPair<Term>(sides[0], sides[1]))) {
-				reportError("Cannot explain main equality " + goalEquality);
+			// This is a transitivity lemma
+			for (int i = 0; i < mainPath.length - 1; i++) {
+				if (!allEqualities.contains(new SymmetricPair<>(mainPath[i], mainPath[i + 1]))) {
+					reportError("Equality missing in transitivity lemma");
+				}
 			}
 		}
 	}
 
 	/**
-	 * Check if each step in a CC or array path is valid. This means, for each pair of consecutive terms, either there
-	 * is a strong path between the two, or there exists a select path explaining element equality of array terms at the
-	 * weak path index, or it is a weak store step, or a congruence. This reports errors using reportError.
+	 * Check an array lemma for correctness. If a problem is found, an error is reported.
 	 *
+	 * @param type
+	 *            the lemma type
+	 * @param clause
+	 *            the clause to check
+	 * @param ccAnnotation
+	 *            the argument of the :CC annotation.
+	 */
+	private void checkArrayLemma(final String type, final Term[] clause, final Object[] ccAnnotation) {
+		if (ccAnnotation.length < 3) {
+			reportError("Malformed Array annotation");
+			return;
+		}
+		final boolean isWeakEqExt = type == ":weakeq-ext";
+		final boolean noIndexOnMain = isWeakEqExt || type == ":const-weakeq";
+		/*
+		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
+		 * pair. strongPaths contains the sets of all proven strong paths.
+		 */
+		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
+		/* indexDiseqs contains all index equalities in the clause */
+		final HashSet<SymmetricPair<Term>> allDisequalities = new HashSet<SymmetricPair<Term>>();
+
+		/* collect literals and search for the disequality */
+		for (final Term literal : clause) {
+			final boolean negated = isApplication("not", literal);
+			final Term atom = unquote(negated ? ((ApplicationTerm) literal).getParameters()[0] : literal);
+			if (!isApplication("=", atom)) {
+				reportError("Unknown literal in array lemma.");
+				return;
+			}
+			final Term[] sides = ((ApplicationTerm) atom).getParameters();
+			if (sides.length != 2) {
+				reportError("Unknown literal in array lemma.");
+				return;
+			}
+			if (negated) {
+				// negated atom in clause -> equality in conflict
+				allEqualities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+			} else {
+				allDisequalities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+			}
+		}
+		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		if (!isApplication("=", goalEquality)) {
+			reportError("Goal equality is not an equality in array lemma");
+			return;
+		}
+		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
+		if (goalTerms.length != 2) {
+			reportError("Expected binary equality in array lemma");
+			return;
+		}
+		if (!allDisequalities.contains(new SymmetricPair<Term>(goalTerms[0], goalTerms[1]))
+				&& !checkTrivialDisequality(goalTerms[0], goalTerms[1])) {
+			reportError("Did not find goal equality in array lemma");
+		}
+
+		/*
+		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
+		 */
+		if (isWeakEqExt ? ccAnnotation.length % 2 != 1 : ccAnnotation.length != 3) {
+			reportError("Malformed Array subpath");
+			return;
+		}
+		if (ccAnnotation[1] != (noIndexOnMain ? ":subpath" : ":weakpath") || !(ccAnnotation[2] instanceof Object[])) {
+			reportError("Malformed Array subpath");
+			return;
+		}
+		Term[] mainPath;
+		Term mainIdx;
+		if (!noIndexOnMain) {
+			final Object[] weakItems = (Object[]) ccAnnotation[2];
+			if (weakItems.length != 2 || !(weakItems[0] instanceof Term) || !(weakItems[1] instanceof Term[])) {
+				reportError("Malformed Array subpath");
+				return;
+			}
+			mainIdx = (Term) weakItems[0];
+			mainPath = (Term[]) weakItems[1];
+		} else {
+			if (!(ccAnnotation[2] instanceof Term[])) {
+				reportError("Malformed Array subpath");
+				return;
+			}
+			mainIdx = null;
+			mainPath = (Term[]) ccAnnotation[2];
+		}
+		final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(mainPath[0], mainPath[mainPath.length - 1]);
+		/*
+		 * Collect the weakpaths of weakeq ext first.
+		 */
+		if (isWeakEqExt) {
+			final HashSet<Term> weakIndices = new HashSet<Term>();
+			for (int i = 3; i < ccAnnotation.length; i += 2) {
+				if (ccAnnotation[i] != ":weakpath" ||  !(ccAnnotation[i + 1] instanceof Object[])) {
+					reportError("Malformed Array subpath");
+					return;
+				}
+				final Object[] weakItems = (Object[]) ccAnnotation[i + 1];
+				if (weakItems.length != 2 || !(weakItems[0] instanceof Term) || !(weakItems[1] instanceof Term[])) {
+					reportError("Malformed Array subpath");
+					return;
+				}
+				/* check weak path */
+				final Term idx = (Term) weakItems[0];
+				final Term[] weakPath = (Term[]) weakItems[1];
+				checkArrayPath(type, idx, weakPath, allEqualities, allDisequalities, null);
+				/* check end points */
+				if (!endPoints.equals(new SymmetricPair<>(weakPath[0], weakPath[weakPath.length - 1]))) {
+					reportError("Malformed Array weakpath");
+					return;
+				}
+				/* remember index */
+				weakIndices.add(idx);
+			}
+
+			checkArrayPath(type, null, mainPath, allEqualities, allDisequalities, weakIndices);
+			// check that we proved the right equality
+			if (!endPoints.equals(new SymmetricPair<>(goalTerms[0], goalTerms[1]))) {
+				reportError("Wrong goal equality");
+			}
+		} else {
+			checkArrayPath(type, mainIdx, mainPath, allEqualities, allDisequalities, null);
+			switch (type) {
+			case ":read-over-weakeq": {
+				if (!isApplication("=", goalEquality)) {
+					reportError("Wrong goal equality in read-over-weakeq lemma");
+					return;
+				}
+				if (!isApplication("select", goalTerms[0]) || !isApplication("select", goalTerms[1])) {
+					reportError("Wrong goal equality in read-over-weakeq lemma");
+					return;
+				}
+				final Term[] p1 = ((ApplicationTerm) goalTerms[0]).getParameters();
+				final Term[] p2 = ((ApplicationTerm) goalTerms[1]).getParameters();
+				if (p1[1] != p2[1] && !allEqualities.contains(new SymmetricPair<Term>(p1[1], p2[1]))) {
+					reportError("Missing index equality in read-over-weakeq lemma");
+				}
+				if (mainIdx != p1[1] && mainIdx != p2[1]) {
+					reportError("Wrong index in weak path");
+				}
+				if (!endPoints.equals(new SymmetricPair<Term>(p1[0], p2[0]))) {
+					reportError("Wrong path ends in weak path");
+				}
+				break;
+			}
+			case ":read-const-weakeq": {
+				if (!isApplication("const", endPoints.getSecond())) {
+					reportError("Main weak path in read-const-weakeq not to a const array.");
+					return;
+				}
+				final Term c1 = mSkript.term("select", endPoints.getFirst(), mainIdx);
+				final Term c2 = ((ApplicationTerm) endPoints.getSecond()).getParameters()[0];
+				// check if goalTerms are a permutation of c1,c2
+				if ((goalTerms[0] != c1 || goalTerms[1] != c2) && (goalTerms[1] != c1 || goalTerms[0] != c2)) {
+					reportError("Wong goal equality in read-const-weakeq");
+				}
+				break;
+			}
+			case ":const-weakeq": {
+				assert mainIdx == null;
+				if (!isApplication("const", endPoints.getFirst()) || !isApplication("const", endPoints.getSecond())) {
+					reportError("Main weak path in read-const-weakeq not to a const array.");
+					return;
+				}
+				final Term v1 = ((ApplicationTerm) endPoints.getFirst()).getParameters()[0];
+				final Term v2 = ((ApplicationTerm) endPoints.getSecond()).getParameters()[0];
+				// check if goalTerms are a permutation of c1,c2
+				if ((goalTerms[0] != v1 || goalTerms[1] != v2) && (goalTerms[1] != v1 || goalTerms[0] != v2)) {
+					reportError("Wrong goal equality in const-weakeq lemma");
+				}
+				break;
+			}
+			default:
+				reportError("Unknown rule " + type);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Check if each step in an array path is valid. This means, for each pair of consecutive terms, either there is a
+	 * strong path between the two, or there exists a select path explaining element equality of array terms at the weak
+	 * path index, or it is a weak store step, or a congruence. This reports errors using reportError.
+	 *
+	 * @param lemmaType
+	 *            the type of array lemma.
 	 * @param weakIdx
 	 *            the weak path index or null for subpaths.
 	 * @param path
 	 *            the path to check.
-	 * @param strongPaths
-	 *            the equality literals and subpaths from the CC- and array lemma annotations.
+	 * @param equalities
+	 *            the equality literals from the clause.
+	 * @param disequalities
+	 *            the index disequality literals from the clause.
 	 * @param weakPaths
 	 *            the weak paths (given by their weak index) needed for the main path in array lemmas, null if path is
 	 *            not the main path.
-	 * @param indexDiseqs
-	 *            the index disequality literals.
 	 */
-	void checkArrayPath(final Term weakIdx, final Term[] path, final HashSet<SymmetricPair<Term>> strongPaths,
-			final HashSet<Term> weakPaths, final HashSet<SymmetricPair<Term>> indexDiseqs) {
+	void checkArrayPath(final String lemmaType, final Term weakIdx, final Term[] path,
+			final HashSet<SymmetricPair<Term>> equalities,
+			final HashSet<SymmetricPair<Term>> disequalities, final HashSet<Term> weakPaths) {
+		// note that a read-const-weakeq path can have length 1
 		if (path.length < 1) {
-			reportError("Empty path in ArrayLemma");
+			reportError("Empty path in array lemma");
 			return;
 		}
 		for (int i = 0; i < path.length - 1; i++) {
 			final SymmetricPair<Term> pair = new SymmetricPair<Term>(path[i], path[i + 1]);
 			/* check for strong path first */
-			if (strongPaths.contains(pair)) {
+			if (equalities.contains(pair)) {
 				continue;
-			}
-			/* check for select path (only for weakeq-ext) */
-			if (weakIdx != null) {
-				/*
-				 * check for select path with select indices equal to weakIdx, both trivially equal and proven equal by
-				 * a strong path
-				 */
-				if (checkSelectPath(pair, weakIdx, strongPaths)) {
-					continue;
-				}
 			}
 			/* check for weak store step */
 			final Term storeIndex = checkStoreIndex(path[i], path[i + 1]);
 			if (storeIndex != null) {
+				// this is a step from a to (store a storeIndex v).  Check if storeIndex is okay.
 				if (weakIdx != null) {
-					if (indexDiseqs.contains(new SymmetricPair<Term>(weakIdx, storeIndex))) {
-						continue;
-					}
-					if (checkTrivialDisequality(weakIdx, storeIndex)) {
+					// for a weak path it needs to be different from weakIdx to prove a[weakIdx] = store[weakIdx]
+					if (disequalities.contains(new SymmetricPair<Term>(weakIdx, storeIndex))
+							|| checkTrivialDisequality(weakIdx, storeIndex)) {
 						continue;
 					}
 				} else {
-					if (weakPaths != null && weakPaths.contains(storeIndex)) {
-						continue;
-					}
-					if (isApplication("const", path[0]) && isApplication("const", path[path.length - 1])) {
+					// For the main path of the weakeq-ext lemma it must be one of the indices for which a weakPath was
+					// given. For the main path of the const-weakeq lemma, we don't need to check the storeIndex.
+					if (lemmaType.equals(":const-weakeq") || weakPaths.contains(storeIndex)) {
 						continue;
 					}
 				}
 			}
-			/* check for congruence */
-			if (path[i] instanceof ApplicationTerm && path[i + 1] instanceof ApplicationTerm) {
-				final ApplicationTerm app1 = (ApplicationTerm) path[i];
-				final ApplicationTerm app2 = (ApplicationTerm) path[i + 1];
-				if (app1.getFunction() == app2.getFunction()) {
-					final Term[] p1 = app1.getParameters();
-					final Term[] p2 = app2.getParameters();
-					for (int j = 0; j < p1.length; j++) {
-						if (p1[j] == p2[j]) {
-							continue;
-						}
-						if (!strongPaths.contains(new SymmetricPair<Term>(p1[j], p2[j]))) {
-							reportError("unexplained equality");
-						}
-					}
+			/* check for select edge (only for weakeq-ext) */
+			if (weakIdx != null && lemmaType.equals(":weakeq-ext")) {
+				/*
+				 * check for select path with select indices equal to weakIdx, both trivially equal and proven equal by
+				 * a strong path
+				 */
+				if (checkSelectPath(pair, weakIdx, equalities)) {
 					continue;
 				}
 			}
@@ -746,26 +824,44 @@ public class ProofChecker extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Checks whether there is a select edge that would explain a step in a weak path of the weakeq-ext lemma. Usually,
+	 * this is a select equality {@code a[i] = b[j]} with {@code weakIdx = i} and {@code weakIdx = j}. This could also
+	 * be a select-const equality {@code a[i] = v} when {@code b} is a const term {@code (const v)}.
+	 *
+	 * @param termPair
+	 *            the pair a,b whose step should be explained.
+	 * @param weakIdx
+	 *            the index of the weak path.
+	 * @param equalities
+	 *            the equalities that occur negated in the lemma and can be used.
+	 * @return true if the step is explained by a valid select edge or select-const edge.
+	 */
 	private boolean checkSelectPath(final SymmetricPair<Term> termPair, final Term weakIdx,
-			final HashSet<SymmetricPair<Term>> strongPaths) {
-		for (final SymmetricPair<Term> strongPath : strongPaths) {
-			if (checkSelectConst(strongPath.getFirst(), termPair.getFirst(), weakIdx, strongPaths)
-					&& checkSelectConst(strongPath.getSecond(), termPair.getSecond(), weakIdx, strongPaths)) {
+			final HashSet<SymmetricPair<Term>> equalities) {
+		for (final SymmetricPair<Term> candidateEquality : equalities) {
+			// Check for each candidate equality if it explains a select edge for a weakeq-ext lemma.
+			// We check if termPair.first[weakIdx]] equals one side of the equality and termPair.second[weakIdx]
+			// equals the other side.
+			if (checkSelectConst(candidateEquality.getFirst(), termPair.getFirst(), weakIdx, equalities)
+					&& checkSelectConst(candidateEquality.getSecond(), termPair.getSecond(), weakIdx, equalities)) {
 				return true;
 			}
-			if (checkSelectConst(strongPath.getFirst(), termPair.getSecond(), weakIdx, strongPaths)
-					&& checkSelectConst(strongPath.getSecond(), termPair.getFirst(), weakIdx, strongPaths)) {
+			if (checkSelectConst(candidateEquality.getFirst(), termPair.getSecond(), weakIdx, equalities)
+					&& checkSelectConst(candidateEquality.getSecond(), termPair.getFirst(), weakIdx, equalities)) {
 				return true;
 			}
 		}
+		// No candidate equality was found but it could also be a select-const edge where a[i] and v are
+		// syntactically equal, in which case there is no equality.
 		if (isApplication("const", termPair.getFirst())
 				&& checkSelectConst(((ApplicationTerm) termPair.getFirst()).getParameters()[0],
-						termPair.getSecond(), weakIdx, strongPaths)) {
+						termPair.getSecond(), weakIdx, equalities)) {
 			return true;
 		}
 		if (isApplication("const", termPair.getSecond())
 				&& checkSelectConst(((ApplicationTerm) termPair.getSecond()).getParameters()[0],
-						termPair.getFirst(), weakIdx, strongPaths)) {
+						termPair.getFirst(), weakIdx, equalities)) {
 			return true;
 		}
 		return false;
@@ -775,22 +871,32 @@ public class ProofChecker extends NonRecursive {
 	 * Check if array[weakIdx] is value, either because value is the select term, or array is a constant array
 	 * on value.
 	 */
-	private boolean checkSelectConst(Term value, Term array, final Term weakIdx,
+	private boolean checkSelectConst(final Term value, final Term array, final Term weakIdx,
 		final HashSet<SymmetricPair<Term>> strongPaths) {
+		// Check if value is (select array idx2) with (weakIdx = idx2) in equalities or syntactically equal.
 		if (isApplication("select", value)) {
-			Term[] args = ((ApplicationTerm) value).getParameters();
+			final Term[] args = ((ApplicationTerm) value).getParameters();
 			if (args[0] == array
 					&& (args[1] == weakIdx || strongPaths.contains(new SymmetricPair<>(args[1], weakIdx)))) {
 				return true;
 			}
 		}
-		if (isApplication("const", array)
-			&& ((ApplicationTerm) array).getParameters()[0] == value) {
+		// Check if array is (const value)
+		if (isApplication("const", array) && ((ApplicationTerm) array).getParameters()[0] == value) {
 			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Checks whether {@code term1} is {@code (store term2 idx val)} or {@code term2} is {@code (store term1 idx val)}.
+	 *
+	 * @param term1
+	 *            the first array term.
+	 * @param term2
+	 *            the second array term
+	 * @return idx if one of the terms is a store term of the other, or null if not.
+	 */
 	private Term checkStoreIndex(final Term term1, final Term term2) {
 		if (isApplication("store", term1)) {
 			final Term[] storeArgs = ((ApplicationTerm) term1).getParameters();
@@ -837,15 +943,17 @@ public class ProofChecker extends NonRecursive {
 	 *            the right-hand side of the equality
 	 * @return true if the equality is trivially not satisfied.
 	 */
-	boolean checkTrivialDisequality(Term first, Term second) {
+	boolean checkTrivialDisequality(final Term first, final Term second) {
 		if (!first.getSort().isNumericSort()) {
 			return false;
 		}
-		final SMTAffineTerm diff = new SMTAffineTerm(second);
-		diff.negate();
-		diff.add(new SMTAffineTerm(first));
-		return (diff.isConstant() && !diff.getConstant().equals(Rational.ZERO))
-			|| (diff.isAllIntSummands() && !diff.getConstant().div(diff.getGcd()).isIntegral());
+		final SMTAffineTerm diff = new SMTAffineTerm(first);
+		diff.add(Rational.MONE, second);
+		if (diff.isConstant()) {
+			return !diff.getConstant().equals(Rational.ZERO);
+		} else {
+			return diff.isAllIntSummands() && !diff.getConstant().div(diff.getGcd()).isIntegral();
+		}
 	}
 
 	/**
@@ -866,13 +974,8 @@ public class ProofChecker extends NonRecursive {
 			return;
 		}
 
-		final Theory t = clause[0].getTheory();
 		boolean sumHasStrict = false;
-		Sort sort = t.getRealSort();
-		if (sort == null) {
-			sort = t.getNumericSort();
-		}
-		final SMTAffineTerm sum = new SMTAffineTerm(sort);
+		final SMTAffineTerm sum = new SMTAffineTerm();
 		for (int i = 0; i < clause.length; i++) {
 			final Rational coeff = parseConstant(coefficients[i]);
 			if (coeff == null) {
@@ -1076,22 +1179,19 @@ public class ProofChecker extends NonRecursive {
 			reportError("Lemma :EQ must have one equality and one disequality");
 			return;
 		}
-		Term[] lit1Args = ((ApplicationTerm) lit1).getParameters();
-		Term[] lit2Args = ((ApplicationTerm) lit2).getParameters();
-		if (isZero(lit1Args[1])) {
-			final Term[] t = lit1Args;
-			lit1Args = lit2Args;
-			lit2Args = t;
-		} else if (!isZero(lit2Args[1])) {
-			reportError("Lemma :EQ must have one LA equality (zero on right-hand side)");
+		final Term[] lit1Args = ((ApplicationTerm) lit1).getParameters();
+		final Term[] lit2Args = ((ApplicationTerm) lit2).getParameters();
+		final SMTAffineTerm diff1 = new SMTAffineTerm(lit1Args[0]);
+		diff1.add(Rational.MONE, lit1Args[1]);
+		final SMTAffineTerm diff2 = new SMTAffineTerm(lit2Args[0]);
+		diff2.add(Rational.MONE, lit2Args[1]);
+		// check that they are not constant to avoid gcd errors.
+		if (diff1.isConstant() || diff2.isConstant()) {
+			reportError("Lemma :EQ with trivial equalities");
 			return;
 		}
-
-		final SMTAffineTerm diff1 = new SMTAffineTerm(lit1Args[0]);
-		diff1.negate();
-		diff1.add(new SMTAffineTerm(lit1Args[1]));
 		diff1.div(diff1.getGcd());
-		final SMTAffineTerm diff2 = new SMTAffineTerm(lit2Args[0]);
+		diff2.div(diff2.getGcd());
 		if (diff1.equals(diff2)) {
 			return;
 		}
@@ -1141,14 +1241,17 @@ public class ProofChecker extends NonRecursive {
 		case ":ite-red":
 			result = checkTautIte(tautolyName, clause);
 			break;
-		case ":=+1":
-		case ":=+2":
-		case ":=-1":
-		case ":=-2":
-			result = checkTautEq(tautolyName, clause);
+		case ":xor+1":
+		case ":xor+2":
+		case ":xor-1":
+		case ":xor-2":
+			result = checkTautXor(tautolyName, clause);
 			break;
 		case ":termITE":
 			result = checkTautTermIte(clause);
+			break;
+		case ":termITEBound":
+			result = checkTautTermIteBound(clause);
 			break;
 		case ":excludedMiddle1":
 		case ":excludedMiddle2":
@@ -1259,7 +1362,7 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	private boolean checkTautEq(final String tautKind, final Term[] clause) {
+	private boolean checkTautXor(final String tautKind, final Term[] clause) {
 		if (clause.length != 3) {
 			return false;
 		}
@@ -1269,7 +1372,7 @@ public class ProofChecker extends NonRecursive {
 			lit = negate(lit);
 		}
 		lit = unquote(lit);
-		if (!isApplication("=", lit)) {
+		if (!isApplication("xor", lit)) {
 			return false;
 		}
 		final Term[] eqParams = ((ApplicationTerm) lit).getParameters();
@@ -1277,19 +1380,19 @@ public class ProofChecker extends NonRecursive {
 			return false;
 		}
 		switch (tautKind) {
-		case ":=+1":
-			// (or (not (! (or t1 t2) :quoted)) t1 (not t2))
-			return negated && clause[1] == eqParams[0] && clause[2] == mSkript.term("not", eqParams[1]);
-		case ":=+2":
-			// (or (not (! (or t1 t2) :quoted)) (not t1) t2)
-			return negated && clause[1] == mSkript.term("not", eqParams[0]) && clause[2] == eqParams[1];
-		case ":=-1":
-			// (or (! (or t1 t2) :quoted) t1 t2)
-			return !negated && clause[1] == eqParams[0] && clause[2] == eqParams[1];
-		case ":=-2":
-			// (or (! (or t1 t2) :quoted) (not t1) (not t2))
-			return !negated && clause[1] == mSkript.term("not", eqParams[0])
+		case ":xor+1":
+			// (or (! (xor t1 t2) :quoted) t1 t2)
+			return negated && clause[1] == eqParams[0] && clause[2] == eqParams[1];
+		case ":xor+2":
+			// (or (! (xor t1 t2) :quoted) (not t1) (not t2))
+			return negated && clause[1] == mSkript.term("not", eqParams[0])
 					&& clause[2] == mSkript.term("not", eqParams[1]);
+		case ":xor-1":
+			// (or (not (! (xor t1 t2) :quoted)) t1 (not t2))
+			return !negated && clause[1] == eqParams[0] && clause[2] == mSkript.term("not", eqParams[1]);
+		case ":xor-2":
+			// (or (not (! (xor t1 t2) :quoted)) (not t1) t2)
+			return !negated && clause[1] == mSkript.term("not", eqParams[0]) && clause[2] == eqParams[1];
 		}
 		return false;
 	}
@@ -1326,6 +1429,67 @@ public class ProofChecker extends NonRecursive {
 		}
 		// check right hand side of equality
 		return term == eqParams[1];
+	}
+
+	private boolean checkTautTermIteBound(final Term[] clause) {
+		// Check for the form: (<= (+ (ite c1 t1 t2) x) 0) where (+ ti x) must be constant and <= 0.
+		// The ite can also be nested, i.e. (<= (+ (ite c1 (ite c2 t1 t2) (ite c3 t3 t4)) x) 0)
+		// The ite can also be negated.
+		// One of the (+ ti x) terms must be equal to 0.
+		// The conditions ci can have arbitrary form.
+		if (clause.length != 1 || !isApplication("<=", clause[0])) {
+			return false;
+		}
+		final Term[] leqArgs = ((ApplicationTerm) clause[0]).getParameters();
+		if (leqArgs.length != 2 || !isZero(leqArgs[1])) {
+			return false;
+		}
+		final SMTAffineTerm sum = new SMTAffineTerm(leqArgs[0]);
+		// find the ite term and check it.
+		// we check each ite if the lemma works with it.
+		boolean foundITE = false;
+		entryLoop:
+		for (final Map.Entry<Term, Rational> entry : sum.getSummands().entrySet()) {
+			if (!isApplication("ite", entry.getKey()) || entry.getValue().abs() != Rational.ONE) {
+				continue;
+			}
+			Term[] iteArgs = ((ApplicationTerm) entry.getKey()).getParameters();
+
+			boolean zeroSeen = false;
+			final ArrayDeque<Term> toCheck = new ArrayDeque<>();
+			toCheck.add(iteArgs[2]);
+			toCheck.add(iteArgs[1]);
+			// Now check for each ti if replacing ti with (ite c t1 t2) in sum results a non-positive constant.
+			while (!toCheck.isEmpty()) {
+				Term candidate = toCheck.removeLast();
+				while (isApplication("ite", candidate)) {
+					// nested ite. push the second branch to toCheck queue, and check the first one.
+					iteArgs = ((ApplicationTerm) candidate).getParameters();
+					toCheck.addLast(iteArgs[2]);
+					candidate = iteArgs[1];
+				}
+
+				// replace (ite c t e) with candidate in sum, by adding (- candidate (ite c t e)) * entry.getValue().
+				final SMTAffineTerm sumWithCandidate = new SMTAffineTerm(candidate);
+				sumWithCandidate.add(Rational.MONE, entry.getKey());
+				sumWithCandidate.mul(entry.getValue());
+				sumWithCandidate.add(sum);
+
+				// Afterwards the literal should be <= 0, to make the clause true.
+				if (!sumWithCandidate.isConstant() || sumWithCandidate.getConstant().signum() > 0) {
+					continue entryLoop;
+				}
+				if (sumWithCandidate.getConstant().signum() == 0) {
+					zeroSeen = true;
+				}
+			}
+			// check that the bound is tight, i.e. one of the sums should be 0.
+			if (zeroSeen) {
+				foundITE = true;
+				break;
+			}
+		}
+		return foundITE;
 	}
 
 	private boolean checkTautLowHigh(final String ruleName, final Term[] clause) {
@@ -1490,7 +1654,7 @@ public class ProofChecker extends NonRecursive {
 
 	Term walkReflexivity(final ApplicationTerm reflexivityApp) {
 		// sanity check (caller and typechecker should ensure this
-		assert reflexivityApp.getFunction().getName() == "@refl";
+		assert reflexivityApp.getFunction().getName() == ProofConstants.FN_REFL;
 		assert reflexivityApp.getParameters().length == 1;
 
 		// reflexivity (@refl term) proves (= term term).
@@ -1502,7 +1666,7 @@ public class ProofChecker extends NonRecursive {
 
 	Term walkTransitivity(final ApplicationTerm transitivityApp, final Term[] equalities) {
 		// sanity check (caller and typechecker should ensure this
-		assert transitivityApp.getFunction().getName() == "@trans";
+		assert transitivityApp.getFunction().getName() == ProofConstants.FN_TRANS;
 
 		Term firstTerm = null;
 		Term lastTerm = null;
@@ -1529,7 +1693,7 @@ public class ProofChecker extends NonRecursive {
 
 	Term walkCongruence(final ApplicationTerm congruenceApp, final Term[] subProofs) {
 		// sanity check (caller and typechecker should ensure this
-		assert congruenceApp.getFunction().getName() == "@cong";
+		assert congruenceApp.getFunction().getName() == ProofConstants.FN_CONG;
 		for (int i = 0; i < subProofs.length; i++) {
 			/* Check that it is an equality */
 			if (!isApplication("=", subProofs[i]) || ((ApplicationTerm) subProofs[i]).getParameters().length != 2) {
@@ -1576,7 +1740,7 @@ public class ProofChecker extends NonRecursive {
 		 * A rewrite rule has the form (@rewrite (! (= lhs rhs) :rewriteRule)) The rewriteRule gives the name of the
 		 * rewrite axiom. The equality (= lhs rhs) is then a simple rewrite axiom.
 		 */
-		assert rewriteApp.getFunction().getName() == "@rewrite";
+		assert rewriteApp.getFunction().getName() == ProofConstants.FN_REWRITE;
 		assert rewriteApp.getParameters().length == 1;
 		final String rewriteRule = checkAndGetAnnotationKey(rewriteApp.getParameters()[0]);
 		if (rewriteRule == null) {
@@ -1621,12 +1785,18 @@ public class ProofChecker extends NonRecursive {
 			break;
 		case ":distinctBool":
 		case ":distinctSame":
-		case ":distinctNeg":
-		case ":distinctTrue":
-		case ":distinctFalse":
-		case ":distinctBoolEq":
 		case ":distinctBinary":
 			okay = checkRewriteDistinct(rewriteRule, eqParams[0], eqParams[1]);
+			break;
+		case ":xorTrue":
+		case ":xorFalse":
+			okay = checkRewriteXorConst(rewriteRule, eqParams[0], eqParams[1]);
+			break;
+		case ":xorNot":
+			okay = checkRewriteXorNot(eqParams[0], eqParams[1]);
+			break;
+		case ":xorSame":
+			okay = checkRewriteXorSame(eqParams[0], eqParams[1]);
 			break;
 		case ":notSimp":
 			okay = checkRewriteNot(eqParams[0], eqParams[1]);
@@ -1651,8 +1821,9 @@ public class ProofChecker extends NonRecursive {
 		case ":andToOr":
 			okay = checkRewriteAndToOr(eqParams[0], eqParams[1]);
 			break;
-		case ":xorToDistinct":
-			okay = checkRewriteXorToDistinct(eqParams[0], eqParams[1]);
+		case ":eqToXor":
+		case ":distinctToXor":
+			okay = checkRewriteToXor(rewriteRule, eqParams[0], eqParams[1]);
 			break;
 		case ":impToOr":
 			okay = checkRewriteImpToOr(eqParams[0], eqParams[1]);
@@ -1701,6 +1872,9 @@ public class ProofChecker extends NonRecursive {
 			break;
 		case ":storeRewrite":
 			okay = checkRewriteStore(eqParams[0], eqParams[1]);
+			break;
+		case ":intern":
+			okay = checkRewriteIntern(eqParams[0], eqParams[1]);
 			break;
 		default:
 			okay = false;
@@ -1757,17 +1931,23 @@ public class ProofChecker extends NonRecursive {
 		return orParams[0] == impParams[impParams.length - 1];
 	}
 
-	boolean checkRewriteXorToDistinct(final Term lhs, final Term rhs) {
-		// expect lhs: (xor a b), rhs: (distinct a b)
-		if (!isApplication("xor", lhs) || !isApplication("distinct", rhs)) {
+	boolean checkRewriteToXor(final String rule, final Term lhs, Term rhs) {
+		// expect lhs: (=/distinct a b), rhs: (not? (xor a b))
+		if (!isApplication(rule == ":eqToXor" ? "=" : "distinct", lhs)) {
 			return false;
 		}
-		final Term[] xorParams = ((ApplicationTerm) lhs).getParameters();
-		final Term[] distinctParams = ((ApplicationTerm) rhs).getParameters();
-		if (xorParams.length != 2 || distinctParams.length != 2) {
+		if (rule == ":eqToXor") {
+			rhs = negate(rhs);
+		}
+		if (!isApplication("xor", rhs)) {
 			return false;
 		}
-		return xorParams[0] == distinctParams[0] && xorParams[1] == distinctParams[1];
+		final Term[] eqParams = ((ApplicationTerm) lhs).getParameters();
+		final Term[] xorParams = ((ApplicationTerm) rhs).getParameters();
+		if (xorParams.length != 2 || eqParams.length != 2) {
+			return false;
+		}
+		return xorParams[0] == eqParams[0] && xorParams[1] == eqParams[1];
 	}
 
 	boolean checkRewriteStrip(final Term lhs, final Term rhs) {
@@ -2049,29 +2229,6 @@ public class ProofChecker extends NonRecursive {
 			}
 			return false;
 		}
-		case ":distinctNeg":
-			if (args.length != 2) {
-				return false;
-			}
-			return args[0] == negate(args[1]) && isApplication("true", rhs);
-		case ":distinctTrue":
-			if (args.length != 2) {
-				return false;
-			}
-			return (isApplication("true", args[0]) && rhs == mSkript.term("not", args[1]))
-					|| (isApplication("true", args[1]) && rhs == mSkript.term("not", args[0]));
-		case ":distinctFalse":
-			if (args.length != 2) {
-				return false;
-			}
-			return (isApplication("false", args[0]) && rhs == args[1])
-					|| (isApplication("false", args[1]) && rhs == args[0]);
-		case ":distinctBoolEq":
-			if (args.length != 2 || args[0].getSort().getName() != "Bool") {
-				return false;
-			}
-			return rhs == mSkript.term("=", args[0], mSkript.term("not", args[1]))
-					|| rhs == mSkript.term("=", mSkript.term("not", args[0]), args[1]);
 		case ":distinctBinary": {
 			rhs = negate(rhs);
 			if (args.length == 2) {
@@ -2094,6 +2251,63 @@ public class ProofChecker extends NonRecursive {
 		}
 		}
 		return false;
+	}
+
+	boolean checkRewriteXorConst(final String rewriteRule, final Term lhs, final Term rhs) {
+		// lhs: (xor true/false arg1) or (xor arg0 true/false)
+		if (!isApplication("xor", lhs)) {
+			return false;
+		}
+		final Term[] args = ((ApplicationTerm) lhs).getParameters();
+		switch (rewriteRule) {
+		case ":xorTrue":
+			return (isApplication("true", args[0]) && rhs == mSkript.term("not", args[1]))
+					|| (isApplication("true", args[1]) && rhs == mSkript.term("not", args[0]));
+		case ":xorFalse":
+			return (isApplication("false", args[0]) && rhs == args[1])
+					|| (isApplication("false", args[1]) && rhs == args[0]);
+		default:
+			return false;
+		}
+	}
+
+	boolean checkRewriteXorNot(final Term lhs, Term rhs) {
+		// lhs: (xor (not? arg0) (not? arg1)), rhs: (not? (xor arg0 arg1))
+		boolean polarity = true;
+		if (isApplication("not", rhs)) {
+			polarity = !polarity;
+			rhs = ((ApplicationTerm) rhs).getParameters()[0];
+		}
+		if (!isApplication("xor", lhs) || !isApplication("xor", rhs)) {
+			return false;
+		}
+		final Term[] lhsArgs = ((ApplicationTerm) lhs).getParameters();
+		final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
+		if (lhsArgs.length != rhsArgs.length) {
+			return false;
+		}
+		for (int i = 0; i < lhsArgs.length; i++) {
+			// If lhsArg contains not, remove it, and switch polarity.
+			// Then check it equals the corresponding rhsArg
+			Term lhsArg = lhsArgs[i];
+			if (isApplication("not", lhsArg)) {
+				polarity = !polarity;
+				lhsArg = ((ApplicationTerm) lhsArg).getParameters()[0];
+			}
+			if (lhsArg != rhsArgs[i]) {
+				return false;
+			}
+		}
+		// The lemma is well-formed if polarity is true, i.e., all nots cancel out.
+		return polarity;
+	}
+
+	boolean checkRewriteXorSame(final Term lhs, final Term rhs) {
+		if (!isApplication("xor", lhs)) {
+			return false;
+		}
+		final Term[] lhsArgs = ((ApplicationTerm) lhs).getParameters();
+		return lhsArgs.length == 2 && lhsArgs[0] == lhsArgs[1] && isApplication("false", rhs);
 	}
 
 	boolean checkRewriteNot(Term lhs, final Term rhs) {
@@ -2548,25 +2762,12 @@ public class ProofChecker extends NonRecursive {
 		}
 	}
 
-	Term walkIntern(final ApplicationTerm internApp) {
-		final Term equality = internApp.getParameters()[0];
-		if (!isApplication("=", equality)) {
-			reportError("Expected equality: " + equality);
-			return null;
-		}
-		final Term[] args = ((ApplicationTerm) equality).getParameters();
-		if (args.length != 2 || args[0].getSort().getName() != "Bool" || !checkIntern(args[0], args[1])) {
-			reportError("Malformed intern application: " + internApp);
-		}
-		return equality;
-	}
-
-	boolean checkIntern(final Term lhs, Term rhs) {
-		if (!(lhs instanceof ApplicationTerm)) {
+	boolean checkRewriteIntern(final Term lhs, Term rhs) {
+		if (!(lhs instanceof ApplicationTerm) || lhs.getSort().getName() != "Bool") {
 			return false;
 		}
 		final ApplicationTerm at = (ApplicationTerm) lhs;
-		if (!at.getFunction().isIntern() || at.getFunction().getName() == "select") {
+		if (!at.getFunction().isInterpreted() || at.getFunction().getName() == "select") {
 			/* boolean literals are not quoted */
 			if (at.getParameters().length == 0) {
 				return rhs == at;
@@ -2601,12 +2802,6 @@ public class ProofChecker extends NonRecursive {
 					isStrict = true;
 				}
 			}
-			rhs = unquote(rhs);
-
-			if (!isApplication(isStrict ? "<" : "<=", rhs)) {
-				return false;
-			}
-
 			// Normalize coefficients
 			lhsAffine.div(lhsAffine.getGcd());
 			// Round constant up for integers: (<= (x + 1.25) 0) --> (<= x + 2)
@@ -2615,27 +2810,27 @@ public class ProofChecker extends NonRecursive {
 				final Rational frac = constant.add(constant.negate().floor());
 				lhsAffine.add(frac.negate());
 			}
-			final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
-			return new SMTAffineTerm(rhsArgs[0]).equals(lhsAffine) && isZero(rhsArgs[1]);
+
+			// Now check that rhs is as expected
+			rhs = unquote(rhs);
+			if (!isApplication(isStrict ? "<" : "<=", rhs)) {
+				return false;
+			}
+			final Term[] rhsParams = ((ApplicationTerm) rhs).getParameters();
+			return new SMTAffineTerm(rhsParams[0]).equals(lhsAffine) && isZero(rhsParams[1]);
 		}
 
-		if (isApplication("=", lhs) && ((ApplicationTerm) lhs).getParameters()[0].getSort().getName() != "Bool") {
+		if (isApplication("=", lhs)) {
 			/* compute affine term for lhs */
 			final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
 			if (lhsParams.length != 2) {
 				return false;
 			}
-			final SMTAffineTerm lhsAffine = new SMTAffineTerm(lhsParams[1]);
-			lhsAffine.negate();
-			lhsAffine.add(new SMTAffineTerm(lhsParams[0]));
-
-			if (lhsAffine.isConstant()) {
-				/* simplify to true/false */
-				if (lhsAffine.getConstant() == Rational.ZERO) {
-					return isApplication("true", rhs);
-				} else {
-					return isApplication("false", rhs);
-				}
+			if (isApplication("false", rhs)) {
+				return checkTrivialDisequality(lhsParams[0], lhsParams[1]);
+			} else if (isApplication("true", rhs)) {
+				// since we canonicalize SMTAffineTerms, they can only be equal if they are identical.
+				return lhsParams[0] == lhsParams[1];
 			}
 
 			rhs = unquote(rhs);
@@ -2652,14 +2847,24 @@ public class ProofChecker extends NonRecursive {
 				return true;
 			}
 
+			// Now it must be an LA equality that got normalized in a different way.
 			if (!lhsParams[0].getSort().isNumericSort()) {
 				return false;
 			}
 
 			/* check that they represent the same equality */
-			final SMTAffineTerm rhsAffine = new SMTAffineTerm(rhsParams[1]);
-			rhsAffine.negate();
-			rhsAffine.add(new SMTAffineTerm(rhsParams[0]));
+			// Note that an LA equality can sometimes be rewritten to an already existing CC equality, so
+			// we cannot assume the rhs is normalized
+
+			final SMTAffineTerm lhsAffine = new SMTAffineTerm(lhsParams[0]);
+			lhsAffine.add(Rational.MONE, lhsParams[1]);
+			final SMTAffineTerm rhsAffine = new SMTAffineTerm(rhsParams[0]);
+			rhsAffine.add(Rational.MONE, rhsParams[1]);
+			// we cannot compute gcd on constants so check for this and bail out
+			if (lhsAffine.isConstant() || rhsAffine.isConstant()) {
+				reportError("A trivial equality was created");
+				return false;
+			}
 			lhsAffine.div(lhsAffine.getGcd());
 			rhsAffine.div(rhsAffine.getGcd());
 			if (lhsAffine.equals(rhsAffine)) {
@@ -2670,7 +2875,7 @@ public class ProofChecker extends NonRecursive {
 		}
 
 		/* Check for auxiliary literals */
-		if (isApplication("ite", lhs) || isApplication("or", lhs) || isApplication("=", lhs)) {
+		if (isApplication("ite", lhs) || isApplication("or", lhs) || isApplication("xor", lhs)) {
 			rhs = unquote(rhs);
 			return lhs == rhs;
 		}
@@ -2779,7 +2984,7 @@ public class ProofChecker extends NonRecursive {
 	 *            The {@literal @}eq application.
 	 */
 	Term walkEquality(final ApplicationTerm eqApp, final Term origFormula, final Term rewrite) {
-		assert eqApp.getFunction().getName().equals("@eq");
+		assert eqApp.getFunction().getName().equals(ProofConstants.FN_EQ);
 
 		/*
 		 * Expected: The first argument is a boolean formula f the second argument a binary equality (= f g).
@@ -2838,6 +3043,16 @@ public class ProofChecker extends NonRecursive {
 
 	/* === Split rules === */
 
+	/**
+	 * This function checks whether splitApp is a valid application of a split rule. A split rule proofs a simple clause
+	 * that follows from a more complicated asserted formula.
+	 *
+	 * @param splitApp
+	 *            the subproof annotated with the simple clause that is extracted.
+	 * @param origTerm
+	 *            the term proved by the sub proof.
+	 * @return the term proved by the split application, i.e., the simple clause from the annotation.
+	 */
 	Term walkSplit(final ApplicationTerm splitApp, final Term origTerm) {
 		final String splitRule = checkAndGetAnnotationKey(splitApp.getParameters()[0]);
 		if (splitRule == null) {
@@ -2856,11 +3071,11 @@ public class ProofChecker extends NonRecursive {
 		case ":notOr":
 			result = checkSplitNotOr(origTerm, splitTerm);
 			break;
-		case ":=+1":
-		case ":=+2":
-		case ":=-1":
-		case ":=-2":
-			result = checkSplitEq(splitRule, origTerm, splitTerm);
+		case ":xor+1":
+		case ":xor+2":
+		case ":xor-1":
+		case ":xor-2":
+			result = checkSplitXor(splitRule, origTerm, splitTerm);
 			break;
 		case ":ite+1":
 		case ":ite+2":
@@ -2879,6 +3094,9 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	boolean checkSplitNotOr(final Term origTerm, final Term splitTerm) {
+		// origTerm must be of the form not (or arg0 ... argn),
+		// splitTerm is one of the negated arguments.
+		// validity follows from (not (or arg0 ... argn)) ==> not argi
 		final Term orTerm = negate(origTerm);
 		if (!isApplication("or", orTerm)) {
 			return false;
@@ -2896,17 +3114,17 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	boolean checkSplitEq(final String splitRule, Term origTerm, final Term splitTerm) {
-		// rule is =+ iff origTerm is an equality.
+	boolean checkSplitXor(final String splitRule, Term origTerm, final Term splitTerm) {
+		// origTerm is (not? (xor arg0 arg1))
 		final boolean positive = !isApplication("not", origTerm);
 		if (!positive) {
 			origTerm = ((ApplicationTerm) origTerm).getParameters()[0];
 		}
-		if (!isApplication("=", origTerm)) {
+		if (!isApplication("xor", origTerm)) {
 			return false;
 		}
-		final Term[] eqParams = ((ApplicationTerm) origTerm).getParameters();
-		if (eqParams.length != 2) {
+		final Term[] xorParams = ((ApplicationTerm) origTerm).getParameters();
+		if (xorParams.length != 2) {
 			return false;
 		}
 		if (!isApplication("or", splitTerm)) {
@@ -2916,21 +3134,27 @@ public class ProofChecker extends NonRecursive {
 		if (clause.length != 2) {
 			return false;
 		}
+		// The validity of the split rules follows from the following implications
+		// xor+1: xor arg0 arg1 ==> or arg0 arg1
+		// xor+2: xor arg0 arg1 ==> or !arg0 !arg1
+		// xor-1: !xor arg0 arg1 ==> or arg0 !arg1
+		// xor-2: !xor arg0 arg1 ==> or !arg0 arg1
 		switch (splitRule) {
-		case ":=+1":
-			return positive && clause[0] == eqParams[0] && clause[1] == mSkript.term("not", eqParams[1]);
-		case ":=+2":
-			return positive && clause[0] == mSkript.term("not", eqParams[0]) && clause[1] == eqParams[1];
-		case ":=-1":
-			return !positive && clause[0] == eqParams[0] && clause[1] == eqParams[1];
-		case ":=-2":
-			return !positive && clause[0] == mSkript.term("not", eqParams[0])
-					&& clause[1] == mSkript.term("not", eqParams[1]);
+		case ":xor+1":
+			return positive && clause[0] == xorParams[0] && clause[1] == xorParams[1];
+		case ":xor+2":
+			return positive && clause[0] == mSkript.term("not", xorParams[0])
+					&& clause[1] == mSkript.term("not", xorParams[1]);
+		case ":xor-1":
+			return !positive && clause[0] == xorParams[0] && clause[1] == mSkript.term("not", xorParams[1]);
+		case ":xor-2":
+			return !positive && clause[0] == mSkript.term("not", xorParams[0]) && clause[1] == xorParams[1];
 		}
 		return false;
 	}
 
 	boolean checkSplitIte(final String splitRule, Term origTerm, final Term splitTerm) {
+		// origTerm must be of the form (not? (ite c t e))
 		final boolean positive = !isApplication("not", origTerm);
 		if (!positive) {
 			origTerm = ((ApplicationTerm) origTerm).getParameters()[0];
@@ -2949,6 +3173,11 @@ public class ProofChecker extends NonRecursive {
 		if (clause.length != 2) {
 			return false;
 		}
+		// The validity of the split rules follows from the following implications
+		// ite+1: ite c arg1 arg2 ==> or !c arg1
+		// ite+2: ite c arg1 arg1 ==> or c arg2
+		// ite-1: !ite c arg1 arg2 ==> or !c !arg1
+		// ite-2: !ite c arg1 arg1 ==> or c !arg2
 		switch (splitRule) {
 		case ":ite+1":
 			return positive && clause[0] == mSkript.term("not", iteParams[0]) && clause[1] == iteParams[1];

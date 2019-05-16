@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.MutableRational;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -33,28 +32,28 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
  * Represents a modifiable affin term, i.e. SUM_i c_i * x_i + c, where the x_i are initially nonbasic variable.
- * 
+ *
  * @author hoenicke.
  */
-public class MutableAffinTerm {
+public class MutableAffineTerm {
 	TreeMap<LinVar, Rational> mSummands = new TreeMap<>();
-	InfinitNumber mConstant;
+	InfinitesimalNumber mConstant;
 
-	public MutableAffinTerm() {
-		mConstant = InfinitNumber.ZERO;
+	public MutableAffineTerm() {
+		mConstant = InfinitesimalNumber.ZERO;
 	}
 
-	public MutableAffinTerm add(final Rational c) {
-		mConstant = mConstant.add(new InfinitNumber(c, 0));
+	public MutableAffineTerm add(final Rational c) {
+		mConstant = mConstant.add(new InfinitesimalNumber(c, 0));
 		return this;
 	}
 
-	public MutableAffinTerm add(final InfinitNumber c) {
+	public MutableAffineTerm add(final InfinitesimalNumber c) {
 		mConstant = mConstant.add(c);
 		return this;
 	}
 
-	public MutableAffinTerm add(final Rational c, final LinVar var) {
+	public MutableAffineTerm add(final Rational c, final LinVar var) {
 		if (c.equals(Rational.ZERO)) {
 			return this;
 		}
@@ -86,7 +85,7 @@ public class MutableAffinTerm {
 		mSummands.put(term, c);
 	}
 
-	public MutableAffinTerm add(final Rational c, final MutableAffinTerm a) {
+	public MutableAffineTerm add(final Rational c, final MutableAffineTerm a) {
 		if (c != Rational.ZERO) {
 			addMap(c, a.mSummands);
 			mConstant = mConstant.add(a.mConstant.mul(c));
@@ -94,7 +93,7 @@ public class MutableAffinTerm {
 		return this;
 	}
 
-	public MutableAffinTerm mul(final Rational c) {
+	public MutableAffineTerm mul(final Rational c) {
 		if (c.equals(Rational.ZERO)) {
 			mSummands.clear();
 		} else if (!c.equals(Rational.ONE)) {
@@ -106,11 +105,11 @@ public class MutableAffinTerm {
 		return this;
 	}
 
-	public MutableAffinTerm div(final Rational c) {
+	public MutableAffineTerm div(final Rational c) {
 		return mul(c.inverse());
 	}
 
-	public MutableAffinTerm negate() {
+	public MutableAffineTerm negate() {
 		return mul(Rational.MONE);
 	}
 
@@ -118,7 +117,7 @@ public class MutableAffinTerm {
 		return mSummands.isEmpty();
 	}
 
-	public InfinitNumber getConstant() {
+	public InfinitesimalNumber getConstant() {
 		return mConstant;
 	}
 
@@ -171,7 +170,7 @@ public class MutableAffinTerm {
 		if (isFirst) {
 			sb.append(mConstant);
 		} else {
-			final int signum = mConstant.compareTo(InfinitNumber.ZERO);
+			final int signum = mConstant.compareTo(InfinitesimalNumber.ZERO);
 			if (signum < 0) {
 				sb.append(" - ");
 				sb.append(mConstant.mul(Rational.MONE));
@@ -189,7 +188,7 @@ public class MutableAffinTerm {
 
 	/**
 	 * Convert the affine term to a term in our core theory.
-	 * 
+	 *
 	 * @param useAuxVars
 	 *            use auxiliary variables for non-variable terms (unimplemented).
 	 */
@@ -203,8 +202,8 @@ public class MutableAffinTerm {
 		if (negate == null) {
 			negate = t.getFunction("-", numSort);
 		}
-		assert (!isInt || mConstant.mA.isIntegral());
-		final Term constTerm = mConstant.mA.equals(Rational.ZERO) ? null : mConstant.mA.toTerm(numSort);
+		assert (!isInt || mConstant.mReal.isIntegral());
+		final Term constTerm = mConstant.mReal.equals(Rational.ZERO) ? null : mConstant.mReal.toTerm(numSort);
 		final Term[] terms = new Term[mSummands.size() + (constTerm == null ? 0 : 1)];
 		if (constTerm != null) {
 			terms[mSummands.size()] = constTerm;
@@ -238,15 +237,6 @@ public class MutableAffinTerm {
 		}
 	}
 
-	public Rational getValue(final LinArSolve linar) {
-		assert mConstant.mEps == 0;
-		final MutableRational val = new MutableRational(mConstant.mA);
-		for (final Map.Entry<LinVar, Rational> me : mSummands.entrySet()) {
-			val.add(me.getValue().mul(linar.realValue(me.getKey())));
-		}
-		return val.toRational();
-	}
-
 	public boolean isInt() {
 		for (final LinVar v : mSummands.keySet()) {
 			if (!v.isInt()) {
@@ -258,7 +248,7 @@ public class MutableAffinTerm {
 
 	/**
 	 * Create the SMTLib formula for the term <code>this <= 0</code>.
-	 * 
+	 *
 	 * @param smtTheory
 	 *            Theory used in conversion.
 	 * @return The SMTLib term representing the formula <code>this <= 0</code>.
@@ -266,7 +256,7 @@ public class MutableAffinTerm {
 	public Term toSMTLibLeq0(final Theory smtTheory, final boolean quoted) {
 		assert mConstant.mEps >= 0;
 		if (isConstant()) {
-			return mConstant.compareTo(InfinitNumber.ZERO) <= 0 ? smtTheory.mTrue : smtTheory.mFalse;
+			return mConstant.compareTo(InfinitesimalNumber.ZERO) <= 0 ? smtTheory.mTrue : smtTheory.mFalse;
 		}
 		final boolean isInt = isInt();
 		final Sort sort = smtTheory.getSort(isInt ? "Int" : "Real");

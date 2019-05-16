@@ -61,7 +61,7 @@ public class FixResolutionProof extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public ProofWalker(final Term term) {
-			assert term.getSort().getName().equals("@Proof");
+			assert term.getSort().getName().equals(ProofConstants.SORT_PROOF);
 			mTerm = (ApplicationTerm) term;
 		}
 
@@ -79,7 +79,7 @@ public class FixResolutionProof extends NonRecursive {
 		final ApplicationTerm mTerm;
 
 		public ResolutionWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals("@res");
+			assert term.getFunction().getName().equals(ProofConstants.FN_RES);
 			mTerm = term;
 		}
 
@@ -118,7 +118,7 @@ public class FixResolutionProof extends NonRecursive {
 
 	/**
 	 * The proof info computed for every node of the proof dag. This stores the clause and the simplified proof.
-	 * 
+	 *
 	 * If the proof computes a tautology (a clause with a literal appearing both positively and negatively), this is
 	 * marked by setting both fields to null.
 	 */
@@ -126,7 +126,7 @@ public class FixResolutionProof extends NonRecursive {
 		Term mResultProof;
 		Term[] mClause;
 
-		public ProofInfo(Term result, Term[] clause) {
+		public ProofInfo(final Term result, final Term[] clause) {
 			mResultProof = result;
 			mClause = clause;
 		}
@@ -211,15 +211,15 @@ public class FixResolutionProof extends NonRecursive {
 
 		/* Look at the rule name and treat each different */
 		switch (rulename) {
-		case "@res":
+		case ProofConstants.FN_RES:
 			new ResolutionWalker(proofTerm).enqueue(this);
 			break;
 
-		case "@lemma":
+		case ProofConstants.FN_LEMMA:
 			stackPush(walkLemma(proofTerm), proofTerm);
 			break;
 
-		case "@clause":
+		case ProofConstants.FN_CLAUSE:
 			stackPush(walkClause(proofTerm), proofTerm);
 			break;
 
@@ -245,7 +245,7 @@ public class FixResolutionProof extends NonRecursive {
 		 */
 		final AnnotatedTerm annTerm = (AnnotatedTerm) lemmaApp.getParameters()[0];
 		final Term lemma = annTerm.getSubterm();
-		ProofInfo info = new ProofInfo(lemmaApp, termToClause(lemma));
+		final ProofInfo info = new ProofInfo(lemmaApp, termToClause(lemma));
 		return info;
 	}
 
@@ -266,7 +266,7 @@ public class FixResolutionProof extends NonRecursive {
 			}
 		}
 
-		ProofInfo info = new ProofInfo(clauseApp, termToClause(provedClause));
+		final ProofInfo info = new ProofInfo(clauseApp, termToClause(provedClause));
 		return info;
 	}
 
@@ -357,7 +357,7 @@ public class FixResolutionProof extends NonRecursive {
 				if (pivotPlusProof.getSubterm() == subProofs[i].getResultingProof()) {
 					newResolutionArgs.add(pivotPlusProof);
 				} else {
-					newResolutionArgs.add(theory.annotatedTerm(pivotPlusProof.getAnnotations(), 
+					newResolutionArgs.add(theory.annotatedTerm(pivotPlusProof.getAnnotations(),
 							subProofs[i].getResultingProof()));
 					changed = true;
 				}
@@ -376,10 +376,11 @@ public class FixResolutionProof extends NonRecursive {
 			return new ProofInfo();
 		}
 		/* compute the resulting clause */
-		Term[] newClause = allDisjuncts.toArray(new Term[allDisjuncts.size()]);
+		final Term[] newClause = allDisjuncts.toArray(new Term[allDisjuncts.size()]);
 		if (!changed) {
 			/* if nothing changes, return the original proof */
-			assert resApp == theory.term("@res", newResolutionArgs.toArray(new Term[newResolutionArgs.size()]));
+			assert resApp == theory.term(ProofConstants.FN_RES,
+					newResolutionArgs.toArray(new Term[newResolutionArgs.size()]));
 			return new ProofInfo(resApp, newClause);
 		}
 		if (newResolutionArgs.size() == 1) {
@@ -387,13 +388,13 @@ public class FixResolutionProof extends NonRecursive {
 			return new ProofInfo(newResolutionArgs.get(0), newClause);
 		}
 		/* compute the new resolution proof and return it */
-		Term[] resArgs = newResolutionArgs.toArray(new Term[newResolutionArgs.size()]);
-		return new ProofInfo(theory.term("@res", resArgs), newClause);
+		final Term[] resArgs = newResolutionArgs.toArray(new Term[newResolutionArgs.size()]);
+		return new ProofInfo(theory.term(ProofConstants.FN_RES, resArgs), newClause);
 	}
 
 	/* === Auxiliary functions === */
 
-	void stackPush(ProofInfo info, final ApplicationTerm keyTerm) {
+	void stackPush(final ProofInfo info, final ApplicationTerm keyTerm) {
 		mCacheConv.put(keyTerm, info);
 		mProofStack.push(info);
 	}

@@ -309,11 +309,11 @@ public class CutCreator {
 		 */
 		public Literal createConstraint() {
 			assert mIsInt;
-			final MutableAffinTerm mat = new MutableAffinTerm();
+			final MutableAffineTerm mat = new MutableAffineTerm();
 			for (int i = 0; i < mIndices.length; i++) {
 				mat.add(Rational.valueOf(mCoeffs[i], BigInteger.ONE), mIndices[i]);
 			}
-			mat.add(new InfinitNumber(mCurval, mEpsilons.signum()).floor().negate());
+			mat.add(new InfinitesimalNumber(mCurval, mEpsilons.signum()).floor().negate());
 			return mSolver.generateConstraint(mat, false);
 		}
 
@@ -323,8 +323,9 @@ public class CutCreator {
 			for (int i = 0; i < mIndices.length; i++) {
 				final LinVar var = mIndices[i];
 				final Rational coeff = Rational.valueOf(mCoeffs[i], BigInteger.ONE);
-				mCurval = mCurval.addmul(coeff, var.getValue().mA);
-				mEpsilons = mEpsilons.addmul(coeff, var.computeEpsilon());
+				final ExactInfinitesimalNumber value = var.getValue();
+				mCurval = mCurval.addmul(coeff, value.getRealValue());
+				mEpsilons = mEpsilons.addmul(coeff, value.getEpsilon());
 			}
 		}
 
@@ -399,7 +400,7 @@ public class CutCreator {
 				continue;
 			}
 			boolean negated = false;
-			if (lv.getValue().lesseq(lv.getLowerBound())) {
+			if (lv.getValue().compareTo(lv.getLowerBound()) <= 0) {
 				negated = true;
 			}
 			if (lv.isInitiallyBasic()) {
@@ -441,7 +442,7 @@ public class CutCreator {
 
 	/**
 	 * Computes the nr-th row of the Hermite Normal Form, by applying the
-	 * mgcd algorithm on the columns from nr upwards.  This ensures that
+	 * mgcd algorithm on the columns from nr onwards.  This ensures that
 	 * the nr-th column contains the gcd at that row and the later columns
 	 * are zero.  Afterward the nr-th column is subtracted from column 0
 	 * to nr-1 to make the coefficients as small as possible.
@@ -557,19 +558,21 @@ public class CutCreator {
 		if (coeffNr.equals(BigInteger.ONE)) {
 			// common fast case
 			for (int i = 0; i < nr; i++) {
-				if (!mURows[i].isInt() && mURows[nr].isInt()) {
-					continue;
-				}
 				int j = 0;
-				while (j < mAColumns[i].mIndices.length
-						&& compare(mAColumns[i].mIndices[j], row) < 0) {
+				while (j < mAColumns[i].mIndices.length && compare(mAColumns[i].mIndices[j], row) < 0) {
 					j++;
 				}
-				if (j == mAColumns[i].mIndices.length
-					|| mAColumns[i].mIndices[j] != row) {
+				if (j == mAColumns[i].mIndices.length || mAColumns[i].mIndices[j] != row) {
 					continue;
 				}
 				assert(mAColumns[i].mIndices[j] == row);
+				if (!mURows[i].isInt() && mURows[nr].isInt()) {
+					// this constraint can only be fixed if the dependent real constraint is fixed.
+					isFixed &= mURows[i].mFixed;
+					isTight &= mAColumns[i].mCoeffs[j].signum() > 0 ? mURows[i].mFixed : mURows[i].mTight;
+					continue;
+				}
+				assert (mAColumns[i].mIndices[j] == row);
 				final BigInteger div = mAColumns[i].mCoeffs[j];
 				mAColumns[i].addmul(mAColumns[nr], div.negate());
 				mURows[nr].addmul(mURows[i], div);
@@ -592,6 +595,7 @@ public class CutCreator {
 					// this integer can only be fixed if the dependent real
 					// constraint is fixed.
 					isFixed &= mURows[i].mFixed;
+					isTight &= mAColumns[i].mCoeffs[j].signum() > 0 ? mURows[i].mFixed : mURows[i].mTight;
 					continue;
 				}
 				final BigInteger coeffI = mAColumns[i].mCoeffs[j];
@@ -608,8 +612,7 @@ public class CutCreator {
 						adjust = -1;
 					}
 					BigInteger limit;
-					if (mURows[i].mFixed || !isTight
-						|| !mURows[i].mTight) {
+					if (mURows[i].mFixed || !isTight || !mURows[i].mTight) {
 						/* This is an equality constraint, or we cannot
 						 * create a cut anymore.
 						 * make remainder small, i.e rem.abs() <= coeffNr2
@@ -661,8 +664,8 @@ public class CutCreator {
 	}
 
 	private boolean isTight(final LinVar linVar) {
-		return linVar.getValue().lesseq(linVar.getLowerBound())
-			|| linVar.getUpperBound().lesseq(linVar.getValue());
+		return linVar.getValue().equals(linVar.getLowerBound())
+				|| linVar.getValue().equals(linVar.getUpperBound());
 	}
 
 	private boolean isFixed(final LinVar linVar) {

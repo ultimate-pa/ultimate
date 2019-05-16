@@ -18,16 +18,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
@@ -42,14 +42,165 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 public class CCInterpolator {
 
 	Interpolator mInterpolator;
-
-	HashMap<SymmetricPair<Term>, AnnotatedTerm> mEqualities;
-	HashMap<SymmetricPair<Term>, PathInfo> mPaths;
+	LitInfo mDiseqOccurrences;
+	HashMap<SymmetricPair<Term>, LitInfo> mEqualityOccurrences;
 
 	Theory mTheory;
 	int mNumInterpolants;
+	Collection<Term>[] mInterpolants;
 
-	Set<Term>[] mInterpolants;
+	Term[] mPath;
+
+	/**
+	 * As long as there is a partition where the whole path is shared, this is the set of partitions for which all
+	 * literals seen so far are in A.
+	 */
+	BitSet mAllInA;
+
+	/**
+	 * The first partition for which the path from start to end is in A. As long as mAllInA is not empty, this is the
+	 * parent of all partition for which the path is AB-shared, i.e. the first partition where some literal is A-local.
+	 */
+	int mMaxColor;
+	PathEnd mHead, mTail;
+
+	/*
+	 * max color is the maximum of all firstColor of all literals on the path.
+	 *
+	 * Head color is the lastColor of the first literal before the first path change. If head color >= max color, then
+	 * there is no path change.
+	 *
+	 */
+
+	/*
+	 * invariants: HeadTerm[p] != null exactly for p in [m_HeadColor, m_MaxColor-1] HeadPre[p] != null only for p in
+	 * [m_HeadColor, numInterpolants] HeadColor is in between first and last color of head term. likewise for Tail.
+	 * MaxColor is maximum of all first of all terms and literals involved in current path.
+	 *
+	 * The partial interpolant of the current path is m_Interpolants && HeadPre ==> Lits[0] == m_HeadTerm && TailPre ==>
+	 * m_TailTerm == lits[n] where HeadTerm = Lits[0] for partitions < HeadColor and TailTerm = Lits[n] for partitions <
+	 * TailColor.
+	 *
+	 * For partitions >= maxColor, everything so far was in A, so the partial interpolant of the current path is
+	 * m_Interpolants && TailPre ==> Lits[0] == lits[n]
+	 */
+
+	class PathEnd {
+		/**
+		 * The first partition for which there is an A-local prefix of the path. If m_hasABPath is non-empty, this is
+		 * the first partition that is not in m_hasABPath, i.e. the first for which only a continuous A-path but not a
+		 * continuous B-path exists.
+		 */
+		int mColor;
+		/**
+		 * For each partition on the path from m_Color to m_MaxColor this gives the term that ends the first A-local
+		 * chain of equalities.
+		 */
+		Term[] mTerm;
+
+		public PathEnd() {
+			mColor = mNumInterpolants;
+			mTerm = new Term[mNumInterpolants];
+		}
+
+		/**
+		 * Closes all A paths and goes up the tree until the occurrence is in A or mixed.
+		 *
+		 * @param other
+		 *            the other path end, usually head.
+		 * @param boundaryTerm
+		 *            the boundary term
+		 * @param occur
+		 *            the occurrence of the term/literal that we use
+		 */
+		public void closeAPath(final PathEnd other, final Term boundaryTerm, final Occurrence occur) {
+			assert (other.mColor <= mMaxColor);
+			mAllInA.and(occur.mInA);
+			while (mColor < mNumInterpolants && occur.isBLocal(mColor)) {
+				// No partition contains the whole path, because at least one literal was A-local in mColor and
+				// this literal is B-local
+				mAllInA.clear();
+
+				final int color = mColor;
+				mColor = getParent(color);
+				if (color < mMaxColor) {
+					// we have an open A-path, which we close by adding the equality to the interpolant.
+					mInterpolants[color].add(mTheory.term("=", mTerm[color], boundaryTerm));
+					mTerm[color] = null;
+				} else {
+					// we haven't visited this partition yet, as all previous literals were in A there.
+					// increase mMaxColor and mark the boundaryTerm as a new open A-path on the other end.
+					assert (mMaxColor == color);
+					other.mTerm[color] = boundaryTerm;
+					mMaxColor = mColor;
+				}
+			}
+		}
+
+		/**
+		 * Open A-paths (or close B-Paths) with the boundary term until there is no A-local child for occur. This means
+		 * that we go down the tree until the corresponding literal/term occurs in this partition. For mixed literals we
+		 * do nothing, since we are already at the occurrence of one of the literals.
+		 *
+		 * @param other
+		 *            the other path end (usually head)
+		 * @param boundaryTerm
+		 *            the boundary term
+		 * @param occur
+		 *            the literal/term whose partition we want to reach.
+		 */
+		public void openAPath(final PathEnd other, final Term boundaryTerm, final Occurrence occur) {
+			/* Go downwards the partition tree, while there is some child where occur is A-local. */
+			int child;
+			while ((child = getChild(mColor, occur)) >= 0) {
+				assert occur.isALocal(child);
+				if (mAllInA.get(child)) {
+					// While mAllInA is not empty, there are some partitions where all literals are shared.
+					// mAllInA lists all partitions where all occurrences on the path are in A.
+					// mMaxColor and mColor are kept to the last partition where all the literals
+					// occur. So in each child of mMaxColor that is in mAllInA, the whole path is
+					// AB shared
+					assert (mMaxColor == mColor && mMaxColor == other.mColor);
+					mMaxColor = other.mColor = child;
+				} else {
+					// open a new A-path by remembering the boundary term.
+					mTerm[child] = boundaryTerm;
+				}
+				mColor = child;
+			}
+		}
+
+		public void closeAPathMixed(final TermVariable mixedVar, final Occurrence occur) {
+			// go to the mixed parent and insert the EQ to the boundary term for all partitions on the path.
+			while (occur.isBLocal(mColor)) {
+				final int color = mColor;
+				mColor = getParent(color);
+				assert color < mMaxColor;
+				mInterpolants[color].add(mTheory.term(Interpolator.EQ, mixedVar, mTerm[color]));
+				mTerm[color] = null;
+			}
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			String comma = "";
+			sb.append(mColor).append(":[");
+			for (int i = mColor; i < mMaxColor; i++) {
+				sb.append(comma);
+				sb.append(mTerm[i]);
+				comma = ",";
+			}
+			sb.append(']');
+			return sb.toString();
+		}
+	}
+
+	public CCInterpolator(final Interpolator ipolator) {
+		mInterpolator = ipolator;
+		mNumInterpolants = ipolator.mNumInterpolants;
+		mTheory = ipolator.mTheory;
+	}
 
 	/**
 	 * Compute the parent partition. This is the next partition, whose subtree includes color.
@@ -78,446 +229,189 @@ public class CCInterpolator {
 		return -1;
 	}
 
-	class PathInfo {
-		Term[] mPath;
-
-		/**
-		 * The set of partitions for which there is an AB-shared path from start to end.
-		 */
-		BitSet mHasABPath;
-
-		/**
-		 * The first partition for which the path from start to end is A-local. This is m_numInterpolants, if there is
-		 * no such partition. If m_hasABPath is not empty, this value is undefined; we set it to the root of the
-		 * m_hasABPath tree, which equals the two mColor of the head and tail node.
-		 */
-		int mMaxColor;
-		PathEnd mHead, mTail;
-
-		/*
-		 * max color is the maximum of all firstColor of all literals on the path.
-		 *
-		 * Head color is the lastColor of the first literal before the first path change. If head color >= max color,
-		 * then there is no path change.
-		 *
-		 */
-		boolean mComputed;
-
-		class PathEnd {
-			/**
-			 * The first partition for which there is an A-local prefix of the path. If m_hasABPath is non-empty, this
-			 * is the first partition that is not in m_hasABPath, i.e. the first for which only a continuous A-path but
-			 * not a continuous B-path exists.
-			 */
-			int mColor;
-			/**
-			 * For each partition on the path from m_Color to m_MaxColor this gives the term that ends the first A-local
-			 * chain of equalities.
-			 */
-			Term[] mTerm;
-			/**
-			 * For each partition on the path from m_Color to the root (m_numInterpolants) this gives B-summaries that
-			 * are used to gap congruence proofs, where both ends are A-local.
-			 */
-			Set<Term>[] mPre;
-
-			@SuppressWarnings("unchecked")
-			public PathEnd() {
-				mColor = mNumInterpolants;
-				mTerm = new Term[mNumInterpolants];
-				mPre = new Set[mNumInterpolants];
-			}
-
-			/**
-			 * Close the A path for partition color. This is called when we add a term to the chain that is B-local for
-			 * the current mColor. We set mColor to the parent node. We also close the open path on mColor or open a new
-			 * one and increment mMaxColor if such a path was not yet open.
-			 *
-			 * @param other
-			 *            the other PathEnd
-			 * @param boundaryTerm
-			 *            the boundary term for opening/closing the path.
-			 */
-			public void closeSingleAPath(final PathEnd other, final Term boundaryTerm) {
-				// this should be empty now, since we anded it with
-				// occur.mInA and the occurrence is not in A for color.
-				assert mHasABPath.isEmpty();
-				final int color = mColor;
-				mColor = getParent(color);
-				if (color < mMaxColor) {
-					addPre(color, mTheory.term("=", boundaryTerm, mTerm[color]));
-					addInterpolantClause(color, mPre[color]);
-					mPre[color] = null;
-					mTerm[color] = null;
-				} else {
-					assert (mMaxColor == color);
-					other.mTerm[color] = boundaryTerm;
-					if (mPre[color] != null) {
-						other.mPre[color] = mPre[color];
-						mPre[color] = null;
-					}
-					mMaxColor = getParent(color);
-				}
-			}
-
-			/**
-			 * Open a new A path. This is called when a term is added that is A local in child, where child is a child
-			 * of mColor. We start a new A path on child. If we have still slack, since mHasABPath contains child, we
-			 * don't have to open the path and just set mMaxColor to child.
-			 *
-			 * @param other
-			 *            the other path end.
-			 * @param boundaryTerm
-			 *            the term that starts the new A path.
-			 * @param child
-			 *            the child of mColor for which the added term is A local.
-			 */
-			public void openSingleAPath(final PathEnd other, final Term boundaryTerm, final int child) {
-				if (mHasABPath.get(child)) {
-					mMaxColor = other.mColor = mColor = child;
-					// compute all nodes below child excluding child itself
-					final BitSet subtree = new BitSet();
-					subtree.set(mInterpolator.mStartOfSubtrees[child], child);
-					// keep only those below the current child.
-					mHasABPath.and(subtree);
-				} else {
-					/* open a new A-path. */
-					mTerm[child] = boundaryTerm;
-					mColor = child;
-				}
-			}
-
-			public void closeAPath(final PathEnd other, final Term boundaryTerm, final Occurrence occur) {
-				assert (other.mColor <= mMaxColor);
-				mHasABPath.and(occur.mInA);
-				while (mColor < mNumInterpolants && occur.isBLocal(mColor)) {
-					closeSingleAPath(other, boundaryTerm);
-				}
-			}
-
-			public void openAPath(final PathEnd other, final Term boundaryTerm, final Occurrence occur) {
-				while (true) {
-					final int child = getChild(mColor, occur);
-					/* if there is no A-local child, we are done. */
-					if (child < 0) {
-						break;
-					}
-					assert occur.isALocal(child);
-					openSingleAPath(other, boundaryTerm, child);
-				}
-			}
-
-			public Term getBoundTerm(final int color) {
-				if (color < mColor) {
-					final Term first = this == mHead ? mPath[0] : mPath[mPath.length - 1];
-					return first;
-				} else if (color < mMaxColor) {
-					return mTerm[color];
-				} else {
-					final Term last = this == mTail ? mPath[0] : mPath[mPath.length - 1];
-					return last;
-				}
-			}
-
-			public void addPre(final int color, final Term pre) {
-				if (mPre[color] == null) {
-					mPre[color] = new HashSet<>();
-				}
-				mPre[color].add(pre);
-			}
-
-			public void addAllPre(final int color, final PathEnd src) {
-				final Set<Term> pre = src.mPre[color];
-				if (pre == null) {
-					return;
-				}
-				if (mPre[color] == null) {
-					mPre[color] = new HashSet<>();
-				}
-				mPre[color].addAll(pre);
-			}
-
-			private void mergeCongPath(final PathEnd other, final ApplicationTerm start, final ApplicationTerm end) {
-				final FunctionSymbol func = start.getFunction();
-				final int rightColor = mInterpolator.getOccurrence(end).getALocalColor();
-				final Occurrence rightOccur = mInterpolator.new Occurrence();
-				rightOccur.occursIn(rightColor);
-				final Occurrence leftOccur = mInterpolator.new Occurrence();
-				leftOccur.occursIn(mColor);
-				final int numArgs = func.getParameterSorts().length;
-				final PathInfo[] argPaths = new PathInfo[numArgs];
-				final PathEnd[] head = new PathEnd[numArgs];
-				final PathEnd[] tail = new PathEnd[numArgs];
-				final boolean[] isReverse = new boolean[numArgs];
-				final Term[] startArgs = start.getParameters();
-				final Term[] endArgs = end.getParameters();
-				for (int arg = 0; arg < numArgs; arg++) {
-					argPaths[arg] = startArgs[arg] == endArgs[arg] ? new PathInfo(startArgs[arg])
-							: mPaths.get(new SymmetricPair<>(startArgs[arg], endArgs[arg]));
-					argPaths[arg].interpolatePathInfo();
-					mHasABPath.and(argPaths[arg].mHasABPath);
-					isReverse[arg] = (startArgs[arg] != argPaths[arg].mPath[0]);
-					head[arg] = isReverse[arg] ? argPaths[arg].mTail : argPaths[arg].mHead;
-					tail[arg] = isReverse[arg] ? argPaths[arg].mHead : argPaths[arg].mTail;
-					final Term startTerm = startArgs[arg];
-					head[arg].closeAPath(tail[arg], startTerm, leftOccur);
-					head[arg].openAPath(tail[arg], startTerm, leftOccur);
-					final Term endTerm = endArgs[arg];
-					tail[arg].closeAPath(head[arg], endTerm, rightOccur);
-					tail[arg].openAPath(head[arg], endTerm, rightOccur);
-				}
-
-				mHasABPath.and(rightOccur.mInA);
-				while (rightOccur.isBLocal(mColor)) {
-					final Term[] boundaryParams = new Term[numArgs];
-					for (int i = 0; i < numArgs; i++) {
-						boundaryParams[i] = head[i].getBoundTerm(mColor);
-						addAllPre(mColor, head[i]);
-					}
-					final Term boundaryTerm = mTheory.term(func, boundaryParams);
-					closeSingleAPath(other, boundaryTerm);
-				}
-				final int highColor = mColor;
-				while (true) {
-					/* find A-local child of m_Color */
-					final int child = getChild(mColor, rightOccur);
-					if (child < 0) {
-						break;
-					}
-					final Term[] boundaryParams = new Term[numArgs];
-					for (int i = 0; i < numArgs; i++) {
-						boundaryParams[i] = tail[i].getBoundTerm(child);
-						addAllPre(child, tail[i]);
-					}
-					final Term boundaryTerm = mTheory.term(func, boundaryParams);
-					openSingleAPath(other, boundaryTerm, child);
-				}
-				assert (mColor == rightColor);
-				for (int color = highColor; color < mNumInterpolants; color = getParent(color)) {
-					for (int i = 0; i < numArgs; i++) {
-						if (color < argPaths[i].mMaxColor) {
-							addPre(color, mTheory
-									.not(mTheory.term("=", head[i].getBoundTerm(color), tail[i].getBoundTerm(color))));
-						}
-						addAllPre(color, head[i]);
-						addAllPre(color, tail[i]);
-					}
-				}
-			}
-
-			@Override
-			public String toString() {
-				final StringBuilder sb = new StringBuilder();
-				String comma = "";
-				sb.append(mColor).append(":[");
-				for (int i = mColor; i < mMaxColor; i++) {
-					sb.append(comma);
-					if (mPre[i] != null) {
-						sb.append(mPre[i]).append(" or ");
-					}
-					sb.append(mTerm[i]);
-					comma = ",";
-				}
-				comma = "|";
-				for (int i = mMaxColor; i < mNumInterpolants; i++) {
-					if (mPre[i] != null) {
-						sb.append(comma).append("pre").append(i).append(':');
-						sb.append(mPre[i]);
-						comma = ",";
-					}
-				}
-				sb.append(']');
-				return sb.toString();
-			}
-		}
-
-		/*
-		 * invariants: HeadTerm[p] != null exactly for p in [m_HeadColor, m_MaxColor-1] HeadPre[p] != null only for p in
-		 * [m_HeadColor, numInterpolants] HeadColor is in between first and last color of head term. likewise for Tail.
-		 * MaxColor is maximum of all first of all terms and literals involved in current path (but there may be bigger
-		 * literals in congruence paths that were added to headPre/tailPre).
-		 *
-		 * The partial interpolant of the current path is m_Interpolants && HeadPre ==> Lits[0] == m_HeadTerm && TailPre
-		 * ==> m_TailTerm == lits[n] where HeadTerm = Lits[0] for partitions < HeadColor and TailTerm = Lits[n] for
-		 * partitions < TailColor.
-		 *
-		 * For partitions >= maxColor, everything so far was in A, so the partial interpolant of the current path is
-		 * m_Interpolants && TailPre ==> Lits[0] == lits[n]
-		 */
-
-		public PathInfo(final Term[] path) {
-			mPath = path;
-			mHasABPath = new BitSet(mNumInterpolants);
-			mHasABPath.set(0, mNumInterpolants);
-			mMaxColor = mNumInterpolants;
-		}
-
-		public PathInfo(final Term arg) {
-			this(new Term[] { arg });
-		}
-
-		public void interpolatePathInfo() {
-			if (mComputed) {
-				return;
-			}
-			final Occurrence headOccur = mInterpolator.getOccurrence(mPath[0]);
-
-			mHead = new PathEnd();
-			mTail = new PathEnd();
-			mTail.closeAPath(mHead, null, headOccur);
-			mTail.openAPath(mHead, null, headOccur);
-
-			for (int i = 0; i < mPath.length - 1; i++) {
-				final Term left = mPath[i];
-				final Term right = mPath[i + 1];
-				final AnnotatedTerm lit = mEqualities.get(new SymmetricPair<>(left, right));
-				if (lit == null) {
-					mTail.mergeCongPath(mHead, (ApplicationTerm) left, (ApplicationTerm) right);
-				} else {
-					final LitInfo info = mInterpolator.getLiteralInfo(lit);
-					Term boundaryTerm;
-					boundaryTerm = mPath[i];
-					if (info.getMixedVar() == null) {
-						mTail.closeAPath(mHead, boundaryTerm, info);
-						mTail.openAPath(mHead, boundaryTerm, info);
-					} else {
-						mTail.closeAPath(mHead, boundaryTerm, info);
-						mTail.openAPath(mHead, boundaryTerm, info);
-						final Occurrence occ = mInterpolator.getOccurrence(mPath[i + 1]);
-						boundaryTerm = info.getMixedVar();
-						mTail.closeAPath(mHead, boundaryTerm, occ);
-						mTail.openAPath(mHead, boundaryTerm, occ);
-					}
-				}
-			}
-			mComputed = true;
-		}
-
-		/**
-		 * Build an interpolant clause and add it to the interpolant set.
-		 *
-		 * @param pre
-		 *            The disequalities summarizing the requirements from the B-part in skipped argument paths.
-		 * @param lhsTerm
-		 *            The end of the A-equality chain.
-		 * @param rhsTerm
-		 *            The start of the A-equality chain.
-		 * @param isNegated
-		 *            True, if there is a disequality in the chain.
-		 */
-		private void addInterpolantClause(final int color, final Set<Term> pre) {
-			final Term clause = pre == null ? mTheory.mFalse : mTheory.or(pre.toArray(new Term[pre.size()]));
-			mInterpolants[color].add(clause);
-		}
-
-		@Override
-		public String toString() {
-
-			return "PathInfo[" + Arrays.toString(mPath) + "," + mHead + ',' + mTail + "," + mMaxColor + "]";
-
-		}
-
-		public void addDiseq(final AnnotatedTerm diseq) {
-			final LitInfo info = mInterpolator.getLiteralInfo(diseq);
-			Term boundaryTailTerm, boundaryHeadTerm;
-			boundaryHeadTerm = mPath[0];
-			boundaryTailTerm = mPath[mPath.length - 1];
-			if (info.getMixedVar() == null) {
-				mTail.closeAPath(mHead, boundaryTailTerm, info);
-				mTail.openAPath(mHead, boundaryTailTerm, info);
-				mHead.closeAPath(mTail, boundaryHeadTerm, info);
-				mHead.openAPath(mTail, boundaryHeadTerm, info);
-			} else {
-				final Occurrence occHead = mInterpolator.getOccurrence(mPath[0]);
-				mHead.closeAPath(mTail, boundaryHeadTerm, info);
-				mHead.openAPath(mTail, boundaryHeadTerm, info);
-				final Occurrence occTail = mInterpolator.getOccurrence(mPath[mPath.length - 1]);
-				mTail.closeAPath(mHead, boundaryTailTerm, info);
-				mTail.openAPath(mHead, boundaryTailTerm, info);
-
-				mHead.closeAPath(mTail, info.getMixedVar(), occTail);
-				mTail.closeAPath(mHead, info.getMixedVar(), occHead);
-			}
-		}
-
-		public void close() {
-			while (mHead.mColor < mNumInterpolants || mTail.mColor < mNumInterpolants) {
-				if (mHead.mColor < mTail.mColor) {
-					mHead.addPre(mHead.mColor,
-							mTheory.term("=", mHead.getBoundTerm(mHead.mColor), mTail.getBoundTerm(mMaxColor)));
-					addInterpolantClause(mHead.mColor, mHead.mPre[mHead.mColor]);
-					mHead.mColor = getParent(mHead.mColor);
-				} else if (mHead.mColor == mTail.mColor) {
-					mHead.addAllPre(mHead.mColor, mTail);
-					mTail.mPre[mTail.mColor] = null;
-					if (mHead.mColor < mMaxColor) {
-						mHead.addPre(mHead.mColor, mTheory.not(
-								mTheory.term("=", mHead.getBoundTerm(mHead.mColor), mTail.getBoundTerm(mHead.mColor))));
-					}
-					addInterpolantClause(mHead.mColor, mHead.mPre[mHead.mColor]);
-					mHead.mColor = mTail.mColor = getParent(mHead.mColor);
-				} else {
-					mTail.addPre(mTail.mColor,
-							mTheory.term("=", mHead.getBoundTerm(mMaxColor), mTail.getBoundTerm(mTail.mColor)));
-					addInterpolantClause(mTail.mColor, mTail.mPre[mTail.mColor]);
-					mTail.mColor = getParent(mTail.mColor);
-				}
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public CCInterpolator(final Interpolator ipolator) {
-		mInterpolator = ipolator;
-		mNumInterpolants = ipolator.mNumInterpolants;
-		mTheory = ipolator.mTheory;
-		mPaths = new HashMap<>();
-		mInterpolants = new Set[mNumInterpolants];
-		for (int i = 0; i < mNumInterpolants; i++) {
-			mInterpolants[i] = new HashSet<>();
-		}
-	}
-
-	public Term[] computeInterpolants(final Term proofTerm) {
-		mEqualities = new HashMap<>();
-		final InterpolatorClauseTermInfo proofTermInfo = mInterpolator.getClauseTermInfo(proofTerm);
-		for (final Term literal : proofTermInfo.getLiterals()) {
-			final InterpolatorLiteralTermInfo litTermInfo = mInterpolator.getLiteralTermInfo(literal);
-			if (litTermInfo.isNegated()) {
-				assert litTermInfo.getAtom() instanceof AnnotatedTerm;
-				final ApplicationTerm eq = litTermInfo.getEquality();
-				mEqualities.put(new SymmetricPair<>(eq.getParameters()[0], eq.getParameters()[1]),
-						(AnnotatedTerm) litTermInfo.getAtom());
-			}
-		}
-
-		PathInfo mainPath = null;
-		final ProofPath[] paths = proofTermInfo.getPaths();
-		for (int i = 0; i < paths.length; i++) {
-			final Term[] path = paths[i].getPath();
-			final Term first = path[0];
-			final Term last = path[path.length - 1];
-			final PathInfo pathInfo = new PathInfo(path);
-			mPaths.put(new SymmetricPair<>(first, last), pathInfo);
-			if (i == 0) {
-				mainPath = pathInfo;
-			}
-		}
-		mainPath.interpolatePathInfo();
-		final AnnotatedTerm diseq = (AnnotatedTerm) proofTermInfo.getDiseq();
-		if (diseq != null) {
-			mainPath.addDiseq(diseq);
-		}
-		mainPath.close();
+	/**
+	 * Compute the interpolants for a congruence lemma.
+	 *
+	 * @param left
+	 *            The left application term.
+	 * @param right
+	 *            The right application term.
+	 * @return The array of interpolants.
+	 */
+	private Term[] interpolateCongruence(final ApplicationTerm left, final ApplicationTerm right) {
 		final Term[] interpolants = new Term[mNumInterpolants];
-		for (int i = 0; i < mNumInterpolants; i++) {
-			interpolants[i] = mTheory.and(mInterpolants[i].toArray(new Term[mInterpolants[i].size()]));
+		final Term[] leftParams = left.getParameters();
+		final Term[] rightParams = right.getParameters();
+		final LitInfo[] paramInfos = new LitInfo[leftParams.length];
+		assert left.getFunction() == right.getFunction() && leftParams.length == rightParams.length;
+		for (int i = 0; i < leftParams.length; i++) {
+			if (leftParams[i] == rightParams[i]) {
+				paramInfos[i] = null;
+			} else {
+				paramInfos[i] = mEqualityOccurrences.get(new SymmetricPair<>(leftParams[i], rightParams[i]));
+			}
+		}
+
+		for (int part = 0; part < mNumInterpolants; part++) {
+			if (mDiseqOccurrences.isBorShared(part)) {
+				// collect A-local literals
+				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
+				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
+					if (paramInfos[paramNr] != null && paramInfos[paramNr].isALocal(part)) {
+						terms.add(mTheory.term("=", leftParams[paramNr], rightParams[paramNr]));
+					}
+				}
+				interpolants[part] = mTheory.and(terms.toArray(new Term[terms.size()]));
+			} else if (mDiseqOccurrences.isALocal(part)) {
+				// collect negated B-local literals
+				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
+				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
+					if (paramInfos[paramNr] != null && paramInfos[paramNr].isBLocal(part)) {
+						terms.add(mTheory.not(mTheory.term("=", leftParams[paramNr], rightParams[paramNr])));
+					}
+				}
+				interpolants[part] = mTheory.or(terms.toArray(new Term[terms.size()]));
+			} else {
+				// the congruence is mixed.  In this case f must be shared and we need to find boundary
+				// terms for every parameter.
+				final Term[] boundaryTerms = new Term[leftParams.length];
+				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
+					if (paramInfos[paramNr] == null) {
+						// term occurs left and right, so this is obviously shared
+						boundaryTerms[paramNr] = leftParams[paramNr];
+					} else if (paramInfos[paramNr].isMixed(part)) {
+						// mixed case: take mixed var
+						boundaryTerms[paramNr] = paramInfos[paramNr].getMixedVar();
+					} else if (mInterpolator.getOccurrence(leftParams[paramNr]).isAB(part)) {
+						// the left term is shared, use it
+						boundaryTerms[paramNr] = leftParams[paramNr];
+					} else {
+						// if it is not the left, the right must be shared, as the literal is not mixed.
+						assert mInterpolator.getOccurrence(rightParams[paramNr]).isAB(part);
+						boundaryTerms[paramNr] = rightParams[paramNr];
+					}
+				}
+				final Term sharedTerm = mTheory.term(left.getFunction(), boundaryTerms);
+				interpolants[part] = mTheory.term(Interpolator.EQ, mDiseqOccurrences.getMixedVar(), sharedTerm);
+			}
 		}
 		return interpolants;
 	}
 
+	/**
+	 * Interpolate a transitivity lemma.  The path should be in mPath, the disquality in mDiseq.
+	 * @return the interpolants
+	 */
+	@SuppressWarnings("unchecked")
+	public Term[] interpolateTransitivity() {
+		mInterpolants = new Collection[mNumInterpolants];
+		for (int part = 0; part < mNumInterpolants; part++) {
+			mInterpolants[part] = new ArrayList<>();
+		}
+
+		final Term headTerm = mPath[0];
+		final Term tailTerm = mPath[mPath.length - 1];
+		final Occurrence headOccur = mInterpolator.getOccurrence(headTerm);
+		final Occurrence tailOccur = mInterpolator.getOccurrence(tailTerm);
+
+		mHead = new PathEnd();
+		mTail = new PathEnd();
+		mMaxColor = mNumInterpolants;
+		mAllInA = new BitSet(mNumInterpolants);
+		mAllInA.set(0, mNumInterpolants);
+
+		mTail.closeAPath(mHead, null, headOccur);
+		mTail.openAPath(mHead, null, headOccur);
+
+		for (int i = 0; i < mPath.length - 1; i++) {
+			final Term left = mPath[i];
+			final Term right = mPath[i + 1];
+			final LitInfo info = mEqualityOccurrences.get(new SymmetricPair<>(left, right));
+			mTail.closeAPath(mHead, left, info);
+			mTail.openAPath(mHead, left, info);
+			if (info.getMixedVar() != null) {
+				final Occurrence occ = mInterpolator.getOccurrence(right);
+				mTail.closeAPath(mHead, info.getMixedVar(), occ);
+				mTail.openAPath(mHead, info.getMixedVar(), occ);
+			}
+		}
+		// add the disequality if present
+		if (mDiseqOccurrences != null) {
+			mTail.closeAPath(mHead, tailTerm, mDiseqOccurrences);
+			mTail.openAPath(mHead, tailTerm, mDiseqOccurrences);
+			mHead.closeAPath(mTail, headTerm, mDiseqOccurrences);
+			mHead.openAPath(mTail, headTerm, mDiseqOccurrences);
+
+			if (mDiseqOccurrences.getMixedVar() != null) {
+				mTail.closeAPathMixed(mDiseqOccurrences.getMixedVar(), headOccur);
+				mHead.closeAPathMixed(mDiseqOccurrences.getMixedVar(), tailOccur);
+			}
+		}
+		// close the still open ends where head and tail have different color. The headTerm/tailTerm must be
+		// shared in this case.
+		while (mHead.mColor != mTail.mColor) {
+			while (mHead.mColor < mTail.mColor) {
+				mInterpolants[mHead.mColor].add(mTheory.term("=", headTerm, mHead.mTerm[mHead.mColor]));
+				mHead.mColor = getParent(mHead.mColor);
+			}
+			while (mTail.mColor < mHead.mColor) {
+				mInterpolants[mTail.mColor].add(mTheory.term("=", mTail.mTerm[mTail.mColor], tailTerm));
+				mTail.mColor = getParent(mTail.mColor);
+			}
+		}
+		assert mHead.mColor == mTail.mColor;
+		// close the remaining paths, closing the cycles with disequalities or false.
+		int color = mHead.mColor;
+		while (color < mMaxColor) {
+			final int color1 = color;
+			mInterpolants[color1].add(mTheory.not(mTheory.term("=", mHead.mTerm[color], mTail.mTerm[color])));
+			color = getParent(color);
+		}
+		while (color < mNumInterpolants) {
+			final int color1 = color;
+			mInterpolants[color1].add(mTheory.mFalse);
+			color = getParent(color);
+		}
+
+		// Collect the interpolants
+		final Term[] interpolants = new Term[mNumInterpolants];
+		for (int part = 0; part < mNumInterpolants; part++) {
+			interpolants[part] = mTheory.and(mInterpolants[part].toArray(new Term[mInterpolants[part].size()]));
+		}
+		return interpolants;
+	}
+
+	public Term[] computeInterpolants(final Term proofTerm) {
+		// Collect the literal infos for all equalities in the clause.
+		mEqualityOccurrences = new HashMap<>();
+		final InterpolatorClauseTermInfo proofTermInfo = mInterpolator.getClauseTermInfo(proofTerm);
+		for (final Term literal : proofTermInfo.getLiterals()) {
+			final Term atom = mInterpolator.getAtom(literal);
+			if (atom != literal) {
+				// negated equality in clause, i.e., positive in conflict.
+				final InterpolatorAtomInfo atomTermInfo = mInterpolator.getAtomTermInfo(atom);
+				final LitInfo occInfo = mInterpolator.getAtomOccurenceInfo(atom);
+				assert atomTermInfo.isCCEquality();
+				final ApplicationTerm eq = atomTermInfo.getEquality();
+				mEqualityOccurrences.put(new SymmetricPair<>(eq.getParameters()[0], eq.getParameters()[1]), occInfo);
+			} else {
+				assert mDiseqOccurrences == null;
+				mDiseqOccurrences = mInterpolator.getAtomOccurenceInfo(atom);
+			}
+		}
+
+		final ProofPath[] paths = proofTermInfo.getPaths();
+		assert (paths.length == 1 && paths[0].getIndex() == null);
+		mPath = paths[0].getPath();
+		if (mPath.length == 2) {
+			return interpolateCongruence((ApplicationTerm) mPath[0], (ApplicationTerm) mPath[1]);
+		} else {
+			return interpolateTransitivity();
+		}
+	}
+
 	@Override
 	public String toString() {
-		return Arrays.toString(mInterpolants);
+		return "PathInfo[" + Arrays.toString(mPath) + "," + mHead + ',' + mTail + "," + mMaxColor + "]";
 	}
 }

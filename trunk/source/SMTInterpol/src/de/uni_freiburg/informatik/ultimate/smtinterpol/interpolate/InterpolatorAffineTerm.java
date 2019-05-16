@@ -18,19 +18,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
 
 /**
  * Represents a modifiable affin term, i.e. SUM_i c_i * x_i + c, where the x_i are initially nonbasic variable.
@@ -39,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumbe
  */
 public class InterpolatorAffineTerm {
 	Map<Term, Rational> mSummands = new HashMap<>();
-	InfinitNumber mConstant;
+	InfinitesimalNumber mConstant;
 
 	public InterpolatorAffineTerm() {
-		mConstant = InfinitNumber.ZERO;
+		mConstant = InfinitesimalNumber.ZERO;
 	}
 
 	public InterpolatorAffineTerm(final InterpolatorAffineTerm iat) {
@@ -51,16 +49,16 @@ public class InterpolatorAffineTerm {
 	}
 
 	public InterpolatorAffineTerm(final SMTAffineTerm affine) {
-		mConstant = new InfinitNumber(affine.getConstant(), 0);
+		mConstant = new InfinitesimalNumber(affine.getConstant(), 0);
 		mSummands.putAll(affine.getSummands());
 	}
 
 	public InterpolatorAffineTerm add(final Rational c) {
-		mConstant = mConstant.add(new InfinitNumber(c, 0));
+		mConstant = mConstant.add(new InfinitesimalNumber(c, 0));
 		return this;
 	}
 
-	public InterpolatorAffineTerm add(final InfinitNumber c) {
+	public InterpolatorAffineTerm add(final InfinitesimalNumber c) {
 		mConstant = mConstant.add(c);
 		return this;
 	}
@@ -122,7 +120,7 @@ public class InterpolatorAffineTerm {
 		return mSummands.isEmpty();
 	}
 
-	public InfinitNumber getConstant() {
+	public InfinitesimalNumber getConstant() {
 		return mConstant;
 	}
 
@@ -175,7 +173,7 @@ public class InterpolatorAffineTerm {
 		if (isFirst) {
 			sb.append(mConstant);
 		} else {
-			final int signum = mConstant.compareTo(InfinitNumber.ZERO);
+			final int signum = mConstant.compareTo(InfinitesimalNumber.ZERO);
 			if (signum < 0) {
 				sb.append(" - ");
 				sb.append(mConstant.mul(Rational.MONE));
@@ -193,42 +191,7 @@ public class InterpolatorAffineTerm {
 	public Term toSMTLib(final Theory t, final boolean isInt) {
 		assert (mConstant.mEps == 0);
 		final Sort numSort = isInt ? t.getSort("Int") : t.getSort("Real");
-		assert (numSort != null);
-		final Sort[] binfunc = new Sort[] { numSort, numSort };
-		final FunctionSymbol times = t.getFunction("*", binfunc);
-		final FunctionSymbol plus = t.getFunction("+", binfunc);
-		FunctionSymbol negate = t.getFunction("-", numSort);
-		if (negate == null) {
-			negate = t.getFunction("-", numSort);
-		}
-		assert (!isInt || mConstant.mA.isIntegral());
-		Term comb = mConstant.mA.equals(Rational.ZERO) ? null : mConstant.mA.toTerm(numSort);
-		for (final Map.Entry<Term, Rational> me : mSummands.entrySet()) {
-			Term convme = me.getKey();
-			// if affine term is integral it may only add integers.
-			assert (!isInt || convme.getSort().getName().equals("Int"));
-			assert (!isInt || me.getValue().isIntegral());
-			if (!isInt && convme.getSort().getName().equals("Int")) {
-				final Sort intSort = t.getSort("Int");
-				final FunctionSymbol toReal = t.getFunction("to_real", intSort);
-				convme = t.term(toReal, convme);
-			}
-			if (me.getValue().equals(Rational.MONE)) {
-				convme = t.term(negate, convme);
-			} else if (!me.getValue().equals(Rational.ONE)) {
-				final Term convfac = me.getValue().toTerm(numSort);
-				convme = t.term(times, convfac, convme);
-			}
-			if (comb == null) {
-				comb = convme;
-			} else {
-				comb = t.term(plus, convme, comb);
-			}
-		}
-		if (comb == null) {
-			return Rational.ZERO.toTerm(numSort);
-		}
-		return comb;
+		return new SMTAffineTerm(mSummands, mConstant.mReal).toTerm(numSort);
 	}
 
 	public boolean isInt() {
@@ -250,68 +213,21 @@ public class InterpolatorAffineTerm {
 	public Term toLeq0(final Theory t) {
 		assert (mConstant.mEps >= 0);
 		if (isConstant()) {
-			return mConstant.compareTo(InfinitNumber.ZERO) <= 0 ? t.mTrue : t.mFalse;
+			return mConstant.compareTo(InfinitesimalNumber.ZERO) <= 0 ? t.mTrue : t.mFalse;
 		}
-		final boolean isInt = isInt();
-		final Sort numSort = isInt ? t.getSort("Int") : t.getSort("Real");
-		assert (numSort != null);
-		final Sort[] binfunc = new Sort[] { numSort, numSort };
-		final FunctionSymbol times = t.getFunction("*", binfunc);
-		final ArrayList<Term> lcomb = new ArrayList<>();
-		final ArrayList<Term> rcomb = new ArrayList<>();
-		for (final Map.Entry<Term, Rational> me : mSummands.entrySet()) {
-			Term convme = me.getKey();
-			// if affine term is integral it may only add integers.
-			assert (!isInt || convme.getSort().getName().equals("Int"));
-			assert (!isInt || me.getValue().isIntegral());
-			if (!isInt && convme.getSort().getName().equals("Int")) {
-				final Sort intSort = t.getSort("Int");
-				final FunctionSymbol toReal = t.getFunction("to_real", intSort);
-				convme = t.term(toReal, convme);
-			}
-			if (me.getValue().equals(Rational.MONE)) {
-				rcomb.add(convme);
-			} else if (me.getValue().signum() < 0) {
-				final Term convfac = me.getValue().abs().toTerm(numSort);
-				rcomb.add(t.term(times, convfac, convme));
-			} else if (me.getValue().equals(Rational.ONE)) {
-				lcomb.add(convme);
-			} else if (me.getValue().signum() > 0) {
-				final Term convfac = me.getValue().toTerm(numSort);
-				lcomb.add(t.term(times, convfac, convme));
+		final SMTAffineTerm left = new SMTAffineTerm();
+		final SMTAffineTerm right = new SMTAffineTerm();
+		final Sort numSort = isInt() ? t.getSort("Int") : t.getSort("Real");
+		for (final Map.Entry<Term, Rational> entry : mSummands.entrySet()) {
+			final Rational coeff = entry.getValue();
+			if (coeff.signum() < 0) {
+				right.add(coeff.negate(), entry.getKey());
+			} else {
+				left.add(coeff, entry.getKey());
 			}
 		}
-		final InfinitNumber constant = isInt ? mConstant.ceil() : mConstant;
-		if (!constant.mA.equals(Rational.ZERO)) {
-			rcomb.add(constant.mA.negate().toTerm(numSort));
-		}
-		if (lcomb.isEmpty() && rcomb.isEmpty()) {
-			// We either have 0<=0 or 0<0
-			return constant.mEps == 0 ? t.mTrue : t.mFalse;
-		}
-		final FunctionSymbol plus = t.getFunction("+", binfunc);
-		Term tlcomb, trcomb;
-		switch (lcomb.size()) {
-		case 0:
-			tlcomb = Rational.ZERO.toTerm(numSort);
-			break;
-		case 1:
-			tlcomb = lcomb.get(0);
-			break;
-		default:
-			tlcomb = t.term(plus, lcomb.toArray(new Term[lcomb.size()]));
-		}
-		switch (rcomb.size()) {
-		case 0:
-			trcomb = Rational.ZERO.toTerm(numSort);
-			break;
-		case 1:
-			trcomb = rcomb.get(0);
-			break;
-		default:
-			trcomb = t.term(plus, rcomb.toArray(new Term[rcomb.size()]));
-		}
-		return t.term(constant.mEps == 0 ? "<=" : "<", tlcomb, trcomb);
+		right.add(mConstant.mReal.negate());
+		return t.term(mConstant.mEps == 0 ? "<=" : "<", left.toTerm(numSort), right.toTerm(numSort));
 	}
 
 	@Override

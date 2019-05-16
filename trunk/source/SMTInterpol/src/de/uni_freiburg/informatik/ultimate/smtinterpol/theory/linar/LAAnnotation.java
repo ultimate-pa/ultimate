@@ -93,7 +93,7 @@ public class LAAnnotation implements IAnnotation {
 	 * if this is the top-most annotation.
 	 * If this is a sub-annotation, it explains a bound on a linear variable.
 	 */
-	private InfinitNumber mBound;
+	private InfinitesimalNumber mBound;
 	/**
 	 * True, if this is a sub-annotation that explains an upper bound on a
 	 * linear variable.
@@ -146,14 +146,14 @@ public class LAAnnotation implements IAnnotation {
 		}
 	}
 	
-	MutableAffinTerm addLiterals() {
-		final MutableAffinTerm mat = new MutableAffinTerm();
+	MutableAffineTerm addLiterals() {
+		final MutableAffineTerm mat = new MutableAffineTerm();
 		for (final Map.Entry<Literal, Rational> entry : mCoefficients.entrySet()) {
 			final Rational coeff = entry.getValue(); 
 			final Literal lit = entry.getKey();
 			if (lit.getAtom() instanceof BoundConstraint) {
 				final BoundConstraint bc = (BoundConstraint) lit.getAtom();
-				InfinitNumber bound = bc.getBound();
+				InfinitesimalNumber bound = bc.getBound();
 				assert ((coeff.signum() > 0) == (bc != lit));
 				if (bc == lit) {
 					bound = bc.getInverseBound();
@@ -202,7 +202,7 @@ public class LAAnnotation implements IAnnotation {
 		return mLinvar;
 	}
 	
-	public InfinitNumber getBound() {
+	public InfinitesimalNumber getBound() {
 		return mBound;
 	}
 	

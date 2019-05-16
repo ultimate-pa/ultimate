@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 
 /**
  * Class that generates a proof term for a LAAnnotation. This is called by LAAnnotation.toTerm().
@@ -64,7 +65,7 @@ public class AnnotationToProofTerm {
 	/**
 	 * Compute the gcd of all Farkas coefficients used in the annotation. This is used to make the Farkas coefficients
 	 * integral.
-	 * 
+	 *
 	 * @param annot
 	 *            the annotation.
 	 * @return the gcd of all Farkas coefficients in annot.
@@ -91,7 +92,7 @@ public class AnnotationToProofTerm {
 
 	/**
 	 * Fill the literal and negLiteral field in annotation info.
-	 * 
+	 *
 	 * @param annot
 	 *            the annotation.
 	 * @param theory
@@ -100,7 +101,7 @@ public class AnnotationToProofTerm {
 	 *            the information corresponding to the annotation.
 	 */
 	private void computeLiterals(final LAAnnotation annot, final Theory theory, final AnnotationInfo info) {
-		final MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, annot.getLinVar());
 		at.add(annot.getBound().negate());
 		if (!annot.isUpper()) {
@@ -118,7 +119,7 @@ public class AnnotationToProofTerm {
 
 	/**
 	 * Convert the base annotation to a proof object.
-	 * 
+	 *
 	 * @param parent
 	 *            the base annotation (i.e. its linvar is null).
 	 * @param theory
@@ -200,7 +201,7 @@ public class AnnotationToProofTerm {
 			Term proofAnnot = theory.term(theory.mOr, disjs);
 			final Annotation[] annots = new Annotation[] { trichotomy ? TRICHOTOMY : new Annotation(":LA", coeffs) };
 			proofAnnot = theory.annotatedTerm(annots, proofAnnot);
-			proofAnnot = theory.term("@lemma", proofAnnot);
+			proofAnnot = theory.term(ProofConstants.FN_LEMMA, proofAnnot);
 			if (!antes.isEmpty()) {
 				// Since the base annotation should be translated first
 				// this must be a sub-annotation, so we should have the
@@ -214,13 +215,13 @@ public class AnnotationToProofTerm {
 		if (antes.size() == 1) {
 			return antes.getFirst();
 		}
-		return theory.term("@res", antes.toArray(new Term[antes.size()]));
+		return theory.term(ProofConstants.FN_RES, antes.toArray(new Term[antes.size()]));
 	}
 
 	/**
 	 * Helper method to retrieve a sort used to convert Rationals. By default, we try to print Rationals as integers. If
 	 * this fails, we switch back to reals.
-	 * 
+	 *
 	 * @param t
 	 *            The theory used to create sorts and terms.
 	 * @return A sort to use for conversion of Rationals.

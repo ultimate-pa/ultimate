@@ -502,7 +502,7 @@ public class Rational implements Comparable<Rational> {
 	 * @return the gcd of i1 and i2.
 	 */
 	public static BigInteger gcd(final BigInteger i1, final BigInteger i2) {
-		if (i1.equals(BigInteger.ONE) || i2.equals(BigInteger.ONE)) {
+		if (i1 == BigInteger.ONE || i2 == BigInteger.ONE) {
 			return BigInteger.ONE;
 		}
 		final int l1 = i1.bitLength();
@@ -916,16 +916,6 @@ public class Rational implements Comparable<Rational> {
 	 */
 	public Term toTerm(final Sort sort) {
 		return sort.getTheory().constant(this, sort);
-	}
-	/**
-	 * Convert this rational into an SMTLIB term.
-	 * @param t Theory to use during conversion.
-	 * @return SMTLIB term corresponding to this rational.
-	 * @deprecated Use {@link #toTerm(Sort)} since this is the type-safe version
-	 */
-	@Deprecated
-	public Term toSMTLIB(final Theory t) {
-		return t.rational(numerator(), denominator());
 	}
 	/**
 	 * Check whether this rational corresponds to a (finite) rational value.

@@ -88,12 +88,8 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 	}
 	
 	private Info getInfoStash(CCTerm lhs, CCTerm rhs) {
-		StashList<Info> stash = mStashList;
-		while (stash != null) {
-			if (stash.getEntry().equals(lhs,rhs)) {
-				return stash.getEntry();
-			}
-			stash = stash.getNext();
+		if (mStash != null && mStash.equals(lhs, rhs)) {
+			return mStash;
 		}
 		return null;
 	}
@@ -102,14 +98,14 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 		final int hash = hash(pairHash(lhs, rhs));
 		final int hash1 = hash1(hash);
 		Info bucket = (Info) mBuckets[hash1]; 
-  		if (bucket != null && bucket.equals(lhs, rhs)) {
+		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
 		}
 		bucket = (Info) mBuckets[hash2(hash) ^ hash1]; 
-  		if (bucket != null && bucket.equals(lhs, rhs)) {
+		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
 		}
-		return mStashList == null ? null : getInfoStash(lhs, rhs);
+		return getInfoStash(lhs, rhs);
 	}
 
 	private static int pairHash(CCTerm lhs, CCTerm rhs) {

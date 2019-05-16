@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public abstract class LAReason {
 	
 	private final LinVar mVar;
-	protected InfinitNumber mBound;
+	protected InfinitesimalNumber mBound;
 	private LAReason mOldReason;
 	private final boolean mIsUpper;
 	/**
@@ -54,7 +54,7 @@ public abstract class LAReason {
 	 */
 	private final LiteralReason mLastlit;
 	
-	public LAReason(LinVar var, InfinitNumber bound, boolean isUpper, LiteralReason lastLit) {
+	public LAReason(LinVar var, InfinitesimalNumber bound, boolean isUpper, LiteralReason lastLit) {
 		mVar = var;
 		mBound = bound;
 		mIsUpper = isUpper;
@@ -64,7 +64,7 @@ public abstract class LAReason {
 	 * Get the effective bound of this reason.
 	 * @return Effective bound of this reason.
 	 */
-	public InfinitNumber getBound() {
+	public InfinitesimalNumber getBound() {
 		return mBound;
 	}
 	
@@ -72,7 +72,7 @@ public abstract class LAReason {
 	 * Get the exact bound of this reason.
 	 * @return Exact bound of this reason.
 	 */
-	public InfinitNumber getExactBound() {
+	public InfinitesimalNumber getExactBound() {
 		return mBound;
 	}
 	
@@ -117,8 +117,8 @@ public abstract class LAReason {
 	 * @param literals the set of literals.
 	 * @return the new positive slack that may be reduced. 
 	 */
-	abstract InfinitNumber explain(Explainer explainer, 
-		InfinitNumber slack, Rational factor);
+	abstract InfinitesimalNumber explain(Explainer explainer, 
+		InfinitesimalNumber slack, Rational factor);
 
 	@Override
 	public String toString() {
@@ -130,7 +130,7 @@ public abstract class LAReason {
 	}
 	
 	public Term toSMTLIB(Theory smtTheory, boolean useAuxVars) {
-		final MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
 		if (!mIsUpper) {

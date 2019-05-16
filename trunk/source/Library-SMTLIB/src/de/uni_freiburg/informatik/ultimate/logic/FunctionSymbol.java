@@ -40,6 +40,7 @@ public class FunctionSymbol {
 	
 	public static final int RETURNOVERLOAD = 16;
 	public static final int MODELVALUE = 32;
+	public static final int UNINTERPRETEDINTERNAL = 64;
 
 	final String mName;
 	final BigInteger[] mIndices;
@@ -360,6 +361,6 @@ public class FunctionSymbol {
 	 */
 	public boolean isInterpreted() {
 		return isModelValue()
-				|| (isIntern() && (mName.charAt(0) != '@' || !mName.endsWith("0")));
+				|| (isIntern() && (mFlags & UNINTERPRETEDINTERNAL) == 0);
 	}
 }

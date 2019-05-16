@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 
 /**
  * Class used to annotate the input formulas such that interpolation is able to discover the origin of a clause.
- * 
+ *
  * @author Juergen Christ
  */
 public class SourceAnnotation implements IAnnotation {
@@ -59,10 +59,10 @@ public class SourceAnnotation implements IAnnotation {
 
 	@Override
 	public Term toTerm(final Clause cls, final Theory theory) {
-		Term res = cls.toTerm(theory);
+		final Term res = cls.toTerm(theory);
 		// For partial proofs, make an asserted sub proof.
-		Term subproof = mSource != null ? mSource : theory.term("@asserted", res);
-		return theory.term("@clause", subproof, theory
+		final Term subproof = mSource != null ? mSource : theory.term(ProofConstants.FN_ASSERTED, res);
+		return theory.term(ProofConstants.FN_CLAUSE, subproof, theory
 				.annotatedTerm(
 					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
 	}

@@ -103,12 +103,14 @@ public class CongruencePath {
 
 	final HashMap<SymmetricPair<CCTerm>,SubPath> mVisited;
 	final ArrayDeque<SubPath> mAllPaths;
+	final ArrayDeque<SymmetricPair<CCTerm>> mTodo;
 	final Set<Literal> mAllLiterals;
 
 	public CongruencePath(CClosure closure) {
 		mClosure = closure;
 		mVisited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
 		mAllLiterals = new HashSet<Literal>();
+		mTodo = new ArrayDeque<SymmetricPair<CCTerm>>();
 		mAllPaths = new ArrayDeque<SubPath>();
 	}
 	
@@ -124,7 +126,7 @@ public class CongruencePath {
 		}
 		return depth;
 	}
-	
+
 	/**
 	 * Compute the conflict set and interpolation information for the 
 	 * congruence path from start to end.  The terms must be congruent AppTerms, 
@@ -148,19 +150,15 @@ public class CongruencePath {
 	private void computeCCPath(CCAppTerm start, CCAppTerm end) {
 		while (true) {
 			/* Compute path and interpolation info for func and arg */
-			final SubPath path = computePath(start.mArg, end.mArg);
-			if (path != null) {
-				mAllPaths.addFirst(path);
-			}
+			mTodo.addFirst(new SymmetricPair<CCTerm>(start.mArg, end.mArg));
 
-			/* We do not have explicit edges between partial function
-			 * applications.  Hence start.func and end.func must be equal 
-			 * or congruent.
+			/*
+			 * We do not have explicit edges between partial function applications. Hence start.func and end.func must
+			 * be equal or congruent.
 			 */
 			if (start.mFunc == end.mFunc) {
 				break;
 			}
-			
 			start = (CCAppTerm) start.mFunc;
 			end = (CCAppTerm) end.mFunc;
 		}
@@ -228,7 +226,7 @@ public class CongruencePath {
 	 * @param left the left end of the congruence chain that should be evaluated.
 	 * @param right the right end of the congruence chain that should be evaluated.
 	 */
-	public SubPath computePath(CCTerm left, CCTerm right) {
+	SubPath computePathNonRecursive(CCTerm left, CCTerm right) {
 		/* check for and ignore trivial paths */
 		if (left == right) {
 			return null;
@@ -279,12 +277,55 @@ public class CongruencePath {
 		mVisited.put(key, path);
 		return path;
 	}
+
+	/**
+	 * Compute the conflict set and interpolation information for the congruence path from term left to right. The
+	 * interpolation info should be empty and its head/max/tailNr should be equal to the (last) formula number of the
+	 * equality that precedes left in the conflict circle. The parameter tailNr should give the (last) formula number of
+	 * the next equality after right. On return info.tailNr is equal to tailNr.
+	 * 
+	 * @param mVisited
+	 *            a set of equality pairs that were already visited. This is used to prevent double work.
+	 * @param set
+	 *            the set of literals in the conflict clause.
+	 * @param info
+	 *            the interpolation info containing head/tail interfaces, and collecting the equality chains.
+	 * @param tailNr
+	 *            this gives the (last) formula number of the equality after right.
+	 * @param left
+	 *            the left end of the congruence chain that should be evaluated.
+	 * @param right
+	 *            the right end of the congruence chain that should be evaluated.
+	 */
+	public void computePath(CCTerm left, CCTerm right) {
+		HashSet<SymmetricPair<CCTerm>> added = new HashSet<>();
+		mTodo.add(new SymmetricPair<CCTerm>(left, right));
+		while (!mTodo.isEmpty()) {
+			SymmetricPair<CCTerm> pathEnds = mTodo.removeFirst();
+
+			// don't do anything for trivial paths
+			if (pathEnds.getFirst() == pathEnds.getSecond())
+				continue;
+
+			// check if we already visited this path
+			SubPath path = mVisited.get(pathEnds);
+			if (path == null) {
+				// if we did not visit it yet, enqueue again for later and visit the path
+				mTodo.addFirst(pathEnds);
+				computePathNonRecursive(pathEnds.getFirst(), pathEnds.getSecond());
+			} else {
+				// already visited it, so we just add the path now unless we did this earlier
+				if (added.add(pathEnds)) {
+					mAllPaths.addFirst(path);
+				}
+			}
+		}
+	}
 	
 	public Clause computeCycle(CCEquality eq, boolean produceProofs) {
 		final CCTerm lhs = eq.getLhs();
 		final CCTerm rhs = eq.getRhs();
-		final SubPath path = computePath(eq.getLhs(), eq.getRhs());
-		mAllPaths.addFirst(path);
+		computePath(eq.getLhs(), eq.getRhs());
 		final Literal[] cycle = new Literal[mAllLiterals.size() + 1];
 		int i = 0;
 		cycle[i++] = eq;
@@ -300,8 +341,7 @@ public class CongruencePath {
 	
 	public Clause computeCycle(CCTerm lconstant, CCTerm rconstant, boolean produceProofs) {
 		mClosure.mEngine.getLogger().debug("computeCycle for Constants");
-		final SubPath path = computePath(lconstant, rconstant);
-		mAllPaths.addFirst(path);
+		computePath(lconstant, rconstant);
 		final Literal[] cycle = new Literal[mAllLiterals.size()];
 		int i = 0;
 		for (final Literal l: mAllLiterals) {

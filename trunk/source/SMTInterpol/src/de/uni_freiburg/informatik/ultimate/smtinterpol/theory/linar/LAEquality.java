@@ -63,7 +63,7 @@ public class LAEquality extends DPLLAtom {
 
 	@Override
 	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
-		final MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
 		final boolean isInt = mVar.mIsInt && mBound.isIntegral();

@@ -68,6 +68,14 @@ public class FormulaLet extends NonRecursive {
 		return result;
 	}
 	
+	/**
+	 * This walker converts a term into a letted term.
+	 * 
+	 * For the initial formula and for each quantifier, a new scope for term infos is created (mVisited).
+	 * It then creates a TermInfo for the term, which is walked first to collect all information about the term and its
+	 * subterms. After collecting all info, the the term is transformed. to a letted term. Finally, the visited scope
+	 * that was initially added is removed again.
+	 */
 	static class Letter implements Walker {
 		final Term mTerm;
 		public Letter(Term term) {
@@ -96,25 +104,58 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 	
+	/**
+	 * This class collects informations for a term and is also a walker. As a walker it will just compute the
+	 * predecessor counter (or occurrence counter).
+	 */
 	private final static class TermInfo extends TermWalker {
+		/**
+		 * How many predecessors does this Term have?
+		 */
 		int                 mCount;
+		/**
+		 * How many times was this Term already visited in transform.
+		 */
 		int                 mSeen;
+		/**
+		 * The TermInfo for all sub terms that should be letted at this term.
+		 */
 		ArrayList<TermInfo> mLettedTerms;
+		/**
+		 * If this term is letted, this is the term variable it is letted to.
+		 */
 		TermVariable        mSubst;
+		/**
+		 * If this term is letted, this is the term that will build the let, i.e., the nearest common parent.
+		 */
 		TermInfo            mParent;
+		/**
+		 * The length of the mParent list if you read it as linked list. This is used to quickly find a common parent.
+		 * This is always equal to {@code mParent.mPDepth + 1}.
+		 */
 		int                 mPDepth;
 		public TermInfo(Term term) {
 			super(term);
 			mCount = 1;
 		}
 
+		/**
+		 * Should we build a let for this term. This is the case if this term occurs several times, or if its single
+		 * predecessor cannot be letted and occurs several times.
+		 *
+		 * @return
+		 */
 		public boolean shouldBuildLet() {
 			TermInfo info = this;
 			while (info.mCount == 1) {
+				// we can use mParent, since we know there is a single predecessor and we already called mergeParent
+				// on it.
 				info = info.mParent;
+				// This has no parent -> no let.
 				if (info == null) {
 					return false;
 				}
+				// parent is letted so this term really only occurs once.
 				if (info.mSubst != null) {
 					return false;
 				}
@@ -122,12 +163,21 @@ public class FormulaLet extends NonRecursive {
 			return true;
 		}
 		
+		/**
+		 * Merge the mParent with parent, i.e. find the common parent of mParent and parent and update mParent.
+		 * 
+		 * @param parent
+		 *            The new parent that should be merged.
+		 */
 		public void mergeParent(TermInfo parent) {
 			if (mParent == null) {
+				// we don't have a parent yet, set mParent to parent.
 				mParent = parent;
 				mPDepth = parent.mPDepth + 1;
 				return;
 			}
+			// Find the common parent. First make sure the depth is equal, then one can just compare mParent with
+			// parent.
 			while (mParent != parent) {
 				if (parent.mPDepth == mParent.mPDepth) {
 					parent = parent.mParent;
@@ -140,7 +190,7 @@ public class FormulaLet extends NonRecursive {
 			}
 			mPDepth = mParent.mPDepth + 1;
 		}
-		
+
 		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
 			throw new InternalError("No TermInfo for ConstantTerm allowed");
@@ -148,9 +198,14 @@ public class FormulaLet extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
+			// Named terms are not counted. They are letted separately.
 			if (!isNamed(term)) {
 				FormulaLet let = (FormulaLet) walker;
+				// walk the main subterm
 				visitChild(let, term.getSubterm());
+
+				// walk all subterms occuring in the annotation
+				// we use a small todo stack here in case the annotation contains nested arrays.
 				final ArrayDeque<Object> todo = new ArrayDeque<>();
 				for (Annotation annot : term.getAnnotations()) {
 					if (annot.getValue() != null) {
@@ -189,6 +244,8 @@ public class FormulaLet extends NonRecursive {
 			// do not recurse into quantified formulas
 			// this avoids problem with common terms containing free
 			// variables
+
+			// TODO: instead use scopes to distinguish variables?
 			//((FormulaLet) walker).visit(term.getSubformula(), this);
 		}
 
@@ -197,30 +254,58 @@ public class FormulaLet extends NonRecursive {
 			throw new InternalError("No TermInfo for TermVariable allowed");
 		}
 
+		/**
+		 * Visit a child of the current term.
+		 * 
+		 * @param let
+		 *            The formula let environment.
+		 * @param term
+		 *            The child term to visit.
+		 */
 		public void visitChild(FormulaLet let, Term term) {
+			// don't let term variables or constant terms
 			if (term instanceof TermVariable
 				|| term instanceof ConstantTerm) {
 				return;
 			}
+			// don't let function applications without arguments (constants)
 			if (term instanceof ApplicationTerm
 				&& ((ApplicationTerm) term).getParameters().length == 0) {
 				return;
 			}
-	
+
+			// check if term info exists
 			TermInfo child = let.mVisited.getLast().get(term);
 			if (child == null) {
+				// create new term info and visit the child recursively.
 				child = new TermInfo(term);
 				let.mVisited.getLast().put(term, child);
 				let.enqueueWalker(child);
 			} else {
+				// already visited, just count the number of predecessors.
 				child.mCount++;
 			}
 		}
 	}
-	
+
+	/**
+	 * This transforms the term into a letted term and puts it on the result stack. It is called by the converter class
+	 * that determines when the term needs to be build, e.g. letted sub terms are only build when the let is going to be
+	 * constructed.
+	 */
 	static class Transformer implements Walker {
 		TermInfo mTermInfo;
 		boolean mIsCounted;
+
+		/**
+		 * Create walker to transform the term into a letted term.
+		 * 
+		 * @param parent
+		 *            The predecessor, or the common ancestor term where the let is placed.
+		 * @param isCounted
+		 *            If this is false, we just create a copy of this term, because it could not be letted for some
+		 *            reasons. We only count the last copy.
+		 */
 		public Transformer(TermInfo parent, boolean isCounted) {
 			mTermInfo = parent;
 			mIsCounted = isCounted;
@@ -231,19 +316,56 @@ public class FormulaLet extends NonRecursive {
 			final FormulaLet let = ((FormulaLet) engine);
 			final Term term = mTermInfo.mTerm;
 			if (mIsCounted) {
+				// If this term is copied, it must not let anything, as the let would be duplicated.
+				// Otherwise enqueue the walker that will build a let if this happens to become a parent for some
+				// letted terms later.
 				let.enqueueWalker(new BuildLet(mTermInfo));
 				mTermInfo.mLettedTerms = new ArrayList<TermInfo>();
 			}
 			if (term instanceof QuantifiedFormula) {
+				// Quantified formulas are handled by a completely new letter.
 				final QuantifiedFormula quant = (QuantifiedFormula) term;
+				// enqueue the final walker that rebuilds the quantified term again.
 				let.enqueueWalker(new BuildQuantifier(quant));
-				let.enqueueWalker(new Letter(quant.getSubformula()));
+				Term sub = quant.getSubformula();
+				if (sub instanceof AnnotatedTerm) {
+					// avoid separating a pattern annotation from its quantifier. We do not let the terms in the
+					// pattern annotation
+					AnnotatedTerm at = (AnnotatedTerm) sub;
+					// enqueue the final walker that rebuilds the annotated term again.
+					let.enqueueWalker(new BuildAnnotatedTerm(at));
+					// recursively walk the annotation and push the contained terms.
+					let.enqueueWalker(new Letter(at.getSubterm()));
+					final ArrayDeque<Object> todo = new ArrayDeque<>();
+					for (Annotation annot : at.getAnnotations()) {
+						if (annot.getValue() != null) {
+							todo.add(annot.getValue());
+						}
+					}
+					while (!todo.isEmpty()) {
+						Object value = todo.removeFirst();
+						if (value instanceof Term) {
+							let.mResultStack.addLast((Term) value);
+						} else if (value instanceof Object[]) {
+							for (Object elem : (Object[]) value) {
+								todo.add(elem);
+							}
+						}
+					}
+				} else {
+					// enqueue a new letter for the sub formula.
+					let.enqueueWalker(new Letter(quant.getSubformula()));
+				}
 			} else if (term instanceof AnnotatedTerm) {
 				final AnnotatedTerm at = (AnnotatedTerm) term;
+				// enqueue the final walker that rebuilds the annotated term again.
 				let.enqueueWalker(new BuildAnnotatedTerm(at));
 				if (isNamed(at)) {
+					// Named terms are special and are handled by a completely new letter (they must not contain
+					// variables).
 					let.enqueueWalker(new Letter(at.getSubterm()));
 				} else {
+					// recursively walk the annotation and convert the contained terms.
 					let.enqueueWalker(new Converter(mTermInfo, at.getSubterm(), mIsCounted));
 					final ArrayDeque<Object> todo = new ArrayDeque<>();
 					for (Annotation annot : at.getAnnotations()) {
@@ -263,19 +385,27 @@ public class FormulaLet extends NonRecursive {
 					}
 				}
 			} else if (term instanceof ApplicationTerm) {
+				// enqueue the final walker that rebuilds the application term.
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				let.enqueueWalker(new BuildApplicationTerm(appTerm));
+				// recursively convert the arguments.
 				final Term[] params = appTerm.getParameters();
 				for (int i = params.length - 1; i >= 0; i--) {
 					let.enqueueWalker(
 						new Converter(mTermInfo, params[i], mIsCounted));
 				}
 			} else {
+				// everything else is converted to itself
 				let.mResultStack.addLast(term);
 			}
 		}
 	}
 
+	/**
+	 * This converts the term into a letted term and puts it on the result stack. This first checks if the term is that
+	 * determines when the term needs to be build, e.g. letted sub terms are only build when the let is going to be
+	 * constructed.
+	 */
 	static class Converter implements Walker {
 		TermInfo mParent;
 		Term mTerm;
@@ -295,56 +425,78 @@ public class FormulaLet extends NonRecursive {
 				let.mResultStack.addLast(child);
 				return;
 			}
+			// merge parents, to find out where the let should be put into.
 			info.mergeParent(mParent);
 			if (info.shouldBuildLet() && info.mSubst == null 
-				&& (let.mFilter == null || let.mFilter.isLettable(child))) {
-				final Term t = info.mTerm; 
-				info.mSubst = t.getTheory().
-					createTermVariable(".cse" + let.mCseNum++, t.getSort());
+					&& (let.mFilter == null || let.mFilter.isLettable(child))) {
+				// this will be letted, so create a new term variable for it.
+				final Term t = info.mTerm;
+				info.mSubst = t.getTheory().createTermVariable(".cse" + let.mCseNum++, t.getSort());
 			}
 			if (mIsCounted && ++info.mSeen == info.mCount) {
+				// this is the last time we visit this term. Now it is time to find our true parent that will let us.
 				if (info.mSubst == null) {
+					// we don't let this term, so just transform it (counted).
 					let.enqueueWalker(new Transformer(info, true));
 				} else {
+					// We let this term. So the result is just the term variable.
 					let.mResultStack.addLast(info.mSubst);
+
+					// Usually the let position is the common parent,
+					// but if some ancestor occurs several times without being letted, we need to move it to its
+					// ancestor to avoid creating the let multiple times.
 					TermInfo ancestor = info.mParent;
 					TermInfo letPos = ancestor;
 					while (ancestor != null && ancestor.mSubst == null) {
 						if (ancestor.mCount > 1) {
+							// ancestor occurs several times.
+							// let position is the common parent of this ancestor.
 							letPos = ancestor.mParent;
 						}
 						ancestor = ancestor.mParent;
 					}
+					// Tell our ancestor, that he needs to let us
 					letPos.mLettedTerms.add(info);
 				}
 				return;
 			}
-			
+
 			if (info.mSubst == null) {
+				// we will not let the term, but it occurs several times. So we must not count
+				// this visit.
 				let.enqueueWalker(new Transformer(info, false));
 			} else {
+				// we will let the term, so this term is created to its term variable
 				let.mResultStack.addLast(info.mSubst);
 			}
 		}
 	}
-	
+
+	/**
+	 * This class checks if there are sub terms that need to be letted. In that case we need to transform the sub terms
+	 * and enqueue a BuildLetTerm that will finally add the let term.
+	 */
 	static class BuildLet implements Walker {
 		final TermInfo mTermInfo;
 		public BuildLet(TermInfo parent) {
 			mTermInfo = parent;
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			final List<TermInfo> lettedTerms = mTermInfo.mLettedTerms;
 			if (lettedTerms.isEmpty()) {
+				// no terms want to be letted by us.
 				return;
 			}
 			final FormulaLet let = ((FormulaLet) engine);
 			final TermVariable[] tvs = new TermVariable[lettedTerms.size()];
+			// Building a let may create new letted terms so we need to run again.
 			let.enqueueWalker(this);
+			// Build the let term after we transformed the sub terms.
 			let.enqueueWalker(new BuildLetTerm(tvs));
 			int i = 0;
+			// now transform the letted subterms; BuildLetTerm will collect them.
 			for (final TermInfo ti : lettedTerms) {
 				tvs[i++] = ti.mSubst;
 				let.enqueueWalker(new Transformer(ti, true));
@@ -353,6 +505,10 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 	
+	/**
+	 * Add a let term around the term on the result stack using the let values also from the result stack and put the
+	 * let term back onto the result stack.
+	 */
 	static class BuildLetTerm implements Walker {
 		final TermVariable[] mVars;
 		public BuildLetTerm(TermVariable[] vars) {
@@ -372,15 +528,34 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Build an application term from the arguments on the result stack and the original function symbol and put the
+	 * result on the result stack.
+	 */
 	static class BuildApplicationTerm implements Walker {
 		final ApplicationTerm mOldTerm;
 		public BuildApplicationTerm(ApplicationTerm term) {
 			mOldTerm = term;
 		}
+
+		public Term[] getTerms(FormulaLet let, Term[] oldArgs) {
+			Term[] newArgs = oldArgs;
+			for (int i = oldArgs.length - 1; i >= 0; i--) {
+				final Term newTerm = let.mResultStack.removeLast();
+				if (newTerm != oldArgs[i]) {
+					if (newArgs == oldArgs) {
+						newArgs = oldArgs.clone();
+					}
+					newArgs[i] = newTerm;
+				}
+			}
+			return newArgs;
+		}
+
 		@Override
 		public void walk(NonRecursive engine) {
 			final FormulaLet let = (FormulaLet)engine;
-			final Term[] newParams = let.getTerms(mOldTerm.getParameters());
+			final Term[] newParams = getTerms(let, mOldTerm.getParameters());
 			Term result = mOldTerm;
 			if (newParams != mOldTerm.getParameters()) {
 				final Theory theory = mOldTerm.getTheory();
@@ -390,6 +565,9 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Build a quantifier around the term on the result stack and put the result on the result stack.
+	 */
 	static class BuildQuantifier implements Walker {
 		final QuantifiedFormula mOldTerm;
 		public BuildQuantifier(QuantifiedFormula term) {
@@ -412,6 +590,10 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Build an annotated term around the term on the result stack (and all term valued annotations also on result
+	 * stack) and put the result on the result stack.
+	 */
 	static class BuildAnnotatedTerm implements Walker {
 		final AnnotatedTerm mOldTerm;
 		public BuildAnnotatedTerm(AnnotatedTerm term) {
@@ -464,6 +646,9 @@ public class FormulaLet extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Check if this term has a :named annotation.
+	 */
 	private static boolean isNamed(AnnotatedTerm at) {
 		for (final Annotation a : at.getAnnotations()) {
 			if (a.getKey().equals(":named")) {
@@ -471,19 +656,5 @@ public class FormulaLet extends NonRecursive {
 			}
 		}
 		return false;
-	}
-
-	public Term[] getTerms(Term[] oldArgs) {
-		Term[] newArgs = oldArgs;
-		for (int i = oldArgs.length - 1; i >= 0; i--) {
-			final Term newTerm = mResultStack.removeLast();
-			if (newTerm != oldArgs[i]) {
-				if (newArgs == oldArgs) {
-					newArgs = oldArgs.clone();
-				}
-				newArgs[i] = newTerm;
-			}
-		}
-		return newArgs;
 	}
 }

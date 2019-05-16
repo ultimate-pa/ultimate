@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -53,12 +54,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
  */
 public class TermCompiler extends TermTransformer {
 
-	private boolean mBy0Seen = false;
 	private Map<Term, Set<String>> mNames;
 	UnifyHash<ApplicationTerm> mCanonicalSums = new UnifyHash<>();
 
 	private IProofTracker mTracker;
-	private Utils mUtils;
+	private LogicSimplifier mUtils;
 
 	static class TransitivityStep implements Walker {
 		final Term mFirst;
@@ -77,7 +77,7 @@ public class TermCompiler extends TermTransformer {
 
 	public void setProofTracker(final IProofTracker tracker) {
 		mTracker = tracker;
-		mUtils = new Utils(tracker);
+		mUtils = new LogicSimplifier(tracker);
 	}
 
 	public void setAssignmentProduction(final boolean on) {
@@ -347,10 +347,7 @@ public class TermCompiler extends TermTransformer {
 				if (params[1] instanceof ConstantTerm) {
 					final Rational arg1 = SMTAffineTerm.convertConstant((ConstantTerm) params[1]);
 					if (arg1.equals(Rational.ZERO)) {
-						mBy0Seen = true;
-						final Term rhs = theory.term("@/0", params[0]);
-						final Term rewrite = mTracker.reflexivity(rhs);
-						setResult(mTracker.transitivity(convertedApp, rewrite));
+						setResult(convertedApp);
 					} else {
 						arg0.mul(arg1.inverse());
 						final Term rhs = arg0.toTerm(this, convertedApp.getSort());
@@ -369,12 +366,7 @@ public class TermCompiler extends TermTransformer {
 				if (params[1] instanceof ConstantTerm) {
 					final Rational divisor = (Rational) ((ConstantTerm) params[1]).getValue();
 					assert divisor.isIntegral();
-					if (divisor.equals(Rational.ZERO)) {
-						mBy0Seen = true;
-						final Term rhs = theory.term("@div0", params[0]);
-						final Term rewrite = mTracker.reflexivity(rhs);
-						setResult(mTracker.transitivity(convertedApp, rewrite));
-					} else if (divisor.equals(Rational.ONE)) {
+					if (divisor.equals(Rational.ONE)) {
 						final Term rhs = arg0.toTerm(this, convertedApp.getSort());
 						final Term rewrite = mTracker.buildRewrite(lhs, rhs, ProofConstants.RW_DIV_ONE);
 						setResult(mTracker.transitivity(convertedApp, rewrite));
@@ -383,7 +375,7 @@ public class TermCompiler extends TermTransformer {
 						final Term rhs = arg0.toTerm(this, convertedApp.getSort());
 						final Term rewrite = mTracker.buildRewrite(lhs, rhs, ProofConstants.RW_DIV_MONE);
 						setResult(mTracker.transitivity(convertedApp, rewrite));
-					} else if (arg0.isConstant()) {
+					} else if (arg0.isConstant() && !divisor.equals(Rational.ZERO)) {
 						// We have (div c0 c1) ==> constDiv(c0, c1)
 						final Rational div = constDiv(arg0.getConstant(), divisor);
 						final Term rhs = div.toTerm(convertedApp.getSort());
@@ -405,10 +397,7 @@ public class TermCompiler extends TermTransformer {
 					final Rational divisor = (Rational) ((ConstantTerm) params[1]).getValue();
 					assert divisor.isIntegral();
 					if (divisor.equals(Rational.ZERO)) {
-						mBy0Seen = true;
-						final Term rhs = theory.term("@mod0", params[0]);
-						final Term rewrite = mTracker.reflexivity(rhs);
-						setResult(mTracker.transitivity(convertedApp, rewrite));
+						setResult(convertedApp);
 					} else if (divisor.equals(Rational.ONE)) {
 						// (mod x 1) == 0
 						final Term rhs = Rational.ZERO.toTerm(convertedApp.getSort());
@@ -544,9 +533,7 @@ public class TermCompiler extends TermTransformer {
 			case "true":
 			case "false":
 			case "@diff":
-			case "@/0":
-			case "@div0":
-			case "@mod0":
+			case Interpolator.EQ:
 				/* nothing to do */
 				break;
 			default:
@@ -627,15 +614,6 @@ public class TermCompiler extends TermTransformer {
 		}
 		setResult(mTracker.transitivity(mTracker.buildRewrite(old, old.getSubterm(), ProofConstants.RW_STRIP),
 				newBody));
-	}
-	/**
-	 * Get and reset the division-by-0 seen flag.
-	 * @return The old division-by-0 seen flag.
-	 */
-	public boolean resetBy0Seen() {
-		final boolean old = mBy0Seen;
-		mBy0Seen = false;
-		return old;
 	}
 
 	/**

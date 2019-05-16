@@ -31,11 +31,11 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Juergen Christ
  */
 public class BoundConstraint extends DPLLAtom {
-	final InfinitNumber mBound;
-	final InfinitNumber mIBound;
+	final InfinitesimalNumber mBound;
+	final InfinitesimalNumber mIBound;
 	final LinVar mVar;
 
-	public BoundConstraint(InfinitNumber bound, LinVar var, int assertionstacklevel) {
+	public BoundConstraint(InfinitesimalNumber bound, LinVar var, int assertionstacklevel) {
 		super(HashUtils.hashJenkins(var.hashCode(), bound), assertionstacklevel);
 		assert(bound.mEps <= 0);
 		assert(!var.mIsInt || bound.isIntegral());
@@ -56,7 +56,7 @@ public class BoundConstraint extends DPLLAtom {
 	 * 
 	 * @return Bound set during construction
 	 */
-	public InfinitNumber getBound() {
+	public InfinitesimalNumber getBound() {
 		return mBound;
 	}
 	
@@ -65,15 +65,15 @@ public class BoundConstraint extends DPLLAtom {
 	 * 
 	 * @return Bound converted to lower bound.
 	 */
-	public InfinitNumber getInverseBound() {
+	public InfinitesimalNumber getInverseBound() {
 		return mIBound;
 	}
 
 	@Override
 	public String toStringNegated() {
-		final InfinitNumber ibound = getInverseBound();
+		final InfinitesimalNumber ibound = getInverseBound();
 		if (ibound.mEps > 0) {
-			return "[" + hashCode() + "]" + mVar + " > " + ibound.mA;
+			return "[" + hashCode() + "]" + mVar + " > " + ibound.mReal;
 		} else {
 			return "[" + hashCode() + "]" + mVar + " >= " + ibound;
 		}
@@ -82,7 +82,7 @@ public class BoundConstraint extends DPLLAtom {
 	@Override
 	public String toString() {
 		if (mBound.mEps < 0) {
-			return "[" + hashCode() + "]" + mVar + " < " + mBound.mA;
+			return "[" + hashCode() + "]" + mVar + " < " + mBound.mReal;
 		} else {
 			return "[" + hashCode() + "]" + mVar + " <= " + mBound;
 		}
@@ -99,7 +99,7 @@ public class BoundConstraint extends DPLLAtom {
 	 *            Upper bound currently set.
 	 * @return true iff this bound is bigger than <code>ubound</code>.
 	 */
-	boolean impliedByUpperBound(InfinitNumber ubound) {
+	boolean impliedByUpperBound(InfinitesimalNumber ubound) {
 		return ubound.lesseq(mBound);
 	}
 
@@ -113,13 +113,13 @@ public class BoundConstraint extends DPLLAtom {
 	 *            Lower bound currently set.
 	 * @return true iff this bound is smaller than <code>lbound</code>.
 	 */
-	boolean impliedByLowerBound(InfinitNumber lbound) {
+	boolean impliedByLowerBound(InfinitesimalNumber lbound) {
 		return getInverseBound().lesseq(lbound);
 	}
 
 	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		final MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
 		return at.toSMTLibLeq0(smtTheory, quoted);

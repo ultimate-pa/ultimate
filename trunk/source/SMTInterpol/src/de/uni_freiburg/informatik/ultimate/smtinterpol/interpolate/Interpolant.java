@@ -23,14 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class Interpolant {
 	Term mTerm;
 
-	/**
-	 * Empty interpolant. Use this constructor if you want to set the term later.
-	 */
-	public Interpolant() {
-		// Provide default ctor
-	}
-
-	public Interpolant(Term term) {
+	public Interpolant(final Term term) {
 		mTerm = term;
 	}
 

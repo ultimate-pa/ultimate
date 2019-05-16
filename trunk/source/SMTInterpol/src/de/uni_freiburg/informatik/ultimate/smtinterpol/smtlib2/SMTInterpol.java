@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap.CopyMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofChecker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTermGenerator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
@@ -132,7 +133,6 @@ public class SMTInterpol extends NoopScript {
 	}
 
 	private static class SMTInterpolSetup extends Theory.SolverSetup {
-
 		private final int mProofMode;
 
 		public SMTInterpolSetup(final int proofMode) {
@@ -141,6 +141,7 @@ public class SMTInterpol extends NoopScript {
 
 		@Override
 		public void setLogic(final Theory theory, final Logics logic) {
+			final Sort[] polySort = theory.createSortVariables("A");
 			final int leftassoc = FunctionSymbol.LEFTASSOC;
 			// Damn Java compiler...
 			Sort proof = null;
@@ -150,28 +151,30 @@ public class SMTInterpol extends NoopScript {
 			if (mProofMode > 0) {
 				// Partial proofs.
 				// Declare all symbols needed for proof production
-				declareInternalSort(theory, "@Proof", 0, 0);
-				proof = theory.getSort("@Proof");
+				declareInternalSort(theory, ProofConstants.SORT_PROOF, 0, 0);
+				proof = theory.getSort(ProofConstants.SORT_PROOF);
 				proof2 = new Sort[] { proof, proof };
-				declareInternalFunction(theory, "@res", proof2, proof, leftassoc);
-				declareInternalFunction(theory, "@lemma", bool1, proof, 0);
-				declareInternalFunction(theory, "@clause", new Sort[] { proof, bool }, proof, 0);
-				declareInternalFunction(theory, "@assumption", bool1, proof, 0);
-				declareInternalFunction(theory, "@asserted", bool1, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_RES, proof2, proof, leftassoc);
+				declareInternalFunction(theory, ProofConstants.FN_LEMMA, bool1, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_CLAUSE, new Sort[] { proof, bool }, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_ASSUMPTION, bool1, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_ASSERTED, bool1, proof, 0);
 			}
 			if (mProofMode > 1) {
 				// Full proofs.
-				final Sort[] polySorts = theory.createSortVariables("A");
-				declareInternalPolymorphicFunction(theory, "@refl", polySorts, polySorts, proof, 0);
-				declareInternalFunction(theory, "@trans", proof2, proof, leftassoc);
-				declareInternalFunction(theory, "@cong", proof2, proof, leftassoc);
-				declareInternalFunction(theory, "@exists", new Sort[] { proof }, proof, 0);
-				declareInternalFunction(theory, "@intern", bool1, proof, 0);
-				declareInternalFunction(theory, "@split", new Sort[] { proof, bool }, proof, 0);
-				declareInternalFunction(theory, "@eq", proof2, proof, 0);
-				declareInternalFunction(theory, "@rewrite", bool1, proof, 0);
-				declareInternalFunction(theory, "@tautology", bool1, proof, 0);
+				declareInternalPolymorphicFunction(theory, ProofConstants.FN_REFL, polySort, polySort, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_TRANS, proof2, proof, leftassoc);
+				declareInternalFunction(theory, ProofConstants.FN_CONG, proof2, proof, leftassoc);
+				declareInternalFunction(theory, ProofConstants.FN_EXISTS, new Sort[] { proof }, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_SPLIT, new Sort[] { proof, bool }, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_EQ, proof2, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_REWRITE, bool1, proof, 0);
+				declareInternalFunction(theory, ProofConstants.FN_TAUTOLOGY, bool1, proof, 0);
 			}
+			// the EQ function for CC interpolation
+			proof2 = new Sort[] { proof, proof };
+			declareInternalPolymorphicFunction(theory, Interpolator.EQ, polySort,
+					new Sort[] { polySort[0], polySort[0] }, bool, FunctionSymbol.UNINTERPRETEDINTERNAL);
 			defineFunction(theory, new FunctionSymbolFactory("@undefined") {
 
 				@Override
@@ -190,32 +193,14 @@ public class SMTInterpol extends NoopScript {
 			if (logic.isArray()) {
 				declareArraySymbols(theory);
 			}
-			if (logic.hasIntegers()) {
-				declareIntSymbols(theory);
-			}
-			if (logic.hasReals()) {
-				declareRealSymbols(theory);
-			}
-		}
-
-		private static final void declareIntSymbols(final Theory theory) {
-			final Sort intSort = theory.getSort("Int");
-			final Sort[] sort1 = { intSort };
-			declareInternalFunction(theory, "@mod0", sort1, intSort, 0);
-			declareInternalFunction(theory, "@div0", sort1, intSort, 0);
-		}
-
-		private static final void declareRealSymbols(final Theory theory) {
-			final Sort realSort = theory.getSort("Real");
-			final Sort[] sort1 = { realSort };
-			declareInternalFunction(theory, "@/0", sort1, realSort, 0);
 		}
 
 		private static final void declareArraySymbols(final Theory theory) {
 			// Currently only diff
 			final Sort[] vars = theory.createSortVariables("Index", "Elem");
 			final Sort array = theory.getSort("Array", vars);
-			declareInternalPolymorphicFunction(theory, "@diff", vars, new Sort[] { array, array }, vars[0], 0);
+			declareInternalPolymorphicFunction(theory, "@diff", vars, new Sort[] { array, array }, vars[0],
+					FunctionSymbol.UNINTERPRETEDINTERNAL);
 		}
 	}
 
@@ -246,9 +231,6 @@ public class SMTInterpol extends NoopScript {
 	// m_status field is not valid and we have to deactivate
 	// get-{value,model,interpolants,proof}.
 	private boolean mAssertionStackModified = true;
-	// The assertion stack level at which the first division-by-0 was
-	// encountered. If it is -1, it means "never"
-	private int mBy0Seen = -1;
 
 	private long mNextQuickCheck = 1;
 	private long mNumAsserts = 0;
@@ -444,10 +426,6 @@ public class SMTInterpol extends NoopScript {
 			}
 		}
 		mClausifier.pop(n);
-		if (mStackLevel < mBy0Seen) {
-			// We've popped all division-by-0s.
-			mBy0Seen = -1;
-		}
 	}
 
 	@Override
@@ -667,12 +645,6 @@ public class SMTInterpol extends NoopScript {
 			if (mAssertions != null) {
 				mAssertions.add(term);
 			}
-			/*
-			 * We always have to reset the flag, but only need to set the stack level if it is not already set.
-			 */
-			if (mClausifier.resetBy0Seen() && mBy0Seen == -1) {
-				mBy0Seen = mStackLevel;
-			}
 			if (mNumAsserts++ >= mNextQuickCheck) {
 				mNextQuickCheck *= 2;
 				if (!mEngine.quickCheck()) {
@@ -800,10 +772,7 @@ public class SMTInterpol extends NoopScript {
 		}
 		try {
 			final ProofTermGenerator generator = new ProofTermGenerator(getTheory());
-			Term res = generator.convert(unsat);
-			if (mBy0Seen != -1) {
-				res = new Div0Remover().transform(res);
-			}
+			final Term res = generator.convert(unsat);
 			return res;
 		} catch (final Exception exc) {
 			throw new SMTLIBException(exc.getMessage() == null ? exc.toString() : exc.getMessage());
@@ -917,13 +886,6 @@ public class SMTInterpol extends NoopScript {
 					new Interpolator(mLogger, this, tmpBench, getTheory(), parts, startOfSubtree);
 			final Term proofTree = getProof();
 			final Term[] ipls = interpolator.getInterpolants(proofTree);
-
-			if (mBy0Seen != -1) {
-				final Div0Remover rem = new Div0Remover();
-				for (int i = 0; i < ipls.length; ++i) {
-					ipls[i] = rem.transform(ipls[i]);
-				}
-			}
 
 			if (mSolverOptions.isInterpolantCheckModeActive()) {
 				boolean error = false;

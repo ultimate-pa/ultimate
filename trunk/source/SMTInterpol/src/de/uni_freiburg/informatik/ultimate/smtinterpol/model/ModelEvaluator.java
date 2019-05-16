@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
  * @author Juergen Christ
  */
 public class ModelEvaluator extends NonRecursive {
-	
+
 	/**
 	 * A helper to enqueue either the true or the false branch of an ite.
 	 * @author Juergen Christ
@@ -50,13 +50,13 @@ public class ModelEvaluator extends NonRecursive {
 	private static class ITESelector implements Walker {
 
 		private final ApplicationTerm mIte;
-		
-		public ITESelector(ApplicationTerm ite) {
+
+		public ITESelector(final ApplicationTerm ite) {
 			mIte = ite;
 		}
-		
+
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final ModelEvaluator eval = (ModelEvaluator) engine;
 			final int selector = eval.getConverted();
 			if (selector == -1) {
@@ -67,48 +67,48 @@ public class ModelEvaluator extends NonRecursive {
 						.getTrueIdx() ? 1 : 2]);
 			}
 		}
-		
+
 	}
-	
+
 	private static class AddToCache implements Walker {
-		
+
 		private final Term mTerm;
-		public AddToCache(Term t) {
+		public AddToCache(final Term t) {
 			mTerm = t;
 		}
-		
+
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final ModelEvaluator eval = (ModelEvaluator) engine;
 			eval.mCache.put(mTerm, eval.mEvaluated.peekLast());
 		}
-		
+
 	}
-	
+
 	private static class Evaluator implements Walker {
 
 		private final ApplicationTerm mTerm;
-		public Evaluator(ApplicationTerm term) {
+		public Evaluator(final ApplicationTerm term) {
 			mTerm = term;
 		}
-		
+
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final ModelEvaluator eval = (ModelEvaluator) engine;
 			final int[] args = eval.getConvertedArgs(mTerm.getParameters().length);
 			eval.setResult(eval.getValue(mTerm.getFunction(), args, mTerm));
 		}
-		
+
 	}
-	
+
 	private static class CachedEvaluator extends TermWalker {
 
-		public CachedEvaluator(Term term) {
+		public CachedEvaluator(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			final ModelEvaluator eval = (ModelEvaluator) walker;
 			final Integer cached = eval.mCache.get(mTerm);
 			if (cached == null) {
@@ -116,11 +116,11 @@ public class ModelEvaluator extends NonRecursive {
 				super.walk(walker);
 			} else {
 				eval.setResult(cached);
-			}	
+			}
 		}
-		
+
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			if (!term.getSort().isNumericSort()) {
 				throw new InternalError(
 						"Don't know how to evaluate this: " + term);
@@ -131,7 +131,7 @@ public class ModelEvaluator extends NonRecursive {
 			Rational val;
 			if (term.getValue() instanceof BigInteger) {
 				val = Rational.valueOf(
-						(BigInteger) term.getValue(), BigInteger.ONE); 
+						(BigInteger) term.getValue(), BigInteger.ONE);
 			} else if (term.getValue() instanceof BigDecimal) {
 				final BigDecimal decimal = (BigDecimal) term.getValue();
 				if (decimal.scale() <= 0) {
@@ -150,58 +150,58 @@ public class ModelEvaluator extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			final ModelEvaluator eval = (ModelEvaluator) walker;
 			eval.enqueueWalker(new CachedEvaluator(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final ModelEvaluator eval = (ModelEvaluator) walker;
 			if (term.getFunction().getName().equals("ite")) {
 				eval.enqueueWalker(new ITESelector(term));
 				eval.pushTerm(term.getParameters()[0]);
 			} else {
 				eval.enqueueWalker(new Evaluator(term));
-				eval.pushTerms(term.getParameters());			
+				eval.pushTerms(term.getParameters());
 			}
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError(
 					"Let-Terms should not be in model evaluation");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			throw new SMTLIBException(
 					"Quantifiers not supported in model evaluation");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			throw new SMTLIBException("Terms to evaluate must be closed");
 		}
-		
+
 	}
-	
+
 	HashMap<Term, Integer> mCache = new HashMap<Term, Integer>();
-	
+
 	ArrayDeque<Integer> mEvaluated = new ArrayDeque<Integer>();
-	
+
 	private Integer getConverted() {
 		return mEvaluated.removeLast();
 	}
-	
-	public int getValue(FunctionSymbol fs, int[] args, ApplicationTerm term) {
-		if (fs.isInterpreted()) {
+
+	public int getValue(final FunctionSymbol fs, final int[] args, final ApplicationTerm term) {
+		if (fs.isIntern() || fs.isModelValue()) {
 			return interpret(fs, args, term);
 		}
 		return evalFunction(fs, args);
 	}
 
-	public void pushTerms(Term[] terms) {
+	public void pushTerms(final Term[] terms) {
 		for (int i = terms.length - 1; i >= 0; i--) {
 			pushTerm(terms[i]);
 		}
@@ -215,21 +215,21 @@ public class ModelEvaluator extends NonRecursive {
 		return result;
 	}
 
-	public void pushTerm(Term term) {
+	public void pushTerm(final Term term) {
 		enqueueWalker(new CachedEvaluator(term));
 	}
 
-	private void setResult(int res) {
+	private void setResult(final int res) {
 		mEvaluated.addLast(res);
 	}
-	
+
 	private final Model mModel;
 
-	public ModelEvaluator(Model model) {
+	public ModelEvaluator(final Model model) {
 		mModel = model;
 	}
 
-	public Term evaluate(Term input) {
+	public Term evaluate(final Term input) {
 		try {
 			run(new CachedEvaluator(input));
 			final int res = getConverted();
@@ -238,17 +238,17 @@ public class ModelEvaluator extends NonRecursive {
 			reset();
 		}
 	}
-	
-	private int evalFunction(FunctionSymbol fs, int... args) {
+
+	private int evalFunction(final FunctionSymbol fs, final int... args) {
 		FunctionValue val = mModel.getFunctionValue(fs);
 		if (val == null) {
 			val = mModel.map(fs, 0);
 		}
 		return val.get(args, mModel.isPartialModel());
 	}
-	
-	private int interpret(FunctionSymbol fun, int[] args,
-			ApplicationTerm term) {
+
+	private int interpret(final FunctionSymbol fun, final int[] args,
+			final ApplicationTerm term) {
 		if (fun.isModelValue()) {
 			return Integer.parseInt(fun.getName().substring(1));
 		}
@@ -368,14 +368,8 @@ public class ModelEvaluator extends NonRecursive {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational divisor = rationalValue(args[i]);
 				if (divisor.equals(Rational.ZERO)) {
-					final FunctionSymbol div0 = theory.getFunction(
-							"@/0", fun.getReturnSort());
 					final int idx = mModel.getNumericSortInterpretation().extend(val);
-					final int divval = evalFunction(div0, idx);
-					if (divval == -1)
-					{
-						return -1; // Propagate undefined
-					}
+					final int divval = evalFunction(fun, idx, args[i]);
 					val = rationalValue(divval);
 				} else {
 					val = val.div(divisor);
@@ -429,14 +423,8 @@ public class ModelEvaluator extends NonRecursive {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational n = rationalValue(args[i]);
 				if (n.equals(Rational.ZERO)) {
-					final FunctionSymbol div0 = theory.getFunction(
-							"@div0", fun.getReturnSort());
 					final int idx = mModel.getNumericSortInterpretation().extend(val);
-					final int divval = evalFunction(div0, idx);
-					if (divval == -1)
-					 {
-						return -1; // Propagate undefined
-					}
+					final int divval = evalFunction(fun, idx, args[i]);
 					val = rationalValue(divval);
 				} else {
 					final Rational div = val.div(n);
@@ -449,9 +437,7 @@ public class ModelEvaluator extends NonRecursive {
 			assert(args.length == 2);
 			final Rational n = rationalValue(args[1]);
 			if (n.equals(Rational.ZERO)) {
-				final FunctionSymbol div0 = theory.getFunction(
-						"@mod0", fun.getReturnSort());
-				return evalFunction(div0, args[0]);
+				return evalFunction(fun, args);
 			}
 			final Rational m = rationalValue(args[0]);
 			Rational div = m.div(n);
@@ -488,9 +474,6 @@ public class ModelEvaluator extends NonRecursive {
 			return arg.isIntegral()
 					? mModel.getTrueIdx() : mModel.getFalseIdx();
 		}
-		// @...0 should not go here...
-//		if (name.equals("@/0") || name.equals("@div0") || name.equals("@mod0"))
-//			return evalExecTerm(term, fun, args);
 		if (name.equals("store")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
@@ -505,7 +488,7 @@ public class ModelEvaluator extends NonRecursive {
 		if (name.equals("const")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getReturnSort());
-			ArrayValue constVal = new ArrayValue();
+			final ArrayValue constVal = new ArrayValue();
 			constVal.setDefaultValue(args[0]);
 			return array.value2index(constVal);
 		}
@@ -525,7 +508,7 @@ public class ModelEvaluator extends NonRecursive {
 		throw new AssertionError("Unknown internal function " + name);
 	}
 
-	private Rational rationalValue(int idx) {
+	private Rational rationalValue(final int idx) {
 		return mModel.getNumericSortInterpretation().get(idx);
 	}
 }

@@ -22,15 +22,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,18 +43,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 @RunWith(Parameterized.class)
 public class SystemTest {
 
-	public File mFile;
-
-	public SystemTest(final File file) {
-		mFile = file;
-	}
-
-	@Test
-	public void testSystem() throws FileNotFoundException {
-		performTest(mFile);
-	}
-
-	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
+	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
@@ -78,6 +64,9 @@ public class SystemTest {
 			}
 
 		};
+		solver.setOption(":proof-check-mode", true);
+		solver.setOption(":model-check-mode", true);
+		solver.setOption(":interpolant-check-mode", true);
 		pe.parseStream(new FileReader(f), "TestStream");
 	}
 
@@ -98,69 +87,46 @@ public class SystemTest {
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
+		} else if (f.getParent().endsWith("lira/cut-lemmas/20-vars")) {
+			return false;
 		}
 		return true;
 	}
 
-	@Parameters(name = "{0}")
-	public static Collection<File> testFiles() throws URISyntaxException, IOException {
-
+	@Parameters // (name = "{0}")
+	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
 		final Collection<File> testFiles = new ArrayList<>();
 
 		final String name = SystemTest.class.getPackage().getName();
 		final URL url = SystemTest.class.getClassLoader().getResource(name);
-		try {
-			final String protocol = url.getProtocol();
-			final File f;
-			if ("file".equals(protocol)) {
-				f = new File(url.toURI());
-			} else if ("bundleresource".equals(protocol)) {
-				f = new File(FileLocator.toFileURL(url).getFile());
-			} else {
-				throw new UnsupportedOperationException("unsupported resource protocol");
-			}
-
-			// find directory named test below SMTInterpolTest and above f
-			final FilenameFilter filter = (FilenameFilter) (dir, name1) -> name1.equals("test");
-			File parent = f.getParentFile();
-			File[] lst = null;
-			while (parent != null) {
-				lst = parent.listFiles(filter);
-				if (lst != null && lst.length > 0) {
-					break;
+		final File f = new File(url.toURI());
+		final File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+		assert lst != null && lst.length == 1;
+		final ArrayDeque<File> todo = new ArrayDeque<>();
+		todo.add(lst[0]);
+		while (!todo.isEmpty()) {
+			final File file = todo.removeFirst();
+			if (file.isDirectory()) {
+				for (final File subFile : file.listFiles()) {
+					todo.add(subFile);
 				}
-				parent = parent.getParentFile();
-			}
-			assert lst != null && lst.length > 0 : "Could not find any tests starting from File " + f.getAbsolutePath();
-
-			final ArrayDeque<File> todo = new ArrayDeque<>();
-			if (lst.length > 1) {
-				System.out.println("More than one test directory found");
-			}
-			todo.addAll(Arrays.asList(lst));
-			while (!todo.isEmpty()) {
-				final File file = todo.removeFirst();
-				if (file.isDirectory()) {
-					for (final File subFile : file.listFiles()) {
-						todo.add(subFile);
-					}
-				} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
-					if (shouldExecute(file)) {
-						testFiles.add(file);
-					}
+			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
+				if (shouldExecute(file)) {
+					testFiles.add(file);
 				}
 			}
-			return testFiles;
-		} catch (final Throwable t) {
-			if (url != null) {
-				System.out.println("Error trying to extract system tests from URL " + url.toString());
-			} else {
-				System.out.println("Error trying to extract system tests; could not load resource");
-			}
-
-			t.printStackTrace();
-			throw t;
 		}
+		return testFiles;
 	}
 
+	public File mFile;
+
+	public SystemTest(final File file) {
+		mFile = file;
+	}
+
+	@Test
+	public void testSystem() throws FileNotFoundException {
+		performTest(mFile);
+	}
 }

@@ -37,6 +37,7 @@ public class LetTerm extends Term {
 	private final TermVariable[] mVariables;
 	private final Term[] mValues;
 	private final Term mSubterm;
+	private final Sort mSort;
 	
 	/**
 	 * @return The variables
@@ -64,15 +65,12 @@ public class LetTerm extends Term {
 		mVariables = vars;
 		mValues = vals;
 		mSubterm = t;
+		mSort = t.getSort();
 	}
 	
 	@Override
 	public Sort getSort() {
-		LetTerm sortterm = this;
-		while (sortterm.mSubterm instanceof LetTerm) {
-			sortterm = (LetTerm) sortterm.mSubterm;
-		}
-		return sortterm.mSubterm.getSort();
+		return mSort;
 	}
 
 	public static final int hashLet(

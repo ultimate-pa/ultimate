@@ -64,11 +64,7 @@ public class ProofTracker implements IProofTracker{
 
 	@Override
 	public Term intern(final Term term, final Term intern) {
-		final Theory t = term.getTheory();
-		if (term == intern) {
-			return reflexivity(intern);
-		}
-		return buildProof(t.term("@intern", t.term("=", term, intern)), intern);
+		return buildRewrite(term, intern, ProofConstants.RW_INTERN);
 	}
 
 	/**
@@ -127,13 +123,13 @@ public class ProofTracker implements IProofTracker{
 	@Override
 	public Term reflexivity(final Term a) {
 		final Theory theory = a.getTheory();
-		final Term proof = theory.term("@refl", a);
+		final Term proof = theory.term(ProofConstants.FN_REFL, a);
 		return buildProof(proof, a);
 	}
 
 	private boolean isReflexivity(final Term proof) {
 		return proof instanceof ApplicationTerm
-				&& ((ApplicationTerm) proof).getFunction().getName() == "@refl";
+				&& ((ApplicationTerm) proof).getFunction().getName() == ProofConstants.FN_REFL;
 	}
 
 	@Override
@@ -149,7 +145,7 @@ public class ProofTracker implements IProofTracker{
 			return buildProof(proofEq1, getProvedTerm(eq2));
 		}
 		final Theory theory = eq1.getTheory();
-		final Term proof = theory.term("@trans", proofEq1, proofEq2);
+		final Term proof = theory.term(ProofConstants.FN_TRANS, proofEq1, proofEq2);
 		return buildProof(proof, getProvedTerm(eq2));
 	}
 
@@ -171,7 +167,7 @@ public class ProofTracker implements IProofTracker{
 		if (congProofs.size() == 1) {
 			proof = congProofs.get(0);
 		} else {
-			proof = theory.term("@cong", congProofs.toArray(new Term[congProofs.size()]));
+			proof = theory.term(ProofConstants.FN_CONG, congProofs.toArray(new Term[congProofs.size()]));
 		}
 		return buildProof(proof, theory.term(aTerm.getFunction(), params));
 	}
@@ -189,7 +185,7 @@ public class ProofTracker implements IProofTracker{
 			return buildProof(getProof(asserted), getProvedTerm(simpFormula));
 		}
 		final Theory t = asserted.getTheory();
-		final Term proof = t.term("@eq", getProof(asserted), simpProof);
+		final Term proof = t.term(ProofConstants.FN_EQ, getProof(asserted), simpProof);
 		return buildProof(proof, getProvedTerm(simpFormula));
 	}
 
@@ -201,14 +197,15 @@ public class ProofTracker implements IProofTracker{
 	@Override
 	public Term auxAxiom(final Term axiom, final Annotation rule) {
 		final Theory t = axiom.getTheory();
-		final Term proof = t.term("@tautology", t.annotatedTerm(new Annotation[] { rule }, axiom));
+		final Term proof = t.term(ProofConstants.FN_TAUTOLOGY, t.annotatedTerm(new Annotation[] { rule }, axiom));
 		return buildProof(proof, axiom);
 	}
 
 	@Override
 	public Term split(final Term splitTerm, final Term input, final Annotation splitRule) {
 		final Theory t = input.getTheory();
-		final Term proof = t.term("@split", t.annotatedTerm(new Annotation[] { splitRule }, getProof(input)), splitTerm);
+		final Term proof = t.term(ProofConstants.FN_SPLIT,
+				t.annotatedTerm(new Annotation[] { splitRule }, getProof(input)), splitTerm);
 		return buildProof(proof, splitTerm);
 	}
 
@@ -225,14 +222,14 @@ public class ProofTracker implements IProofTracker{
 		}
 		final Term statement = theory.term("=", orig, res);
 		final Annotation[] annot = new Annotation[] { rule };
-		final Term proof = theory.term("@rewrite", theory.annotatedTerm(annot, statement));
+		final Term proof = theory.term(ProofConstants.FN_REWRITE, theory.annotatedTerm(annot, statement));
 		return buildProof(proof, res);
 	}
 
 	@Override
 	public Term asserted(final Term formula) {
 		final Theory theory = formula.getTheory();
-		final Term proof = theory.term("@asserted", formula);
+		final Term proof = theory.term(ProofConstants.FN_ASSERTED, formula);
 		return buildProof(proof, formula);
 	}
 
@@ -240,7 +237,7 @@ public class ProofTracker implements IProofTracker{
 	public Term exists(final QuantifiedFormula quant, final Term newBody) {
 		final Theory theory = quant.getTheory();
 		final Annotation[] annot = new Annotation[] { new Annotation(":vars", quant.getVariables()) };
-		final Term proof = theory.term("@exists", theory.annotatedTerm(annot, getProof(newBody)));
+		final Term proof = theory.term(ProofConstants.FN_EXISTS, theory.annotatedTerm(annot, getProof(newBody)));
 		final Term formula = theory.exists(quant.getVariables(), getProvedTerm(newBody));
 		return buildProof(proof, formula);
 	}
