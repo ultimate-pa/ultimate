@@ -101,7 +101,7 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void polynomialTermTest02() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
@@ -116,7 +116,7 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void polynomialTermTest03() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
@@ -143,7 +143,7 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void polynomialTermTest05() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);

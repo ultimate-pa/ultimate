@@ -416,14 +416,17 @@ public class PolynomialTerm extends Term {
 		if (polynomialTerms.length == 1) {
 			return polynomialTerms[0];
 		}
-		for (int i = 0; i < polynomialTerms.length; i++) {
+		for (int i = 1; i < polynomialTerms.length; i++) {
 			if (!polynomialTerms[i].isConstant()) {
 				throw new UnsupportedOperationException("Division by Variables not supported!");
 			}
 		}
-		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], polynomialTerms[1]);
+		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], 
+												 new PolynomialTerm(polynomialTerms[1].getSort(), 
+														 			polynomialTerms[1].getConstant().inverse()));
 		for (int i = 2; i < polynomialTerms.length; i++) {
-			poly = new PolynomialTerm(poly, new PolynomialTerm(polynomialTerms[i]));
+			poly = new PolynomialTerm(poly, new PolynomialTerm(polynomialTerms[i].getSort(),
+															   polynomialTerms[i].getConstant().inverse()));
 		}
 		return poly;
 	}
@@ -582,7 +585,7 @@ public class PolynomialTerm extends Term {
 		if (isConstant()) {
 			return true;
 		}
-		Monomial maybeMonomial = (Monomial) ((Map<?, ?>) mTerm2Coefficient).keySet().iterator().next();
+		Term maybeMonomial = (Term) ((Map<?, ?>) mTerm2Coefficient).keySet().iterator().next();
 		//This is sufficient because of our convention of the two possible states of the map:
 		//Monomial2Coefficient or Variable2Coefficient. Breaking this convention will lead to numerous bugs!!!!
 		if (maybeMonomial instanceof Monomial) {
