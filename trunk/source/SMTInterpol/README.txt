@@ -15,7 +15,7 @@ necessary steps.
 
 3. Create a patch for the changes from SMTInterpol/src and Library-SMTLIB/src.
    cd smtinterpol.git
-   git diff <version-number-last-merged> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
+   git diff <version-number-last-merged> SMTInterpol/src Library-SMTLIB/src SMTInterpolTest/src >smtinterpol.diff
    cd ../source
    patch -p1 < ../smtinterpol.git/smtinterpol.diff
 
