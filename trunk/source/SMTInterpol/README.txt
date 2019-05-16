@@ -30,6 +30,7 @@ necessary steps.
 
    diff -x.svn -r source/SMTInterpol/src smtinterpol.git/SMTInterpol/src
    diff -x.svn -r source/Library-SMTLIB/src smtinterpol.git/Library-SMTLIB/src
+   diff -x.svn -r source/SMTInterpolTest/src smtinterpol.git/SMTInterpolTest/src
 
    it should list some files from ultimate/util, Versions.properties, 
    and the automatically build parser/lexer files and the parser build
@@ -43,7 +44,7 @@ necessary steps.
    cat source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
 
 9. Commit die updated Ultimate.
-   git commit source/SMTInterpol source/Library-SMTLIB
+   git commit source/SMTInterpol source/Library-SMTLIB source/SMTInterpolTest
    The log message should say (version can be found by executing "git describe" 
    in smtinterpol.git)
 
