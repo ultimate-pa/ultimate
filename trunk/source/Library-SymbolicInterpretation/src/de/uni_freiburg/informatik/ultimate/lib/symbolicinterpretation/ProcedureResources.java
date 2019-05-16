@@ -62,7 +62,8 @@ public class ProcedureResources {
 
 		// TODO split this function into sub-functions
 
-		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(icfg).graphOfProcedure(procedure, locationsOfInterest);
+		final ProcedureGraph procedureGraph =
+				new ProcedureGraphBuilder(icfg).graphOfProcedure(procedure, locationsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
 		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =

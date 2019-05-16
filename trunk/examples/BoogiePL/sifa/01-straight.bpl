@@ -12,8 +12,8 @@ procedure sub() returns ()
 {
   var j : int;
   j := 4;
-  assert 5 > 0;
+  assert j == 4;
   j := 6;
-  assert 7 > 0;
+  assert j == 7;
 }
 

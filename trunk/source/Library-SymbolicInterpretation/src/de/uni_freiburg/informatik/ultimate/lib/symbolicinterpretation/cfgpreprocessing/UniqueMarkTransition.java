@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Pure marker, for instance for locations of interest (LOI) inside @link {@link RegexDag}
+ * Pure marker, for instance for locations of interest (LOI) inside {@link RegexDag}
  * This class does not overwrite equals so that all objects of this class are unique
  * and cannot be merged by {@link RegexDagCompressor}.
  * 

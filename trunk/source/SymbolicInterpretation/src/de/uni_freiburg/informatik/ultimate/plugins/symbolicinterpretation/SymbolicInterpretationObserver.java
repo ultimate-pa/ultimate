@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -34,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicInterpreter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -58,13 +61,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		}
 		return true;
 	}
-	
-	/**
-	 * Only for manual testing.
-	 */
+
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(icfg);
-		symbolicInterpreter.interpret();
+		final SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(mServices, icfg);
+		final Map<IcfgLocation, IPredicate> predicates = symbolicInterpreter.interpret();
+		mLogger.info("Computed predicates: " + predicates);
 		// TODO set ultimate results
 	}
 }

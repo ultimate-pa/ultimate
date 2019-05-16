@@ -30,9 +30,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * FIFO queue which saves pairs of generic entries (called <i>work</i>) and @link {@link SymbolicState} (called input).
+ * FIFO queue which saves pairs of generic entries (called <i>work</i>) and @link {@link IPredicate} (called input).
  * Work entries can be in queue at most once. When adding an already queued work entry again (with a possible
  * different input) the old and the new input are merged.
  * 
@@ -42,9 +45,20 @@ import java.util.Map.Entry;
  */
 public class WorklistWithInputs<W> {
 
-	private final Map<W, SymbolicState> mWorklist = new LinkedHashMap<>();
-	private Entry<W, SymbolicState> mRemovedEntry;
+	private final BiFunction<IPredicate, IPredicate, IPredicate> mMergeFunction;
+	private final Map<W, IPredicate> mWorklist = new LinkedHashMap<>();
+	private Entry<W, IPredicate> mRemovedEntry;
 
+	/**
+	 * Creates an empty worklist.
+	 * 
+	 * @param mergeFunction Function to be used in {@link #add(Object, IPredicate)} to merge the old and new input
+	 *                      when the same work entry is added again.
+	 */
+	public WorklistWithInputs(final BiFunction<IPredicate, IPredicate, IPredicate> mergeFunction) {
+		mMergeFunction = mergeFunction;
+	}
+	
 	/**
 	 * Adds or updates an entry.
 	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
@@ -53,8 +67,8 @@ public class WorklistWithInputs<W> {
 	 * @param work Work entry
 	 * @param addInput Input for work entry
 	 */
-	public void add(final W work, final SymbolicState addInput) {
-		mWorklist.merge(work, addInput, (oldInput, newInput) -> oldInput.merge(newInput));
+	public void add(final W work, final IPredicate addInput) {
+		mWorklist.merge(work, addInput, mMergeFunction);
 	}
 
 	/**
@@ -67,7 +81,7 @@ public class WorklistWithInputs<W> {
 		if (mWorklist.isEmpty()) {
 			return false;
 		}
-		final Iterator<Entry<W, SymbolicState>> iterator = mWorklist.entrySet().iterator();
+		final Iterator<Entry<W, IPredicate>> iterator = mWorklist.entrySet().iterator();
 		mRemovedEntry = iterator.next();
 		iterator.remove();
 		return true;
@@ -90,7 +104,7 @@ public class WorklistWithInputs<W> {
 	/**
 	 * @see #advance()
 	 */
-	public SymbolicState getInput() {
+	public IPredicate getInput() {
 		ensureAdvanced();
 		return mRemovedEntry.getValue();
 	}

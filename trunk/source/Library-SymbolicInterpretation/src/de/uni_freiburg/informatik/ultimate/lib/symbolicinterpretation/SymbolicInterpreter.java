@@ -32,11 +32,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.UniqueMarkTransition;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -44,10 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Annotates given program locations with predicates over-approximating the actually reachable concrete states at that
  * locations.
+ *
+ * @see #interpret()
  *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
@@ -56,47 +61,73 @@ public class SymbolicInterpreter {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private Map<String, ProcedureResources> mProcResources = new HashMap<>();
-	private final WorklistWithInputs<String> mEnterCallWorklist = new WorklistWithInputs<>();
-	private final Map<IcfgLocation, SymbolicState> mPredicatesForLOI = new HashMap<>();
-
-	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg) {
-		this(icfg, icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()));
+	private final WorklistWithInputs<String> mEnterCallWorklist;
+	private final Map<IcfgLocation, IPredicate> mPredicatesForLOI = new HashMap<>();
+	private final PredicateUtils mPredicateUtils;
+	
+	/**
+	 * Creates a new interpreter assuming all error locations to be locations of interest.
+	 * @see #interpret()
+	 */
+	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+		this(services, icfg, icfg.getProcedureErrorNodes().values().stream()
+				.flatMap(Set::stream).collect(Collectors.toList()));
 	}
 
-	public SymbolicInterpreter(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
+	/**
+	 * Creates a new interpret using a custom set of locations of interest.
+	 * @param locationsOfInterest Locations for which predicates shall be computed.
+	 * @see #interpret()
+	 */
+	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
+		mPredicateUtils = new PredicateUtils(services, mIcfg);
+		mEnterCallWorklist = new WorklistWithInputs<>(mPredicateUtils::merge);
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		initPredicates(locationsOfInterest);
 		enqueInitial();
 	}
 
 	private void enqueInitial() {
-		mCallGraph.initialProceduresOfInterest().forEach(proc -> mEnterCallWorklist.add(proc, new SymbolicState()));
+		final IPredicate top = mPredicateUtils.top();
+		mCallGraph.initialProceduresOfInterest().stream()
+			.peek(proc -> mEnterCallWorklist.add(proc, top))
+			.map(mIcfg.getProcedureEntryNodes()::get)
+			.forEach(procEntry -> storePredicateIfLOI(procEntry, top));
 	}
 
 	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
-		// TODO create bottom symbol instead of this dummy
-		final SymbolicState bottom = new SymbolicState();
+		final IPredicate bottom = mPredicateUtils.bottom();
 		locationsOfInterest.forEach(loi -> mPredicatesForLOI.put(loi, bottom));
 	}
 
-	public void interpret() {
+	/**
+	 * Interprets the ICFG starting at the initial nodes.
+	 * 
+	 * @return Map from all locations of interest given in
+	 *         {@link #SymbolicInterpreter(IUltimateServiceProvider, IIcfg, Collection)}
+	 *          to predicates over-approximating the program states at these locations
+	 */
+	public Map<IcfgLocation, IPredicate> interpret() {
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
-			final SymbolicState input = mEnterCallWorklist.getInput();
+			final IPredicate input = mEnterCallWorklist.getInput();
 			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
 			interpretLOIsInProcedure(resources, input);
 		}
+		return mPredicatesForLOI;
 	}
 
-	private void interpretLOIsInProcedure(final ProcedureResources resources, final SymbolicState initalInput) {
+	private void interpretLOIsInProcedure(final ProcedureResources resources, final IPredicate initalInput) {
 		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLOIsAndEnterCalls();
-		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new WorklistWithInputs<>();
+		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist =
+				new WorklistWithInputs<>(mPredicateUtils::merge);
 		worklist.add(resources.getRegexDag().getSource(), initalInput);
 		while (worklist.advance()) {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
-			final SymbolicState currentInput = worklist.getInput();
-			final SymbolicState currentOutput = interpretNode(currentNode, currentInput);
+			final IPredicate currentInput = worklist.getInput();
+			final IPredicate currentOutput = interpretNode(currentNode, currentInput);
 			overlaySuccessors.getImage(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
 		}
 	}
@@ -106,50 +137,54 @@ public class SymbolicInterpreter {
 				mCallGraph.successorsOfInterest(procedure));
 	}
 
-	private SymbolicState interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,
-			final SymbolicState input) {
+	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {
 		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
 		if (regex instanceof Literal) {
-			return interpretLiteral(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
+			return interpretTransition(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
 		} else if (regex instanceof Epsilon) {
 			// Nothing to do. Multiple inputs for the same node are merged inside the worklist.
-			// Merging is applied because we traverse DAG using BFS.
+			// Merging always applies because we traverse DAG using BFS.
 			return input;
 		} else if (regex instanceof Star) {
 			throw new UnsupportedOperationException("Loop handling not implemented yet: " + regex);
 		} else {
-			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex);
+			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex.getClass());
 		}
 	}
 
-	// TODO compute using post
-	private SymbolicState interpretLiteral(final IIcfgTransition<IcfgLocation> letter, final SymbolicState input) {
-		if (letter instanceof IIcfgSummaryTransition<?>) {
-			throw new UnsupportedOperationException("Call summaries not implemented yet: " + letter);
-		} else if (letter instanceof IIcfgCallTransition<?>) {
-			// TODO process transformula to compute input for function
-			// see PredicateTransformer.strongestPostCall
-			throw new UnsupportedOperationException("Enter calls not implemented yet: " + letter);
-			// mEnterCallWorklist.add(letter.getSucceedingProcedure(), computedInput);
-		} else if (letter instanceof IIcfgInternalTransition) {
-			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) letter, input);
+	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+		if (transition instanceof UniqueMarkTransition) {
+			// TODO Do we have to do more? Does this cause more work than needed?
+			// TODO Maybe we don't need UniqueMarkTransition at all.
+			return input;
+		} else if (transition instanceof IIcfgSummaryTransition<?>) {
+			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
+		} else if (transition instanceof IIcfgCallTransition<?>) {
+			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);
+		} else if (transition instanceof IIcfgInternalTransition) {
+			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) transition, input);
 		} else {
-			throw new UnsupportedOperationException("Unexpected transition type: " + letter);
+			throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
 		}
 	}
 
-	private SymbolicState interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition,
-				final SymbolicState input) {
-		// TODO apply post to compute output
-		// see PredicateTransformer.strongestPost
-		final SymbolicState output = new SymbolicState();
-		// TODO only target? what if source location is also a LOI? call storePred somewhere else too?
+	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition,
+			final IPredicate input) {
+		final IPredicate output = mPredicateUtils.post(input, transition);
 		storePredicateIfLOI(transition.getTarget(), output);
 		return output;
 	}
 
-	private void storePredicateIfLOI(final IcfgLocation location, final SymbolicState addPredicate) {
-		mPredicatesForLOI.computeIfPresent(location, (unused, oldPredicate) -> oldPredicate.merge(addPredicate));
+	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
+		IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
+		mEnterCallWorklist.add(transition.getSucceedingProcedure(), calleeInput);
+		storePredicateIfLOI(transition.getTarget(), calleeInput);
+		return calleeInput;
+	}
+
+	private void storePredicateIfLOI(final IcfgLocation location, final IPredicate addPredicate) {
+		mPredicatesForLOI.computeIfPresent(location,
+				(unused, oldPredicate) -> mPredicateUtils.merge(oldPredicate, addPredicate));
 	}
 
 
