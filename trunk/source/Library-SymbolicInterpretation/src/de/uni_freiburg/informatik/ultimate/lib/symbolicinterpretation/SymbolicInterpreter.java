@@ -29,16 +29,17 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.UniqueMarkTransition;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class SymbolicInterpreter {
 
+	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private Map<String, ProcedureResources> mProcResources = new HashMap<>();
@@ -81,10 +83,16 @@ public class SymbolicInterpreter {
 	 */
 	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> locationsOfInterest) {
+		// TODO this logger is not affected by the log leves set for SymbolicInterpretation
+		//      Use another class ur re-use a given logger?
+		mLogger = services.getLoggingService().getLogger(getClass());
+		logStartingSifa(locationsOfInterest);
 		mIcfg = icfg;
 		mPredicateUtils = new PredicateUtils(services, mIcfg);
 		mEnterCallWorklist = new WorklistWithInputs<>(mPredicateUtils::merge);
+		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
+		logCallGraphComputed();
 		initPredicates(locationsOfInterest);
 		enqueInitial();
 	}
@@ -110,12 +118,15 @@ public class SymbolicInterpreter {
 	 *          to predicates over-approximating the program states at these locations
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
+		logStartingInterpretation();
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
+			logEnterCall(procedure, input);
 			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
 			interpretLOIsInProcedure(resources, input);
 		}
+		logFinalResults();
 		return mPredicatesForLOI;
 	}
 
@@ -153,11 +164,7 @@ public class SymbolicInterpreter {
 	}
 
 	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
-		if (transition instanceof UniqueMarkTransition) {
-			// TODO Do we have to do more? Does this cause more work than needed?
-			// TODO Maybe we don't need UniqueMarkTransition at all.
-			return input;
-		} else if (transition instanceof IIcfgSummaryTransition<?>) {
+		if (transition instanceof IIcfgSummaryTransition<?>) {
 			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
 		} else if (transition instanceof IIcfgCallTransition<?>) {
 			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);
@@ -187,5 +194,40 @@ public class SymbolicInterpreter {
 				(unused, oldPredicate) -> mPredicateUtils.merge(oldPredicate, addPredicate));
 	}
 
+	// log messages -------------------------------------------------------------------------------
+
+	private void logStartingSifa(final Collection<IcfgLocation> locationsOfInterest) {
+		mLogger.info("Started Sifa with %d locations of interest", locationsOfInterest.size());
+	}
+
+	private void logBuildingCallGraph() {
+		mLogger.info("Building call graph");
+	}
+
+	private void logCallGraphComputed() {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Initial procedures are %s", mCallGraph.initialProceduresOfInterest());
+		}
+	}
+
+	private void logStartingInterpretation() {
+		mLogger.info("Starting interpretation");
+	}
+
+	private void logFinalResults() {
+		mLogger.info("Interpretation finished");
+		if (mPredicatesForLOI.isEmpty()) {
+			mLogger.warn("No locations of interest were given");
+			return;
+		}
+		mLogger.info("Final predicates for locations of interest are:");
+		for (Entry<IcfgLocation, IPredicate> entry : mPredicatesForLOI.entrySet()) {
+			mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void logEnterCall(final String procedure, final IPredicate input) {
+		mLogger.debug("Interpreting procedure %s with input %s", procedure, input);
+	}
 
 }

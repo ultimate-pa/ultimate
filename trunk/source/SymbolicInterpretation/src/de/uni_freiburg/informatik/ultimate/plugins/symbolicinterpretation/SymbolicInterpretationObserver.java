@@ -65,7 +65,6 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(mServices, icfg);
 		final Map<IcfgLocation, IPredicate> predicates = symbolicInterpreter.interpret();
-		mLogger.info("Computed predicates: " + predicates);
 		// TODO set ultimate results
 	}
 }

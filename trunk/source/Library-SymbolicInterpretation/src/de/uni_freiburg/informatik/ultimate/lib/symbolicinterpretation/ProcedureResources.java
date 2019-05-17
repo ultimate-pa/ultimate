@@ -32,9 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.UniqueMarkTransition;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
@@ -72,22 +69,21 @@ public class ProcedureResources {
 
 		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> loiDagNodes = locationsOfInterest.stream()
 				.peek(loi -> assertLoiFromSameProcedure(procedure, loi))
-				.map(loi -> markedRegex(peComputer, entry, loi))
+				.map(loi -> peComputer.exprBetween(entry, loi))
 				.map(regexToDag::add)
 				.collect(Collectors.toList());
 
 		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> enterCallDagNodes = enterCallsOfInterest.stream()
 				.map(procedureEntryNodes::get)
-				.map(enterCallOfInterest -> markedRegex(peComputer, entry, enterCallOfInterest))
+				.map(enterCallOfInterest -> peComputer.exprBetween(entry, enterCallOfInterest))
 				.map(regexToDag::add)
 				.collect(Collectors.toList());
 
 		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode =
-				regexToDag.add(markedRegex(peComputer, entry, procedureGraph.getExitNode()));
+				regexToDag.add(peComputer.exprBetween(entry, procedureGraph.getExitNode()));
 
-		final RegexDagCompressor<IIcfgTransition<IcfgLocation>> compressor = new RegexDagCompressor<>();
-		compressor.compress(regexToDag.getDag());
 		mRegexDag = regexToDag.getDag();
+		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new OverlaySuccessors();
 		Stream.concat(loiDagNodes.stream(), enterCallDagNodes.stream())
@@ -98,12 +94,6 @@ public class ProcedureResources {
 
 	private static void assertLoiFromSameProcedure(final String procedure, final IcfgLocation loi) {
 		assert procedure.equals(loi.getProcedure()) : "Location of interest from different procedure";
-	}
-
-	private static IRegex<IIcfgTransition<IcfgLocation>> markedRegex(
-			final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer,
-			final IcfgLocation source, final IcfgLocation target) {
-		return Regex.concat(peComputer.exprBetween(source, target), Regex.literal(new UniqueMarkTransition(target)));
 	}
 
 	private static void addToOverlay(final OverlaySuccessors overlaySuccessors,

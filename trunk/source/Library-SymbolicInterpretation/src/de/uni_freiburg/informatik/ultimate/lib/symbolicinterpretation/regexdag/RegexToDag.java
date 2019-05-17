@@ -50,13 +50,13 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 		resetDagAndStars();
 	}
 
-	public void resetDagAndStars() {
+	public final void resetDagAndStars() {
 		resetDag();
 		mVisitedStars = new HashSet<>();
 		mStarWorklist = new ArrayDeque<>();
 	}
 
-	public void resetDag() {
+	public final void resetDag() {
 		mDag = new RegexDag<>(RegexDagNode.makeEpsilon(), RegexDagNode.makeEpsilon());
 	}
 
