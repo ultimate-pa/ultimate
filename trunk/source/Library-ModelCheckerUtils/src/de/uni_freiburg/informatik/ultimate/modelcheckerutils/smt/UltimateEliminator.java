@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,13 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -89,12 +82,29 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		mSmtSolver.setLogic(logic);
+		// do not pass the original logic but the corresponding quantifier-free logic
+		if (logic.startsWith("QF_")) {
+			mSmtSolver.setLogic(logic);
+		} else if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
+			final String qFLogic = "QF_" + logic;
+			if (Logics.valueOf(qFLogic) != null) {
+				mSmtSolver.setLogic(qFLogic);
+			} else {
+				throw new AssertionError("No Quantifier Free Logic found for Overapproximation");
+			}
+		} else {
+			mSmtSolver.setLogic(logic);
+		}
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		mSmtSolver.setLogic(logic);
+		if (logic.isQuantified() && WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
+			final Logics qFLogic = Logics.valueOf("QF_" + logic.toString());
+			mSmtSolver.setLogic(qFLogic);
+		} else {
+			mSmtSolver.setLogic(logic);
+		}
 	}
 
 	@Override
@@ -151,41 +161,8 @@ public class UltimateEliminator implements Script {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final boolean furtherOptimizations = false;
-		if (furtherOptimizations ) {
-			if (lessQuantifier instanceof QuantifiedFormula) {
-				mLogger.info("Quantifier couldn't be eliminated");
-				final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true)
-						.transform(lessQuantifier);
-				// Optimization 2
-				final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL)
-						.transform(nnf);
-
-				Term qfree = mMgdScript.getScript().term("true");
-				for (Term cojunct : SmtUtils.cannibalize(mMgdScript, mServices, false, pushed)) {
-					if (cojunct instanceof QuantifiedFormula) {
-						// Optimization 3
-						final Term qnfTerm = new PrenexNormalForm(mMgdScript).transform(cojunct);
-						try {
-							final SkolemNormalForm snf = new SkolemNormalForm(mMgdScript, qnfTerm);
-							final Term snfTerm = snf.getSkolemizedFormula();
-							if (snfTerm instanceof QuantifiedFormula) {
-								cojunct = mMgdScript.getScript().term("true");
-							} else {
-								cojunct = snfTerm;
-							}
-						} catch (final AssertionError ae) { // catch: term needs to be in PNF
-							cojunct = mMgdScript.getScript().term("true");
-						}
-
-					}
-					qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
-				}
-				if (qfree instanceof QuantifiedFormula) {
-					return LBool.UNKNOWN;
-				} else {
-					return mSmtSolver.assertTerm(qfree);
-				}
-			}
+		if (furtherOptimizations) {
+			// TODO
 		}
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
 			throw new AssertionError("Failed to remove all quantifiers.");

@@ -43,7 +43,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 
 /**
  * Wrapper for an SMT solver that makes sure that the solver does not have to
@@ -84,28 +90,12 @@ public class QuantifierOverapproximatingSolver implements Script {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		// do not pass the original logic but the corresponding quantifier-free logic
-		if (logic.startsWith("QF_")) {
-			mSmtSolver.setLogic(logic);
-		} else {
-			final String qFLogic = "QF_" + logic.toString();
-			if (Logics.valueOf(qFLogic) != null) {
-				mSmtSolver.setLogic(qFLogic);
-			} else {
-				throw new AssertionError("No Quantifier Free Logic found for Overapproximation");
-			}
-
-		}
+		mSmtSolver.setLogic(logic);
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		if (logic.isQuantified()) {
-			final Logics qFLogic = Logics.valueOf("QF_" + logic.toString());
-			mSmtSolver.setLogic(qFLogic);
-		} else {
-			mSmtSolver.setLogic(logic);
-		}
+		mSmtSolver.setLogic(logic);
 	}
 
 	@Override
@@ -150,11 +140,42 @@ public class QuantifierOverapproximatingSolver implements Script {
 		mSmtSolver.pop(levels);
 	}
 
+	private Term overApproximate(final Term term) {
+
+		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(term);
+		// Optimization 2
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(nnf);
+		Term qfree = mMgdScript.getScript().term("true");
+		for (Term cojunct : SmtUtils.getConjuncts(pushed)) {
+			if (!QuantifierUtils.isQuantifierFree(cojunct)) {
+				// Optimization 3
+				final Term pnfTerm = new PrenexNormalForm(mMgdScript).transform(cojunct);
+				try {
+					final SkolemNormalForm snf = new SkolemNormalForm(mMgdScript, pnfTerm);
+					final Term snfTerm = snf.getSkolemizedFormula();
+					if (snfTerm instanceof QuantifiedFormula) {
+						cojunct = mMgdScript.getScript().term("true");
+					} else {
+						cojunct = snfTerm;
+					}
+				} catch (final AssertionError ae) { // catch: term needs to be in PNF
+					cojunct = mMgdScript.getScript().term("true");
+				}
+
+			}
+			qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
+		}
+
+		return qfree;
+	}
+
 	@Override
-	public LBool assertTerm(final Term term) throws SMTLIBException {
-		// TODO do overapproximation if necessary
-		if (term instanceof QuantifiedFormula) {
+	public LBool assertTerm(Term term) throws SMTLIBException {
+		// TODO can term be quantified if the logic is quantifier free?
+		if (!QuantifierUtils.isQuantifierFree(term)) {
+			mLogger.info("assert OVA term");
 			mOverAprox = true;
+			term = overApproximate(term);
 		}
 		return mSmtSolver.assertTerm(term);
 	}
@@ -162,6 +183,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		final LBool result = mSmtSolver.checkSat();
+		// TODO right place? or do we need it in assertTerm method
 		if (result.equals(LBool.SAT) && mOverAprox) {
 			return LBool.UNKNOWN;
 		}
