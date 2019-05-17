@@ -155,7 +155,7 @@ public final class AbstractInterpreter {
 			return postProcessResult(services, logger, true, result, root);
 		} catch (final ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
-			logger.warn("Abstract interpretation run out of time");
+			logger.warn("Abstract interpretation ran out of time");
 			return null;
 		}
 	}
@@ -211,7 +211,7 @@ public final class AbstractInterpreter {
 				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
 						logger, root, services, additionalLiterals, trackedArrays))
 						.setTimer(timer),
-				p -> new FixpointEngine<>(p));
+				FixpointEngine::new);
 	}
 
 	/**
@@ -229,7 +229,7 @@ public final class AbstractInterpreter {
 		final IAbstractDomain<SMTTheoryState, IcfgEdge> smtDomain =
 				new SMTTheoryDomain(services, root.getCfgSmtToolkit());
 		return runFuture(root, services, logger, isSilent, params.setDomain(smtDomain).setTimer(timer),
-				p -> new FixpointEngine<>(p));
+				FixpointEngine::new);
 	}
 
 	public static IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation>
@@ -238,7 +238,7 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
-				params.setDomain(new DataflowDomain<>(logger)).setTimer(timer), p -> new FixpointEngine<>(p));
+				params.setDomain(new DataflowDomain<>(logger)).setTimer(timer), FixpointEngine::new);
 	}
 
 	public static IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IcfgLocation>
@@ -248,7 +248,7 @@ public final class AbstractInterpreter {
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
 				params.setDomain(new LiveVariableDomain<>(logger)).setTimer(timer).setMaxParallelStates(1),
-				p -> new BackwardFixpointEngine<>(p));
+				BackwardFixpointEngine::new);
 	}
 
 	private static <STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
