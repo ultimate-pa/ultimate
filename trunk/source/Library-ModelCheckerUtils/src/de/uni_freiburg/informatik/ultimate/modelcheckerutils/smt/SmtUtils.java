@@ -1207,13 +1207,15 @@ public final class SmtUtils {
 			break;
 		case "=":
 			if (params.length != 2) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(
+						"not yet implemented: equality with " + params.length + " params");
 			}
 			result = binaryEquality(script, params[0], params[1]);
 			break;
 		case "distinct":
 			if (params.length != 2) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(
+						"not yet implemented: distinct with " + params.length + " params");
 			}
 			result = SmtUtils.distinct(script, params[0], params[1]);
 			break;
