@@ -148,38 +148,41 @@ public class UltimateEliminator implements Script {
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		if (lessQuantifier instanceof QuantifiedFormula) {
-			mLogger.info("Quantifier couldn't be eliminated");
-			final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true)
-					.transform(lessQuantifier);
-			// Optimization 2
-			final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL)
-					.transform(nnf);
+		final boolean furtherOptimizations = false;
+		if (furtherOptimizations ) {
+			if (lessQuantifier instanceof QuantifiedFormula) {
+				mLogger.info("Quantifier couldn't be eliminated");
+				final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true)
+						.transform(lessQuantifier);
+				// Optimization 2
+				final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL)
+						.transform(nnf);
 
-			Term qfree = mMgdScript.getScript().term("true");
-			for (Term cojunct : SmtUtils.cannibalize(mMgdScript, mServices, false, pushed)) {
-				if (cojunct instanceof QuantifiedFormula) {
-					// Optimization 3
-					final Term qnfTerm = new PrenexNormalForm(mMgdScript).transform(cojunct);
-					try {
-						final SkolemNormalForm snf = new SkolemNormalForm(mMgdScript, qnfTerm);
-						final Term snfTerm = snf.getSkolemizedFormula();
-						if (snfTerm instanceof QuantifiedFormula) {
+				Term qfree = mMgdScript.getScript().term("true");
+				for (Term cojunct : SmtUtils.cannibalize(mMgdScript, mServices, false, pushed)) {
+					if (cojunct instanceof QuantifiedFormula) {
+						// Optimization 3
+						final Term qnfTerm = new PrenexNormalForm(mMgdScript).transform(cojunct);
+						try {
+							final SkolemNormalForm snf = new SkolemNormalForm(mMgdScript, qnfTerm);
+							final Term snfTerm = snf.getSkolemizedFormula();
+							if (snfTerm instanceof QuantifiedFormula) {
+								cojunct = mMgdScript.getScript().term("true");
+							} else {
+								cojunct = snfTerm;
+							}
+						} catch (final AssertionError ae) { // catch: term needs to be in PNF
 							cojunct = mMgdScript.getScript().term("true");
-						} else {
-							cojunct = snfTerm;
 						}
-					} catch (final AssertionError ae) { // catch: term needs to be in PNF
-						cojunct = mMgdScript.getScript().term("true");
-					}
 
+					}
+					qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
 				}
-				qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
-			}
-			if (qfree instanceof QuantifiedFormula) {
-				return LBool.UNKNOWN;
-			} else {
-				return mSmtSolver.assertTerm(qfree);
+				if (qfree instanceof QuantifiedFormula) {
+					return LBool.UNKNOWN;
+				} else {
+					return mSmtSolver.assertTerm(qfree);
+				}
 			}
 		}
 		return mSmtSolver.assertTerm(lessQuantifier);
