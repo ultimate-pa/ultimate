@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Constant;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Variable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -85,7 +85,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			final Set<Term> connectedTerms = connection.getTermsOfConnectedNonTheorySymbols(connectedSymbols);
 			final Set<TermVariable> freeVarsOfConnectedTerms = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
-			if (containsNonTheoryConstant(connectedSymbols)) {
+			if (!containsOnlyVariables(connectedSymbols)) {
 				isSuperfluous = false;
 			} else {
 				if (quantifier == QuantifiedFormula.EXISTS) {
@@ -177,9 +177,9 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 
 	}
 
-	private static boolean containsNonTheoryConstant(final Set<NonTheorySymbol<?>> connectedSymbols) {
-		final Predicate<? super NonTheorySymbol<?>> predicate = x -> (x instanceof Constant);
-		return connectedSymbols.stream().anyMatch(predicate);
+	private static boolean containsOnlyVariables(final Set<NonTheorySymbol<?>> connectedSymbols) {
+		final Predicate<? super NonTheorySymbol<?>> predicate = x -> (x instanceof Variable);
+		return connectedSymbols.stream().allMatch(predicate);
 	}
 
 	/**
