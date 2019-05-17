@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * SMT solver for logics with quantifiers. Passes all SMT command to a back end
@@ -72,6 +73,7 @@ public class UltimateEliminator implements Script {
 	private final Script mSmtSolver;
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
+	private long mTreeSizeOfAssertedTerms = 0;
 
 	public UltimateEliminator(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		mServices = services;
@@ -185,6 +187,10 @@ public class UltimateEliminator implements Script {
 				}
 			}
 		}
+		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
+			throw new AssertionError("Failed to remove all quantifiers.");
+		}
+		mTreeSizeOfAssertedTerms += new DAGSize().treesize(lessQuantifier);
 		return mSmtSolver.assertTerm(lessQuantifier);
 	}
 
@@ -199,7 +205,8 @@ public class UltimateEliminator implements Script {
 				}
 			} else {
 				if (result != LBool.UNKNOWN && result != mExpectedResult) {
-					throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
+					throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result
+							+ ". Treesize of asserted terms " + mTreeSizeOfAssertedTerms);
 				}
 
 			}
