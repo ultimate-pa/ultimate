@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -170,14 +171,15 @@ public class QuantifierOverapproximatingSolver implements Script {
 	}
 
 	@Override
-	public LBool assertTerm(Term term) throws SMTLIBException {
+	public LBool assertTerm(final Term term) throws SMTLIBException {
+		Term withoutLet = new FormulaUnLet().transform(term);
 		// TODO can term be quantified if the logic is quantifier free?
-		if (!QuantifierUtils.isQuantifierFree(term)) {
+		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
 			mLogger.info("assert OVA term");
 			mOverAprox = true;
-			term = overApproximate(term);
+			withoutLet = overApproximate(withoutLet);
 		}
-		return mSmtSolver.assertTerm(term);
+		return mSmtSolver.assertTerm(withoutLet);
 	}
 
 	@Override
