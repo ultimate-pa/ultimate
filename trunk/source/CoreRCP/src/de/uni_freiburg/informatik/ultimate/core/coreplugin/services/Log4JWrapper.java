@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Copyright (C) 2016,2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -26,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.Objects;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -38,7 +41,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class Log4JWrapper implements ILogger {
 
+	private static final Level[] sILoggerLevelToLog4jLevel = {
+			Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL, Level.OFF };
+
 	private static final String FQCN = Log4JWrapper.class.getName();
+
 	private final Logger mLogger;
 
 	public Log4JWrapper(final Logger logger) {
@@ -47,31 +54,6 @@ public final class Log4JWrapper implements ILogger {
 
 	Logger getBacking() {
 		return mLogger;
-	}
-
-	@Override
-	public boolean isFatalEnabled() {
-		return Level.FATAL.isGreaterOrEqual(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isErrorEnabled() {
-		return Level.ERROR.isGreaterOrEqual(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isWarnEnabled() {
-		return Level.WARN.isGreaterOrEqual(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isInfoEnabled() {
-		return mLogger.isInfoEnabled();
-	}
-
-	@Override
-	public boolean isDebugEnabled() {
-		return mLogger.isDebugEnabled();
 	}
 
 	@Override
@@ -84,59 +66,28 @@ public final class Log4JWrapper implements ILogger {
 		mLogger.log(FQCN, Level.ERROR, msg, t);
 	}
 
-	@Override
-	public void fatal(final Object msg) {
-		mLogger.log(FQCN, Level.FATAL, msg, null);
-	}
 
 	@Override
-	public void error(final Object msg) {
-		mLogger.log(FQCN, Level.ERROR, msg, null);
-	}
-
-	@Override
-	public void warn(final Object msg) {
-		mLogger.log(FQCN, Level.WARN, msg, null);
-	}
-
-	@Override
-	public void info(final Object msg) {
-		mLogger.log(FQCN, Level.INFO, msg, null);
-	}
-
-	@Override
-	public void debug(final Object msg) {
-		mLogger.log(FQCN, Level.DEBUG, msg, null);
+	public void log(final LogLevel level, final String msg) {
+		mLogger.log(FQCN, translateLevel(level), msg, null);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mLogger == null) ? 0 : mLogger.hashCode());
-		return result;
+		return Objects.hash(mLogger);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		}
-		if (obj == null) {
+		} else if (obj == null) {
+			return false;
+		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Log4JWrapper other = (Log4JWrapper) obj;
-		if (mLogger == null) {
-			if (other.mLogger != null) {
-				return false;
-			}
-		} else if (!mLogger.equals(other.mLogger)) {
-			return false;
-		}
-		return true;
+		Log4JWrapper other = (Log4JWrapper) obj;
+		return Objects.equals(mLogger, other.mLogger);
 	}
 
 	@Override
@@ -146,30 +97,18 @@ public final class Log4JWrapper implements ILogger {
 
 	@Override
 	public void setLevel(final LogLevel level) {
-		final Level log4jLevel;
-		switch (level) {
-		case DEBUG:
-			log4jLevel = Level.DEBUG;
-			break;
-		case ERROR:
-			log4jLevel = Level.ERROR;
-			break;
-		case FATAL:
-			log4jLevel = Level.FATAL;
-			break;
-		case INFO:
-			log4jLevel = Level.INFO;
-			break;
-		case OFF:
-			log4jLevel = Level.OFF;
-			break;
-		case WARN:
-			log4jLevel = Level.WARN;
-			break;
-		default:
-			throw new UnsupportedOperationException("Unhandled LogLevel " + level);
+		mLogger.setLevel(translateLevel(level));
+	}
 
+	@Override
+	public boolean isLogLevelEnabled(final LogLevel level) {
+		return mLogger.isEnabledFor(translateLevel(level));
+	}
+
+	private static Level translateLevel(final LogLevel level) {
+		if (level.ordinal() >= sILoggerLevelToLog4jLevel.length) {
+			throw new UnsupportedOperationException("Unknown LogLevel " + level);
 		}
-		mLogger.setLevel(log4jLevel);
+		return sILoggerLevelToLog4jLevel[level.ordinal()];
 	}
 }

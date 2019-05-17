@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Copyright (C) 2016,2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -72,29 +73,85 @@ public interface ILogger {
 		OFF
 	}
 
-	boolean isFatalEnabled();
+	default boolean isFatalEnabled() {
+		return isLogLevelEnabled(LogLevel.FATAL);
+	}
 
 	void fatal(Object msg, Throwable t);
 
-	void fatal(Object msg);
+	default void fatal(final Object msg) {
+		log(LogLevel.FATAL, msg);
+	}
 
-	boolean isErrorEnabled();
+	default void fatal(final String formatString, final Object... formatArgs) {
+		log(LogLevel.FATAL, formatString, formatArgs);
+	}
+
+	default boolean isErrorEnabled() {
+		return isLogLevelEnabled(LogLevel.ERROR);
+	}
 
 	void error(Object msg, Throwable t);
 
-	void error(Object msg);
+	default void error(final Object msg) {
+		log(LogLevel.ERROR, msg);
+	}
 
-	boolean isWarnEnabled();
+	default void error(final String formatString, final Object... formatArgs) {
+		log(LogLevel.ERROR, formatString, formatArgs);
+	}
 
-	void warn(Object msg);
+	default boolean isWarnEnabled() {
+		return isLogLevelEnabled(LogLevel.WARN);
+	}
 
-	boolean isInfoEnabled();
+	default void warn(final Object msg) {
+		log(LogLevel.WARN, msg);
+	}
+	
+	default void warn(final String formatString, final Object... formatArgs) {
+		log(LogLevel.WARN, formatString, formatArgs);
+	}
 
-	void info(Object msg);
+	default boolean isInfoEnabled() {
+		return isLogLevelEnabled(LogLevel.INFO);
+	}
 
-	boolean isDebugEnabled();
+	default void info(final Object msg) {
+		log(LogLevel.INFO, msg);
+	}
 
-	void debug(Object msg);
+	default void info(final String formatString, final Object... formatArgs) {
+		log(LogLevel.INFO, formatString, formatArgs);
+	}
+
+	default boolean isDebugEnabled() {
+		return isLogLevelEnabled(LogLevel.DEBUG);
+	}
+
+	default void debug(final Object msg) {
+		log(LogLevel.DEBUG, msg);
+	}
+
+	default void debug(final String formatString, final Object... formatArgs) {
+		log(LogLevel.DEBUG, formatString, formatArgs);
+	}
+
+	boolean isLogLevelEnabled(LogLevel level);
+
+	void log(LogLevel level, String message);
+
+	default void log(final LogLevel level, final Object msg) {
+		if (isLogLevelEnabled(level)) {
+			log(level, msg.toString());
+		}
+	}
+
+	default void log(final LogLevel level, final String formatString, final Object... formatArgs) {
+		if (isLogLevelEnabled(level)) {
+			log(level, String.format(formatString, formatArgs));
+		}
+	}
 
 	/**
 	 * Sets this logger to a level specified by {@link LogLevel}. Only messages matching this level are logged.

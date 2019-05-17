@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Copyright (C) 2016,2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -27,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.Objects;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +48,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class Log4J2Wrapper implements ILogger {
 
+	private static final Level[] sILoggerLevelToLog4jLevel = {
+			Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL, Level.OFF };
+
 	private static final String FQCN = Log4J2Wrapper.class.getName();
+
 	private final ExtendedLoggerWrapper mLogger;
 
 	public Log4J2Wrapper(final Logger logger) {
@@ -58,41 +65,8 @@ public class Log4J2Wrapper implements ILogger {
 	}
 
 	@Override
-	public boolean isFatalEnabled() {
-		return mLogger.isFatalEnabled();
-		// return Level.FATAL.isLessSpecificThan(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isErrorEnabled() {
-		return mLogger.isErrorEnabled();
-		// return Level.ERROR.isLessSpecificThan(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isWarnEnabled() {
-		return mLogger.isWarnEnabled();
-		// return Level.WARN.isLessSpecificThan(mLogger.getLevel());
-	}
-
-	@Override
-	public boolean isInfoEnabled() {
-		return mLogger.isInfoEnabled();
-	}
-
-	@Override
-	public boolean isDebugEnabled() {
-		return mLogger.isDebugEnabled();
-	}
-
-	@Override
 	public void fatal(final Object msg, final Throwable t) {
 		mLogger.logIfEnabled(FQCN, Level.FATAL, null, msg, t);
-	}
-
-	@Override
-	public void fatal(final Object msg) {
-		mLogger.logIfEnabled(FQCN, Level.FATAL, null, msg, null);
 	}
 
 	@Override
@@ -101,53 +75,26 @@ public class Log4J2Wrapper implements ILogger {
 	}
 
 	@Override
-	public void error(final Object msg) {
-		mLogger.logIfEnabled(FQCN, Level.ERROR, null, msg, null);
-	}
-
-	@Override
-	public void warn(final Object msg) {
-		mLogger.logIfEnabled(FQCN, Level.WARN, null, msg, null);
-	}
-
-	@Override
-	public void info(final Object msg) {
-		mLogger.logIfEnabled(FQCN, Level.INFO, null, msg, null);
-	}
-
-	@Override
-	public void debug(final Object msg) {
-		mLogger.logIfEnabled(FQCN, Level.DEBUG, null, msg, null);
+	public void log(final LogLevel level, final String msg) {
+		mLogger.logIfEnabled(FQCN, translateLevel(level), null, msg);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mLogger == null) ? 0 : mLogger.hashCode());
-		return result;
+		return Objects.hash(mLogger);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		}
-		if (obj == null) {
+		} else if (obj == null) {
+			return false;
+		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Log4J2Wrapper other = (Log4J2Wrapper) obj;
-		if (mLogger == null) {
-			if (other.mLogger != null) {
-				return false;
-			}
-		} else if (!mLogger.equals(other.mLogger)) {
-			return false;
-		}
-		return true;
+		Log4J2Wrapper other = (Log4J2Wrapper) obj;
+		return Objects.equals(mLogger, other.mLogger);
 	}
 
 	@Override
@@ -157,35 +104,22 @@ public class Log4J2Wrapper implements ILogger {
 
 	@Override
 	public void setLevel(final LogLevel level) {
-
-		final Level log4j2Level;
-		switch (level) {
-		case DEBUG:
-			log4j2Level = Level.DEBUG;
-			break;
-		case ERROR:
-			log4j2Level = Level.ERROR;
-			break;
-		case FATAL:
-			log4j2Level = Level.FATAL;
-			break;
-		case INFO:
-			log4j2Level = Level.INFO;
-			break;
-		case OFF:
-			log4j2Level = Level.OFF;
-			break;
-		case WARN:
-			log4j2Level = Level.WARN;
-			break;
-		default:
-			throw new UnsupportedOperationException("Unhandled LogLevel " + level);
-		}
-
 		final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
 		final Configuration config = ctx.getConfiguration();
 		final LoggerConfig loggerConfig = config.getLoggerConfig(mLogger.getName());
-		loggerConfig.setLevel(log4j2Level);
+		loggerConfig.setLevel(translateLevel(level));
 	}
 
+	@Override
+	public boolean isLogLevelEnabled(final LogLevel level) {
+		return mLogger.isEnabled(translateLevel(level));
+		// return translateLevel(level).isLessSpecificThan(mLogger.getLevel()); // comment from Marius Greitschus
+	}
+
+	private static Level translateLevel(final ILogger.LogLevel level) {
+		if (level.ordinal() >= sILoggerLevelToLog4jLevel.length) {
+			throw new UnsupportedOperationException("Unknown LogLevel " + level);
+		}
+		return sILoggerLevelToLog4jLevel[level.ordinal()];
+	}
 }

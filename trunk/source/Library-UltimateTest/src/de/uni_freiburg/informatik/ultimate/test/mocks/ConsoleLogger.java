@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Copyright (C) 2015,2019 University of Freiburg
  *
  * This file is part of the ULTIMATE UnitTest Library.
  *
@@ -39,11 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public final class ConsoleLogger implements ILogger {
 
 	private LogLevel mLevel;
-	private ILogFunction mFatal;
-	private ILogFunction mError;
-	private ILogFunction mWarn;
-	private ILogFunction mInfo;
-	private ILogFunction mDebug;
+	private ILogFunction[] mLevelToFunction = new ILogFunction[LogLevel.values().length];
 
 	public ConsoleLogger() {
 		setLevel(LogLevel.DEBUG);
@@ -54,96 +51,34 @@ public final class ConsoleLogger implements ILogger {
 	}
 
 	@Override
-	public boolean isFatalEnabled() {
-		return isLevelEnabled(LogLevel.FATAL);
-	}
-
-	@Override
 	public void fatal(final Object msg, final Throwable t) {
-		mFatal.log(msg, t);
-	}
-
-	@Override
-	public void fatal(final Object msg) {
-		mFatal.log(msg);
-	}
-
-	@Override
-	public boolean isErrorEnabled() {
-		return isLevelEnabled(LogLevel.ERROR);
+		mLevelToFunction[LogLevel.FATAL.ordinal()].log(msg, t);
 	}
 
 	@Override
 	public void error(final Object msg, final Throwable t) {
-		mError.log(msg, t);
+		mLevelToFunction[LogLevel.ERROR.ordinal()].log(msg, t);
 	}
 
 	@Override
-	public void error(final Object msg) {
-		mError.log(msg);
-	}
-
-	@Override
-	public boolean isWarnEnabled() {
-		return isLevelEnabled(LogLevel.WARN);
-	}
-
-	@Override
-	public void warn(final Object msg) {
-		mWarn.log(msg);
-	}
-
-	@Override
-	public boolean isInfoEnabled() {
-		return isLevelEnabled(LogLevel.INFO);
-	}
-
-	@Override
-	public void info(final Object msg) {
-		mInfo.log(msg);
-	}
-
-	@Override
-	public boolean isDebugEnabled() {
-		return isLevelEnabled(LogLevel.DEBUG);
-	}
-
-	@Override
-	public void debug(final Object msg) {
-		mDebug.log(msg);
+	public void log(final LogLevel level, final String msg) {
+		mLevelToFunction[level.ordinal()].log(msg);
 	}
 
 	@Override
 	public void setLevel(final LogLevel level) {
 		mLevel = level;
 		final ILogFunction noLog = new NoLog();
-		mDebug = noLog;
-		mInfo = noLog;
-		mWarn = noLog;
-		mError = noLog;
-		mFatal = noLog;
-		// intentional fall-through
-		switch (mLevel) {
-		case OFF:
-			break;
-		case DEBUG:
-			mDebug = new Log(LogLevel.DEBUG);
-		case INFO:
-			mInfo = new Log(LogLevel.INFO);
-		case WARN:
-			mWarn = new Log(LogLevel.WARN);
-		case ERROR:
-			mError = new Log(LogLevel.ERROR);
-		case FATAL:
-			mFatal = new Log(LogLevel.FATAL);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unknown log level " + level);
+		for (LogLevel levelIter : LogLevel.values()) {
+			mLevelToFunction[levelIter.ordinal()] = isLogLevelEnabled(levelIter) ?
+					new Log("[" + levelIter + "]: ") : noLog;
 		}
 	}
 
-	private boolean isLevelEnabled(final LogLevel level) {
-		return level.compareTo(mLevel) != -1;
+	@Override
+	public boolean isLogLevelEnabled(final LogLevel queryLevel) {
+		// lower levels log more, see documentation of ILogger.LogLevel
+		return queryLevel.compareTo(mLevel) >= 0;
 	}
 
 	private static interface ILogFunction {
@@ -153,38 +88,12 @@ public final class ConsoleLogger implements ILogger {
 		void log(final Object msg, Throwable t);
 	}
 
-	private final class Log implements ILogFunction {
-
-		private static final String FATAL = "[FATAL]: ";
-		private static final String ERROR = "[ERROR]: ";
-		private static final String WARN = "[WARN]: ";
-		private static final String INFO = "[INFO]: ";
-		private static final String DEBUG = "[DEBUG]: ";
+	private static final class Log implements ILogFunction {
 
 		private final String mPrefix;
 
-		private Log(final LogLevel level) {
-			switch (level) {
-			case DEBUG:
-				mPrefix = DEBUG;
-				break;
-			case ERROR:
-				mPrefix = ERROR;
-				break;
-			case FATAL:
-				mPrefix = FATAL;
-				break;
-			case INFO:
-				mPrefix = INFO;
-				break;
-			case WARN:
-				mPrefix = WARN;
-				break;
-			case OFF:
-				throw new IllegalArgumentException("Cannot create Log with LogLevel Off");
-			default:
-				throw new UnsupportedOperationException("Unhandled log level " + level);
-			}
+		private Log(final String prefix) {
+			mPrefix = prefix;
 		}
 
 		@Override
