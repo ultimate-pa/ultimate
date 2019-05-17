@@ -54,7 +54,16 @@ public class UnfTransformer extends TermTransformer {
 
 	@Override
 	protected void convert(final Term term) {
-		if (term instanceof ConstantTerm) {
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (isEqualityOrDisequalityWithMoreThanTwoParams(appTerm)) {
+				final Term binarized = SmtUtils.binarize(mScript, appTerm);
+				convert(binarized);
+				return;
+			} else {
+				super.convert(term);
+			}
+		} else if (term instanceof ConstantTerm) {
 			final ConstantTerm constTerm = (ConstantTerm) term;
 			final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
 			final Term normalized = rational.toTerm(term.getSort());
@@ -63,6 +72,11 @@ public class UnfTransformer extends TermTransformer {
 		} else {
 			super.convert(term);
 		}
+	}
+
+	private static boolean isEqualityOrDisequalityWithMoreThanTwoParams(final ApplicationTerm appTerm) {
+		return (appTerm.getFunction().getName().equals("=") || appTerm.getFunction().getName().equals("distinct"))
+				&& appTerm.getParameters().length > 2;
 	}
 
 	@Override
