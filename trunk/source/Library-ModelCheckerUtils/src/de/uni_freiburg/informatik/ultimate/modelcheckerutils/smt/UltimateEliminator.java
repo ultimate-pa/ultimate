@@ -156,7 +156,8 @@ public class UltimateEliminator implements Script {
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		final Term letFree = new FormulaUnLet().transform(term);
-		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(letFree);
+		final Term annotationFree = new AnnotationRemover().transform(letFree);
+		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
