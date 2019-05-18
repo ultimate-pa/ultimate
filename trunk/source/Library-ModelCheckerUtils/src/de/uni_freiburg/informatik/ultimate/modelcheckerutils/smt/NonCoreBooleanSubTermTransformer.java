@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -102,6 +103,9 @@ public abstract class NonCoreBooleanSubTermTransformer {
 			} else if (term instanceof LetTerm) {
 				throw new UnsupportedOperationException(NonCoreBooleanSubTermTransformer.class.getSimpleName()
 						+ " does not support " + LetTerm.class.getSimpleName());
+			} else if (term instanceof AnnotatedTerm) {
+				throw new UnsupportedOperationException(NonCoreBooleanSubTermTransformer.class.getSimpleName()
+						+ " does not support " + AnnotatedTerm.class.getSimpleName());
 			}
 			super.convert(term);
 		}
