@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.AnnotationRemover;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -55,7 +56,7 @@ public class GraphWriter {
 	private boolean mHideUnreachableOnce = true;
 	private boolean mDontWrite = true;
 
-	private final StripAnnotationsTermTransformer mStripAnnotTermTransformer;
+	private final AnnotationRemover mAnnotationRemover;
 	private final String mImagePath;
 	private int mGraphCounter = 0;
 	private final ILogger mLogger;
@@ -78,7 +79,7 @@ public class GraphWriter {
 		mAnnotateEdges = annotateEdges;
 		mAnnotateNodes = annotateNodes;
 		mShowUnreachableEdges = showUnreachableEdges;
-		mStripAnnotTermTransformer = new StripAnnotationsTermTransformer();
+		mAnnotationRemover = new AnnotationRemover();
 	}
 
 	public void writeGraphAsImage(final AnnotatedProgramPoint root, final String fileName) {
@@ -333,7 +334,7 @@ public class GraphWriter {
 	}
 
 	private String prettifyFormula(final Term f) {
-		final Term f1 = mStripAnnotTermTransformer.transform(f);
+		final Term f1 = mAnnotationRemover.transform(f);
 		return f1.toString();
 	}
 
