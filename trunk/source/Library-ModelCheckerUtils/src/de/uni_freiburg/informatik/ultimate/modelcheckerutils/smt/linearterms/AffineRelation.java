@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 public class AffineRelation {
 	private static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
 			"No affine representation where desired variable is on left hand side";
+	private static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;
 	private final Term mOriginalTerm;
 	private final RelationSymbol mRelationSymbol;
 	private final TrivialityStatus mTrivialityStatus;
@@ -131,8 +132,8 @@ public class AffineRelation {
 
 		final Term lhs = bnr.getLhs();
 		final Term rhs = bnr.getRhs();
-		final AffineTerm affineLhs = (AffineTerm) new AffineTermTransformer(script).transform(lhs);
-		final AffineTerm affineRhs = (AffineTerm) new AffineTermTransformer(script).transform(rhs);
+		final AffineTerm affineLhs = transformToAffineTerm(script, lhs);
+		final AffineTerm affineRhs = transformToAffineTerm(script, rhs);
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");
 		}
@@ -194,6 +195,18 @@ public class AffineRelation {
 			mRelationSymbol = bnr.getRelationSymbol();
 		}
 		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
+	}
+
+	private static AffineTerm transformToAffineTerm(final Script script, final Term term) {
+		if (TEMPORARY_POLYNOMIAL_TERM_TEST) {
+			final PolynomialTerm polynomialTerm = (PolynomialTerm) new PolynomialTermTransformer(script).transform(term);
+			final Term toTerm = polynomialTerm.toTerm(script);
+			final LBool lbool = Util.checkSat(script, script.term("distinct", term, toTerm));
+			if (lbool != LBool.UNSAT) {
+				throw new AssertionError("Input and output is not equivalent (" + lbool+ "). Input: " + term + " Output: " + toTerm);
+			}
+		}
+		return (AffineTerm) new AffineTermTransformer(script).transform(term);
 	}
 
 	private static TrivialityStatus computeTrivialityStatus(final AffineTerm term, final RelationSymbol symbol) {
@@ -370,8 +383,8 @@ public class AffineRelation {
 		}
 		final Term lhs = bnr.getLhs();
 		final Term rhs = bnr.getRhs();
-		final AffineTerm affineLhs = (AffineTerm) new AffineTermTransformer(script).transform(lhs);
-		final AffineTerm affineRhs = (AffineTerm) new AffineTermTransformer(script).transform(rhs);
+		final AffineTerm affineLhs = transformToAffineTerm(script, lhs);
+		final AffineTerm affineRhs = transformToAffineTerm(script, rhs);
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			return null;
 		}
