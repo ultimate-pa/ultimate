@@ -270,5 +270,39 @@ public class QuantifierUtils {
 		return !new SubtermPropertyChecker(x -> (x instanceof QuantifiedFormula)).isPropertySatisfied(term);
 	}
 
+	public static String getNameOfCorrespondingJuncts(final int quantifier) {
+		String result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = "conjuncts";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = "disjuncts";
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	public static String getNameOfDualJuncts(final int quantifier) {
+		String result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = "disjuncts";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = "conjuncts";
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	public static String getAsciiAbbreviation(final int quantifier) {
+		if (quantifier == 0) {
+			return "E";
+		} else if (quantifier == 1) {
+			return "A";
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
 
 }
