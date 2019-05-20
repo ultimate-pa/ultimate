@@ -1,6 +1,8 @@
 SMTInterpol in Ultimate
 =======================
 
+Attention: There is a small script (https://github.com/ultimate-pa/ultimate/blob/dev/releaseScripts/default/update-smtinterpol.sh) that performs the steps outlined in this README. Have a look at the script before trying to perform the steps manually. 
+
 SMTInterpol is merged manually into Ultimate.  Here are the
 necessary steps.
 
