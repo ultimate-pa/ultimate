@@ -40,12 +40,31 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
  */
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
+	public enum SmtParserMode {
+		GenericSmtSolver,
+		MsoSolver,
+		UltimateEliminator,
+		UltimateTreeAutomizer,
+	}
+
 	public enum MsoLogic {
 		MsoDiffInt,
 		MsoDiffNat,
 		WeakMsoDiffInt,
 		WeakMsoDiffNat,
 	}
+
+
+
+	public static final String LABEL_SMT_PARSER_MODE = "SmtParser Mode";
+	public static final SmtParserMode DEF_SMT_PARSER_MODE = SmtParserMode.GenericSmtSolver;
+	// @formatter:off
+	public static final String TOOLTIP_SMT_PARSER_MODE =
+			SmtParserMode.GenericSmtSolver.toString() + ": Apply some SMT solver." + System.lineSeparator() +
+			SmtParserMode.MsoSolver.toString() + ": Presume that input uses our MSO logic, apply our MSO Solver." + System.lineSeparator() +
+			SmtParserMode.UltimateEliminator.toString() + ": Run UltimateElimintor. " + System.lineSeparator() +
+			SmtParserMode.UltimateTreeAutomizer.toString() + ": Presume that input contains Horn clauses, run UltimateTreeAutomizer.";
+	// @formatter:on
 
 	//	public static final String LABEL_UseExtSolver = "Use external solver";
 //	public static final boolean DEF_UseExtSolver = true;
@@ -61,13 +80,6 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 //
 	public static final String LABEL_Directory = "Directory";
 	public static final String DEF_Directory = "";
-
-	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file"
-			+ " contains Horn clauses only).";
-	public static final boolean DEF_HornSolverMode = false;
-
-	public static final String LABEL_MsoSolverMode = "Apply MSO solver on input";
-	public static final boolean DEF_MsoSolverMode = false;
 
 	public static final String LABEL_MsoLogic = "MSO logic";
 	public static final MsoLogic DEF_MsoLogic = MsoLogic.MsoDiffInt;
@@ -121,6 +133,8 @@ public SmtParserPreferenceInitializer() {
 	@Override
 		protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 			return new UltimatePreferenceItem<?>[] {
+					new UltimatePreferenceItem<SmtParserMode>(LABEL_SMT_PARSER_MODE, DEF_SMT_PARSER_MODE,
+							TOOLTIP_SMT_PARSER_MODE, PreferenceType.Combo, SmtParserMode.values()),
 	//				new UltimatePreferenceItem<Boolean>(LABEL_UseExtSolver,
 	//						DEF_UseExtSolver, PreferenceType.Boolean),
 	//				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
@@ -131,10 +145,6 @@ public SmtParserPreferenceInitializer() {
 	//						DEF_Filename, PreferenceType.String),
 					new UltimatePreferenceItem<String>(LABEL_Directory,
 							DEF_Directory, PreferenceType.Directory),
-					new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
-							DEF_HornSolverMode, PreferenceType.Boolean),
-					new UltimatePreferenceItem<Boolean>(LABEL_MsoSolverMode,
-							DEF_MsoSolverMode, PreferenceType.Boolean),
 					new UltimatePreferenceItem<MsoLogic>(LABEL_MsoLogic, DEF_MsoLogic, PreferenceType.Combo,
 							MsoLogic.values()),
 					new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
