@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -166,7 +168,10 @@ public class UltimateEliminator implements Script {
 			// TODO
 		}
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
-			throw new AssertionError("Failed to remove all quantifiers.");
+			final Term pnf = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
+			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+			throw new AssertionError("Result of partial quantifier elimination is not quantifier-free but an "
+					+ qs.buildQuantifierSequenceStringRepresentation() + " term.");
 		}
 		mTreeSizeOfAssertedTerms += new DAGSize().treesize(lessQuantifier);
 		return mSmtSolver.assertTerm(lessQuantifier);
