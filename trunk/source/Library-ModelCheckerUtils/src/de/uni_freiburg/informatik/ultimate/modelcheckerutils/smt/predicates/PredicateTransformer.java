@@ -262,10 +262,10 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		final C renamedPredecessor =
 				mOperationProvider.renameVariables(pRename.getSubstitutionForSuccessor(), constraint);
 
-		final C disjunction =
+		final C conjunction =
 				mOperationProvider.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
 
-		return mOperationProvider.projectExistentially(pRename.getVarsToProject(), disjunction);
+		return mOperationProvider.projectExistentially(pRename.getVarsToProject(), conjunction);
 	}
 
 	public C preCall(final P callSucc, final R callTF, final R globalVarsAssignments, final R oldVarAssignments,
@@ -338,6 +338,11 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		return freshVarConstructor.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
 	}
 
+	/**
+	 *
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 *
+	 */
 	private final class PreRenaming {
 
 		private final Set<TermVariable> mVarsToProject;
