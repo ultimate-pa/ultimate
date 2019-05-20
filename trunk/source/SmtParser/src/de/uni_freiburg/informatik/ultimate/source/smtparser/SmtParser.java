@@ -235,8 +235,12 @@ public class SmtParser implements ISource {
 					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
 			solverLogger.setLevel(LogLevel.DEBUG);
 			mLogger.setLevel(LogLevel.DEBUG);
-			Script backEnd = new Scriptor(command, solverLogger, mServices, "External");
-//			Script backEnd = SolverBuilder.createSMTInterpol(mServices);
+			Script backEnd;
+			if (command.isEmpty()) {
+				backEnd = SolverBuilder.createSMTInterpol(mServices);
+			} else {
+				backEnd = new Scriptor(command, solverLogger, mServices, "External");
+			}
 			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(SmtParserPreferenceInitializer.LABEL_SmtDumpPath);
 			if (!folderOfDumpedFile.isEmpty()) {
