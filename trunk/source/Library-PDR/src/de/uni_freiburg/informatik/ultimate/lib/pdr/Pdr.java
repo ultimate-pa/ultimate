@@ -538,45 +538,46 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private IPredicate getInterpolant(final IcfgEdge predecessorTransition, final IPredicate predecessorFrame,
 			final IPredicate prePred) throws AssertionError {
 
-		final Term second = andPredTf(mScript.getScript(), predecessorFrame, predecessorTransition.getTransformula(),
-				mCsToolkit.getModifiableGlobalsTable()
+		final Term frameAndTrans = andPredTf(mScript.getScript(), predecessorFrame,
+				predecessorTransition.getTransformula(), mCsToolkit.getModifiableGlobalsTable()
 						.getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure()));
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Converted frame %s and transformula %s to %s", predecessorFrame,
-					predecessorTransition.getTransformula(), second));
+					predecessorTransition.getTransformula(), frameAndTrans));
 		}
 
-		final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
+		final IPredicate frameAndTransPred = mPredicateUnifier.getOrConstructPredicate(frameAndTrans);
 
 		// rename variables to primed constants
 		final Set<IProgramVar> ppVars = prePred.getVars();
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Map<Term, Term> reverseMapping = new HashMap<>();
 		for (final IProgramVar var : ppVars) {
-			substitutionMapping.put(var.getDefaultConstant(), var.getPrimedConstant());
-			reverseMapping.put(var.getPrimedConstant(), var.getTermVariable());
+			// substitutionMapping.put(var.getDefaultConstant(), var.getPrimedConstant());
+			// reverseMapping.put(var.getPrimedConstant(), var.getTermVariable());
 		}
 
 		final Term transformedPrePred =
 				new Substitution(mScript, substitutionMapping).transform(prePred.getClosedFormula());
 
-		final Pair<LBool, Term> interpolPair =
-				SmtUtils.interpolateBinary(mScript.getScript(), transformedPrePred, secondPred.getClosedFormula());
+		final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(), transformedPrePred,
+				frameAndTransPred.getClosedFormula());
 
 		if (interpolPair.getFirst() == LBool.UNKNOWN) {
 			return null;
 		}
 
 		if (interpolPair.getFirst() == LBool.SAT) {
-			throw new AssertionError(String.format("Wrong interpolation query (is sat): %s  and  %s ",
-					transformedPrePred, secondPred.getClosedFormula()));
+			throw new AssertionError(
+					String.format("Wrong interpolation query (is sat): Pre: %s Renamed Pre: %s  FrameAndTrans: %s ",
+							prePred.getClosedFormula(), transformedPrePred, frameAndTransPred.getClosedFormula()));
 		}
 
 		// TODO: The interpolant is now full of variables that are constants and primed constant_pv_prime; we have to go
 		// back to unprimed and un-constants
 
-		for (final IProgramVar var : secondPred.getVars()) {
+		for (final IProgramVar var : frameAndTransPred.getVars()) {
 			reverseMapping.put(var.getPrimedConstant(), var.getTermVariable());
 		}
 
@@ -587,7 +588,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		final IPredicate interpolatedPreCondition = mPredicateUnifier.getOrConstructPredicate(transformedInterpolant);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Interpolant: %s (%s from binInt(%s  %s))", interpolatedPreCondition,
-					interpolPair.getSecond(), transformedPrePred, secondPred.getClosedFormula()));
+					interpolPair.getSecond(), transformedPrePred, frameAndTransPred.getClosedFormula()));
 		}
 		return interpolatedPreCondition;
 	}
