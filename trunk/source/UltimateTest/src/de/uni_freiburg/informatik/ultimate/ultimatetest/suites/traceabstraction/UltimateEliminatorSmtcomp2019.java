@@ -113,7 +113,10 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 	 *
 	 */
 	private static final String[] mSettings = {
-			"svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
+			"UltimateEliminator/z3.epf",
+			"UltimateEliminator/yices2.epf",
+			"UltimateEliminator/smtinterpol.epf",
+			"UltimateEliminator/mathsat.epf",
 	};
 
 	private static final String[] mCToolchains = {
