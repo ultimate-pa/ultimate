@@ -95,7 +95,7 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
-	private static Script createSMTInterpol(final IUltimateServiceProvider services) {
+	public static Script createSMTInterpol(final IUltimateServiceProvider services) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
 		final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 		final TerminationRequest termRequest = new SMTInterpolTerminationRequest(services.getProgressMonitorService());
