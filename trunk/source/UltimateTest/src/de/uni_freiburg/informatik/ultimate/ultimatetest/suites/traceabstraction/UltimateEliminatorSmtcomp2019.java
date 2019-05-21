@@ -74,7 +74,9 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 			 * divisions where we have quantifiers but no algebraic datatypes
 			 * I commented all division with bitvectors and floats, because
 			 * I don't know if we want to participate in these divisions
-			 *
+			 * 
+			 * You can get the benchmarks in one .zip archive at the following URL
+			 * http://www.informatik.uni-freiburg.de/~heizmann/2019smtcomp/2019SmtcompQuantifierNonincremental.zip
 			 */
 //			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ABVFP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
 			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ALIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
