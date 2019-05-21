@@ -1,4 +1,4 @@
-UltimateEliminator+SMTInterpol
+UltimateEliminatorPLUSSMTInterpol
 
 Wrapper tool that eliminates quantifiers in SMT files and applies SMTInterpol.
 

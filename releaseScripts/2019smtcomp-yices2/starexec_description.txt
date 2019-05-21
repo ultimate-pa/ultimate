@@ -1,4 +1,4 @@
-UltimateEliminator+Yices
+UltimateEliminatorPLUSYices
 
 Wrapper tool that eliminates quantifiers in SMT files and applies Yices.
 

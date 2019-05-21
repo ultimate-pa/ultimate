@@ -1,4 +1,4 @@
-UltimateEliminator+MathSAT
+UltimateEliminatorPLUSMathSAT
 
 Wrapper tool that eliminates quantifiers in SMT files and applies MathSAT.
 
