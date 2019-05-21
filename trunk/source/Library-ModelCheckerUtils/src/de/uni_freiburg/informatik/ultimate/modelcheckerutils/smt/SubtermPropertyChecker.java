@@ -93,7 +93,7 @@ public class SubtermPropertyChecker extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("SubtermPropertyChecker does not support LetTerms");
 		}
 
 		@Override
