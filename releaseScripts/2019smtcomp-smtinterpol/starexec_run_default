@@ -1,0 +1,25 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+./../Ultimate/Ultimate -tc ./../Empty.xml -s ./../smtinterpol.epf -data "$TMPDIR" -i "$1" &> output.txt
+
+RESULT_UNSAT=`cat output.txt | grep "Computed result: unsat"`
+RESULT_SAT=`cat output.txt | grep "Computed result: sat"`
+RESULT_UNKNOWN=`cat output.txt | grep "Computed result: unknown"`
+
+if [ "$RESULT_UNSAT" ]; then
+	echo "unsat"
+fi
+    
+if [ "$RESULT_SAT" ]; then
+	echo "sat"
+fi
+    
+if [ "$RESULT_UNKNOWN" ]; then
+	echo "unknown"
+fi
+
+echo ""
+cat output.txt
