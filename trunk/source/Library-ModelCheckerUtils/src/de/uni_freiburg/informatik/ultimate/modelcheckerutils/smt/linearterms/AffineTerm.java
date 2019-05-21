@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -70,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Leike
  */
-public class AffineTerm extends Term {
+public class AffineTerm extends Term implements IPolynomialTerm {
 	/**
 	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
@@ -251,6 +252,7 @@ public class AffineTerm extends Term {
 	 * True if this represents not an affine term but an error during the translation process, e.g., if original term
 	 * was not linear.
 	 */
+	@Override
 	public boolean isErrorTerm() {
 		if (mVariable2Coefficient == null) {
 			assert mConstant == null;
@@ -266,6 +268,7 @@ public class AffineTerm extends Term {
 	/**
 	 * @return whether this affine term is just a constant
 	 */
+	@Override
 	public boolean isConstant() {
 		return mVariable2Coefficient.isEmpty();
 	}
@@ -273,6 +276,7 @@ public class AffineTerm extends Term {
 	/**
 	 * @return whether this affine term is zero
 	 */
+	@Override
 	public boolean isZero() {
 		return mConstant.equals(Rational.ZERO) && mVariable2Coefficient.isEmpty();
 	}
@@ -280,6 +284,7 @@ public class AffineTerm extends Term {
 	/**
 	 * @return the constant summand of this affine term
 	 */
+	@Override
 	public Rational getConstant() {
 		return mConstant;
 	}
@@ -297,6 +302,7 @@ public class AffineTerm extends Term {
 	 * @param script
 	 *            Script for that this term is constructed.
 	 */
+	@Override
 	public Term toTerm(final Script script) {
 		Term[] summands;
 		if (mConstant.equals(Rational.ZERO)) {
@@ -322,14 +328,15 @@ public class AffineTerm extends Term {
 		final Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
 	}
-	
+
 	/**
 	 * Transforms this AffineTerm into an equivalent PolynomialTerm.
 	 */
-	public PolynomialTerm toPolynomialTerm() {
-		int arraylength = mVariable2Coefficient.entrySet().size();
-		Rational[] coefficients = new Rational[arraylength];
-		Term[] terms = new Term[arraylength];
+	@Deprecated
+	public IPolynomialTerm toPolynomialTerm() {
+		final int arraylength = mVariable2Coefficient.entrySet().size();
+		final Rational[] coefficients = new Rational[arraylength];
+		final Term[] terms = new Term[arraylength];
 		int index = 0;
 		for (final Map.Entry<Term, Rational> entry : mVariable2Coefficient.entrySet()) {
 			terms[index] = entry.getKey();
@@ -436,4 +443,16 @@ public class AffineTerm extends Term {
 		}
 		return true;
 	}
+
+	@Override
+	public Map<Monomial, Rational> getMonomial2Coefficient() {
+		return mVariable2Coefficient.entrySet().stream()
+				.collect(Collectors.toMap(x -> new Monomial((Term) x, Rational.ONE), Entry::getValue));
+	}
+
+	@Override
+	public boolean isAffine() {
+		return true;
+	}
+
 }

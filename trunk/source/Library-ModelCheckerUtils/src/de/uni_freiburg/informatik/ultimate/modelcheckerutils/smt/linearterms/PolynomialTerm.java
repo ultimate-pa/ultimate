@@ -14,24 +14,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * 
+ *
  * This represents a term in form of
- * 
+ *
  * <pre>
  * Σ c_i * x_i^{e_i} + c
  * </pre>
- * 
+ *
  * where c_i, c, e_i are literals, and x_i are variables.
- * 
+ *
  * @author Leonard Fichtner
  *
  */
-public class PolynomialTerm extends Term {
+public class PolynomialTerm extends Term implements IPolynomialTerm {
     /**
      * Map from Monomials or Terms to coefficients. Coefficient Zero is forbidden.
      * Make sure that this is always either of type Map<Term, Rational> (Variable2Coefficient) or of type
@@ -44,13 +43,13 @@ public class PolynomialTerm extends Term {
      * Affine constant (coefficient without variable).
      */
     private final Rational mConstant;
-    
+
     /**
 	 * Sort of this term. E.g, "Int" or "Real".
 	 */
 	private final Sort mSort;
-	
-	
+
+
 	/**
 	 * PolynomialTerm that represents the Rational r of sort s.
 	 */
@@ -60,7 +59,7 @@ public class PolynomialTerm extends Term {
 		mConstant = r;
 		mTerm2Coefficient = Collections.emptyMap();
 	}
-	
+
 	/**
 	 * PolynomialTerm that represents the product of polynomialTerm and multiplier.
 	 */
@@ -72,7 +71,7 @@ public class PolynomialTerm extends Term {
 			mTerm2Coefficient = Collections.emptyMap();
 		} else {
 			mConstant = polynomialTerm.getConstant().mul(multiplier);
-			mTerm2Coefficient = calculateProductMap(polynomialTerm, 
+			mTerm2Coefficient = calculateProductMap(polynomialTerm,
 													new PolynomialTerm(polynomialTerm.getSort(), multiplier));
 		}
 	}
@@ -86,17 +85,17 @@ public class PolynomialTerm extends Term {
 		mConstant = Rational.ZERO;
 		mTerm2Coefficient = Collections.singletonMap(tv, Rational.ONE);
 	}
-	
+
 	/**
 	 * PolynomialTerm that consists of the single variable tv, with coefficient r.
 	 */
-	public PolynomialTerm(final TermVariable tv, Rational r) {
+	public PolynomialTerm(final TermVariable tv, final Rational r) {
 		super(0);
 		mSort = tv.getSort();
 		mConstant = Rational.ZERO;
 		mTerm2Coefficient = Collections.singletonMap(tv, r);
 	}
-	
+
 	/**
 	 * PolynomialTerm that consists of the single variable which is an application term.
 	 */
@@ -106,7 +105,7 @@ public class PolynomialTerm extends Term {
 		mConstant = Rational.ZERO;
 		mTerm2Coefficient = Collections.singletonMap(appTerm, Rational.ONE);
 	}
-	
+
 	/**
 	 * {@link PolynomialTerm} that consists of the single variable that is represented by
 	 * the {@link Term} t.
@@ -117,7 +116,7 @@ public class PolynomialTerm extends Term {
 		mConstant = Rational.ZERO;
 		mTerm2Coefficient = Collections.singletonMap(t, Rational.ONE);
 	}
-	
+
 	/**
 	 * PolynomialTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
 	 * array coefficients, and whose constant term is given by the Rational constant.
@@ -139,13 +138,13 @@ public class PolynomialTerm extends Term {
 			if (coefficients[0].equals(Rational.ZERO)) {
 				mTerm2Coefficient = Collections.emptyMap();
 			} else {
-				Rational[] rationals = new Rational[1];
+				final Rational[] rationals = new Rational[1];
 				rationals[0] = Rational.ONE;
 				mTerm2Coefficient = Collections.singletonMap(terms[0], coefficients[0]);
 			}
 			break;
 		default:
-			HashMap<Term, Rational> mapToBe = new HashMap<>();
+			final HashMap<Term, Rational> mapToBe = new HashMap<>();
 			for (int i = 0; i < terms.length; i++) {
 				checkIfTermIsLegalVariable(terms[i]);
 				if (!coefficients[i].equals(Rational.ZERO)) {
@@ -156,7 +155,7 @@ public class PolynomialTerm extends Term {
 			break;
 		}
 	}
-	
+
 	/**
 	 * Check if term is of a type that may be a variable of an PolynomialTerm.
 	 */
@@ -167,19 +166,19 @@ public class PolynomialTerm extends Term {
 			throw new IllegalArgumentException("Variable of PolynomialTerm has to be TermVariable or ApplicationTerm");
 		}
 	}
-	
+
 	/**
 	 * Turns a given array of polynomial terms into a new single polynomial term which represents
 	 * the addition of the given polynomial terms and returns it.
 	 */
-	public static PolynomialTerm constructAddition(PolynomialTerm... polynomialTerms) {
+	public static PolynomialTerm constructAddition(final PolynomialTerm... polynomialTerms) {
 	    return new PolynomialTerm(polynomialTerms);
 	}
 
 	/**
 	 * Constructor for Addition of polynomial terms.
 	 */
-	private PolynomialTerm(PolynomialTerm... polynomialTerms) {
+	private PolynomialTerm(final PolynomialTerm... polynomialTerms) {
 		super(0);
 		mSort = polynomialTerms[0].getSort();
 		mTerm2Coefficient = calculateSumMap(polynomialTerms);
@@ -195,26 +194,26 @@ public class PolynomialTerm extends Term {
 		}
 		return calculateSumMapOfAffineTerms(polynomialTerms);
 	}
-	
+
 	/**
 	 * Returns true when one of the given Terms is truly polynomial (not representable
 	 * by an AffineTerm)
 	 */
-	private boolean someTermIsPolynomial(final PolynomialTerm...polynomialTerms) {
-		for (final PolynomialTerm polynomialTerm: polynomialTerms) {
-			if (!polynomialTerm.isLinear()) {
+	private boolean someTermIsPolynomial(final IPolynomialTerm...polynomialTerms) {
+		for (final IPolynomialTerm polynomialTerm: polynomialTerms) {
+			if (!polynomialTerm.isAffine()) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Calculate the map of the sum of polynomials in Monomial2Coefficient form.
 	 */
-	private Map<Monomial, Rational> calculateSumMapOfPolynomials(final PolynomialTerm... polynomialTerms){
-		Map<Monomial, Rational> map = new HashMap<>();
-		for (final PolynomialTerm polynomialTerm : polynomialTerms) {
+	private Map<Monomial, Rational> calculateSumMapOfPolynomials(final IPolynomialTerm... polynomialTerms){
+		final Map<Monomial, Rational> map = new HashMap<>();
+		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
 			for (final Map.Entry<Monomial, Rational> summand : polynomialTerm.getMonomial2Coefficient().entrySet()) {
 				assert summand.getKey().getSort() == mSort : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
 						+ mSort;
@@ -238,12 +237,12 @@ public class PolynomialTerm extends Term {
 		}
 		return map;
 	}
-	
+
 	/**
 	 * Calculate the map of the sum of polynomials in Variable2Coefficient form.
 	 */
 	private Map<Term, Rational> calculateSumMapOfAffineTerms(final PolynomialTerm... polynomialTerms){
-		Map<Term, Rational> map = new HashMap<>();
+		final Map<Term, Rational> map = new HashMap<>();
 		for (final PolynomialTerm polynomialTerm : polynomialTerms) {
 			for (final Map.Entry<Term, Rational> summand : polynomialTerm.getVariable2Coefficient().entrySet()) {
 				assert summand.getKey().getSort() == mSort : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
@@ -266,15 +265,15 @@ public class PolynomialTerm extends Term {
 				}
 			}
 		}
-		return (Map<Term, Rational>) map;
+		return map;
 	}
-	
+
 	/**
 	 * Calculate the constant of a sum of given PolynomialTerms.
 	 */
-	private Rational calculateSumConstant(final PolynomialTerm...polynomialTerms) {
+	private Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
 		Rational constant = Rational.ZERO;
-		for (PolynomialTerm polynomialTerm : polynomialTerms) {
+		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
 			if (SmtSortUtils.isBitvecSort(mSort)) {
 				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), mSort);
 			} else {
@@ -283,12 +282,12 @@ public class PolynomialTerm extends Term {
 		}
 		return constant;
 	}
-	
+
 	/**
 	 * Turns a given array of polynomial terms into a new single polynomial term which represents
 	 * the product of the given polynomial terms and returns it.
 	 */
-	public static PolynomialTerm constructProduct(PolynomialTerm... polynomialTerms) {
+	public static PolynomialTerm constructProduct(final PolynomialTerm... polynomialTerms) {
 		if (polynomialTerms.length == 1) {
 			return polynomialTerms[0];
 		}
@@ -308,26 +307,26 @@ public class PolynomialTerm extends Term {
 		mTerm2Coefficient = calculateProductMap(poly1, poly2);
 		mConstant = poly1.getConstant().mul(poly2.getConstant());
 	}
-	
+
 	/**
 	 * Calculate the map of the product of two polynomials.
 	 */
 	private Object calculateProductMap(final PolynomialTerm poly1, final PolynomialTerm poly2) {
-		if (!poly1.isLinear() || !poly2.isLinear() || (!poly1.isConstant() && !poly2.isConstant())) {
+		if (!poly1.isAffine() || !poly2.isAffine() || (!poly1.isConstant() && !poly2.isConstant())) {
 			return calculateProductMapOfPolynomials(poly1, poly2);
 		}
 		return calculateProductMapOfAffineTerms(poly1, poly2);
 	}
-	
+
 	/**
 	 * Calculate the map of the product of two polynomials in Monomial2Coefficient form.
 	 */
-	private Map<Monomial, Rational> calculateProductMapOfPolynomials(final PolynomialTerm poly1, PolynomialTerm poly2){
-		Map<Monomial, Rational> map = new HashMap<>();
+	private Map<Monomial, Rational> calculateProductMapOfPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
+		final Map<Monomial, Rational> map = new HashMap<>();
 		//Multiply Monomials of the two polynomialTerms
 		for (final Map.Entry<Monomial, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
 			for (final Map.Entry<Monomial, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
-				final Monomial mono = new Monomial((Monomial) summand1.getKey(),(Monomial) summand2.getKey());
+				final Monomial mono = new Monomial(summand1.getKey(),summand2.getKey());
 				final Rational newCoeff;
 				final Rational coeff = map.get(mono);
 				if (coeff == null) {
@@ -344,7 +343,7 @@ public class PolynomialTerm extends Term {
 				}
 			}
 		}
-		
+
 		//Multiply Monomials of polynomialTerm 1 with the constant of polynomialTerm 2
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = map.get(summand.getKey());
@@ -352,7 +351,7 @@ public class PolynomialTerm extends Term {
 			if (coeff == null) {
 				newCoeff = summand.getValue().mul(poly2.getConstant());
 				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);	
+					map.put(summand.getKey(), newCoeff);
 				}
 			}else {
 				//TODO: Probably something with bitvectors should be here, too
@@ -362,7 +361,7 @@ public class PolynomialTerm extends Term {
 				}
 			}
 		}
-		
+
 		//Multiply Monomials of polynomialTerm 2 with the constant of polynomialTerm 1
 		for (final Map.Entry<Monomial, Rational> summand : poly2.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = map.get(summand.getKey());
@@ -370,7 +369,7 @@ public class PolynomialTerm extends Term {
 			if (coeff == null) {
 				newCoeff = summand.getValue().mul(poly1.getConstant());
 				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);	
+					map.put(summand.getKey(), newCoeff);
 				}
 			}else {
 				//TODO: Probably something with bitvectors should be here, too
@@ -382,12 +381,12 @@ public class PolynomialTerm extends Term {
 		}
 		return map;
 	}
-	
+
 	/**
 	 * Calculate the map of the product of polynomials in Variable2Coefficient form.
 	 */
-	private Map<Term, Rational> calculateProductMapOfAffineTerms(PolynomialTerm poly1, PolynomialTerm poly2){
-		Map<Term, Rational> map = new HashMap<>();
+	private Map<Term, Rational> calculateProductMapOfAffineTerms(final PolynomialTerm poly1, final PolynomialTerm poly2){
+		final Map<Term, Rational> map = new HashMap<>();
 		if (poly1.isConstant()) {
 			if (poly1.getConstant().equals(Rational.ZERO)) {
 				return map;
@@ -406,13 +405,13 @@ public class PolynomialTerm extends Term {
 		}
 		return map;
 	}
-	
+
 	/**
 	 * Turns a given array of polynomial terms into a new single polynomial term which represents
 	 * the division of the given polynomial terms and returns it. At the moment this only supports
 	 * division by Constants.
 	 */
-	public static PolynomialTerm constructDivision(PolynomialTerm...polynomialTerms) {
+	public static PolynomialTerm constructDivision(final PolynomialTerm...polynomialTerms) {
 		if (polynomialTerms.length == 1) {
 			return polynomialTerms[0];
 		}
@@ -421,8 +420,8 @@ public class PolynomialTerm extends Term {
 				throw new UnsupportedOperationException("Division by Variables not supported!");
 			}
 		}
-		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0], 
-												 new PolynomialTerm(polynomialTerms[1].getSort(), 
+		PolynomialTerm poly = new PolynomialTerm(polynomialTerms[0],
+												 new PolynomialTerm(polynomialTerms[1].getSort(),
 														 			polynomialTerms[1].getConstant().inverse()));
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = new PolynomialTerm(poly, new PolynomialTerm(polynomialTerms[i].getSort(),
@@ -430,7 +429,7 @@ public class PolynomialTerm extends Term {
 		}
 		return poly;
 	}
-	
+
 	/**
 	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had wrong sorts.
 	 */
@@ -441,10 +440,10 @@ public class PolynomialTerm extends Term {
 		mSort = null;
 	}
 
-	/**
-	 * True if this represents not an polynomial or affine term but an error during the translation process, e.g., if original term
-	 * had wrong sorts.
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#isErrorTerm()
 	 */
+	@Override
 	public boolean isErrorTerm() {
 		if (mTerm2Coefficient == null) {
 			assert mConstant == null;
@@ -456,7 +455,7 @@ public class PolynomialTerm extends Term {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Use modulo operation to bring Rational in the range of representable values.
 	 *
@@ -476,20 +475,18 @@ public class PolynomialTerm extends Term {
 		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
-	
-	/**
-	 * Transforms this PolynomialTerm into a Term that is supported by the solver.
-	 *
-	 * @param script
-	 *            Script for that this term is constructed.
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#toTerm(de.uni_freiburg.informatik.ultimate.logic.Script)
 	 */
+	@Override
 	public Term toTerm(final Script script) {
-		if (isLinear()) {
+		if (isAffine()) {
 			return affineToTerm(script);
 		}
 		return polynomialToTerm(script);
 	}
-	
+
 	/**
 	 * The transformation to a Term for affineTerms.
 	 */
@@ -518,7 +515,7 @@ public class PolynomialTerm extends Term {
 		final Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
 	}
-	
+
 	/**
 	 * The transformation to a Term for polynomialTerms.
 	 */
@@ -547,30 +544,32 @@ public class PolynomialTerm extends Term {
 		final Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
 	}
-	
-	/**
-	 * @return unmodifiable map where each variable (wrapped as Monomial) is mapped to its coefficient.
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#getMonomial2Coefficient()
 	 */
+	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
-		if (!isLinear()) {
+		if (!isAffine()) {
 			return Collections.unmodifiableMap(castMonomialMap(mTerm2Coefficient));
 		}
 		return Collections.unmodifiableMap(turnVariableMapIntoMonomialMap(castVariableMap(mTerm2Coefficient)));
 	}
-	
+
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
 	public Map<Term, Rational> getVariable2Coefficient() {
-		if (isLinear()) {
+		if (isAffine()) {
 			return Collections.unmodifiableMap(castVariableMap(mTerm2Coefficient));
 		}
 		throw new UnsupportedOperationException("Term is not linear. Use getMonomial2Coefficient() instead.");
 	}
-	
-	/**
-	 * @return whether this polynomial term is just a constant
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#isConstant()
 	 */
+	@Override
 	public boolean isConstant() {
 		if (mTerm2Coefficient instanceof Map<?, ?>) {
 			return ((Map<?, ?>) mTerm2Coefficient).isEmpty();
@@ -578,14 +577,12 @@ public class PolynomialTerm extends Term {
 		throw new UnsupportedOperationException("You may not ask this, when the Map is no Map (e. g. ErrorTerm)");
 	}
 
-	/**
-	 * Return true, when this term is linear (thus could be represented by AffineTerm), false otherwise.
-	 */
-	public boolean isLinear() {
+	@Override
+	public boolean isAffine() {
 		if (isConstant()) {
 			return true;
 		}
-		Term maybeMonomial = (Term) ((Map<?, ?>) mTerm2Coefficient).keySet().iterator().next();
+		final Term maybeMonomial = (Term) ((Map<?, ?>) mTerm2Coefficient).keySet().iterator().next();
 		//This is sufficient because of our convention of the two possible states of the map:
 		//Monomial2Coefficient or Variable2Coefficient. Breaking this convention will lead to numerous bugs!!!!
 		if (maybeMonomial instanceof Monomial) {
@@ -594,43 +591,44 @@ public class PolynomialTerm extends Term {
 			return true;
 		}
 	}
-	
+
+
 	/**
 	 * This is a method that performs an unsafe cast to retrieve a Monomial to Rational Map
 	 * from the mTerm2Coefficient-object
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<Monomial, Rational> castMonomialMap(Object map){
+	private Map<Monomial, Rational> castMonomialMap(final Object map){
 		if (mTerm2Coefficient instanceof Map<?, ?>) {
 			return (Map<Monomial, Rational>) mTerm2Coefficient;
 		}
 		throw new UnsupportedOperationException("You may not ask for this, when there is no Map (e. g. ErrorTerm)");
 	}
-	
+
 	/**
 	 * This is a method that performs an unsafe cast to retrieve a Term (Variable) to Rational Map
 	 * from the mTerm2Coefficient-object.
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<Term, Rational> castVariableMap(Object map){
+	private Map<Term, Rational> castVariableMap(final Object map){
 		if (mTerm2Coefficient instanceof Map<?, ?>) {
 			return (Map<Term, Rational>) mTerm2Coefficient;
 		}
 		throw new UnsupportedOperationException("You may not ask for this, when there is no Map (e. g. ErrorTerm)");
 	}
-	
+
 	/**
 	 * Given a Variable2Coefficients-map, this turns it into a Monomial2Coefficients-map.
 	 */
-	private Map<Monomial, Rational> turnVariableMapIntoMonomialMap(Map<Term, Rational> termMap){
+	private Map<Monomial, Rational> turnVariableMapIntoMonomialMap(final Map<Term, Rational> termMap){
 		switch (termMap.size()) {
 		case 0:
 			return Collections.emptyMap();
 		case 1:
-			Map.Entry<Term, Rational> singleEntry = termMap.entrySet().iterator().next();
+			final Map.Entry<Term, Rational> singleEntry = termMap.entrySet().iterator().next();
 			return Collections.singletonMap(new Monomial(singleEntry.getKey(), Rational.ONE), singleEntry.getValue());
 		default:
-			Map<Monomial, Rational> MonoMap = new HashMap<>();
+			final Map<Monomial, Rational> MonoMap = new HashMap<>();
 			for (final Map.Entry<Term, Rational> entry : termMap.entrySet()) {
 				if (entry.getKey() instanceof Monomial) {
 					throw new IllegalArgumentException("This map has monomials in it. Something before went wrong!");
@@ -640,10 +638,11 @@ public class PolynomialTerm extends Term {
 			return MonoMap;
 			}
 	}
-	
-	/**
-	 * @return whether this polynomial term is zero
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#isZero()
 	 */
+	@Override
 	public boolean isZero() {
 		if (mTerm2Coefficient instanceof Map<?, ?>) {
 			return mConstant.equals(Rational.ZERO) && ((Map<?, ?>) mTerm2Coefficient).isEmpty();
@@ -651,13 +650,14 @@ public class PolynomialTerm extends Term {
 		throw new UnsupportedOperationException("You may not ask this, when the Map is no Map (e. g. ErrorTerm)");
 	}
 
-	/**
-	 * @return the constant summand of this polynomial term
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#getConstant()
 	 */
+	@Override
 	public Rational getConstant() {
 		return mConstant;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -678,17 +678,20 @@ public class PolynomialTerm extends Term {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#getSort()
+	 */
 	@Override
 	public Sort getSort() {
 		return mSort;
 	}
-	
+
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
 	}
-	
-	public static PolynomialTerm applyModuloToAllCoefficients(final Script script, final PolynomialTerm polynomialTerm,
+
+	public static IPolynomialTerm applyModuloToAllCoefficients(final Script script, final IPolynomialTerm polynomialTerm,
 			final BigInteger divident) {
 		assert SmtSortUtils.isIntSort(polynomialTerm.getSort());
 		final Map<Monomial, Rational> map = polynomialTerm.getMonomial2Coefficient();
@@ -705,7 +708,7 @@ public class PolynomialTerm extends Term {
 				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(polynomialTerm.getConstant()), divident));
 		return new PolynomialTerm(polynomialTerm.getSort(), terms, coefficients, constant);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -715,7 +718,7 @@ public class PolynomialTerm extends Term {
 		result = prime * result + (mTerm2Coefficient == null ? 0 : mTerm2Coefficient.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -751,4 +754,6 @@ public class PolynomialTerm extends Term {
 		}
 		return true;
 	}
+
+
 }

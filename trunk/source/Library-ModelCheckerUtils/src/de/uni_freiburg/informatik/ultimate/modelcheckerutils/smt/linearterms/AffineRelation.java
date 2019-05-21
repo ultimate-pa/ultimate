@@ -199,7 +199,7 @@ public class AffineRelation {
 
 	private static AffineTerm transformToAffineTerm(final Script script, final Term term) {
 		if (TEMPORARY_POLYNOMIAL_TERM_TEST) {
-			final PolynomialTerm polynomialTerm = (PolynomialTerm) new PolynomialTermTransformer(script).transform(term);
+			final IPolynomialTerm polynomialTerm = (IPolynomialTerm) new PolynomialTermTransformer(script).transform(term);
 			final Term toTerm = polynomialTerm.toTerm(script);
 			final LBool lbool = Util.checkSat(script, script.term("distinct", term, toTerm));
 			if (lbool != LBool.UNSAT) {
