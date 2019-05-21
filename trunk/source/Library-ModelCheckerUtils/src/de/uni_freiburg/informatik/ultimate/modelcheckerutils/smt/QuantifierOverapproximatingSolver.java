@@ -28,13 +28,14 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -47,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SkolemNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
@@ -78,6 +80,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
 	private Boolean mOverAprox;
+	private final Boolean[] mOvAStack;
 
 	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger,
 			final Script script) {
@@ -86,6 +89,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 		mSmtSolver = script;
 		mMgdScript = new ManagedScript(services, script);
 		mOverAprox = false;
+		mOvAStack = new Boolean[] {};
 
 	}
 
@@ -138,11 +142,36 @@ public class QuantifierOverapproximatingSolver implements Script {
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
 		// TODO check if there is still an overapproximated term on the assertion stack
+		mSmtSolver.getAssertions();
+
 		mSmtSolver.pop(levels);
 	}
 
-	private Term overApproximate(final Term term) {
+	private Term skolemizeOA(final QuantifiedFormula inputFormula) {
 
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), inputFormula);
+
+		final QuantifiedVariables qb = qs.getQuantifierBlocks().get(0);
+		Term newInnerTerm = qs.getInnerTerm();
+
+		for (int block = 0; block < qs.getQuantifierBlocks().size(); block++) {
+			final List<QuantifiedVariables> qVar = qs.getQuantifierBlocks();
+			if (qVar.get(block).getQuantifier() == QuantifiedFormula.EXISTS && block == 0) {
+				final Map<Term, Term> subMap = new HashMap<>();
+				for (final TermVariable qtv : qb.getVariables()) {
+					final TermVariable ctv = mMgdScript.constructFreshTermVariable("skolemconst", qtv.getSort());
+					final Term newConst = SmtUtils.termVariable2constant(mMgdScript.getScript(), ctv, true);
+					subMap.put(qtv, newConst);
+				}
+				newInnerTerm = new Substitution(mMgdScript, subMap).transform(newInnerTerm);
+			}
+		}
+		final Term reAddQuantifiers = qs.prependQuantifierSequence(mMgdScript.getScript(), qs.getQuantifierBlocks(),
+				newInnerTerm);
+		return reAddQuantifiers;
+	}
+
+	private Term overApproximate(final Term term) {
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(term);
 		// Optimization 2
 		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(nnf);
@@ -151,41 +180,40 @@ public class QuantifierOverapproximatingSolver implements Script {
 			if (!QuantifierUtils.isQuantifierFree(cojunct)) {
 				// Optimization 3
 				final Term pnfTerm = new PrenexNormalForm(mMgdScript).transform(cojunct);
-				try {
-					final SkolemNormalForm snf = new SkolemNormalForm(mMgdScript, pnfTerm);
-					final Term snfTerm = snf.getSkolemizedFormula();
+				if (!QuantifierUtils.isQuantifierFree(pnfTerm)) {
+					final Term snfTerm = skolemizeOA((QuantifiedFormula) pnfTerm);
 					if (snfTerm instanceof QuantifiedFormula) {
 						cojunct = mMgdScript.getScript().term("true");
 					} else {
 						cojunct = snfTerm;
 					}
-				} catch (final AssertionError ae) { // catch: term needs to be in PNF
-					cojunct = mMgdScript.getScript().term("true");
 				}
 
 			}
 			qfree = SmtUtils.and(mMgdScript.getScript(), cojunct, qfree);
 		}
-
 		return qfree;
 	}
 
 	@Override
-	public LBool assertTerm(final Term term) throws SMTLIBException {
-		Term withoutLet = new FormulaUnLet().transform(term);
-		// TODO can term be quantified if the logic is quantifier free?
-		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
-			mLogger.info("assert OVA term");
+	public LBool assertTerm(Term term) throws SMTLIBException {
+		if (!QuantifierUtils.isQuantifierFree(term)) {
 			mOverAprox = true;
-			withoutLet = overApproximate(withoutLet);
+			term = overApproximate(term);
+		} else {
+			mOverAprox = false;
 		}
-		return mSmtSolver.assertTerm(withoutLet);
+		mOvAStack[mSmtSolver.getAssertions().length] = mOverAprox;
+		final LBool result = mSmtSolver.assertTerm(term);
+		if (result.equals(LBool.SAT) && mOverAprox) {
+			return LBool.UNKNOWN;
+		}
+		return result;
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		final LBool result = mSmtSolver.checkSat();
-		// TODO right place? or do we need it in assertTerm method
 		if (result.equals(LBool.SAT) && mOverAprox) {
 			return LBool.UNKNOWN;
 		}
