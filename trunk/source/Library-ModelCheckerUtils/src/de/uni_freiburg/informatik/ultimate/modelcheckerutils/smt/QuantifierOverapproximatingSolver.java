@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.Unletter;
 
 /**
  * Wrapper for an SMT solver that makes sure that the solver does not have to
@@ -197,14 +200,15 @@ public class QuantifierOverapproximatingSolver implements Script {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		if (!QuantifierUtils.isQuantifierFree(term)) {
+		Term withoutLet = new FormulaUnLet().transform(term);
+		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
 			mOverAprox = true;
-			term = overApproximate(term);
+			withoutLet = overApproximate(withoutLet);
 		} else {
 			mOverAprox = false;
 		}
 		mOvAStack[mSmtSolver.getAssertions().length] = mOverAprox;
-		final LBool result = mSmtSolver.assertTerm(term);
+		final LBool result = mSmtSolver.assertTerm(withoutLet);
 		if (result.equals(LBool.SAT) && mOverAprox) {
 			return LBool.UNKNOWN;
 		}
