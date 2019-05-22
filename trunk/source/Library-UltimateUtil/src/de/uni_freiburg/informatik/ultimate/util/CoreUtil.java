@@ -791,8 +791,13 @@ public class CoreUtil {
 	}
 
 	public static String getStackTrace(final Throwable t) {
+		return getStackTrace("", t);
+	}
+
+	public static String getStackTrace(final String indent, final Throwable t) {
 		final StringBuilder sb = new StringBuilder();
 		for (final StackTraceElement elem : t.getStackTrace()) {
+			sb.append(indent);
 			sb.append(String.format("%s%n", elem.toString()));
 		}
 		return sb.toString();
