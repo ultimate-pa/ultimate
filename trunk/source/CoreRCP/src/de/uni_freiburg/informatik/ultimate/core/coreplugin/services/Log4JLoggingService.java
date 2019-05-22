@@ -272,7 +272,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 
 		// it is a controller or something that wants the controller logger
-		assert mCurrentControllerName != null;
+		assert mCurrentControllerName != null : "There is no controller";
 		if (id.equals(mCurrentControllerName) || id.equals(LOGGER_NAME_CONTROLLER)) {
 			return Logger.getLogger(LOGGER_NAME_CONTROLLER);
 		}

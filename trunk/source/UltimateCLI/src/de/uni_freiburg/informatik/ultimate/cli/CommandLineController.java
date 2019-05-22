@@ -467,6 +467,11 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 	}
 
+	@Override
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
+		// not needed
+	}
+
 	private static final class SigIntTrap implements Runnable {
 
 		private static final int SHUTDOWN_GRACE_PERIOD_SECONDS = 5;
@@ -504,8 +509,4 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 	}
 
-	@Override
-	public void prerun(final IToolchainData<RunDefinition> tcData) {
-		// not needed
-	}
 }
