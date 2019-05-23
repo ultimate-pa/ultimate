@@ -122,7 +122,7 @@ public class SymbolicInterpreter {
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
-			logEnterCall(procedure, input);
+			logEnterProcedure(procedure, input);
 			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
 			interpretLOIsInProcedure(resources, input);
 		}
@@ -164,6 +164,7 @@ public class SymbolicInterpreter {
 	}
 
 	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+		logInterpretTransition(transition, input);
 		if (transition instanceof IIcfgSummaryTransition<?>) {
 			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
 		} else if (transition instanceof IIcfgCallTransition<?>) {
@@ -226,8 +227,14 @@ public class SymbolicInterpreter {
 		}
 	}
 
-	private void logEnterCall(final String procedure, final IPredicate input) {
+	private void logEnterProcedure(final String procedure, final IPredicate input) {
 		mLogger.debug("Interpreting procedure %s with input %s", procedure, input);
 	}
+
+	private void logInterpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+		mLogger.debug("Interpreting transition %s with input %s", transition, input);
+	}
+	
+	
 
 }
