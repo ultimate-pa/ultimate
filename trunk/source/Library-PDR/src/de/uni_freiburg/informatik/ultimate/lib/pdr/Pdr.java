@@ -132,7 +132,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	/**
 	 * Currently we cannot handle procedures.
 	 */
-	private final DealWithProcedures mDealWithProcedures = DealWithProcedures.THROW_EXCEPTION;
+	private final DealWithProcedures mDealWithProcedures = DealWithProcedures.CONTINUE;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -443,6 +443,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
+					
+					
 					result = checkSatCall(predecessorFrame, (ICallAction) predecessorTransition, toBeBlocked);
 					/*
 					 * Query is satisfiable: generate new proofobligation
@@ -501,9 +503,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						if (level - 1 == 0) {
 							return false;
 						}
-						final Term pre = mPredTrans.preReturn(toBeBlocked, preHier, returnTrans.getAssignmentOfReturn(),
+						Term pre = mPredTrans.preReturn(toBeBlocked, preHier, returnTrans.getAssignmentOfReturn(),
 								returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments, modifiableGlobals);
 
+						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, 
+								pre, SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER, 
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						
 						final IPredicate preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
 						addProofObligation(proofObligations, proofObligation, level, predecessor, preCondition);
 						/*
