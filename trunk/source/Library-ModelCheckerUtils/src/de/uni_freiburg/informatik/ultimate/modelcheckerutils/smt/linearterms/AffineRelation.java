@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are {@link AffineTerm}s
@@ -349,6 +350,27 @@ public class AffineRelation {
 			|| isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to AffineRelation unsound";
 		return result;
 	}
+	
+	/**
+	 * TODO: New method that returns also a modulo constraint under which
+	 * we can bring a variable to the left-hand side.
+	 */
+	public Pair<ApplicationTerm, ApplicationTerm> onLeftHandSideOnlyWithIntegerDivision(final Script script,
+			final Term var) throws NotAffineException {
+		Term withOutModulo = null;
+		try {
+			withOutModulo = onLeftHandSideOnly(script, var); 
+		} catch (NotAffineException nae) {
+			//TODO: with better integer support
+			// ...
+			// if still not eliminateable
+			throw nae;
+		}
+		return new Pair<ApplicationTerm, ApplicationTerm>((ApplicationTerm) withOutModulo, null);
+	}
+	
+	
+	
 
 	private static LBool isEquivalent(final Script script, final Term term1, final Term term2) {
 		Term comp = script.term("=", term1, term2);
