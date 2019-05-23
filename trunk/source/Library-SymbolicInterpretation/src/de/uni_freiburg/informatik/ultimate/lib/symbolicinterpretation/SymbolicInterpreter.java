@@ -84,7 +84,7 @@ public class SymbolicInterpreter {
 	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> locationsOfInterest) {
 		// TODO this logger is not affected by the log leves set for SymbolicInterpretation
-		//      Use another class ur re-use a given logger?
+		//      Use another class or re-use a given logger?
 		mLogger = services.getLoggingService().getLogger(getClass());
 		logStartingSifa(locationsOfInterest);
 		mIcfg = icfg;

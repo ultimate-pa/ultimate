@@ -61,6 +61,10 @@ public class PredicateUtils {
 		mBottom = mFactory.newPredicate(script.term(this, "false"));
 	}
 
+	public PredicateFactory getFactory() {
+		return mFactory;
+	}
+	
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		return mFactory.newPredicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 	}
