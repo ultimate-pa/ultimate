@@ -28,8 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
-import java.util.Enumeration;
-
 /**
  * Ultiamte's logging interface. It is similar to the old log4j API, but it should get smaller over time (i.e., methods
  * throwing exceptions will be removed in time).
@@ -108,7 +106,7 @@ public interface ILogger {
 	default void warn(final Object msg) {
 		log(LogLevel.WARN, msg);
 	}
-	
+
 	default void warn(final String formatString, final Object... formatArgs) {
 		log(LogLevel.WARN, formatString, formatArgs);
 	}
@@ -164,27 +162,5 @@ public interface ILogger {
 	static ILogger getLogger(final String loggerName) {
 		throw new UnsupportedOperationException(
 				"You should never use the static logger method getLogger(String)! " + loggerName);
-	}
-
-	static ILogger getLogger(final Class<?> loggerName) {
-		throw new UnsupportedOperationException(
-				"You should never use the static logger method getLogger(Class)! " + loggerName);
-	}
-
-	static ILogger getRootLogger() {
-		throw new UnsupportedOperationException(
-				"You should never use the static logger method getRootLogger()osgi.devosgi.devosgi.dev!");
-	}
-
-	default void addAppender(final Object something) {
-		throw new UnsupportedOperationException("You should never use addAppender on Ultimate loggers!");
-	}
-
-	default void removeAppender(final Object mAppender) {
-		throw new UnsupportedOperationException("You should never use removeAppender on Ultimate loggers!");
-	}
-
-	default Enumeration<?> getAllAppenders() {
-		throw new UnsupportedOperationException("You should never use getAllAppenders on Ultimate loggers!");
 	}
 }
