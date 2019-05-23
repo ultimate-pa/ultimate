@@ -143,11 +143,19 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		return mPreferenceValidator;
 	}
 
+	@Override
+	public List<UltimatePreferenceItem<?>> getFlattenedList() {
+		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
+		returnList.add(this);
+		return returnList;
+	}
+
 	public interface IUltimatePreferenceItemValidator<T> {
 		/**
 		 * An {@link IntegerValidator} that allows all values from 0 to Integer.MAX_VALUE
 		 */
 		public static final IntegerValidator ONLY_POSITIVE = new IntegerValidator(0, Integer.MAX_VALUE);
+		public static final IntegerValidator ONLY_POSITIVE_NON_ZERO = new IntegerValidator(1, Integer.MAX_VALUE);
 		public static final IntegerValidator GEQ_TWO = new IntegerValidator(2, Integer.MAX_VALUE);
 
 		public boolean isValid(T value);
@@ -176,10 +184,4 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		}
 	}
 
-	@Override
-	public List<UltimatePreferenceItem<?>> getFlattenedList() {
-		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
-		returnList.add(this);
-		return returnList;
-	}
 }

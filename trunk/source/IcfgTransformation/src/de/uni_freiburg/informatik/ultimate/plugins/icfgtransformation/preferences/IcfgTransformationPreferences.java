@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
@@ -84,6 +85,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 	private static final String DESC_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA =
 			"If true, implications such as (i = j) => (a[i] = a[j]) are only added as conjuncts to the transformula, "
 					+ "if all free-vars of i and j occur in the transformula.";
+	public static final String LABEL_MAPELIM_MONNIAUX_NUMBER_OF_CELLS = "Map elimination Monniaux: number of cells";
+	private static final String DESC_MAPELIM_MONNIAUX_NUMBER_OF_CELLS =
+			"The number of cells that should be used to abstract a map. Must be non-zero positive.";
 
 	/**
 	 * Select which transformation should be performed by this plugin.
@@ -150,6 +154,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 						DESC_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA, false,
 						DESC_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAPELIM_MONNIAUX_NUMBER_OF_CELLS, 1,
+						DESC_MAPELIM_MONNIAUX_NUMBER_OF_CELLS, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE_NON_ZERO),
 
 		};
 	}
