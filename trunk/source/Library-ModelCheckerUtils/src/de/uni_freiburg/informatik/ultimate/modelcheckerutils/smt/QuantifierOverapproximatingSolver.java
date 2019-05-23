@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -82,8 +83,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 	private final Script mSmtSolver;
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
-	private Boolean mOverAprox;
-	private final Boolean[] mOvAStack;
+	private final Stack<Boolean> mOverapproxiamtionStack;
 
 	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger,
 			final Script script) {
@@ -91,9 +91,8 @@ public class QuantifierOverapproximatingSolver implements Script {
 		mLogger = logger;
 		mSmtSolver = script;
 		mMgdScript = new ManagedScript(services, script);
-		mOverAprox = false;
-		mOvAStack = new Boolean[] {};
-
+		mOverapproxiamtionStack = new Stack<Boolean>();
+		mOverapproxiamtionStack.push(false);
 	}
 
 	@Override
@@ -139,14 +138,18 @@ public class QuantifierOverapproximatingSolver implements Script {
 
 	@Override
 	public void push(final int levels) throws SMTLIBException {
+		for (int i=0; i<levels; i++) {
+			mOverapproxiamtionStack.push(false);	
+		}
 		mSmtSolver.push(levels);
 	}
 
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
-		// TODO check if there is still an overapproximated term on the assertion stack
-		mSmtSolver.getAssertions();
-
+		// TODO check if there is still an overapproximated term on the assertion stack (optimization)
+		for (int i=0; i<levels; i++) {
+			mOverapproxiamtionStack.pop();
+		}
 		mSmtSolver.pop(levels);
 	}
 
@@ -202,23 +205,28 @@ public class QuantifierOverapproximatingSolver implements Script {
 	public LBool assertTerm(Term term) throws SMTLIBException {
 		Term withoutLet = new FormulaUnLet().transform(term);
 		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
-			mOverAprox = true;
+			// there is an overapproxiamtion on the current level
+			if (mOverapproxiamtionStack.peek() == false) {
+				mOverapproxiamtionStack.pop();
+				mOverapproxiamtionStack.push(true);
+			}
 			withoutLet = overApproximate(withoutLet);
-		} else {
-			mOverAprox = false;
 		}
-		mOvAStack[mSmtSolver.getAssertions().length] = mOverAprox;
 		final LBool result = mSmtSolver.assertTerm(withoutLet);
-		if (result.equals(LBool.SAT) && mOverAprox) {
+		if (result.equals(LBool.SAT) && wasSomeAssertedTermOverapproximated()) {
 			return LBool.UNKNOWN;
 		}
 		return result;
 	}
 
+	private boolean wasSomeAssertedTermOverapproximated() {
+		return mOverapproxiamtionStack.stream().anyMatch(x -> x == true);
+	}
+
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		final LBool result = mSmtSolver.checkSat();
-		if (result.equals(LBool.SAT) && mOverAprox) {
+		if (result.equals(LBool.SAT) && wasSomeAssertedTermOverapproximated()) {
 			return LBool.UNKNOWN;
 		}
 		return result;
