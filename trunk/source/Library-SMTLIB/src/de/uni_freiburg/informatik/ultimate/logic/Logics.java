@@ -53,7 +53,9 @@ public enum Logics {
 	QF_AUFBV  (Features.AX + Features.UF + Features.BV),
 	QF_ALIA   (Features.AX + Features.LA + Features.IA),
 	QF_AUFLIA (Features.AX + Features.UF + Features.LA + Features.IA),
-	QF_AUFLIRA(Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
+	QF_AUFNIA (Features.AX + Features.UF + Features.NA + Features.IA),
+	QF_AUFLIRA(Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
+	QF_AUFNIRA(Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
 
 	BV        (Features.QU + Features.BV),
 	FP        (Features.QU + Features.FP),
@@ -72,9 +74,10 @@ public enum Logics {
 	ABVFP     (Features.QU + Features.AX + Features.BV + Features.FP),
 	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
 	ALIA      (Features.QU + Features.AX + Features.LA + Features.IA),
-	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
-	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
-	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
+	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA),
+	AUFNIA    (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA),
+	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
+	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
 
 	; //NOCHECKSTYLE
 
