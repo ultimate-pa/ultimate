@@ -88,6 +88,16 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	private final Sort mSort;
 
 	/**
+	 * Constructor to be used of all static methods that construct an affineTerm.
+	 */
+	public AffineTerm(final Sort s, Rational constant, Map<Term, Rational> map) {
+		super(0);
+		mSort = s;
+		mConstant = constant;
+		mVariable2Coefficient = map;
+	}
+	
+	/**
 	 * AffineTerm that represents the Rational r of sort s.
 	 */
 	public AffineTerm(final Sort s, final Rational r) {
