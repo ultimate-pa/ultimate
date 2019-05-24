@@ -43,21 +43,20 @@ public class TermTransformer extends NonRecursive {
 	/**
 	 * The term cache.
 	 */
-	private final ArrayDeque<HashMap<Term, Term>> mCache =
-		new ArrayDeque<HashMap<Term,Term>>();
+	private final ArrayDeque<HashMap<Term, Term>> mCache = new ArrayDeque<>();
 
 	/**
 	 * The converted terms.  This is used for example to store the
 	 * arguments of an application term, before the application term is
 	 * evaluated.
 	 */
-	private final ArrayDeque<Term> mConverted = new ArrayDeque<Term>();
+	private final ArrayDeque<Term> mConverted = new ArrayDeque<>();
 
 	/**
 	 * The converted object arrays. This is used to store the arguments of an array valued annotation, before the
 	 * annotation's subterm is processed.
 	 */
-	private final ArrayDeque<Object[]> mConvertedArrays = new ArrayDeque<Object[]>();
+	private final ArrayDeque<Object[]> mConvertedArrays = new ArrayDeque<>();
 
 	/**
 	 * This class represents one item of work. It consists of a term and some task that still needs to be performed on
