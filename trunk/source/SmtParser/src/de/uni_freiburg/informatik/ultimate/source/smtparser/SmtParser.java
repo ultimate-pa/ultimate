@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
@@ -233,8 +234,8 @@ public class SmtParser implements ISource {
 			final ILogger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("SolverLogger");
 			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
-			solverLogger.setLevel(LogLevel.DEBUG);
-			mLogger.setLevel(LogLevel.DEBUG);
+			solverLogger.setLevel(LogLevel.INFO);
+			mLogger.setLevel(LogLevel.INFO);
 			Script backEnd;
 			if (command.isEmpty()) {
 				backEnd = SolverBuilder.createSMTInterpol(mServices);
@@ -269,13 +270,13 @@ public class SmtParser implements ISource {
 
 		final OptionMap optionMap = new OptionMap(logProxy, true);
 
-		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer) {
+		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer || smtParserMode == smtParserMode.UltimateEliminator) {
 			// crash in Horn solver mode if parsing fails
 			optionMap.set(":continue-on-error", false);
 			optionMap.set(":print-success", false);
 		}
 
-		final ParseEnvironment parseEnv = new ParseEnvironment(script, optionMap);
+		final ParseEnvironment parseEnv = new ExceptionThrowingParseEnvironment(script, optionMap);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
 			mLogger.info("Succesfully executed SMT file " + file.getAbsolutePath());
@@ -285,7 +286,7 @@ public class SmtParser implements ISource {
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while executing SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
-			parseEnv.printError(exc.getMessage());
+//			parseEnv.printError(exc.getMessage());
 			throw exc;
 		} finally {
 			script.exit();
@@ -315,8 +316,8 @@ public class SmtParser implements ISource {
 			mLogger.info("Succesfully wrote SMT file " + outputFilename);
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while writing SMT file " + outputFilename);
-			mLogger.info("SMTLIBException " + exc.getMessage());
-			parseEnv2.printError(exc.getMessage());
+			mLogger.error("SMTLIBException " + exc.getMessage());
+//			parseEnv2.printError(exc.getMessage());
 		}
 	}
 
