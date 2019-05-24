@@ -217,6 +217,10 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		for (final Bound lowerBound : lowerBounds) {
 			for (final Bound upperBound : upperBounds) {
 				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"building " + (lowerBounds.size() * upperBounds.size())  + " inequalities");
+				}
 			}
 		}
 		resultAtoms.addAll(termsWithoutEliminatee);
