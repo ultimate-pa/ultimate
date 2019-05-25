@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
@@ -227,7 +229,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final List<Term> resultDisjunctions;
 		if (antiDer.isEmpty()) {
 			resultDisjunctions = new ArrayList<>();
-			final Term tmp = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
+			final Term tmp = constructConjunction(quantifier, resultAtoms);
 			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
 			resultDisjunctions.add(tmp);
 		} else {
@@ -246,6 +248,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		return resultDisjunctions;
 	}
+
 
 	/**
 	 * @return true iff tv is subterm of some select term in term.
@@ -300,6 +303,17 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		return rel.positiveNormalForm(mScript);
 	}
 
+	private Term constructConjunction(final int quantifier, final List<Term> resultAtoms) {
+		final Term conjunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
+		if (resultAtoms.size() > 9) {
+			final ExtendedSimplificationResult res = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
+					mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			return res.getSimplifiedTerm();
+		} else {
+			return conjunction;
+		}
+	}
+
 	private class BuildingInstructions {
 		private final int mQuantifier;
 		private final Sort mSort;
@@ -350,8 +364,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 						resultAtoms.add(buildInequality(mQuantifier, lowerBound, adUpper));
 					}
 				}
-				resultXJuncts
-						.add(QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, resultAtoms));
+				resultXJuncts.add(constructConjunction(mQuantifier, resultAtoms));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"building " + Math.pow(2, mAntiDer.size()) + " xjuncts");
