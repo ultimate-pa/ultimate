@@ -233,6 +233,17 @@ public class QuantifierPusher extends TermTransformer {
 					// if afterwards some disjunct is disjunction then re-apply
 					// the tryToPushOverDualFiniteConnective method
 					for (int i = 0; i < dualFiniteParams.length; i++) {
+						// this loop just selects some
+						// correspondingFiniteJunction that we start with
+						// recursive calls will take of other
+						// correspondingFiniteJunctions.
+						// Hence, we do not continue to iterate
+						// after the first correspondingFiniteJunction
+						// was found.
+						// TODO: optimization: have a closer look at atoms
+						// inside to determine where we apply distributivity
+						// first (e.g., somewhere where some (dis)equality
+						// allows us to apply DER
 						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
 							final Term correspondingFinite =
 									applyDistributivityAndPushOneStep(quantifier, eliminatees, dualFiniteParams, i);
