@@ -250,7 +250,7 @@ public class QuantifierPusher extends TermTransformer {
 								// </pre>
 								return quantifiedFormula;
 							} else {
-								return correspondingFinite;
+								return pushed;
 							}
 						}
 					}
