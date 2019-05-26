@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -303,6 +305,9 @@ public class QuantifierPusher extends TermTransformer {
 					SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
 			offset++;
 		}
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		logger.info("Applying distributivity, recursing on " + resultOuterParams.length + " terms");
+
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
 		return result;
 	}
