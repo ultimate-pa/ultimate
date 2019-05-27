@@ -570,6 +570,7 @@
         <module>../UltimateServer</module>
         <module>../WitnessParser</module>
         <module>../WitnessPrinter</module>
+        <module>../UltimateEliminatorController</module>
 	</modules>
 
 	<profiles>

@@ -32,10 +32,10 @@
 								</goals>
 							</execution>
 							<!-- create zip file with the installed product -->
-							<!-- <execution> <id>archive-products</id> <goals> <goal>archive-products</goal> 
+							<!-- <execution> <id>archive-products</id> <goals> <goal>archive-products</goal>
 								</goals> </execution> -->
 						</executions>
-						<!-- We need to say which products will be build and assign each of 
+						<!-- We need to say which products will be build and assign each of
 							them a unique attachId (dont know why, it just is) -->
 						<configuration>
 							<products>
@@ -58,6 +58,10 @@
 								<product>
 									<id>Webbridge</id>
 									<attachId>Webbridge</attachId>
+								</product>
+								<product>
+									<id>UltimateEliminator</id>
+									<attachId>UltimateEliminator</attachId>
 								</product>
 							</products>
 						</configuration>
