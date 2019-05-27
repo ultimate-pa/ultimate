@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -166,19 +167,21 @@ final class SettingsManager {
 		}
 	}
 
-	void resetPreferences(final ICore<RunDefinition> core) {
-		mLogger.info("Resetting all preferences to default values...");
+	void resetPreferences(final ICore<RunDefinition> core, final boolean silent) {
+		final Consumer<Object> log = silent ? a -> {
+		} : mLogger::info;
+		log.accept("Resetting all preferences to default values...");
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
-				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
+				log.accept("Resetting " + plugin.getPluginName() + " preferences to default values");
 				RcpPreferenceBinder.resetToDefaultPreferences(plugin.getPluginID(), preferences.getPreferenceItems());
 			} else {
-				mLogger.info(plugin.getPluginName() + " provides no preferences, ignoring...");
+				log.accept(plugin.getPluginName() + " provides no preferences, ignoring...");
 			}
 
 		}
-		mLogger.info("Finished resetting all preferences to default values...");
+		log.accept("Finished resetting all preferences to default values...");
 	}
 
 	private void logDefaultPreferences(final String pluginID, final String pluginName) {

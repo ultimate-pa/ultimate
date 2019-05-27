@@ -87,7 +87,7 @@ public class UltimateStarter implements IController<RunDefinition> {
 		mLoggingService = core.getCoreLoggingService();
 		mLogger = mLoggingService.getControllerLogger();
 		mCurrentCore = core;
-		core.resetPreferences();
+		core.resetPreferences(false);
 		return mExternalUltimateCore
 				.init(core, mUltimateRunDefinition.getSettings(), mDeadline, mUltimateRunDefinition.getInput())
 				.getCode();

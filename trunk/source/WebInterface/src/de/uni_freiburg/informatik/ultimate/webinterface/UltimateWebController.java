@@ -69,7 +69,7 @@ public class UltimateWebController implements IController<RunDefinition> {
 		// TODO: check what the whole settings thing means in parallel contexts
 		// clear old preferences
 		mCore = core;
-		core.resetPreferences();
+		core.resetPreferences(false);
 		return mExternalUltimateCore.init(core, mSettingsFile, mDeadline, new File[] { mInputFile }).getCode();
 	}
 

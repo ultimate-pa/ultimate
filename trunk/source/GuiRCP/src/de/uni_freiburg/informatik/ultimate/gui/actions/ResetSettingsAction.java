@@ -49,7 +49,7 @@ public class ResetSettingsAction extends Action implements IWorkbenchAction {
 
 	@Override
 	public void run() {
-		mCore.resetPreferences();
+		mCore.resetPreferences(false);
 	}
 
 	@Override

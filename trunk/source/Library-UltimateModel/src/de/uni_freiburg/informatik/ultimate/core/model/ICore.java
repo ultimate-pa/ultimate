@@ -102,8 +102,11 @@ public interface ICore<T> {
 
 	/**
 	 * Reset all preferences to their default values.
+	 * 
+	 * @param silent
+	 *            Log the reset
 	 */
-	void resetPreferences();
+	void resetPreferences(boolean silent);
 
 	/**
 	 * Get an instance of every {@link IUltimatePlugin} that is known to the Core (this will load every UltimatePlugin).

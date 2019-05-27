@@ -249,7 +249,7 @@ public class CommandLineController implements IController<RunDefinition> {
 
 	private IToolchainData<RunDefinition> prepareToolchain(final ICore<RunDefinition> core,
 			final ParsedParameter fullParams) throws ParseException, InvalidFileArgumentException {
-		core.resetPreferences();
+		core.resetPreferences(false);
 		if (fullParams.hasSettings()) {
 			core.loadPreferences(fullParams.getSettingsFile());
 		}
