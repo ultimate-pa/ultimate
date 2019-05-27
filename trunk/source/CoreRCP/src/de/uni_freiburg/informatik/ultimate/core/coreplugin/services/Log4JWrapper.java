@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class Log4JWrapper implements ILogger {
 
-	private static final Level[] sILoggerLevelToLog4jLevel = {
-			Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL, Level.OFF };
+	private static final Level[] sILoggerLevelToLog4jLevel =
+			{ Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL, Level.OFF };
 
-	private static final String FQCN = Log4JWrapper.class.getName();
+	private static final String FQCN = ILogger.class.getName();
 
 	private final Logger mLogger;
 
@@ -66,7 +66,6 @@ public final class Log4JWrapper implements ILogger {
 		mLogger.log(FQCN, Level.ERROR, msg, t);
 	}
 
-
 	@Override
 	public void log(final LogLevel level, final String msg) {
 		mLogger.log(FQCN, translateLevel(level), msg, null);
@@ -86,7 +85,7 @@ public final class Log4JWrapper implements ILogger {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Log4JWrapper other = (Log4JWrapper) obj;
+		final Log4JWrapper other = (Log4JWrapper) obj;
 		return Objects.equals(mLogger, other.mLogger);
 	}
 
