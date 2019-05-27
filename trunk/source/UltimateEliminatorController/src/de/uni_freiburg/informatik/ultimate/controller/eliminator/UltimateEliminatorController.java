@@ -182,14 +182,14 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		try {
 			mToolchain = core.createToolchainData();
-			setCoreLoggerToWarn();
+			setCoreLoggerToError();
 			core.resetPreferences(true);
-			setCoreLoggerToWarn();
+			setCoreLoggerToError();
 			if (settingsFile != null) {
 				core.loadPreferences(settingsFile);
 			}
 			mToolchain = core.createToolchainData();
-			setCoreLoggerToWarn();
+			setCoreLoggerToError();
 
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
 			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(mToolchain, mLogger), "SigIntTrap"));
@@ -221,10 +221,10 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		}
 	}
 
-	private void setCoreLoggerToWarn() {
+	private void setCoreLoggerToError() {
 		final IPreferenceProvider provider =
 				mToolchain.getServices().getPreferenceProvider("de.uni_freiburg.informatik.ultimate.core");
-		provider.put("Log level for core plugin", "WARN");
+		provider.put("Log level for core plugin", "ERROR");
 	}
 
 	private void usage() {
@@ -343,7 +343,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		@Override
 		public void run() {
-			mLogger.warn("Received shutdown request...");
+			mLogger.info("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
 				return;
