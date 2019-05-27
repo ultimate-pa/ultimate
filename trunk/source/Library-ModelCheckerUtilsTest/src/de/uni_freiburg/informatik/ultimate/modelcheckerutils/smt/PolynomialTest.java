@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Monomial;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -94,7 +96,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(+ (* 2 x) y)";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
@@ -109,7 +111,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(/ (- 2.0 x) y)";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
@@ -124,7 +126,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(/ (- 2.0 x) (+ y x))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		Assert.assertTrue(result.isErrorTerm());
 	}
 	
@@ -136,7 +138,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(/ (- y x) 10.0)";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
@@ -151,7 +153,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(/ (- y x) y)";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
@@ -166,7 +168,7 @@ public class PolynomialTest {
 		final String formulaAsString = "(+ (* x x) (* y y))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
@@ -181,35 +183,24 @@ public class PolynomialTest {
 		final String formulaAsString = "(+ (* x y) (* y x))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
-		final PolynomialTerm result = (PolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
-	public void castTest() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		Map<Term, Rational> map = new HashMap<>();
-		map.put(new AffineTerm(intSort, Rational.ONE), Rational.ONE);
-		Object mapObject = (Object) map;
-		Map<AffineTerm, Rational> affineMap = (Map<AffineTerm, Rational>) mapObject;
-		AffineTerm term = affineMap.entrySet().iterator().next().getKey();
-		mLogger.info("Term: " + term.toString());
+	public void mapTest() {
+		Map<Rational, PolynomialTerm> map = new HashMap<>();
+		putInMap(map);
+		mLogger.info("Map size: " + map.size());
+		Assert.assertTrue(map.size() == 2);
 	}
 	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void castTest2() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		Map<AffineTerm, Rational> map = new HashMap<>();
-		map.put(new AffineTerm(intSort, Rational.ONE), Rational.ONE);
-		Object mapObject = (Object) map;
-		Map<Term, Rational> affineMap = (Map<Term, Rational>) mapObject;
-		Term term = affineMap.entrySet().iterator().next().getKey();
-		mLogger.info("Term: " + ((AffineTerm) term).toString());
+	public static void putInMap(Map<Rational, PolynomialTerm> map) {
+		map.put(Rational.ONE, new PolynomialTerm());
+		map.put(Rational.MONE, new PolynomialTerm());
 	}
 	
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {

@@ -87,6 +87,9 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	 */
 	private final Sort mSort;
 
+	
+	/*======================== This is new ===================*/
+	
 	/**
 	 * Constructor to be used of all static methods that construct an affineTerm.
 	 */
@@ -96,6 +99,92 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		mConstant = constant;
 		mVariable2Coefficient = map;
 	}
+	
+	/**
+	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
+	 */
+	private static Map<Term, Rational> calculateProductMapOfAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
+		final Map<Term, Rational> map = new HashMap<>();
+		if (poly1.isConstant()) {
+			if (poly1.getConstant().equals(Rational.ZERO)) {
+				return Collections.emptyMap();
+			}
+			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly2).getVariable2Coefficient().entrySet()) {
+				map.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
+			}
+		//poly2 must be a constant then, or else the product will not be affine -> Error
+		}else if (poly2.isConstant()){
+			if (poly2.getConstant().equals(Rational.ZERO)) {
+				return Collections.emptyMap();
+			}
+			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly1).getVariable2Coefficient().entrySet()) {
+				map.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
+			}
+		}else {
+			throw new UnsupportedOperationException("The outcome of this product is not affine!");
+		}
+		return shrinkMap(map);
+	}
+	
+	/**
+	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
+	 */
+	private static Map<Term, Rational> shrinkMap(Map<Term, Rational> map){
+		if (map.size() == 0) {
+			return Collections.emptyMap();
+		}
+		else if (map.size() == 1) {
+			Entry<Term, Rational> entry = map.entrySet().iterator().next();
+			return Collections.singletonMap(entry.getKey(), entry.getValue());
+		}
+		return map;
+	}
+	
+	/**
+	 * Calculate the constant of a sum of given IPolynomialTerms.
+	 */
+	private static Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
+		Rational constant = Rational.ZERO;
+		Sort s = polynomialTerms[0].getSort();
+		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
+			if (SmtSortUtils.isBitvecSort(s)) {
+				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
+			} else {
+				constant = constant.add(polynomialTerm.getConstant());
+			}
+		}
+		return constant;
+	}
+	
+	private static Map<Term, Rational> calculateSumMapOfAffineTerms(IPolynomialTerm... affineTerms){
+		Sort s = affineTerms[0].getSort();
+		Map<Term, Rational> map = new HashMap<>();
+		for (final IPolynomialTerm affineTerm : affineTerms) {
+			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) affineTerm).getVariable2Coefficient().entrySet()) {
+				assert summand.getKey().getSort() == s : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
+						+ s;
+				final Rational coeff = map.get(summand.getKey());
+				if (coeff == null) {
+					map.put(summand.getKey(), summand.getValue());
+				} else {
+					final Rational newCoeff;
+					if (SmtSortUtils.isBitvecSort(s)) {
+						newCoeff = bringValueInRange(coeff.add(summand.getValue()), s);
+					} else {
+						newCoeff = coeff.add(summand.getValue());
+					}
+					if (newCoeff.equals(Rational.ZERO)) {
+						map.remove(summand.getKey());
+					} else {
+						map.put(summand.getKey(), newCoeff);
+					}
+				}
+			}
+		}
+		return shrinkMap(map);
+	}
+	
+	/*======================= Until here ==================*/
 	
 	/**
 	 * AffineTerm that represents the Rational r of sort s.
@@ -457,7 +546,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
 		return mVariable2Coefficient.entrySet().stream()
-				.collect(Collectors.toMap(x -> new Monomial((Term) x, Rational.ONE), Entry::getValue));
+				.collect(Collectors.toMap(x -> new Monomial((Term) x.getKey(), Rational.ONE), Entry::getValue));
 	}
 
 	@Override

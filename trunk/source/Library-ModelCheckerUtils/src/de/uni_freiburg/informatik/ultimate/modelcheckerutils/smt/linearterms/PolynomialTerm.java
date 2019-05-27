@@ -154,7 +154,19 @@ public class PolynomialTerm extends Term implements IPolynomialTerm {
 	 */
 	private static Map<Monomial, Rational> calculateProductMap(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
 		final Map<Monomial, Rational> map = new HashMap<>();
-		//Multiply Monomials of the two polynomialTerms
+		monomialsTimesMonomialsIntoMap(map, poly1, poly2);
+		monomialsTimesConstantIntoMap(map, poly1, poly2);
+		monomialsTimesConstantIntoMap(map, poly2, poly1);
+		return shrinkMap(map);
+	}
+	
+	/**
+	 * Multiply just the Monomials of the two polynomialTerms with each other and put them into the given map.
+	 * Return that same map.
+	 */
+	private static Map<Monomial, Rational> monomialsTimesMonomialsIntoMap(Map<Monomial, Rational> map, 
+																  		  IPolynomialTerm poly1, 
+																  		  IPolynomialTerm poly2){
 		for (final Map.Entry<Monomial, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
 			for (final Map.Entry<Monomial, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
 				final Monomial mono = new Monomial(summand1.getKey(),summand2.getKey());
@@ -174,8 +186,16 @@ public class PolynomialTerm extends Term implements IPolynomialTerm {
 				}
 			}
 		}
-
-		//Multiply Monomials of polynomialTerm 1 with the constant of polynomialTerm 2
+		return map;
+	}
+	
+	/**
+	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into the given map.
+	 * Return that same map.
+	 */
+	private static Map<Monomial, Rational> monomialsTimesConstantIntoMap(Map<Monomial, Rational> map, 
+																  		IPolynomialTerm poly1, 
+																  		IPolynomialTerm poly2){
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = map.get(summand.getKey());
 			final Rational newCoeff;
@@ -192,25 +212,7 @@ public class PolynomialTerm extends Term implements IPolynomialTerm {
 				}
 			}
 		}
-
-		//Multiply Monomials of polynomialTerm 2 with the constant of polynomialTerm 1
-		for (final Map.Entry<Monomial, Rational> summand : poly2.getMonomial2Coefficient().entrySet()) {
-			final Rational coeff = map.get(summand.getKey());
-			final Rational newCoeff;
-			if (coeff == null) {
-				newCoeff = summand.getValue().mul(poly1.getConstant());
-				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);
-				}
-			}else {
-				//TODO: Probably something with bitvectors should be here, too
-				newCoeff = summand.getValue().mul(poly1.getConstant()).add(coeff);
-				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);
-				}
-			}
-		}
-		return shrinkMap(map);
+		return map;
 	}
 
 	/**
@@ -385,28 +387,6 @@ public class PolynomialTerm extends Term implements IPolynomialTerm {
 	@Override
 	public boolean isZero() {
 		return mConstant.equals(Rational.ZERO) && mMonomial2Coefficient.isEmpty();
-	}
-
-	/**
-	 * Given a Variable2Coefficients-map, this turns it into a Monomial2Coefficients-map.
-	 */
-	private Map<Monomial, Rational> turnVariableMapIntoMonomialMap(final Map<Term, Rational> termMap){
-		switch (termMap.size()) {
-		case 0:
-			return Collections.emptyMap();
-		case 1:
-			final Map.Entry<Term, Rational> singleEntry = termMap.entrySet().iterator().next();
-			return Collections.singletonMap(new Monomial(singleEntry.getKey(), Rational.ONE), singleEntry.getValue());
-		default:
-			final Map<Monomial, Rational> MonoMap = new HashMap<>();
-			for (final Map.Entry<Term, Rational> entry : termMap.entrySet()) {
-				if (entry.getKey() instanceof Monomial) {
-					throw new IllegalArgumentException("This map has monomials in it. Something before went wrong!");
-				}
-				MonoMap.put(new Monomial(entry.getKey(),  Rational.ONE), entry.getValue());
-			}
-			return MonoMap;
-			}
 	}
 
 	@Override

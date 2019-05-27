@@ -209,8 +209,10 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private void castAndSetResult(IPolynomialTerm poly){
 		if (poly instanceof PolynomialTerm) {
 			setResult((PolynomialTerm) poly);
+			return;
 		}else if(poly instanceof AffineTerm) {
 			setResult((AffineTerm) poly);
+			return;
 		}
 		throw new UnsupportedOperationException("This IPolynomialTerm is instance of no known class.");
 	}
@@ -482,7 +484,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 				// Only the argument at position 0 may be a non-constant,
 				// all other arguments must be literals,
 				// divisors must not be zero.
-				return null;
+				throw new UnsupportedOperationException("Division by Variables not supported!");
 			}
 		}
 		if (affineTerm == null) {
