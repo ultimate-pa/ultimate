@@ -662,6 +662,15 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void applyDistributivity() {
+		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
+		final String formulaAsString = "(forall ((x Int)) (or (and (p x) (p (+ x 1))) (and (not (= x 7)) (not (= x 8)))))";
+		final String expectedResultAsString = "(not (= v (select b k)))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
 		// TODO: DD: Somehow the quantified formulas are too large / strange for TermParseUtils.parseTerm, but this way
