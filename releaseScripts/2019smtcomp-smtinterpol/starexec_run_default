@@ -1,9 +1,4 @@
 #!/bin/sh
-if [ ! "$1" ]; then
-    echo "First argument has to be the file that we analyze"
-    exit
-fi
-
 pushd ../Ultimate > /dev/null
 java \
 -Dosgi.configuration.area=config/ \
@@ -11,25 +6,7 @@ java \
 -Xss4m \
 -jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar \
 -data "$TMPDIR" \
--tc ./../Empty.xml \
 -s ./../smtinterpol.epf \
--i "$1" \
-&> ../bin/output.txt
+$@
 popd > /dev/null
 
-RESULT_UNSAT=$(cat output.txt | grep "Computed result: unsat")
-RESULT_SAT=$(cat output.txt | grep "Computed result: sat")
-RESULT_UNKNOWN=$(cat output.txt | grep "Computed result: unknown")
-
-if [ "$RESULT_UNSAT" ]; then
-	echo "unsat"
-elif [ "$RESULT_SAT" ]; then
-	echo "sat"
-elif [ "$RESULT_UNKNOWN" ]; then
-	echo "unknown"
-else
-	echo "exception"
-fi
-
-echo ""
-cat output.txt
