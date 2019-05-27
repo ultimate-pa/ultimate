@@ -343,7 +343,6 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		@Override
 		public void run() {
-			mLogger.info("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
 				return;
@@ -355,9 +354,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 			final CountDownLatch cdl = progressMonitor.cancelToolchain();
 			try {
-				if (cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
-					mLogger.info("Completed graceful shutdown");
-				} else {
+				if (!cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
 					mLogger.fatal("Cannot interrupt operation gracefully because timeout expired. Forcing shutdown");
 				}
 			} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
