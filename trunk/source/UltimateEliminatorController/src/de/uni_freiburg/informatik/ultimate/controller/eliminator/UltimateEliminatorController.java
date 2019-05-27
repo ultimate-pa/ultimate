@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib.SMTLIBParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -102,6 +104,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		int paramctr = 0;
 		String settingsFile = null;
+		String externalSolverCommand = null;
 		while (paramctr < param.length && param[paramctr].startsWith("-")) {
 			if (param[paramctr].equals("--")) {
 				paramctr++;
@@ -120,6 +123,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 				options.set(":random-seed", param[paramctr]);
 			} else if (param[paramctr].equals("-s") && ++paramctr < param.length) {
 				settingsFile = param[paramctr];
+			} else if (param[paramctr].equals("-external-solver") && ++paramctr < param.length) {
+				externalSolverCommand = param[paramctr];
 			} else if (param[paramctr].equals("-o") && paramctr + 1 < param.length) {
 				paramctr++;
 				final String opt = param[paramctr];
@@ -176,14 +181,17 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		options.started();
 
 		try {
-			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
-			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, settingsFile);
-			// TODO: Apply options here, e.g., to silence logging
-			// IPreferenceProvider provider = currentToolchain.getServices().getPreferenceProvider("pluginid");
-			// provider.put("option-name", "option-value");
-			assert currentToolchain == mToolchain;
+			mToolchain = core.createToolchainData();
+			setCoreLoggerToWarn();
+			core.resetPreferences(true);
+			if (settingsFile != null) {
+				core.loadPreferences(settingsFile);
+			}
+			mToolchain = core.createToolchainData();
+			setCoreLoggerToWarn();
+
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
-			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
+			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(mToolchain, mLogger), "SigIntTrap"));
 
 			final IToolchain<RunDefinition> tc = core.requestToolchain(new File[0]);
 			final NullProgressMonitor pm = new NullProgressMonitor();
@@ -192,16 +200,19 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			final IToolchainData<RunDefinition> tcData = tc.makeToolSelection(rcpPm);
 			assert tcData == mToolchain;
 
-			final SMTInterpol script = new SMTInterpol(null, options);
+			// actual start of eliminator
 			final IUltimateServiceProvider services = tcData.getServices();
-			final Script solver = new UltimateEliminator(services, mLogger, script);
-			final int exitCode = parser.run(solver, filename, options);
+
+			final Script solver;
+			if (externalSolverCommand == null) {
+				solver = new SMTInterpol(null, options);
+			} else {
+				solver = new Scriptor(externalSolverCommand, mLogger, services, "External Solver");
+			}
+			final Script eliminator = new UltimateEliminator(services, mLogger, solver);
+			final int exitCode = parser.run(eliminator, filename, options);
 			core.releaseToolchain(tc);
 			return exitCode;
-		} catch (final ParseException pex) {
-			printParseException(param, pex);
-			usage();
-			return -1;
 		} catch (final Throwable ex) {
 			mLogger.fatal(ex);
 			mLogger.fatal(CoreUtil.getStackTrace("\t", ex));
@@ -209,18 +220,25 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		}
 	}
 
+	private void setCoreLoggerToWarn() {
+		final IPreferenceProvider provider =
+				mToolchain.getServices().getPreferenceProvider("de.uni_freiburg.informatik.ultimate.core");
+		provider.put("Log level for core plugin", "WARN");
+	}
+
 	private void usage() {
 		mLogger.info("If no INPUTFILE is given, stdin is used.");
-		mLogger.info("  -no-success          Don't print success messages.");// NOCHECKSTYLE
-		mLogger.info("  -o <opt>=<value>     Set option :opt to value. The default value is true.");// NOCHECKSTYLE
-		mLogger.info("  -q                   Only print error messages.");// NOCHECKSTYLE
-		mLogger.info("  -w                   Don't print statistics and models.");// NOCHECKSTYLE
-		mLogger.info("  -v                   Print debugging messages.");
-		mLogger.info("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");// NOCHECKSTYLE
-		mLogger.info("  -r <num>             Use a different random seed.");// NOCHECKSTYLE
-		mLogger.info("  -s <file>            Use Ultimate settings file <file>");// NOCHECKSTYLE
-		mLogger.info("  -smt2                Parse input as SMTLIB 2 script.");// NOCHECKSTYLE
-		mLogger.info("  -version             Print version and exit.");
+		mLogger.info("  -no-success                   Don't print success messages.");// NOCHECKSTYLE
+		mLogger.info("  -o <opt>=<value>              Set option :opt to value. The default value is true.");// NOCHECKSTYLE
+		mLogger.info("  -q                            Only print error messages.");// NOCHECKSTYLE
+		mLogger.info("  -w                            Don't print statistics and models.");// NOCHECKSTYLE
+		mLogger.info("  -v                            Print debugging messages.");
+		mLogger.info("  -t <num>                      Set the timeout per check-sat call to <num> milliseconds.");// NOCHECKSTYLE
+		mLogger.info("  -r <num>                      Use a different random seed.");// NOCHECKSTYLE
+		mLogger.info("  -s <file>                     Use Ultimate settings file <file>");// NOCHECKSTYLE
+		mLogger.info("  -smt2                         Parse input as SMTLIB 2 script.");// NOCHECKSTYLE
+		mLogger.info("  -version                      Print version and exit.");
+		mLogger.info("  -external-solver \"<cmd>\"    Use external solver with command <cmd> as underlying SMT solver");
 	}
 
 	private void printVersion(final ICore<RunDefinition> core) {
@@ -241,16 +259,6 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			mLogger.info("Value of " + sysProp + " is " + value);
 		}
 
-	}
-
-	private IToolchainData<RunDefinition> prepareToolchain(final ICore<RunDefinition> core,
-			final String settingsFilePath) throws ParseException {
-		core.resetPreferences();
-		if (settingsFilePath != null) {
-			core.loadPreferences(settingsFilePath);
-		}
-		mToolchain = core.createToolchainData();
-		return mToolchain;
 	}
 
 	private void printParseException(final String[] args, final ParseException pex) {
