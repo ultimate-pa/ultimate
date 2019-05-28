@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -62,30 +63,38 @@ public class SymbolicInterpreter {
 	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
-	private Map<String, ProcedureResources> mProcResources = new HashMap<>();
+	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
 	private final WorklistWithInputs<String> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLOI = new HashMap<>();
 	private final PredicateUtils mPredicateUtils;
-	
+
+	private final ILoopSummarizer mLoopSummarizer;
+
 	/**
 	 * Creates a new interpreter assuming all error locations to be locations of interest.
+	 *
 	 * @see #interpret()
 	 */
-	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
-		this(services, icfg, icfg.getProcedureErrorNodes().values().stream()
-				.flatMap(Set::stream).collect(Collectors.toList()));
+	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final ILoopSummarizer loopSummarizer) {
+		this(services, icfg,
+				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()),
+				loopSummarizer);
 	}
 
 	/**
 	 * Creates a new interpret using a custom set of locations of interest.
-	 * @param locationsOfInterest Locations for which predicates shall be computed.
+	 *
+	 * @param locationsOfInterest
+	 *            Locations for which predicates shall be computed.
 	 * @see #interpret()
 	 */
 	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest) {
+			final Collection<IcfgLocation> locationsOfInterest, final ILoopSummarizer loopSummarizer) {
 		// TODO this logger is not affected by the log leves set for SymbolicInterpretation
-		//      Use another class or re-use a given logger?
+		// Use another class or re-use a given logger?
 		mLogger = services.getLoggingService().getLogger(getClass());
+		mLoopSummarizer = loopSummarizer;
 		logStartingSifa(locationsOfInterest);
 		mIcfg = icfg;
 		mPredicateUtils = new PredicateUtils(services, mIcfg);
@@ -99,10 +108,8 @@ public class SymbolicInterpreter {
 
 	private void enqueInitial() {
 		final IPredicate top = mPredicateUtils.top();
-		mCallGraph.initialProceduresOfInterest().stream()
-			.peek(proc -> mEnterCallWorklist.add(proc, top))
-			.map(mIcfg.getProcedureEntryNodes()::get)
-			.forEach(procEntry -> storePredicateIfLOI(procEntry, top));
+		mCallGraph.initialProceduresOfInterest().stream().peek(proc -> mEnterCallWorklist.add(proc, top))
+				.map(mIcfg.getProcedureEntryNodes()::get).forEach(procEntry -> storePredicateIfLOI(procEntry, top));
 	}
 
 	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
@@ -112,10 +119,10 @@ public class SymbolicInterpreter {
 
 	/**
 	 * Interprets the ICFG starting at the initial nodes.
-	 * 
+	 *
 	 * @return Map from all locations of interest given in
-	 *         {@link #SymbolicInterpreter(IUltimateServiceProvider, IIcfg, Collection)}
-	 *          to predicates over-approximating the program states at these locations
+	 *         {@link #SymbolicInterpreter(IUltimateServiceProvider, IIcfg, Collection)} to predicates
+	 *         over-approximating the program states at these locations
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
 		logStartingInterpretation();
@@ -157,7 +164,7 @@ public class SymbolicInterpreter {
 			// Merging always applies because we traverse DAG using BFS.
 			return input;
 		} else if (regex instanceof Star) {
-			throw new UnsupportedOperationException("Loop handling not implemented yet: " + regex);
+			return mLoopSummarizer.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);
 		} else {
 			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex.getClass());
 		}
@@ -184,7 +191,7 @@ public class SymbolicInterpreter {
 	}
 
 	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
-		IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
+		final IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
 		mEnterCallWorklist.add(transition.getSucceedingProcedure(), calleeInput);
 		storePredicateIfLOI(transition.getTarget(), calleeInput);
 		return calleeInput;
@@ -222,7 +229,7 @@ public class SymbolicInterpreter {
 			return;
 		}
 		mLogger.info("Final predicates for locations of interest are:");
-		for (Entry<IcfgLocation, IPredicate> entry : mPredicatesForLOI.entrySet()) {
+		for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLOI.entrySet()) {
 			mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
 		}
 	}

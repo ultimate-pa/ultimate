@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -34,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -65,7 +70,7 @@ public class PredicateUtils {
 	public ManagedScript getScript() {
 		return mScript;
 	}
-	
+
 	public PredicateFactory getFactory() {
 		return mFactory;
 	}
@@ -74,11 +79,10 @@ public class PredicateUtils {
 		return mFactory.newPredicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 	}
 
-	public IPredicate postCall(IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
+	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
-		return mFactory.newPredicate(mTransformer.strongestPostconditionCall(input,
-				transition.getLocalVarsAssignment(),
+		return mFactory.newPredicate(mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
 				toolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure)));
@@ -96,6 +100,56 @@ public class PredicateUtils {
 
 	public IPredicate bottom() {
 		return mBottom;
+	}
+
+	public IPredicate or(final IPredicate... operands) {
+		return mFactory.or(true, operands);
+	}
+
+	public IPredicate or(final Term... operands) {
+		return mFactory.newPredicate(SmtUtils.or(mScript.getScript(), operands));
+	}
+
+	public IPredicate or(final Collection<Term> operands) {
+		return mFactory.newPredicate(SmtUtils.or(mScript.getScript(), operands));
+	}
+
+	public boolean isFalse(final IPredicate pred) {
+		// TODO: Use unifier instead of costly SMT check
+		if (mBottom.equals(pred)) {
+			return true;
+		}
+		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), pred.getClosedFormula());
+		switch (result) {
+		case SAT:
+			return false;
+		case UNSAT:
+			return true;
+		case UNKNOWN:
+			throw new UnsupportedOperationException("Abstraction of intricate predicate not yet implemented");
+		default:
+			throw new UnsupportedOperationException("Missing case: " + result);
+		}
+	}
+
+	public boolean implies(final IPredicate p1, final IPredicate p2) {
+		if (p1.equals(p2)) {
+			return true;
+		}
+		final Script script = mScript.getScript();
+		final Term negImplTerm =
+				SmtUtils.neg(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
+		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
+		switch (result) {
+		case SAT:
+			return false;
+		case UNSAT:
+			return true;
+		case UNKNOWN:
+			throw new UnsupportedOperationException("Abstraction of intricate predicate not yet implemented");
+		default:
+			throw new UnsupportedOperationException("Missing case: " + result);
+		}
 	}
 
 }

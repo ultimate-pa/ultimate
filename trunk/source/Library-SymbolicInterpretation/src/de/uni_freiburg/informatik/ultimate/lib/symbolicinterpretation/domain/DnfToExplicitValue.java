@@ -26,20 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class DnfToExplicitValue extends TermTransformer {
 
-	private final int mMaxValsPerVar = 4;
+	private final Term mTrue;
 
+	/**
+	 * Expects disjunct of DNF as term
+	 *
+	 * @param services
+	 * @param predicateUtils
+	 */
 	public DnfToExplicitValue(final IUltimateServiceProvider services, final PredicateUtils predicateUtils) {
-
+		mTrue = predicateUtils.getScript().term(this, "true");
 	}
 
 	@Override
@@ -47,13 +59,26 @@ public class DnfToExplicitValue extends TermTransformer {
 		if (term instanceof TermVariable) {
 			setResult(term);
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm applTerm = (ApplicationTerm) term;
-			if ("or".equals(applTerm.getFunction().getName())) {
-				// TODO add walkers for each and term, add explicit value for each term
+			final ApplicationTerm applTerm = (ApplicationTerm) term;
+			final String funName = applTerm.getFunction().getName();
+			if ("=".equals(funName) && hasAtLeastOneConstant(applTerm.getParameters())) {
+				setResult(term);
+			} else {
+				setResult(mTrue);
 			}
+		} else if (term instanceof LetTerm) {
+			throw new UnsupportedOperationException("We were told there are not let terms");
+		} else if (term instanceof AnnotatedTerm) {
+			convert(((AnnotatedTerm) term).getSubterm());
+		} else if (term instanceof QuantifiedFormula) {
+			setResult(mTrue);
 		} else {
-			// TODO handle let expressions?
+			throw new UnsupportedOperationException("Not yet implemented: " + term.getClass());
 		}
+	}
+
+	private static boolean hasAtLeastOneConstant(final Term[] parameters) {
+		return Arrays.stream(parameters).anyMatch(a -> a instanceof ConstantTerm);
 	}
 
 	/** Only used to make {@link #getConverted()} visible to walkers. */

@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -36,6 +39,7 @@ public class ExplicitValueDomain implements IDomain<IPredicate> {
 
 	private final PredicateUtils mPredicateUtils;
 	private final IUltimateServiceProvider mServices;
+	private int mDisjunctThreshold;
 
 	public ExplicitValueDomain(final IUltimateServiceProvider services, final PredicateUtils predicateUtils) {
 		mPredicateUtils = predicateUtils;
@@ -43,38 +47,51 @@ public class ExplicitValueDomain implements IDomain<IPredicate> {
 	}
 
 	@Override
-	public IPredicate join(IPredicate first, IPredicate second) {
+	public IPredicate join(final IPredicate first, final IPredicate second) {
 		// TODO decide whether or not to use simplification or use a setting
 		final boolean simplifyDDA = true;
 		return mPredicateUtils.getFactory().or(simplifyDDA, first, second);
 	}
 
 	@Override
-	public IPredicate widen(IPredicate old, IPredicate widenWith) {
+	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
 		// TODO implement non-trivial version
 		return mPredicateUtils.top();
 	}
 
 	@Override
-	public boolean isBottom(IPredicate pred) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean isBottom(final IPredicate pred) {
+		return mPredicateUtils.isFalse(pred);
 	}
 
 	@Override
-	public boolean isSubsetEq(IPredicate subset, IPredicate superset) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
+		return mPredicateUtils.implies(subset, superset);
 	}
 
 	@Override
-	public IPredicate alpha(IPredicate pred) {
+	public IPredicate alpha(final IPredicate pred) {
 		// TODO consider using QuantifierPusher to push quantifiers as inwards as possible
-		// TODO how to handle "let" terms?
+
+		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
+		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
+
 		final Term dnf = SmtUtils.toDnf(mServices, mPredicateUtils.getScript(), pred.getFormula(),
 				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		
-		return null;
+
+		final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
+		final Set<Term> rewrittenDisjuncts = new HashSet<>();
+		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mPredicateUtils);
+		for (int i = 0; i < disjuncts.length; ++i) {
+			// rewrite each disjunct with DnfToExplicitvalue
+			rewrittenDisjuncts.add(rewriter.transform((disjuncts[i])));
+		}
+
+		// decide how many of the unique disjuncts are allowed to survive, join if necessary
+		if (rewrittenDisjuncts.size() > mDisjunctThreshold) {
+			// TODO: Join
+		}
+		return mPredicateUtils.or(rewrittenDisjuncts);
 	}
 
 }
