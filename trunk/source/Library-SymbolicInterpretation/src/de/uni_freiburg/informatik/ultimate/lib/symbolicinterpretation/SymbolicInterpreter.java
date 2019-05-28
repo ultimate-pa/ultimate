@@ -234,7 +234,5 @@ public class SymbolicInterpreter {
 	private void logInterpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
 		mLogger.debug("Interpreting transition %s with input %s", transition, input);
 	}
-	
-	
 
 }

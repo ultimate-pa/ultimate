@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class PredicateUtils {
 
 	private final IIcfg<IcfgLocation> mIcfg;
+	private final ManagedScript mScript;
 	private final PredicateFactory mFactory;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mTransformer;
 	private final IPredicate mTop;
@@ -52,19 +53,23 @@ public class PredicateUtils {
 
 	public PredicateUtils(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
-		final ManagedScript script = icfg.getCfgSmtToolkit().getManagedScript();
+		mScript = icfg.getCfgSmtToolkit().getManagedScript();
 		// TODO decide which techniques to use or use a setting
-		mFactory = new PredicateFactory(services, script, icfg.getCfgSmtToolkit().getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_QUICK, XnfConversionTechnique.BDD_BASED);
-		mTransformer = new PredicateTransformer<>(script, new TermDomainOperationProvider(services, script));
-		mTop = mFactory.newPredicate(script.term(this, "true"));
-		mBottom = mFactory.newPredicate(script.term(this, "false"));
+		mFactory = new PredicateFactory(services, mScript, icfg.getCfgSmtToolkit().getSymbolTable(),
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(services, mScript));
+		mTop = mFactory.newPredicate(mScript.term(this, "true"));
+		mBottom = mFactory.newPredicate(mScript.term(this, "false"));
 	}
 
+	public ManagedScript getScript() {
+		return mScript;
+	}
+	
 	public PredicateFactory getFactory() {
 		return mFactory;
 	}
-	
+
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		return mFactory.newPredicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 	}
