@@ -12,4 +12,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing,
- de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers
