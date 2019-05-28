@@ -251,8 +251,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			mFrames.put(loc, new ArrayList<>());
 
+			/*
+			 * Assume we only have one errorstate.
+			 */
 			if (init.contains(loc)) {
-				mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mAxioms));
+				for (final IcfgLocation errorloc : error) {
+					if (errorloc.getProcedure().equals(loc.getProcedure())) {
+						mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mAxioms));
+					} else {
+						mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mFalsePred));
+					}
+				}
 			} else {
 				mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mFalsePred));
 			}
@@ -444,6 +453,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
 					
+					mLogger.debug("Found Call");
 					
 					result = checkSatCall(predecessorFrame, (ICallAction) predecessorTransition, toBeBlocked);
 					/*
@@ -455,13 +465,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						}
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
+						
 						final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
+						
 						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
+						
 						final Term pre = mPredTrans.preCall(toBeBlocked, predecessorTransition.getTransformula(),
 								globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+						
 						final IPredicate preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
+						
 						addProofObligation(proofObligations, proofObligation, level, predecessor, preCondition);
 						/*
 						 * Query is not satisfiable: strengthen the frames of location.
@@ -481,21 +496,35 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
+					mLogger.debug("Found Return");
+					
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
+					
 					final IcfgLocation pp = returnTrans.getCallerProgramPoint();
+					
 					final List<Pair<ChangedFrame, IPredicate>> callerFrame = mFrames.get(pp);
+					
 					final UnmodifiableTransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 							.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
+					
 					final UnmodifiableTransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
 							.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
+					
 					final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 							.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
+					
 					final Pair<List<LETTER>, UnmodifiableTransFormula> proc = getProcedureTrace(pp, returnTrans,
 							globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+					
 					final UnmodifiableTransFormula procFormula = proc.getSecond();
 					final IPredicate preHier = mPredicateUnifier
 							.getOrConstructPredicate(mPredTrans.pre(callerFrame.get(level).getSecond(), procFormula));
+					
+					/*
+					 * Problem: somehow we get a false in here. Blocking any further attempt.
+					 */
 					result = checkSatReturn(predecessorFrame, preHier, returnTrans, toBeBlocked);
+					
 					/*
 					 * Query is satisfiable: generate new proofobligation
 					 */

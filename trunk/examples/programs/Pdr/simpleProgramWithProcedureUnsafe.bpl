@@ -19,5 +19,5 @@ modifies y;
     var x : int;
     assume (y == x);
     call inc();
-    assert (y = x + 1);
+    assert (y != x + 1);
 }

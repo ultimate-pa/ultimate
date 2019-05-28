@@ -1,4 +1,4 @@
-// #Safe
+// #Unsafe
 /* 
  * Simple Program for Checking PDRs interprocedual capabilities
  *
@@ -10,6 +10,7 @@ procedure inc() returns ()
 modifies y;
 {
 	y := y + 1;
+	assert y == 1;
 }
 
 
@@ -19,5 +20,5 @@ modifies y;
     var x : int;
     assume (y == x);
     call inc();
-    assert (y = x + 1);
+    assert (y == x + 1);
 }
