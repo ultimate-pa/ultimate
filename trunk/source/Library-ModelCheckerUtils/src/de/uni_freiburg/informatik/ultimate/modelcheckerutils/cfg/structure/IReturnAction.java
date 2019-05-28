@@ -26,18 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a return has to the (non-control-flow)
- * variables of the system. A return is the transition that brings the system from the called procedure back to the called
- * procedure. This means that the effect of the of a return is that
+ * Classes that implement this interface represent an {@link IAction} that defines the effect that a return has to the
+ * (non-control-flow) variables of the system. A return is the transition that brings the system from the called
+ * procedure back to the called procedure. This means that the effect of the of a return is that
  * <ul>
- * <li> local variables of the calling context get the values that they had before the call
- * <li> variables that are assigned by the call get the values that are returned by the procedure
- * <li> all local variables that occur only in the context of the called procedure are havoced.
+ * <li>local variables of the calling context get the values that they had before the call
+ * <li>variables that are assigned by the call get the values that are returned by the procedure
+ * <li>all local variables that occur only in the context of the called procedure are havoced.
  * <ul />
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -50,12 +50,14 @@ public interface IReturnAction extends IAction {
 	 *         updated on the return (this does not include information about modifiable global variables that are
 	 *         implicitly modified).
 	 */
+	@Visualizable
 	UnmodifiableTransFormula getAssignmentOfReturn();
 
 	/**
 	 * @return {@link TransFormula} which defines how the local variables of the called procedure are modified while
 	 *         executing the corresponding call action.
 	 */
+	@Visualizable
 	UnmodifiableTransFormula getLocalVarsAssignmentOfCall();
 
 	@Override
