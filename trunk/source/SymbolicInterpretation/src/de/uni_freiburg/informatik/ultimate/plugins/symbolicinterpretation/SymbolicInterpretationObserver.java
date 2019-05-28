@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicIn
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -68,9 +69,10 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final PredicateUtils predicateUtils = new PredicateUtils(mServices, icfg);
-		final IDomain<? extends IPredicate> domain = new ExplicitValueDomain(mServices, predicateUtils);
-		final FixpointLoopSummarizer loopSummarizer = new FixpointLoopSummarizer(mLogger, domain);
-		final SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(mServices, icfg, loopSummarizer);
+		final IDomain domain = new ExplicitValueDomain(mServices, predicateUtils);
+		final ILoopSummarizer summarizer = new FixpointLoopSummarizer(mLogger, domain);
+		final SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(
+				mLogger, predicateUtils, domain, summarizer, icfg);
 		final Map<IcfgLocation, IPredicate> predicates = symbolicInterpreter.interpret();
 		// TODO set ultimate results
 	}

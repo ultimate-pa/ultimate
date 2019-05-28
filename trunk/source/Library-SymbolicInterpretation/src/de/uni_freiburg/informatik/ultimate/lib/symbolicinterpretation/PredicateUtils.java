@@ -120,19 +120,11 @@ public class PredicateUtils {
 			return true;
 		}
 		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), pred.getClosedFormula());
-		switch (result) {
-		case SAT:
-			return false;
-		case UNSAT:
-			return true;
-		case UNKNOWN:
-			throw new UnsupportedOperationException("Abstraction of intricate predicate not yet implemented");
-		default:
-			throw new UnsupportedOperationException("Missing case: " + result);
-		}
+		return !satAsBool(result);
 	}
 
 	public boolean implies(final IPredicate p1, final IPredicate p2) {
+		// TODO: Use unifier instead of costly SMT check
 		if (p1.equals(p2)) {
 			return true;
 		}
@@ -140,15 +132,19 @@ public class PredicateUtils {
 		final Term negImplTerm =
 				SmtUtils.neg(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
-		switch (result) {
+		return !satAsBool(result);
+	}
+
+	private boolean satAsBool(final LBool solverResult) {
+		switch (solverResult) {
 		case SAT:
-			return false;
-		case UNSAT:
 			return true;
+		case UNSAT:
+			return false;
 		case UNKNOWN:
 			throw new UnsupportedOperationException("Abstraction of intricate predicate not yet implemented");
 		default:
-			throw new UnsupportedOperationException("Missing case: " + result);
+			throw new UnsupportedOperationException("Missing case: " + solverResult);
 		}
 	}
 

@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
-	private final IDomain<? extends IPredicate> mDomain;
+	private final IDomain mDomain;
 
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IDomain<? extends IPredicate> domain) {
+	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain) {
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
 		mCache = new HashMap<>();
@@ -59,12 +59,18 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> key) {
-		final Star<IIcfgTransition<IcfgLocation>> regex = key.getFirst();
-		final IPredicate preState = key.getSecond();
-
-		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = regex.getInner();
-
-		return null;
+		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = key.getFirst().getInner();
+		// TODO convert loop body to regex DAG (and cache that DAG)
+		IPredicate preState = key.getSecond();
+		IPredicate postState = null;
+		while (true) {
+			// TODO use interpreter to interpret loop body
+			if (mDomain.isSubsetEq(preState, postState)) {
+				break;
+			}
+			preState = mDomain.widen(preState, postState);
+		}
+		return postState;
 	}
 
 }

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  * @param <ABS_STATE> Type of the abstract states of this domain. Should be fixed for subclasses.
  */
-public interface IDomain<ABS_STATE extends IPredicate> {
+public interface IDomain {
 
 	// special symbols for copy-pasting: ∀ ¬ ⇒ ⇏ ≢ ≡ α ∪ ∨
 
@@ -50,7 +50,7 @@ public interface IDomain<ABS_STATE extends IPredicate> {
 	 * @param second p2
 	 * @return Join j of p1 and p2 such that (p1 ∨ p2) → j.
 	 */
-	ABS_STATE join(ABS_STATE first, ABS_STATE second);
+	IPredicate join(IPredicate first, IPredicate second);
 
 	/**
 	 * Widens one abstract state by another one.
@@ -63,7 +63,7 @@ public interface IDomain<ABS_STATE extends IPredicate> {
 	 * @param widenWith New abstract state extending old
 	 * @return Widened abstract state
 	 */
-	ABS_STATE widen(ABS_STATE old, ABS_STATE widenWith);
+	IPredicate widen(IPredicate old, IPredicate widenWith);
 
 	/**
 	 * Checks unsatisfiability.
@@ -73,7 +73,7 @@ public interface IDomain<ABS_STATE extends IPredicate> {
 	 * @param pred Predicate to be checked
 	 * @return The predicate is unsatisfiable, that is, equivalent to false
 	 */
-	boolean isBottom(ABS_STATE pred);
+	boolean isBottom(IPredicate pred);
 
 	/**
 	 * Checks whether the set of concrete states described by predicate p1 is a subset of or equal to the set of
@@ -86,7 +86,7 @@ public interface IDomain<ABS_STATE extends IPredicate> {
 	 * @param superset p2
 	 * @return p1 → p2
 	 */
-	boolean isSubsetEq(final ABS_STATE subset, final ABS_STATE superset);
+	boolean isSubsetEq(final IPredicate subset, final IPredicate superset);
 
 	/**
 	 * Abstracts a predicate by over-approximating, that is ∀ p : p → α(p).
@@ -94,5 +94,5 @@ public interface IDomain<ABS_STATE extends IPredicate> {
 	 * @param pred Predicate to be abstracted
 	 * @return Abstracted predicate
 	 */
-	ABS_STATE alpha(IPredicate pred);
+	IPredicate alpha(IPredicate pred);
 }

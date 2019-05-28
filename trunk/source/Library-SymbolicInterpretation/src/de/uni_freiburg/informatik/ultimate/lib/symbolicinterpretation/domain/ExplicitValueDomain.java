@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
-public class ExplicitValueDomain implements IDomain<IPredicate> {
+public class ExplicitValueDomain implements IDomain {
 
 	private final PredicateUtils mPredicateUtils;
 	private final IUltimateServiceProvider mServices;

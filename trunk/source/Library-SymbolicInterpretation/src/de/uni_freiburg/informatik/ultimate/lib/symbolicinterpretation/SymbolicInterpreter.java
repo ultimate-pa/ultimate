@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -57,7 +58,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * @see #interpret()
  *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ *
+ * @deprecated Class got split into {@link IcfgInterpreter} and {@link DagInterpreter} for better re-usability
  */
+@Deprecated
 public class SymbolicInterpreter {
 
 	private final ILogger mLogger;
@@ -69,17 +73,17 @@ public class SymbolicInterpreter {
 	private final PredicateUtils mPredicateUtils;
 
 	private final ILoopSummarizer mLoopSummarizer;
+	private final IDomain mDomain;
 
 	/**
 	 * Creates a new interpreter assuming all error locations to be locations of interest.
 	 *
 	 * @see #interpret()
 	 */
-	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final ILoopSummarizer loopSummarizer) {
-		this(services, icfg,
-				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()),
-				loopSummarizer);
+	public SymbolicInterpreter(final ILogger logger, final PredicateUtils predicateUtils,
+			final IDomain domain, final ILoopSummarizer loopSummarizer, final IIcfg<IcfgLocation> icfg) {
+		this(logger, predicateUtils, domain, loopSummarizer, icfg,
+				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList()));
 	}
 
 	/**
@@ -89,15 +93,15 @@ public class SymbolicInterpreter {
 	 *            Locations for which predicates shall be computed.
 	 * @see #interpret()
 	 */
-	public SymbolicInterpreter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest, final ILoopSummarizer loopSummarizer) {
-		// TODO this logger is not affected by the log leves set for SymbolicInterpretation
-		// Use another class or re-use a given logger?
-		mLogger = services.getLoggingService().getLogger(getClass());
+	public SymbolicInterpreter(final ILogger logger, final PredicateUtils predicateUtils,
+			final IDomain domain, final ILoopSummarizer loopSummarizer, final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest) {
+		mLogger = logger;
+		mDomain = domain;
 		mLoopSummarizer = loopSummarizer;
 		logStartingSifa(locationsOfInterest);
 		mIcfg = icfg;
-		mPredicateUtils = new PredicateUtils(services, mIcfg);
+		mPredicateUtils = predicateUtils;
 		mEnterCallWorklist = new WorklistWithInputs<>(mPredicateUtils::merge);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);

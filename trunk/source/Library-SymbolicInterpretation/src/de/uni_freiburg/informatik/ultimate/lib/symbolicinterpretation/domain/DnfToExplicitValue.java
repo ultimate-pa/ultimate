@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
-import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -51,7 +50,7 @@ public class DnfToExplicitValue extends TermTransformer {
 	 * @param predicateUtils
 	 */
 	public DnfToExplicitValue(final IUltimateServiceProvider services, final PredicateUtils predicateUtils) {
-		mTrue = predicateUtils.getScript().term(this, "true");
+		mTrue = predicateUtils.top().getFormula();
 	}
 
 	@Override
@@ -79,56 +78,5 @@ public class DnfToExplicitValue extends TermTransformer {
 
 	private static boolean hasAtLeastOneConstant(final Term[] parameters) {
 		return Arrays.stream(parameters).anyMatch(a -> a instanceof ConstantTerm);
-	}
-
-	/** Only used to make {@link #getConverted()} visible to walkers. */
-	Term[] getConvertedArray(final Term[] oldArgs) {
-		return getConverted(oldArgs);
-	}
-
-	protected class WalkOuterOr implements Walker {
-		/** the application term to convert. */
-		private final ApplicationTerm mAppTerm;
-
-		public WalkOuterOr(final ApplicationTerm term) {
-			mAppTerm = term;
-		}
-
-		@Override
-		public void walk(final NonRecursive engine) {
-			// TODO implement -- right now this is only a copy of TermTransformer's walker
-			final DnfToExplicitValue transformer = (DnfToExplicitValue) engine;
-			final Term[] oldArgs = mAppTerm.getParameters();
-			final Term[] newArgs = transformer.getConvertedArray(oldArgs);
-			transformer.convertApplicationTerm(mAppTerm, newArgs);
-		}
-
-		@Override
-		public String toString() {
-			return mAppTerm.getFunction().getApplicationString();
-		}
-	}
-
-	protected class WalkInnerAnd implements Walker {
-		/** the application term to convert. */
-		private final ApplicationTerm mAppTerm;
-
-		public WalkInnerAnd(final ApplicationTerm term) {
-			mAppTerm = term;
-		}
-
-		@Override
-		public void walk(final NonRecursive engine) {
-			// TODO implement -- right now this is only a copy of TermTransformer's walker
-			final DnfToExplicitValue transformer = (DnfToExplicitValue) engine;
-			final Term[] oldArgs = mAppTerm.getParameters();
-			final Term[] newArgs = transformer.getConvertedArray(oldArgs);
-			transformer.convertApplicationTerm(mAppTerm, newArgs);
-		}
-
-		@Override
-		public String toString() {
-			return mAppTerm.getFunction().getApplicationString();
-		}
 	}
 }
