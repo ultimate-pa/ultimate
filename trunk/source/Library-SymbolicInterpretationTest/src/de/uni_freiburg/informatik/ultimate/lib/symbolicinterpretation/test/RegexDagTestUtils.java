@@ -56,14 +56,14 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.R
  */
 public class RegexDagTestUtils {
 
-	private final static String SPLIT_REGEX = "\\s+";
-	private final static String NODE_REGEX = "(\\d+)\\.?(\\S*)";
-	private final static String EDGE_REGEX = "(\\d+)\\.?(\\d+)";
-	private final static Pattern NODE_PATTERN = Pattern.compile(NODE_REGEX);
-	private final static Pattern EDGE_PATTERN = Pattern.compile(EDGE_REGEX);
+	private static final String SPLIT_REGEX = "\\s+";
+	private static final String NODE_REGEX = "(\\d+)\\.?(\\S*)";
+	private static final String EDGE_REGEX = "(\\d+)\\.?(\\d+)";
+	private static final Pattern NODE_PATTERN = Pattern.compile(NODE_REGEX);
+	private static final Pattern EDGE_PATTERN = Pattern.compile(EDGE_REGEX);
 
 	/**
-	 * Creates a DAG from a human-writeable graph format.
+	 * Creates a DAG from a human-writable graph format.
 	 * For more information on the graph format see class documentation of {@link RegexDagTestUtils}.
 	 * @param listOfNodes Space-separated list of nodes of the form {@code 0.a} (the dot is optional).
 	 * @param listOfEdges Space-separated list of edges of the form {@code 0.1} (the dot is optional).
@@ -72,7 +72,7 @@ public class RegexDagTestUtils {
 	 */
 	public static RegexDag<String> dag(final String listOfNodes, final String listOfEdges) {
 		final Map<String, RegexDagNode<String>> idToNode = new HashMap<>();
-		RegexDag<String> dag = new RegexDag<String>(null);
+		RegexDag<String> dag = new RegexDag<>(null);
 		for (final String nodeDescription : listOfNodes.split(SPLIT_REGEX)) {
 			mapNewNode(nodeDescription, idToNode);
 		}
