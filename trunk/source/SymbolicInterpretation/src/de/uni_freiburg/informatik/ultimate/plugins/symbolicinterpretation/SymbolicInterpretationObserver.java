@@ -70,7 +70,8 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final PredicateUtils predicateUtils = new PredicateUtils(mServices, icfg);
 		final IDomain domain = new ExplicitValueDomain(mServices, predicateUtils);
-		final ILoopSummarizer summarizer = new FixpointLoopSummarizer(mLogger, domain);
+		// TODO replace null value. Only dummy while SymbolicInterpreter is split into two classes
+		final ILoopSummarizer summarizer = new FixpointLoopSummarizer(mLogger, domain, null);
 		final SymbolicInterpreter symbolicInterpreter = new SymbolicInterpreter(
 				mLogger, predicateUtils, domain, summarizer, icfg);
 		final Map<IcfgLocation, IPredicate> predicates = symbolicInterpreter.interpret();

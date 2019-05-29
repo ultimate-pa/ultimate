@@ -33,6 +33,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -43,18 +44,23 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
 	private final IDomain mDomain;
+	private DagInterpreter mDagInterpreter;
 
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain) {
+	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final DagInterpreter dagInterpreter) {
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
+		mDagInterpreter = Objects.requireNonNull(dagInterpreter);
 		mCache = new HashMap<>();
 	}
 
 	@Override
 	public IPredicate summarize(final Star<IIcfgTransition<IcfgLocation>> regex, final IPredicate input) {
 		final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> key = new Pair<>(regex, input);
+		// TODO consider using cache more, for instance if loop is the same but
+		// - input is a subset of a known input
+		// - input is a superset of a known input, but a subset of any input from the iteration sequence.
 		return mCache.computeIfAbsent(key, this::summarizeInternal);
 	}
 

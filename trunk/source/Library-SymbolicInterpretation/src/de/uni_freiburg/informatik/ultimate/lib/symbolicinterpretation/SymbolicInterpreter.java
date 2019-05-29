@@ -166,6 +166,13 @@ public class SymbolicInterpreter {
 		} else if (regex instanceof Epsilon) {
 			// Nothing to do. Multiple inputs for the same node are merged inside the worklist.
 			// Merging always applies because we traverse DAG using BFS.
+			//
+			// TODO I no longer think that this is true. In The following example we have to interpret
+			// the transition 2-4 twice.
+			//  ,1-3-5-6-⹁
+			// 0          2-4
+			//  `--------´
+			// We should the traversal order such that join nodes wait for all their predecessors.
 			return input;
 		} else if (regex instanceof Star) {
 			return mLoopSummarizer.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);

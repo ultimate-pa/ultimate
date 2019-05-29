@@ -26,6 +26,113 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.function.BiConsumer;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+
 public class DagInterpreter {
 
+	private final ILogger mLogger;
+	private final PredicateUtils mPredicateUtils;
+	private final IDomain mDomain;
+	private final ILoopSummarizer mLoopSummarizer;
+
+	private BiConsumer<IcfgLocation, IPredicate> mRegisterPostResult = missingCallbackError("register post result");
+	private BiConsumer<String, IPredicate> mRegisterEnterCall = missingCallbackError("register enter call");
+
+	private static <A, B> BiConsumer<A, B> missingCallbackError(final String callbackName) {
+		return (unused1, unused2) -> { throw new IllegalStateException("Missing callback: " + callbackName); };
+	}
+
+	public DagInterpreter(final ILogger logger, final PredicateUtils predicateUtils, final IDomain domain,
+			final ILoopSummarizer loopSummarizer) {
+		mLogger = logger;
+		mPredicateUtils = predicateUtils;
+		mDomain = domain;
+		mLoopSummarizer = loopSummarizer;
+	}
+
+	public void setCallbacks(final BiConsumer<IcfgLocation, IPredicate> registerPostResult,
+			final BiConsumer<String, IPredicate> registerEnterCall) {
+		mRegisterPostResult = registerPostResult;
+		mRegisterEnterCall = registerEnterCall;
+	}
+
+	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag, final OverlaySuccessors overlaySuccessors,
+			final IPredicate initalInput) {
+		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist =
+				new WorklistWithInputs<>(mPredicateUtils::merge);
+		worklist.add(dag.getSource(), initalInput);
+		while (worklist.advance()) {
+			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
+			final IPredicate currentOutput = interpretNode(currentNode, worklist.getInput());
+			overlaySuccessors.getImage(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
+		}
+		// TODO compute return value for final sink node. Required in FixpointLoopSummarizer
+	}
+
+	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {
+		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
+		if (regex instanceof Epsilon) {
+			// TODO change traversal order such that join nodes wait for all their predecessors.
+			// In the following example we have to interpret the transition 2-4 twice when using BFS.
+			//  ,1-3-5-6-⹁
+			// 0          2-4
+			//  `--------´
+			return input;
+		} else if (regex instanceof Literal) {
+			return interpretTransition(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
+		} else if (regex instanceof Star) {
+			return mLoopSummarizer.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);
+		} else {
+			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex.getClass());
+		}
+	}
+
+	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+		logInterpretTransition(transition, input);
+		if (transition instanceof IIcfgSummaryTransition<?>) {
+			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
+		} else if (transition instanceof IIcfgCallTransition<?>) {
+			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);
+		} else if (transition instanceof IIcfgInternalTransition) {
+			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) transition, input);
+		} else {
+			throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
+		}
+	}
+
+	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
+		final IPredicate output = mPredicateUtils.post(input, transition);
+		mRegisterPostResult.accept(transition.getTarget(), output);
+		return output;
+	}
+
+	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
+		final IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
+		mRegisterEnterCall.accept(transition.getSucceedingProcedure(), calleeInput);
+		mRegisterPostResult.accept(transition.getTarget(), calleeInput);
+		return calleeInput;
+	}
+
+	// log messages -------------------------------------------------------------------------------
+
+	private void logInterpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+		mLogger.debug("Interpreting transition %s with input %s", transition, input);
+	}
 }
