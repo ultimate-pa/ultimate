@@ -69,7 +69,7 @@ public class SymbolicInterpreter {
 	private final CallGraph mCallGraph;
 	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
 	private final WorklistWithInputs<String> mEnterCallWorklist;
-	private final Map<IcfgLocation, IPredicate> mPredicatesForLOI = new HashMap<>();
+	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final PredicateUtils mPredicateUtils;
 
 	private final ILoopSummarizer mLoopSummarizer;
@@ -113,12 +113,12 @@ public class SymbolicInterpreter {
 	private void enqueInitial() {
 		final IPredicate top = mPredicateUtils.top();
 		mCallGraph.initialProceduresOfInterest().stream().peek(proc -> mEnterCallWorklist.add(proc, top))
-				.map(mIcfg.getProcedureEntryNodes()::get).forEach(procEntry -> storePredicateIfLOI(procEntry, top));
+				.map(mIcfg.getProcedureEntryNodes()::get).forEach(procEntry -> storePredicateIfLoi(procEntry, top));
 	}
 
 	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
 		final IPredicate bottom = mPredicateUtils.bottom();
-		locationsOfInterest.forEach(loi -> mPredicatesForLOI.put(loi, bottom));
+		locationsOfInterest.forEach(loi -> mPredicatesForLoi.put(loi, bottom));
 	}
 
 	/**
@@ -135,14 +135,14 @@ public class SymbolicInterpreter {
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
 			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
-			interpretLOIsInProcedure(resources, input);
+			interpretLoisInProcedure(resources, input);
 		}
 		logFinalResults();
-		return mPredicatesForLOI;
+		return mPredicatesForLoi;
 	}
 
-	private void interpretLOIsInProcedure(final ProcedureResources resources, final IPredicate initalInput) {
-		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLOIsAndEnterCalls();
+	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initalInput) {
+		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLoisAndEnterCalls();
 		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist =
 				new WorklistWithInputs<>(mPredicateUtils::merge);
 		worklist.add(resources.getRegexDag().getSource(), initalInput);
@@ -190,19 +190,19 @@ public class SymbolicInterpreter {
 	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition,
 			final IPredicate input) {
 		final IPredicate output = mPredicateUtils.post(input, transition);
-		storePredicateIfLOI(transition.getTarget(), output);
+		storePredicateIfLoi(transition.getTarget(), output);
 		return output;
 	}
 
 	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
 		final IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
 		mEnterCallWorklist.add(transition.getSucceedingProcedure(), calleeInput);
-		storePredicateIfLOI(transition.getTarget(), calleeInput);
+		storePredicateIfLoi(transition.getTarget(), calleeInput);
 		return calleeInput;
 	}
 
-	private void storePredicateIfLOI(final IcfgLocation location, final IPredicate addPredicate) {
-		mPredicatesForLOI.computeIfPresent(location,
+	private void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPredicate) {
+		mPredicatesForLoi.computeIfPresent(location,
 				(unused, oldPredicate) -> mPredicateUtils.merge(oldPredicate, addPredicate));
 	}
 
@@ -228,12 +228,12 @@ public class SymbolicInterpreter {
 
 	private void logFinalResults() {
 		mLogger.info("Interpretation finished");
-		if (mPredicatesForLOI.isEmpty()) {
+		if (mPredicatesForLoi.isEmpty()) {
 			mLogger.warn("No locations of interest were given");
 			return;
 		}
 		mLogger.info("Final predicates for locations of interest are:");
-		for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLOI.entrySet()) {
+		for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLoi.entrySet()) {
 			mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
 		}
 	}

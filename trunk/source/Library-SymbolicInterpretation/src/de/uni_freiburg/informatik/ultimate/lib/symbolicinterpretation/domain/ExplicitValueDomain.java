@@ -26,8 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
@@ -78,15 +79,10 @@ public class ExplicitValueDomain implements IDomain {
 
 		final Term dnf = SmtUtils.toDnf(mServices, mPredicateUtils.getScript(), pred.getFormula(),
 				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
-		final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
-		final Set<Term> rewrittenDisjuncts = new HashSet<>();
 		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mPredicateUtils);
-		for (int i = 0; i < disjuncts.length; ++i) {
-			// rewrite each disjunct with DnfToExplicitvalue
-			rewrittenDisjuncts.add(rewriter.transform((disjuncts[i])));
-		}
-
+		final Set<Term> rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
+				.map(rewriter::transform)
+				.collect(Collectors.toSet());
 		// decide how many of the unique disjuncts are allowed to survive, join if necessary
 		if (rewrittenDisjuncts.size() > mDisjunctThreshold) {
 			// TODO: Join

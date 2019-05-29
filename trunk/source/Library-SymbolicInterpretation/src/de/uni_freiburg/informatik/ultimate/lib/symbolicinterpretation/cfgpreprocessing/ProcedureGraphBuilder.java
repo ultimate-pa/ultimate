@@ -76,7 +76,7 @@ public class ProcedureGraphBuilder {
 		mWork.add(mCurrentProcedureGraph.getExitNode());
 		mWork.addAll(locationsOfInterest);
 		while (!mWork.isEmpty()) {
-			for (IcfgEdge edge : mWork.remove().getIncomingEdges()) {
+			for (final IcfgEdge edge : mWork.remove().getIncomingEdges()) {
 				processBottomUp(edge);
 			}
 		}

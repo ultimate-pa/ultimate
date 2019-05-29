@@ -45,11 +45,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 public class ProcedureResources {
 
-	// TODO find a better way to abbreviate long generics
-	public static class OverlaySuccessors extends HashRelation<
-			RegexDagNode<IIcfgTransition<IcfgLocation>>, RegexDagNode<IIcfgTransition<IcfgLocation>>> {
-	}
-
 	private final RegexDag<IIcfgTransition<IcfgLocation>> mRegexDag;
 	private final OverlaySuccessors mDagOverlayPathToReturn;
 	private final OverlaySuccessors mDagOverlayPathToLOIsAndEnterCalls;
@@ -113,8 +108,15 @@ public class ProcedureResources {
 		return mDagOverlayPathToReturn;
 	}
 
-	public OverlaySuccessors getDagOverlayPathToLOIsAndEnterCalls() {
+	public OverlaySuccessors getDagOverlayPathToLoisAndEnterCalls() {
 		return mDagOverlayPathToLOIsAndEnterCalls;
 	}
 
+	/**
+	 * Abbreviation for long nested generic expression.
+	 * TODO find a better way to abbreviate long generics.
+	 */
+	public static class OverlaySuccessors extends HashRelation<
+			RegexDagNode<IIcfgTransition<IcfgLocation>>, RegexDagNode<IIcfgTransition<IcfgLocation>>> {
+	}
 }
