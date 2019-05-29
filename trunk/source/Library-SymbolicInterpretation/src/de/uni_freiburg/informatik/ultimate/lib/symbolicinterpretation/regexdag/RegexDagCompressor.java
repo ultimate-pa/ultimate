@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -52,7 +52,7 @@ public class RegexDagCompressor<L> {
 	 * Could also be a local variable, but recycling an existing map is more efficient than
 	 * creating a new one each time.
 	 */
-	private final Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new HashMap<>();
+	private final Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new LinkedHashMap<>();
 
 	/**
 	 * Some nodes where merged in the last iteration over the whole graph.
