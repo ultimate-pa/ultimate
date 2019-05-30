@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 
 /**
  * This represents an affine term in the form of
@@ -87,19 +88,9 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	 */
 	private final Sort mSort;
 
-	
+
 	/*======================== This is new ===================*/
-	
-	/**
-	 * Constructor to be used of all static methods that construct an affineTerm.
-	 */
-	public AffineTerm(final Sort s, Rational constant, Map<Term, Rational> map) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		mVariable2Coefficient = map;
-	}
-	
+
 	/**
 	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
 	 */
@@ -125,40 +116,40 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		}
 		return shrinkMap(map);
 	}
-	
+
 	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
 	 */
-	private static Map<Term, Rational> shrinkMap(Map<Term, Rational> map){
+	private static Map<Term, Rational> shrinkMap(final Map<Term, Rational> map){
 		if (map.size() == 0) {
 			return Collections.emptyMap();
 		}
 		else if (map.size() == 1) {
-			Entry<Term, Rational> entry = map.entrySet().iterator().next();
+			final Entry<Term, Rational> entry = map.entrySet().iterator().next();
 			return Collections.singletonMap(entry.getKey(), entry.getValue());
 		}
 		return map;
 	}
-	
+
 	/**
 	 * Calculate the constant of a sum of given IPolynomialTerms.
 	 */
 	private static Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
 		Rational constant = Rational.ZERO;
-		Sort s = polynomialTerms[0].getSort();
+		final Sort s = polynomialTerms[0].getSort();
 		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
 			if (SmtSortUtils.isBitvecSort(s)) {
-				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
+				constant = PolynomialTermUtils.bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
 			} else {
 				constant = constant.add(polynomialTerm.getConstant());
 			}
 		}
 		return constant;
 	}
-	
-	private static Map<Term, Rational> calculateSumMapOfAffineTerms(IPolynomialTerm... affineTerms){
-		Sort s = affineTerms[0].getSort();
-		Map<Term, Rational> map = new HashMap<>();
+
+	private static Map<Term, Rational> calculateSumMapOfAffineTerms(final IPolynomialTerm... affineTerms){
+		final Sort s = affineTerms[0].getSort();
+		final Map<Term, Rational> map = new HashMap<>();
 		for (final IPolynomialTerm affineTerm : affineTerms) {
 			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) affineTerm).getVariable2Coefficient().entrySet()) {
 				assert summand.getKey().getSort() == s : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
@@ -169,7 +160,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 				} else {
 					final Rational newCoeff;
 					if (SmtSortUtils.isBitvecSort(s)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), s);
+						newCoeff = PolynomialTermUtils.bringValueInRange(coeff.add(summand.getValue()), s);
 					} else {
 						newCoeff = coeff.add(summand.getValue());
 					}
@@ -183,9 +174,29 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		}
 		return shrinkMap(map);
 	}
-	
+
 	/*======================= Until here ==================*/
-	
+
+	static AffineTerm sum(final IPolynomialTerm... summands) {
+		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::construct;
+		return PolynomialTermUtils.constructSum(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor, summands);
+	}
+
+	static AffineTerm construct(final Sort sort, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
+		return new AffineTerm(sort, constant, variables2coeffcient);
+	}
+
+	/**
+	 * Constructor to be used of all static methods that construct an affineTerm.
+	 */
+	private AffineTerm(final Sort s, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
+		super(0);
+		mSort = s;
+		mConstant = constant;
+		mVariable2Coefficient = variables2coeffcient;
+	}
+
+
 	/**
 	 * AffineTerm that represents the Rational r of sort s.
 	 */
@@ -272,7 +283,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 				} else {
 					final Rational newCoeff;
 					if (SmtSortUtils.isBitvecSort(mSort)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), mSort);
+						newCoeff = PolynomialTermUtils.bringValueInRange(coeff.add(summand.getValue()), mSort);
 					} else {
 						newCoeff = coeff.add(summand.getValue());
 					}
@@ -284,7 +295,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 				}
 			}
 			if (SmtSortUtils.isBitvecSort(mSort)) {
-				constant = bringValueInRange(constant.add(affineTerm.mConstant), mSort);
+				constant = PolynomialTermUtils.bringValueInRange(constant.add(affineTerm.mConstant), mSort);
 			} else {
 				constant = constant.add(affineTerm.mConstant);
 			}
@@ -305,7 +316,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 			mVariable2Coefficient = new HashMap<>();
 			mSort = affineTerm.getSort();
 			if (SmtSortUtils.isBitvecSort(mSort)) {
-				mConstant = bringValueInRange(affineTerm.mConstant.mul(multiplier), mSort);
+				mConstant = PolynomialTermUtils.bringValueInRange(affineTerm.mConstant.mul(multiplier), mSort);
 			} else {
 				assert mSort.isNumericSort();
 				mConstant = affineTerm.mConstant.mul(multiplier);
@@ -316,25 +327,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		}
 	}
 
-	/**
-	 * Use modulo operation to bring Rational in the range of representable values.
-	 *
-	 * @param bv
-	 *            Rational that represents a bitvector
-	 * @param sort
-	 *            bitvector sort
-	 * @return bv % 2^sort.getIndices[0]
-	 */
-	private static Rational bringValueInRange(final Rational bv, final Sort sort) {
-		assert SmtSortUtils.isBitvecSort(sort);
-		assert sort.getIndices().length == 1;
-		assert bv.isIntegral();
-		final int bitsize = sort.getIndices()[0].intValueExact();
-		final BigInteger bvBigInt = bv.numerator();
-		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
-		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
-		return Rational.valueOf(resultBigInt, BigInteger.ONE);
-	}
+
 
 	/**
 	 * Auxiliary affine term that represents an error during the translation process, e.g., if original term was not
@@ -546,7 +539,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
 		return mVariable2Coefficient.entrySet().stream()
-				.collect(Collectors.toMap(x -> new Monomial((Term) x.getKey(), Rational.ONE), Entry::getValue));
+				.collect(Collectors.toMap(x -> new Monomial(x.getKey(), Rational.ONE), Entry::getValue));
 	}
 
 	@Override

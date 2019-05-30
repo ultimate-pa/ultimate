@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 public class PolynomialTermTransformer extends TermTransformer {
 
 	private final Script mScript;
-	
+
 	/**
 	 * Predicate that defines which Terms might be variables of the
 	 * {@link PolynomialTerm}. Currently, every {@link TermVariable} and every
@@ -53,7 +53,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	public PolynomialTermTransformer(final Script script) {
 		mScript = script;
 	}
-	
+
 	@Override
 	protected void convert(final Term term) {
 		// If the term has a sort that is not supported, we report
@@ -92,14 +92,14 @@ public class PolynomialTermTransformer extends TermTransformer {
 		inputIsNotPolynomial();
 		return;
 	}
-	
+
 	/**
 	 * Sets result to auxiliary error term.
 	 */
 	private void inputIsNotPolynomial() {
 		setResult(new PolynomialTerm());
 	}
-	
+
 	/**
 	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric
 	 * sorts) and the bitvector sorts.
@@ -107,7 +107,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static boolean hasSupportedSort(final Term term) {
 		return SmtSortUtils.isNumericSort(term.getSort()) || SmtSortUtils.isBitvecSort(term.getSort());
 	}
-	
+
 	/**
 	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
 	 * represents an "polynomial function". We call a function an "polynomial function" if
@@ -122,12 +122,12 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return false;
 		}
 	}
-	
+
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
 	}
-	
+
 	/**
 	 * Check if term represents a literal. If this is the case, then return its
 	 * value as a {@link Rational} otherwise return true.
@@ -152,7 +152,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return result;
 	}
-	
+
 	//TODO: Change PolynomialTermTransformer to use the more efficient class AffineTerm if possible.
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
@@ -170,7 +170,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		final String funName = appTerm.getFunction().getName();
 		if (funName.equals("*") || funName.equals("bvmul")) {
-			Sort sort = appTerm.getSort();
+			final Sort sort = appTerm.getSort();
 			final IPolynomialTerm result = multiply(sort, polynomialArgs);
 			castAndSetResult(result);
 			return;
@@ -201,12 +201,12 @@ public class PolynomialTermTransformer extends TermTransformer {
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
 	}
-	
+
 	/**
 	 * Cast the interface IPolynomialTerm in a way that the TermTransformer
 	 * accepts the result for "setResult". Execute "setResult" afterwards.
 	 */
-	private void castAndSetResult(IPolynomialTerm poly){
+	private void castAndSetResult(final IPolynomialTerm poly){
 		if (poly instanceof PolynomialTerm) {
 			setResult((PolynomialTerm) poly);
 			return;
@@ -216,11 +216,11 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		throw new UnsupportedOperationException("This IPolynomialTerm is instance of no known class.");
 	}
-	
+
 	/**
 	 * Multiply an array of PolynomialTerms.
 	 */
-	private static IPolynomialTerm multiply(Sort sort, final IPolynomialTerm[] polynomialArgs) {
+	private static IPolynomialTerm multiply(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
 		//TODO: Find out whether passing the sort explicitly in case every polynomialTerm is just a Constant
 		//is really necessary (like in the AffineTermTransformer): YES it is in case that the array is empty
 		//TODO: Ask Matthias why does AffineTermTransformer not catch this in add?
@@ -230,37 +230,37 @@ public class PolynomialTermTransformer extends TermTransformer {
 		if (polynomialArgs.length == 1) {
 			return polynomialArgs[0];
 		}
-		
+
 		IPolynomialTerm poly = multiplyTwoPolynomials(polynomialArgs[0], polynomialArgs[1]);
 		for (int i = 2; i < polynomialArgs.length; i++) {
 			poly = multiplyTwoPolynomials(poly, polynomialArgs[i]);
 		}
 		return poly;
 	}
-	
+
 	/**
 	 * Returns the product of poly1 and poly2.
 	 */
-	private static IPolynomialTerm multiplyTwoPolynomials(IPolynomialTerm poly1, IPolynomialTerm poly2) {
+	private static IPolynomialTerm multiplyTwoPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		assert poly1.getSort() == poly2.getSort();
-		
+
 		if (productWillBePolynomial(poly1, poly2)) {
 			return PolynomialTerm.polynomialTimesPolynomial(poly1, poly2);
 		}else {
-			return new AffineTerm(poly1.getSort(), 
+			return AffineTerm.construct(poly1.getSort(),
 								  poly1.getConstant().mul(poly2.getConstant()),
 								  calculateProductMapOfAffineTerms(poly1, poly2));
 		}
 	}
-	
+
 	/**
 	 * Determines whether the product of two polynomialTerms will be truly polynomial (not affine).
 	 * If the result is truly polynomial it returns true, false otherwise.
 	 */
-	private static boolean productWillBePolynomial(IPolynomialTerm poly1, IPolynomialTerm poly2) {
+	private static boolean productWillBePolynomial(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		return !poly1.isAffine() || !poly2.isAffine() || (!poly1.isConstant() && !poly2.isConstant());
 	}
-	
+
 	/**
 	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
 	 */
@@ -286,16 +286,16 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return shrinkMap(map);
 	}
-	
+
 	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
 	 */
-	private static Map<Term, Rational> shrinkMap(Map<Term, Rational> map){
+	private static Map<Term, Rational> shrinkMap(final Map<Term, Rational> map){
 		if (map.size() == 0) {
 			return Collections.emptyMap();
 		}
 		else if (map.size() == 1) {
-			Entry<Term, Rational> entry = map.entrySet().iterator().next();
+			final Entry<Term, Rational> entry = map.entrySet().iterator().next();
 			return Collections.singletonMap(entry.getKey(), entry.getValue());
 		}
 		return map;
@@ -308,7 +308,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		if (someTermIsPolynomial(polynomialArgs)) {
 			return PolynomialTerm.polynomialSum(polynomialArgs);
 		}else {
-			return new AffineTerm(polynomialArgs[0].getSort(),
+			return AffineTerm.construct(polynomialArgs[0].getSort(),
 								  calculateSumConstant(polynomialArgs),
 								  calculateSumMapOfAffineTerms(polynomialArgs));
 		}
@@ -326,13 +326,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Calculate the constant of a sum of given IPolynomialTerms.
 	 */
 	private static Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
 		Rational constant = Rational.ZERO;
-		Sort s = polynomialTerms[0].getSort();
+		final Sort s = polynomialTerms[0].getSort();
 		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
 			if (SmtSortUtils.isBitvecSort(s)) {
 				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
@@ -342,10 +342,10 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return constant;
 	}
-	
-	private static Map<Term, Rational> calculateSumMapOfAffineTerms(IPolynomialTerm... affineTerms){
-		Sort s = affineTerms[0].getSort();
-		Map<Term, Rational> map = new HashMap<>();
+
+	private static Map<Term, Rational> calculateSumMapOfAffineTerms(final IPolynomialTerm... affineTerms){
+		final Sort s = affineTerms[0].getSort();
+		final Map<Term, Rational> map = new HashMap<>();
 		for (final IPolynomialTerm affineTerm : affineTerms) {
 			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) affineTerm).getVariable2Coefficient().entrySet()) {
 				assert summand.getKey().getSort() == s : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
@@ -370,7 +370,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return shrinkMap(map);
 	}
-	
+
 	/**
 	 * Use modulo operation to bring Rational in the range of representable values.
 	 *
@@ -434,19 +434,19 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}else if (polynomialArgs.length == 1) {
 			return polynomialArgs[0];
 		}
-		
-		//Only Term at position 0 may be not affine. 
+
+		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			return affineDivision(sort, polynomialArgs);
 		}else {
 			return polynomialDivision(polynomialArgs);
 		}
 	}
-	
+
 	/**
 	 * Returns a PolynomialTerm which represents the quotient of the given arguments (see divide method above).
 	 */
-	private static IPolynomialTerm polynomialDivision(IPolynomialTerm[] polynomialTerms) {
+	private static IPolynomialTerm polynomialDivision(final IPolynomialTerm[] polynomialTerms) {
 		for (int i = 1; i < polynomialTerms.length; i++) {
 			if (!polynomialTerms[i].isConstant()) {
 				throw new UnsupportedOperationException("Division by Variables not supported!");
@@ -462,11 +462,11 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return poly;
 	}
-	
+
 	/**
 	 * Returns an AffineTerm which represents the quotient of the given arguments (see divide method above).
 	 */
-	private static IPolynomialTerm affineDivision(Sort sort, IPolynomialTerm[] affineArgs) {
+	private static IPolynomialTerm affineDivision(final Sort sort, final IPolynomialTerm[] affineArgs) {
 		final IPolynomialTerm affineTerm;
 		Rational multiplier;
 		if (affineArgs[0].isConstant()) {
@@ -494,9 +494,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return result;
 	}
-	
+
 	//TODO: PolynomialRelation
-	
+
 	/**
 	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by
 	 * casting every single element. In case an element of the input is our
