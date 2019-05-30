@@ -170,9 +170,17 @@ public class OctagonRelationTest {
 
 	}
 
-	// @Test
-	public void relationIntDiv7() throws NotAffineException {
+	@Test
+	public void relationIntDiv71() throws NotAffineException {
 		final String inputSTR = "(> (* 3 a) b )";
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
+				affRelOnLeftHandSide(inputSTR, "a"), mScript));
+
+	}
+
+	// @Test
+	public void relationIntDiv72() throws NotAffineException {
+		final String inputSTR = "(< (* 3 a) b )";
 		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a"), mScript));
 

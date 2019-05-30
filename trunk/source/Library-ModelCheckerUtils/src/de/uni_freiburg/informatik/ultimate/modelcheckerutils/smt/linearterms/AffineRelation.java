@@ -428,13 +428,17 @@ public class AffineRelation {
 						? BinaryRelation.swapParameters(mRelationSymbol)
 						: mRelationSymbol;
 				Term conjTerm = script.term("false");
-				if (relSymb == RelationSymbol.GEQ || relSymb == RelationSymbol.LEQ) {
+
+				if (relSymb == RelationSymbol.GEQ) {
 					conjTerm = SmtUtils.sum(script, mAffineTerm.getSort(), constSum,
 							TermParseUtils.parseTerm(script, "1"), divTerm);
 					conjTerm = script.term(relSymb.toString(), var, conjTerm);
 
-				} else if (relSymb == RelationSymbol.LEQ) {
+				} else if (relSymb == RelationSymbol.LEQ || relSymb == RelationSymbol.GREATER) {
 					modTerm = script.term("true");
+				} else if (relSymb == RelationSymbol.LESS) {
+					// TODO
+
 				}
 
 				divTerm = script.term(relSymb.toString(), var, withOutModulo);
@@ -442,7 +446,6 @@ public class AffineRelation {
 				modTerm = SmtUtils.or(script, modTerm, conjTerm);
 				// check if result is unsound
 				final Term soundResult = SmtUtils.and(script, modTerm, divTerm);
-				System.out.println(soundResult.toStringDirect());
 				assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 						soundResult) != LBool.SAT : "transformation to AffineRelation unsound";
 				return new Pair<>((ApplicationTerm) divTerm, (ApplicationTerm) modTerm);
@@ -457,7 +460,6 @@ public class AffineRelation {
 		Term comp = script.term("=", term1, term2);
 		comp = script.term("not", comp);
 		final LBool sat = Util.checkSat(script, comp);
-		System.out.println(sat + " " + comp);
 		return sat;
 	}
 
