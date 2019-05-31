@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -121,7 +122,7 @@ public class RegexDagCompressor<L> {
 	}
 
 	private void addToMergetable(final RegexDagNode<L> node) {
-		mMergetable.computeIfAbsent(node.getContent(), key -> new HashSet<>()).add(node);
+		mMergetable.computeIfAbsent(node.getContent(), key -> new LinkedHashSet<>()).add(node);
 	}
 
 	private RegexDagNode<L> groupToSingleNode(Map.Entry<IRegex<L>, Set<RegexDagNode<L>>> labelToMergeGroup) {
@@ -136,7 +137,7 @@ public class RegexDagCompressor<L> {
 		mergeGroup.forEach(nodeToBeMerged -> merge(merged, nodeToBeMerged));
 		return merged;
 	}
-	
+
 	/**
 	 * Merges two nodes by contracting one node (prey) into another (predator).
 	 * <p>
