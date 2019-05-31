@@ -84,7 +84,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
 		if (mIsPolynomialVariable.test(term)) {
-			final AffineTerm result = new AffineTerm(term);
+			final AffineTerm result = AffineTerm.constructVariable(term);
 			setResult(result);
 			return;
 		}
@@ -396,7 +396,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 */
 	private static IPolynomialTerm negate(final IPolynomialTerm polynomialTerm) {
 		if (polynomialTerm.isAffine()) {
-			return new AffineTerm((AffineTerm) polynomialTerm, Rational.MONE);
+			return AffineTerm.mul((AffineTerm) polynomialTerm, Rational.MONE);
 		}
 		return PolynomialTerm.polynomialTimesRational(polynomialTerm, Rational.MONE);
 	}
@@ -490,7 +490,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		if (affineTerm == null) {
 			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
-			result = new AffineTerm((AffineTerm) affineTerm, multiplier);
+			result = AffineTerm.mul((AffineTerm) affineTerm, multiplier);
 		}
 		return result;
 	}

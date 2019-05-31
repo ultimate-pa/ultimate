@@ -68,7 +68,7 @@ public class EquivalenceFinder {
 			case LEQ:
 			case GEQ:
 				final AffineTerm affine1 = normalize(relation.getAffineTerm());
-				final AffineTerm affine2 = normalize(new AffineTerm(relation.getAffineTerm(), Rational.MONE));
+				final AffineTerm affine2 = normalize(AffineTerm.mul(relation.getAffineTerm(), Rational.MONE));
 				final AffineTerm positive = symbol == RelationSymbol.LEQ ? affine1 : affine2;
 				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
 				if (leqTerms.contains(negative)) {
@@ -93,6 +93,6 @@ public class EquivalenceFinder {
 		if (factor.equals(Rational.ZERO)) {
 			return affineTerm;
 		}
-		return new AffineTerm(affineTerm, factor.inverse());
+		return AffineTerm.mul(affineTerm, factor.inverse());
 	}
 }

@@ -142,7 +142,7 @@ public class AffineRelation {
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");
 		}
-		final AffineTerm difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+		final AffineTerm difference = AffineTerm.constructSum(affineLhs, AffineTerm.mul(affineRhs, Rational.MONE));
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
 				&& SmtSortUtils.isIntSort(difference.getSort())) {
 			if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
@@ -158,13 +158,13 @@ public class AffineRelation {
 				case LESS:
 					// increment affine term by one
 					mRelationSymbol = RelationSymbol.LEQ;
-					mAffineTerm = new AffineTerm(difference,
+					mAffineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
 					mRelationSymbol = RelationSymbol.GEQ;
-					mAffineTerm = new AffineTerm(difference,
+					mAffineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 
 					break;
@@ -184,13 +184,13 @@ public class AffineRelation {
 				case GEQ:
 					// increment affine term by one
 					mRelationSymbol = RelationSymbol.GREATER;
-					mAffineTerm = new AffineTerm(difference,
+					mAffineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
 					mRelationSymbol = RelationSymbol.LESS;
-					mAffineTerm = new AffineTerm(difference,
+					mAffineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
@@ -499,7 +499,7 @@ public class AffineRelation {
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			return null;
 		}
-		final AffineTerm difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+		final AffineTerm difference = AffineTerm.constructSum(affineLhs, AffineTerm.mul(affineRhs, Rational.MONE));
 		final AffineTerm affineTerm;
 		final RelationSymbol relationSymbol;
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
@@ -517,13 +517,13 @@ public class AffineRelation {
 				case LESS:
 					// increment affine term by one
 					relationSymbol = RelationSymbol.LEQ;
-					affineTerm = new AffineTerm(difference,
+					affineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
 					relationSymbol = RelationSymbol.GEQ;
-					affineTerm = new AffineTerm(difference,
+					affineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
@@ -542,13 +542,13 @@ public class AffineRelation {
 				case GEQ:
 					// increment affine term by one
 					relationSymbol = RelationSymbol.GREATER;
-					affineTerm = new AffineTerm(difference,
+					affineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
 					relationSymbol = RelationSymbol.LESS;
-					affineTerm = new AffineTerm(difference,
+					affineTerm = AffineTerm.constructSum(difference,
 							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:

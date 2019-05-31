@@ -103,7 +103,7 @@ public class AffineTermTransformer extends TermTransformer {
 		// TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
 		if (mIsAffineVariable.test(term)) {
-			final AffineTerm result = new AffineTerm(term);
+			final AffineTerm result = AffineTerm.constructVariable(term);
 			setResult(result);
 			return;
 		}
@@ -248,7 +248,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Construct an {@link AffineTerm} that is the sum of all inputs.
 	 */
 	private static AffineTerm add(final AffineTerm[] affineArgs) {
-		final AffineTerm result = new AffineTerm(affineArgs);
+		final AffineTerm result = AffineTerm.constructSum(affineArgs);
 		return result;
 	}
 
@@ -256,7 +256,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Construct negation (unary minus).
 	 */
 	private static AffineTerm negate(final AffineTerm affineTerm) {
-		return new AffineTerm(affineTerm, Rational.MONE);
+		return AffineTerm.mul(affineTerm, Rational.MONE);
 	}
 
 	/**
@@ -271,7 +271,7 @@ public class AffineTermTransformer extends TermTransformer {
 		// negate all arguments but the first (at position 0)
 		argumentsForSum[0] = input[0];
 		for (int i = 1; i < argumentsForSum.length; i++) {
-			argumentsForSum[i] = new AffineTerm(input[i], Rational.MONE);
+			argumentsForSum[i] = AffineTerm.mul(input[i], Rational.MONE);
 		}
 		// construct the sum
 		return add(argumentsForSum);
@@ -300,7 +300,7 @@ public class AffineTermTransformer extends TermTransformer {
 		if (nonLiteralArgument == null) {
 			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
-			result = new AffineTerm(nonLiteralArgument, multiplier);
+			result = AffineTerm.mul(nonLiteralArgument, multiplier);
 		}
 		return result;
 	}
@@ -338,7 +338,7 @@ public class AffineTermTransformer extends TermTransformer {
 		if (affineTerm == null) {
 			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
-			result = new AffineTerm(affineTerm, multiplier);
+			result = AffineTerm.mul(affineTerm, multiplier);
 		}
 		return result;
 	}
@@ -383,7 +383,7 @@ public class AffineTermTransformer extends TermTransformer {
 			final AffineTerm realTerm = AffineTerm.constructConstant(term.getSort(), intTerm.getConstant());
 			result = realTerm;
 		} else {
-			result = new AffineTerm(term);
+			result = AffineTerm.constructVariable(term);
 		}
 		return result;
 	}

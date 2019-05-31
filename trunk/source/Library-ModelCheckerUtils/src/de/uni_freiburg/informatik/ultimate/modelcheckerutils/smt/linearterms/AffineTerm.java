@@ -182,6 +182,33 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		return PolynomialTermUtils.constructSum(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor, summands);
 	}
 
+	/**
+	 * @returns AffineTerm that represents the product of affineTerm and multiplier.
+	 */
+	public static AffineTerm mul(final AffineTerm affineTerm, final Rational multiplier) {
+		final Sort sort;
+		final Rational constant;
+		final Map<Term, Rational> variable2Coefficient;
+		if (multiplier.equals(Rational.ZERO)) {
+			sort = affineTerm.getSort();
+			constant = Rational.ZERO;
+			variable2Coefficient = Collections.emptyMap();
+		} else {
+			variable2Coefficient = new HashMap<>();
+			sort = affineTerm.getSort();
+			if (SmtSortUtils.isBitvecSort(sort)) {
+				constant = PolynomialTermUtils.bringValueInRange(affineTerm.mConstant.mul(multiplier), sort);
+			} else {
+				assert sort.isNumericSort();
+				constant = affineTerm.mConstant.mul(multiplier);
+			}
+			for (final Map.Entry<Term, Rational> summand : affineTerm.mVariable2Coefficient.entrySet()) {
+				variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+			}
+		}
+		return new AffineTerm(sort, constant, variable2Coefficient);
+	}
+
 	@Deprecated
 	static AffineTerm construct(final Sort sort, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
 		return new AffineTerm(sort, constant, variables2coeffcient);
@@ -198,22 +225,19 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	}
 
 	/**
-	 * AffineTerm that has sort s and represents a Term of the given
-	 * {@link Rational} value.
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the
+	 *          given {@link Rational} value.
 	 */
 	public static AffineTerm constructConstant(final Sort s, final Rational constant) {
 		return new AffineTerm(s, constant, Collections.emptyMap());
 	}
 
 	/**
-	 * {@linkAffineTerm} that consists of the single variable that is represented by
+	 * {@link AffineTerm} that consists of the single variable that is represented by
 	 * the {@link Term} t.
 	 */
-	public AffineTerm(final Term t) {
-		super(0);
-		mSort = t.getSort();
-		mConstant = Rational.ZERO;
-		mVariable2Coefficient = Collections.singletonMap(t, Rational.ONE);
+	public static AffineTerm constructVariable(final Term t) {
+		return new AffineTerm(t.getSort(), Rational.ZERO, Collections.singletonMap(t, Rational.ONE));
 	}
 
 	/**
@@ -263,67 +287,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		}
 	}
 
-	/**
-	 * AffineTerm that represents the sum of affineTerms.
-	 */
-	public AffineTerm(final AffineTerm... affineTerms) {
-		super(0);
-		mSort = affineTerms[0].getSort();
-		mVariable2Coefficient = new HashMap<>();
-		Rational constant = Rational.ZERO;
-		for (final AffineTerm affineTerm : affineTerms) {
-			for (final Map.Entry<Term, Rational> summand : affineTerm.mVariable2Coefficient.entrySet()) {
-				assert summand.getKey().getSort() == mSort : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
-						+ mSort;
-				final Rational coeff = mVariable2Coefficient.get(summand.getKey());
-				if (coeff == null) {
-					mVariable2Coefficient.put(summand.getKey(), summand.getValue());
-				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(mSort)) {
-						newCoeff = PolynomialTermUtils.bringValueInRange(coeff.add(summand.getValue()), mSort);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
-					if (newCoeff.equals(Rational.ZERO)) {
-						mVariable2Coefficient.remove(summand.getKey());
-					} else {
-						mVariable2Coefficient.put(summand.getKey(), newCoeff);
-					}
-				}
-			}
-			if (SmtSortUtils.isBitvecSort(mSort)) {
-				constant = PolynomialTermUtils.bringValueInRange(constant.add(affineTerm.mConstant), mSort);
-			} else {
-				constant = constant.add(affineTerm.mConstant);
-			}
-		}
-		mConstant = constant;
-	}
 
-	/**
-	 * AffineTerm that represents the product of affineTerm and multiplier.
-	 */
-	public AffineTerm(final AffineTerm affineTerm, final Rational multiplier) {
-		super(0);
-		if (multiplier.equals(Rational.ZERO)) {
-			mSort = affineTerm.getSort();
-			mConstant = Rational.ZERO;
-			mVariable2Coefficient = Collections.emptyMap();
-		} else {
-			mVariable2Coefficient = new HashMap<>();
-			mSort = affineTerm.getSort();
-			if (SmtSortUtils.isBitvecSort(mSort)) {
-				mConstant = PolynomialTermUtils.bringValueInRange(affineTerm.mConstant.mul(multiplier), mSort);
-			} else {
-				assert mSort.isNumericSort();
-				mConstant = affineTerm.mConstant.mul(multiplier);
-			}
-			for (final Map.Entry<Term, Rational> summand : affineTerm.mVariable2Coefficient.entrySet()) {
-				mVariable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
-			}
-		}
-	}
 
 
 
