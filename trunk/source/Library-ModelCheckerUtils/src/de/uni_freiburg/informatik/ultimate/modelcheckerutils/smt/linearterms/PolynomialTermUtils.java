@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -72,24 +73,24 @@ public class PolynomialTermUtils {
 	/**
 	 * Generalized builder for sums of {@link AffineTerm}s and
 	 * {@link PolynomialTerm}s. The type paramter T refers either to
-	 * {@link AffineTerm} or {@link PolynomialTerm}. The type paramter V is a
+	 * {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a
 	 * {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
 	 * {@link PolynomialTerm}s.
 	 *
 	 * @param term2map
-	 *            {@link Function} that returns for a given T the Map<V,Rational>
-	 *            map. (TODO: maybe we should make this map available via a package
-	 *            private getter)
+	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
+	 *            map.
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, V> T constructSum(final Function<IPolynomialTerm, Map<V, Rational>> term2map,
-			final GeneralizedConstructor<V, T> constructor, final IPolynomialTerm... summands) {
+	static <T extends IPolynomialTerm, MNL extends Term> T constructSum(
+			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();
-		final Map<V, Rational> variable2Coefficient = new HashMap<>();
+		final Map<MNL, Rational> variable2Coefficient = new HashMap<>();
 		Rational constant = Rational.ZERO;
 		for (final IPolynomialTerm term : summands) {
-			for (final Map.Entry<V, Rational> summand : term2map.apply(term).entrySet()) {
+			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				// assert summand.getKey().getSort() == mSort : "Sort mismatch: " +
 				// summand.getKey().getSort() + " vs. "
 				// + mSort;
@@ -114,6 +115,45 @@ public class PolynomialTermUtils {
 				constant = bringValueInRange(constant.add(term.getConstant()), sort);
 			} else {
 				constant = constant.add(term.getConstant());
+			}
+		}
+		return constructor.apply(sort, constant, variable2Coefficient);
+	}
+
+	/**
+	 * Generalized builder for multiplication of a constant and either an
+	 * {@link AffineTerm}s or a {@link PolynomialTerm}s. The type paramter T refers
+	 * either to {@link AffineTerm} or {@link PolynomialTerm}. The type paramter MNL
+	 * is a {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
+	 * {@link PolynomialTerm}s.
+	 *
+	 * @param term2map
+	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
+	 *            map.
+	 * @param constructor
+	 *            Methods that constructs the term of type T.
+	 */
+	static <T extends IPolynomialTerm, MNL extends Term> T constructMul(
+			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm term, final Rational multiplier) {
+		final Sort sort;
+		final Rational constant;
+		final Map<MNL, Rational> variable2Coefficient;
+		if (multiplier.equals(Rational.ZERO)) {
+			sort = term.getSort();
+			constant = Rational.ZERO;
+			variable2Coefficient = Collections.emptyMap();
+		} else {
+			variable2Coefficient = new HashMap<>();
+			sort = term.getSort();
+			if (SmtSortUtils.isBitvecSort(sort)) {
+				constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
+			} else {
+				assert sort.isNumericSort();
+				constant = term.getConstant().mul(multiplier);
+			}
+			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
+				variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 			}
 		}
 		return constructor.apply(sort, constant, variable2Coefficient);

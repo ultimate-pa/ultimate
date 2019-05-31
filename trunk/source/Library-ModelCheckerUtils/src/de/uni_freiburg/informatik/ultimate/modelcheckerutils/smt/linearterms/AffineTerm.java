@@ -177,37 +177,6 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 
 	/*======================= Until here ==================*/
 
-	static AffineTerm constructSum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
-		return PolynomialTermUtils.constructSum(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor, summands);
-	}
-
-	/**
-	 * @returns AffineTerm that represents the product of affineTerm and multiplier.
-	 */
-	public static AffineTerm mul(final AffineTerm affineTerm, final Rational multiplier) {
-		final Sort sort;
-		final Rational constant;
-		final Map<Term, Rational> variable2Coefficient;
-		if (multiplier.equals(Rational.ZERO)) {
-			sort = affineTerm.getSort();
-			constant = Rational.ZERO;
-			variable2Coefficient = Collections.emptyMap();
-		} else {
-			variable2Coefficient = new HashMap<>();
-			sort = affineTerm.getSort();
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = PolynomialTermUtils.bringValueInRange(affineTerm.mConstant.mul(multiplier), sort);
-			} else {
-				assert sort.isNumericSort();
-				constant = affineTerm.mConstant.mul(multiplier);
-			}
-			for (final Map.Entry<Term, Rational> summand : affineTerm.mVariable2Coefficient.entrySet()) {
-				variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
-			}
-		}
-		return new AffineTerm(sort, constant, variable2Coefficient);
-	}
 
 	@Deprecated
 	static AffineTerm construct(final Sort sort, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
@@ -240,11 +209,25 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		return new AffineTerm(t.getSort(), Rational.ZERO, Collections.singletonMap(t, Rational.ONE));
 	}
 
+	static AffineTerm sum(final IPolynomialTerm... summands) {
+		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
+		return PolynomialTermUtils.constructSum(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor, summands);
+	}
+
+	/**
+	 * @returns AffineTerm that represents the product of affineTerm and multiplier.
+	 */
+	public static AffineTerm mul(final IPolynomialTerm affineTerm, final Rational multiplier) {
+		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
+		return PolynomialTermUtils.constructMul(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor,
+				affineTerm, multiplier);
+	}
+
 	/**
 	 * AffineTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
 	 * array coefficients, and whose constant term is given by the Rational constant.
 	 */
-	public AffineTerm(final Sort s, final Term[] terms, final Rational[] coefficients, final Rational constant) {
+	private AffineTerm(final Sort s, final Term[] terms, final Rational[] coefficients, final Rational constant) {
 		super(0);
 		mSort = s;
 		mConstant = constant;

@@ -248,7 +248,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Construct an {@link AffineTerm} that is the sum of all inputs.
 	 */
 	private static AffineTerm add(final AffineTerm[] affineArgs) {
-		final AffineTerm result = AffineTerm.constructSum(affineArgs);
+		final AffineTerm result = AffineTerm.sum(affineArgs);
 		return result;
 	}
 
