@@ -1,0 +1,9 @@
+UltimateEliminatorPLUSYices
+
+Wrapper tool that eliminates quantifiers in SMT files and applies Yices.
+
+Max Barth, Daniel Dietsch, Leonard Fichtner, Matthias Heizmann [University of Freiburg, Germany]
+
+UltimateEliminator is part of Ultimate
+http://ultimate.informatik.uniMINUSfreiburg.de/
+to which many people contributed.
