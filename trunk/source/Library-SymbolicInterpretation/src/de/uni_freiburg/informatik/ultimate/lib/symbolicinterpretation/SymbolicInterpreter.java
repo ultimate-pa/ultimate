@@ -68,7 +68,7 @@ public class SymbolicInterpreter {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
-	private final WorklistWithInputs<String> mEnterCallWorklist;
+	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final PredicateUtils mPredicateUtils;
 
@@ -102,7 +102,7 @@ public class SymbolicInterpreter {
 		logStartingSifa(locationsOfInterest);
 		mIcfg = icfg;
 		mPredicateUtils = predicateUtils;
-		mEnterCallWorklist = new WorklistWithInputs<>(mPredicateUtils::merge);
+		mEnterCallWorklist = new FifoWithInputs<>(mPredicateUtils::merge);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
@@ -143,8 +143,8 @@ public class SymbolicInterpreter {
 
 	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initalInput) {
 		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLoisAndEnterCalls();
-		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist =
-				new WorklistWithInputs<>(mPredicateUtils::merge);
+		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
+				new FifoWithInputs<>(mPredicateUtils::merge);
 		worklist.add(resources.getRegexDag().getSource(), initalInput);
 		while (worklist.advance()) {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();

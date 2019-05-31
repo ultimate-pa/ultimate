@@ -44,7 +44,7 @@ public class IcfgInterpreter {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
-	private final WorklistWithInputs<String> mEnterCallWorklist;
+	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final PredicateUtils mPredicateUtils;
 	private final DagInterpreter mDagInterpreter;
@@ -79,7 +79,7 @@ public class IcfgInterpreter {
 		mDagInterpreter = dagInterpreter;
 		mDagInterpreter.setCallbacks(this::storePredicateIfLoi, this::registerEnterCall);
 		logStartingSifa(locationsOfInterest);
-		mEnterCallWorklist = new WorklistWithInputs<>(mPredicateUtils::merge);
+		mEnterCallWorklist = new FifoWithInputs<>(mPredicateUtils::merge);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();

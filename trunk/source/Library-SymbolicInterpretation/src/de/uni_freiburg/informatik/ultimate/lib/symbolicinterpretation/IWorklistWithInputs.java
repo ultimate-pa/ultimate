@@ -26,39 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.BiFunction;
-
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-
 /**
- * FIFO queue which saves pairs of generic entries (called <i>work</i>) and @link {@link IPredicate} (called input).
- * Work entries can be in queue at most once. When adding an already queued work entry again (with a possible
- * different input) the old and the new input are merged.
+ * Worklist which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
+ * The order in which items are inserted into the queue is up to each class implementing this interface.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <W> Type of the work entries
+ * @param <I> Type of the input entries
  */
-public class WorklistWithInputs<W> {
+public interface IWorklistWithInputs<W, I> {
 
-	private final BiFunction<IPredicate, IPredicate, IPredicate> mMergeFunction;
-	private final Map<W, IPredicate> mWorklist = new LinkedHashMap<>();
-	private Entry<W, IPredicate> mRemovedEntry;
-
-	/**
-	 * Creates an empty worklist.
-	 * 
-	 * @param mergeFunction Function to be used in {@link #add(Object, IPredicate)} to merge the old and new input
-	 *                      when the same work entry is added again.
-	 */
-	public WorklistWithInputs(final BiFunction<IPredicate, IPredicate, IPredicate> mergeFunction) {
-		mMergeFunction = mergeFunction;
-	}
-	
 	/**
 	 * Adds or updates an entry.
 	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
@@ -67,50 +45,26 @@ public class WorklistWithInputs<W> {
 	 * @param work Work entry
 	 * @param addInput Input for work entry
 	 */
-	public void add(final W work, final IPredicate addInput) {
-		mWorklist.merge(work, addInput, mMergeFunction);
-	}
+	void add(W work, I addInput);
 
 	/**
-	 * If this queue contains entries, removes the head (oldest entry) from this queue.
+	 * If this queue contains entries, removes the next entry.
 	 * The removed entry can be queried with {@link #getWork()} and {@link #getInput()}.
+	 * <p>
+	 * Calling advance on an empty worklist has no effect.
 	 * 
-	 * @return The queue contained at least one element, the head was removed.
+	 * @return The queue contained at least one entry, the next entry was removed.
 	 */
-	public boolean advance() {
-		if (mWorklist.isEmpty()) {
-			return false;
-		}
-		final Iterator<Entry<W, IPredicate>> iterator = mWorklist.entrySet().iterator();
-		mRemovedEntry = iterator.next();
-		iterator.remove();
-		return true;
-	}
-
-	private void ensureAdvanced() {
-		if (mRemovedEntry == null) {
-			throw new IllegalStateException("Never called advance() on this worklist.");
-		}
-	}
+	boolean advance();
 
 	/**
 	 * @see #advance()
 	 */
-	public W getWork() {
-		ensureAdvanced();
-		return mRemovedEntry.getKey();
-	}
+	W getWork();
 
 	/**
 	 * @see #advance()
 	 */
-	public IPredicate getInput() {
-		ensureAdvanced();
-		return mRemovedEntry.getValue();
-	}
+	I getInput();
 
-	@Override
-	public String toString() {
-		return mWorklist.toString();
-	}
 }

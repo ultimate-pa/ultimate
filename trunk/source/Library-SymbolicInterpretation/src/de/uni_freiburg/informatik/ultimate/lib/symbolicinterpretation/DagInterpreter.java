@@ -75,8 +75,9 @@ public class DagInterpreter {
 
 	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag, final OverlaySuccessors overlaySuccessors,
 			final IPredicate initalInput) {
-		final WorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist =
-				new WorklistWithInputs<>(mPredicateUtils::merge);
+		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
+				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlaySuccessors),
+						mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);
 		while (worklist.advance()) {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
@@ -86,14 +87,20 @@ public class DagInterpreter {
 		// TODO compute return value for final sink node. Required in FixpointLoopSummarizer
 	}
 
+	private static int prioritizeNonJoinNodes(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,
+			final OverlaySuccessors overlaySuccessors) {
+		// TODO this could be shortened to ...
+		//      Math.min(node.getIncomingNodes().size(), 1)
+		// ... if overlays were closed under the predecessor function getIncomingNodes().
+		// At the moment the should be closed, but will they also be closed in the future?
+		return node.getIncomingNodes().stream()
+				.anyMatch(pred -> !overlaySuccessors.getImage(pred).isEmpty()) ? 1 : 0;
+	}
+
 	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {
 		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
 		if (regex instanceof Epsilon) {
-			// TODO change traversal order such that join nodes wait for all their predecessors.
-			// In the following example we have to interpret the transition 2-4 twice when using BFS.
-			//  ,1-3-5-6-⹁
-			// 0          2-4
-			//  `--------´
+			// nothing to do
 			return input;
 		} else if (regex instanceof Literal) {
 			return interpretTransition(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
