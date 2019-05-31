@@ -177,11 +177,12 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 
 	/*======================= Until here ==================*/
 
-	static AffineTerm sum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::construct;
+	static AffineTerm constructSum(final IPolynomialTerm... summands) {
+		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
 		return PolynomialTermUtils.constructSum(x -> ((AffineTerm) x).getVariable2Coefficient(), constructor, summands);
 	}
 
+	@Deprecated
 	static AffineTerm construct(final Sort sort, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
 		return new AffineTerm(sort, constant, variables2coeffcient);
 	}
@@ -196,15 +197,12 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		mVariable2Coefficient = variables2coeffcient;
 	}
 
-
 	/**
-	 * AffineTerm that represents the Rational r of sort s.
+	 * AffineTerm that has sort s and represents a Term of the given
+	 * {@link Rational} value.
 	 */
-	public AffineTerm(final Sort s, final Rational r) {
-		super(0);
-		mSort = s;
-		mConstant = r;
-		mVariable2Coefficient = Collections.emptyMap();
+	public static AffineTerm constructConstant(final Sort s, final Rational constant) {
+		return new AffineTerm(s, constant, Collections.emptyMap());
 	}
 
 	/**

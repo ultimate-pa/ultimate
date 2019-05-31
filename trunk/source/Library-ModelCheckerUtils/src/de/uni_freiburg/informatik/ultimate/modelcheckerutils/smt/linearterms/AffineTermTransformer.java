@@ -88,7 +88,7 @@ public class AffineTermTransformer extends TermTransformer {
 		// is the result (i.e., it should not descend to subformulas).
 		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
 		if (valueOfLiteral != null) {
-			final AffineTerm result = new AffineTerm(term.getSort(), valueOfLiteral);
+			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
 		}
@@ -298,7 +298,7 @@ public class AffineTermTransformer extends TermTransformer {
 			}
 		}
 		if (nonLiteralArgument == null) {
-			result = new AffineTerm(sort, multiplier);
+			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
 			result = new AffineTerm(nonLiteralArgument, multiplier);
 		}
@@ -336,7 +336,7 @@ public class AffineTermTransformer extends TermTransformer {
 			}
 		}
 		if (affineTerm == null) {
-			result = new AffineTerm(sort, multiplier);
+			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
 			result = new AffineTerm(affineTerm, multiplier);
 		}
@@ -355,7 +355,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 */
 	private static AffineTerm convertConstantNumericTerm(final ConstantTerm constTerm) {
 		final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
-		final AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
+		final AffineTerm result = AffineTerm.constructConstant(constTerm.getSort(), rational);
 		return result;
 	}
 
@@ -380,7 +380,7 @@ public class AffineTermTransformer extends TermTransformer {
 				throw new UnsupportedOperationException();
 			}
 			final AffineTerm intTerm = convertConstantNumericTerm(constant);
-			final AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
+			final AffineTerm realTerm = AffineTerm.constructConstant(term.getSort(), intTerm.getConstant());
 			result = realTerm;
 		} else {
 			result = new AffineTerm(term);

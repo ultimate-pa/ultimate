@@ -69,7 +69,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// is the result (i.e., it should not descend to subformulas).
 		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
 		if (valueOfLiteral != null) {
-			final AffineTerm result = new AffineTerm(term.getSort(), valueOfLiteral);
+			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
 		}
@@ -430,7 +430,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(sort);
 		if (polynomialArgs.length == 0) {
-			return new AffineTerm(sort, Rational.ONE);
+			return AffineTerm.constructConstant(sort, Rational.ONE);
 		}else if (polynomialArgs.length == 1) {
 			return polynomialArgs[0];
 		}
@@ -488,7 +488,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			}
 		}
 		if (affineTerm == null) {
-			result = new AffineTerm(sort, multiplier);
+			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
 			result = new AffineTerm((AffineTerm) affineTerm, multiplier);
 		}

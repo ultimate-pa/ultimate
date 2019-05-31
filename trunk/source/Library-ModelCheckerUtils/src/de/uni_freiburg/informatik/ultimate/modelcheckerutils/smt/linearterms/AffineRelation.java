@@ -158,12 +158,14 @@ public class AffineRelation {
 				case LESS:
 					// increment affine term by one
 					mRelationSymbol = RelationSymbol.LEQ;
-					mAffineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					mAffineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
 					mRelationSymbol = RelationSymbol.GEQ;
-					mAffineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
+					mAffineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 
 					break;
 				default:
@@ -182,12 +184,14 @@ public class AffineRelation {
 				case GEQ:
 					// increment affine term by one
 					mRelationSymbol = RelationSymbol.GREATER;
-					mAffineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					mAffineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
 					mRelationSymbol = RelationSymbol.LESS;
-					mAffineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
+					mAffineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
@@ -513,13 +517,14 @@ public class AffineRelation {
 				case LESS:
 					// increment affine term by one
 					relationSymbol = RelationSymbol.LEQ;
-					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					affineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
 					relationSymbol = RelationSymbol.GEQ;
-					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
-
+					affineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
@@ -537,12 +542,14 @@ public class AffineRelation {
 				case GEQ:
 					// increment affine term by one
 					relationSymbol = RelationSymbol.GREATER;
-					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.ONE));
+					affineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
 					relationSymbol = RelationSymbol.LESS;
-					affineTerm = new AffineTerm(difference, new AffineTerm(difference.getSort(), Rational.MONE));
+					affineTerm = new AffineTerm(difference,
+							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
