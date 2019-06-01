@@ -1961,6 +1961,12 @@ public final class SmtUtils {
 		return script.term(name);
 	}
 
+	public static Term constructNamedTerm(final Script script, final Term term, final String name) {
+		final Annotation annot = new Annotation(":named", name);
+		final Term result = script.annotate(term, annot);
+		return result;
+	}
+
 	/**
 	 * Write a line in the SMT script.
 	 */
