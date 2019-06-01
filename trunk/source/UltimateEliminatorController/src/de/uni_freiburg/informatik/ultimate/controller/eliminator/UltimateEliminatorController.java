@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ExceptionThrowingSMTLIB2Parser;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -100,7 +101,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		// start parse arguments
 		final SmtInterpolLogProxyWrapper smtinterpolLogger = new SmtInterpolLogProxyWrapper(mLogger);
 		final OptionMap options = new OptionMap(smtinterpolLogger, true);
-		IParser parser = new SMTLIB2Parser();
+		options.set(":continue-on-error", false);
+		IParser parser = new ExceptionThrowingSMTLIB2Parser();
 
 		int paramctr = 0;
 		String settingsFile = null;
