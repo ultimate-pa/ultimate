@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -161,6 +164,19 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
+		final NamedTermWrapper ntw = new NamedTermWrapper(term);
+		if (ntw.isIsNamed()) {
+			// we alredy removed quantifiers
+			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
+			return mSmtSolver.assertTerm(term);
+		} else {
+			final Term hopfullyQuantifierFree = makeQuantifierFree(ntw.getUnnamedTerm());
+			mTreeSizeOfAssertedTerms += new DAGSize().treesize(hopfullyQuantifierFree);
+			return mSmtSolver.assertTerm(hopfullyQuantifierFree);
+		}
+	}
+
+	private Term makeQuantifierFree(final Term term) {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
@@ -177,8 +193,7 @@ public class UltimateEliminator implements Script {
 			throw new AssertionError("Result of partial quantifier elimination is not quantifier-free but an "
 					+ qs.buildQuantifierSequenceStringRepresentation() + " term.");
 		}
-		mTreeSizeOfAssertedTerms += new DAGSize().treesize(lessQuantifier);
-		return mSmtSolver.assertTerm(lessQuantifier);
+		return lessQuantifier;
 	}
 
 	@Override
@@ -220,7 +235,17 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		return mSmtSolver.getUnsatCore();
+		if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
+			final QuantifierOverapproximatingSolver qos = (QuantifierOverapproximatingSolver) mSmtSolver;
+			assert qos.isInUsatCoreMode();
+			final Term[] uc = mSmtSolver.getUnsatCore();
+			final Set<Term> result = new HashSet<>();
+			result.addAll(qos.getAdditionalUnsatCoreContent());
+			result.addAll(Arrays.asList(uc));
+			return result.toArray(new Term[result.size()]);
+		} else {
+			throw new AssertionError("Unsat-core only available in combination with QuantifierOverapproximatingSolver");
+		}
 	}
 
 	@Override
@@ -297,7 +322,12 @@ public class UltimateEliminator implements Script {
 
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-		return mSmtSolver.annotate(t, annotations);
+		if (Arrays.stream(annotations).anyMatch(x -> x.getKey().equals(":named"))) {
+			final Term hopfullyQuantifierFree = makeQuantifierFree(t);
+			return mSmtSolver.annotate(hopfullyQuantifierFree, annotations);
+		} else {
+			return mSmtSolver.annotate(t, annotations);
+		}
 	}
 
 	@Override

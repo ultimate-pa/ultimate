@@ -28,16 +28,18 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -56,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.Unletter;
 
 /**
  * Wrapper for an SMT solver that makes sure that the solver does not have to
@@ -84,6 +85,8 @@ public class QuantifierOverapproximatingSolver implements Script {
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
 	private final Stack<Boolean> mOverapproxiamtionStack;
+	private boolean mInUsatCoreMode;
+	private Set<Term> mAdditionalUnsatCoreContent;
 
 	public QuantifierOverapproximatingSolver(final IUltimateServiceProvider services, final ILogger logger,
 			final Script script) {
@@ -107,6 +110,14 @@ public class QuantifierOverapproximatingSolver implements Script {
 
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
+		if (opt.equals(":produce-unsat-cores")) {
+			final Boolean b = (Boolean) value;
+			if (b) {
+				mInUsatCoreMode = true;
+				assert mAdditionalUnsatCoreContent == null;
+				mAdditionalUnsatCoreContent = new HashSet<>();
+			}
+		}
 		mSmtSolver.setOption(opt, value);
 	}
 
@@ -139,7 +150,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 	@Override
 	public void push(final int levels) throws SMTLIBException {
 		for (int i=0; i<levels; i++) {
-			mOverapproxiamtionStack.push(false);	
+			mOverapproxiamtionStack.push(false);
 		}
 		mSmtSolver.push(levels);
 	}
@@ -202,7 +213,7 @@ public class QuantifierOverapproximatingSolver implements Script {
 	}
 
 	@Override
-	public LBool assertTerm(Term term) throws SMTLIBException {
+	public LBool assertTerm(final Term term) throws SMTLIBException {
 		Term withoutLet = new FormulaUnLet().transform(term);
 		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
 			// there is an overapproxiamtion on the current level
@@ -228,6 +239,10 @@ public class QuantifierOverapproximatingSolver implements Script {
 		final LBool result = mSmtSolver.checkSat();
 		if (result.equals(LBool.SAT) && wasSomeAssertedTermOverapproximated()) {
 			return LBool.UNKNOWN;
+		}
+		if (mInUsatCoreMode && result.equals(LBool.UNSAT)) {
+			final Term[] uc = getUnsatCore();
+			mAdditionalUnsatCoreContent.addAll(Arrays.asList(uc));
 		}
 		return result;
 
@@ -410,5 +425,15 @@ public class QuantifierOverapproximatingSolver implements Script {
 	public QuotedObject echo(final QuotedObject msg) {
 		return mSmtSolver.echo(msg);
 	}
+
+	public boolean isInUsatCoreMode() {
+		return mInUsatCoreMode;
+	}
+
+	public Set<Term> getAdditionalUnsatCoreContent() {
+		return mAdditionalUnsatCoreContent;
+	}
+
+
 
 }
