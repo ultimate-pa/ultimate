@@ -85,6 +85,15 @@ public class QuantifierPusher extends TermTransformer {
 		CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
 	}
 
+	/**
+	 * If set to true we check after applying distributivity if we were able to
+	 * eliminate some quantified variables. If elimination failed for all
+	 * variables then we return the original term without applying
+	 * distributivity.
+	 *
+	 */
+	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -249,6 +258,9 @@ public class QuantifierPusher extends TermTransformer {
 						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
 							final Term correspondingFinite =
 									applyDistributivityAndPushOneStep(quantifier, eliminatees, dualFiniteParams, i);
+							if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
+								return correspondingFinite;
+							}
 							final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity,
 									mPqeTechniques).transform(correspondingFinite);
 							if (allStillQuantified(eliminatees, pushed)) {
