@@ -74,7 +74,7 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 			 * divisions where we have quantifiers but no algebraic datatypes
 			 * I commented all division with bitvectors and floats, because
 			 * I don't know if we want to participate in these divisions
-			 * 
+			 *
 			 * You can get the benchmarks in one .zip archive at the following URL
 			 * http://www.informatik.uni-freiburg.de/~heizmann/2019smtcomp/2019SmtcompQuantifierNonincremental.zip
 			 */
@@ -116,10 +116,10 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 	 *
 	 */
 	private static final String[] mSettings = {
-			"UltimateEliminator/z3.epf",
-			"UltimateEliminator/yices2.epf",
-			"UltimateEliminator/smtinterpol.epf",
-			"UltimateEliminator/mathsat.epf",
+			"UltimateEliminator/testing-z3.epf",
+			"UltimateEliminator/testing-yices2.epf",
+			"UltimateEliminator/testing-smtinterpol.epf",
+			"UltimateEliminator/testing-mathsat.epf",
 	};
 
 	private static final String[] mCToolchains = {
