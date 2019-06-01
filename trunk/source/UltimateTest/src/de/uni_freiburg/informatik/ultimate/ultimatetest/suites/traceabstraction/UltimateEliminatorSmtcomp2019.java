@@ -97,6 +97,7 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFNIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/uc", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 	};
 
 
