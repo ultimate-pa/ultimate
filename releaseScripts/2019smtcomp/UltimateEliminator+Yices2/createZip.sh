@@ -9,7 +9,7 @@ cp *LICENSE* StarExecArchive/Ultimate/
 cp starexec_description.txt StarExecArchive/
 cp starexec_run_* StarExecArchive/bin/
 cp ../../../trunk/examples/settings/UltimateEliminator/* StarExecArchive/
-cp -LR ../adds/yices-smt2 StarExecArchive/bin/
+cp -LR ../adds/yices-smt2 StarExecArchive/Ultimate/
 
 
 

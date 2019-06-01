@@ -10,7 +10,7 @@ cp starexec_description.txt StarExecArchive/
 cp starexec_run_* StarExecArchive/bin/
 cp ../../../trunk/examples/settings/UltimateEliminator/* StarExecArchive/
 
-cp -LR ../adds/mathsat StarExecArchive/bin/
+cp -LR ../adds/mathsat StarExecArchive/Ultimate
 
 
 cd StarExecArchive
