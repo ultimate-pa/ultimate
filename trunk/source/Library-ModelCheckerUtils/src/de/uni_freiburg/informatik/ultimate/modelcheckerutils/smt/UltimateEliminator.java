@@ -142,6 +142,10 @@ public class UltimateEliminator implements Script {
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
+		if (!QuantifierUtils.isQuantifierFree(definition)) {
+			throw new UnsupportedOperationException(
+					"Cannot handle define-fun with quantified definition " + definition);
+		}
 		mSmtSolver.defineFun(fun, params, resultSort, definition);
 	}
 
