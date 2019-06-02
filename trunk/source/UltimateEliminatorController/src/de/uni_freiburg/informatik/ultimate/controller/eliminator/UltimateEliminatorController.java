@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.controller.eliminator;
 
 import java.io.File;
-import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -262,12 +261,6 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			mLogger.info("Value of " + sysProp + " is " + value);
 		}
 
-	}
-
-	private void printParseException(final String[] args, final ParseException pex) {
-		mLogger.error(pex.getMessage());
-		printArgs(args);
-		mLogger.error("--");
 	}
 
 	private void printArgs(final String[] args) {
