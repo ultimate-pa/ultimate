@@ -118,7 +118,7 @@ public class ExternalUltimateCore {
 			logger = getLogger(core.getCoreLoggingService());
 
 			if (settingsFile != null) {
-				core.loadPreferences(settingsFile.getAbsolutePath());
+				core.loadPreferences(settingsFile.getAbsolutePath(), false);
 			}
 			mJob = getToolchainJob(core, mController, logger, inputFiles);
 			if (deadline > 0) {

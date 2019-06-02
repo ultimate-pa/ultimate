@@ -283,7 +283,7 @@ public class ServerController implements IController<RunDefinition> {
 				.request(Path.class, RootPath.newInstance(mCla.Settings.getValue().toPath(), "Settings", ".epf")).get();
 		try {
 			core.resetPreferences(false);
-			core.loadPreferences(settingsFile.toFile().getAbsolutePath());
+			core.loadPreferences(settingsFile.toFile().getAbsolutePath(), false);
 		} catch (final Exception e) {
 			throw new IllegalStateException("could not load settings", e);
 		}

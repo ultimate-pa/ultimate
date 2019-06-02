@@ -187,7 +187,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			core.resetPreferences(true);
 			setCoreLoggerToError();
 			if (settingsFile != null) {
-				core.loadPreferences(settingsFile);
+				core.loadPreferences(settingsFile, true);
 			}
 			mToolchain = core.createToolchainData();
 			setCoreLoggerToError();

@@ -251,7 +251,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			final ParsedParameter fullParams) throws ParseException, InvalidFileArgumentException {
 		core.resetPreferences(false);
 		if (fullParams.hasSettings()) {
-			core.loadPreferences(fullParams.getSettingsFile());
+			core.loadPreferences(fullParams.getSettingsFile(), false);
 		}
 		mToolchain = fullParams.createToolchainData();
 		fullParams.applyCliSettings(mToolchain.getServices());

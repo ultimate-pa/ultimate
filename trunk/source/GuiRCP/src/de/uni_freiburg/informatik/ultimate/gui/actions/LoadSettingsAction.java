@@ -60,7 +60,7 @@ public class LoadSettingsAction extends Action implements IWorkbenchAction {
 		fd.setFilterExtensions(new String[] { "*.epf", "*.*" });
 		fd.setFilterNames(new String[] { "Eclipse preference file (*.epf)", "All (*.*)" });
 		fd.setText("Load settings from...");
-		mCore.loadPreferences(fd.open());
+		mCore.loadPreferences(fd.open(), false);
 	}
 
 	@Override

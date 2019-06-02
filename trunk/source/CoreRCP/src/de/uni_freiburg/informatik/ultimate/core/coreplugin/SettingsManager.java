@@ -93,12 +93,14 @@ final class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(final ICore<RunDefinition> core, final String filename) {
+	void loadPreferencesFromFile(final ICore<RunDefinition> core, final String filename, final boolean silent) {
+		final Consumer<Object> infoLogger = silent ? a -> {
+		} : mLogger::info;
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
-			mLogger.info("Beginning loading settings from " + filename);
+			infoLogger.accept("Beginning loading settings from " + filename);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.info("Preferences different from defaults before loading file:");
+				infoLogger.accept("Preferences different from defaults before loading file:");
 				logPreferencesDifferentFromDefaults(core);
 			}
 
@@ -108,17 +110,19 @@ final class SettingsManager {
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 				} else {
-					mLogger.info("Loading preferences was successful");
+					infoLogger.accept("Loading preferences was successful");
 				}
-				mLogger.info("Preferences different from defaults after loading the file:");
-				logPreferencesDifferentFromDefaults(core);
+				infoLogger.accept("Preferences different from defaults after loading the file:");
+				if (!silent) {
+					logPreferencesDifferentFromDefaults(core);
+				}
 			} catch (IOException | CoreException e) {
 				mLogger.error("Could not load preferences: " + e.getMessage());
 			} finally {
 				mLogger.debug("--------------------------------------------------------------------------------");
 			}
 		} else {
-			mLogger.info("Loading settings from empty filename is not possible");
+			mLogger.warn("Loading settings from empty filename is not possible");
 		}
 	}
 

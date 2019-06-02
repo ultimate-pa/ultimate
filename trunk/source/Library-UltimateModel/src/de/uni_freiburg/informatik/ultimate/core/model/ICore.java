@@ -97,8 +97,9 @@ public interface ICore<T> {
 	 *
 	 * @param absolutePath
 	 *            An absolute path to a .epf settings file compatible with Ultimate's settings.
+	 * @param silent TODO
 	 */
-	void loadPreferences(String absolutePath);
+	void loadPreferences(String absolutePath, boolean silent);
 
 	/**
 	 * Reset all preferences to their default values.
