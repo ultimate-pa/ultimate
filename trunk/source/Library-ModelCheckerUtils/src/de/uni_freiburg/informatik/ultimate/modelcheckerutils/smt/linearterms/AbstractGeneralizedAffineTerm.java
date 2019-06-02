@@ -56,7 +56,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	/**
 	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
-	protected final Map<AVAR, Rational> mVariable2Coefficient;
+	protected final Map<AVAR, Rational> mAbstractVariable2Coefficient;
 	/**
 	 * Affine constant (the coefficient without variable).
 	 */
@@ -87,7 +87,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	public AbstractGeneralizedAffineTerm() {
 		super(0);
-		mVariable2Coefficient = null;
+		mAbstractVariable2Coefficient = null;
 		mConstant = null;
 		mSort = null;
 	}
@@ -100,7 +100,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		super(0);
 		mSort = s;
 		mConstant = constant;
-		mVariable2Coefficient = variables2coeffcient;
+		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
 
 
@@ -110,7 +110,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	@Override
 	public boolean isErrorTerm() {
-		if (mVariable2Coefficient == null) {
+		if (mAbstractVariable2Coefficient == null) {
 			assert mConstant == null;
 			assert mSort == null;
 			return true;
@@ -126,7 +126,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	@Override
 	public boolean isConstant() {
-		return mVariable2Coefficient.isEmpty();
+		return mAbstractVariable2Coefficient.isEmpty();
 	}
 
 	/**
@@ -134,7 +134,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	@Override
 	public boolean isZero() {
-		return mConstant.equals(Rational.ZERO) && mVariable2Coefficient.isEmpty();
+		return mConstant.equals(Rational.ZERO) && mAbstractVariable2Coefficient.isEmpty();
 	}
 
 	/**
@@ -160,23 +160,23 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 		switch (terms.length) {
 		case 0:
-			mVariable2Coefficient = Collections.emptyMap();
+			mAbstractVariable2Coefficient = Collections.emptyMap();
 			break;
 		case 1:
 			final AVAR variable = terms[0];
 			checkIfTermIsLegalVariable(variable);
 			if (coefficients[0].equals(Rational.ZERO)) {
-				mVariable2Coefficient = Collections.emptyMap();
+				mAbstractVariable2Coefficient = Collections.emptyMap();
 			} else {
-				mVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
+				mAbstractVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
 			}
 			break;
 		default:
-			mVariable2Coefficient = new HashMap<>();
+			mAbstractVariable2Coefficient = new HashMap<>();
 			for (int i = 0; i < terms.length; i++) {
 				checkIfTermIsLegalVariable(terms[i]);
 				if (!coefficients[i].equals(Rational.ZERO)) {
-					mVariable2Coefficient.put(terms[i], coefficients[i]);
+					mAbstractVariable2Coefficient.put(terms[i], coefficients[i]);
 				}
 			}
 			break;
@@ -201,7 +201,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 			return "auxilliaryErrorTerm";
 		}
 		final StringBuilder sb = new StringBuilder();
-		for (final Map.Entry<AVAR, Rational> entry : mVariable2Coefficient.entrySet()) {
+		for (final Map.Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			sb.append(entry.getValue().isNegative() ? " - " : " + ");
 			sb.append(entry.getValue().abs() + "*" + entry.getKey());
 		}
@@ -237,12 +237,12 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	public Term toTerm(final Script script) {
 		Term[] summands;
 		if (mConstant.equals(Rational.ZERO)) {
-			summands = new Term[mVariable2Coefficient.size()];
+			summands = new Term[mAbstractVariable2Coefficient.size()];
 		} else {
-			summands = new Term[mVariable2Coefficient.size() + 1];
+			summands = new Term[mAbstractVariable2Coefficient.size() + 1];
 		}
 		int i = 0;
-		for (final Map.Entry<AVAR, Rational> entry : mVariable2Coefficient.entrySet()) {
+		for (final Map.Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal coefficient in AffineTerm";
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = abstractVariableToTerm(script, entry.getKey());
@@ -276,7 +276,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		int result = super.hashCode();
 		result = prime * result + ((mConstant == null) ? 0 : mConstant.hashCode());
 		result = prime * result + ((mSort == null) ? 0 : mSort.hashCode());
-		result = prime * result + ((mVariable2Coefficient == null) ? 0 : mVariable2Coefficient.hashCode());
+		result = prime * result + ((mAbstractVariable2Coefficient == null) ? 0 : mAbstractVariable2Coefficient.hashCode());
 		return result;
 	}
 
@@ -299,10 +299,10 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 				return false;
 		} else if (!mSort.equals(other.mSort))
 			return false;
-		if (mVariable2Coefficient == null) {
-			if (other.mVariable2Coefficient != null)
+		if (mAbstractVariable2Coefficient == null) {
+			if (other.mAbstractVariable2Coefficient != null)
 				return false;
-		} else if (!mVariable2Coefficient.equals(other.mVariable2Coefficient))
+		} else if (!mAbstractVariable2Coefficient.equals(other.mAbstractVariable2Coefficient))
 			return false;
 		return true;
 	}

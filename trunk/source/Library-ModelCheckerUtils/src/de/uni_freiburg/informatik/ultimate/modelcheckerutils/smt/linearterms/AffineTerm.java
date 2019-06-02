@@ -213,7 +213,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
 	public Map<Term, Rational> getVariable2Coefficient() {
-		return Collections.unmodifiableMap(mVariable2Coefficient);
+		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
 
@@ -223,11 +223,11 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	 */
 	@Deprecated
 	public IPolynomialTerm toPolynomialTerm() {
-		final int arraylength = mVariable2Coefficient.entrySet().size();
+		final int arraylength = mAbstractVariable2Coefficient.entrySet().size();
 		final Rational[] coefficients = new Rational[arraylength];
 		final Term[] terms = new Term[arraylength];
 		int index = 0;
-		for (final Map.Entry<Term, Rational> entry : mVariable2Coefficient.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			terms[index] = entry.getKey();
 			coefficients[index] = entry.getValue();
 			index++;
@@ -259,7 +259,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
-		return mVariable2Coefficient.entrySet().stream()
+		return mAbstractVariable2Coefficient.entrySet().stream()
 				.collect(Collectors.toMap(x -> new Monomial(x.getKey(), Rational.ONE), Entry::getValue));
 	}
 
