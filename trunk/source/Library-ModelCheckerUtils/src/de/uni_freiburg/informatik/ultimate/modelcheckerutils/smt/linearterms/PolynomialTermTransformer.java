@@ -69,7 +69,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// is the result (i.e., it should not descend to subformulas).
 		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
 		if (valueOfLiteral != null) {
-			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
+			final AbstractGeneralizedAffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
 		}
@@ -84,7 +84,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
 		if (mIsPolynomialVariable.test(term)) {
-			final AffineTerm result = AffineTerm.constructVariable(term);
+			final AbstractGeneralizedAffineTerm result = AffineTerm.constructVariable(term);
 			setResult(result);
 			return;
 		}
@@ -211,7 +211,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			setResult((PolynomialTerm) poly);
 			return;
 		}else if(poly instanceof AffineTerm) {
-			setResult((AffineTerm) poly);
+			setResult((AbstractGeneralizedAffineTerm) poly);
 			return;
 		}
 		throw new UnsupportedOperationException("This IPolynomialTerm is instance of no known class.");
@@ -246,10 +246,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 		if (productWillBePolynomial(poly1, poly2)) {
 			return PolynomialTerm.polynomialTimesPolynomial(poly1, poly2);
-		}else {
-			return AffineTerm.construct(poly1.getSort(),
-								  poly1.getConstant().mul(poly2.getConstant()),
-								  calculateProductMapOfAffineTerms(poly1, poly2));
+		} else {
+			return new AffineTerm(poly1.getSort(), poly1.getConstant().mul(poly2.getConstant()),
+					calculateProductMapOfAffineTerms(poly1, poly2));
 		}
 	}
 
@@ -308,7 +307,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		if (someTermIsPolynomial(polynomialArgs)) {
 			return PolynomialTerm.polynomialSum(polynomialArgs);
 		}else {
-			return AffineTerm.construct(polynomialArgs[0].getSort(),
+			return new AffineTerm(polynomialArgs[0].getSort(),
 								  calculateSumConstant(polynomialArgs),
 								  calculateSumMapOfAffineTerms(polynomialArgs));
 		}
@@ -396,7 +395,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 */
 	private static IPolynomialTerm negate(final IPolynomialTerm polynomialTerm) {
 		if (polynomialTerm.isAffine()) {
-			return AffineTerm.mul((AffineTerm) polynomialTerm, Rational.MONE);
+			return AffineTerm.mul(polynomialTerm, Rational.MONE);
 		}
 		return PolynomialTerm.polynomialTimesRational(polynomialTerm, Rational.MONE);
 	}
@@ -490,7 +489,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		if (affineTerm == null) {
 			result = AffineTerm.constructConstant(sort, multiplier);
 		} else {
-			result = AffineTerm.mul((AffineTerm) affineTerm, multiplier);
+			result = AffineTerm.mul(affineTerm, multiplier);
 		}
 		return result;
 	}

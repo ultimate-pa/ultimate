@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,22 +71,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Pol
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Leike
  */
-public class AffineTerm extends Term implements IPolynomialTerm {
-	/**
-	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
-	 */
-	private final Map<Term, Rational> mVariable2Coefficient;
+public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements IPolynomialTerm {
 
 	/**
-	 * Affine constant (the coefficient without variable).
+	 * {@inheritDoc}
 	 */
-	private final Rational mConstant;
-
-	/**
-	 * Sort of this term. E.g, "Int" or "Real".
-	 */
-	private final Sort mSort;
-
+	public AffineTerm() {
+		super();
+	}
 
 	/*======================== This is new ===================*/
 
@@ -115,20 +106,6 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 			throw new UnsupportedOperationException("The outcome of this product is not affine!");
 		}
 		return shrinkMap(map);
-	}
-
-	/**
-	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
-	 */
-	private static Map<Term, Rational> shrinkMap(final Map<Term, Rational> map){
-		if (map.size() == 0) {
-			return Collections.emptyMap();
-		}
-		else if (map.size() == 1) {
-			final Entry<Term, Rational> entry = map.entrySet().iterator().next();
-			return Collections.singletonMap(entry.getKey(), entry.getValue());
-		}
-		return map;
 	}
 
 	/**
@@ -178,19 +155,18 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	/*======================= Until here ==================*/
 
 
-	@Deprecated
-	static AffineTerm construct(final Sort sort, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
-		return new AffineTerm(sort, constant, variables2coeffcient);
-	}
-
 	/**
 	 * Constructor to be used of all static methods that construct an affineTerm.
 	 */
-	private AffineTerm(final Sort s, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		mVariable2Coefficient = variables2coeffcient;
+	AffineTerm(final Sort s, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
+		super(s, constant, variables2coeffcient);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public AffineTerm(final Sort sort, final Term[] terms, final Rational[] coefficients, final Rational constant) {
+		super(sort, terms, coefficients, constant);
 	}
 
 	/**
@@ -223,108 +199,15 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 				affineTerm, multiplier);
 	}
 
-	/**
-	 * AffineTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
-	 * array coefficients, and whose constant term is given by the Rational constant.
-	 */
-	private AffineTerm(final Sort s, final Term[] terms, final Rational[] coefficients, final Rational constant) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		if (terms.length != coefficients.length) {
-			throw new IllegalArgumentException("number of variables and coefficients different");
-		}
-		switch (terms.length) {
-		case 0:
-			mVariable2Coefficient = Collections.emptyMap();
-			break;
-		case 1:
-			final Term variable = terms[0];
-			checkIfTermIsLegalVariable(variable);
-			if (coefficients[0].equals(Rational.ZERO)) {
-				mVariable2Coefficient = Collections.emptyMap();
-			} else {
-				mVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
-			}
-			break;
-		default:
-			mVariable2Coefficient = new HashMap<>();
-			for (int i = 0; i < terms.length; i++) {
-				checkIfTermIsLegalVariable(terms[i]);
-				if (!coefficients[i].equals(Rational.ZERO)) {
-					mVariable2Coefficient.put(terms[i], coefficients[i]);
-				}
-			}
-			break;
-		}
-	}
-
-	/**
-	 * Check if term is of a type that may be a variable of an AffineTerm.
-	 */
-	public void checkIfTermIsLegalVariable(final Term term) {
-		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
-			// term is ok
-		} else {
-			throw new IllegalArgumentException("Variable of AffineTerm has to be TermVariable or ApplicationTerm");
-		}
-	}
 
 
 
 
 
-	/**
-	 * Auxiliary affine term that represents an error during the translation process, e.g., if original term was not
-	 * linear.
-	 */
-	public AffineTerm() {
-		super(0);
-		mVariable2Coefficient = null;
-		mConstant = null;
-		mSort = null;
-	}
 
-	/**
-	 * True if this represents not an affine term but an error during the translation process, e.g., if original term
-	 * was not linear.
-	 */
-	@Override
-	public boolean isErrorTerm() {
-		if (mVariable2Coefficient == null) {
-			assert mConstant == null;
-			assert mSort == null;
-			return true;
-		} else {
-			assert mConstant != null;
-			assert mSort != null;
-			return false;
-		}
-	}
 
-	/**
-	 * @return whether this affine term is just a constant
-	 */
-	@Override
-	public boolean isConstant() {
-		return mVariable2Coefficient.isEmpty();
-	}
 
-	/**
-	 * @return whether this affine term is zero
-	 */
-	@Override
-	public boolean isZero() {
-		return mConstant.equals(Rational.ZERO) && mVariable2Coefficient.isEmpty();
-	}
 
-	/**
-	 * @return the constant summand of this affine term
-	 */
-	@Override
-	public Rational getConstant() {
-		return mConstant;
-	}
 
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
@@ -333,38 +216,7 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		return Collections.unmodifiableMap(mVariable2Coefficient);
 	}
 
-	/**
-	 * Transforms this AffineTerm into a Term that is supported by the solver.
-	 *
-	 * @param script
-	 *            Script for that this term is constructed.
-	 */
-	@Override
-	public Term toTerm(final Script script) {
-		Term[] summands;
-		if (mConstant.equals(Rational.ZERO)) {
-			summands = new Term[mVariable2Coefficient.size()];
-		} else {
-			summands = new Term[mVariable2Coefficient.size() + 1];
-		}
-		int i = 0;
-		for (final Map.Entry<Term, Rational> entry : mVariable2Coefficient.entrySet()) {
-			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal coefficient in AffineTerm";
-			if (entry.getValue().equals(Rational.ONE)) {
-				summands[i] = entry.getKey();
-			} else {
-				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
-				summands[i] = SmtUtils.mul(script, mSort, coeff, entry.getKey());
-			}
-			++i;
-		}
-		if (!mConstant.equals(Rational.ZERO)) {
-			assert mConstant.isIntegral() || SmtSortUtils.isRealSort(mSort);
-			summands[i] = SmtUtils.rational2Term(script, mConstant, mSort);
-		}
-		final Term result = SmtUtils.sum(script, mSort, summands);
-		return result;
-	}
+
 
 	/**
 	 * Transforms this AffineTerm into an equivalent PolynomialTerm.
@@ -381,40 +233,6 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 			index++;
 		}
 		return new PolynomialTerm(mSort, terms, coefficients, mConstant);
-	}
-
-	@Override
-	public String toString() {
-		if (isErrorTerm()) {
-			return "auxilliaryErrorTerm";
-		}
-		final StringBuilder sb = new StringBuilder();
-		for (final Map.Entry<Term, Rational> entry : mVariable2Coefficient.entrySet()) {
-			sb.append(entry.getValue().isNegative() ? " - " : " + ");
-			sb.append(entry.getValue().abs() + "*" + entry.getKey());
-		}
-		if (!mConstant.equals(Rational.ZERO) || sb.length() == 0) {
-			if (mConstant.isNegative() || sb.length() > 0) {
-				sb.append(mConstant.isNegative() ? " - " : " + ");
-			}
-			sb.append(mConstant.abs());
-		}
-		String result = sb.toString();
-		if (result.charAt(0) == ' ') {
-			result = result.substring(1); // Drop first space
-		}
-
-		return result;
-	}
-
-	@Override
-	public Sort getSort() {
-		return mSort;
-	}
-
-	@Override
-	public void toStringHelper(final ArrayDeque<Object> mTodo) {
-		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
 	}
 
 	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
@@ -435,51 +253,9 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant);
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mConstant == null ? 0 : mConstant.hashCode());
-		result = prime * result + (mSort == null ? 0 : mSort.hashCode());
-		result = prime * result + (mVariable2Coefficient == null ? 0 : mVariable2Coefficient.hashCode());
-		return result;
-	}
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (!(obj instanceof AffineTerm)) {
-			return false;
-		}
-		final AffineTerm other = (AffineTerm) obj;
-		if (mConstant == null) {
-			if (other.mConstant != null) {
-				return false;
-			}
-		} else if (!mConstant.equals(other.mConstant)) {
-			return false;
-		}
-		if (mSort == null) {
-			if (other.mSort != null) {
-				return false;
-			}
-		} else if (!mSort.equals(other.mSort)) {
-			return false;
-		}
-		if (mVariable2Coefficient == null) {
-			if (other.mVariable2Coefficient != null) {
-				return false;
-			}
-		} else if (!mVariable2Coefficient.equals(other.mVariable2Coefficient)) {
-			return false;
-		}
-		return true;
-	}
+
+
 
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
@@ -490,6 +266,11 @@ public class AffineTerm extends Term implements IPolynomialTerm {
 	@Override
 	public boolean isAffine() {
 		return true;
+	}
+
+	@Override
+	protected Term abstractVariableToTerm(final Script script, final Term abstractVariable) {
+		return abstractVariable;
 	}
 
 }
