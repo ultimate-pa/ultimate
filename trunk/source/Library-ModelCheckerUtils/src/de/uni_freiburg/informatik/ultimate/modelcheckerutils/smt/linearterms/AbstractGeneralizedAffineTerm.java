@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends Term implements IPolynomialTerm {
 
 	/**
-	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
+	 * Map from abstract variables to coeffcients. Coefficient zero is forbidden.
 	 */
 	protected final Map<AVAR, Rational> mAbstractVariable2Coefficient;
 	/**
