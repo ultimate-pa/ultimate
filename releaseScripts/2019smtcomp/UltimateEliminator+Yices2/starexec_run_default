@@ -20,7 +20,7 @@ java \
 -jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar \
 -data "$TMPDIR" \
 -s ./../yices2.epf \
--external-solver "yices-smt2 --timeout=15 --incremental" \
+-external-solver "yices-smt2 --incremental" \
 $input
 popd > /dev/null
 
