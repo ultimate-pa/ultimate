@@ -34,6 +34,8 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.BackwardClosedOverlay;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
@@ -41,13 +43,12 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.R
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class ProcedureResources {
 
 	private final RegexDag<IIcfgTransition<IcfgLocation>> mRegexDag;
-	private final OverlaySuccessors mDagOverlayPathToReturn;
-	private final OverlaySuccessors mDagOverlayPathToLOIsAndEnterCalls;
+	private final BackwardClosedOverlay<IIcfgTransition<IcfgLocation>> mDagOverlayPathToReturn;
+	private final BackwardClosedOverlay<IIcfgTransition<IcfgLocation>> mDagOverlayPathToLOIsAndEnterCalls;
 
 	public ProcedureResources(final IIcfg<IcfgLocation> icfg, final String procedure,
 			final Collection<IcfgLocation> locationsOfInterest, final Collection<String> enterCallsOfInterest) {
@@ -80,43 +81,26 @@ public class ProcedureResources {
 		mRegexDag = regexToDag.getDag();
 		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(mRegexDag);
 
-		mDagOverlayPathToLOIsAndEnterCalls = new OverlaySuccessors();
+		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();
 		Stream.concat(loiDagNodes.stream(), enterCallDagNodes.stream())
-				.forEach(node -> addToOverlay(mDagOverlayPathToLOIsAndEnterCalls, node));
-		mDagOverlayPathToReturn = new OverlaySuccessors();
-		addToOverlay(mDagOverlayPathToReturn, returnDagNode);
+				.forEach(mDagOverlayPathToLOIsAndEnterCalls::add);
+		mDagOverlayPathToReturn = new BackwardClosedOverlay<>();
+		mDagOverlayPathToReturn.add(returnDagNode);
 	}
 
 	private static void assertLoiFromSameProcedure(final String procedure, final IcfgLocation loi) {
 		assert procedure.equals(loi.getProcedure()) : "Location of interest from different procedure";
 	}
 
-	private static void addToOverlay(final OverlaySuccessors overlaySuccessors,
-			final RegexDagNode<IIcfgTransition<IcfgLocation>> targetNode) {
-		for (final RegexDagNode<IIcfgTransition<IcfgLocation>> predecessor : targetNode.getIncomingNodes()) {
-			if (overlaySuccessors.addPair(predecessor, targetNode)) {
-				addToOverlay(overlaySuccessors, predecessor);
-			}
-		}
-	}
-
 	public RegexDag<IIcfgTransition<IcfgLocation>> getRegexDag() {
 		return mRegexDag;
 	}
 
-	public OverlaySuccessors getDagOverlayPathToReturn() {
+	public IDagOverlay<IIcfgTransition<IcfgLocation>> getDagOverlayPathToReturn() {
 		return mDagOverlayPathToReturn;
 	}
 
-	public OverlaySuccessors getDagOverlayPathToLoisAndEnterCalls() {
+	public IDagOverlay<IIcfgTransition<IcfgLocation>> getDagOverlayPathToLoisAndEnterCalls() {
 		return mDagOverlayPathToLOIsAndEnterCalls;
-	}
-
-	/**
-	 * Abbreviation for long nested generic expression.
-	 * TODO find a better way to abbreviate long generics.
-	 */
-	public static class OverlaySuccessors extends HashRelation<
-			RegexDagNode<IIcfgTransition<IcfgLocation>>, RegexDagNode<IIcfgTransition<IcfgLocation>>> {
 	}
 }

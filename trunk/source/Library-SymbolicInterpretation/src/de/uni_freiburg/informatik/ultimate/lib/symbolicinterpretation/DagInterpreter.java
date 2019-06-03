@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
@@ -73,28 +73,25 @@ public class DagInterpreter {
 		mRegisterEnterCall = registerEnterCall;
 	}
 
-	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag, final OverlaySuccessors overlaySuccessors,
-			final IPredicate initalInput) {
+	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlaySuccessors),
+				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlay),
 						mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);
 		while (worklist.advance()) {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
 			final IPredicate currentOutput = interpretNode(currentNode, worklist.getInput());
-			overlaySuccessors.getImage(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
+			overlay.successorsOf(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
 		}
 		// TODO compute return value for final sink node. Required in FixpointLoopSummarizer
 	}
 
 	private static int prioritizeNonJoinNodes(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,
-			final OverlaySuccessors overlaySuccessors) {
-		// TODO this could be shortened to ...
-		//      Math.min(node.getIncomingNodes().size(), 1)
-		// ... if overlays were closed under the predecessor function getIncomingNodes().
-		// At the moment overlays should be closed, but will they also be closed in the future?
-		return node.getIncomingNodes().stream()
-				.anyMatch(pred -> !overlaySuccessors.getImage(pred).isEmpty()) ? 1 : 0;
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
+		final boolean isJoin = overlay.predecessorsOf(node).size() > 1;
+		// higher numbers have lower priority
+		return isJoin ? 1 : 0;
 	}
 
 	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {

@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -142,7 +142,7 @@ public class SymbolicInterpreter {
 	}
 
 	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initalInput) {
-		final OverlaySuccessors overlaySuccessors = resources.getDagOverlayPathToLoisAndEnterCalls();
+		final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay = resources.getDagOverlayPathToLoisAndEnterCalls();
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
 				new FifoWithInputs<>(mPredicateUtils::merge);
 		worklist.add(resources.getRegexDag().getSource(), initalInput);
@@ -150,7 +150,7 @@ public class SymbolicInterpreter {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
 			final IPredicate currentInput = worklist.getInput();
 			final IPredicate currentOutput = interpretNode(currentNode, currentInput);
-			overlaySuccessors.getImage(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
+			overlay.successorsOf(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
 		}
 	}
 

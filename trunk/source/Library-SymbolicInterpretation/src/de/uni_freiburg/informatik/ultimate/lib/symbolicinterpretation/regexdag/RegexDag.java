@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
-import java.util.Collection;
-
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
