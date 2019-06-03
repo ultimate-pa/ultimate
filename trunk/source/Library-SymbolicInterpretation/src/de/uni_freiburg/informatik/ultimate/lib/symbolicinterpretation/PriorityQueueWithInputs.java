@@ -26,14 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.function.BiFunction;
-import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 /**
- * Priority queue with a fixed number of priority levels [0, n] with n >= 0; 0 is the highest priority.
- * The queue saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
- * Work entries can be in queue at most once. When adding an already queued work entry again (with a possible
- * different input) the old and the new input are merged using a user-specified merge function.
+ * Priority queue that sorts its entries according to a custom order on the work type.
+ * Only work entries listed in the custom order can be added to this queue.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -42,79 +44,85 @@ import java.util.function.ToIntFunction;
  */
 public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> {
 
-	private final FifoWithInputs<W, I>[] mWorklists;
-	private final ToIntFunction<W> mPriorityLevelOf;
-	private int mAdvancedPrio = -1;
+	private final List<W> mIdxToWork;
+	private final Map<W, Integer> mWorkToIdx = new HashMap<>();
+
+	private final PriorityQueue<Integer> mWorklistOfIndices = new PriorityQueue<>();
+	private final Map<Integer, I> mInputsForElemsInWorklist = new HashMap<>();
+	private final BiFunction<I, I, I> mMergeFunction;
+
+	/** Work component from entry last retrieved by {@link #advance()}. */
+	private W mCurrentWork;
+	/** Input component from entry last retrieved by {@link #advance()}. */
+	private I mCurrentInput;
 
 	/**
-	 * Creates a new priority queue with a fixed number of priority levels.
+	 * Creates a new priority queue based on a custom order on the work entries.
 	 * 
-	 * @param priorityLevels Number of priority levels for this queue.
-	 * @param priorityLevelOf Maps work entries to their priorities. The priority has to be deterministic.
-	 *                        Priority levels are [0, priorityLevels). 0 is the highest priority.
-	 * @param mergeFunction When an already enqueued work entry is added again this function is called to compute a
-	 *                      new input from the already enqueued input and the to be enqueued input.
-	 *                      The form is {@code (oldInput, newInput) -> mergedInput}.
+	 * @param order Order on the work entries. The first (index 0) element has the highest priority.
+	 * @param mergeFunction Function used to merge two inputs when an already enqueued work entry is added again.
 	 */
-	@SuppressWarnings("unchecked")
-	public PriorityQueueWithInputs(final int priorityLevels, final ToIntFunction<W> priorityLevelOf,
-			final BiFunction<I, I, I> mergeFunction) {
-		mWorklists = (FifoWithInputs<W, I>[]) new FifoWithInputs[priorityLevels];
-		mPriorityLevelOf = priorityLevelOf;
-		for (int prio = 0; prio < priorityLevels; ++prio) {
-			mWorklists[prio] = new FifoWithInputs<>(mergeFunction);
-		}
+	public PriorityQueueWithInputs(final List<W> order, final BiFunction<I, I, I> mergeFunction) {
+		mIdxToWork = order;
+		order.forEach(node -> mWorkToIdx.put(node, mWorkToIdx.size()));
+		mMergeFunction = mergeFunction;
 	}
 
 	/**
-	 * Adds or updates an entry.
+	 * Adds or updates an entry. Only work entries listed in the custom order can be added.
 	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
-	 * If {@code work} is new to this queue, adds it to the tail of the internal queue with corresponding priority.
+	 * If {@code work} is new to this queue, inserts it corresponding to its priority.
 	 * 
-	 * @param work Work entry
-	 * @param addInput Input for work entry
+	 * @param workIdx Work entry
+	 * @param newInput Input for work entry
 	 */
 	@Override
-	public void add(final W work, final I addInput) {
-		mWorklists[mPriorityLevelOf.applyAsInt(work)].add(work, addInput);
+	public void add(final W work, final I newInput) {
+		final Integer index = mWorkToIdx.get(work);
+		if (index == null) {
+			throw new IllegalArgumentException("Tried to insert element unknown in custom order: " + work);
+		}
+		mInputsForElemsInWorklist.compute(index, (key, oldInput) -> addInternal(key, oldInput, newInput));
+	}
+
+	private I addInternal(final Integer index, final I oldInput, final I newInput) {
+		if (oldInput == null) {
+			return mMergeFunction.apply(oldInput, newInput);
+		}
+		mWorklistOfIndices.add(index);
+		return newInput;
 	}
 
 	@Override
 	public boolean advance() {
-		for (int prio = 0; prio < mWorklists.length; ++prio) {
-			if (mWorklists[prio].advance()) {
-				mAdvancedPrio = prio;
-				return true;
-			}
+		if (mWorklistOfIndices.isEmpty()) {
+			return false;
 		}
-		return false;
+		final Integer index = mWorklistOfIndices.poll();
+		mCurrentWork = mIdxToWork.get(index);
+		mCurrentInput = mInputsForElemsInWorklist.remove(index);
+		return true;
 	}
 
 	@Override
 	public W getWork() {
-		ensureAdvanced();
-		return mWorklists[mAdvancedPrio].getWork();
+		return mCurrentWork;
 	}
 
 	@Override
 	public I getInput() {
-		ensureAdvanced();
-		return mWorklists[mAdvancedPrio].getInput();
-	}
-
-	private void ensureAdvanced() {
-		if (mAdvancedPrio < 0) {
-			throw new IllegalStateException("Never called advance() on this worklist.");
-		}
+		return mCurrentInput;
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		for (int prio = 0; prio < mWorklists.length; ++prio) {
-			sb.append("prio ").append(prio).append(" = ").append(mWorklists[prio]).append("\n");
-		}
-		return sb.toString();
+		return mWorklistOfIndices.stream().sorted(mWorklistOfIndices.comparator())
+				.map(this::workIdxToString)
+				.collect(Collectors.joining("\n"));
+	}
+
+	private String workIdxToString(final Integer workIdx) {
+		return String.format("%s=%s", mIdxToWork.get(workIdx), mInputsForElemsInWorklist.get(workIdx));
 	}
 
 }

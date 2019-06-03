@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -85,8 +88,11 @@ public class DagInterpreter {
 	 */
 	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
+		// TODO compute and cache topsort. Use something along the lines of ( v--- list of all nodes in DAG. )
+		// new TopologicalSorter(overlay::successorsOf).topologicalOrdering(...)
+		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = null;
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlay), mPredicateUtils::merge);
+				new PriorityQueueWithInputs<>(topologicalOrder, mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);
 		IPredicate lastOutput = initalInput;
 		while (worklist.advance()) {
@@ -95,15 +101,7 @@ public class DagInterpreter {
 			overlay.successorsOf(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
 			lastOutput = currentOutput;
 		}
-		// TODO this may not be the final sink node, even in some fully overlaid cases -- use real topological sort.
 		return lastOutput;
-	}
-
-	private static int prioritizeNonJoinNodes(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,
-			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
-		final boolean isJoin = overlay.predecessorsOf(node).size() > 1;
-		// higher numbers have lower priority
-		return isJoin ? 1 : 0;
 	}
 
 	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {
