@@ -73,18 +73,30 @@ public class DagInterpreter {
 		mRegisterEnterCall = registerEnterCall;
 	}
 
-	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	/**
+	 * Interprets a dag starting from its source node.
+	 * 
+	 * @param dag         Dag to be interpreted
+	 * @param overlay     Overlay for the dag allowing to ignore some edges
+	 * @param initalInput Input for the dag's source node
+	 * @return Last computed output.
+	 *         If The overlay creates a dag with exactly one sink node
+	 *         then the returned output is the output of that sink node.
+	 */
+	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlay),
-						mPredicateUtils::merge);
+				new PriorityQueueWithInputs<>(2, node -> prioritizeNonJoinNodes(node, overlay), mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);
+		IPredicate lastOutput = initalInput;
 		while (worklist.advance()) {
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
 			final IPredicate currentOutput = interpretNode(currentNode, worklist.getInput());
 			overlay.successorsOf(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
+			lastOutput = currentOutput;
 		}
-		// TODO compute return value for final sink node. Required in FixpointLoopSummarizer
+		// TODO this may not be the final sink node, even in some fully overlaid cases -- use real topological sort.
+		return lastOutput;
 	}
 
 	private static int prioritizeNonJoinNodes(final RegexDagNode<IIcfgTransition<IcfgLocation>> node,

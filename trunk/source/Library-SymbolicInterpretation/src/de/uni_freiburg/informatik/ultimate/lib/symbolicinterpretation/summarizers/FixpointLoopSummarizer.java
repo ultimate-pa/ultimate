@@ -75,8 +75,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
-			// TODO get source node's post state.
-			mDagInterpreter.interpret(dag, fullOverlay, preState);
+			postState = mDagInterpreter.interpret(dag, fullOverlay, preState);
 			if (mDomain.isSubsetEq(preState, postState)) {
 				break;
 			}
