@@ -92,7 +92,7 @@ public class DagInterpreter {
 		// TODO this could be shortened to ...
 		//      Math.min(node.getIncomingNodes().size(), 1)
 		// ... if overlays were closed under the predecessor function getIncomingNodes().
-		// At the moment the should be closed, but will they also be closed in the future?
+		// At the moment overlays should be closed, but will they also be closed in the future?
 		return node.getIncomingNodes().stream()
 				.anyMatch(pred -> !overlaySuccessors.getImage(pred).isEmpty()) ? 1 : 0;
 	}

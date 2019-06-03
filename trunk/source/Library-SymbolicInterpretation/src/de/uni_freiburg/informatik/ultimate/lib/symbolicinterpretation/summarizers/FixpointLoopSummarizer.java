@@ -34,7 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources.OverlaySuccessors;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.StarDagCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -44,8 +47,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
 	private final IDomain mDomain;
-	private DagInterpreter mDagInterpreter;
-
+	private final DagInterpreter mDagInterpreter;
+	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
 	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final DagInterpreter dagInterpreter) {
@@ -64,13 +67,16 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		return mCache.computeIfAbsent(key, this::summarizeInternal);
 	}
 
-	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> key) {
-		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = key.getFirst().getInner();
-		// TODO convert loop body to regex DAG (and cache that DAG)
-		IPredicate preState = key.getSecond();
+	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
+		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
+		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
+		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
-			// TODO use interpreter to interpret loop body
+			// TODO make overlay to match everything. Even better: Create Overlay Interface with subclasses
+			final OverlaySuccessors overlaySuccessors = null;
+			// TODO get source node's post state.
+			mDagInterpreter.interpret(dag, overlaySuccessors, preState);
 			if (mDomain.isSubsetEq(preState, postState)) {
 				break;
 			}
