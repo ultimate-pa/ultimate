@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
@@ -38,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDo
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
@@ -51,29 +49,15 @@ public class DagInterpreter {
 	private final ILogger mLogger;
 	private final PredicateUtils mPredicateUtils;
 	private final IDomain mDomain;
-	private final ILoopSummarizer mLoopSummarizer;
-
-	private BiConsumer<IcfgLocation, IPredicate> mRegisterPostResult = missingCallbackError("register post result");
-	private BiConsumer<String, IPredicate> mRegisterEnterCall = missingCallbackError("register enter call");
-
+	private final InterpreterResources mInterpreterResources;
 	private final TopsortCache mTopsortCache = new TopsortCache();
-	
-	private static <A, B> BiConsumer<A, B> missingCallbackError(final String callbackName) {
-		return (unused1, unused2) -> { throw new IllegalStateException("Missing callback: " + callbackName); };
-	}
 
 	public DagInterpreter(final ILogger logger, final PredicateUtils predicateUtils, final IDomain domain,
-			final ILoopSummarizer loopSummarizer) {
+			final InterpreterResources resources) {
 		mLogger = logger;
 		mPredicateUtils = predicateUtils;
 		mDomain = domain;
-		mLoopSummarizer = loopSummarizer;
-	}
-
-	public void setCallbacks(final BiConsumer<IcfgLocation, IPredicate> registerPostResult,
-			final BiConsumer<String, IPredicate> registerEnterCall) {
-		mRegisterPostResult = registerPostResult;
-		mRegisterEnterCall = registerEnterCall;
+		mInterpreterResources = resources;
 	}
 
 	/**
@@ -110,7 +94,8 @@ public class DagInterpreter {
 		} else if (regex instanceof Literal) {
 			return interpretTransition(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
 		} else if (regex instanceof Star) {
-			return mLoopSummarizer.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);
+			return mInterpreterResources.getLoopSummarizer()
+					.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);
 		} else {
 			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex.getClass());
 		}
@@ -131,14 +116,14 @@ public class DagInterpreter {
 
 	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
 		final IPredicate output = mPredicateUtils.post(input, transition);
-		mRegisterPostResult.accept(transition.getTarget(), output);
+		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
 		return output;
 	}
 
 	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
 		final IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
-		mRegisterEnterCall.accept(transition.getSucceedingProcedure(), calleeInput);
-		mRegisterPostResult.accept(transition.getTarget(), calleeInput);
+		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
+		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), calleeInput);
 		return calleeInput;
 	}
 

@@ -47,7 +47,7 @@ public class IcfgInterpreter {
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final PredicateUtils mPredicateUtils;
-	private final DagInterpreter mDagInterpreter;
+	private final InterpreterResources mInterpreterResources;
 
 	/**
 	 * Creates a new interpreter assuming all error locations to be locations of interest.
@@ -55,8 +55,8 @@ public class IcfgInterpreter {
 	 * @see #interpret()
 	 */
 	public IcfgInterpreter(final ILogger logger, final PredicateUtils predicateUtils, final IIcfg<IcfgLocation> icfg,
-			final DagInterpreter dagInterpreter) {
-		this(logger, predicateUtils, icfg, errorLocations(icfg), dagInterpreter);
+			final InterpreterResources resources) {
+		this(logger, predicateUtils, icfg, errorLocations(icfg), resources);
 	}
 
 	private static Collection<IcfgLocation> errorLocations(final IIcfg<IcfgLocation> icfg) {
@@ -72,12 +72,11 @@ public class IcfgInterpreter {
 	 */
 	public IcfgInterpreter(final ILogger logger, final PredicateUtils predicateUtils,
 			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
-			final DagInterpreter dagInterpreter) {
+			final InterpreterResources resources) {
 		mLogger = logger;
 		mPredicateUtils = predicateUtils;
 		mIcfg = icfg;
-		mDagInterpreter = dagInterpreter;
-		mDagInterpreter.setCallbacks(this::storePredicateIfLoi, this::registerEnterCall);
+		mInterpreterResources = resources;
 		logStartingSifa(locationsOfInterest);
 		mEnterCallWorklist = new FifoWithInputs<>(mPredicateUtils::merge);
 		logBuildingCallGraph();
@@ -126,7 +125,7 @@ public class IcfgInterpreter {
 	}
 
 	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initialInput) {
-		mDagInterpreter.interpret(
+		mInterpreterResources.getDagInterpreter().interpret(
 				resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(), initialInput);
 	}
 

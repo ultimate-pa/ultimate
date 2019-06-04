@@ -33,7 +33,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.StarDagCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
@@ -48,14 +48,14 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
 	private final IDomain mDomain;
-	private final DagInterpreter mDagInterpreter;
+	private final InterpreterResources mInterpreterResources;
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final DagInterpreter dagInterpreter) {
+	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final InterpreterResources resources) {
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
-		mDagInterpreter = Objects.requireNonNull(dagInterpreter);
+		mInterpreterResources = Objects.requireNonNull(resources);
 		mCache = new HashMap<>();
 	}
 
@@ -75,7 +75,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
-			postState = mDagInterpreter.interpret(dag, fullOverlay, preState);
+			postState = mInterpreterResources.getDagInterpreter().interpret(dag, fullOverlay, preState);
 			if (mDomain.isSubsetEq(preState, postState)) {
 				break;
 			}
