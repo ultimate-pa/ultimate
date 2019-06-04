@@ -96,7 +96,9 @@ public class Tasks {
 
 		TAIPAN_C,
 
-		TAIPAN_BOOGIE
+		TAIPAN_BOOGIE,
+		
+		REFEREE_BOOGIE,
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -150,6 +152,7 @@ public class Tasks {
 			case CONCURRENT_BOOGIE:
 			case KOJAK_BOOGIE:
 			case TAIPAN_BOOGIE:
+			case REFEREE_BOOGIE:
 				return "boogie";
 			case AUTOMIZER_C:
 			case TERMINATION_C:
@@ -205,6 +208,8 @@ public class Tasks {
 
 		addWorker(NameStrings.TOOL_AUTOMIZER_PETRI, NameStrings.TASK_VERIFY,
 				NameStrings.DESCRIPTION_AUTOMIZER_PETRI);
+		
+		addWorker(NameStrings.TOOL_REFEREE, NameStrings.TASK_ANALYZE, NameStrings.DESCRIPTION_REFEREE);
 
 		completeInitWorker();
 	}
@@ -255,6 +260,7 @@ public class Tasks {
 		TASK_STRINGS.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
 		TASK_STRINGS.put(TaskNames.KOJAK_C, "Verify C");
 		TASK_STRINGS.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
+		TASK_STRINGS.put(TaskNames.REFEREE_BOOGIE, "Check invariants Boogie");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + TASK_STRINGS.size() + " task names are present:");

@@ -100,6 +100,9 @@ public final class Example {
 
 		final Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };
 		addAllFilesInExamplesSubfolder(list, "ltlautomizer/", ltlAutomizer);
+		
+		final Tasks.TaskNames[] invariantCheckBoogie = { Tasks.TaskNames.REFEREE_BOOGIE };
+		addAllFilesInExamplesSubfolder(list, "invariantCheckBoogie/", invariantCheckBoogie);
 
 		// load the content for the examples in the list and place it in the
 		// sExamplesByTask map (via the alternate example constructor)

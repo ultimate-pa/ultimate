@@ -124,6 +124,7 @@ public class Worker {
 				result = NameStrings.TASK_VERIFY;
 				break;
 			case NameStrings.TOOL_AUTOMIZER_BUCHI:
+			case NameStrings.TOOL_REFEREE:
 				result = NameStrings.TASK_ANALYZE;
 				break;
 			case NameStrings.TOOL_LASSO_RANKER:

@@ -32,6 +32,7 @@ public class PrefStrings {
 	public static final String LTL2AUT = "de.uni_freiburg.informatik.ultimate.ltl2aut";
 	public static final String BUCHIPROGRAMPRODUCT = "de.uni_freiburg.informatik.ultimate.buchiprogramproduct";
 	public static final String CODECHECK = "de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck";
+	public static final String REFEREE = "de.uni_freiburg.informatik.ultimate.plugins.generator.referee";
 
 	/** Settings strings **/
 
