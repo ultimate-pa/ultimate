@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -58,6 +56,8 @@ public class DagInterpreter {
 	private BiConsumer<IcfgLocation, IPredicate> mRegisterPostResult = missingCallbackError("register post result");
 	private BiConsumer<String, IPredicate> mRegisterEnterCall = missingCallbackError("register enter call");
 
+	private final TopsortCache mTopsortCache = new TopsortCache();
+	
 	private static <A, B> BiConsumer<A, B> missingCallbackError(final String callbackName) {
 		return (unused1, unused2) -> { throw new IllegalStateException("Missing callback: " + callbackName); };
 	}
@@ -88,9 +88,7 @@ public class DagInterpreter {
 	 */
 	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
-		// TODO compute and cache topsort. Use something along the lines of ( v--- list of all nodes in DAG. )
-		// new TopologicalSorter(overlay::successorsOf).topologicalOrdering(...)
-		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = null;
+		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = mTopsortCache.topsort(dag);
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
 				new PriorityQueueWithInputs<>(topologicalOrder, mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);

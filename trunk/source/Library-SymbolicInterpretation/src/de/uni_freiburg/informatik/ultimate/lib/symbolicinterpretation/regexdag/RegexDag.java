@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
@@ -96,6 +100,22 @@ public class RegexDag<L> {
 
 	public String toString() {
 		return new GraphToTgf<>(mSource).includeComponentOf(mSink).getTgf();
+	}
+
+	/**
+	 * Iterates over this dag and collects all nodes.
+	 * @return Collection containing each node in this dag exactly once.
+	 */
+	public Collection<RegexDagNode<L>> collectNodes() {
+		final Set<RegexDagNode<L>> visited = new LinkedHashSet<>();
+		collectNodes(visited, mSource);
+		return visited;
+	}
+
+	private void collectNodes(final Set<RegexDagNode<L>> visited, final RegexDagNode<L> tryVisit) {
+		if (visited.add(tryVisit)) {
+			tryVisit.getOutgoingNodes().forEach(succ -> collectNodes(visited, succ));
+		}
 	}
 }
 
