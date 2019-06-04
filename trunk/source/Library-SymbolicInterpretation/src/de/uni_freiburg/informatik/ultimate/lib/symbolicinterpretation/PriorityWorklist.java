@@ -34,7 +34,8 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
- * Priority queue that sorts its entries according to a custom order on the work type. Only work entries listed in the
+ * Priority queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
+ * Entries are sorted according to a custom order on the work entries. Only work entries listed in the
  * custom order can be added to this queue.
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -44,29 +45,36 @@ import java.util.stream.Collectors;
  * @param <I>
  *            Type of the input entries
  */
-public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> {
+public class PriorityWorklist<W, I> implements IWorklistWithInputs<W, I> {
 
+	/** Custom order for work entries. Entries with lower indices have higher priorities. */
 	private final List<W> mIdxToWork;
+	/** Maps work entries to their indices in {@link #mIdxToWork}. */
 	private final Map<W, Integer> mWorkToIdx = new HashMap<>();
-
+	/**
+	 * The actual priority queue.
+	 * Instead of the pair (W,I) only the index of W in {@link #mIdxToWork} is stored
+	 * and used as a priority. Use {@link #mIdxToWork} to retrieve the work component
+	 * and {@link #mInputsForElemsInWorklist} to retrieve the input component.
+	 */
 	private final PriorityQueue<Integer> mWorklistOfIndices = new PriorityQueue<>();
+	/** For each entry in {@link #mWorklistOfIndices} map the work items to their inputs. */
 	private final Map<Integer, I> mInputsForElemsInWorklist = new HashMap<>();
 	private final BiFunction<I, I, I> mMergeFunction;
-
 	/** Work component from entry last retrieved by {@link #advance()}. */
 	private W mCurrentWork;
 	/** Input component from entry last retrieved by {@link #advance()}. */
 	private I mCurrentInput;
 
 	/**
-	 * Creates a new priority queue based on a custom order on the work entries.
+	 * Creates a new priority worklist based on a custom order on the work entries.
 	 *
 	 * @param order
-	 *            Order on the work entries. The first (index 0) element has the highest priority.
+	 *            Order on the work entry. The first (index 0) element has the highest priority.
 	 * @param mergeFunction
 	 *            Function used to merge two inputs when an already enqueued work entry is added again.
 	 */
-	public PriorityQueueWithInputs(final List<W> order, final BiFunction<I, I, I> mergeFunction) {
+	public PriorityWorklist(final List<W> order, final BiFunction<I, I, I> mergeFunction) {
 		mIdxToWork = order;
 		order.forEach(node -> mWorkToIdx.put(node, mWorkToIdx.size()));
 		mMergeFunction = mergeFunction;

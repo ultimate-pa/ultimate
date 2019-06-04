@@ -74,7 +74,7 @@ public class DagInterpreter {
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = mTopsortCache.topsort(dag);
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityQueueWithInputs<>(topologicalOrder, mPredicateUtils::merge);
+				new PriorityWorklist<>(topologicalOrder, mPredicateUtils::merge);
 		worklist.add(dag.getSource(), initalInput);
 		IPredicate lastOutput = initalInput;
 		while (worklist.advance()) {

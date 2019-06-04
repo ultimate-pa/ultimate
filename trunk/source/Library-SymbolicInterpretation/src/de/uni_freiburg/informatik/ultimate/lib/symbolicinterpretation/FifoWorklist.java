@@ -42,7 +42,7 @@ import java.util.function.BiFunction;
  * @param <W> Type of the work entries
  * @param <I> Type of the input entries
  */
-public class FifoWithInputs<W, I> implements IWorklistWithInputs<W, I> {
+public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 
 	private final BiFunction<I, I, I> mMergeFunction;
 	private final Map<W, I> mWorklist = new LinkedHashMap<>();
@@ -55,7 +55,7 @@ public class FifoWithInputs<W, I> implements IWorklistWithInputs<W, I> {
 	 *                      new input from the already enqueued input and the to be enqueued input.
 	 *                      The form is {@code (oldInput, newInput) -> mergedInput}.
 	 */
-	public FifoWithInputs(final BiFunction<I, I, I> mergeFunction) {
+	public FifoWorklist(final BiFunction<I, I, I> mergeFunction) {
 		mMergeFunction = mergeFunction;
 	}
 

@@ -78,7 +78,7 @@ public class IcfgInterpreter {
 		mIcfg = icfg;
 		mInterpreterResources = resources;
 		logStartingSifa(locationsOfInterest);
-		mEnterCallWorklist = new FifoWithInputs<>(mPredicateUtils::merge);
+		mEnterCallWorklist = new FifoWorklist<>(mPredicateUtils::merge);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
