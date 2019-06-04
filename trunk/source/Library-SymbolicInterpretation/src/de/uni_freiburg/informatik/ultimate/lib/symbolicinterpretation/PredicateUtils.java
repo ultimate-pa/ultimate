@@ -59,12 +59,13 @@ public class PredicateUtils {
 	public PredicateUtils(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
 		mScript = icfg.getCfgSmtToolkit().getManagedScript();
+		final Script script = mScript.getScript();
 		// TODO decide which techniques to use or use a setting
 		mFactory = new PredicateFactory(services, mScript, icfg.getCfgSmtToolkit().getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(services, mScript));
-		mTop = mFactory.newPredicate(mScript.term(this, "true"));
-		mBottom = mFactory.newPredicate(mScript.term(this, "false"));
+		mTop = mFactory.newPredicate(script.term("true"));
+		mBottom = mFactory.newPredicate(script.term("false"));
 	}
 
 	public ManagedScript getScript() {
