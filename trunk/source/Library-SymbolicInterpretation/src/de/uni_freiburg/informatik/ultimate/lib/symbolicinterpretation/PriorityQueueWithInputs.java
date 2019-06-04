@@ -34,13 +34,15 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
- * Priority queue that sorts its entries according to a custom order on the work type.
- * Only work entries listed in the custom order can be added to this queue.
- * 
+ * Priority queue that sorts its entries according to a custom order on the work type. Only work entries listed in the
+ * custom order can be added to this queue.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <W> Type of the work entries
- * @param <I> Type of the input entries
+ * @param <W>
+ *            Type of the work entries
+ * @param <I>
+ *            Type of the input entries
  */
 public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> {
 
@@ -58,9 +60,11 @@ public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> 
 
 	/**
 	 * Creates a new priority queue based on a custom order on the work entries.
-	 * 
-	 * @param order Order on the work entries. The first (index 0) element has the highest priority.
-	 * @param mergeFunction Function used to merge two inputs when an already enqueued work entry is added again.
+	 *
+	 * @param order
+	 *            Order on the work entries. The first (index 0) element has the highest priority.
+	 * @param mergeFunction
+	 *            Function used to merge two inputs when an already enqueued work entry is added again.
 	 */
 	public PriorityQueueWithInputs(final List<W> order, final BiFunction<I, I, I> mergeFunction) {
 		mIdxToWork = order;
@@ -69,12 +73,14 @@ public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> 
 	}
 
 	/**
-	 * Adds or updates an entry. Only work entries listed in the custom order can be added.
-	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
-	 * If {@code work} is new to this queue, inserts it corresponding to its priority.
-	 * 
-	 * @param workIdx Work entry
-	 * @param newInput Input for work entry
+	 * Adds or updates an entry. Only work entries listed in the custom order can be added. If {@code work} is already
+	 * queued, its old and new input are merged and its position is kept. If {@code work} is new to this queue, inserts
+	 * it corresponding to its priority.
+	 *
+	 * @param workIdx
+	 *            Work entry
+	 * @param newInput
+	 *            Input for work entry
 	 */
 	@Override
 	public void add(final W work, final I newInput) {
@@ -86,7 +92,7 @@ public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> 
 	}
 
 	private I addInternal(final Integer index, final I oldInput, final I newInput) {
-		if (oldInput == null) {
+		if (oldInput != null) {
 			return mMergeFunction.apply(oldInput, newInput);
 		}
 		mWorklistOfIndices.add(index);
@@ -116,8 +122,7 @@ public class PriorityQueueWithInputs<W, I> implements IWorklistWithInputs<W, I> 
 
 	@Override
 	public String toString() {
-		return mWorklistOfIndices.stream().sorted(mWorklistOfIndices.comparator())
-				.map(this::workIdxToString)
+		return mWorklistOfIndices.stream().sorted(mWorklistOfIndices.comparator()).map(this::workIdxToString)
 				.collect(Collectors.joining("\n"));
 	}
 
