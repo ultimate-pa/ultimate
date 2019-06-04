@@ -78,13 +78,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <SE, TE> TE translateExpression(final SE expression, final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
 		return translateExpression(current, expression);
 	}
 
 	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
 		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
 		return translateExpressionToString(translateExpression(current, expression), last);
 	}
@@ -95,6 +95,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ITranslator<?, ?, ?, TE, ?, ?> last = (ITranslator<?, ?, ?, TE, ?, ?>) trans;
 		return last.targetExpressionToString(expression);
 	}
+
 
 	@SuppressWarnings("unchecked")
 	private <TE, SE> TE translateExpression(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final SE expression) {
@@ -108,13 +109,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <STE> List<?> translateTrace(final List<STE> trace, final Class<STE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceTraceElement(clazz);
 		return translateTrace(current, trace);
 	}
 
 	@Override
 	public <STE> List<String> translateTraceToHumanReadableString(final List<STE> trace, final Class<STE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceTraceElement(clazz);
 		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
 		return translateTraceToString(translateTrace(current, trace), last);
 	}
@@ -126,25 +127,49 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return last.targetTraceToString(trace);
 	}
 
-	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStack(final Class<STE> clazz) {
+	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStackAndCheckSourceTraceElement(
+			final Class<STE> classOfSourceElement) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
-			if (trans.getSourceTraceElementClass().isAssignableFrom(clazz)) {
+			if (trans.getSourceTraceElementClass().isAssignableFrom(classOfSourceElement)) {
 				canTranslate = true;
 			}
 		}
 		if (!canTranslate) {
-			throw new IllegalArgumentException("You cannot translate " + clazz.getSimpleName()
+			throw new IllegalArgumentException("You cannot translate " + classOfSourceElement.getSimpleName()
 					+ " with this backtranslation service, as there is no compatible ITranslator available");
 		}
-		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(clazz)) {
-			throw new IllegalArgumentException("You cannot translate " + clazz.getSimpleName()
+		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(classOfSourceElement)) {
+			throw new IllegalArgumentException("You cannot translate " + classOfSourceElement.getSimpleName()
 					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
 		}
 		return current;
 	}
+
+	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStackAndCheckSourceExpression(
+			final Class<STE> classOfSourceExpression) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
+		boolean canTranslate = false;
+		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
+			current.push(trans);
+			if (trans.getSourceExpressionClass().isAssignableFrom(classOfSourceExpression)) {
+				canTranslate = true;
+			}
+		}
+		if (!canTranslate) {
+			throw new IllegalArgumentException("You cannot translate " + classOfSourceExpression.getSimpleName()
+					+ " with this backtranslation service, as there is no compatible ITranslator available");
+		}
+		if (!current.peek().getSourceExpressionClass().isAssignableFrom(classOfSourceExpression)) {
+			throw new IllegalArgumentException("You cannot translate " + classOfSourceExpression.getSimpleName()
+					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
+		}
+		return current;
+	}
+	
+	
 
 	@SuppressWarnings("unchecked")
 	private <TTE, STE> List<TTE> translateTrace(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining,
