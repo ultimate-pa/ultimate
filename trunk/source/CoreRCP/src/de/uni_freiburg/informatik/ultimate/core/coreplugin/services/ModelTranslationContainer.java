@@ -78,13 +78,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <SE, TE> TE translateExpression(final SE expression, final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
 		return translateExpression(current, expression);
 	}
 
 	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStack(clazz);
 		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
 		return translateExpressionToString(translateExpression(current, expression), last);
 	}
@@ -105,28 +105,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return translateExpression(remaining, tmp.translateExpression(expression));
 	}
 
-	private <SE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareExpressionStack(final SE expression,
-			final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
-		boolean canTranslate = false;
-		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
-			current.push(trans);
-			if (trans.getSourceExpressionClass().isAssignableFrom(clazz)) {
-				canTranslate = true;
-			}
-		}
-		if (!canTranslate) {
-			throw new IllegalArgumentException("You cannot translate " + expression.getClass().getName()
-					+ " with this backtranslation service, as there is no compatible "
-					+ "ITranslator available. Available translators: " + toString());
-		}
-		if (!current.peek().getSourceExpressionClass().isAssignableFrom(clazz)) {
-			throw new IllegalArgumentException("You cannot translate " + expression.getClass().getName()
-					+ " with this backtranslation service, as the last ITranslator in "
-					+ "this chain is not compatible. Available translators: " + toString());
-		}
-		return current;
-	}
 
 	@Override
 	public <STE> List<?> translateTrace(final List<STE> trace, final Class<STE> clazz) {
