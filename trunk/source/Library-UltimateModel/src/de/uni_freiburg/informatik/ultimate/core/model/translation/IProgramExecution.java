@@ -196,16 +196,55 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 			return mVariable2Values.get(variable);
 		}
 
-		@Override
-		public String toString() {
-			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(mVariable2Values.entrySet());
+		public Class<E> getClassOfExpression() {
+			return mClassOfExpression;
+		}
+		
+		/**
+		 * @param expressionToString
+		 *            Function that maps each expression of type E to a string.
+		 */
+		public String toString(Function<E,String> expressionToString) {
+			final List<Entry<E, Collection<E>>> toSort = constructSortedListOfEntries(mVariable2Values);
+			final StringBuilder sb = new StringBuilder();
+			boolean first = true;
+			for (Entry<E, Collection<E>> entry : toSort) {
+				sb.append(expressionToString.apply(entry.getKey()));
+				if (entry.getValue().size() == 1) {
+					sb.append("=");
+					E theElement = entry.getValue().iterator().next();
+					sb.append(expressionToString.apply(theElement));
+				} else {
+					// TODO 20190604 Matthias: replace by UTF-8 ∈ if this 
+					// does not lead to problems with web interface
+					// or other use interfaces
+					sb.append(" in");
+					sb.append(entry.getValue().stream().map(expressionToString).collect(Collectors.joining(",")));
+				}
+				if (first) {
+					first = false;
+				} else {
+					sb.append(", ");
+				}
+			}
+			return sb.toString();
+		}
+
+		private static <E> List<Entry<E, Collection<E>>> constructSortedListOfEntries(
+				Map<E, Collection<E>> variable2values) {
+			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(variable2values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
 				public int compare(final Entry<E, Collection<E>> arg0, final Entry<E, Collection<E>> arg1) {
 					return arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString());
 				}
 			});
-			return toSort.toString();
+			return toSort;
+		}
+
+		@Override
+		public String toString() {
+			return toString(String::valueOf);
 		}
 	}
 }

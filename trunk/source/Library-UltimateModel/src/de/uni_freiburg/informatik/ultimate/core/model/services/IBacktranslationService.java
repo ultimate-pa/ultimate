@@ -67,6 +67,8 @@ public interface IBacktranslationService {
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 	
 	public <SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
+	
+	public <SE> String translateProgramStateToString(ProgramState<SE> programState);
 
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
 

@@ -76,6 +76,11 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 			translateProgramState(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramState(programState);
 	}
+	
+	@Override
+	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+		return mTranslatorSequence.translateProgramStateToString(programState);
+	}
 
 	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {

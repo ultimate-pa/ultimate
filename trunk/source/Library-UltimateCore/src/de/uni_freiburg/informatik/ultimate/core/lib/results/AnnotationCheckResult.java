@@ -138,8 +138,8 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	public static <ELEM, E> String validSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
 			final IBacktranslationService translation) {
 		return "Annotation is not valid for all loop-free paths from " + segment.before() + " to " + segment.after()
-				+ ". One counterxample starts in " + translation.translateProgramState(segment.getStateBefore())
-				+ " and ends in " + translation.translateProgramState(segment.getStateAfter());
+				+ ". One counterxample starts in " + translation.translateProgramStateToString(segment.getStateBefore())
+				+ " and ends in " + translation.translateProgramStateToString(segment.getStateAfter());
 	}
 
 	public static class LoopFreeSegment<E> {

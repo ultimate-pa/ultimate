@@ -261,6 +261,21 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ProgramState<TE> translated = translator.translateProgramState(programState);
 		return translateProgramState(remaining, translated);
 	}
+	
+	@Override
+	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(
+				programState.getClassOfExpression());
+		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
+		return translateProgramStateToString(translateProgramState(current, programState), last);
+	}
+
+	
+	private static <TE> String translateProgramStateToString(ProgramState<TE> translateProgramState,
+			final ITranslator<?, ?, ?, ?, ?, ?> trans) {
+		final ITranslator<?, ?, ?, TE, ?, ?> last = (ITranslator<?, ?, ?, TE, ?, ?>) trans;
+		return translateProgramState.toString(x -> last.targetExpressionToString(x));
+	}
 
 	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
@@ -305,4 +320,5 @@ class ModelTranslationContainer implements IBacktranslationService {
 	public String toString() {
 		return CoreUtil.join(mTranslationSequence, ",");
 	}
+
 }

@@ -93,10 +93,10 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Counterexample state before: ");
-		sb.append(mTranslatorSequence.translateProgramState(mStateBefore));
+		sb.append(mTranslatorSequence.translateProgramStateToString(mStateBefore));
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Counterexample state after: ");
-		sb.append(mTranslatorSequence.translateProgramState(mStateAfter));
+		sb.append(mTranslatorSequence.translateProgramStateToString(mStateAfter));
 		return sb.toString();
 	}
 

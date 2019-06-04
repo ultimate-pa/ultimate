@@ -80,6 +80,11 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	}
 
 	@Override
+	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+		return null;
+	}
+
+	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
 		return null;
 	}
@@ -88,6 +93,7 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	public IBacktranslationService getTranslationServiceCopy() {
 		return this;
 	}
+
 
 
 }
