@@ -149,6 +149,15 @@ public class TopologicalSorterTest {
 	}
 
 	@Test
+	public void shiftedInterleavedDiamonds() {
+		// Use direct string comparison for cases in which result checking methods themself have a bug.
+		// Since topological orderings are not unique this test may fail even for correct results
+		// in case the topsort algorithm or iteration order changes.
+		final String randomDag = "0→1a 0→1b 1a→2aOut 1a→2aIn 1b→2bIn 1b→2bOut 2aOut→4 2bOut→4 2aIn→3In 2bIn→3In 3In→4";
+		Assert.assertEquals("[0, 1b, 2bOut, 2bIn, 1a, 2aIn, 3In, 2aOut, 4]", topSort(randomDag).get().toString());
+	}
+
+	@Test
 	public void testCheckingMechanismPositive() {
 		checkTopOrder("a b c", "a→b a→c");
 		checkTopOrder("dolor amet", "dolor→amet");
@@ -178,7 +187,7 @@ public class TopologicalSorterTest {
 	public void testCheckingMechanismUnsorted() {
 		checkTopOrder("c a b", "a→b a→c");
 	}
-	
+
 	@Test(expected = AssertionError.class)
 	public void testCheckingMechanismUnsorted2() {
 		checkTopOrder("a d b c", "a→b b→c c→d");
@@ -189,6 +198,9 @@ public class TopologicalSorterTest {
 		assertUnsortable("a→b");
 	}
 
+	// ↑ tests
+	// ----------------
+	// ↓ helper methods
 
 	private static void assertTopSort(final String inputGraph) {
 		final Graph input = new Graph(inputGraph);
