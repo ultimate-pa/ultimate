@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Program Execution defined by a finite trace and (partial) program states at each position of this trace. This
@@ -177,10 +179,12 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	public class ProgramState<E> {
+		private final Class<E> mClassOfExpression;
 		private final Map<E, Collection<E>> mVariable2Values;
 
-		public ProgramState(final Map<E, Collection<E>> variable2Values) {
+		public ProgramState(final Map<E, Collection<E>> variable2Values, Class<E> classOfExpression) {
 			super();
+			mClassOfExpression = classOfExpression;
 			mVariable2Values = variable2Values;
 		}
 

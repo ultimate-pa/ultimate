@@ -287,7 +287,7 @@ public class BlockEncodingBacktranslator extends
 			}
 			variable2Values.put(newVariable, newValues);
 		}
-		return new ProgramState<>(variable2Values);
+		return new ProgramState<>(variable2Values, getTargetExpressionClass());
 	}
 
 	public void setVariableBlacklist(final Set<Term> variableBlacklist) {

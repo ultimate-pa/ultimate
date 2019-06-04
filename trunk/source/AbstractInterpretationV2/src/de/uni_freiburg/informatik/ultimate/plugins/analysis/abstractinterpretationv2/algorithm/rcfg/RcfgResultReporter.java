@@ -103,7 +103,7 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 
 	private ProgramState<Term> computeProgramState(final DisjunctiveAbstractState<STATE> abstractMultiState) {
 		// TODO: Compute program state
-		return new ProgramState<>(Collections.emptyMap());
+		return new ProgramState<>(Collections.emptyMap(), Term.class);
 	}
 
 	private LOC getLast(final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOC> cex) {

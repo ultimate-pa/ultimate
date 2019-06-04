@@ -171,7 +171,7 @@ public class IcfgProgramExecutionBuilder {
 				final IProgramVar bv = entry.getKey();
 				variable2Values.put(bv.getTermVariable(), Collections.singleton(entry.getValue()));
 			}
-			final ProgramState<Term> pps = new ProgramState<>(variable2Values);
+			final ProgramState<Term> pps = new ProgramState<>(variable2Values, Term.class);
 			partialProgramStateMapping.put(i, pps);
 		}
 		return IcfgProgramExecution.create(mTrace.asList().stream().map(a -> (IcfgEdge) a).collect(Collectors.toList()),

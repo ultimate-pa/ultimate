@@ -535,7 +535,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 			final TE newVariable = translateExpression(oldVariable);
 			variable2Values.put(newVariable, newValues);
 		}
-		return new ProgramState<>(variable2Values);
+		return new ProgramState<>(variable2Values, getTargetExpressionClass());
 	}
 
 	@FunctionalInterface

@@ -69,7 +69,7 @@ final class ProgramExecutionMock<TE, E> implements IProgramExecution<TE, E> {
 
 	@Override
 	public ProgramState<E> getInitialProgramState() {
-		return new ProgramState<>(Collections.emptyMap());
+		return new ProgramState<>(Collections.emptyMap(), null);
 	}
 
 	@Override

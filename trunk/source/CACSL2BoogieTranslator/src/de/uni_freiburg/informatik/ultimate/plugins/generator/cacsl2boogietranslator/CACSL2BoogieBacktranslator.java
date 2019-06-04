@@ -628,7 +628,7 @@ public class CACSL2BoogieBacktranslator
 		if (translatedStateMap.isEmpty()) {
 			return null;
 		}
-		return new ProgramState<>(translatedStateMap);
+		return new ProgramState<>(translatedStateMap, IASTExpression.class);
 
 	}
 
@@ -700,7 +700,7 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 
-		return new ProgramState<>(map);
+		return new ProgramState<>(map, Expression.class);
 	}
 
 	private void extractTemporaryPointerExpression(final List<Pair<Expression, Collection<Expression>>> oldEntries,

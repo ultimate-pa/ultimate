@@ -695,7 +695,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				ctxPrecondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
 			}
 		}
-		return new ProgramState<>(ctxPrecondition);
+		return new ProgramState<>(ctxPrecondition, Term.class);
 	}
 
 	private ProgramState<Term> constructCounterexampleStateForPostcondition() {
@@ -709,7 +709,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				ctxPostcondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
 			}
 		}
-		return new ProgramState<>(ctxPostcondition);
+		return new ProgramState<>(ctxPostcondition, Term.class);
 	}
 
 	private static Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula,

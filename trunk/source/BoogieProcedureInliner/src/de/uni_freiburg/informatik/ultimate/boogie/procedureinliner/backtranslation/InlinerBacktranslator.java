@@ -208,7 +208,8 @@ public class InlinerBacktranslator
 						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));
 					}
 				}
-				translatedStates.put(translatedTrace.size() - 1, new ProgramState<>(translatedVar2Values));
+				translatedStates.put(translatedTrace.size() - 1,
+						new ProgramState<>(translatedVar2Values, Expression.class));
 			}
 		}
 		assert checkCallStackTarget(mLogger, translatedTrace) : "callstack broken after backtranslation by "

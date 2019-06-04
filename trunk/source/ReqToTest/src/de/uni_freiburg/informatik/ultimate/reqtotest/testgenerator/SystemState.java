@@ -17,7 +17,7 @@ public class SystemState extends ProgramState<Expression> {
 	private final Map<String,  Collection<Expression>> mIdentToValues = new HashMap<>();
 
 	public SystemState(Map<Expression, Collection<Expression>> variable2Values, int time) {
-		super(variable2Values);
+		super(variable2Values, Expression.class);
 		mTime = time;
 		for(Expression v : variable2Values.keySet()) {
 			mIdentToValues.put(((IdentifierExpression)v).getIdentifier(), variable2Values.get(v));
