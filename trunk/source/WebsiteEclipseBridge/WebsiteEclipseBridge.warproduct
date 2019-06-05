@@ -11,33 +11,23 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.astbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.parser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.cdt.parser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.core.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.core"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.test" fragment="true"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.pdr"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib.test" fragment="true"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.test"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.test.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.util"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.util.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker"/>
@@ -47,26 +37,22 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.webbridge"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.webinterface"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee"/>
       <plugin id="edu.uci.ics.jung"/>
       <plugin id="javax.xml"/>
       <plugin id="net.sf.javabdd"/>
       <plugin id="org.apache.ant"/>
       <plugin id="org.apache.commons.io"/>
       <plugin id="org.apache.commons.lang"/>
-      <plugin id="org.apache.felix.gogo.command"/>
-      <plugin id="org.apache.felix.gogo.runtime"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.apache.logging.log4j"/>
       <plugin id="org.eclipse.cdt.core"/>
@@ -100,7 +86,6 @@
       <plugin id="org.eclipse.equinox.region" fragment="true"/>
       <plugin id="org.eclipse.equinox.registry"/>
       <plugin id="org.eclipse.equinox.servletbridge"/>
-      <plugin id="org.eclipse.equinox.supplement"/>
       <plugin id="org.eclipse.equinox.transforms.hook" fragment="true"/>
       <plugin id="org.eclipse.equinox.weaving.hook" fragment="true"/>
       <plugin id="org.eclipse.ltk.core.refactoring"/>
@@ -135,9 +120,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.lassoranker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.pdr" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.test" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.util" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" autoStart="true" startLevel="0" />
@@ -151,11 +134,11 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.webbridge" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.webinterface" autoStart="true" startLevel="0" />
@@ -167,15 +150,13 @@
       <plugin id="org.apache.ant" autoStart="true" startLevel="0" />
       <plugin id="org.apache.commons.io" autoStart="true" startLevel="0" />
       <plugin id="org.apache.commons.lang" autoStart="true" startLevel="0" />
-      <plugin id="org.apache.felix.gogo.command" autoStart="true" startLevel="0" />
-      <plugin id="org.apache.felix.gogo.runtime" autoStart="true" startLevel="0" />
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.apache.logging.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.linux" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.linux.x86" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.linux.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.native" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.cdt.core.win32" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.cdt.core.win32.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.commands" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.contenttype" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.expressions" autoStart="true" startLevel="0" />
@@ -183,10 +164,9 @@
       <plugin id="org.eclipse.core.filesystem" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.java7" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.linux.x86" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.core.filesystem.win32.x86_64" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.core.filesystem.linux.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.jobs" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.resources" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.core.resources.win32.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.runtime.compatibility.registry" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.variables" autoStart="true" startLevel="0" />
@@ -198,7 +178,6 @@
       <plugin id="org.eclipse.equinox.preferences" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.registry" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.servletbridge" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.equinox.supplement" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.ltk.core.refactoring" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi.services" autoStart="true" startLevel="0" />
@@ -211,7 +190,9 @@
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
    <libraries>
-      <library path="org.eclipse.equinox.servletbridge_1.3.200.v20160128-1435.jar" fromTarget="true"/>
+      			<library
+				path="org.eclipse.equinox.servletbridge_1.3.200.v20160128-1435.jar"
+				fromTarget="true" />
    </libraries>
    </warConfiguration>
 </product>
