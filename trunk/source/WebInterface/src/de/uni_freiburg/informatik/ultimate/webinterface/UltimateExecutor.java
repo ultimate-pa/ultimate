@@ -176,6 +176,7 @@ public class UltimateExecutor {
 		case TERMINATION_BOOGIE:
 		case KOJAK_BOOGIE:
 		case TAIPAN_BOOGIE:
+		case REFEREE_BOOGIE:
 			fileExtension = ".bpl";
 			break;
 		case AUTOMIZER_C:

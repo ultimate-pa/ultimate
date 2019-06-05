@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Tool;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
 
 /**
  * @author @author Matthias Heizmann
@@ -33,7 +33,7 @@ public class BoogieRefereeTC extends WebToolchain {
 
 	@Override
 	protected TaskNames[] defineTaskName() {
-		return new TaskNames[] { TaskNames.AUTOMIZER_BOOGIE };
+		return new TaskNames[] { TaskNames.REFEREE_BOOGIE };
 	}
 
 	@Override

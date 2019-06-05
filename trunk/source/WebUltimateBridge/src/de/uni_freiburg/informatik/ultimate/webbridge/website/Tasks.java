@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieBuchiAutom
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieRefereeTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.BoogieTaipanTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CBuchiAutomizerTC;
@@ -49,7 +50,8 @@ public class Tasks {
 			CKojakTC.class,
 			BoogieKojakTC.class,
 			CTaipanTC.class,
-			BoogieTaipanTC.class
+			BoogieTaipanTC.class,
+			BoogieRefereeTC.class,
 			//@formatter:on
 	};
 	/**
@@ -97,7 +99,7 @@ public class Tasks {
 		TAIPAN_C,
 
 		TAIPAN_BOOGIE,
-		
+
 		REFEREE_BOOGIE,
 
 		// If you add something here, add a String representation to
@@ -208,7 +210,7 @@ public class Tasks {
 
 		addWorker(NameStrings.TOOL_AUTOMIZER_PETRI, NameStrings.TASK_VERIFY,
 				NameStrings.DESCRIPTION_AUTOMIZER_PETRI);
-		
+
 		addWorker(NameStrings.TOOL_REFEREE, NameStrings.TASK_ANALYZE, NameStrings.DESCRIPTION_REFEREE);
 
 		completeInitWorker();
