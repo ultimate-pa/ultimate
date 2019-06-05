@@ -98,8 +98,12 @@
 									<fileset dir="${examplesDir}/concurrent/concurrentBoogie/showcase/"
 										includes="*.bpl" />
 								</copy>
-
-
+								
+								<copy todir="${websiteExamplesDir}/invariantCheckBoogie"
+									verbose="true">
+									<fileset dir="${examplesDir}/programs/toy/InvariantChecking/showcase/"
+										includes="*.bpl" />
+								</copy>
 							</tasks>
 						</configuration>
 						<goals>
