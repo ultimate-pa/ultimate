@@ -553,6 +553,7 @@
         <module>../PEAtoBoogie</module>
         <module>../RCFGBuilder</module>
         <module>../ReachingDefinitions</module>
+        <module>../Referee</module>
         <module>../ReqParser</module>
         <module>../ReqPrinter</module>
         <module>../ReqToTest</module>
