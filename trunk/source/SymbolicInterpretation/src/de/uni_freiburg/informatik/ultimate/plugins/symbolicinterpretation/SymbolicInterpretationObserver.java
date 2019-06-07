@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
@@ -69,12 +69,12 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		final PredicateUtils predicateUtils = new PredicateUtils(mServices, icfg);
-		final IDomain domain = new ExplicitValueDomain(mServices, predicateUtils);
+		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
+		final IDomain domain = new ExplicitValueDomain(mServices, tools);
 
 		final InterpreterResources resources = new InterpreterResources();
-		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, predicateUtils, icfg, resources));
-		resources.setDagInterpreter(new DagInterpreter(mLogger, predicateUtils, domain, resources));
+		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, resources));
+		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, resources));
 		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
 		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();
 		mLogger.debug("final results are " + predicates);

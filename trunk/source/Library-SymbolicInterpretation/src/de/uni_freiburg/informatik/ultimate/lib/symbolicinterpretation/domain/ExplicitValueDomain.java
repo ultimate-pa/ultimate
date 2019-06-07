@@ -31,19 +31,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 public class ExplicitValueDomain implements IDomain {
 
-	private final PredicateUtils mPredicateUtils;
+	private final SymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
 	private int mDisjunctThreshold;
 
-	public ExplicitValueDomain(final IUltimateServiceProvider services, final PredicateUtils predicateUtils) {
-		mPredicateUtils = predicateUtils;
+	public ExplicitValueDomain(final IUltimateServiceProvider services, final SymbolicTools tools) {
+		mTools = tools;
 		mServices = services;
 	}
 
@@ -51,23 +51,23 @@ public class ExplicitValueDomain implements IDomain {
 	public IPredicate join(final IPredicate first, final IPredicate second) {
 		// TODO decide whether or not to use simplification or use a setting
 		final boolean simplifyDDA = true;
-		return mPredicateUtils.getFactory().or(simplifyDDA, first, second);
+		return mTools.getFactory().or(simplifyDDA, first, second);
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
 		// TODO implement non-trivial version
-		return mPredicateUtils.top();
+		return mTools.top();
 	}
 
 	@Override
 	public boolean isBottom(final IPredicate pred) {
-		return mPredicateUtils.isFalse(pred);
+		return mTools.isFalse(pred);
 	}
 
 	@Override
 	public boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		return mPredicateUtils.implies(subset, superset);
+		return mTools.implies(subset, superset);
 	}
 
 	@Override
@@ -77,9 +77,9 @@ public class ExplicitValueDomain implements IDomain {
 		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
 		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
 
-		final Term dnf = SmtUtils.toDnf(mServices, mPredicateUtils.getScript(), pred.getFormula(),
+		final Term dnf = SmtUtils.toDnf(mServices, mTools.getScript(), pred.getFormula(),
 				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mPredicateUtils);
+		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
 		final Set<Term> rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
 				.map(rewriter::transform)
 				.collect(Collectors.toSet());
@@ -87,7 +87,7 @@ public class ExplicitValueDomain implements IDomain {
 		if (rewrittenDisjuncts.size() > mDisjunctThreshold) {
 			// TODO: Join
 		}
-		return mPredicateUtils.or(rewrittenDisjuncts);
+		return mTools.or(rewrittenDisjuncts);
 	}
 
 }

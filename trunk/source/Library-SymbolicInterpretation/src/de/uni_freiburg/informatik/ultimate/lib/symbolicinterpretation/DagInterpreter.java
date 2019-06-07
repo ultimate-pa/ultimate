@@ -47,15 +47,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class DagInterpreter {
 
 	private final ILogger mLogger;
-	private final PredicateUtils mPredicateUtils;
+	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final InterpreterResources mInterpreterResources;
 	private final TopsortCache mTopsortCache = new TopsortCache();
 
-	public DagInterpreter(final ILogger logger, final PredicateUtils predicateUtils, final IDomain domain,
+	public DagInterpreter(final ILogger logger, final SymbolicTools tools, final IDomain domain,
 			final InterpreterResources resources) {
 		mLogger = logger;
-		mPredicateUtils = predicateUtils;
+		mTools = tools;
 		mDomain = domain;
 		mInterpreterResources = resources;
 	}
@@ -74,7 +74,7 @@ public class DagInterpreter {
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = mTopsortCache.topsort(dag);
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityWorklist<>(topologicalOrder, mPredicateUtils::merge);
+				new PriorityWorklist<>(topologicalOrder, mTools::merge);
 		worklist.add(dag.getSource(), initalInput);
 		IPredicate lastOutput = initalInput;
 		while (worklist.advance()) {
@@ -117,13 +117,13 @@ public class DagInterpreter {
 	}
 
 	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
-		final IPredicate output = mPredicateUtils.post(input, transition);
+		final IPredicate output = mTools.post(input, transition);
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
 		return output;
 	}
 
 	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
-		final IPredicate calleeInput = mPredicateUtils.postCall(input, transition);
+		final IPredicate calleeInput = mTools.postCall(input, transition);
 		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), calleeInput);
 		return calleeInput;

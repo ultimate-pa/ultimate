@@ -46,7 +46,7 @@ public class IcfgInterpreter {
 	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
-	private final PredicateUtils mPredicateUtils;
+	private final SymbolicTools mTools;
 	private final InterpreterResources mInterpreterResources;
 
 	/**
@@ -54,9 +54,9 @@ public class IcfgInterpreter {
 	 *
 	 * @see #interpret()
 	 */
-	public IcfgInterpreter(final ILogger logger, final PredicateUtils predicateUtils, final IIcfg<IcfgLocation> icfg,
+	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
 			final InterpreterResources resources) {
-		this(logger, predicateUtils, icfg, errorLocations(icfg), resources);
+		this(logger, tools, icfg, errorLocations(icfg), resources);
 	}
 
 	private static Collection<IcfgLocation> errorLocations(final IIcfg<IcfgLocation> icfg) {
@@ -70,15 +70,15 @@ public class IcfgInterpreter {
 	 * 
 	 * @see #interpret()
 	 */
-	public IcfgInterpreter(final ILogger logger, final PredicateUtils predicateUtils,
+	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools,
 			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
 			final InterpreterResources resources) {
 		mLogger = logger;
-		mPredicateUtils = predicateUtils;
+		mTools = tools;
 		mIcfg = icfg;
 		mInterpreterResources = resources;
 		logStartingSifa(locationsOfInterest);
-		mEnterCallWorklist = new FifoWorklist<>(mPredicateUtils::merge);
+		mEnterCallWorklist = new FifoWorklist<>(mTools::merge);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
@@ -87,7 +87,7 @@ public class IcfgInterpreter {
 	}
 
 	private void enqueInitial() {
-		final IPredicate top = mPredicateUtils.top();
+		final IPredicate top = mTools.top();
 		mCallGraph.initialProceduresOfInterest().stream()
 				.peek(proc -> mEnterCallWorklist.add(proc, top))
 				.map(mIcfg.getProcedureEntryNodes()::get)
@@ -95,7 +95,7 @@ public class IcfgInterpreter {
 	}
 
 	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
-		final IPredicate bottom = mPredicateUtils.bottom();
+		final IPredicate bottom = mTools.bottom();
 		locationsOfInterest.forEach(loi -> mPredicatesForLoi.put(loi, bottom));
 	}
 
@@ -137,7 +137,7 @@ public class IcfgInterpreter {
 
 	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPredicate) {
 		mPredicatesForLoi.computeIfPresent(location,
-				(unused, oldPredicate) -> mPredicateUtils.merge(oldPredicate, addPredicate));
+				(unused, oldPredicate) -> mTools.merge(oldPredicate, addPredicate));
 	}
 
 	// log messages -------------------------------------------------------------------------------

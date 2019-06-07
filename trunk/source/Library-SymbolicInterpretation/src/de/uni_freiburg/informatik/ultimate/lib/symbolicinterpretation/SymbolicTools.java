@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public class PredicateUtils {
+public class SymbolicTools {
 
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final ManagedScript mScript;
@@ -56,7 +56,7 @@ public class PredicateUtils {
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
 
-	public PredicateUtils(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
 		mScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mScript.getScript();

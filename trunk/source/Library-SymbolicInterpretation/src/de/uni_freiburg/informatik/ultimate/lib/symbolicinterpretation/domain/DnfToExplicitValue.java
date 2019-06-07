@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -43,16 +43,13 @@ public class DnfToExplicitValue extends TermTransformer {
 
 	private final Term mTrue;
 
-	/**
-	 * Expects disjunct of DNF as term
-	 *
-	 * @param services
-	 * @param predicateUtils
-	 */
-	public DnfToExplicitValue(final IUltimateServiceProvider services, final PredicateUtils predicateUtils) {
-		mTrue = predicateUtils.top().getFormula();
+	public DnfToExplicitValue(final IUltimateServiceProvider services, final SymbolicTools tools) {
+		mTrue = tools.top().getFormula();
 	}
 
+	/**
+	 * @param term The disjunct of a DNF
+	 */
 	@Override
 	protected void convert(final Term term) {
 		if (term instanceof TermVariable) {
