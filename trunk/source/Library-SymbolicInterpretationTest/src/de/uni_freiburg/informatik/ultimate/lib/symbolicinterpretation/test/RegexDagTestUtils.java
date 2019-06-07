@@ -34,6 +34,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Assert;
+
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
@@ -185,5 +187,23 @@ public class RegexDagTestUtils {
 		final String[] lines = string.split("\n");
 		Arrays.sort(lines);
 		return String.join("\n", lines);
+	}
+
+	/**
+	 * Constructs an expected dag from a list of nodes and edges (see {@link #toTgf(String, String)})
+	 * and compares the expected dag with the actual dag using {@link Assert#assertEquals(String, String)}.
+	 * <p>
+	 * Caution: This method is very fragile. Usually we had to check graph isomorphism, which is complicated.
+	 * We compare the trivial graph format (TGF) representation which is faster but unreliable.
+	 * TGFs can differ for isomorph graph because of different node ids
+	 * A benefit of comparing TGFs is human-readable output for failed asserts.
+	 */
+	public static void assertEq(final String nodesExpected, final String edgesExpected,
+			final RegexDag<String> actualDag) {
+		// leading \n makes jUnit's output ("expected <...> but was <...>") more readable
+		Assert.assertEquals(
+				"\n" + sortTgf(toTgf(nodesExpected, edgesExpected)),
+				"\n" + sortTgf(actualDag.toString()));
+		// TODO assert source and sink nodes are set correctly
 	}
 }

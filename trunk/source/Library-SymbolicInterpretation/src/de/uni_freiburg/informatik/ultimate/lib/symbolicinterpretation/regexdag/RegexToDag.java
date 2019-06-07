@@ -107,8 +107,8 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	@Override
 	public RegexDagNode<L> visit(final Union<L> union, final RegexDagNode<L> parent) {
 		final RegexDagNode<L> join = RegexDagNode.makeEpsilon();
-		join.addIncoming(union.getFirst().accept(this, parent));
-		join.addIncoming(union.getSecond().accept(this, parent));
+		join.connectIncoming(union.getFirst().accept(this, parent));
+		join.connectIncoming(union.getSecond().accept(this, parent));
 		return join;
 	}
 

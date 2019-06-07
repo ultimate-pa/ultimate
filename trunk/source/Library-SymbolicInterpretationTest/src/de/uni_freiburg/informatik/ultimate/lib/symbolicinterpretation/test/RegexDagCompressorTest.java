@@ -112,12 +112,12 @@ public class RegexDagCompressorTest {
 	@Test
 	public void inputsOfNonReproducalbeTestFails() {
 		// mergeJoinOnly
-		assertParsingDagEqualsTgf("0a 1b 2c 3c 4d", "01 13 34 02 24");
+		assertDagParsingEqualsTgf("0a 1b 2c 3c 4d", "01 13 34 02 24");
 		// example1
-		assertParsingDagEqualsTgf("0ε 1a 2e 3b 4c 5f 6a", "01 02 13 34 35 42 46 52 65");
+		assertDagParsingEqualsTgf("0ε 1a 2e 3b 4c 5f 6a", "01 02 13 34 35 42 46 52 65");
 	}
 
-	private static void assertParsingDagEqualsTgf(final String nodes, final String edges) {
+	private static void assertDagParsingEqualsTgf(final String nodes, final String edges) {
 		Assert.assertEquals(
 				sortTgf(dag(nodes, edges).toString()),
 				sortTgf(toTgf(nodes, edges)));
@@ -127,22 +127,7 @@ public class RegexDagCompressorTest {
 
 	private static void compressAssertEq(final String nodesExpected, final String edgesExpected,
 			final RegexDag<String> dag) {
-		assertEq(nodesExpected, edgesExpected, new RegexDagCompressor<String>().compress(dag));
-	}
-
-	private static void assertEq(final String nodesExpected, final String edgesExpected,
-			final RegexDag<String> actualDag) {
-		// Assert is very fragile:
-		// Usually we had to check graph isomorphism, which is complicated.
-		// We compare the trivial graph format (TGF) representation which is faster but unreliable.
-		// TGFs can differ for isomorph graph because of different node ids
-		// A benefit of comparing TGFs is human-readable output for failed asserts.
-
-		// leading \n makes jUnit's output ("expected <...> but was <...>") more readable
-		Assert.assertEquals(
-				"\n" + sortTgf(toTgf(nodesExpected, edgesExpected)),
-				"\n" + sortTgf(actualDag.toString()));
-		// TODO assert source and sink nodes are set correctly
+		RegexDagTestUtils.assertEq(nodesExpected, edgesExpected, new RegexDagCompressor<String>().compress(dag));
 	}
 
 }
