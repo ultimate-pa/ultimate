@@ -182,7 +182,7 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 		private final Class<E> mClassOfExpression;
 		private final Map<E, Collection<E>> mVariable2Values;
 
-		public ProgramState(final Map<E, Collection<E>> variable2Values, Class<E> classOfExpression) {
+		public ProgramState(final Map<E, Collection<E>> variable2Values, final Class<E> classOfExpression) {
 			super();
 			mClassOfExpression = classOfExpression;
 			mVariable2Values = variable2Values;
@@ -199,39 +199,39 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 		public Class<E> getClassOfExpression() {
 			return mClassOfExpression;
 		}
-		
+
 		/**
 		 * @param expressionToString
 		 *            Function that maps each expression of type E to a string.
 		 */
-		public String toString(Function<E,String> expressionToString) {
+		public String toString(final Function<E,String> expressionToString) {
 			final List<Entry<E, Collection<E>>> toSort = constructSortedListOfEntries(mVariable2Values);
 			final StringBuilder sb = new StringBuilder();
 			boolean first = true;
-			for (Entry<E, Collection<E>> entry : toSort) {
-				sb.append(expressionToString.apply(entry.getKey()));
-				if (entry.getValue().size() == 1) {
-					sb.append("=");
-					E theElement = entry.getValue().iterator().next();
-					sb.append(expressionToString.apply(theElement));
-				} else {
-					// TODO 20190604 Matthias: replace by UTF-8 ∈ if this 
-					// does not lead to problems with web interface
-					// or other use interfaces
-					sb.append(" in");
-					sb.append(entry.getValue().stream().map(expressionToString).collect(Collectors.joining(",")));
-				}
+			for (final Entry<E, Collection<E>> entry : toSort) {
 				if (first) {
 					first = false;
 				} else {
 					sb.append(", ");
+				}
+				sb.append(expressionToString.apply(entry.getKey()));
+				if (entry.getValue().size() == 1) {
+					sb.append("=");
+					final E theElement = entry.getValue().iterator().next();
+					sb.append(expressionToString.apply(theElement));
+				} else {
+					// TODO 20190604 Matthias: replace by UTF-8 ∈ if this
+					// does not lead to problems with web interface
+					// or other use interfaces
+					sb.append(" in");
+					sb.append(entry.getValue().stream().map(expressionToString).collect(Collectors.joining(",")));
 				}
 			}
 			return sb.toString();
 		}
 
 		private static <E> List<Entry<E, Collection<E>>> constructSortedListOfEntries(
-				Map<E, Collection<E>> variable2values) {
+				final Map<E, Collection<E>> variable2values) {
 			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(variable2values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
