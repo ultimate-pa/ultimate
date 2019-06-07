@@ -108,6 +108,7 @@ public class IcfgInterpreter {
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
 		logStartingInterpretation();
+		// TODO use topological order? 
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();

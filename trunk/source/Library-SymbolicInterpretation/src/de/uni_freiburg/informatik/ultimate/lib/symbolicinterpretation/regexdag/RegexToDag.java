@@ -50,6 +50,7 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 		resetDagAndStars();
 	}
 
+	// TODO remove, see getStarWorklist
 	public final void resetDagAndStars() {
 		resetDag();
 		mVisitedStars = new HashSet<>();
@@ -79,6 +80,8 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	}
 
 	/**
+	 * TODO remove star worklist. This Method is probably not needed.
+	 * 
 	 * Retrieves the star expressions treated like literals since the last {@link #resetDagAndStars()}.
 	 * The list is free of duplicates. This returns a direct reference to the internal worklist;
 	 * it is ok to modify the list from the outside, but running {@link #add(IRegex)} may add something to the

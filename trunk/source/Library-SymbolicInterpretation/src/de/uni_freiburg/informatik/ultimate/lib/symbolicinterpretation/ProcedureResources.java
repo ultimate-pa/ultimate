@@ -26,13 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.BackwardClosedOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
@@ -63,17 +65,18 @@ public class ProcedureResources {
 				new PathExpressionComputer<>(procedureGraph);
 		final RegexToDag<IIcfgTransition<IcfgLocation>> regexToDag = new RegexToDag<>();
 
-		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> loiDagNodes = locationsOfInterest.stream()
+		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> loisAndEnterCallMarkers = new ArrayList<>(
+				locationsOfInterest.size() + enterCallsOfInterest.size());
+		locationsOfInterest.stream()
 				.peek(loi -> assertLoiFromSameProcedure(procedure, loi))
-				.map(loi -> peComputer.exprBetween(entry, loi))
+				.map(loi -> markRegex(peComputer.exprBetween(entry, loi), loi))
 				.map(regexToDag::add)
-				.collect(Collectors.toList());
-
-		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> enterCallDagNodes = enterCallsOfInterest.stream()
+				.forEach(loisAndEnterCallMarkers::add);
+		enterCallsOfInterest.stream()
 				.map(procedureEntryNodes::get)
-				.map(enterCallOfInterest -> peComputer.exprBetween(entry, enterCallOfInterest))
+				.map(procEntry -> markRegex(peComputer.exprBetween(entry, procEntry), procEntry))
 				.map(regexToDag::add)
-				.collect(Collectors.toList());
+				.forEach(loisAndEnterCallMarkers::add);
 
 		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode =
 				regexToDag.add(peComputer.exprBetween(entry, procedureGraph.getExitNode()));
@@ -82,10 +85,18 @@ public class ProcedureResources {
 		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();
-		Stream.concat(loiDagNodes.stream(), enterCallDagNodes.stream())
-				.forEach(mDagOverlayPathToLOIsAndEnterCalls::add);
+		// loiDagNodes and enterCallDagNodes are computed before dag compression,
+		// but since they are unique using them after compression is safe
+		loisAndEnterCallMarkers.stream()
+				.forEach(mDagOverlayPathToLOIsAndEnterCalls::addExclusive);
 		mDagOverlayPathToReturn = new BackwardClosedOverlay<>();
-		mDagOverlayPathToReturn.add(returnDagNode);
+		mDagOverlayPathToReturn.addInclusive(returnDagNode);
+	}
+
+	/**  Marks a regex by appending a marker literal based on a location. */
+	private static IRegex<IIcfgTransition<IcfgLocation>> markRegex(
+			final IRegex<IIcfgTransition<IcfgLocation>> regex, final IcfgLocation finalLocationAsMark) {
+		return Regex.concat(regex, Regex.literal(new LocationMarkerTransition(finalLocationAsMark)));
 	}
 
 	private static void assertLoiFromSameProcedure(final String procedure, final IcfgLocation loi) {

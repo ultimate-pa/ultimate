@@ -110,6 +110,8 @@ public class DagInterpreter {
 		} else if (transition instanceof IIcfgInternalTransition) {
 			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) transition, input);
 		} else {
+			// This case also includes LocationMarkerTransition. Markers should not be reachable in the overlay.
+			// Markers are only used to find nodes after compression and to construct the overlay.
 			throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
 		}
 	}

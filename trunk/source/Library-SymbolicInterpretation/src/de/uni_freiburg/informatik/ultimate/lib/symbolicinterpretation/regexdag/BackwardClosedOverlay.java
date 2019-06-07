@@ -40,17 +40,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 
+	private final HashRelation<RegexDagNode<L>, RegexDagNode<L>> mPredecessorRelation = new HashRelation<>();
 	private final HashRelation<RegexDagNode<L>, RegexDagNode<L>> mSuccessorRelation = new HashRelation<>();
 
 	/**
-	 * Adds all backward edges to this overlay starting from a given node.
-	 * As a result, all paths from the DAG's source to the given node will be part of this overlay.
-	 * @param targetNode Node to be added
+	 * Adds all backward edges to this overlay starting from the predecessors of the given node.
+	 * As a result, all paths from the DAG's source to the predecessors of the given node will be part of this overlay.
+	 * Paths to the given node itself will <i>not</i> be added.
+	 * @param targetNodeInclusive Node whose predecessors will be added
 	 */
-	public void add(final RegexDagNode<L> targetNode) {
-		for (final RegexDagNode<L> predecessor : targetNode.getIncomingNodes()) {
-			if (mSuccessorRelation.addPair(predecessor, targetNode)) {
-				add(predecessor);
+	public void addExclusive(final RegexDagNode<L> targetNodeExclusive) {
+		targetNodeExclusive.getIncomingNodes().forEach(this::addInclusive);
+	} 
+
+	/**
+	 * Adds all backward edges to this overlay starting from the given node.
+	 * As a result, all paths from the DAG's source to the given node will be part of this overlay.
+	 * @param targetNodeInclusive Node to be added
+	 */
+	public void addInclusive(final RegexDagNode<L> targetNodeInclusive) {
+		for (final RegexDagNode<L> predecessor : targetNodeInclusive.getIncomingNodes()) {
+			if (mSuccessorRelation.addPair(predecessor, targetNodeInclusive)) {
+				addInclusive(predecessor);
 			}
 		}
 	}
@@ -62,7 +73,7 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 
 	@Override
 	public Collection<RegexDagNode<L>> predecessorsOf(final RegexDagNode<L> node) {
-		return node.getIncomingNodes();
+		return mPredecessorRelation.getImage(node);
 	}
 
 	
