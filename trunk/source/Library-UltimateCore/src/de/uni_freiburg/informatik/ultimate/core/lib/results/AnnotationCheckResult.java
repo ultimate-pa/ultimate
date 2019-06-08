@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -42,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @param <EXPR>
  *            Type of expression
  */
-public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends AbstractResult {
+public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends AbstractResult implements IResultWithSeverity {
 
 	public enum AnnotationState { VALID, UNKNOWN, INVALID };
 
@@ -88,6 +90,19 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	}
 
 	@Override
+	public Severity getSeverity() {
+		switch (mAnnotationState) {
+		case VALID:
+			return Severity.INFO;
+		case INVALID:
+		case UNKNOWN:
+			return Severity.ERROR;
+		default:
+			throw new AssertionError("Unknown value " + mAnnotationState);
+		}
+	}
+
+	@Override
 	public String getShortDescription() {
 		String result;
 		switch (mAnnotationState) {
@@ -95,7 +110,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 			result = "Annotation is not a valid proof of correctness.";
 			break;
 		case UNKNOWN:
-			result = "Unable to check if annotation is a valid proof of correctness";
+			result = "Insufficient resources for checking whether annotation is a valid proof of correctness";
 			break;
 		case VALID:
 			result = "Annotation is a valid proof of correctness";
@@ -116,7 +131,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 			sb.append(System.lineSeparator());
 		}
 		for (final LoopFreeSegment<ELEM> segment : mSegmentsUnknown) {
-			sb.append(validSegmentToString(segment));
+			sb.append(unknownSegmentToString(segment));
 			sb.append(System.lineSeparator());
 		}
 		for (final LoopFreeSegment<ELEM> segment : mSegmentsValid) {
@@ -127,85 +142,127 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	}
 
 	public static <E> String validSegmentToString(final LoopFreeSegment<E> segment) {
-		return "Annotation is valid for all loop-free paths from " + segment.before() + " to " + segment.after();
+		return "Annotation is valid for " + segment + ".";
 	}
 
 	public static <E> String unknownSegmentToString(final LoopFreeSegment<E> segment) {
-		return "Unable to check if annotation is valid for all loop-free paths from " + segment.before() + " to "
-				+ segment.after();
+		return "Insufficient resources for checking whether annotation is valid for " + segment  + ".";
 	}
 
 	public static <ELEM, E> String validSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
 			final IBacktranslationService translation) {
-		return "Annotation is not valid for all loop-free paths from " + segment.before() + " to " + segment.after()
+		return "Annotation is not valid for " + segment
 				+ ". One counterxample starts in " + translation.translateProgramStateToString(segment.getStateBefore())
-				+ " and ends in " + translation.translateProgramStateToString(segment.getStateAfter());
+				+ " and ends in " + translation.translateProgramStateToString(segment.getStateAfter()) + ".";
 	}
 
 	public static class LoopFreeSegment<E> {
-		final ILocation mLocationBefore;
-		final ILocation mLocationAfter;
-		final String mLocationTypeBefore;
-		final String mLocationTypeAfter;
+		final CategorizedProgramPoint mCppBefore;
+		final CategorizedProgramPoint mCppAfter;
 
-		public LoopFreeSegment(final ILocation locationBefore, final ILocation locationAfter, final String locationTypeBefore,
-				final String locationTypeAfter) {
+		public LoopFreeSegment(final CategorizedProgramPoint cppBefore, final CategorizedProgramPoint cppAfter) {
 			super();
-			mLocationBefore = locationBefore;
-			mLocationAfter = locationAfter;
-			mLocationTypeBefore = locationTypeBefore;
-			mLocationTypeAfter = locationTypeAfter;
+			this.mCppBefore = cppBefore;
+			this.mCppAfter = cppAfter;
 		}
 
-		public String before() {
-			return mLocationTypeBefore + " at line " + mLocationBefore.getStartLine();
+		@Override
+		public String toString() {
+			return "all loop-free paths from " + mCppBefore + " to " + mCppAfter;
 		}
-
-		public String after() {
-			return mLocationTypeAfter + " at line " + mLocationBefore.getEndLine();
-		}
-
-
-		public ILocation getLocationBefore() {
-			return mLocationBefore;
-		}
-
-		public ILocation getLocationAfter() {
-			return mLocationAfter;
-		}
-
-		public String getLocationTypeBefore() {
-			return mLocationTypeBefore;
-		}
-
-		public String getLocationTypeAfter() {
-			return mLocationTypeAfter;
-		}
-
-
-
-
 	}
 
 	public static class LoopFreeSegmentWithStatePair<ELEM, E> extends LoopFreeSegment<ELEM> {
 		final ProgramState<E> mStateBefore;
 		final ProgramState<E> mStateAfter;
-		public LoopFreeSegmentWithStatePair(final ILocation locationBefore, final ILocation locationAfter,
-				final String locationTypeBefore, final String locationTypeAfter, final ProgramState<E> stateBefore,
+
+		public LoopFreeSegmentWithStatePair(final CategorizedProgramPoint cppBefore,
+				final CategorizedProgramPoint cppAfter, final ProgramState<E> stateBefore,
 				final ProgramState<E> stateAfter) {
-			super(locationBefore, locationAfter, locationTypeBefore, locationTypeAfter);
+			super(cppBefore, cppAfter);
 			mStateBefore = stateBefore;
 			mStateAfter = stateAfter;
 		}
+
 		public ProgramState<E> getStateBefore() {
 			return mStateBefore;
 		}
+
 		public ProgramState<E> getStateAfter() {
 			return mStateAfter;
 		}
-
-
 	}
+
+	public static abstract class CategorizedProgramPoint {
+		private final ILocation mLocation;
+
+		public CategorizedProgramPoint(final ILocation location) {
+			super();
+			mLocation = location;
+		}
+
+		protected ILocation getLocation() {
+			return mLocation;
+		}
+	}
+
+	public static class LoopHead extends CategorizedProgramPoint {
+
+		public LoopHead(final ILocation location) {
+			super(location);
+		}
+
+		@Override
+		public String toString() {
+			return "loop head at line " + getLocation().getStartLine();
+		}
+	}
+
+	public static class ProcedureEntry extends CategorizedProgramPoint {
+
+		final String mProcedureName;
+
+		public ProcedureEntry(final ILocation location, final String procedureName) {
+			super(location);
+			mProcedureName = procedureName;
+		}
+
+		@Override
+		public String toString() {
+			return "entry of procedure " + mProcedureName;
+		}
+	}
+
+	public static class ProcedureExit extends CategorizedProgramPoint {
+
+		final String mProcedureName;
+
+		public ProcedureExit(final ILocation location, final String procedureName) {
+			super(location);
+			mProcedureName = procedureName;
+		}
+
+		@Override
+		public String toString() {
+			return "exit of procedure " + mProcedureName;
+		}
+	}
+
+	public static class CheckPoint extends CategorizedProgramPoint {
+
+		final Check mCheck;
+
+		public CheckPoint(final ILocation location, final Check check) {
+			super(location);
+			mCheck = check;
+		}
+
+		@Override
+		public String toString() {
+			return "check that " + mCheck.getPositiveMessage() + " at line " + getLocation().getStartLine();
+		}
+	}
+
 
 
 }

@@ -37,9 +37,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 
 public class RefereeStarter {
 
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
-	private static final boolean INVARIANT_CHECKING = !false;
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -52,7 +49,10 @@ public class RefereeStarter {
 	public RefereeStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> rcfgRootNode) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		new InvariantChecker(mServices, rcfgRootNode);
+		final InvariantChecker ic = new InvariantChecker(mServices, rcfgRootNode);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ic.getResultForUltimateUser());
+		mLogger.info(ic.getResultForUltimateUser().getShortDescription());
+
 	}
 
 	/**

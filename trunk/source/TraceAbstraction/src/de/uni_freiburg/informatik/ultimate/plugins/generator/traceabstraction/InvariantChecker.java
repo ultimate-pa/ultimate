@@ -37,16 +37,24 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CategorizedProgramPoint;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CheckPoint;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegment;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegmentWithStatePair;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopHead;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureEntry;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureExit;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InsufficientAnnotationResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -74,69 +82,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class InvariantChecker {
-
-	private static class EdgeCheckResult {
-
-		private final Validity mValidity;
-		private final ProgramState<Term> mCtxPre;
-		private final ProgramState<Term> mCtxPost;
-
-		public EdgeCheckResult(final Validity validity, final ProgramState<Term> ctxPre,
-				final ProgramState<Term> ctxPost) {
-			mValidity = validity;
-			mCtxPre = ctxPre;
-			mCtxPost = ctxPost;
-		}
-
-		public Validity getValidity() {
-			return mValidity;
-		}
-
-		public ProgramState<Term> getCtxPre() {
-			return mCtxPre;
-		}
-
-		public ProgramState<Term> getCtxPost() {
-			return mCtxPost;
-		}
-
-	}
-
-	private static class LoopLocations {
-		public final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge;
-		public final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge;
-		public final List<IcfgLocation> mLoopLocWithoutInvariant;
-
-		public LoopLocations(final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge,
-				final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge,
-				final List<IcfgLocation> loopLocWithoutInvariant) {
-			mLoopLoc2errorEdge = loopLoc2errorEdge;
-			mLoopErrorLoc2errorEdge = loopErrorLoc2errorEdge;
-			mLoopLocWithoutInvariant = loopLocWithoutInvariant;
-		}
-
-		public Map<IcfgLocation, IcfgEdge> getLoopLoc2errorEdge() {
-			return mLoopLoc2errorEdge;
-		}
-
-		public Map<IcfgLocation, IcfgEdge> getLoopErrorLoc2errorEdge() {
-			return mLoopErrorLoc2errorEdge;
-		}
-
-		public List<IcfgLocation> getLoopLocWithoutInvariant() {
-			return mLoopLocWithoutInvariant;
-		}
-
-	}
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	private final LoopLocations mLoopLocations;
+	private IResultWithSeverity mResultForUltimateUser;
 
-	public enum LocationType {
-		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC
+	public enum ProgramPointType {
+		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC;
 	}
 
 	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
@@ -147,12 +101,12 @@ public class InvariantChecker {
 		if (!mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
 
 			final String shortDescription = "Not every loop was annotated with an invariant.";
-			final String longDescription = "Missing invariants at: " + mLoopLocations.getLoopLocWithoutInvariant();
+			final String longDescription = "Missing invariants at: "
+					+ icfgLocationsToListOfLineNumbers(mLoopLocations.getLoopLocWithoutInvariant());
 			final Severity severity = Severity.ERROR;
-			final GenericResultAtElement<?> grae = new GenericResultAtElement<>(
+			mResultForUltimateUser = new GenericResultAtElement<>(
 					mLoopLocations.getLoopLocWithoutInvariant().get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), shortDescription, longDescription, severity);
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID, grae);
 			return;
 		}
 		mLogger.info("Found " + mIcfg.getLoopLocations().size() + " loops.");
@@ -174,9 +128,9 @@ public class InvariantChecker {
 				findTwoPointSubgraphDefinitions(icfg, mLoopLocations, loopLocsAndNonLoopErrorLocs);
 		final String message = message24(tpsds);
 		mLogger.info("Will check " + message);
-		final Set<TwoPointSubgraphDefinition> mValid = new HashSet<>();
-		final Set<TwoPointSubgraphDefinition> mUnknown = new HashSet<>();
-		final Map<TwoPointSubgraphDefinition, EdgeCheckResult> mInvalid = new HashMap<>();
+		final Set<TwoPointSubgraphDefinition> validTpsds = new HashSet<>();
+		final Set<TwoPointSubgraphDefinition> unknownTpsds = new HashSet<>();
+		final Map<TwoPointSubgraphDefinition, EdgeCheckResult> invalidTpsds = new HashMap<>();
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final IcfgLocation startLoc = tpsd.getStartLocation();
 			final IcfgLocation errorLoc = tpsd.getEndLocation();
@@ -191,33 +145,34 @@ public class InvariantChecker {
 			final EdgeCheckResult ecr = doCheck(startLoc, tf, errorLoc);
 			switch (ecr.getValidity()) {
 			case INVALID:
-				final InsufficientAnnotationResult<IcfgEdge, Term> iar = new InsufficientAnnotationResult<>(
-						startLoc.getOutgoingEdges().get(0), Activator.PLUGIN_ID, mServices.getBacktranslationService(),
-						errorLoc.getIncomingEdges().get(0), ecr.getCtxPre(), ecr.getCtxPost());
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID, iar);
-				mLogger.info(iar.getShortDescription());
-				mInvalid.put(tpsd, ecr);
+				invalidTpsds.put(tpsd, ecr);
 				break;
 			case NOT_CHECKED:
 				throw new AssertionError("failed to perfrom check");
 			case UNKNOWN:
-				mUnknown.add(tpsd);
+				unknownTpsds.add(tpsd);
 				break;
 			case VALID:
-				mValid.add(tpsd);
+				validTpsds.add(tpsd);
 				break;
 			default:
 				throw new AssertionError("illegal result: " + ecr.getValidity());
 			}
 		}
-		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(mValid);
-		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(mUnknown);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
-				twoPointSubgraphsToSegments(mInvalid);
-		final AnnotationCheckResult<IcfgEdge, Term> acr = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
+		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(validTpsds);
+		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(
+				invalidTpsds);
+		mResultForUltimateUser = new AnnotationCheckResult<IcfgEdge, Term>(Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, acr);
-		mLogger.info(acr.getShortDescription());
+	}
+
+	private String icfgLocationsToListOfLineNumbers(final List<IcfgLocation> loopLocWithoutInvariant) {
+		final TreeSet<Integer> lineNumbersSorted = loopLocWithoutInvariant.stream()
+				.map(x -> guessLocation(x).getStartLine()).collect(Collectors.toCollection(TreeSet::new));
+		final String result = lineNumbersSorted.stream().map(x -> "line " + x.toString())
+				.collect(Collectors.joining(", "));
+		return result;
 	}
 
 	private List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>>
@@ -231,12 +186,43 @@ public class InvariantChecker {
 
 	private LoopFreeSegmentWithStatePair<IcfgEdge, Term>
 			twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
-		final ILocation locationBefore = guessLocation(tpsd.getStartLocation());
-		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
-		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
-		final String locationTypeAfter = classify(tpsd.getEndLocation()).toString();
-		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result = new LoopFreeSegmentWithStatePair<>(locationBefore,
-				locationAfter, locationTypeBefore, locationTypeAfter, value.getCtxPre(), value.getCtxPost());
+		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
+		final CategorizedProgramPoint cppAfter= constructCategorizedProgramPoint(tpsd.getEndLocation());
+		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result = new LoopFreeSegmentWithStatePair<>(cppBefore,
+				cppAfter, value.getCtxPre(), value.getCtxPost());
+		return result;
+	}
+
+	private CategorizedProgramPoint constructCategorizedProgramPoint(final IcfgLocation programPoint) {
+		final ILocation location = guessLocation(programPoint);
+		final ProgramPointType programPointType = classify(programPoint);
+		final CategorizedProgramPoint result;
+		switch (programPointType) {
+		case ENTRY:
+			result = new ProcedureEntry(location, programPoint.getProcedure());
+			break;
+		case ERROR_LOC:
+			final Check check = Check.getAnnotation(programPoint);
+			if (check == null) {
+				throw new AssertionError(
+						"program point " + programPoint + " is error location but does not have a Check");
+			}
+			if (check.getSpec().equals(Collections.singleton(Check.Spec.POST_CONDITION))) {
+				result = new ProcedureExit(location, programPoint.getProcedure());
+			} else {
+				result = new CheckPoint(location, Check.getAnnotation(programPoint));
+			}
+			break;
+		case LOOP_HEAD:
+			result = new LoopHead(location);
+			break;
+		case LOOP_INVARIANT_ERROR_LOC:
+			result = new LoopHead(location);
+			break;
+		case UNKNOWN:
+		default:
+			throw new AssertionError("unable to categorize program point " + programPoint);
+		}
 		return result;
 	}
 
@@ -249,45 +235,48 @@ public class InvariantChecker {
 	}
 
 	private LoopFreeSegment<IcfgEdge> twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd) {
-		final ILocation locationBefore = guessLocation(tpsd.getStartLocation());
-		final ILocation locationAfter = guessLocation(tpsd.getEndLocation());
-		final String locationTypeBefore = classify(tpsd.getStartLocation()).toString();
-		final String locationTypeAfter = classify(tpsd.getEndLocation()).toString();
-		final LoopFreeSegment<IcfgEdge> result =
-				new LoopFreeSegment<>(locationBefore, locationAfter, locationTypeBefore, locationTypeAfter);
+		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
+		final CategorizedProgramPoint cppAfter= constructCategorizedProgramPoint(tpsd.getEndLocation());
+		final LoopFreeSegment<IcfgEdge> result = new LoopFreeSegment<>(cppBefore, cppAfter);
 		return result;
 	}
 
-	private ILocation guessLocation(final IcfgLocation startLocation) {
-		final LocationType programPointType = classify(startLocation);
+	private ILocation guessLocation(final IcfgLocation programPoint) {
+		final ProgramPointType programPointType = classify(programPoint);
 		final IcfgEdge someEdge;
 		switch (programPointType) {
 		case ENTRY:
 		case LOOP_HEAD:
-			someEdge = startLocation.getOutgoingEdges().get(0);
+			someEdge = programPoint.getOutgoingEdges().get(0);
 			break;
 		case ERROR_LOC:
 		case LOOP_INVARIANT_ERROR_LOC:
-			someEdge = startLocation.getIncomingEdges().get(0);
+			someEdge = programPoint.getIncomingEdges().get(0);
 			break;
 		case UNKNOWN:
 		default:
 			throw new AssertionError("unable to determine type of program point");
 		}
 		final ILocation loc = ILocation.getAnnotation(someEdge);
-		return loc;
+		final ILocation result;
+		if (loc instanceof MergedLocation) {
+			result = ((MergedLocation) loc).getOriginLocations().get(0);
+		} else {
+			result = loc;
+		}
+		return result;
 	}
 
 	private String message24(final List<TwoPointSubgraphDefinition> tpsds) {
-		final HashRelation<Pair<LocationType, LocationType>, TwoPointSubgraphDefinition> hr = new HashRelation<>();
+		final HashRelation<Pair<ProgramPointType, ProgramPointType>, TwoPointSubgraphDefinition> hr = new HashRelation<>();
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
-			final LocationType startType = classify(tpsd.getStartLocation());
-			final LocationType endType = classify(tpsd.getEndLocation());
+			final ProgramPointType startType = classify(tpsd.getStartLocation());
+			final ProgramPointType endType = classify(tpsd.getEndLocation());
 			hr.addPair(new Pair(startType, endType), tpsd);
 		}
 		boolean isFirst = true;
 		final StringBuilder sb = new StringBuilder();
-		for (final Pair<LocationType, LocationType> dom : hr.getDomain()) {
+		for (final Pair<ProgramPointType, ProgramPointType> dom : hr.getDomain()) {
 			final int number = hr.numberOfPairsWithGivenDomainElement(dom);
 			if (!isFirst) {
 				sb.append(", ");
@@ -434,19 +423,19 @@ public class InvariantChecker {
 		return sb.toString();
 	}
 
-	LocationType classify(final IcfgLocation loc) {
+	ProgramPointType classify(final IcfgLocation loc) {
 		if (mIcfg.getLoopLocations().contains(loc)) {
-			return LocationType.LOOP_HEAD;
+			return ProgramPointType.LOOP_HEAD;
 		} else if (mLoopLocations.getLoopErrorLoc2errorEdge().containsKey(loc)) {
-			return LocationType.LOOP_INVARIANT_ERROR_LOC;
+			return ProgramPointType.LOOP_INVARIANT_ERROR_LOC;
 		} else {
 			final String proc = loc.getProcedure();
 			if (mIcfg.getProcedureEntryNodes().get(proc).equals(loc)) {
-				return LocationType.ENTRY;
+				return ProgramPointType.ENTRY;
 			} else if (mIcfg.getProcedureErrorNodes().get(proc).contains(loc)) {
-				return LocationType.ERROR_LOC;
+				return ProgramPointType.ERROR_LOC;
 			} else {
-				return LocationType.UNKNOWN;
+				return ProgramPointType.UNKNOWN;
 			}
 		}
 	}
@@ -473,7 +462,9 @@ public class InvariantChecker {
 		case NOT_CHECKED:
 			throw new AssertionError();
 		case UNKNOWN:
-			throw new UnsupportedOperationException();
+			ecr = new EdgeCheckResult(validity, null, null);
+			mLogger.info("unknown inductivity: todo good error message");
+			break;
 		case VALID:
 			ecr = new EdgeCheckResult(validity, null, null);
 			mLogger.info(generateMessage(startLoc, errorLoc, true));
@@ -503,7 +494,7 @@ public class InvariantChecker {
 		return sb.toString();
 	}
 
-	private String getType(final IcfgLocation startLoc) {
+	private static String getType(final IcfgLocation startLoc) {
 		if (isInvariant(startLoc)) {
 			return "loop head";
 		} else if (isErrorLoc(startLoc)) {
@@ -529,7 +520,7 @@ public class InvariantChecker {
 		return result;
 	}
 
-	private void processForward(final ArrayDeque<IcfgLocation> worklistForward, final Set<IcfgLocation> seenForward,
+	private static void processForward(final ArrayDeque<IcfgLocation> worklistForward, final Set<IcfgLocation> seenForward,
 			final Set<IcfgLocation> errorLocations, final IcfgLocation succLoc, final boolean checkForErrorLocs) {
 		seenForward.add(succLoc);
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
@@ -577,17 +568,17 @@ public class InvariantChecker {
 		return false;
 	}
 
-	private boolean isErrorLoc(final IcfgLocation loc) {
+	private static boolean isErrorLoc(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		return (check != null);
 	}
 
-	private boolean isLoopLoc(final IcfgLocation loc) {
+	private static boolean isLoopLoc(final IcfgLocation loc) {
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(loc);
 		return (loa != null);
 	}
 
-	private String getNiceSubgraphPointDescription(final LocationType lt) {
+	private String getNiceSubgraphPointDescription(final ProgramPointType lt) {
 		switch (lt) {
 		case ENTRY:
 			return "procedure entry";
@@ -602,6 +593,10 @@ public class InvariantChecker {
 		default:
 			throw new AssertionError("unknown location type " + lt);
 		}
+	}
+
+	public IResultWithSeverity getResultForUltimateUser() {
+		return mResultForUltimateUser;
 	}
 
 	private static class TwoPointSubgraphDefinition {
@@ -627,6 +622,59 @@ public class InvariantChecker {
 
 		public IcfgLocation getEndLocation() {
 			return mEndLocation;
+		}
+	}
+
+	private static class EdgeCheckResult {
+
+		private final Validity mValidity;
+		private final ProgramState<Term> mCtxPre;
+		private final ProgramState<Term> mCtxPost;
+
+		public EdgeCheckResult(final Validity validity, final ProgramState<Term> ctxPre,
+				final ProgramState<Term> ctxPost) {
+			mValidity = validity;
+			mCtxPre = ctxPre;
+			mCtxPost = ctxPost;
+		}
+
+		public Validity getValidity() {
+			return mValidity;
+		}
+
+		public ProgramState<Term> getCtxPre() {
+			return mCtxPre;
+		}
+
+		public ProgramState<Term> getCtxPost() {
+			return mCtxPost;
+		}
+
+	}
+
+	private static class LoopLocations {
+		public final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge;
+		public final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge;
+		public final List<IcfgLocation> mLoopLocWithoutInvariant;
+
+		public LoopLocations(final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge,
+				final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge,
+				final List<IcfgLocation> loopLocWithoutInvariant) {
+			mLoopLoc2errorEdge = loopLoc2errorEdge;
+			mLoopErrorLoc2errorEdge = loopErrorLoc2errorEdge;
+			mLoopLocWithoutInvariant = loopLocWithoutInvariant;
+		}
+
+		public Map<IcfgLocation, IcfgEdge> getLoopLoc2errorEdge() {
+			return mLoopLoc2errorEdge;
+		}
+
+		public Map<IcfgLocation, IcfgEdge> getLoopErrorLoc2errorEdge() {
+			return mLoopErrorLoc2errorEdge;
+		}
+
+		public List<IcfgLocation> getLoopLocWithoutInvariant() {
+			return mLoopLocWithoutInvariant;
 		}
 
 	}
