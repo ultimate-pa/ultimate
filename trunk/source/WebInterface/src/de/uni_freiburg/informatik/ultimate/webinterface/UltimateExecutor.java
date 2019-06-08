@@ -185,6 +185,7 @@ public class UltimateExecutor {
 		case TERMINATION_C:
 		case KOJAK_C:
 		case TAIPAN_C:
+		case REFEREE_C:
 			fileExtension = ".c";
 			break;
 		default:

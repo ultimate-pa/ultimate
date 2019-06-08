@@ -104,6 +104,12 @@
 									<fileset dir="${examplesDir}/programs/toy/InvariantChecking/showcase/"
 										includes="*.bpl" />
 								</copy>
+								
+								<copy todir="${websiteExamplesDir}/invariantCheckC"
+									verbose="true">
+									<fileset dir="${examplesDir}/programs/toy/InvariantChecking/showcase/"
+										includes="*.c" />
+								</copy>
 							</tasks>
 						</configuration>
 						<goals>

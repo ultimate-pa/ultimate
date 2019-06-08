@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CBuchiAutomizerT
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CRefereeTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CTaipanTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.NameStrings;
 
@@ -52,6 +53,7 @@ public class Tasks {
 			CTaipanTC.class,
 			BoogieTaipanTC.class,
 			BoogieRefereeTC.class,
+			CRefereeTC.class,
 			//@formatter:on
 	};
 	/**
@@ -101,6 +103,8 @@ public class Tasks {
 		TAIPAN_BOOGIE,
 
 		REFEREE_BOOGIE,
+
+		REFEREE_C,
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -162,6 +166,7 @@ public class Tasks {
 			case LTLAUTOMIZER_C:
 			case KOJAK_C:
 			case TAIPAN_C:
+			case REFEREE_C:
 				return "c_cpp";
 			default:
 				return "text";
@@ -263,6 +268,7 @@ public class Tasks {
 		TASK_STRINGS.put(TaskNames.KOJAK_C, "Verify C");
 		TASK_STRINGS.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
 		TASK_STRINGS.put(TaskNames.REFEREE_BOOGIE, "Check invariants Boogie");
+		TASK_STRINGS.put(TaskNames.REFEREE_C, "Check invariants Boogie");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + TASK_STRINGS.size() + " task names are present:");
