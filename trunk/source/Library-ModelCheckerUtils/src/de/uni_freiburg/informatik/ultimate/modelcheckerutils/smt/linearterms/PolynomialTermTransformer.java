@@ -69,7 +69,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// is the result (i.e., it should not descend to subformulas).
 		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
 		if (valueOfLiteral != null) {
-			final AbstractGeneralizedAffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
+			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
 			return;
 		}
@@ -84,7 +84,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
 		if (mIsPolynomialVariable.test(term)) {
-			final AbstractGeneralizedAffineTerm result = AffineTerm.constructVariable(term);
+			final AffineTerm result = AffineTerm.constructVariable(term);
 			setResult(result);
 			return;
 		}
@@ -211,7 +211,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			setResult((PolynomialTerm) poly);
 			return;
 		}else if(poly instanceof AffineTerm) {
-			setResult((AbstractGeneralizedAffineTerm) poly);
+			setResult((AffineTerm) poly);
 			return;
 		}
 		throw new UnsupportedOperationException("This IPolynomialTerm is instance of no known class.");
@@ -225,7 +225,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		//is really necessary (like in the AffineTermTransformer): YES it is in case that the array is empty
 		//TODO: Ask Matthias why does AffineTermTransformer not catch this in add?
 		if (polynomialArgs.length == 0) {
-			return PolynomialTerm.polynomialOfRational(sort, Rational.ONE);
+			return new PolynomialTerm(sort, Rational.ONE, Collections.emptyMap());
 		}
 		if (polynomialArgs.length == 1) {
 			return polynomialArgs[0];
@@ -245,10 +245,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 		assert poly1.getSort() == poly2.getSort();
 
 		if (productWillBePolynomial(poly1, poly2)) {
-			return PolynomialTerm.polynomialTimesPolynomial(poly1, poly2);
+			return PolynomialTerm.mulPolynomials(poly1, poly2);
 		} else {
-			return new AffineTerm(poly1.getSort(), poly1.getConstant().mul(poly2.getConstant()),
-					calculateProductMapOfAffineTerms(poly1, poly2));
+			return AffineTerm.mulAffineTerms(poly1, poly2);
 		}
 	}
 
@@ -261,55 +260,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
-	 */
-	private static Map<Term, Rational> calculateProductMapOfAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
-		final Map<Term, Rational> map = new HashMap<>();
-		if (poly1.isConstant()) {
-			if (poly1.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly2).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
-			}
-		//poly2 must be a constant then, or else the product will not be affine -> Error
-		}else if (poly2.isConstant()){
-			if (poly2.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly1).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
-			}
-		}else {
-			throw new UnsupportedOperationException("The outcome of this product is not affine!");
-		}
-		return shrinkMap(map);
-	}
-
-	/**
-	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
-	 */
-	private static Map<Term, Rational> shrinkMap(final Map<Term, Rational> map){
-		if (map.size() == 0) {
-			return Collections.emptyMap();
-		}
-		else if (map.size() == 1) {
-			final Entry<Term, Rational> entry = map.entrySet().iterator().next();
-			return Collections.singletonMap(entry.getKey(), entry.getValue());
-		}
-		return map;
-	}
-
-	/**
 	 * Construct a {@link PolynomialTerm} that is the sum of all inputs.
 	 */
 	private static IPolynomialTerm add(final IPolynomialTerm[] polynomialArgs) {
 		if (someTermIsPolynomial(polynomialArgs)) {
-			return PolynomialTerm.polynomialSum(polynomialArgs);
+			return PolynomialTerm.sum(polynomialArgs);
 		}else {
-			return new AffineTerm(polynomialArgs[0].getSort(),
-								  calculateSumConstant(polynomialArgs),
-								  calculateSumMapOfAffineTerms(polynomialArgs));
+			return AffineTerm.sum(polynomialArgs);
 		}
 	}
 
@@ -327,77 +284,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Calculate the constant of a sum of given IPolynomialTerms.
-	 */
-	private static Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
-		Rational constant = Rational.ZERO;
-		final Sort s = polynomialTerms[0].getSort();
-		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
-			if (SmtSortUtils.isBitvecSort(s)) {
-				constant = bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
-			} else {
-				constant = constant.add(polynomialTerm.getConstant());
-			}
-		}
-		return constant;
-	}
-
-	private static Map<Term, Rational> calculateSumMapOfAffineTerms(final IPolynomialTerm... affineTerms){
-		final Sort s = affineTerms[0].getSort();
-		final Map<Term, Rational> map = new HashMap<>();
-		for (final IPolynomialTerm affineTerm : affineTerms) {
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) affineTerm).getVariable2Coefficient().entrySet()) {
-				assert summand.getKey().getSort() == s : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
-						+ s;
-				final Rational coeff = map.get(summand.getKey());
-				if (coeff == null) {
-					map.put(summand.getKey(), summand.getValue());
-				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(s)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), s);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
-					if (newCoeff.equals(Rational.ZERO)) {
-						map.remove(summand.getKey());
-					} else {
-						map.put(summand.getKey(), newCoeff);
-					}
-				}
-			}
-		}
-		return shrinkMap(map);
-	}
-
-	/**
-	 * Use modulo operation to bring Rational in the range of representable values.
-	 *
-	 * @param bv
-	 *            Rational that represents a bitvector
-	 * @param sort
-	 *            bitvector sort
-	 * @return bv % 2^sort.getIndices[0]
-	 */
-	private static Rational bringValueInRange(final Rational bv, final Sort sort) {
-		assert SmtSortUtils.isBitvecSort(sort);
-		assert sort.getIndices().length == 1;
-		assert bv.isIntegral();
-		final int bitsize = sort.getIndices()[0].intValueExact();
-		final BigInteger bvBigInt = bv.numerator();
-		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
-		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
-		return Rational.valueOf(resultBigInt, BigInteger.ONE);
-	}
-
-	/**
 	 * Construct negation (unary minus).
 	 */
 	private static IPolynomialTerm negate(final IPolynomialTerm polynomialTerm) {
 		if (polynomialTerm.isAffine()) {
 			return AffineTerm.mul(polynomialTerm, Rational.MONE);
 		}
-		return PolynomialTerm.polynomialTimesRational(polynomialTerm, Rational.MONE);
+		return PolynomialTerm.mul(polynomialTerm, Rational.MONE);
 	}
 
 	/**
@@ -451,13 +344,15 @@ public class PolynomialTermTransformer extends TermTransformer {
 				throw new UnsupportedOperationException("Division by Variables not supported!");
 			}
 		}
-		PolynomialTerm inverse = PolynomialTerm.polynomialOfRational(polynomialTerms[1].getSort(),
-																	 polynomialTerms[1].getConstant().inverse());
-		PolynomialTerm poly = PolynomialTerm.polynomialTimesPolynomial(polynomialTerms[0], inverse);
+		PolynomialTerm inverse = new PolynomialTerm(polynomialTerms[1].getSort(),
+													polynomialTerms[1].getConstant().inverse(),
+													Collections.emptyMap());
+		PolynomialTerm poly = PolynomialTerm.mulPolynomials(polynomialTerms[0], inverse);
 		for (int i = 2; i < polynomialTerms.length; i++) {
-			inverse = PolynomialTerm.polynomialOfRational(polynomialTerms[i].getSort(),
-					 polynomialTerms[i].getConstant().inverse());
-			poly = PolynomialTerm.polynomialTimesPolynomial(poly, inverse);
+			inverse = new PolynomialTerm(polynomialTerms[i].getSort(),
+					 					 polynomialTerms[i].getConstant().inverse(), 
+					 					 Collections.emptyMap());
+			poly = PolynomialTerm.mulPolynomials(poly, inverse);
 		}
 		return poly;
 	}

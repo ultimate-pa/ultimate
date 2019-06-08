@@ -67,20 +67,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected final Sort mSort;
 
 	/**
-	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
-	 */
-	protected static Map<Term, Rational> shrinkMap(final Map<Term, Rational> map) {
-		if (map.size() == 0) {
-			return Collections.emptyMap();
-		}
-		else if (map.size() == 1) {
-			final Entry<Term, Rational> entry = map.entrySet().iterator().next();
-			return Collections.singletonMap(entry.getKey(), entry.getValue());
-		}
-		return map;
-	}
-
-	/**
 	 * Auxiliary {@link AbstractGeneralizedAffineTerm} term that represents an error
 	 * during the translation process, e.g., if original term was not linear or not
 	 * polynomial.

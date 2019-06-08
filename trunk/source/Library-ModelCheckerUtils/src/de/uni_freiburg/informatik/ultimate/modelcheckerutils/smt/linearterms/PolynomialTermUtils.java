@@ -30,13 +30,16 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Provides static auxiliary methods for {@link AffineTerm}s and
@@ -68,6 +71,20 @@ public class PolynomialTermUtils {
 		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
 		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
+	}
+	
+	/**
+	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
+	 */
+	protected static <MNL extends Term> Map<MNL, Rational> shrinkMap(final Map<MNL, Rational> map) {
+		if (map.size() == 0) {
+			return Collections.emptyMap();
+		}
+		else if (map.size() == 1) {
+			final Entry<MNL, Rational> entry = map.entrySet().iterator().next();
+			return Collections.singletonMap(entry.getKey(), entry.getValue());
+		}
+		return map;
 	}
 
 	/**

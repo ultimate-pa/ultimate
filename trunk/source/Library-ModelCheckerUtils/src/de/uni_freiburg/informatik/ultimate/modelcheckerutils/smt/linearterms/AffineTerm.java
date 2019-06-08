@@ -80,81 +80,6 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		super();
 	}
 
-	/*======================== This is new ===================*/
-
-	/**
-	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
-	 */
-	private static Map<Term, Rational> calculateProductMapOfAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
-		final Map<Term, Rational> map = new HashMap<>();
-		if (poly1.isConstant()) {
-			if (poly1.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly2).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
-			}
-		//poly2 must be a constant then, or else the product will not be affine -> Error
-		}else if (poly2.isConstant()){
-			if (poly2.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly1).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
-			}
-		}else {
-			throw new UnsupportedOperationException("The outcome of this product is not affine!");
-		}
-		return shrinkMap(map);
-	}
-
-	/**
-	 * Calculate the constant of a sum of given IPolynomialTerms.
-	 */
-	private static Rational calculateSumConstant(final IPolynomialTerm...polynomialTerms) {
-		Rational constant = Rational.ZERO;
-		final Sort s = polynomialTerms[0].getSort();
-		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
-			if (SmtSortUtils.isBitvecSort(s)) {
-				constant = PolynomialTermUtils.bringValueInRange(constant.add(polynomialTerm.getConstant()), s);
-			} else {
-				constant = constant.add(polynomialTerm.getConstant());
-			}
-		}
-		return constant;
-	}
-
-	private static Map<Term, Rational> calculateSumMapOfAffineTerms(final IPolynomialTerm... affineTerms){
-		final Sort s = affineTerms[0].getSort();
-		final Map<Term, Rational> map = new HashMap<>();
-		for (final IPolynomialTerm affineTerm : affineTerms) {
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) affineTerm).getVariable2Coefficient().entrySet()) {
-				assert summand.getKey().getSort() == s : "Sort mismatch: " + summand.getKey().getSort() + " vs. "
-						+ s;
-				final Rational coeff = map.get(summand.getKey());
-				if (coeff == null) {
-					map.put(summand.getKey(), summand.getValue());
-				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(s)) {
-						newCoeff = PolynomialTermUtils.bringValueInRange(coeff.add(summand.getValue()), s);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
-					if (newCoeff.equals(Rational.ZERO)) {
-						map.remove(summand.getKey());
-					} else {
-						map.put(summand.getKey(), newCoeff);
-					}
-				}
-			}
-		}
-		return shrinkMap(map);
-	}
-
-	/*======================= Until here ==================*/
-
-
 	/**
 	 * Constructor to be used of all static methods that construct an affineTerm.
 	 */
@@ -199,15 +124,36 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 				affineTerm, multiplier);
 	}
 
+	public static AffineTerm mulAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+		return new AffineTerm(poly1.getSort(), poly1.getConstant().mul(poly2.getConstant()),
+					calculateProductMapOfAffineTerms(poly1, poly2));
+	}
 
-
-
-
-
-
-
-
-
+	/**
+	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
+	 */
+	private static Map<Term, Rational> calculateProductMapOfAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
+		final Map<Term, Rational> map = new HashMap<>();
+		if (poly1.isConstant()) {
+			if (poly1.getConstant().equals(Rational.ZERO)) {
+				return Collections.emptyMap();
+			}
+			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly2).getVariable2Coefficient().entrySet()) {
+				map.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
+			}
+		//poly2 must be a constant then, or else the product will not be affine -> Error
+		}else if (poly2.isConstant()){
+			if (poly2.getConstant().equals(Rational.ZERO)) {
+				return Collections.emptyMap();
+			}
+			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly1).getVariable2Coefficient().entrySet()) {
+				map.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
+			}
+		}else {
+			throw new UnsupportedOperationException("The outcome of this product is not affine!");
+		}
+		return PolynomialTermUtils.shrinkMap(map);
+	}
 
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
@@ -216,25 +162,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
-
-
-	/**
-	 * Transforms this AffineTerm into an equivalent PolynomialTerm.
-	 */
-	@Deprecated
-	public IPolynomialTerm toPolynomialTerm() {
-		final int arraylength = mAbstractVariable2Coefficient.entrySet().size();
-		final Rational[] coefficients = new Rational[arraylength];
-		final Term[] terms = new Term[arraylength];
-		int index = 0;
-		for (final Map.Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
-			terms[index] = entry.getKey();
-			coefficients[index] = entry.getValue();
-			index++;
-		}
-		return new PolynomialTerm(mSort, terms, coefficients, mConstant);
-	}
-
+	
+	
+	
+	
+	
+	
+	
+	
 	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {
 		assert SmtSortUtils.isIntSort(affineTerm.getSort());
