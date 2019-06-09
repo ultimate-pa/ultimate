@@ -30,7 +30,6 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -106,6 +105,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 			return false;
 		}
 	}
+
+	/*
+	 * check documentation of subclasses
+	 */
+	public abstract boolean isVariable(Term var);
 
 	/**
 	 * @return whether this {@link AbstractGeneralizedAffineTerm} is just a constant

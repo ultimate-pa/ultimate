@@ -255,11 +255,10 @@ public class AffineRelation {
 	}
 
 	/**
-	 * Return if term is variable (possibly with coefficient 0) in this affine
-	 * relation.
+	 * @return true iff var is variable of this {@link AffineRelation}
 	 */
-	public boolean isVariable(final Term term) {
-		return mAffineTerm.getVariable2Coefficient().containsKey(term);
+	public boolean isVariable(final Term var) {
+		return mAffineTerm.isVariable(var);
 	}
 
 	/**

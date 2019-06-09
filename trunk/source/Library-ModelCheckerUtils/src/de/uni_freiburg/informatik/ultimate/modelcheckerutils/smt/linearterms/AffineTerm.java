@@ -162,14 +162,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
 	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {
 		assert SmtSortUtils.isIntSort(affineTerm.getSort());
@@ -201,6 +201,17 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	@Override
 	public boolean isAffine() {
 		return true;
+	}
+
+	/**
+	 * @return true iff var is a variable of this {@link AffineTerm} (i.e., if this
+	 *         variable has a non-zero coefficient) Note that for returning true it
+	 *         is especially NOT sufficient if var occurs only as a subterm of some
+	 *         variable.
+	 */
+	@Override
+	public boolean isVariable(final Term var) {
+		return mAbstractVariable2Coefficient.containsKey(var);
 	}
 
 	@Override
