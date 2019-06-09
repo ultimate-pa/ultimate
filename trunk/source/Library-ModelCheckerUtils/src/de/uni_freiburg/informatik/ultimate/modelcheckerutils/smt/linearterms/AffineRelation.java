@@ -63,24 +63,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author Matthias Heizmann, Max Barth
  */
-public class AffineRelation extends AbstractGeneralizedaAffineRelation {
+public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTerm, Term> {
 
 	public AffineRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
 		super(script, term, relationSymbol);
 	}
 
-//	public AffineRelation(final Script script, final Term term, final TransformInequality transformInequality) throws NotAffineException {
-//		super(script, term, transformInequality);
-//	}
-
-//	public AffineRelation(final Script script, final Term term) throws NotAffineException {
-//		super(script, term);
-//	}
-
-
-
-	public AffineRelation(final Script script, final TransformInequality transformInequality, final RelationSymbol relationSymbol,
-			final AffineTerm affineLhs, final AffineTerm affineRhs, final Term term) {
+	public AffineRelation(final Script script, final TransformInequality transformInequality,
+			final RelationSymbol relationSymbol, final AffineTerm affineLhs, final AffineTerm affineRhs,
+			final Term term) {
 		super(script, transformInequality, relationSymbol, affineLhs, affineRhs, term);
 	}
 
@@ -117,7 +108,8 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation {
 		return convert(script, term, TransformInequality.NO_TRANFORMATION);
 	}
 
-	public static AffineRelation convert(final Script script, final Term term, final TransformInequality transformInequality) {
+	public static AffineRelation convert(final Script script, final Term term,
+			final TransformInequality transformInequality) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
 		if (bnr == null) {
 			return null;

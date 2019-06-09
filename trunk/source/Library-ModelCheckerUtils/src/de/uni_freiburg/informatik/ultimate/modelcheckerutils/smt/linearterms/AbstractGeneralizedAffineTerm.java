@@ -255,6 +255,10 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return mSort;
 	}
 
+	Map<AVAR, Rational> getAbstractVariable2Coefficient() {
+		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
+	}
+
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");

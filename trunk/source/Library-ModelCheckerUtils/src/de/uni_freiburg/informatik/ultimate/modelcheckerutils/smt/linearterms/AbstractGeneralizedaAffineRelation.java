@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
-public abstract class AbstractGeneralizedaAffineRelation {
+public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term> {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE = "No affine representation where desired variable is on left hand side";
 	protected static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;
@@ -29,9 +29,8 @@ public abstract class AbstractGeneralizedaAffineRelation {
 	/**
 	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
 	 * mOriginalTerm.
-	 *
 	 */
-	protected final AffineTerm mAffineTerm;
+	protected final AGAT mAffineTerm;
 
 	public enum TransformInequality {
 		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT
@@ -47,7 +46,7 @@ public abstract class AbstractGeneralizedaAffineRelation {
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 */
-	public AbstractGeneralizedaAffineRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
+	public AbstractGeneralizedaAffineRelation(final Script script, final AGAT term, final RelationSymbol relationSymbol) {
 		mAffineTerm = Objects.requireNonNull(term);
 		mRelationSymbol = relationSymbol;
 		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
@@ -161,10 +160,10 @@ public abstract class AbstractGeneralizedaAffineRelation {
 //	}
 
 	protected AbstractGeneralizedaAffineRelation(final Script script, final TransformInequality transformInequality,
-			final RelationSymbol relationSymbol, final AffineTerm affineLhs, final AffineTerm affineRhs, final Term originalTerm) {
+			final RelationSymbol relationSymbol, final AGAT affineLhs, final AGAT affineRhs, final Term originalTerm) {
 		mOriginalTerm = originalTerm;
-		final AffineTerm difference = AffineTerm.sum(affineLhs, AffineTerm.mul(affineRhs, Rational.MONE));
-		final AffineTerm affineTerm;
+		final AGAT difference = sum(affineLhs, mul(affineRhs, Rational.MONE));
+		final AGAT affineTerm;
 		final RelationSymbol relationSymbolAfterTransformation;
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
 				&& SmtSortUtils.isIntSort(difference.getSort())) {
@@ -181,14 +180,12 @@ public abstract class AbstractGeneralizedaAffineRelation {
 				case LESS:
 					// increment affine term by one
 					relationSymbolAfterTransformation = RelationSymbol.LEQ;
-					affineTerm = AffineTerm.sum(difference,
-							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
+					affineTerm = sum(difference, constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
 					relationSymbolAfterTransformation = RelationSymbol.GEQ;
-					affineTerm = AffineTerm.sum(difference,
-							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
+					affineTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
@@ -206,14 +203,12 @@ public abstract class AbstractGeneralizedaAffineRelation {
 				case GEQ:
 					// increment affine term by one
 					relationSymbolAfterTransformation = RelationSymbol.GREATER;
-					affineTerm = AffineTerm.sum(difference,
-							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
+					affineTerm = sum(difference, constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
 					relationSymbolAfterTransformation = RelationSymbol.LESS;
-					affineTerm = AffineTerm.sum(difference,
-							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
+					affineTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
@@ -231,13 +226,14 @@ public abstract class AbstractGeneralizedaAffineRelation {
 //		return new AbstractGeneralizedaAffineRelation(script, affineTerm, relationSymbolAfterTransformation);
 	}
 
-	protected abstract AffineTerm sum(final AffineTerm op1, final AffineTerm op2);
+	protected abstract AGAT sum(final AGAT op1, final AGAT op2);
 
-	protected abstract AffineTerm mul(final AffineTerm op, final Rational r);
+	protected abstract AGAT mul(final AGAT op, final Rational r);
 
-	protected abstract AffineTerm constructConstant(final Sort s, final Rational r);
+	protected abstract AGAT constructConstant(final Sort s, final Rational r);
 
-	protected static final TrivialityStatus computeTrivialityStatus(final AffineTerm term, final RelationSymbol symbol) {
+	protected static <AGAT extends AbstractGeneralizedAffineTerm<?>> TrivialityStatus computeTrivialityStatus(
+			final AGAT term, final RelationSymbol symbol) {
 		if (!term.isConstant()) {
 			return TrivialityStatus.NONTRIVIAL;
 		}
@@ -260,7 +256,8 @@ public abstract class AbstractGeneralizedaAffineRelation {
 		}
 	}
 
-	private static TrivialityStatus computeTrivialityStatus(final AffineTerm term, final Predicate<Integer> pred) {
+	private static <AGAT extends AbstractGeneralizedAffineTerm<?>> TrivialityStatus computeTrivialityStatus(
+			final AGAT term, final Predicate<Integer> pred) {
 		if (pred.test(term.getConstant().signum())) {
 			return TrivialityStatus.EQUIVALENT_TO_TRUE;
 		}
@@ -300,11 +297,12 @@ public abstract class AbstractGeneralizedaAffineRelation {
 			assert mTrivialityStatus == TrivialityStatus.NONTRIVIAL;
 			final List<Term> lhsSummands = new ArrayList<>();
 			final List<Term> rhsSummands = new ArrayList<>();
-			for (final Entry<Term, Rational> entry : mAffineTerm.getVariable2Coefficient().entrySet()) {
+			for (final Entry<AVAR, Rational> entry : mAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
+				final Term abstractVariableAsTerm = mAffineTerm.abstractVariableToTerm(script, entry.getKey());
 				if (entry.getValue().isNegative()) {
-					rhsSummands.add(product(script, entry.getValue().abs(), entry.getKey()));
+					rhsSummands.add(product(script, entry.getValue().abs(), abstractVariableAsTerm));
 				} else {
-					lhsSummands.add(product(script, entry.getValue(), entry.getKey()));
+					lhsSummands.add(product(script, entry.getValue(), abstractVariableAsTerm));
 				}
 			}
 			if (mAffineTerm.getConstant() != Rational.ZERO) {
@@ -339,7 +337,7 @@ public abstract class AbstractGeneralizedaAffineRelation {
 
 
 
-	public AffineTerm getAffineTerm() {
+	public AGAT getAffineTerm() {
 		return mAffineTerm;
 	}
 
