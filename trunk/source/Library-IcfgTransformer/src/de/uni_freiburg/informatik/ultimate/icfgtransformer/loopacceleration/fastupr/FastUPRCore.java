@@ -195,7 +195,7 @@ public class FastUPRCore {
 
 	}
 
-	private boolean periodicityCalculation(ParametricOctMatrix difference, int b, int c) {
+	private boolean periodicityCalculation(final ParametricOctMatrix difference, final int b, final int c) {
 		boolean consistent = true;
 		int n = 0;
 
@@ -234,7 +234,7 @@ public class FastUPRCore {
 		return true;
 	}
 
-	private boolean checkPeriodicity(ParametricOctMatrix difference, int b, int c) {
+	private boolean checkPeriodicity(final ParametricOctMatrix difference, final int b, final int c) {
 		// Exists n >= 0 rho(n*difference + sigma(R^b) ○ R^c
 
 		final Script script = mManagedScript.getScript();
@@ -402,7 +402,7 @@ public class FastUPRCore {
 
 			// Get Term in positive Normal Form
 
-			final AffineRelation affine = new AffineRelation(script, t);
+			final AffineRelation affine = AffineRelation.convert(script, t);
 			t = affine.positiveNormalForm(script);
 			mUtils.debug("Term as Positive Normal Form:");
 			mUtils.debug(t.toString());
@@ -432,7 +432,7 @@ public class FastUPRCore {
 	 *            The {@link UmodifiableTransFormula} of the exit edge.
 	 * @return accelerated result including the exit edge.
 	 */
-	public UnmodifiableTransFormula getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula) {
+	public UnmodifiableTransFormula getExitEdgeResult(final UnmodifiableTransFormula exitEdgeFormula) {
 		mResultTerm = mFormulaBuilder.getExitEdgeResult(exitEdgeFormula, mResultTerm, mInVars, mOutVars);
 		return getResult();
 	}

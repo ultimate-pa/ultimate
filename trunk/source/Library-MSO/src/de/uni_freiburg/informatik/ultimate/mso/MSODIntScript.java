@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
@@ -461,7 +461,7 @@ public class MSODIntScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
 			throws NotAffineException, AutomataLibraryException {
 
-		final AffineRelation affineRelation = new AffineRelation(this, term, TransformInequality.NONSTRICT2STRICT);
+		final AffineRelation affineRelation = AffineRelation.convert(this, term, TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = affineRelation.getAffineTerm();
 		final Map<Term, Rational> variables = affineTerm.getVariable2Coefficient();
 		final Rational constant = affineTerm.getConstant().negate();
@@ -536,7 +536,7 @@ public class MSODIntScript extends NoopScript {
 
 	/**
 	 * Returns automaton that represents "t element X".
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processElement(final ApplicationTerm term)

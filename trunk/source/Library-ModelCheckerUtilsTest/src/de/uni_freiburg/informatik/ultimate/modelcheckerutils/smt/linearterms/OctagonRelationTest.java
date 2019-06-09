@@ -198,19 +198,17 @@ public class OctagonRelationTest {
 	}
 
 	private String octRelAsString(final String termAsString) {
-
-		try {
-			final OctagonRelation octRel = OctagonRelation
-					.from(new AffineRelation(mScript, TermParseUtils.parseTerm(mScript, termAsString)));
-			return octRel == null ? null : octRel.toString();
-		} catch (final NotAffineException nae) {
-			throw new IllegalArgumentException("Invalid test case. Term was not affine.", nae);
+		final AffineRelation affRel = AffineRelation.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString));
+		if (affRel == null) {
+			throw new IllegalArgumentException("Invalid test case. Term was not affine.");
 		}
+		final OctagonRelation octRel = OctagonRelation.from(affRel);
+		return octRel == null ? null : octRel.toString();
 	}
 
 	private Term affRelOnLeftHandSide(final String termAsString, final String varString) throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
-		final Pair<ApplicationTerm, ApplicationTerm> pair = new AffineRelation(mScript,
+		final Pair<ApplicationTerm, ApplicationTerm> pair = AffineRelation.convert(mScript,
 				TermParseUtils.parseTerm(mScript, termAsString)).onLeftHandSideOnlyWithIntegerDivision(mScript, var);
 		final Term newTerm = SmtUtils.and(mScript, pair.getFirst(), pair.getSecond());
 		return newTerm;

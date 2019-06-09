@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.OctagonRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -1166,13 +1165,13 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			return EvalResult.FALSE;
 		}
 		OctagonRelation octRel;
-		try {
-			final AffineRelation affRel = new AffineRelation(script, term);
-			octRel = OctagonRelation.from(affRel);
-		} catch (final NotAffineException nae) {
-			// TODO (optional) special treatment for boolean variables
+		final AffineRelation affRel = AffineRelation.convert(script, term);
+		if (affRel == null) {
+			//term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
+			// TODO (optional) special treatment for boolean variables
 		}
+		octRel = OctagonRelation.from(affRel);
 		if (octRel == null) {
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 		}
