@@ -260,7 +260,7 @@ public class InvariantSynthesisStarter {
 
 		// TODO 2017-05-01 Matthias: Add settings if used more often.
 		final boolean fakeNonIncrementalScript = false;
-		final boolean dumpSmtScriptToFile = !false;
+		final boolean dumpSmtScriptToFile = false;
 		final String pathOfDumpedScript = "dump/";
 		final String baseNameOfDumpedScript =
 				useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier : "Linear" + "_" + cfgIdentifier;
