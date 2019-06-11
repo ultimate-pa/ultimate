@@ -67,10 +67,19 @@ public class DeclarationInformation {
 		IMPLEMENTATION_OUTPARAM,
 		/**
 		 * All local variables and constants
+		 * TODO 2019-06-11 Matthias: There are no local constants in Boogie!
 		 */
 		LOCAL,
-
-		QUANTIFIED, IMPLEMENTATION,
+		/**
+		 * Variables that a bound by a quantifier
+		 */
+		QUANTIFIED,
+		/**
+		 * TODO 2019-06-11 Matthias: I think this enum value does not make
+		 * sense and should be removed.
+		 */
+		@Deprecated
+		IMPLEMENTATION,
 		/**
 		 * All procedure or function declarations
 		 */
